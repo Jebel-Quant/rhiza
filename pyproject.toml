@@ -27,9 +27,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Jebel-Quant/rhiza"
-Repository = "https://github.com/Jebel-Quant/rhiza"
-Issues = "https://github.com/Jebel-Quant/rhiza/issues"
+Homepage = "https://github.com/jebel-quant/rhiza"
+Repository = "https://github.com/jebel-quant/rhiza"
+Issues = "https://github.com/jebel-quant/rhiza/issues"
 
 [project.optional-dependencies]
 dev = [
