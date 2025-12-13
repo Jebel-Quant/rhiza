@@ -3,7 +3,7 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "config-templates"
+name = "rhiza"
 version = "0.10.0"
 description = "Reusable configuration templates for modern Python projects"
 readme = "README.md"
@@ -43,7 +43,7 @@ dev = [
 
 [tool.hatch.build.targets.wheel]
 # Use src-layout: package code is under src/config
-packages = ["src/config"]
+packages = ["src/rhiza"]
 
 [tool.deptry]
 # see https://deptry.com/usage/#pep-621-dev-dependency-groups
