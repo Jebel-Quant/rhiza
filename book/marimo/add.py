@@ -14,9 +14,11 @@ app = marimo.App(width="medium")
 
 @app.cell
 def _():
-    from rhiza import add
     # matplotlib is neither a dev dependency nor listed in the missing script section
     import matplotlib.pyplot as plt
+
+    from rhiza import add
+
     plt.plot([1, 2, 3])
 
     return (add,)
