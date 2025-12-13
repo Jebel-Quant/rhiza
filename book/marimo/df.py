@@ -11,11 +11,11 @@ or by running this file directly.
 # dependencies = [
 #     "marimo",
 #     "pandas",
-#     "config-templates",
+#     "rhiza",
 # ]
 #
 # [tool.uv.sources]
-# config-templates = { path = "../..", editable = true }
+# rhiza = { path = "../..", editable = true }
 # ///
 
 import marimo
