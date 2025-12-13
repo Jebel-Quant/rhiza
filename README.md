@@ -34,7 +34,7 @@ Start by cloning the repository:
 
 ```bash
 # Clone the repository
-git clone https://github.com/tschm/config-templates.git
+git clone https://github.com/Jebel-Quant/rhiza.git
 cd config-templates
 ```
 
