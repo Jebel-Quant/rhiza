@@ -91,5 +91,5 @@ jobs:
       # Execute the notebook with the appropriate runner based on its content
       - name: Run notebook
         run: |
-          uvx marimo run "${{ matrix.notebook }}"
+          uvx python run "${{ matrix.notebook }}"
         shell: bash
