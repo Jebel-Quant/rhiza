@@ -27,9 +27,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/tschm/.config-templates"
-Repository = "https://github.com/tschm/.config-templates"
-Issues = "https://github.com/tschm/.config-templates/issues"
+Homepage = "https://github.com/Jebel-Quant/rhiza"
+Repository = "https://github.com/Jebel-Quant/rhiza"
+Issues = "https://github.com/Jebel-Quant/rhiza/issues"
 
 [project.optional-dependencies]
 dev = [

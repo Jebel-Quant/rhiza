@@ -4,20 +4,20 @@
 [![Python versions](https://img.shields.io/badge/Python-3.11%20•%203.12%20•%203.13%20•%203.14-blue?logo=python)](https://www.python.org/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg?logo=ruff)](https://github.com/astral-sh/ruff)
 
-[![CI Status](https://github.com/tschm/.config-templates/workflows/CI/badge.svg)](https://github.com/tschm/.config-templates/actions)
-[![Pre-commit](https://github.com/tschm/.config-templates/workflows/PRE-COMMIT/badge.svg)](https://github.com/tschm/.config-templates/actions?query=workflow%3APRE-COMMIT)
-[![Deptry](https://github.com/tschm/.config-templates/workflows/DEPTRY/badge.svg)](https://github.com/tschm/.config-templates/actions?query=workflow%3ADEPTRY)
-[![Book](https://github.com/tschm/.config-templates/workflows/BOOK/badge.svg)](https://github.com/tschm/.config-templates/actions?query=workflow%3ABOOK)
-[![Marimo](https://github.com/tschm/.config-templates/workflows/Marimo/badge.svg)](https://github.com/tschm/.config-templates/actions?query=workflow%3AMarimo)
+[![CI Status](https://github.com/Jebel-Quant/rhiza/workflows/CI/badge.svg)](https://github.com/Jebel-Quant/rhiza/actions)
+[![Pre-commit](https://github.com/Jebel-Quant/rhiza/workflows/PRE-COMMIT/badge.svg)](https://github.com/Jebel-Quant/rhiza/actions?query=workflow%3APRE-COMMIT)
+[![Deptry](https://github.com/Jebel-Quant/rhiza/workflows/DEPTRY/badge.svg)](https://github.com/Jebel-Quant/rhiza/actions?query=workflow%3ADEPTRY)
+[![Book](https://github.com/Jebel-Quant/rhiza/workflows/BOOK/badge.svg)](https://github.com/Jebel-Quant/rhiza/actions?query=workflow%3ABOOK)
+[![Marimo](https://github.com/Jebel-Quant/rhiza/workflows/Marimo/badge.svg)](https://github.com/Jebel-Quant/rhiza/actions?query=workflow%3AMarimo)
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/tschm/.config-templates)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Jebel-Quant/rhiza)
 
 A collection of reusable configuration templates
 for modern Python projects.
 Save time and maintain consistency across your projects
 with these pre-configured templates.
 
-![Last Updated](https://img.shields.io/github/last-commit/tschm/.config-templates/main?label=Last%20updated&color=blue)
+![Last Updated](https://img.shields.io/github/last-commit/Jebel-Quant/rhiza/main?label=Last%20updated&color=blue)
 
 ## ✨ Features
 
@@ -256,7 +256,7 @@ which templates to sync. This file should list the configuration files you want 
 Example template.yml:
 
 ```yaml
-template-repository: "tschm/.config-templates"
+template-repository: "Jebel-Quant/rhiza"
 template-branch: "main"
 include: |
     .github

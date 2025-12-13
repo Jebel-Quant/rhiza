@@ -14,7 +14,7 @@ app = marimo.App(width="medium")
 
 @app.cell
 def _():
-    from config import add
+    from rhiza import add
 
     return (add,)
 
