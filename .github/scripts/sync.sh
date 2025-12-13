@@ -16,7 +16,7 @@ YELLOW="\033[33m"
 RESET="\033[0m"
 
 TEMPLATE_CONFIG=".github/template.yml"
-TEMP_DIR="/tmp/config-templates-sync-$$"
+TEMP_DIR="/tmp/rhiza-sync-$$"
 
 show_usage() {
   printf "Usage: %s [OPTIONS]\n\n" "$0"
