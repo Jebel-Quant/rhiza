@@ -35,7 +35,7 @@ Start by cloning the repository:
 ```bash
 # Clone the repository
 git clone https://github.com/Jebel-Quant/rhiza.git
-cd config-templates
+cd rhiza
 ```
 
 The project uses a [Makefile](Makefile) as the primary entry point for all tasks.
@@ -121,7 +121,7 @@ pythonpath = ["src"]
 
 Marimo notebooks can define their own dependencies using inline script metadata. This allows notebooks to be self-contained and reproducible.
 
-To use the current package (`config-templates`) within a notebook, you can define it as a dependency and point `uv` to the local path. Add the following block at the top of your `.py` notebook file:
+To use the current package (`rhiza`) within a notebook, you can define it as a dependency and point `uv` to the local path. Add the following block at the top of your `.py` notebook file:
 
 ```python
 # /// script
@@ -129,11 +129,11 @@ To use the current package (`config-templates`) within a notebook, you can defin
 # dependencies = [
 #     "marimo",
 #     "pandas",
-#     "config-templates",
+#     "rhiza",
 # ]
 #
 # [tool.uv.sources]
-# config-templates = { path = "../.." }
+# rhiza = { path = "../.." }
 # ///
 ```
 
@@ -210,7 +210,7 @@ Copy the desired configuration files to your project:
 ```bash
 # Example: Copy GitHub workflow files
 mkdir -p .github/workflows
-cp config-templates/.github/workflows/ci.yml .github/workflows/
+cp rhiza/.github/workflows/ci.yml .github/workflows/
 ```
 
 ### Using Jebel Quant's [Sync Template Action](https://github.com/marketplace/actions/sync-template)
