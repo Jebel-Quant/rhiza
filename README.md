@@ -282,7 +282,10 @@ If you copied the Makefile, you can now use it to install dependencies:
 # Install uv and project dependencies
 make install
 
-# Install pre-commit hooks
+# Install pre-commit hooks (requires uv to be installed first)
+uvx pre-commit install
+
+# Run pre-commit checks and linting
 make fmt
 ```
 
