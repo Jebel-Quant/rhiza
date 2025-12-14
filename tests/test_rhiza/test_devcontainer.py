@@ -131,16 +131,23 @@ class TestStartupScript:
         startup_script = root / ".devcontainer" / "startup.sh"
         content = startup_script.read_text()
 
-        # Check for source command with bootstrap.sh
-        assert "source" in content and "bootstrap.sh" in content
+        # Check for source command with bootstrap.sh in the same line
+        lines = content.split('\n')
+        sources_bootstrap = any('source' in line and 'bootstrap.sh' in line for line in lines)
+        assert sources_bootstrap, "startup.sh should contain 'source' command with 'bootstrap.sh'"
 
     def test_startup_script_has_welcome_messages(self, root):
         """Startup script should display welcome messages to users."""
         startup_script = root / ".devcontainer" / "startup.sh"
         content = startup_script.read_text()
 
-        # Check for echo commands that display welcome messages
-        assert "echo" in content and ("environment ready" in content.lower() or "ready!" in content.lower())
+        # Check for echo commands with welcome messages
+        lines = content.split('\n')
+        has_welcome_echo = any(
+            'echo' in line and ('environment ready' in line.lower() or 'ready!' in line.lower())
+            for line in lines
+        )
+        assert has_welcome_echo, "startup.sh should have echo statements with welcome messages"
 
 
 class TestDevContainerScriptIntegration:
@@ -176,8 +183,9 @@ class TestDevContainerScriptIntegration:
         bootstrap_script = root / ".devcontainer" / "bootstrap.sh"
         content = bootstrap_script.read_text()
 
-        # Verify the script reads UV_INSTALL_DIR from environment with default fallback
+        # Verify the script uses UV_INSTALL_DIR with parameter expansion
+        # Looking for pattern like ${UV_INSTALL_DIR:-./bin}
         assert "UV_INSTALL_DIR" in content
-        assert "${UV_INSTALL_DIR" in content or "$UV_INSTALL_DIR" in content
-        # Verify it has a default value (either in export or parameter expansion)
-        assert ":-" in content or "/home/vscode/.local/bin" in content or "./bin" in content
+        assert "${UV_INSTALL_DIR}" in content or "$UV_INSTALL_DIR" in content
+        # Verify it has a default value using parameter expansion (:-) 
+        assert ":-" in content, "bootstrap.sh should use ${VAR:-default} pattern for UV_INSTALL_DIR"
