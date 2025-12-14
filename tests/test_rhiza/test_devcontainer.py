@@ -131,16 +131,16 @@ class TestStartupScript:
         startup_script = root / ".devcontainer" / "startup.sh"
         content = startup_script.read_text()
 
-        assert "source" in content or "." in content
-        assert "bootstrap.sh" in content
+        # Check for source command with bootstrap.sh
+        assert "source" in content and "bootstrap.sh" in content
 
     def test_startup_script_has_welcome_messages(self, root):
         """Startup script should display welcome messages to users."""
         startup_script = root / ".devcontainer" / "startup.sh"
         content = startup_script.read_text()
 
-        # Check for emoji-based welcome messages
-        assert "🚀" in content or "ready" in content.lower()
+        # Check for echo commands that display welcome messages
+        assert "echo" in content and ("environment ready" in content.lower() or "ready!" in content.lower())
 
 
 class TestDevContainerScriptIntegration:
@@ -170,23 +170,14 @@ class TestDevContainerScriptIntegration:
 
         assert result.returncode == 0, f"Syntax error in startup.sh: {result.stderr}"
 
-    def test_bootstrap_uv_install_dir_configuration(self, root, tmp_path, monkeypatch):
+    def test_bootstrap_uv_install_dir_configuration(self, root):
         """Bootstrap script should respect UV_INSTALL_DIR environment variable."""
-        # Create a temporary directory for testing
-        test_bin = tmp_path / "test_bin"
-        test_bin.mkdir()
-
-        # Create mock files that make install would create
-        (tmp_path / "pyproject.toml").write_text('[project]\nname = "test"\n')
-        (tmp_path / "Makefile").write_text("install:\n\t@echo 'Install complete'\n")
-
-        # Set environment to use custom UV_INSTALL_DIR
-        monkeypatch.setenv("UV_INSTALL_DIR", str(test_bin))
-
         # Read the bootstrap script
         bootstrap_script = root / ".devcontainer" / "bootstrap.sh"
         content = bootstrap_script.read_text()
 
-        # Verify the script reads UV_INSTALL_DIR from environment
+        # Verify the script reads UV_INSTALL_DIR from environment with default fallback
         assert "UV_INSTALL_DIR" in content
         assert "${UV_INSTALL_DIR" in content or "$UV_INSTALL_DIR" in content
+        # Verify it has a default value (either in export or parameter expansion)
+        assert ":-" in content or "/home/vscode/.local/bin" in content or "./bin" in content
