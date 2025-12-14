@@ -206,26 +206,116 @@ Control which Python versions are used in your workflows:
 2. Click "New repository variable"
 3. Add `PYTHON_MAX_VERSION` and/or `PYTHON_DEFAULT_VERSION` with your desired values
 
-## 🧩 Usage Examples
+## 🧩 Bringing Rhiza into an Existing Project
 
-You can inject the templates into your project
-using one of the methods described below.
+Rhiza provides reusable configuration templates that you can integrate into your existing Python projects. You can choose to adopt all templates or selectively pick the ones that fit your needs.
 
-### Manual Copy
+### Prerequisites
 
-Copy the desired configuration files to your project:
+Before integrating Rhiza into your existing project:
+
+- **Python 3.11+** - Ensure your project supports Python 3.11 or newer
+- **Git** - Your project should be a Git repository
+- **Backup** - Consider committing any uncommitted changes before integration
+- **Review** - Review the [Available Templates](#-available-templates) section to understand what will be added
+
+### Method 1: Manual Integration (Selective Adoption)
+
+This approach is ideal if you want to cherry-pick specific templates or customize them before integration.
+
+#### Step 1: Clone Rhiza
+
+First, clone the Rhiza repository to a temporary location:
 
 ```bash
-# Example: Copy GitHub workflow files
-mkdir -p .github/workflows
-cp rhiza/.github/workflows/ci.yml .github/workflows/
+# Clone to a temporary directory
+cd /tmp
+git clone https://github.com/jebel-quant/rhiza.git
 ```
 
-### Using Jebel Quant's [Sync Template Action](https://github.com/marketplace/actions/sync-template)
+#### Step 2: Copy Desired Templates
 
-You can automatically sync these configuration
-templates into your GitHub repositories using
-the Jebel Quant action:
+Navigate to your project and copy the configuration files you need:
+
+```bash
+# Navigate to your project
+cd /path/to/your/project
+
+# Copy GitHub Actions workflows
+mkdir -p .github/workflows
+cp /tmp/rhiza/.github/workflows/ci.yml .github/workflows/
+cp /tmp/rhiza/.github/workflows/pre-commit.yml .github/workflows/
+
+# Copy linting and formatting configuration
+cp /tmp/rhiza/ruff.toml .
+
+# Copy testing configuration
+cp /tmp/rhiza/pytest.ini .
+
+# Copy the Makefile for task automation
+cp /tmp/rhiza/Makefile .
+
+# Copy editor configuration
+cp /tmp/rhiza/.editorconfig .
+
+# Copy pre-commit configuration
+cp /tmp/rhiza/.pre-commit-config.yaml .
+
+# Copy dev container configuration (optional)
+cp -r /tmp/rhiza/.devcontainer .
+```
+
+#### Step 3: Customize for Your Project
+
+Review and customize the copied files to match your project's needs:
+
+- **pyproject.toml** - Update project name, version, and dependencies in your existing `pyproject.toml`
+- **Makefile** - Adjust targets as needed for your project structure
+- **Workflows** - Review GitHub Actions workflows and adjust Python versions or job configurations
+- **.github/scripts** - Copy and customize build scripts if needed
+
+#### Step 4: Install Dependencies
+
+If you copied the Makefile, you can now use it to install dependencies:
+
+```bash
+# Install uv and project dependencies
+make install
+
+# Install pre-commit hooks
+make fmt
+```
+
+### Method 2: Automated Sync (Continuous Updates)
+
+This approach is ideal if you want to keep your project's configuration in sync with Rhiza's latest templates automatically.
+
+#### Step 1: Create Template Configuration
+
+Create a `.github/template.yml` file in your project repository that specifies which templates to sync:
+
+```yaml
+template-repository: "jebel-quant/rhiza"
+template-branch: "main"
+include: |
+    .github/workflows
+    .github/scripts
+    .editorconfig
+    .gitignore
+    .pre-commit-config.yaml
+    Makefile
+    pytest.ini
+    ruff.toml
+exclude: |
+    .github/scripts/customisations/build-extras.sh
+    .github/scripts/customisations/post-release.sh
+```
+
+**Important:** Add your custom scripts to the `exclude` list to prevent them from being overwritten.
+
+#### Step 2: Create Sync Workflow
+
+Create `.github/workflows/sync.yml` in your project:
 
 ```yaml
 name: Sync Templates
@@ -245,38 +335,71 @@ jobs:
     steps:
       - name: Sync Template
         id: sync
-        uses: jebel-quant/sync_template@v0.3.1
+        uses: jebel-quant/sync_template@v0.4.2
         with:
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           source: ".github/template.yml"
           branch: "template-updates"
           commit-message: "chore: sync template files"
 ```
 
-This workflow will:
+#### Step 3: Configure GitHub Token (if needed)
 
-1. Download the latest templates based on your template.yml configuration
-2. Copy them to your project
-3. Create a pull request with the changes (if any)
+If you want the sync workflow to trigger other workflows, create a Personal Access Token (PAT):
 
-**Note:** You need to create a `.github/template.yml` file in your repository that specifies
-which templates to sync. This file should list the configuration files you want to include from this repository.
-Example template.yml:
+1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. Generate a new token with `repo` and `workflow` scopes
+3. Add it as a repository secret named `PAT_TOKEN`
+4. Update the workflow to use `token: ${{ secrets.PAT_TOKEN }}`
 
-```yaml
-template-repository: "jebel-quant/rhiza"
-template-branch: "main"
-include: |
-    .github
-    tests
-    .editorconfig
-    .gitignore
-    .pre-commit-config.yaml
-    CODE_OF_CONDUCT.md
-    CONTRIBUTING.md
-    Makefile
-    ruff.toml
-```
+Otherwise, you can use the default `GITHUB_TOKEN` which has sufficient permissions for basic syncing.
+
+#### Step 4: Run Initial Sync
+
+You can trigger the sync workflow manually:
+
+1. Go to your repository's "Actions" tab
+2. Select the "Sync Templates" workflow
+3. Click "Run workflow"
+4. Review and merge the resulting pull request
+
+The workflow will:
+- Download the latest templates from Rhiza
+- Copy them to your project based on your `template.yml` configuration
+- Create a pull request with the changes (if any)
+- Automatically run weekly to keep your templates up to date
+
+### What to Expect After Integration
+
+After integrating Rhiza, your project will have:
+
+- **Automated CI/CD** - GitHub Actions workflows for testing, linting, and releases
+- **Code Quality Tools** - Pre-commit hooks, ruff formatting, and pytest configuration
+- **Task Automation** - Makefile with common development tasks (`make test`, `make fmt`, etc.)
+- **Dev Container** - Optional VS Code/Codespaces development environment
+- **Documentation** - Templates for automated documentation generation
+
+### Next Steps
+
+1. **Test the integration** - Run `make test` to ensure tests pass
+2. **Run pre-commit** - Execute `make fmt` to verify code quality checks
+3. **Review workflows** - Check GitHub Actions tabs to see workflows in action
+4. **Customize** - Adjust templates to match your project's specific needs
+5. **Update documentation** - Add project-specific instructions to your README
+
+### Troubleshooting
+
+**Issue: Makefile targets conflict with existing scripts**
+- Solution: Review the Makefile and merge targets with your existing build scripts, or rename conflicting targets
+
+**Issue: Pre-commit hooks fail on existing code**
+- Solution: Run `make fmt` to fix formatting issues, or temporarily exclude certain files in `.pre-commit-config.yaml`
+
+**Issue: GitHub Actions workflows fail**
+- Solution: Check Python version compatibility and adjust `PYTHON_MAX_VERSION` repository variable if needed
+
+**Issue: Dev container fails to build**
+- Solution: Review `.devcontainer/devcontainer.json` and ensure all dependencies are available for your project
 
 ## 🖥️ Dev Container Compatibility
 
