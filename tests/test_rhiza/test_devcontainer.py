@@ -6,8 +6,6 @@ the development environment for users.
 """
 
 import subprocess
-import tempfile
-from pathlib import Path
 
 
 class TestDevContainerConfiguration:
@@ -132,8 +130,8 @@ class TestStartupScript:
         content = startup_script.read_text()
 
         # Check for source command with bootstrap.sh in the same line
-        lines = content.split('\n')
-        sources_bootstrap = any('source' in line and 'bootstrap.sh' in line for line in lines)
+        lines = content.split("\n")
+        sources_bootstrap = any("source" in line and "bootstrap.sh" in line for line in lines)
         assert sources_bootstrap, "startup.sh should contain 'source' command with 'bootstrap.sh'"
 
     def test_startup_script_has_welcome_messages(self, root):
@@ -142,10 +140,9 @@ class TestStartupScript:
         content = startup_script.read_text()
 
         # Check for echo commands with welcome messages
-        lines = content.split('\n')
+        lines = content.split("\n")
         has_welcome_echo = any(
-            'echo' in line and ('environment ready' in line.lower() or 'ready!' in line.lower())
-            for line in lines
+            "echo" in line and ("environment ready" in line.lower() or "ready!" in line.lower()) for line in lines
         )
         assert has_welcome_echo, "startup.sh should have echo statements with welcome messages"
 
@@ -187,5 +184,5 @@ class TestDevContainerScriptIntegration:
         # Looking for pattern like ${UV_INSTALL_DIR:-./bin}
         assert "UV_INSTALL_DIR" in content
         assert "${UV_INSTALL_DIR}" in content or "$UV_INSTALL_DIR" in content
-        # Verify it has a default value using parameter expansion (:-) 
+        # Verify it has a default value using parameter expansion (:-)
         assert ":-" in content, "bootstrap.sh should use ${VAR:-default} pattern for UV_INSTALL_DIR"
