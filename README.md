@@ -1,14 +1,20 @@
-# 🛠️ Rhiza
+<div align="center">
 
+# <img src="assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza
+
+![Created with Rhiza](https://img.shields.io/badge/synced%20with-rhiza-2FA4A9?logoUrl=https://raw.githubusercontent.com/Jebel-Quant/rhiza/main/assets/rhiza-logo.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python versions](https://img.shields.io/badge/Python-3.11%20•%203.12%20•%203.13%20•%203.14-blue?logo=python)](https://www.python.org/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg?logo=ruff)](https://github.com/astral-sh/ruff)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg)](https://github.com/pypa/hatch)
+
 
 [![CI Status](https://github.com/jebel-quant/rhiza/workflows/CI/badge.svg)](https://github.com/jebel-quant/rhiza/actions)
 [![Pre-commit](https://github.com/jebel-quant/rhiza/workflows/PRE-COMMIT/badge.svg)](https://github.com/jebel-quant/rhiza/actions?query=workflow%3APRE-COMMIT)
 [![Deptry](https://github.com/jebel-quant/rhiza/workflows/DEPTRY/badge.svg)](https://github.com/jebel-quant/rhiza/actions?query=workflow%3ADEPTRY)
 [![Book](https://github.com/jebel-quant/rhiza/workflows/BOOK/badge.svg)](https://github.com/jebel-quant/rhiza/actions?query=workflow%3ABOOK)
-[![Marimo](https://github.com/jebel-quant/rhiza/workflows/Marimo/badge.svg)](https://github.com/jebel-quant/rhiza/actions?query=workflow%3AMarimo)
+[![MARIMO](https://github.com/Jebel-Quant/rhiza/actions/workflows/marimo.yml/badge.svg)](https://github.com/Jebel-Quant/rhiza/actions/workflows/marimo.yml)
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/jebel-quant/rhiza)
 
@@ -18,6 +24,8 @@ Save time and maintain consistency across your projects
 with these pre-configured templates.
 
 ![Last Updated](https://img.shields.io/github/last-commit/jebel-quant/rhiza/main?label=Last%20updated&color=blue)
+
+</div>
 
 ## ✨ Features
 
