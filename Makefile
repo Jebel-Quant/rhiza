@@ -19,7 +19,7 @@ RESET := \033[0m
 # Declare phony targets (they don't produce files)
 .PHONY: install-uv install clean test marimo marimushka book fmt deptry docs release release-dry-run post-release sync help all update-readme
 
-UV_INSTALL_DIR := ./bin
+UV_INSTALL_DIR ?= ./bin
 UV_BIN := ${UV_INSTALL_DIR}/uv
 UVX_BIN := ${UV_INSTALL_DIR}/uvx
 MARIMO_FOLDER := book/marimo
