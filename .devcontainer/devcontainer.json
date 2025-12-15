@@ -44,5 +44,6 @@
         }
     },
     "onCreateCommand": ".devcontainer/bootstrap.sh",
-    "remoteUser": "vscode"
+    "remoteUser": "vscode",
+    "postStartCommand": "uv run marimo --yes edit --host=localhost --port=8080 --headless --no-token" 
 }
