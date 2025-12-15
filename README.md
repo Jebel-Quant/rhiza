@@ -174,13 +174,30 @@ Hello, World!
 
 ## 📁 Available Templates
 
-This repository includes the following configuration templates:
+This repository provides a curated set of reusable configuration templates, organised by purpose.
 
-- **ruff.toml** - Configuration for the Ruff linter and formatter
-- **pytest.ini** - Configuration for the pytest testing framework
-- **.devcontainer/** - Development container configuration
-- **.github/** - GitHub Actions, scripts and workflow templates
-- **Makefile** - Simple make commands for common operations
+### 🌱 Core Project Configuration
+Foundational files that define project structure, standards, and contribution practices.
+
+- **.gitignore** — Sensible defaults for Python projects
+- **.editorconfig** — Editor configuration to enforce consistent coding standards
+- **ruff.toml** — Configuration for the Ruff linter and formatter
+- **pytest.ini** — Configuration for the `pytest` testing framework
+- **Makefile** — Simple make targets for common development tasks
+- **CODE_OF_CONDUCT.md** — Generic code of conduct for open-source projects
+- **CONTRIBUTING.md** — Generic contributing guidelines for open-source projects
+
+### 🔧 Developer Experience
+Tooling that improves local development, onboarding, and reproducibility.
+
+- **.devcontainer/** — Development container setup (VS Code / Dev Containers)
+- **.pre-commit-config.yaml** — Common and useful pre-commit hooks
+- **docker/** — Example `Dockerfile` and `.dockerignore`
+
+### 🚀 CI / CD & Automation
+Templates related to continuous integration, delivery, and repository automation.
+
+- **.github/** — GitHub Actions workflows, scripts, and repository templates
 
 ## ⚙️ Workflow Configuration
 
