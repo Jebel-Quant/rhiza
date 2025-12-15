@@ -208,7 +208,8 @@ Control which Python versions are used in your workflows:
 
 ## 🧩 Bringing Rhiza into an Existing Project
 
-Rhiza provides reusable configuration templates that you can integrate into your existing Python projects. You can choose to adopt all templates or selectively pick the ones that fit your needs.
+Rhiza provides reusable configuration templates that you can integrate into your existing Python projects. 
+You can choose to adopt all templates or selectively pick the ones that fit your needs.
 
 ### Prerequisites
 
@@ -217,7 +218,7 @@ Before integrating Rhiza into your existing project:
 - **Python 3.11+** - Ensure your project supports Python 3.11 or newer
 - **Git** - Your project should be a Git repository
 - **Backup** - Consider committing any uncommitted changes before integration
-- **Review** - Review the [Available Templates](#-available-templates) section to understand what will be added
+- **Review** - Review the [Available Templates](#-available-templates) section to understand what could be added
 
 ### Method 1: Manual Integration (Selective Adoption)
 
@@ -241,123 +242,81 @@ Navigate to your project and copy the configuration files you need:
 # Navigate to your project
 cd /path/to/your/project
 
-# Copy GitHub Actions workflows
+# We recommend working on a fresh branch
+git checkout -b rhiza
+
+# Ensure required directories exist
 mkdir -p .github/workflows
-cp /tmp/rhiza/.github/workflows/ci.yml .github/workflows/
-cp /tmp/rhiza/.github/workflows/pre-commit.yml .github/workflows/
+mkdir -p .github/scripts
 
-# Copy linting and formatting configuration
-cp /tmp/rhiza/ruff.toml .
+# Copy the template configuration
+cp /tmp/rhiza/.github/template.yml .github/template.yml
 
-# Copy testing configuration
-cp /tmp/rhiza/pytest.ini .
-
-# Copy the Makefile for task automation
-cp /tmp/rhiza/Makefile .
-
-# Copy editor configuration
-cp /tmp/rhiza/.editorconfig .
-
-# Copy pre-commit configuration
-cp /tmp/rhiza/.pre-commit-config.yaml .
-
-# Copy dev container configuration (optional)
-cp -r /tmp/rhiza/.devcontainer .
+# Copy the sync helper script
+cp /tmp/rhiza/.github/scripts/sync.sh .github/scripts
 ```
 
-#### Step 3: Customize for Your Project
+At this stage:
 
-Review and customize the copied files to match your project's needs:
+❌ No templates are copied yet
+❌ No existing files are modified
+✅ Only the sync mechanism is installed
+⚠️ **Do not merge this branch yet.**
 
-- **pyproject.toml** - Update project name, version, and dependencies in your existing `pyproject.toml`
-- **Makefile** - Adjust targets as needed for your project structure
-- **Workflows** - Review GitHub Actions workflows and adjust Python versions or job configurations
-- **.github/scripts** - Copy and customize build scripts if needed
+#### Step 3: Perform the first sync
 
-#### Step 4: Install Dependencies
-
-If you copied the Makefile, you can now use it to install dependencies:
+Run the sync script to apply the templates defined in '.github/template.yml'
 
 ```bash
-# Install uv and project dependencies
-make install
+./.github/scripts/sync.sh
+```
 
-# Install pre-commit hooks (requires uv to be installed first)
-uvx pre-commit install
+This will:
 
-# Run pre-commit checks and linting
-make fmt
+  Fetch the selected templates from the Rhiza repository
+  Apply them locally according to your include/exclude rules
+  Stage or commit the resulting changes on the current branch
+
+Review the changes carefully:
+
+```bash
+git status
+git diff
+```
+
+```bash
+git add .
+git commit -m "Integrate Rhiza templates"
+git push -u origin rhiza
 ```
 
 ### Method 2: Automated Sync (Continuous Updates)
 
-This approach is ideal if you want to keep your project's configuration in sync with Rhiza's latest templates automatically.
+This approach keeps your project’s configuration in sync with Rhiza’s latest templates while giving you control over which files are applied.
 
-#### Step 1: Create Template Configuration
+Prerequisites:
 
-Create a `.github/template.yml` file in your project repository that specifies which templates to sync:
+  A .github/template.yml file exists, defining **which templates to include or exclude**.
+  The first manual sync (./.github/scripts/sync.sh) has been performed.
+  The .github/workflows/sync.yml workflow is present in your repository.
 
-```yaml
-template-repository: "jebel-quant/rhiza"
-template-branch: "main"
-include: |
-    .github/workflows
-    .github/scripts
-    .editorconfig
-    .gitignore
-    .pre-commit-config.yaml
-    Makefile
-    pytest.ini
-    ruff.toml
-exclude: |
-    .github/scripts/customisations/build-extras.sh
-    .github/scripts/customisations/post-release.sh
-```
+The workflow can run:
 
-**Important:** Add your custom scripts to the `exclude` list to prevent them from being overwritten.
+  **On a schedule** — e.g., weekly updates
+  **Manually** — via the GitHub Actions “Run workflow” button
 
-#### Step 2: Create Sync Workflow
+⚠️ .github/template.yml remains the **source of truth**. All automated updates are driven by its include/exclude rules.
 
-Create `.github/workflows/sync.yml` in your project:
+#### Step 1: Configure GitHub Token
 
-```yaml
-name: Sync Templates
-
-on:
-  schedule:
-    - cron: '0 0 * * 1'  # Weekly on Monday at midnight
-  workflow_dispatch:     # Allow manual triggering
-
-permissions:
-  contents: write
-  pull-requests: write
-
-jobs:
-  sync:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Sync Template
-        id: sync
-        uses: jebel-quant/sync_template@v0.4.2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          source: ".github/template.yml"
-          branch: "template-updates"
-          commit-message: "chore: sync template files"
-```
-
-#### Step 3: Configure GitHub Token (if needed)
-
-If you want the sync workflow to trigger other workflows, create a Personal Access Token (PAT):
+If you want the sync workflow to trigger other workflows (e.g. to create pull requests), create a Personal Access Token (PAT):
 
 1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
 2. Generate a new token with `repo` and `workflow` scopes
 3. Add it as a repository secret named `PAT_TOKEN`
 4. Update the workflow to use `token: ${{ secrets.PAT_TOKEN }}`
 
-Otherwise, you can use the default `GITHUB_TOKEN` which has sufficient permissions for basic syncing.
-
-#### Step 4: Run Initial Sync
+#### Step 2: Run Initial Sync (again)
 
 You can trigger the sync workflow manually:
 
