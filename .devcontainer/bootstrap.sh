@@ -37,5 +37,5 @@ if [ -f .pre-commit-config.yaml ]; then
   "$UVX_BIN" pre-commit install
 fi
 
-"$UV_BIN" run marimo --yes edit --host=localhost --port=8080 --headless --no-token || echo '⚠️ Marimo failed to start'"
+"$UV_BIN" run marimo --yes edit --host=localhost --port=8080 --headless --no-token || echo '⚠️ Marimo failed to start'
 
