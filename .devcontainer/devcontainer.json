@@ -43,6 +43,6 @@
             ]
         }
     },
-    "onCreateCommand": ".devcontainer/startup.sh",
+    "onCreateCommand": ".devcontainer/bootstrap.sh",
     "remoteUser": "vscode"
 }
