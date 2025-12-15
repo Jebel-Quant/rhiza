@@ -36,6 +36,3 @@ if [ -f .pre-commit-config.yaml ]; then
   # uvx runs tools without requiring them in the project deps
   "$UVX_BIN" pre-commit install
 fi
-
-"$UV_BIN" run marimo --yes edit --host=0.0.0.0 --port=8080 --headless --no-token || echo '⚠️ Marimo failed to start'
-
