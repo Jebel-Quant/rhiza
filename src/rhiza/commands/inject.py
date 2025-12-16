@@ -12,20 +12,16 @@ import sys
 import tempfile
 from pathlib import Path
 
-#import typer
+# import typer
 import yaml
 from loguru import logger
 
-#app = typer.Typer(help="Materialize rhiza configuration templates into a git repository")
+# app = typer.Typer(help="Materialize rhiza configuration templates into a git repository")
 
-#@app.command()
-def inject(
-    target: Path,
-    branch: str,
-    force: bool
-):
+
+# @app.command()
+def inject(target: Path, branch: str, force: bool):
     """Materialize rhiza templates into TARGET repository."""
-
     # Convert to absolute path to avoid surprises
     target = target.resolve()
 
@@ -54,8 +50,8 @@ def inject(
                 "/.gitignore",
                 "/.pre-commit-config.yaml",
                 "/Makefile",
-                "/pytest.ini"
-            ]
+                "/pytest.ini",
+            ],
         }
         with open(template_file, "w") as f:
             yaml.dump(template_content, f)
@@ -88,15 +84,22 @@ def inject(
     logger.info(f"Cloning {rhiza_repo}@{rhiza_branch} into temporary directory")
 
     try:
-        subprocess.run([
-            "git", "clone",
-            "--depth", "1",
-            "--filter=blob:none",
-            "--sparse",
-            "--branch", rhiza_branch,
-            f"https://github.com/{rhiza_repo}.git",
-            str(tmp_dir)
-        ], check=True, stdout=subprocess.DEVNULL)
+        subprocess.run(
+            [
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--filter=blob:none",
+                "--sparse",
+                "--branch",
+                rhiza_branch,
+                f"https://github.com/{rhiza_repo}.git",
+                str(tmp_dir),
+            ],
+            check=True,
+            stdout=subprocess.DEVNULL,
+        )
 
         subprocess.run(["git", "sparse-checkout", "init"], cwd=tmp_dir, check=True)
         subprocess.run(["git", "sparse-checkout", "set", "--skip-checks", *include_paths], cwd=tmp_dir, check=True)
@@ -148,10 +151,10 @@ This is a one-shot snapshot.
 Re-run this script to update templates explicitly.
 """)
 
+
 # -----------------------
 # Entry point
 # -----------------------
-#if __name__ == "__main__":
+# if __name__ == "__main__":
 #    import sys
 #    app()
-
