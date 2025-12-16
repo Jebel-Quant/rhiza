@@ -775,6 +775,7 @@ version = "0.0.3"
 source = { editable = "." }
 dependencies = [
     { name = "loguru" },
+    { name = "pyyaml" },
     { name = "typer" },
 ]
 
@@ -797,6 +798,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = "==9.0.2" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-html", marker = "extra == 'dev'", specifier = ">=4.1.1" },
+    { name = "pyyaml", specifier = "==6.0.3" },
     { name = "typer", specifier = ">=0.20.0" },
 ]
 provides-extras = ["dev"]

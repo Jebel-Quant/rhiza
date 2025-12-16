@@ -27,7 +27,8 @@ classifiers = [
 
 dependencies = [
     "loguru>=0.7.3",
-    "typer>=0.20.0"
+    "typer>=0.20.0",
+    "PyYAML==6.0.3"
 ]
 
 [project.urls]
