@@ -196,8 +196,9 @@ git clone \
   >/dev/null
 
 cd "$TMP_DIR"
-git sparse-checkout init --cone
-git sparse-checkout set $INCLUDE_PATHS
+git sparse-checkout init
+git sparse-checkout set --no-cone "${INCLUDE_PATHS[@]}"
+
 
 # ------------------------------------------------------------------------------
 # Copy files into target repo
