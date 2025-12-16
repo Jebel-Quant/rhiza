@@ -49,11 +49,5 @@ packages = ["src/rhiza"]
 # see https://deptry.com/usage/#pep-621-dev-dependency-groups
 pep621_dev_dependency_groups = ["dev"]
 
-[tool.deptry.package_module_name_map]
-PyYAML = "yaml"
-
 [tool.marimo.runtime]
 pythonpath = ["src"]
-
-[project.scripts]
-rhiza = "rhiza.__main__:app"
