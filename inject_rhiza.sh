@@ -136,34 +136,65 @@ fi
 
 # Check for uncommitted changes
 cd "$TARGET_DIR"
-if ! git diff-index --quiet HEAD -- 2>/dev/null; then
-  printf "%b[WARN] Target repository has uncommitted changes%b\n" "$YELLOW" "$RESET"
-  printf "It's recommended to commit or stash changes before injection.\n"
-  printf "Continue anyway? [y/N] "
-  read -r answer
-  case "$answer" in
-    [Yy]*)
-      printf "%b[INFO] Continuing with uncommitted changes...%b\n" "$YELLOW" "$RESET"
-      ;;
-    *)
-      printf "%b[INFO] Aborting injection%b\n" "$BLUE" "$RESET"
-      exit 0
-      ;;
-  esac
+# Check if there are any commits first (HEAD exists)
+if git rev-parse HEAD >/dev/null 2>&1; then
+  if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+    printf "%b[WARN] Target repository has uncommitted changes%b\n" "$YELLOW" "$RESET"
+    printf "It's recommended to commit or stash changes before injection.\n"
+    printf "Continue anyway? [y/N] "
+    read -r answer
+    case "$answer" in
+      [Yy]*)
+        printf "%b[INFO] Continuing with uncommitted changes...%b\n" "$YELLOW" "$RESET"
+        ;;
+      *)
+        printf "%b[INFO] Aborting injection%b\n" "$BLUE" "$RESET"
+        exit 0
+        ;;
+    esac
+  fi
 fi
 
-# Create temporary directory for rhiza clone
-TEMP_DIR="/tmp/rhiza-inject-$$"
+# Create temporary directory for sparse clone
+TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT INT TERM
 
-printf "\n%b[INFO] Cloning rhiza repository...%b\n" "$BLUE" "$RESET"
-mkdir -p "$TEMP_DIR"
+printf "\n%b[INFO] Fetching required files from rhiza (sparse clone)...%b\n" "$BLUE" "$RESET"
 RHIZA_URL="https://github.com/${RHIZA_REPO}.git"
 
-if ! git clone --depth 1 --branch "$RHIZA_BRANCH" "$RHIZA_URL" "$TEMP_DIR/rhiza" >/dev/null 2>&1; then
-  printf "%b[ERROR] Failed to clone rhiza repository from %s%b\n" "$RED" "$RHIZA_URL" "$RESET"
+# Initialize sparse checkout
+cd "$TEMP_DIR"
+if ! git init >/dev/null 2>&1; then
+  printf "%b[ERROR] Failed to initialize git repository%b\n" "$RED" "$RESET"
   exit 1
 fi
+
+# Configure sparse checkout
+git config core.sparseCheckout true
+
+# Specify which files to fetch
+cat > .git/info/sparse-checkout <<EOF
+.github/scripts/sync.sh
+.github/template.yml
+EOF
+
+# Add remote and fetch only specified files
+if ! git remote add origin "$RHIZA_URL" >/dev/null 2>&1; then
+  printf "%b[ERROR] Failed to add remote%b\n" "$RED" "$RESET"
+  exit 1
+fi
+
+if ! git fetch --depth 1 origin "$RHIZA_BRANCH" >/dev/null 2>&1; then
+  printf "%b[ERROR] Failed to fetch from rhiza repository%b\n" "$RED" "$RESET"
+  exit 1
+fi
+
+if ! git checkout "$RHIZA_BRANCH" >/dev/null 2>&1; then
+  printf "%b[ERROR] Failed to checkout branch%b\n" "$RED" "$RESET"
+  exit 1
+fi
+
+cd "$TARGET_DIR"
 
 # Create required directories
 printf "%b[INFO] Creating required directories...%b\n" "$BLUE" "$RESET"
@@ -172,17 +203,19 @@ mkdir -p "$TARGET_DIR/.github/scripts"
 
 # Copy sync.sh script
 printf "%b[INFO] Copying sync.sh script...%b\n" "$BLUE" "$RESET"
-if [ ! -f "$TEMP_DIR/rhiza/.github/scripts/sync.sh" ]; then
+if [ ! -f "$TEMP_DIR/.github/scripts/sync.sh" ]; then
   printf "%b[ERROR] sync.sh not found in rhiza repository%b\n" "$RED" "$RESET"
   exit 1
 fi
 
-cp "$TEMP_DIR/rhiza/.github/scripts/sync.sh" "$TARGET_DIR/.github/scripts/sync.sh"
+cp "$TEMP_DIR/.github/scripts/sync.sh" "$TARGET_DIR/.github/scripts/sync.sh"
 chmod +x "$TARGET_DIR/.github/scripts/sync.sh"
 printf "  %b[COPY]%b .github/scripts/sync.sh\n" "$GREEN" "$RESET"
 
 # Create or update template.yml
 TEMPLATE_FILE="$TARGET_DIR/.github/template.yml"
+TEMPLATE_CREATED="false"
+
 if [ -f "$TEMPLATE_FILE" ]; then
   printf "%b[WARN] template.yml already exists, skipping creation%b\n" "$YELLOW" "$RESET"
   printf "  Existing file: %s\n" "$TEMPLATE_FILE"
@@ -190,8 +223,9 @@ else
   printf "%b[INFO] Creating default template.yml...%b\n" "$BLUE" "$RESET"
   
   # Check if rhiza has a template.yml to use as base
-  if [ -f "$TEMP_DIR/rhiza/.github/template.yml" ]; then
-    cp "$TEMP_DIR/rhiza/.github/template.yml" "$TEMPLATE_FILE"
+  if [ -f "$TEMP_DIR/.github/template.yml" ]; then
+    cp "$TEMP_DIR/.github/template.yml" "$TEMPLATE_FILE"
+    printf "  %b[COPY]%b .github/template.yml (from rhiza)\n" "$GREEN" "$RESET"
   else
     # Create a sensible default template.yml
     cat > "$TEMPLATE_FILE" <<'EOF'
@@ -212,15 +246,16 @@ include: |
 exclude: |
   .github/template.yml
 EOF
+    printf "  %b[CREATE]%b .github/template.yml (default)\n" "$GREEN" "$RESET"
   fi
-  printf "  %b[CREATE]%b .github/template.yml\n" "$GREEN" "$RESET"
+  TEMPLATE_CREATED="true"
 fi
 
 # Summary
 printf "\n%b[SUCCESS] Rhiza injection complete!%b\n" "$GREEN" "$RESET"
 printf "\nFiles created/updated:\n"
 printf "  ✓ .github/scripts/sync.sh\n"
-if [ ! -f "$TARGET_DIR/.github/template.yml" ] || [ ! -s "$TARGET_DIR/.github/template.yml" ]; then
+if [ "$TEMPLATE_CREATED" = "true" ]; then
   printf "  ✓ .github/template.yml (created)\n"
 else
   printf "  - .github/template.yml (already exists)\n"
