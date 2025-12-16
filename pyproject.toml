@@ -25,10 +25,16 @@ classifiers = [
     "Topic :: Software Development :: Build Tools",
 ]
 
+dependencies = [
+    "loguru>=0.7.3",
+    "typer-cli>=0.20.0"
+]
+
 [project.urls]
 Homepage = "https://github.com/jebel-quant/rhiza"
 Repository = "https://github.com/jebel-quant/rhiza"
 Issues = "https://github.com/jebel-quant/rhiza/issues"
+
 
 [project.optional-dependencies]
 dev = [
@@ -53,3 +59,4 @@ pythonpath = ["src"]
 
 [project.scripts]
 hello = "rhiza.hello:main"
+inject = "rhiza.cli:inject"
