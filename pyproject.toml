@@ -59,4 +59,4 @@ pythonpath = ["src"]
 
 [project.scripts]
 hello = "rhiza.hello:main"
-inject = "rhiza.cli:inject"
+inject = "rhiza.cli:app"

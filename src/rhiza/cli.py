@@ -17,17 +17,24 @@ from loguru import logger
 
 app = typer.Typer(help="Materialize rhiza configuration templates into a git repository")
 
-
 @app.command()
 def inject(
-    target: Path = typer.Argument(..., exists=True, file_okay=False, help="Target git repository"),
+    target: Path = typer.Argument(
+        default=Path("."),  # default to current directory
+        exists=True,
+        file_okay=False,
+        dir_okay=True,
+        help="Target git repository (defaults to current directory)",
+    ),
     branch: str = typer.Option("main", "--branch", "-b", help="Rhiza branch to use"),
     force: bool = typer.Option(False, "--force", "-y", help="Overwrite existing files"),
 ):
     """Materialize rhiza templates into TARGET repository."""
-    # -----------------------
-    # Validate target
-    # -----------------------
+
+    # Convert to absolute path to avoid surprises
+    target = target.resolve()
+
+    # Validate target is a git repository
     if not (target / ".git").is_dir():
         logger.error(f"Target directory is not a git repository: {target}")
         raise typer.Exit(code=1)
@@ -48,11 +55,11 @@ def inject(
             "template-branch": branch,
             "include": [
                 ".github",
-                ".editorconfig",
-                ".gitignore",
-                ".pre-commit-config.yaml",
-                "Makefile",
-                "pytest.ini"
+                "/.editorconfig",
+                "/.gitignore",
+                "/.pre-commit-config.yaml",
+                "/Makefile",
+                "/pytest.ini"
             ]
         }
         with open(template_file, "w") as f:
@@ -96,8 +103,8 @@ def inject(
             str(tmp_dir)
         ], check=True, stdout=subprocess.DEVNULL)
 
-        subprocess.run(["git", "sparse-checkout", "init", "--cone"], cwd=tmp_dir, check=True)
-        subprocess.run(["git", "sparse-checkout", "set", *include_paths], cwd=tmp_dir, check=True)
+        subprocess.run(["git", "sparse-checkout", "init"], cwd=tmp_dir, check=True)
+        subprocess.run(["git", "sparse-checkout", "set", "--skip-checks", *include_paths], cwd=tmp_dir, check=True)
 
         # -----------------------
         # Copy files into target
@@ -150,4 +157,6 @@ Re-run this script to update templates explicitly.
 # Entry point
 # -----------------------
 if __name__ == "__main__":
+    import sys
     app()
+
