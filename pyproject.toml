@@ -14,7 +14,6 @@ authors = [
 ]
 keywords = ["templates", "configuration", "taskfile", "ci", "ruff"]
 classifiers = [
-    "Private :: Do Not Upload",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.11",
