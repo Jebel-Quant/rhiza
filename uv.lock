@@ -775,7 +775,7 @@ version = "0.0.3"
 source = { editable = "." }
 dependencies = [
     { name = "loguru" },
-    { name = "typer-cli" },
+    { name = "typer" },
 ]
 
 [package.optional-dependencies]
@@ -797,7 +797,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = "==9.0.2" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-html", marker = "extra == 'dev'", specifier = ">=4.1.1" },
-    { name = "typer-cli", specifier = ">=0.20.0" },
+    { name = "typer", specifier = ">=0.20.0" },
 ]
 provides-extras = ["dev"]
 
@@ -907,18 +907,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/8f/28/7c85c8032b91dbe79725b6f17d2fffc595dff06a35c7a30a37bef73a1ab4/typer-0.20.0.tar.gz", hash = "sha256:1aaf6494031793e4876fb0bacfa6a912b551cf43c1e63c800df8b1a866720c37", size = 106492, upload-time = "2025-10-20T17:03:49.445Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/78/64/7713ffe4b5983314e9d436a90d5bd4f63b6054e2aca783a3cfc44cb95bbf/typer-0.20.0-py3-none-any.whl", hash = "sha256:5b463df6793ec1dca6213a3cf4c0f03bc6e322ac5e16e13ddd622a889489784a", size = 47028, upload-time = "2025-10-20T17:03:47.617Z" },
-]
-
-[[package]]
-name = "typer-cli"
-version = "0.20.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "typer" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/31/8d/093a38a48769665fee025215a7a951f574a81507236948230dee6d0664c6/typer_cli-0.20.0.tar.gz", hash = "sha256:af928da59aed5770f50e4c0f135f70ebf798d5bd00586d86d4c3015a5718a021", size = 4326, upload-time = "2025-10-20T17:03:45.101Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/87/55/7941a2b853160b169a4ff8a134c50d2cdc2e58b4836cb48e53813f2dcb97/typer_cli-0.20.0-py3-none-any.whl", hash = "sha256:f51a241ffa1b7da858c1b73fd318186808f4a43423d01edd2d9181fe2d8ef98a", size = 3100, upload-time = "2025-10-20T17:03:43.582Z" },
 ]
 
 [[package]]
