@@ -1,14 +1,22 @@
-# rhiza/tools/inject_rhiza.py
-from pathlib import Path
+"""Command-line helpers for working with Rhiza templates.
+
+This module currently exposes a thin wrapper that shells out to the
+`tools/inject_rhiza.sh` script. It exists so the functionality can be
+invoked via a Python entry point while delegating the heavy lifting to
+the maintained shell script.
+"""
+
 import shutil
-import sys
-import tempfile
 import subprocess
-import yaml
+import tempfile
+from pathlib import Path
+
 import typer
+import yaml
 from loguru import logger
 
 app = typer.Typer(help="Materialize rhiza configuration templates into a git repository")
+
 
 @app.command()
 def inject(
