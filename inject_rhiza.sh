@@ -2,23 +2,19 @@
 # inject_rhiza.sh - Inject rhiza configuration templates into a repository
 #
 # This script automates the process of integrating rhiza templates into
-# an existing Python project. It sets up the sync mechanism and optionally
-# performs an initial sync.
+# an existing Python project. It sets up the sync mechanism and performs
+# an initial sync.
 #
 # Usage:
 #   ./inject_rhiza.sh [OPTIONS] <target-directory>
 #
 # Options:
 #   -h, --help           Show this help message
-#   --no-sync            Skip the initial sync after setup
 #   --branch BRANCH      Specify rhiza branch to use (default: main)
 #
 # Example:
 #   # Inject rhiza into a project at /path/to/project
 #   ./inject_rhiza.sh /path/to/project
-#
-#   # Inject without running initial sync
-#   ./inject_rhiza.sh --no-sync /path/to/project
 
 set -e
 
@@ -30,7 +26,6 @@ RESET="\033[0m"
 
 RHIZA_REPO="jebel-quant/rhiza"
 RHIZA_BRANCH="main"
-DO_SYNC="true"
 TARGET_DIR=""
 
 show_usage() {
@@ -44,15 +39,11 @@ Arguments:
 
 Options:
   -h, --help          Show this help message
-  --no-sync           Skip the initial sync after setup
   --branch BRANCH     Specify rhiza branch to use (default: main)
 
 Example:
   # Inject rhiza into a project at /path/to/project
   $0 /path/to/project
-
-  # Inject without running initial sync
-  $0 --no-sync /path/to/project
 
   # Use a specific branch of rhiza
   $0 --branch develop /path/to/project
@@ -62,7 +53,7 @@ What this script does:
   2. Creates required directories (.github/workflows, .github/scripts)
   3. Copies sync.sh script from rhiza
   4. Creates a default template.yml configuration
-  5. Optionally runs the initial sync
+  5. Runs the initial sync
 
 After running this script, you can:
   - Review changes with: git status
@@ -78,10 +69,6 @@ while [ $# -gt 0 ]; do
     -h|--help)
       show_usage
       exit 0
-      ;;
-    --no-sync)
-      DO_SYNC="false"
-      shift
       ;;
     --branch)
       if [ -z "$2" ]; then
@@ -255,20 +242,16 @@ else
   printf "  - .github/template.yml (already exists)\n"
 fi
 
-# Run initial sync if requested
-if [ "$DO_SYNC" = "true" ]; then
-  printf "\n%b[INFO] Running initial sync...%b\n" "$BLUE" "$RESET"
-  printf "This will download and apply templates from rhiza.\n"
-  
-  if ! "$TARGET_DIR/.github/scripts/sync.sh"; then
-    printf "%b[ERROR] Initial sync failed%b\n" "$RED" "$RESET"
-    exit 1
-  fi
-  
-  printf "\n%b[INFO] Initial sync complete!%b\n" "$GREEN" "$RESET"
-else
-  printf "\n%b[INFO] Skipping initial sync (--no-sync flag used)%b\n" "$YELLOW" "$RESET"
+# Run initial sync
+printf "\n%b[INFO] Running initial sync...%b\n" "$BLUE" "$RESET"
+printf "This will download and apply templates from rhiza.\n"
+
+if ! "$TARGET_DIR/.github/scripts/sync.sh"; then
+  printf "%b[ERROR] Initial sync failed%b\n" "$RED" "$RESET"
+  exit 1
 fi
+
+printf "\n%b[INFO] Initial sync complete!%b\n" "$GREEN" "$RESET"
 
 # Next steps
 printf "\n%b[NEXT STEPS]%b\n" "$BLUE" "$RESET"
@@ -277,18 +260,9 @@ printf "   cd %s\n" "$TARGET_DIR"
 printf "   git status\n"
 printf "   git diff\n\n"
 
-if [ "$DO_SYNC" = "false" ]; then
-  printf "2. Customize .github/template.yml to select which files to sync\n\n"
-  printf "3. Run the initial sync:\n"
-  printf "   ./.github/scripts/sync.sh\n\n"
-  printf "4. Review and commit the changes:\n"
-  printf "   git add .\n"
-  printf "   git commit -m 'chore: integrate rhiza templates'\n\n"
-else
-  printf "2. Commit the changes:\n"
-  printf "   git add .\n"
-  printf "   git commit -m 'chore: integrate rhiza templates'\n\n"
-fi
+printf "2. Commit the changes:\n"
+printf "   git add .\n"
+printf "   git commit -m 'chore: integrate rhiza templates'\n\n"
 
 printf "Next: (Optional) Set up automated sync workflow\n"
 printf "      See: https://github.com/jebel-quant/rhiza#method-2-automated-sync-continuous-updates\n\n"

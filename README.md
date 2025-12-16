@@ -260,15 +260,11 @@ This will:
 - ✅ Provide clear next steps for review and customization
 
 **Options:**
-- `--no-sync` - Skip the initial sync (just set up the mechanism)
 - `--branch <branch>` - Use a specific rhiza branch (default: main)
 - `--help` - Show detailed usage information
 
-**Example with options:**
+**Example with branch option:**
 ```bash
-# Set up without syncing (to customize template.yml first)
-/tmp/rhiza/inject_rhiza.sh --no-sync /path/to/your/project
-
 # Use a development branch
 /tmp/rhiza/inject_rhiza.sh --branch develop /path/to/your/project
 ```
