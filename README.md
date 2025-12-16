@@ -172,6 +172,28 @@ Hello, World!
 0.71
 ```
 
+## 🎨 Documentation Customization
+
+You can customize the look and feel of your documentation by providing your own templates.
+
+### API Documentation (pdoc)
+
+The `make docs` command checks for a directory at `book/pdoc-templates`. If found, it uses the templates within that directory to generate the API documentation.
+
+To customize the API docs:
+1. Create the directory: `mkdir -p book/pdoc-templates`
+2. Add your Jinja2 templates (e.g., `module.html.jinja2`) to this directory.
+
+See the [pdoc documentation](https://pdoc.dev/docs/pdoc.html#templates) for more details on templating.
+
+### Companion Book (minibook)
+
+The `make book` command checks for a template at `book/minibook-templates/custom.html.jinja2`. If found, it uses this template for the minibook generation.
+
+To customize the book:
+1. Create the directory: `mkdir -p book/minibook-templates`
+2. Create your custom template at `book/minibook-templates/custom.html.jinja2`.
+
 ## 📁 Available Templates
 
 This repository provides a curated set of reusable configuration templates, organised by purpose.
