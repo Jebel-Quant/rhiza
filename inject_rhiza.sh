@@ -51,14 +51,13 @@ Example:
 What this script does:
   1. Validates the target directory is a git repository
   2. Creates required directories (.github/workflows, .github/scripts)
-  3. Copies sync.sh script from rhiza
-  4. Creates a default template.yml configuration
-  5. Runs the initial sync
+  3. Creates a default template.yml configuration
+  4. Performs sparse clone of files from rhiza (as listed in template.yml)
+  5. Copies the fetched files to your repository
 
 After running this script, you can:
   - Review changes with: git status
-  - Customize .github/template.yml to select which files to sync
-  - Run manual sync with: ./.github/scripts/sync.sh
+  - Customize .github/template.yml if needed
   - Set up automated sync workflow (see rhiza documentation)
 EOF
 }
@@ -142,116 +141,108 @@ if git rev-parse HEAD >/dev/null 2>&1; then
   fi
 fi
 
-## Create temporary directory for sparse clone
-#TEMP_DIR=$(mktemp -d)
-#trap 'rm -rf "$TEMP_DIR"' EXIT INT TERM
-
-#printf "\n%b[INFO] Fetching required files from rhiza (sparse clone)...%b\n" "$BLUE" "$RESET"
-#RHIZA_URL="https://github.com/${RHIZA_REPO}.git"
-
-## Initialize sparse checkout
-#cd "$TEMP_DIR"
-#if ! git init >/dev/null 2>&1; then
-#  printf "%b[ERROR] Failed to initialize git repository%b\n" "$RED" "$RESET"
-#  exit 1
-#fi
-
-## Configure sparse checkout
-#git config core.sparseCheckout true
-
-## Specify which files to fetch
-#cat > .git/info/sparse-checkout <<EOF
-#.github/scripts/sync.sh
-#EOF
-
-## Add remote and fetch only specified files
-#if ! git remote add origin "$RHIZA_URL" >/dev/null 2>&1; then
-#  printf "%b[ERROR] Failed to add remote%b\n" "$RED" "$RESET"
-#  exit 1
-#fi
-
-#if ! git fetch --depth 1 origin "$RHIZA_BRANCH" >/dev/null 2>&1; then
-#  printf "%b[ERROR] Failed to fetch from rhiza repository%b\n" "$RED" "$RESET"
-#  exit 1
-#fi
-
-#if ! git checkout "$RHIZA_BRANCH" >/dev/null 2>&1; then
-#  printf "%b[ERROR] Failed to checkout branch%b\n" "$RED" "$RESET"
-#  exit 1
-#fi
-
-cd "$TARGET_DIR"
+# Create temporary directory for sparse clone
+TEMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TEMP_DIR"' EXIT INT TERM
 
 # Create required directories
-printf "%b[INFO] Creating required directories...%b\n" "$BLUE" "$RESET"
+printf "\n%b[INFO] Creating required directories...%b\n" "$BLUE" "$RESET"
 mkdir -p "$TARGET_DIR/.github/workflows"
 mkdir -p "$TARGET_DIR/.github/scripts"
 
-# Copy sync.sh script
-printf "%b[INFO] Copying sync.sh script...%b\n" "$BLUE" "$RESET"
-#if [ ! -f "$TEMP_DIR/.github/scripts/sync.sh" ]; then
-#  printf "%b[ERROR] sync.sh not found in rhiza repository%b\n" "$RED" "$RESET"
-#  exit 1
-#fi
-
-#cp "$TEMP_DIR/.github/scripts/sync.sh" "$TARGET_DIR/.github/scripts/sync.sh"
-#chmod +x "$TARGET_DIR/.github/scripts/sync.sh"
-#printf "  %b[COPY]%b .github/scripts/sync.sh\n" "$GREEN" "$RESET"
-
-# Create or update template.yml
+# Create template.yml first so we know what to clone
 TEMPLATE_FILE="$TARGET_DIR/.github/template.yml"
-#TEMPLATE_CREATED="false"
+TEMPLATE_CREATED="true"
 
-#if [ -f "$TEMPLATE_FILE" ]; then
-#  printf "%b[WARN] template.yml already exists, skipping creation%b\n" "$YELLOW" "$RESET"
-#  printf "  Existing file: %s\n" "$TEMPLATE_FILE"
-#else
 printf "%b[INFO] Creating default template.yml...%b\n" "$BLUE" "$RESET"
-  
-  # Create a sensible default template.yml
+
+# Create a sensible default template.yml
 cat > "$TEMPLATE_FILE" <<'EOF'
 template-repository: "jebel-quant/rhiza"
 template-branch: "main"
 include: |
   .github
-  #.devcontainer
   .editorconfig
   .gitignore
   .pre-commit-config.yaml
-  #CODE_OF_CONDUCT.md
-  #CONTRIBUTING.md
   Makefile
-  #docker
   pytest.ini
-  #ruff.toml
-#exclude: |
-#  .github/template.yml
 EOF
 
 printf "  %b[CREATE]%b .github/template.yml\n" "$GREEN" "$RESET"
-TEMPLATE_CREATED="true"
-#fi
 
-# Summary
-printf "\n%b[SUCCESS] Rhiza injection complete!%b\n" "$GREEN" "$RESET"
-printf "\nFiles created/updated:\n"
-printf "  ✓ .github/scripts/sync.sh\n"
-if [ "$TEMPLATE_CREATED" = "true" ]; then
-  printf "  ✓ .github/template.yml (created)\n"
-else
-  printf "  - .github/template.yml (already exists)\n"
-fi
+# Perform sparse clone of files listed in template.yml
+printf "\n%b[INFO] Fetching files from rhiza (sparse clone)...%b\n" "$BLUE" "$RESET"
+RHIZA_URL="https://github.com/${RHIZA_REPO}.git"
 
-# Run initial sync
-printf "\n%b[INFO] Running initial sync...%b\n" "$BLUE" "$RESET"
-printf "This will download and apply templates from rhiza.\n"
-
-if ! "$TARGET_DIR/.github/scripts/sync.sh"; then
-  printf "%b[ERROR] Initial sync failed%b\n" "$RED" "$RESET"
+# Initialize sparse checkout in temp directory
+cd "$TEMP_DIR"
+if ! git init >/dev/null 2>&1; then
+  printf "%b[ERROR] Failed to initialize git repository%b\n" "$RED" "$RESET"
   exit 1
 fi
 
-printf "\n%b[INFO] Initial sync complete!%b\n" "$GREEN" "$RESET"
+# Configure sparse checkout
+git config core.sparseCheckout true
+
+# Specify which files to fetch (from the include section of template.yml)
+cat > .git/info/sparse-checkout <<'SPARSE_EOF'
+.github
+.editorconfig
+.gitignore
+.pre-commit-config.yaml
+Makefile
+pytest.ini
+SPARSE_EOF
+
+# Add remote and fetch only specified files
+if ! git remote add origin "$RHIZA_URL" >/dev/null 2>&1; then
+  printf "%b[ERROR] Failed to add remote%b\n" "$RED" "$RESET"
+  exit 1
+fi
+
+if ! git fetch --depth 1 origin "$RHIZA_BRANCH" >/dev/null 2>&1; then
+  printf "%b[ERROR] Failed to fetch from rhiza repository%b\n" "$RED" "$RESET"
+  exit 1
+fi
+
+if ! git checkout "$RHIZA_BRANCH" >/dev/null 2>&1; then
+  printf "%b[ERROR] Failed to checkout branch%b\n" "$RED" "$RESET"
+  exit 1
+fi
+
+# Copy files from temp directory to target
+cd "$TARGET_DIR"
+printf "%b[INFO] Copying files to target repository...%b\n" "$BLUE" "$RESET"
+
+# Copy each file/directory from the sparse clone
+for item in .github .editorconfig .gitignore .pre-commit-config.yaml Makefile pytest.ini; do
+  if [ -e "$TEMP_DIR/$item" ]; then
+    if [ -d "$TEMP_DIR/$item" ]; then
+      # For directories, create destination and copy contents
+      mkdir -p "$TARGET_DIR/$item"
+      cp -R "$TEMP_DIR/$item"/. "$TARGET_DIR/$item"/
+      printf "  %b[SYNC]%b %s (directory)\n" "$GREEN" "$RESET" "$item"
+    else
+      # For files, copy directly
+      cp "$TEMP_DIR/$item" "$TARGET_DIR/$item"
+      printf "  %b[SYNC]%b %s\n" "$GREEN" "$RESET" "$item"
+    fi
+  else
+    printf "  %b[SKIP]%b %s (not found in rhiza)\n" "$YELLOW" "$RESET" "$item"
+  fi
+done
+
+# Summary
+printf "\n%b[SUCCESS] Rhiza injection complete!%b\n" "$GREEN" "$RESET"
+printf "\nFiles synced from rhiza:\n"
+printf "  ✓ .github/ (workflows and scripts)\n"
+printf "  ✓ .editorconfig\n"
+printf "  ✓ .gitignore\n"
+printf "  ✓ .pre-commit-config.yaml\n"
+printf "  ✓ Makefile\n"
+printf "  ✓ pytest.ini\n"
+printf "  ✓ .github/template.yml (created)\n"
 
 # Next steps
 printf "\n%b[NEXT STEPS]%b\n" "$BLUE" "$RESET"
