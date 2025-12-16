@@ -175,7 +175,6 @@ git config core.sparseCheckout true
 # Specify which files to fetch
 cat > .git/info/sparse-checkout <<EOF
 .github/scripts/sync.sh
-.github/template.yml
 EOF
 
 # Add remote and fetch only specified files
@@ -222,13 +221,8 @@ if [ -f "$TEMPLATE_FILE" ]; then
 else
   printf "%b[INFO] Creating default template.yml...%b\n" "$BLUE" "$RESET"
   
-  # Check if rhiza has a template.yml to use as base
-  if [ -f "$TEMP_DIR/.github/template.yml" ]; then
-    cp "$TEMP_DIR/.github/template.yml" "$TEMPLATE_FILE"
-    printf "  %b[COPY]%b .github/template.yml (from rhiza)\n" "$GREEN" "$RESET"
-  else
-    # Create a sensible default template.yml
-    cat > "$TEMPLATE_FILE" <<'EOF'
+  # Create a sensible default template.yml
+  cat > "$TEMPLATE_FILE" <<'EOF'
 template-repository: "jebel-quant/rhiza"
 template-branch: "main"
 include: |
@@ -246,8 +240,7 @@ include: |
 exclude: |
   .github/template.yml
 EOF
-    printf "  %b[CREATE]%b .github/template.yml (default)\n" "$GREEN" "$RESET"
-  fi
+  printf "  %b[CREATE]%b .github/template.yml\n" "$GREEN" "$RESET"
   TEMPLATE_CREATED="true"
 fi
 
