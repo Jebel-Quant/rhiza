@@ -288,13 +288,15 @@ if [ "$DO_SYNC" = "false" ]; then
   printf "3. Run the initial sync:\n"
   printf "   ./.github/scripts/sync.sh\n\n"
   printf "4. Review and commit the changes:\n"
+  printf "   git add .\n"
+  printf "   git commit -m 'chore: integrate rhiza templates'\n\n"
 else
   printf "2. Commit the changes:\n"
+  printf "   git add .\n"
+  printf "   git commit -m 'chore: integrate rhiza templates'\n\n"
 fi
-printf "   git add .\n"
-printf "   git commit -m 'chore: integrate rhiza templates'\n\n"
 
-printf "3. (Optional) Set up automated sync workflow\n"
-printf "   See: https://github.com/jebel-quant/rhiza#method-2-automated-sync-continuous-updates\n\n"
+printf "Next: (Optional) Set up automated sync workflow\n"
+printf "      See: https://github.com/jebel-quant/rhiza#method-2-automated-sync-continuous-updates\n\n"
 
 printf "%b[INFO] For more information, visit: https://github.com/jebel-quant/rhiza%b\n" "$BLUE" "$RESET"
