@@ -110,7 +110,7 @@ marimo: install ## fire up Marimo server
 	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
 	  printf " ${YELLOW}[WARN] Marimo folder '${MARIMO_FOLDER}' not found, skipping start${RESET}\n"; \
 	else \
-	  ${UV_BIN} run --with marimo marimo edit "${MARIMO_FOLDER}"; \
+	  ${UV_BIN} run --with marimo marimo edit --no-token --headless "${MARIMO_FOLDER}"; \
 	fi
 
 marimushka: install-uv ## export Marimo notebooks to HTML
