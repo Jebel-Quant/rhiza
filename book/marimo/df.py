@@ -10,7 +10,6 @@ or by running this file directly.
 # requires-python = ">=3.11"
 # dependencies = [
 #     "marimo",
-#     "pandas",
 #     "rhiza",
 # ]
 #
@@ -23,22 +22,10 @@ import marimo
 __generated_with = "0.17.7"
 app = marimo.App(width="medium")
 
-
 @app.cell
 def _():
-    from rhiza import add
-
-    return (add,)
-
-
-@app.cell
-def _():
-    import pandas as pd
-
-    data = {"A": [1, 2, 3], "B": [4, 5, 6]}
-    df = pd.DataFrame(data)
-    print("DataFrame:")
-    print(df)
+    from rhiza.hello import main
+    main()
     return
 
 
