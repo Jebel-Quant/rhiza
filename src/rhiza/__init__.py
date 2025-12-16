@@ -1,8 +1,5 @@
-"""Config package.
+"""Utility tools and command-line helpers for the Rhiza project.
 
-This package holds configuration-related templates and utilities. It exists to
-provide a namespace for possible future Python modules that accompany the
-configuration templates shipped in this repository.
+This package groups small, user-facing utilities that can be invoked from
+the command line or other automation scripts.
 """
-
-from .add import add as add  # noqa: F401
