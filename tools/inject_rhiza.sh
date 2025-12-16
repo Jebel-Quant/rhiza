@@ -143,8 +143,8 @@ include: |
   /Makefile
   /pytest.ini
 exclude: |
-  .github/workflows/docker.yml
-  .github/workflows/devcontainer.yml
+  /.github/workflows/docker.yml
+  /.github/workflows/devcontainer.yml
 EOF
 
   printf "  %b[CREATE]%b .github/template.yml\n" "$GREEN" "$RESET"
