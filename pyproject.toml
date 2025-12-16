@@ -52,4 +52,4 @@ pep621_dev_dependency_groups = ["dev"]
 pythonpath = ["src"]
 
 [project.scripts]
-hello = "rhiza.tools.hello:main"
+hello = "rhiza.hello:main"
