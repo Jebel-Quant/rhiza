@@ -37,6 +37,8 @@
                 // Linting and Formatting
                 "charliermarsh.ruff",
                 "tamasfe.even-better-toml",
+                // Build Tools
+                "ms-vscode.makefile-tools",
                 // AI Assistance
                 "github.copilot-chat",
                 "github.copilot"
