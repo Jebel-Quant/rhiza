@@ -124,7 +124,7 @@ def inject(target: Path, branch: str, force: bool):
         all_files = expand_paths(tmp_dir, include_paths)
 
         # Filter out excluded files
-        #excluded_set = {tmp_dir / e for e in excluded_paths}
+        # excluded_set = {tmp_dir / e for e in excluded_paths}
         excluded_files = expand_paths(tmp_dir, excluded_paths)
 
         files_to_copy = [f for f in all_files if f not in excluded_files]
