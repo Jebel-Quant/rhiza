@@ -12,14 +12,29 @@ import sys
 import tempfile
 from pathlib import Path
 
-# import typer
 import yaml
 from loguru import logger
 
-# app = typer.Typer(help="Materialize rhiza configuration templates into a git repository")
+
+def expand_paths(base_dir: Path, paths: list[str]) -> list[Path]:
+    """Expand files/directories relative to base_dir into a flat list of files.
+
+    Given a list of paths relative to ``base_dir``, return a flat list of all
+    individual files.
+    """
+    all_files = []
+    for p in paths:
+        full_path = base_dir / p
+        if full_path.is_file():
+            all_files.append(full_path)
+        elif full_path.is_dir():
+            all_files.extend([f for f in full_path.rglob("*") if f.is_file()])
+        else:
+            # Path does not exist — could log a warning
+            continue
+    return all_files
 
 
-# @app.command()
 def inject(target: Path, branch: str, force: bool):
     """Materialize rhiza templates into TARGET repository."""
     # Convert to absolute path to avoid surprises
@@ -46,11 +61,11 @@ def inject(target: Path, branch: str, force: bool):
             "template-branch": branch,
             "include": [
                 ".github",
-                "/.editorconfig",
-                "/.gitignore",
-                "/.pre-commit-config.yaml",
-                "/Makefile",
-                "/pytest.ini",
+                ".editorconfig",
+                ".gitignore",
+                ".pre-commit-config.yaml",
+                "Makefile",
+                "pytest.ini",
             ],
         }
         with open(template_file, "w") as f:
@@ -68,6 +83,7 @@ def inject(target: Path, branch: str, force: bool):
     rhiza_repo = config.get("template-repository")
     rhiza_branch = config.get("template-branch", branch)
     include_paths = config.get("include", [])
+    excluded_paths = config.get("exclude", [])
 
     if not include_paths:
         logger.error("No include paths found in template.yml")
@@ -104,34 +120,26 @@ def inject(target: Path, branch: str, force: bool):
         subprocess.run(["git", "sparse-checkout", "init"], cwd=tmp_dir, check=True)
         subprocess.run(["git", "sparse-checkout", "set", "--skip-checks", *include_paths], cwd=tmp_dir, check=True)
 
-        # -----------------------
-        # Copy files into target
-        # -----------------------
-        for path in include_paths:
-            src = tmp_dir / path
-            dst = target / path
+        # After sparse-checkout
+        all_files = expand_paths(tmp_dir, include_paths)
 
-            if not src.exists():
-                logger.warning(f"{path} not found in rhiza — skipping")
+        # Filter out excluded files
+        #excluded_set = {tmp_dir / e for e in excluded_paths}
+        excluded_files = expand_paths(tmp_dir, excluded_paths)
+
+        files_to_copy = [f for f in all_files if f not in excluded_files]
+        # print(files_to_copy)
+
+        # Copy loop
+        for src_file in files_to_copy:
+            dst_file = target / src_file.relative_to(tmp_dir)
+            if dst_file.exists() and not force:
+                logger.warning(f"{dst_file.relative_to(target)} already exists — use force=True to overwrite")
                 continue
 
-            if dst.exists() and not force:
-                logger.warning(f"{path} already exists — use --force to overwrite")
-                continue
-
-            if dst.exists():
-                if dst.is_dir():
-                    shutil.rmtree(dst)
-                else:
-                    dst.unlink()
-
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            if src.is_dir():
-                shutil.copytree(src, dst)
-            else:
-                shutil.copy2(src, dst)
-
-            logger.success(f"[ADD] {path}")
+            dst_file.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src_file, dst_file)
+            logger.success(f"[ADD] {dst_file.relative_to(target)}")
 
     finally:
         shutil.rmtree(tmp_dir)
@@ -150,11 +158,3 @@ Next steps:
 This is a one-shot snapshot.
 Re-run this script to update templates explicitly.
 """)
-
-
-# -----------------------
-# Entry point
-# -----------------------
-# if __name__ == "__main__":
-#    import sys
-#    app()

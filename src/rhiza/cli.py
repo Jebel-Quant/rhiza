@@ -21,7 +21,7 @@ def hello():
 
 
 @app.command()
-def inject(
+def materialize(
     target: Path = typer.Argument(
         default=Path("."),  # default to current directory
         exists=True,
