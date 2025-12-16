@@ -14,6 +14,14 @@ import subprocess
 
 import pytest
 
+MOCK_MAKE_SCRIPT = """#!/usr/bin/env python3
+import sys
+
+if len(sys.argv) > 1 and sys.argv[1] == "help":
+    print("Mock Makefile Help")
+    print("target: ## Description")
+"""
+
 MOCK_UVX_SCRIPT = """#!/usr/bin/env python3
 import sys
 import os
@@ -185,6 +193,11 @@ def git_repo(root, tmp_path, monkeypatch):
         f.write(MOCK_UVX_SCRIPT)
     uvx_path.chmod(0o755)
 
+    make_path = bin_dir / "make"
+    with open(make_path, "w") as f:
+        f.write(MOCK_MAKE_SCRIPT)
+    make_path.chmod(0o755)
+
     # Ensure our bin comes first on PATH so 'uv' resolves to mock
     monkeypatch.setenv("PATH", f"{bin_dir}:{os.environ.get('PATH', '')}")
 
@@ -195,10 +208,12 @@ def git_repo(root, tmp_path, monkeypatch):
     shutil.copy(root / ".github" / "scripts" / "release.sh", script_dir / "release.sh")
     shutil.copy(root / ".github" / "scripts" / "bump.sh", script_dir / "bump.sh")
     shutil.copy(root / ".github" / "scripts" / "marimushka.sh", script_dir / "marimushka.sh")
+    shutil.copy(root / ".github" / "scripts" / "update-readme-help.sh", script_dir / "update-readme-help.sh")
 
     (script_dir / "release.sh").chmod(0o755)
     (script_dir / "bump.sh").chmod(0o755)
     (script_dir / "marimushka.sh").chmod(0o755)
+    (script_dir / "update-readme-help.sh").chmod(0o755)
 
     # Commit and push initial state
     subprocess.run(["git", "config", "user.email", "test@example.com"], check=True)
