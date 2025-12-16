@@ -1,0 +1,9 @@
+include:
+- .github
+- /.editorconfig
+- /.gitignore
+- /.pre-commit-config.yaml
+- /Makefile
+- /pytest.ini
+template-branch: main
+template-repository: jebel-quant/rhiza
