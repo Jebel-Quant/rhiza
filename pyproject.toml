@@ -12,7 +12,7 @@ license = { text = "MIT" }
 authors = [
   { name = "Thomas Schmelzer" }
 ]
-keywords = ["templates", "configuration", "taskfile", "ci", "ruff"]
+keywords = ["templates", "configuration", "ci", "ruff"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
@@ -23,12 +23,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Build Tools",
-]
-
-dependencies = [
-    "loguru>=0.7.3",
-    "typer>=0.20.0",
-    "PyYAML==6.0.3"
 ]
 
 [project.urls]
@@ -55,11 +49,5 @@ packages = ["src/rhiza"]
 # see https://deptry.com/usage/#pep-621-dev-dependency-groups
 pep621_dev_dependency_groups = ["dev"]
 
-[tool.deptry.package_module_name_map]
-PyYAML = "yaml"
-
 [tool.marimo.runtime]
 pythonpath = ["src"]
-
-[project.scripts]
-rhiza = "rhiza.__main__:app"
