@@ -22,9 +22,11 @@ import marimo
 __generated_with = "0.17.7"
 app = marimo.App(width="medium")
 
+
 @app.cell
 def _():
     from rhiza.hello import main
+
     main()
     return
 
