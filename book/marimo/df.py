@@ -25,10 +25,10 @@ app = marimo.App(width="medium")
 
 @app.cell
 def _():
-    #from rhiza.commands.hello import hello
+    # from rhiza.commands.hello import hello
     def hello():
         return "Guten Tach"
-        
+
     hello()
     return
 
