@@ -155,43 +155,43 @@ if git rev-parse HEAD >/dev/null 2>&1; then
   fi
 fi
 
-# Create temporary directory for sparse clone
-TEMP_DIR=$(mktemp -d)
-trap 'rm -rf "$TEMP_DIR"' EXIT INT TERM
+## Create temporary directory for sparse clone
+#TEMP_DIR=$(mktemp -d)
+#trap 'rm -rf "$TEMP_DIR"' EXIT INT TERM
 
-printf "\n%b[INFO] Fetching required files from rhiza (sparse clone)...%b\n" "$BLUE" "$RESET"
-RHIZA_URL="https://github.com/${RHIZA_REPO}.git"
+#printf "\n%b[INFO] Fetching required files from rhiza (sparse clone)...%b\n" "$BLUE" "$RESET"
+#RHIZA_URL="https://github.com/${RHIZA_REPO}.git"
 
-# Initialize sparse checkout
-cd "$TEMP_DIR"
-if ! git init >/dev/null 2>&1; then
-  printf "%b[ERROR] Failed to initialize git repository%b\n" "$RED" "$RESET"
-  exit 1
-fi
+## Initialize sparse checkout
+#cd "$TEMP_DIR"
+#if ! git init >/dev/null 2>&1; then
+#  printf "%b[ERROR] Failed to initialize git repository%b\n" "$RED" "$RESET"
+#  exit 1
+#fi
 
-# Configure sparse checkout
-git config core.sparseCheckout true
+## Configure sparse checkout
+#git config core.sparseCheckout true
 
-# Specify which files to fetch
-cat > .git/info/sparse-checkout <<EOF
-.github/scripts/sync.sh
-EOF
+## Specify which files to fetch
+#cat > .git/info/sparse-checkout <<EOF
+#.github/scripts/sync.sh
+#EOF
 
-# Add remote and fetch only specified files
-if ! git remote add origin "$RHIZA_URL" >/dev/null 2>&1; then
-  printf "%b[ERROR] Failed to add remote%b\n" "$RED" "$RESET"
-  exit 1
-fi
+## Add remote and fetch only specified files
+#if ! git remote add origin "$RHIZA_URL" >/dev/null 2>&1; then
+#  printf "%b[ERROR] Failed to add remote%b\n" "$RED" "$RESET"
+#  exit 1
+#fi
 
-if ! git fetch --depth 1 origin "$RHIZA_BRANCH" >/dev/null 2>&1; then
-  printf "%b[ERROR] Failed to fetch from rhiza repository%b\n" "$RED" "$RESET"
-  exit 1
-fi
+#if ! git fetch --depth 1 origin "$RHIZA_BRANCH" >/dev/null 2>&1; then
+#  printf "%b[ERROR] Failed to fetch from rhiza repository%b\n" "$RED" "$RESET"
+#  exit 1
+#fi
 
-if ! git checkout "$RHIZA_BRANCH" >/dev/null 2>&1; then
-  printf "%b[ERROR] Failed to checkout branch%b\n" "$RED" "$RESET"
-  exit 1
-fi
+#if ! git checkout "$RHIZA_BRANCH" >/dev/null 2>&1; then
+#  printf "%b[ERROR] Failed to checkout branch%b\n" "$RED" "$RESET"
+#  exit 1
+#fi
 
 cd "$TARGET_DIR"
 
@@ -202,47 +202,48 @@ mkdir -p "$TARGET_DIR/.github/scripts"
 
 # Copy sync.sh script
 printf "%b[INFO] Copying sync.sh script...%b\n" "$BLUE" "$RESET"
-if [ ! -f "$TEMP_DIR/.github/scripts/sync.sh" ]; then
-  printf "%b[ERROR] sync.sh not found in rhiza repository%b\n" "$RED" "$RESET"
-  exit 1
-fi
+#if [ ! -f "$TEMP_DIR/.github/scripts/sync.sh" ]; then
+#  printf "%b[ERROR] sync.sh not found in rhiza repository%b\n" "$RED" "$RESET"
+#  exit 1
+#fi
 
-cp "$TEMP_DIR/.github/scripts/sync.sh" "$TARGET_DIR/.github/scripts/sync.sh"
-chmod +x "$TARGET_DIR/.github/scripts/sync.sh"
-printf "  %b[COPY]%b .github/scripts/sync.sh\n" "$GREEN" "$RESET"
+#cp "$TEMP_DIR/.github/scripts/sync.sh" "$TARGET_DIR/.github/scripts/sync.sh"
+#chmod +x "$TARGET_DIR/.github/scripts/sync.sh"
+#printf "  %b[COPY]%b .github/scripts/sync.sh\n" "$GREEN" "$RESET"
 
 # Create or update template.yml
 TEMPLATE_FILE="$TARGET_DIR/.github/template.yml"
-TEMPLATE_CREATED="false"
+#TEMPLATE_CREATED="false"
 
-if [ -f "$TEMPLATE_FILE" ]; then
-  printf "%b[WARN] template.yml already exists, skipping creation%b\n" "$YELLOW" "$RESET"
-  printf "  Existing file: %s\n" "$TEMPLATE_FILE"
-else
-  printf "%b[INFO] Creating default template.yml...%b\n" "$BLUE" "$RESET"
+#if [ -f "$TEMPLATE_FILE" ]; then
+#  printf "%b[WARN] template.yml already exists, skipping creation%b\n" "$YELLOW" "$RESET"
+#  printf "  Existing file: %s\n" "$TEMPLATE_FILE"
+#else
+printf "%b[INFO] Creating default template.yml...%b\n" "$BLUE" "$RESET"
   
   # Create a sensible default template.yml
-  cat > "$TEMPLATE_FILE" <<'EOF'
+cat > "$TEMPLATE_FILE" <<'EOF'
 template-repository: "jebel-quant/rhiza"
 template-branch: "main"
 include: |
   .github
-  .devcontainer
+  #.devcontainer
   .editorconfig
   .gitignore
   .pre-commit-config.yaml
-  CODE_OF_CONDUCT.md
-  CONTRIBUTING.md
+  #CODE_OF_CONDUCT.md
+  #CONTRIBUTING.md
   Makefile
-  docker
+  #docker
   pytest.ini
-  ruff.toml
-exclude: |
-  .github/template.yml
+  #ruff.toml
+#exclude: |
+#  .github/template.yml
 EOF
-  printf "  %b[CREATE]%b .github/template.yml\n" "$GREEN" "$RESET"
-  TEMPLATE_CREATED="true"
-fi
+
+printf "  %b[CREATE]%b .github/template.yml\n" "$GREEN" "$RESET"
+TEMPLATE_CREATED="true"
+#fi
 
 # Summary
 printf "\n%b[SUCCESS] Rhiza injection complete!%b\n" "$GREEN" "$RESET"
