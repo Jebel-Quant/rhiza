@@ -237,6 +237,42 @@ Before integrating Rhiza into your existing project:
 - **Backup** - Consider committing any uncommitted changes before integration
 - **Review** - Review the [Available Templates](#-available-templates) section to understand what could be added
 
+### Quick Start: Automated Injection
+
+The fastest way to integrate Rhiza is using the `inject_rhiza.sh` script:
+
+```bash
+# Clone rhiza
+cd /tmp
+git clone https://github.com/jebel-quant/rhiza.git
+
+# Navigate to your project
+cd /path/to/your/project
+
+# Run the injection script
+/tmp/rhiza/inject_rhiza.sh .
+```
+
+This will:
+- ✅ Set up the sync mechanism (`.github/scripts/sync.sh`)
+- ✅ Create a default template configuration (`.github/template.yml`)
+- ✅ Perform an initial sync of all templates
+- ✅ Provide clear next steps for review and customization
+
+**Options:**
+- `--no-sync` - Skip the initial sync (just set up the mechanism)
+- `--branch <branch>` - Use a specific rhiza branch (default: main)
+- `--help` - Show detailed usage information
+
+**Example with options:**
+```bash
+# Set up without syncing (to customize template.yml first)
+/tmp/rhiza/inject_rhiza.sh --no-sync /path/to/your/project
+
+# Use a development branch
+/tmp/rhiza/inject_rhiza.sh --branch develop /path/to/your/project
+```
+
 ### Method 1: Manual Integration (Selective Adoption)
 
 This approach is ideal if you want to cherry-pick specific templates or customize them before integration.
