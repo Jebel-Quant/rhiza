@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 # inject_rhiza.sh — Materialize rhiza configuration templates via sparse checkout
 #
-# This script performs a one-shot import of selected files from the rhiza
-# template repository into an existing git repository.
-#
-# No sync engine. No background coupling. Git-native snapshot semantics.
+# One-shot import of selected files from the rhiza template repository
+# into an existing git repository.
 #
 # Usage:
 #   ./inject_rhiza.sh [OPTIONS] <target-directory>
@@ -170,12 +168,20 @@ extract_include() {
 RHIZA_REPO="$(extract_value template-repository)"
 RHIZA_BRANCH="$(extract_value template-branch)"
 
-INCLUDE_PATHS="$(extract_include)"
+# POSIX-compatible array population (macOS bash 3.2)
+INCLUDE_PATHS=()
+while IFS= read -r line; do
+  [ -n "$line" ] && INCLUDE_PATHS+=("$line")
+done <<EOF
+$(extract_include)
+EOF
 
-[ -n "$INCLUDE_PATHS" ] || die "No include paths found in template.yml"
+[ ${#INCLUDE_PATHS[@]} -gt 0 ] || die "No include paths found in template.yml"
 
 info "Include paths:"
-printf "%s\n" "$INCLUDE_PATHS" | sed 's/^/  - /'
+for p in "${INCLUDE_PATHS[@]}"; do
+  printf "  - %s\n" "$p"
+done
 
 # ------------------------------------------------------------------------------
 # Sparse clone rhiza
@@ -196,9 +202,19 @@ git clone \
   >/dev/null
 
 cd "$TMP_DIR"
-git sparse-checkout init
-git sparse-checkout set --no-cone "${INCLUDE_PATHS[@]}"
 
+# ------------------------------------------------------------------------------
+# Compute correct sparse-checkout patterns (directories + files)
+# ------------------------------------------------------------------------------
+
+SPARSE_PATTERNS=()
+for path in "${INCLUDE_PATHS[@]}"; do
+  SPARSE_PATTERNS+=("$path")       # include file or dir itself
+  SPARSE_PATTERNS+=("$path/**")    # include all contents if dir
+done
+
+git sparse-checkout init --no-cone
+git sparse-checkout set "${SPARSE_PATTERNS[@]}"
 
 # ------------------------------------------------------------------------------
 # Copy files into target repo
@@ -206,7 +222,7 @@ git sparse-checkout set --no-cone "${INCLUDE_PATHS[@]}"
 
 cd "$TARGET_DIR"
 
-for path in $INCLUDE_PATHS; do
+for path in "${INCLUDE_PATHS[@]}"; do
   src="$TMP_DIR/$path"
   dst="$TARGET_DIR/$path"
 
