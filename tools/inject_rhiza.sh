@@ -137,11 +137,14 @@ template-repository: "$RHIZA_REPO"
 template-branch: "$RHIZA_BRANCH"
 include: |
   .github
-  .editorconfig
-  .gitignore
-  .pre-commit-config.yaml
-  Makefile
-  pytest.ini
+  /.editorconfig
+  /.gitignore
+  /.pre-commit-config.yaml
+  /Makefile
+  /pytest.ini
+exclude: |
+  .github/workflows/docker.yml
+  .github/workflows/devcontainer.yml
 EOF
 
   printf "  %b[CREATE]%b .github/template.yml\n" "$GREEN" "$RESET"
@@ -157,9 +160,10 @@ extract_value() {
   awk -F': ' "/^$1:/ {print \$2}" "$TEMPLATE_FILE" | tr -d '"'
 }
 
-extract_include() {
-  awk '
-    /^include:/ {flag=1; next}
+extract_block() {
+  local key="$1"
+  awk -v key="$key" '
+    $0 ~ "^"key":" {flag=1; next}
     flag && /^[^ ]/ {exit}
     flag {sub(/^  /,""); print}
   ' "$TEMPLATE_FILE"
@@ -168,18 +172,30 @@ extract_include() {
 RHIZA_REPO="$(extract_value template-repository)"
 RHIZA_BRANCH="$(extract_value template-branch)"
 
-# POSIX-compatible array population (macOS bash 3.2)
+# POSIX-compatible array population
 INCLUDE_PATHS=()
 while IFS= read -r line; do
   [ -n "$line" ] && INCLUDE_PATHS+=("$line")
 done <<EOF
-$(extract_include)
+$(extract_block include)
+EOF
+
+EXCLUDE_PATHS=()
+while IFS= read -r line; do
+  [ -n "$line" ] && EXCLUDE_PATHS+=("$line")
+done <<EOF
+$(extract_block exclude)
 EOF
 
 [ ${#INCLUDE_PATHS[@]} -gt 0 ] || die "No include paths found in template.yml"
 
 info "Include paths:"
 for p in "${INCLUDE_PATHS[@]}"; do
+  printf "  - %s\n" "$p"
+done
+
+info "Exclude paths:"
+for p in "${EXCLUDE_PATHS[@]}"; do
   printf "  - %s\n" "$p"
 done
 
@@ -209,8 +225,10 @@ cd "$TMP_DIR"
 
 SPARSE_PATTERNS=()
 for path in "${INCLUDE_PATHS[@]}"; do
-  SPARSE_PATTERNS+=("$path")       # include file or dir itself
-  SPARSE_PATTERNS+=("$path/**")    # include all contents if dir
+  SPARSE_PATTERNS+=("$path")
+  # Only add /** if path is a directory in the remote repo
+  # Best-effort: add it anyway, warnings are harmless if empty
+  SPARSE_PATTERNS+=("$path/**")
 done
 
 git sparse-checkout init --no-cone
@@ -223,10 +241,18 @@ git sparse-checkout set "${SPARSE_PATTERNS[@]}"
 cd "$TARGET_DIR"
 
 for path in "${INCLUDE_PATHS[@]}"; do
+  # Skip excluded paths
+  skip=false
+  for excl in "${EXCLUDE_PATHS[@]}"; do
+    [ "$path" = "$excl" ] && skip=true && break
+  done
+  $skip && continue
+
   src="$TMP_DIR/$path"
   dst="$TARGET_DIR/$path"
 
   if [ ! -e "$src" ]; then
+    [ -d "$dst" ] && continue  # suppress warning if dir exists
     warn "$path not found in rhiza — skipping"
     continue
   fi
