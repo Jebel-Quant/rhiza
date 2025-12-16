@@ -12,7 +12,7 @@ license = { text = "MIT" }
 authors = [
   { name = "Thomas Schmelzer" }
 ]
-keywords = ["templates", "configuration", "taskfile", "ci", "ruff"]
+keywords = ["templates", "configuration", "ci", "ruff"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
