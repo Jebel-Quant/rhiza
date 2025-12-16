@@ -25,12 +25,6 @@ classifiers = [
     "Topic :: Software Development :: Build Tools",
 ]
 
-dependencies = [
-    "loguru>=0.7.3",
-    "typer>=0.20.0",
-    "PyYAML==6.0.3"
-]
-
 [project.urls]
 Homepage = "https://github.com/jebel-quant/rhiza"
 Repository = "https://github.com/jebel-quant/rhiza"
