@@ -23,6 +23,8 @@ for modern Python projects.
 Save time and maintain consistency across your projects
 with these pre-configured templates.
 
+* **ῥίζα** - pronounced "ree-ZAH", and having the literal meaning "root"*
+
 ![Last Updated](https://img.shields.io/github/last-commit/jebel-quant/rhiza/main?label=Last%20updated&color=blue)
 
 </div>
