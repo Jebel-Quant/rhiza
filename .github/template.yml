@@ -1,0 +1,3 @@
+template-repository: jebel-quant/rhiza
+include:
+- .github
