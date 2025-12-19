@@ -25,7 +25,7 @@ with these pre-configured templates.
 
 ![Last Updated](https://img.shields.io/github/last-commit/jebel-quant/rhiza/main?label=Last%20updated&color=blue)
 
-In the original Greek, spelt **ῥίζα**, pronounced *"ree-ZAH"*, and having the literal meaning "<u>root</u>"
+In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the literal meaning <u>root</u>
 
 </div>
 
