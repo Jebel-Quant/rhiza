@@ -606,12 +606,16 @@ except PackageNotFoundError:
     import tomllib
     from pathlib import Path
 
+    __version__ = "unknown"
+    # Path from src/rhiza/__init__.py to pyproject.toml at repository root
     _pyproject_path = Path(__file__).parent.parent.parent / "pyproject.toml"
     if _pyproject_path.exists():
-        with open(_pyproject_path, "rb") as f:
-            _pyproject_data = tomllib.load(f)
-            __version__ = _pyproject_data.get("project", {}).get("version", "unknown")
-    else:
-        __version__ = "unknown"
+        try:
+            with open(_pyproject_path, "rb") as f:
+                _pyproject_data = tomllib.load(f)
+                __version__ = _pyproject_data.get("project", {}).get("version", "unknown")
+        except (OSError, tomllib.TOMLDecodeError):
+            # If we can't read or parse the file, fall back to "unknown"
+            pass
 
 __all__ = ["__version__"]
