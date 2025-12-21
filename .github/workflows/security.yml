@@ -2,6 +2,7 @@ name: SECURITY
 
 permissions:
   contents: read
+  security-events: read
 
 on:
   push:
