@@ -91,7 +91,8 @@ do_bump() {
     4)
       printf "Enter version: "
       read -r VERSION
-      # Strip 'v' prefix if present
+      # Strip 'v' prefix if present (e.g., "v1.2.3" becomes "1.2.3")
+      # This ensures consistency since uv expects semantic versions without 'v'
       VERSION=$(echo "$VERSION" | sed 's/^v//')
       ;;
     *)
@@ -101,6 +102,7 @@ do_bump() {
   esac
 
   # Get current branch
+  # Using git rev-parse to get the symbolic name of HEAD (current branch)
   CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
   if [ -z "$CURRENT_BRANCH" ]; then
     printf "%b[ERROR] Could not determine current branch%b\n" "$RED" "$RESET"
@@ -108,6 +110,8 @@ do_bump() {
   fi
 
   # Determine default branch
+  # Query remote to find the default branch (e.g., 'main' or 'master')
+  # This ensures we warn users if they're bumping version on a non-default branch
   DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
   if [ -z "$DEFAULT_BRANCH" ]; then
     printf "%b[ERROR] Could not determine default branch from remote%b\n" "$RED" "$RESET"
@@ -124,7 +128,9 @@ do_bump() {
   printf "%b[INFO] Current version: %s%b\n" "$BLUE" "$CURRENT_VERSION" "$RESET"
 
   # Determine the new version using uv version with --dry-run first
+  # Using --dry-run ensures we validate the version change before applying it
   if [ -n "$TYPE" ]; then
+    # For bump types (patch/minor/major), calculate what the new version will be
     printf "%b[INFO] Bumping version using: %s%b\n" "$BLUE" "$TYPE" "$RESET"
     NEW_VERSION=$("$UV_BIN" version --bump "$TYPE" --dry-run --short 2>/dev/null)
     if [ $? -ne 0 ] || [ -z "$NEW_VERSION" ]; then
@@ -132,7 +138,8 @@ do_bump() {
       exit 1
     fi
   else
-    # Validate the version format by having uv try it with --dry-run
+    # For explicit versions, validate the format using dry-run mode
+    # This catches invalid semver formats before we modify pyproject.toml
     if ! "$UV_BIN" version "$VERSION" --dry-run >/dev/null 2>&1; then
       printf "%b[ERROR] Invalid version format: %s%b\n" "$RED" "$VERSION" "$RESET"
       printf "uv rejected this version. Please use a valid semantic version.\n"
@@ -146,11 +153,15 @@ do_bump() {
   TAG="v$NEW_VERSION"
 
   # Check if tag already exists
+  # Prevent creating duplicate tags by checking both local and remote repositories
+  # git rev-parse succeeds if the tag exists locally
   if git rev-parse "$TAG" >/dev/null 2>&1; then
     printf "%b[ERROR] Tag '%s' already exists locally%b\n" "$RED" "$TAG" "$RESET"
     exit 1
   fi
 
+  # git ls-remote checks if the tag exists on the remote repository
+  # --exit-code returns 2 if the ref is not found, which we want
   if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
     printf "%b[ERROR] Tag '%s' already exists on remote%b\n" "$RED" "$TAG" "$RESET"
     exit 1
@@ -216,6 +227,7 @@ do_bump() {
 
     printf "%b[INFO] Committing version change...%b\n" "$BLUE" "$RESET"
     git add pyproject.toml
+    # Add uv.lock if it exists and was modified (uv may update it during version bump)
     git add uv.lock 2>/dev/null || true  # In case uv modifies the lock file
     git add CHANGELOG.md 2>/dev/null || true  # In case changelog was updated
     git commit -m "$COMMIT_MSG"
