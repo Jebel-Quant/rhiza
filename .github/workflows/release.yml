@@ -166,9 +166,9 @@ jobs:
 
       - name: Generate Release Changelog
         run: |
-          # Install git-cliff via uvx
+          # Install uv/uvx
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          export PATH="$HOME/.cargo/bin:$PATH"
+          export PATH="$HOME/.local/bin:$PATH"
           
           # Generate changelog for this release
           uvx git-cliff --config cliff.toml --tag ${{ needs.tag.outputs.tag }} --strip all > RELEASE_NOTES.md
@@ -393,4 +393,45 @@ jobs:
           body: |
             ${{ steps.devcontainer_link.outputs.message }}
             ${{ steps.pypi_link.outputs.message }}
+
+  update-changelog:
+    name: Update Changelog in Repository
+    runs-on: ubuntu-latest
+    needs: [tag, finalise-release]
+    if: needs.finalise-release.result == 'success'
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.repository.default_branch }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update CHANGELOG.md
+        run: |
+          # Install uv/uvx
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          
+          # Generate full changelog
+          uvx git-cliff --output CHANGELOG.md
+          
+          echo "Updated CHANGELOG.md:"
+          head -50 CHANGELOG.md
+
+      - name: Commit and Push Changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          if git diff --quiet CHANGELOG.md; then
+            echo "No changes to CHANGELOG.md"
+          else
+            git add CHANGELOG.md
+            git commit -m "docs: update CHANGELOG.md for release ${{ needs.tag.outputs.tag }}"
+            git push origin ${{ github.event.repository.default_branch }}
+            echo "CHANGELOG.md updated and pushed"
+          fi
 
