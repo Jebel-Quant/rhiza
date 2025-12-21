@@ -88,6 +88,9 @@ Development and Testing
 
 Documentation
   docs             create documentation with pdoc
+  presentation     generate presentation slides from PRESENTATION.md using Marp
+  presentation-pdf  generate PDF presentation from PRESENTATION.md using Marp
+  presentation-serve  serve presentation interactively with Marp
   book             compile the companion book
   fmt              check the pre-commit hooks and the linting
   all              Run everything
