@@ -17,7 +17,7 @@ RESET := \033[0m
 .DEFAULT_GOAL := help
 
 # Declare phony targets (they don't produce files)
-.PHONY: install-uv install clean test marimo marimushka book fmt deptry docs release release-dry-run post-release sync help all update-readme
+.PHONY: install-uv install clean test marimo marimushka book fmt deptry docs release release-dry-run post-release sync help all update-readme changelog changelog-full
 
 UV_INSTALL_DIR ?= ./bin
 UV_BIN := ${UV_INSTALL_DIR}/uv
@@ -183,6 +183,12 @@ bump: install-uv ## bump version
 
 release: install-uv ## create tag and push to remote with prompts
 	@UV_BIN="${UV_BIN}" /bin/sh "${SCRIPTS_FOLDER}/release.sh"
+
+changelog: install-uv ## generate/update changelog
+	@UVX_BIN="${UVX_BIN}" /bin/sh "${SCRIPTS_FOLDER}/changelog.sh"
+
+changelog-full: install-uv ## regenerate full changelog from history
+	@UVX_BIN="${UVX_BIN}" /bin/sh "${SCRIPTS_FOLDER}/changelog.sh" --mode full
 
 post-release: install-uv ## perform post-release tasks
 	@if [ -x "${CUSTOM_SCRIPTS_FOLDER}/post-release.sh" ]; then \

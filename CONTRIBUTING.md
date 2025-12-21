@@ -15,6 +15,19 @@ Before sending a pull request, make sure you do the following:
 and all tests pass.
 - [Write unit tests](#writing-unit-tests) for new functionality added.
 
+## Changelog
+
+This project maintains a [CHANGELOG.md](CHANGELOG.md) file to track all notable
+changes between releases. The changelog follows the
+[Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format.
+
+The changelog is automatically generated using [git-cliff](https://git-cliff.org/)
+based on conventional commit messages. When contributing:
+
+- Use conventional commit messages (e.g., `feat:`, `fix:`, `docs:`, etc.)
+- The changelog will be automatically updated during the release process
+- You can preview unreleased changes by running `make changelog`
+
 ## Building from source
 
 You'll need to build the project locally to start editing code.

@@ -159,12 +159,29 @@ jobs:
     needs: [tag, build]
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Generate Release Changelog
+        run: |
+          # Install git-cliff via uvx
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="$HOME/.cargo/bin:$PATH"
+          
+          # Generate changelog for this release
+          uvx git-cliff --config cliff.toml --tag ${{ needs.tag.outputs.tag }} --strip all > RELEASE_NOTES.md
+          
+          echo "Generated release notes:"
+          cat RELEASE_NOTES.md
+
       - name: Create GitHub Release with artifacts
         uses: softprops/action-gh-release@v2.5.0
         with:
           tag_name: ${{ needs.tag.outputs.tag }}
           name: ${{ needs.tag.outputs.tag }}
-          generate_release_notes: true
+          body_path: RELEASE_NOTES.md
           draft: true
 
   # Decide at step-level whether to publish

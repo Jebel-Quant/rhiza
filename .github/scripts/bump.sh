@@ -10,6 +10,7 @@
 set -e
 
 UV_BIN=${UV_BIN:-./bin/uv}
+UVX_BIN=${UVX_BIN:-./bin/uvx}
 
 BLUE="\033[36m"
 RED="\033[31m"
@@ -186,6 +187,20 @@ do_bump() {
 
   printf "%b[SUCCESS] 🚀 Version bumped: %s -> %s in pyproject.toml%b\n" "$GREEN" "$CURRENT_VERSION" "$NEW_VERSION" "$RESET"
 
+  # Ask if user wants to update changelog
+  if [ -f "cliff.toml" ] && [ -f "CHANGELOG.md" ]; then
+    if prompt_yes_no "Update CHANGELOG.md?"; then
+      printf "%b[INFO] Updating changelog for version %s...%b\n" "$BLUE" "$NEW_VERSION" "$RESET"
+      if [ -x "${UVX_BIN}" ]; then
+        "${UVX_BIN}" git-cliff --tag "v${NEW_VERSION}" --output CHANGELOG.md
+        printf "%b[SUCCESS] CHANGELOG.md updated%b\n" "$GREEN" "$RESET"
+      else
+        printf "%b[WARN] uvx not found, skipping changelog update%b\n" "$YELLOW" "$RESET"
+        printf "%b[INFO] Run 'make changelog' manually to update the changelog%b\n" "$BLUE" "$RESET"
+      fi
+    fi
+  fi
+
   # Handle commit if requested
   if [ -z "$DO_COMMIT" ]; then
     if prompt_yes_no "Commit changes?"; then
@@ -202,6 +217,7 @@ do_bump() {
     printf "%b[INFO] Committing version change...%b\n" "$BLUE" "$RESET"
     git add pyproject.toml
     git add uv.lock 2>/dev/null || true  # In case uv modifies the lock file
+    git add CHANGELOG.md 2>/dev/null || true  # In case changelog was updated
     git commit -m "$COMMIT_MSG"
 
     printf "%b[SUCCESS] Version committed with message: '%s'%b\n" "$GREEN" "$COMMIT_MSG" "$RESET"

@@ -95,6 +95,8 @@ Documentation
 Releasing and Versioning
   bump             bump version
   release          create tag and push to remote with prompts
+  changelog        generate/update changelog
+  changelog-full   regenerate full changelog from history
   post-release     perform post-release tasks
 
 Meta
@@ -109,6 +111,24 @@ The [Makefile](Makefile) provides organized targets for bootstrapping, developme
 > **Note:** The help output above is automatically generated from the Makefile.
 > When you modify Makefile targets or descriptions, run `make update-readme` to update this section,
 > or the pre-commit hook will update it automatically when you commit changes to the Makefile.
+
+## 📝 Changelog
+
+This project maintains a [CHANGELOG.md](CHANGELOG.md) file to track all notable changes between releases.
+The changelog follows the [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format and is automatically
+generated using [git-cliff](https://git-cliff.org/) based on conventional commit messages.
+
+To view or update the changelog:
+
+```bash
+# Generate changelog for unreleased changes
+make changelog
+
+# Regenerate full changelog from history
+make changelog-full
+```
+
+Changes are automatically added to the changelog during the release process.
 
 ## 📊 Marimo Notebooks
 
