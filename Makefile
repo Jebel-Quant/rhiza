@@ -222,7 +222,7 @@ presentation-serve: ## serve presentation interactively with Marp
 	fi
 	@printf "${BLUE}[INFO] Starting Marp server...${RESET}\n"
 	@printf "${GREEN}[INFO] Press Ctrl+C to stop the server${RESET}\n"
-	@marp -s PRESENTATION.md
+	@marp -s .
 
 book: test docs marimushka ## compile the companion book
 	@${UV_BIN} pip install marimo
