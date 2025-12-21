@@ -244,10 +244,16 @@ The repository uses itself for its own infrastructure, demonstrating confidence 
 **Impact**: Vulnerabilities in dependencies or scripts could go unnoticed.  
 **Recommendation**: 
 ```yaml
-# Add to .github/workflows/security.yml
-- uses: github/codeql-action/init@v3
-  with:
-    languages: python
+# Add to .github/workflows/security.yml (partial example)
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: python
+      - uses: github/codeql-action/analyze@v3
 ```
 
 ### 3. **Missing Dependency Management** (Priority: Medium)
@@ -311,25 +317,25 @@ We needed fast, reliable Python package management...
 ## Comparison to Industry Standards
 
 ### Excellent Practices Found:
-✅ MIT License (permissive, business-friendly)  
-✅ Code of Conduct (inclusive community)  
-✅ Contributing guidelines (clear process)  
-✅ CI/CD with multiple workflows  
-✅ Pre-commit hooks (catching issues early)  
-✅ Dev container support (consistent environments)  
-✅ Semantic versioning  
-✅ OIDC publishing (secure, no tokens)  
-✅ Multi-version testing  
+- [x] MIT License (permissive, business-friendly)  
+- [x] Code of Conduct (inclusive community)  
+- [x] Contributing guidelines (clear process)  
+- [x] CI/CD with multiple workflows  
+- [x] Pre-commit hooks (catching issues early)  
+- [x] Dev container support (consistent environments)  
+- [x] Semantic versioning  
+- [x] OIDC publishing (secure, no tokens)  
+- [x] Multi-version testing  
 
 ### Missing Best Practices:
-❌ Security scanning (CodeQL, Snyk)  
-❌ Dependency updates automation (Renovate/Dependabot)  
-❌ CHANGELOG.md  
-❌ Issue/PR templates  
-❌ GitHub Discussions enabled  
-❌ Project roadmap  
-❌ Architecture Decision Records  
-⚠️  Limited commit history  
+- [ ] Security scanning (CodeQL, Snyk)  
+- [ ] Dependency updates automation (Renovate/Dependabot)  
+- [ ] CHANGELOG.md  
+- [ ] Issue/PR templates  
+- [ ] GitHub Discussions enabled  
+- [ ] Project roadmap  
+- [ ] Architecture Decision Records  
+- [~] Limited commit history  
 
 ---
 
