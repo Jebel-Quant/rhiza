@@ -44,14 +44,29 @@ show_usage() {
 while [ $# -gt 0 ]; do
   case "$1" in
     -m|--mode)
+      if [ -z "$2" ] || [ "${2#-}" != "$2" ]; then
+        printf "%b[ERROR] --mode requires a value%b\n" "$RED" "$RESET"
+        show_usage
+        exit 1
+      fi
       MODE="$2"
       shift 2
       ;;
     -t|--tag)
+      if [ -z "$2" ] || [ "${2#-}" != "$2" ]; then
+        printf "%b[ERROR] --tag requires a value%b\n" "$RED" "$RESET"
+        show_usage
+        exit 1
+      fi
       TAG="$2"
       shift 2
       ;;
     -o|--output)
+      if [ -z "$2" ] || [ "${2#-}" != "$2" ]; then
+        printf "%b[ERROR] --output requires a value%b\n" "$RED" "$RESET"
+        show_usage
+        exit 1
+      fi
       OUTPUT="$2"
       shift 2
       ;;

@@ -8,10 +8,17 @@
 # 📋 Pipeline Phases:
 #   1. 🔍 Validate Tag - Check tag format and ensure release doesn't already exist
 #   2. 🏗️  Build - Build Python package with Hatch (if [build-system] is defined in pyproject.toml
-#   3. 📝 Draft Release - Create draft GitHub release with build artifacts
+#   3. 📝 Draft Release - Create draft GitHub release with changelog and build artifacts
 #   4. 🚀 Publish to PyPI - Publish package using OIDC or custom feed
 #   5. 🐳 Publish Devcontainer - Build and publish devcontainer image (conditional)
 #   6. ✅ Finalize Release - Publish the GitHub release with links
+#   7. 📋 Update Changelog - Commit updated CHANGELOG.md back to repository
+#
+# 📝 Changelog Generation:
+#   - Uses git-cliff to generate release notes from conventional commits
+#   - Release notes are added to the GitHub release
+#   - CHANGELOG.md in the repository is automatically updated after release
+#   - Requires cliff.toml configuration file in repository root
 #
 # 🐳 Devcontainer Publishing:
 #   - Only occurs when PUBLISH_DEVCONTAINER repository variable is set to "true"
@@ -36,6 +43,7 @@
 #
 # 📄 Requirements:
 #   - pyproject.toml with top-level version field (for Python packages)
+#   - cliff.toml configuration file (for changelog generation)
 #   - Package registered on PyPI as Trusted Publisher (for PyPI publishing)
 #   - PUBLISH_DEVCONTAINER variable set to "true" (for devcontainer publishing)
 #   - .devcontainer/devcontainer.json file (for devcontainer publishing)
