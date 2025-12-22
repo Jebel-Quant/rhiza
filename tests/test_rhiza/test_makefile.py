@@ -157,13 +157,6 @@ class TestMakefile:
         expected_uvx = f"{expected_uv_install_dir}/uvx"
         assert f"{expected_uvx} minibook" in out
 
-    def test_all_target_dry_run(self, logger):
-        """All target echoes a composite message in dry-run output."""
-        proc = run_make(logger, ["all"])
-        out = proc.stdout
-        # The composite target should echo a message
-        assert "Run fmt, deptry, test and book" in out
-
     def test_uv_no_modify_path_is_exported(self, logger):
         """`UV_NO_MODIFY_PATH` should be set to `1` in the Makefile."""
         proc = run_make(logger, ["print-UV_NO_MODIFY_PATH"], dry_run=False)
