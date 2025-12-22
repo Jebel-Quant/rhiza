@@ -14,6 +14,8 @@ per second, and renders an interactive Plotly bar chart of mean runtimes.
 
 # Python script: read JSON, create reduced table, and Plotly chart
 import json
+import logging
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -21,7 +23,17 @@ import plotly.express as px
 
 # Load pytest-benchmark JSON
 with open(Path(__file__).parent / "benchmarks.json") as f:
-    data = json.load(f)
+    # Do not continue if JSON is invalid (e.g. empty file)
+    try:
+        data = json.load(f)
+    except json.JSONDecodeError:
+        logging.warning("benchmarks.json is invalid or empty; skipping analysis and exiting successfully.")
+        sys.exit(0)
+
+# Validate structure: require a 'benchmarks' list
+if not isinstance(data, dict) or "benchmarks" not in data or not isinstance(data["benchmarks"], list):
+    logging.warning("benchmarks.json missing valid 'benchmarks' list; skipping analysis and exiting successfully.")
+    sys.exit(0)
 
 # Extract relevant info: Benchmark name, Mean (ms), OPS
 benchmarks = []
@@ -63,3 +75,6 @@ fig.update_layout(
 )
 
 fig.show()
+
+# plotly fig to html
+fig.write_html(Path(__file__).parent / "benchmarks.html")
