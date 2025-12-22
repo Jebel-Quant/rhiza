@@ -177,6 +177,8 @@ presentation: ## generate presentation slides from PRESENTATION.md using Marp
 	    exit 1; \
 	  fi; \
 	fi
+	@printf "${BLUE}[INFO] Cleaning up build artifacts...${RESET}\n"
+	@rm -rf _tests _book
 	@printf "${BLUE}[INFO] Generating HTML presentation...${RESET}\n"
 	@marp PRESENTATION.md -o presentation.html
 	@printf "${GREEN}[SUCCESS] Presentation generated: presentation.html${RESET}\n"
@@ -199,6 +201,8 @@ presentation-pdf: ## generate PDF presentation from PRESENTATION.md using Marp
 	    exit 1; \
 	  fi; \
 	fi
+	@printf "${BLUE}[INFO] Cleaning up build artifacts...${RESET}\n"
+	@rm -rf _tests _book
 	@printf "${BLUE}[INFO] Generating PDF presentation...${RESET}\n"
 	@marp PRESENTATION.md -o presentation.pdf --allow-local-files
 	@printf "${GREEN}[SUCCESS] Presentation generated: presentation.pdf${RESET}\n"
@@ -220,6 +224,8 @@ presentation-serve: ## serve presentation interactively with Marp
 	    exit 1; \
 	  fi; \
 	fi
+	@printf "${BLUE}[INFO] Cleaning up build artifacts to prevent Marp CSS warnings...${RESET}\n"
+	@rm -rf _tests _book
 	@printf "${BLUE}[INFO] Starting Marp server...${RESET}\n"
 	@printf "${GREEN}[INFO] Press Ctrl+C to stop the server${RESET}\n"
 	@marp -s .
