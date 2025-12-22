@@ -58,8 +58,6 @@ jobs:
       - name: Sync template
         id: sync
         shell: bash
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           set -euo pipefail
 
