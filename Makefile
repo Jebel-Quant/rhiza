@@ -22,7 +22,7 @@ RESET := \033[0m
 -include presentation/Makefile.presentation
 
 # Declare phony targets (they don't produce files)
-.PHONY: install-uv install clean test marimo marimushka book fmt deptry docs presentation presentation-pdf presentation-serve release release-dry-run post-release sync help all update-readme
+.PHONY: install-uv install clean marimo fmt deptry release release-dry-run post-release sync help all update-readme
 
 UV_INSTALL_DIR ?= ./bin
 UV_BIN := ${UV_INSTALL_DIR}/uv

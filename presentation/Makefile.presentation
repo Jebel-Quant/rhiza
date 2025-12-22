@@ -1,6 +1,9 @@
 ## Makefile.presentation - Presentation targets
 # This file is included by the main Makefile
 
+# Declare phony targets (they don't produce files)
+.PHONY: presentation presentation-pdf presentation-serve
+
 ##@ Presentation
 presentation: ## generate presentation slides from PRESENTATION.md using Marp
 	@printf "${BLUE}[INFO] Checking for Marp CLI...${RESET}\n"
