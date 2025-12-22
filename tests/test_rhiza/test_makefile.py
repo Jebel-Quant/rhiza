@@ -40,7 +40,6 @@ def expected_uv_install_dir() -> str:
     return os.environ.get("UV_INSTALL_DIR", "./bin")
 
 
-
 @pytest.fixture(autouse=True)
 def setup_tmp_makefile(logger, root, tmp_path: Path):
     """Copy the Makefile and split Makefiles into a temp directory and chdir there.
