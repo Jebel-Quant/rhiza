@@ -16,6 +16,13 @@ RESET := \033[0m
 # Default goal when running `make` with no target
 .DEFAULT_GOAL := help
 
+# Include split Makefiles
+-include Makefile.install
+-include Makefile.release
+-include tests/Makefile.tests
+-include book/Makefile.book
+-include presentation/Makefile.presentation
+
 # Declare phony targets (they don't produce files)
 .PHONY: install-uv install clean test marimo marimushka book fmt deptry docs presentation presentation-pdf presentation-serve release release-dry-run post-release sync help all update-readme
 
@@ -36,90 +43,12 @@ DOCFORMAT :=
 export UV_NO_MODIFY_PATH := 1
 export UV_VENV_CLEAR := 1
 
-##@ Bootstrap
-install-uv: ## ensure uv/uvx is installed
-	# Ensure the ${UV_INSTALL_DIR} folder exists
-	@mkdir -p ${UV_INSTALL_DIR}
-
-	# Install uv/uvx only if they are not already present
-	@if [ -x "${UV_INSTALL_DIR}/uv" ] && [ -x "${UV_INSTALL_DIR}/uvx" ]; then \
-	  printf "${BLUE}[INFO] uv and uvx already installed in ${UV_INSTALL_DIR}, skipping.${RESET}\n"; \
-	else \
-	  printf "${BLUE}[INFO] Installing uv and uvx...${RESET}\n"; \
-	  if ! curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR="${UV_INSTALL_DIR}" sh >/dev/null 2>&1; then \
-	    printf "${RED}[ERROR] Failed to install uv${RESET}\n"; \
-	    exit 1; \
-	  fi; \
-	fi
-
-install-extras: ## run custom build script (if exists)
-	@if [ -x "${CUSTOM_SCRIPTS_FOLDER}/build-extras.sh" ]; then \
-		printf "${BLUE}[INFO] Running custom build script from customisations folder...${RESET}\n"; \
-		"${CUSTOM_SCRIPTS_FOLDER}"/build-extras.sh; \
-	elif [ -f "${CUSTOM_SCRIPTS_FOLDER}/build-extras.sh" ]; then \
-		printf "${BLUE}[INFO] Running custom build script from customisations folder...${RESET}\n"; \
-		/bin/sh "${CUSTOM_SCRIPTS_FOLDER}/build-extras.sh"; \
-	else \
-		printf "${BLUE}[INFO] No custom build script in ${CUSTOM_SCRIPTS_FOLDER}, skipping...${RESET}\n"; \
-	fi
-
-install: install-uv install-extras ## install
-	# Create the virtual environment only if it doesn't exist
-	@if [ ! -d ".venv" ]; then \
-	  ${UV_BIN} venv --python 3.12 || { printf "${RED}[ERROR] Failed to create virtual environment${RESET}\n"; exit 1; }; \
-	else \
-	  printf "${BLUE}[INFO] Using existing virtual environment at .venv, skipping creation${RESET}\n"; \
-	fi
-
-	# Check if there is requirements.txt file in the tests folder
-	@if [ -f "tests/requirements.txt" ]; then \
-	  ${UV_BIN} pip install -r tests/requirements.txt || { printf "${RED}[ERROR] Failed to install test requirements${RESET}\n"; exit 1; }; \
-	fi
-
-	# Install the dependencies from pyproject.toml (if it exists)
-	@if [ -f "pyproject.toml" ]; then \
-	  printf "${BLUE}[INFO] Installing dependencies${RESET}\n"; \
-	  ${UV_BIN} sync --all-extras --frozen || { printf "${RED}[ERROR] Failed to install dependencies${RESET}\n"; exit 1; }; \
-	else \
-	  printf "${YELLOW}[WARN] No pyproject.toml found, skipping install${RESET}\n"; \
-	fi
-
-
-clean: ## clean
-	@printf "${BLUE}Cleaning project...${RESET}\n"
-	# do not clean .env files
-	@git clean -d -X -f -e .env -e '.env.*'
-	@rm -rf dist build *.egg-info .coverage .pytest_cache
-	@printf "${BLUE}Removing local branches with no remote counterpart...${RESET}\n"
-	@git fetch --prune
-	@git branch -vv \
-	  | grep ': gone]' \
-	  | awk '{print $1}' \
-	  | xargs -r git branch -D 2>/dev/null || true
-
 ##@ Development and Testing
-test: install ## run all tests
-	@if [ -d ${SOURCE_FOLDER} ] && [ -d ${TESTS_FOLDER} ]; then \
-	  mkdir -p _tests/html-coverage _tests/html-report; \
-	  ${UV_BIN} pip install pytest pytest-cov pytest-html; \
-	  ${UV_BIN} run pytest ${TESTS_FOLDER} --cov=${SOURCE_FOLDER} --cov-report=term --cov-report=html:_tests/html-coverage --html=_tests/html-report/report.html; \
-	else \
-	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} or tests folder ${TESTS_FOLDER} not found, skipping tests${RESET}\n"; \
-	fi
-
 marimo: install ## fire up Marimo server
 	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
 	  printf " ${YELLOW}[WARN] Marimo folder '${MARIMO_FOLDER}' not found, skipping start${RESET}\n"; \
 	else \
 	  ${UV_BIN} run --with marimo marimo edit --no-token --headless "${MARIMO_FOLDER}"; \
-	fi
-
-marimushka: install-uv ## export Marimo notebooks to HTML
-	@printf "${BLUE}[INFO] Exporting notebooks from ${MARIMO_FOLDER}...${RESET}\n"
-	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
-	  printf "${YELLOW}[WARN] Directory '${MARIMO_FOLDER}' does not exist. Skipping marimushka.${RESET}\n"; \
-	else \
-	  MARIMO_FOLDER="${MARIMO_FOLDER}" UV_BIN="${UV_BIN}" UVX_BIN="${UVX_BIN}" /bin/sh "${SCRIPTS_FOLDER}/marimushka.sh"; \
 	fi
 
 deptry: install-uv ## run deptry if pyproject.toml exists
@@ -128,112 +57,6 @@ deptry: install-uv ## run deptry if pyproject.toml exists
 	else \
 	  printf "${YELLOW} No pyproject.toml found, skipping deptry${RESET}\n"; \
 	fi
-
-##@ Documentation
-docs: install ## create documentation with pdoc
-	@if [ -d "${SOURCE_FOLDER}" ]; then \
-	  PKGS=""; for d in "${SOURCE_FOLDER}"/*; do [ -d "$$d" ] && PKGS="$$PKGS $$(basename "$$d")"; done; \
-	  if [ -z "$$PKGS" ]; then \
-	    printf "${YELLOW}[WARN] No packages found under ${SOURCE_FOLDER}, skipping docs${RESET}\n"; \
-	  else \
-	    TEMPLATE_ARG=""; \
-	    if [ -d "${PDOC_TEMPLATE_DIR}" ]; then \
-	      TEMPLATE_ARG="-t ${PDOC_TEMPLATE_DIR}"; \
-	      printf "${BLUE}[INFO] Using pdoc templates from ${PDOC_TEMPLATE_DIR}${RESET}\n"; \
-	    fi; \
-	    DOCFORMAT="$(DOCFORMAT)"; \
-	    if [ -z "$$DOCFORMAT" ]; then \
-	      if [ -f "ruff.toml" ]; then \
-	        DOCFORMAT=$$(${UV_BIN} run python -c "import tomllib; print(tomllib.load(open('ruff.toml', 'rb')).get('lint', {}).get('pydocstyle', {}).get('convention', ''))"); \
-	      fi; \
-	      if [ -z "$$DOCFORMAT" ]; then \
-	        DOCFORMAT="google"; \
-	      fi; \
-	      printf "${BLUE}[INFO] Detected docformat: $$DOCFORMAT${RESET}\n"; \
-	    else \
-	      printf "${BLUE}[INFO] Using provided docformat: $$DOCFORMAT${RESET}\n"; \
-	    fi; \
-	    ${UV_BIN} pip install pdoc && \
-	    PYTHONPATH="${SOURCE_FOLDER}" ${UV_BIN} run pdoc --docformat $$DOCFORMAT --output-dir _pdoc $$TEMPLATE_ARG $$PKGS; \
-	  fi; \
-	else \
-	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping docs${RESET}\n"; \
-	fi
-
-presentation: ## generate presentation slides from PRESENTATION.md using Marp
-	@printf "${BLUE}[INFO] Checking for Marp CLI...${RESET}\n"
-	@if ! command -v marp >/dev/null 2>&1; then \
-	  if command -v npm >/dev/null 2>&1; then \
-	    printf "${YELLOW}[WARN] Marp CLI not found. Installing with npm...${RESET}\n"; \
-	    npm install -g @marp-team/marp-cli || { \
-	      printf "${RED}[ERROR] Failed to install Marp CLI. Please install manually:${RESET}\n"; \
-	      printf "${BLUE}  npm install -g @marp-team/marp-cli${RESET}\n"; \
-	      exit 1; \
-	    }; \
-	  else \
-	    printf "${RED}[ERROR] npm not found. Please install Node.js and npm first.${RESET}\n"; \
-	    printf "${BLUE}  See: https://nodejs.org/${RESET}\n"; \
-	    printf "${BLUE}  Then run: npm install -g @marp-team/marp-cli${RESET}\n"; \
-	    exit 1; \
-	  fi; \
-	fi
-	@printf "${BLUE}[INFO] Generating HTML presentation...${RESET}\n"
-	@marp PRESENTATION.md -o presentation.html
-	@printf "${GREEN}[SUCCESS] Presentation generated: presentation.html${RESET}\n"
-	@printf "${BLUE}[TIP] Open presentation.html in a browser to view slides${RESET}\n"
-
-presentation-pdf: ## generate PDF presentation from PRESENTATION.md using Marp
-	@printf "${BLUE}[INFO] Checking for Marp CLI...${RESET}\n"
-	@if ! command -v marp >/dev/null 2>&1; then \
-	  if command -v npm >/dev/null 2>&1; then \
-	    printf "${YELLOW}[WARN] Marp CLI not found. Installing with npm...${RESET}\n"; \
-	    npm install -g @marp-team/marp-cli || { \
-	      printf "${RED}[ERROR] Failed to install Marp CLI. Please install manually:${RESET}\n"; \
-	      printf "${BLUE}  npm install -g @marp-team/marp-cli${RESET}\n"; \
-	      exit 1; \
-	    }; \
-	  else \
-	    printf "${RED}[ERROR] npm not found. Please install Node.js and npm first.${RESET}\n"; \
-	    printf "${BLUE}  See: https://nodejs.org/${RESET}\n"; \
-	    printf "${BLUE}  Then run: npm install -g @marp-team/marp-cli${RESET}\n"; \
-	    exit 1; \
-	  fi; \
-	fi
-	@printf "${BLUE}[INFO] Generating PDF presentation...${RESET}\n"
-	@marp PRESENTATION.md -o presentation.pdf --allow-local-files
-	@printf "${GREEN}[SUCCESS] Presentation generated: presentation.pdf${RESET}\n"
-
-presentation-serve: ## serve presentation interactively with Marp
-	@printf "${BLUE}[INFO] Checking for Marp CLI...${RESET}\n"
-	@if ! command -v marp >/dev/null 2>&1; then \
-	  if command -v npm >/dev/null 2>&1; then \
-	    printf "${YELLOW}[WARN] Marp CLI not found. Installing with npm...${RESET}\n"; \
-	    npm install -g @marp-team/marp-cli || { \
-	      printf "${RED}[ERROR] Failed to install Marp CLI. Please install manually:${RESET}\n"; \
-	      printf "${BLUE}  npm install -g @marp-team/marp-cli${RESET}\n"; \
-	      exit 1; \
-	    }; \
-	  else \
-	    printf "${RED}[ERROR] npm not found. Please install Node.js and npm first.${RESET}\n"; \
-	    printf "${BLUE}  See: https://nodejs.org/${RESET}\n"; \
-	    printf "${BLUE}  Then run: npm install -g @marp-team/marp-cli${RESET}\n"; \
-	    exit 1; \
-	  fi; \
-	fi
-	@printf "${BLUE}[INFO] Starting Marp server...${RESET}\n"
-	@printf "${GREEN}[INFO] Press Ctrl+C to stop the server${RESET}\n"
-	@marp -s .
-
-book: test docs marimushka ## compile the companion book
-	@${UV_BIN} pip install marimo
-	@/bin/sh "${SCRIPTS_FOLDER}/book.sh"
-	@TEMPLATE_ARG=""; \
-	if [ -f "${BOOK_TEMPLATE}" ]; then \
-	  TEMPLATE_ARG="--template ${BOOK_TEMPLATE}"; \
-	  printf "${BLUE}[INFO] Using book template ${BOOK_TEMPLATE}${RESET}\n"; \
-	fi; \
-	${UVX_BIN} minibook --title "${BOOK_TITLE}" --subtitle "${BOOK_SUBTITLE}" $$TEMPLATE_ARG --links "$$(python3 -c 'import json,sys; print(json.dumps(json.load(open("_book/links.json"))))')" --output "_book"
-	@touch "_book/.nojekyll"
 
 fmt: install-uv ## check the pre-commit hooks and the linting
 	@${UVX_BIN} pre-commit run --all-files

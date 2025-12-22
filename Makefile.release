@@ -1,0 +1,20 @@
+## Makefile.release - Release and versioning targets
+# This file is included by the main Makefile
+
+##@ Releasing and Versioning
+bump: install-uv ## bump version
+	@UV_BIN="${UV_BIN}" /bin/sh "${SCRIPTS_FOLDER}/bump.sh"
+
+release: install-uv ## create tag and push to remote with prompts
+	@UV_BIN="${UV_BIN}" /bin/sh "${SCRIPTS_FOLDER}/release.sh"
+
+post-release: install-uv ## perform post-release tasks
+	@if [ -x "${CUSTOM_SCRIPTS_FOLDER}/post-release.sh" ]; then \
+		printf "${BLUE}[INFO] Running post-release script from customisations folder...${RESET}\n"; \
+		"${CUSTOM_SCRIPTS_FOLDER}"/post-release.sh; \
+	elif [ -f "${CUSTOM_SCRIPTS_FOLDER}/post-release.sh" ]; then \
+		printf "${BLUE}[INFO] Running post-release script from customisations folder...${RESET}\n"; \
+		/bin/sh "${CUSTOM_SCRIPTS_FOLDER}/post-release.sh"; \
+	else \
+		printf "${BLUE}[INFO] No post-release script in ${CUSTOM_SCRIPTS_FOLDER}, skipping...${RESET}\n"; \
+	fi
