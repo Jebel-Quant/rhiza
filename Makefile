@@ -143,7 +143,7 @@ help: ## Display this help message
 	+@printf "$(BOLD)Usage:$(RESET)\n"
 	+@printf "  make $(BLUE)<target>$(RESET)\n\n"
 	+@printf "$(BOLD)Targets:$(RESET)\n"
-	+@awk 'BEGIN {FS = ":.*##"; printf ""} /^[a-zA-Z_-]+:.*?##/ { printf "  $(BLUE)%-15s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BOLD)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)
+	+@awk 'BEGIN {FS = ":.*##"; printf ""} /^[a-zA-Z_-]+:.*?##/ { printf "  $(BLUE)%-20s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BOLD)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)
 
 customisations: ## list available customisation scripts
 	@printf "${BLUE}${BOLD}Customisation scripts available in ${CUSTOM_SCRIPTS_FOLDER}:$(RESET)\n"
