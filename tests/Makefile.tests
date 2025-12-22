@@ -16,3 +16,16 @@ test: install ## run all tests
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} or tests folder ${TESTS_FOLDER} not found, skipping tests${RESET}\n"; \
 	fi
+
+benchmark: install ## run performance benchmarks
+	@if [ -d "${TESTS_FOLDER}/benchmarks" ]; then \
+	  printf "${BLUE}[INFO] Running performance benchmarks...${RESET}\n"; \
+	  ${UV_BIN} pip install pytest-benchmark==5.2.3 pygal==3.1.0; \
+	  ${UV_BIN} run pytest "${TESTS_FOLDER}/benchmarks/" \
+	  		--benchmark-only \
+			--benchmark-histogram=tests/test_rhiza/benchmarks/benchmarks \
+			--benchmark-json=tests/test_rhiza/benchmarks/benchmarks.json; \
+	  ${UV_BIN} run tests/test_rhiza/benchmarks/analyze_benchmarks.py ; \
+	else \
+	  printf "${YELLOW}[WARN] Benchmarks folder not found, skipping benchmarks${RESET}\n"; \
+	fi
