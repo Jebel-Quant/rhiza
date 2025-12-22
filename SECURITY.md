@@ -61,7 +61,7 @@ This repository uses automated security scanning tools:
 When contributing to Rhiza:
 
 - Never commit secrets, API keys, or credentials
-- Follow secure coding practices as outlined in our [Contributing Guidelines](CONTRIBUTING.md)
+- Follow secure coding practices as outlined in our [Contributing Guide](CONTRIBUTING.md)
 - Keep dependencies up to date
 - Run `make fmt` to ensure code meets our security standards
 
