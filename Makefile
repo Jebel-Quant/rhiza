@@ -129,6 +129,14 @@ deptry: install-uv ## run deptry if pyproject.toml exists
 	  printf "${YELLOW} No pyproject.toml found, skipping deptry${RESET}\n"; \
 	fi
 
+benchmark: install ## run performance benchmarks
+	@if [ -d "${TESTS_FOLDER}/benchmarks" ]; then \
+	  printf "${BLUE}[INFO] Running performance benchmarks...${RESET}\n"; \
+	  ${UV_BIN} run pytest ${TESTS_FOLDER}/benchmarks/ --benchmark-only; \
+	else \
+	  printf "${YELLOW}[WARN] Benchmarks folder not found, skipping benchmarks${RESET}\n"; \
+	fi
+
 ##@ Documentation
 docs: install ## create documentation with pdoc
 	@if [ -d "${SOURCE_FOLDER}" ]; then \
