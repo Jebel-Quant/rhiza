@@ -132,7 +132,12 @@ deptry: install-uv ## run deptry if pyproject.toml exists
 benchmark: install ## run performance benchmarks
 	@if [ -d "${TESTS_FOLDER}/benchmarks" ]; then \
 	  printf "${BLUE}[INFO] Running performance benchmarks...${RESET}\n"; \
-	  ${UV_BIN} run pytest ${TESTS_FOLDER}/benchmarks/ --benchmark-only; \
+	  ${UV_BIN} pip install pytest-benchmark==5.2.3 pygal==3.1.0; \
+	  ${UV_BIN} run pytest "${TESTS_FOLDER}/benchmarks/" \
+	  		--benchmark-only \
+			--benchmark-histogram=tests/test_rhiza/benchmarks/benchmarks \
+			--benchmark-json=tests/test_rhiza/benchmarks/benchmarks.json; \
+	  ${UV_BIN} run tests/test_rhiza/benchmarks/analyze_benchmarks.py ; \
 	else \
 	  printf "${YELLOW}[WARN] Benchmarks folder not found, skipping benchmarks${RESET}\n"; \
 	fi
