@@ -35,14 +35,28 @@ def expected_uv_install_dir() -> str:
 
 @pytest.fixture(autouse=True)
 def setup_tmp_makefile(logger, root, tmp_path: Path):
-    """Copy only the Makefile into a temp directory and chdir there.
+    """Copy the Makefile and split Makefiles into a temp directory and chdir there.
 
     We rely on `make -n` so that no real commands are executed.
     """
     logger.debug("Setting up temporary Makefile test dir: %s", tmp_path)
 
-    # Copy the Makefile into the temporary working directory
+    # Copy the main Makefile into the temporary working directory
     shutil.copy(root / "Makefile", tmp_path / "Makefile")
+
+    # Copy split Makefiles if they exist (maintaining directory structure)
+    split_makefiles = [
+        "tests/Makefile.tests",
+        "book/Makefile.book",
+        "presentation/Makefile.presentation",
+    ]
+    for split_file in split_makefiles:
+        source_path = root / split_file
+        if source_path.exists():
+            dest_path = tmp_path / split_file
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(source_path, dest_path)
+            logger.debug("Copied %s to %s", source_path, dest_path)
 
     # Move into tmp directory for isolation
     old_cwd = Path.cwd()
@@ -206,9 +220,19 @@ class TestMakefileRootFixture:
         assert len(content) > 0
 
     def test_makefile_contains_targets(self, root):
-        """Makefile should contain expected targets."""
+        """Makefile should contain expected targets (including split files)."""
         makefile = root / "Makefile"
         content = makefile.read_text()
+
+        # Read split Makefiles as well
+        split_files = [
+            root / "tests/Makefile.tests",
+            root / "book/Makefile.book",
+            root / "presentation/Makefile.presentation",
+        ]
+        for split_file in split_files:
+            if split_file.exists():
+                content += "\n" + split_file.read_text()
 
         expected_targets = ["install", "fmt", "test", "deptry", "book", "help"]
         for target in expected_targets:
