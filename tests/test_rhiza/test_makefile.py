@@ -157,40 +157,17 @@ class TestMakefile:
         expected_uvx = f"{expected_uv_install_dir}/uvx"
         assert f"{expected_uvx} minibook" in out
 
-    def test_book_target_fallback_without_book_folder(self, logger, tmp_path):
-        """Book target should show a warning when book folder is missing."""
+    @pytest.mark.parametrize("target", ["book", "docs", "marimushka"])
+    def test_book_related_targets_fallback_without_book_folder(
+        self, logger, tmp_path, target
+    ):
+        """Book-related targets should show a warning when book folder is missing."""
         # Remove the book folder to test fallback
         book_folder = tmp_path / "book"
         if book_folder.exists():
             shutil.rmtree(book_folder)
 
-        proc = run_make(logger, ["book"], check=False, dry_run=False)
-        out = strip_ansi(proc.stdout)
-        assert "Book folder not found" in out
-        assert "not available" in out
-        assert proc.returncode == 0  # Should not fail
-
-    def test_docs_target_fallback_without_book_folder(self, logger, tmp_path):
-        """Docs target should show a warning when book folder is missing."""
-        # Remove the book folder to test fallback
-        book_folder = tmp_path / "book"
-        if book_folder.exists():
-            shutil.rmtree(book_folder)
-
-        proc = run_make(logger, ["docs"], check=False, dry_run=False)
-        out = strip_ansi(proc.stdout)
-        assert "Book folder not found" in out
-        assert "not available" in out
-        assert proc.returncode == 0  # Should not fail
-
-    def test_marimushka_target_fallback_without_book_folder(self, logger, tmp_path):
-        """Marimushka target should show a warning when book folder is missing."""
-        # Remove the book folder to test fallback
-        book_folder = tmp_path / "book"
-        if book_folder.exists():
-            shutil.rmtree(book_folder)
-
-        proc = run_make(logger, ["marimushka"], check=False, dry_run=False)
+        proc = run_make(logger, [target], check=False, dry_run=False)
         out = strip_ansi(proc.stdout)
         assert "Book folder not found" in out
         assert "not available" in out
