@@ -21,6 +21,11 @@ from pathlib import Path
 import pandas as pd
 import plotly.express as px
 
+# check if the file exists at all
+if not Path(__file__).parent.joinpath("benchmarks.json").exists():
+    logging.warning("benchmarks.json not found; skipping analysis and exiting successfully.")
+    sys.exit(0)
+
 # Load pytest-benchmark JSON
 with open(Path(__file__).parent / "benchmarks.json") as f:
     # Do not continue if JSON is invalid (e.g. empty file)
