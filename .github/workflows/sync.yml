@@ -124,7 +124,7 @@ jobs:
           fi
 
       - name: Create pull request
-        if: ${{ inputs.create-pr && steps.sync.outputs.changes_detected == 'true' && steps.sync.outputs.push_succeeded == 'true' }}
+        if: ${{ (inputs.create-pr == true || inputs.create-pr == null) && steps.sync.outputs.changes_detected == 'true' && steps.sync.outputs.push_succeeded == 'true' }}
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.PAT_TOKEN || github.token }}
