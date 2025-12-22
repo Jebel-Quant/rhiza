@@ -1,4 +1,4 @@
-name: RHIZA
+name: RHIZA VALIDATE
 
 permissions:
   contents: read
@@ -23,5 +23,4 @@ jobs:
       - name: Validate Rhiza config
         shell: bash
         run: |
-          python -m pip install rhiza --index-url https://pypi.org/simple
-          rhiza validate
+          uvx rhiza validate .
