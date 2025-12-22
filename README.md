@@ -99,6 +99,7 @@ Meta
 
 Development and Testing
   test                  run all tests
+  benchmark             run performance benchmarks
 
 Documentation
   docs                  create documentation with pdoc
