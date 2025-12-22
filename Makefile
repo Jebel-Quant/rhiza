@@ -224,7 +224,7 @@ presentation-serve: ## serve presentation interactively with Marp
 	    exit 1; \
 	  fi; \
 	fi
-	@printf "${BLUE}[INFO] Cleaning up build artifacts to prevent Marp CSS warnings...${RESET}\n"
+	@printf "${BLUE}[INFO] Cleaning up build artifacts...${RESET}\n"
 	@rm -rf _tests _book
 	@printf "${BLUE}[INFO] Starting Marp server...${RESET}\n"
 	@printf "${GREEN}[INFO] Press Ctrl+C to stop the server${RESET}\n"
