@@ -158,9 +158,7 @@ class TestMakefile:
         assert f"{expected_uvx} minibook" in out
 
     @pytest.mark.parametrize("target", ["book", "docs", "marimushka"])
-    def test_book_related_targets_fallback_without_book_folder(
-        self, logger, tmp_path, target
-    ):
+    def test_book_related_targets_fallback_without_book_folder(self, logger, tmp_path, target):
         """Book-related targets should show a warning when book folder is missing."""
         # Remove the book folder to test fallback
         book_folder = tmp_path / "book"
