@@ -1,6 +1,9 @@
 ## Makefile.tests - Testing targets
 # This file is included by the main Makefile
 
+# Test-specific variables
+TESTS_FOLDER := tests
+
 ##@ Development and Testing
 test: install ## run all tests
 	@if [ -d ${SOURCE_FOLDER} ] && [ -d ${TESTS_FOLDER} ]; then \
