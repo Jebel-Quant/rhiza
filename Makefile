@@ -22,7 +22,22 @@ RESET := \033[0m
 -include presentation/Makefile.presentation
 
 # Declare phony targets (they don't produce files)
-.PHONY: install-uv install clean marimo fmt deptry release release-dry-run post-release sync help all update-readme
+.PHONY: install-uv install clean marimo fmt deptry release release-dry-run post-release sync help all update-readme docs marimushka book
+
+# Fallback targets for book-related commands (used when book/Makefile.book doesn't exist)
+ifeq ($(wildcard book/Makefile.book),)
+docs:
+	@printf "${YELLOW}[WARN] Book folder not found. The 'docs' target is not available.${RESET}\n"
+	@printf "${BLUE}[INFO] To enable this target, ensure the 'book/' folder exists with Makefile.book${RESET}\n"
+
+marimushka:
+	@printf "${YELLOW}[WARN] Book folder not found. The 'marimushka' target is not available.${RESET}\n"
+	@printf "${BLUE}[INFO] To enable this target, ensure the 'book/' folder exists with Makefile.book${RESET}\n"
+
+book:
+	@printf "${YELLOW}[WARN] Book folder not found. The 'book' target is not available.${RESET}\n"
+	@printf "${BLUE}[INFO] To enable this target, ensure the 'book/' folder exists with Makefile.book${RESET}\n"
+endif
 
 UV_INSTALL_DIR ?= ./bin
 UV_BIN := ${UV_INSTALL_DIR}/uv
