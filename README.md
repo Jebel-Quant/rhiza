@@ -74,36 +74,42 @@ Usage:
 Targets:
 
 Bootstrap
-  install-uv       ensure uv/uvx is installed
-  install-extras   run custom build script (if exists)
-  install          install
-  clean            clean
+  install-uv            ensure uv/uvx is installed
+  install-extras        run custom build script (if exists)
+  install               install
+  clean                 clean
 
-Development and Testing
-  test             run all tests
-  marimo           fire up Marimo server
-  marimushka       export Marimo notebooks to HTML
-  deptry           run deptry if pyproject.toml exists
+Tools
+  marimo                fire up Marimo server
 
-Documentation
-  docs             create documentation with pdoc
-  presentation     generate presentation slides from PRESENTATION.md using Marp
-  presentation-pdf  generate PDF presentation from PRESENTATION.md using Marp
-  presentation-serve  serve presentation interactively with Marp
-  book             compile the companion book
-  fmt              check the pre-commit hooks and the linting
-  all              Run everything
+Quality and Formatting
+  deptry                run deptry if pyproject.toml exists
+  fmt                   check the pre-commit hooks and the linting
 
 Releasing and Versioning
-  bump             bump version
-  release          create tag and push to remote with prompts
-  post-release     perform post-release tasks
+  bump                  bump version
+  release               create tag and push to remote with prompts
+  post-release          perform post-release tasks
 
 Meta
-  sync             sync with template repository as defined in .github/template.yml
-  help             Display this help message
-  customisations   list available customisation scripts
-  update-readme    update README.md with current Makefile help output
+  sync                  sync with template repository as defined in .github/template.yml
+  help                  Display this help message
+  customisations        list available customisation scripts
+  update-readme         update README.md with current Makefile help output
+
+Development and Testing
+  test                  run all tests
+
+Documentation
+  docs                  create documentation with pdoc
+  marimushka            export Marimo notebooks to HTML
+  book                  compile the companion book
+
+Presentation
+  presentation          generate presentation slides from PRESENTATION.md using Marp
+  presentation-pdf      generate PDF presentation from PRESENTATION.md using Marp
+  presentation-serve    serve presentation interactively with Marp
+
 ```
 
 The [Makefile](Makefile) provides organized targets for bootstrapping, development, testing, and documentation tasks.
