@@ -17,8 +17,6 @@ RESET := \033[0m
 .DEFAULT_GOAL := help
 
 # Include split Makefiles
--include Makefile.install
--include Makefile.release
 -include tests/Makefile.tests
 -include book/Makefile.book
 -include presentation/Makefile.presentation
@@ -42,6 +40,67 @@ DOCFORMAT :=
 
 export UV_NO_MODIFY_PATH := 1
 export UV_VENV_CLEAR := 1
+
+##@ Bootstrap
+install-uv: ## ensure uv/uvx is installed
+	# Ensure the ${UV_INSTALL_DIR} folder exists
+	@mkdir -p ${UV_INSTALL_DIR}
+
+	# Install uv/uvx only if they are not already present
+	@if [ -x "${UV_INSTALL_DIR}/uv" ] && [ -x "${UV_INSTALL_DIR}/uvx" ]; then \
+	  printf "${BLUE}[INFO] uv and uvx already installed in ${UV_INSTALL_DIR}, skipping.${RESET}\n"; \
+	else \
+	  printf "${BLUE}[INFO] Installing uv and uvx...${RESET}\n"; \
+	  if ! curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR="${UV_INSTALL_DIR}" sh >/dev/null 2>&1; then \
+	    printf "${RED}[ERROR] Failed to install uv${RESET}\n"; \
+	    exit 1; \
+	  fi; \
+	fi
+
+install-extras: ## run custom build script (if exists)
+	@if [ -x "${CUSTOM_SCRIPTS_FOLDER}/build-extras.sh" ]; then \
+		printf "${BLUE}[INFO] Running custom build script from customisations folder...${RESET}\n"; \
+		"${CUSTOM_SCRIPTS_FOLDER}"/build-extras.sh; \
+	elif [ -f "${CUSTOM_SCRIPTS_FOLDER}/build-extras.sh" ]; then \
+		printf "${BLUE}[INFO] Running custom build script from customisations folder...${RESET}\n"; \
+		/bin/sh "${CUSTOM_SCRIPTS_FOLDER}/build-extras.sh"; \
+	else \
+		printf "${BLUE}[INFO] No custom build script in ${CUSTOM_SCRIPTS_FOLDER}, skipping...${RESET}\n"; \
+	fi
+
+install: install-uv install-extras ## install
+	# Create the virtual environment only if it doesn't exist
+	@if [ ! -d ".venv" ]; then \
+	  ${UV_BIN} venv --python 3.12 || { printf "${RED}[ERROR] Failed to create virtual environment${RESET}\n"; exit 1; }; \
+	else \
+	  printf "${BLUE}[INFO] Using existing virtual environment at .venv, skipping creation${RESET}\n"; \
+	fi
+
+	# Check if there is requirements.txt file in the tests folder
+	@if [ -f "tests/requirements.txt" ]; then \
+	  ${UV_BIN} pip install -r tests/requirements.txt || { printf "${RED}[ERROR] Failed to install test requirements${RESET}\n"; exit 1; }; \
+	fi
+
+	# Install the dependencies from pyproject.toml (if it exists)
+	@if [ -f "pyproject.toml" ]; then \
+	  printf "${BLUE}[INFO] Installing dependencies${RESET}\n"; \
+	  ${UV_BIN} sync --all-extras --frozen || { printf "${RED}[ERROR] Failed to install dependencies${RESET}\n"; exit 1; }; \
+	else \
+	  printf "${YELLOW}[WARN] No pyproject.toml found, skipping install${RESET}\n"; \
+	fi
+
+
+clean: ## clean
+	@printf "${BLUE}Cleaning project...${RESET}\n"
+	# do not clean .env files
+	@git clean -d -X -f -e .env -e '.env.*'
+	@rm -rf dist build *.egg-info .coverage .pytest_cache
+	@printf "${BLUE}Removing local branches with no remote counterpart...${RESET}\n"
+	@git fetch --prune
+	@git branch -vv \
+	  | grep ': gone]' \
+	  | awk '{print $1}' \
+	  | xargs -r git branch -D 2>/dev/null || true
 
 ##@ Development and Testing
 marimo: install ## fire up Marimo server
