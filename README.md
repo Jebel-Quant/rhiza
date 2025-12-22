@@ -10,10 +10,10 @@
 [![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg)](https://github.com/pypa/hatch)
 
 
-[![CI Status](https://github.com/jebel-quant/rhiza/workflows/CI/badge.svg?branch=main)](https://github.com/jebel-quant/rhiza/actions)
-[![Pre-commit](https://github.com/jebel-quant/rhiza/workflows/PRE-COMMIT/badge.svg?branch=main)](https://github.com/jebel-quant/rhiza/actions?query=workflow%3APRE-COMMIT)
-[![Deptry](https://github.com/jebel-quant/rhiza/workflows/DEPTRY/badge.svg?branch=main)](https://github.com/jebel-quant/rhiza/actions?query=workflow%3ADEPTRY)
-[![Book](https://github.com/jebel-quant/rhiza/workflows/BOOK/badge.svg?branch=main)](https://github.com/jebel-quant/rhiza/actions?query=workflow%3ABOOK)
+[![CI Status](https://github.com/jebel-quant/rhiza/workflows/CI/badge.svg?branch=main)](https://github.com/jebel-quant/rhiza/actions/workflows/ci.yml)
+[![Pre-commit](https://github.com/jebel-quant/rhiza/workflows/PRE-COMMIT/badge.svg?branch=main)](https://github.com/jebel-quant/rhiza/actions/workflows/pre-commit.yml)
+[![DEPTRY](https://github.com/Jebel-Quant/rhiza/actions/workflows/deptry.yml/badge.svg?branch=main)](https://github.com/Jebel-Quant/rhiza/actions/workflows/deptry.yml)
+[![BOOK](https://github.com/Jebel-Quant/rhiza/actions/workflows/book.yml/badge.svg?branch=main)](https://github.com/Jebel-Quant/rhiza/actions/workflows/book.yml)
 [![MARIMO](https://github.com/Jebel-Quant/rhiza/actions/workflows/marimo.yml/badge.svg?branch=main)](https://github.com/Jebel-Quant/rhiza/actions/workflows/marimo.yml)
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/jebel-quant/rhiza)
