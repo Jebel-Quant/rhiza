@@ -85,6 +85,7 @@ Development and Testing
   marimo           fire up Marimo server
   marimushka       export Marimo notebooks to HTML
   deptry           run deptry if pyproject.toml exists
+  benchmark        run performance benchmarks
 
 Documentation
   docs             create documentation with pdoc
