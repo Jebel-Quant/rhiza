@@ -96,7 +96,7 @@ clean: ## clean
 	  | awk '{print $1}' \
 	  | xargs -r git branch -D 2>/dev/null || true
 
-##@ Development and Testing
+##@ Tools
 marimo: install ## fire up Marimo server
 	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
 	  printf " ${YELLOW}[WARN] Marimo folder '${MARIMO_FOLDER}' not found, skipping start${RESET}\n"; \
@@ -104,6 +104,7 @@ marimo: install ## fire up Marimo server
 	  ${UV_BIN} run --with marimo marimo edit --no-token --headless "${MARIMO_FOLDER}"; \
 	fi
 
+##@ Quality and Formatting
 deptry: install-uv ## run deptry if pyproject.toml exists
 	@if [ -f "pyproject.toml" ]; then \
 	  ${UVX_BIN} deptry "${SOURCE_FOLDER}"; \
@@ -113,9 +114,6 @@ deptry: install-uv ## run deptry if pyproject.toml exists
 
 fmt: install-uv ## check the pre-commit hooks and the linting
 	@${UVX_BIN} pre-commit run --all-files
-
-all: fmt deptry book ## Run everything
-	echo "Run fmt, deptry, test and book"
 
 ##@ Releasing and Versioning
 bump: install-uv ## bump version
@@ -144,6 +142,7 @@ help: ## Display this help message
 	+@printf "  make $(BLUE)<target>$(RESET)\n\n"
 	+@printf "$(BOLD)Targets:$(RESET)\n"
 	+@awk 'BEGIN {FS = ":.*##"; printf ""} /^[a-zA-Z_-]+:.*?##/ { printf "  $(BLUE)%-20s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BOLD)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)
+	+@printf "\n"
 
 customisations: ## list available customisation scripts
 	@printf "${BLUE}${BOLD}Customisation scripts available in ${CUSTOM_SCRIPTS_FOLDER}:$(RESET)\n"
