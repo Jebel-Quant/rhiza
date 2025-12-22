@@ -20,6 +20,13 @@ from pathlib import Path
 
 import pytest
 
+# Split Makefile paths that are included in the main Makefile
+SPLIT_MAKEFILES = [
+    "tests/Makefile.tests",
+    "book/Makefile.book",
+    "presentation/Makefile.presentation",
+]
+
 
 def strip_ansi(text: str) -> str:
     """Strip ANSI escape sequences from text."""
@@ -31,6 +38,7 @@ def strip_ansi(text: str) -> str:
 def expected_uv_install_dir() -> str:
     """Get the expected UV_INSTALL_DIR from environment or default to ./bin."""
     return os.environ.get("UV_INSTALL_DIR", "./bin")
+
 
 
 @pytest.fixture(autouse=True)
@@ -45,12 +53,7 @@ def setup_tmp_makefile(logger, root, tmp_path: Path):
     shutil.copy(root / "Makefile", tmp_path / "Makefile")
 
     # Copy split Makefiles if they exist (maintaining directory structure)
-    split_makefiles = [
-        "tests/Makefile.tests",
-        "book/Makefile.book",
-        "presentation/Makefile.presentation",
-    ]
-    for split_file in split_makefiles:
+    for split_file in SPLIT_MAKEFILES:
         source_path = root / split_file
         if source_path.exists():
             dest_path = tmp_path / split_file
@@ -225,14 +228,10 @@ class TestMakefileRootFixture:
         content = makefile.read_text()
 
         # Read split Makefiles as well
-        split_files = [
-            root / "tests/Makefile.tests",
-            root / "book/Makefile.book",
-            root / "presentation/Makefile.presentation",
-        ]
-        for split_file in split_files:
-            if split_file.exists():
-                content += "\n" + split_file.read_text()
+        for split_file in SPLIT_MAKEFILES:
+            split_path = root / split_file
+            if split_path.exists():
+                content += "\n" + split_path.read_text()
 
         expected_targets = ["install", "fmt", "test", "deptry", "book", "help"]
         for target in expected_targets:
