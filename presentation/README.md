@@ -34,6 +34,8 @@ The presentation system provides three main commands via the Makefile:
 
 ### 1. Generate HTML Presentation
 
+Run from the repository root:
+
 ```bash
 make presentation
 ```
@@ -46,6 +48,8 @@ This command:
 **Output**: `presentation.html` in the repository root
 
 ### 2. Generate PDF Presentation
+
+Run from the repository root:
 
 ```bash
 make presentation-pdf
@@ -61,6 +65,8 @@ This command:
 **Note**: PDF generation requires a Chromium-based browser to be installed.
 
 ### 3. Serve Presentation Interactively
+
+Run from the repository root:
 
 ```bash
 make presentation-serve
@@ -197,7 +203,7 @@ npm install -g @marp-team/marp-cli
 
 **Problem**: `npm: command not found`
 
-**Solution**: Install Node.js from https://nodejs.org/
+**Solution**: Install Node.js from [https://nodejs.org/](https://nodejs.org/)
 
 ### PDF Generation Fails
 
@@ -206,7 +212,7 @@ npm install -g @marp-team/marp-cli
 **Solution**: Install Google Chrome or Chromium:
 - **Ubuntu/Debian**: `sudo apt-get install chromium-browser`
 - **macOS**: `brew install chromium`
-- **Windows**: Download from https://www.google.com/chrome/
+- **Windows**: Download from [https://www.google.com/chrome/](https://www.google.com/chrome/)
 
 ### Permission Errors During npm Install
 
@@ -269,10 +275,10 @@ To create additional presentations:
 
 ## Learn More
 
-- **Marp Documentation**: https://marpit.marp.app/
-- **Marp CLI Documentation**: https://github.com/marp-team/marp-cli
-- **Marpit Markdown**: https://marpit.marp.app/markdown
-- **Theme Customization**: https://marpit.marp.app/theme-css
+- **Marp Documentation**: [https://marpit.marp.app/](https://marpit.marp.app/)
+- **Marp CLI Documentation**: [https://github.com/marp-team/marp-cli](https://github.com/marp-team/marp-cli)
+- **Marpit Markdown**: [https://marpit.marp.app/markdown](https://marpit.marp.app/markdown)
+- **Theme Customization**: [https://marpit.marp.app/theme-css](https://marpit.marp.app/theme-css)
 
 ## Integration with Rhiza
 
