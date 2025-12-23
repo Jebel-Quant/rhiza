@@ -1,6 +1,7 @@
 # Presentation Generation with Marp
 
-This directory contains the presentation generation system for Rhiza. The project uses [Marp](https://marp.app/) to convert Markdown files into beautiful presentation slides.
+REmThis directory contains the presentation generation system for Rhiza.
+The project uses [Marp](https://marp.app/) to convert Markdown files into beautiful presentation slides.
 
 ## Overview
 
@@ -233,7 +234,7 @@ npm install -g @marp-team/marp-cli
 
 **Problem**: Custom styles in front matter don't appear
 
-**Solution**: 
+**Solution**:
 - Ensure `marp: true` is set in the front matter
 - Check that your CSS syntax is valid
 - Try clearing browser cache
