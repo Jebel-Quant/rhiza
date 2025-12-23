@@ -40,9 +40,14 @@ RESET := \033[0m
 	presentation-pdf \
 	presentation-serve
 
-book docs marimushka test presentation presentation-pdf presentation-serve::
-	@echo "error: '$@' not implemented in this environment" >&2
-	@exit 1
+book docs marimushka::
+	@printf "${YELLOW}[WARN] Book folder not found. Target '$@' is not available.${RESET}\n"
+
+test::
+	@printf "${YELLOW}[WARN] Tests folder not found. Target '$@' is not available.${RESET}\n"
+
+presentation presentation-pdf presentation-serve::
+	@printf "${YELLOW}[WARN] Presentation folder not found. Target '$@' is not available.${RESET}\n"
 
 UV_INSTALL_DIR ?= ./bin
 UV_BIN := ${UV_INSTALL_DIR}/uv
