@@ -9,7 +9,7 @@ This notebook showcases the most useful features of Marimo, including:
 - Forms and user input handling
 - Dynamic content generation
 
-Run this notebook with: marimo edit showcase.py
+Run this notebook with: marimo edit rhiza.py
 Or in the rhiza project: make marimo
 """
 
@@ -18,7 +18,7 @@ Or in the rhiza project: make marimo
 # dependencies = [
 #     "marimo==0.18.4",
 #     "numpy>=1.24.0",
-#     "matplotlib>=3.7.0",
+#     "plotly>=5.18.0",
 #     "pandas>=2.0.0",
 # ]
 # ///
@@ -158,8 +158,8 @@ def __(mo):
         r"""
         ## 📊 Data Visualization
 
-        Marimo works seamlessly with popular visualization libraries like Matplotlib,
-        Plotly, and Altair. Let's create interactive plots!
+        Marimo works seamlessly with popular visualization libraries like Plotly,
+        Altair, and Matplotlib. Let's create interactive plots!
         """
     )
     return
@@ -168,8 +168,8 @@ def __(mo):
 @app.cell
 def __():
     import numpy as np
-    import matplotlib.pyplot as plt
-    return np, plt
+    import plotly.graph_objects as go
+    return go, np
 
 
 @app.cell
@@ -196,18 +196,31 @@ def __(mo):
 
 
 @app.cell
-def __(amplitude_slider, frequency_slider, mo, np, plt):
+def __(amplitude_slider, frequency_slider, go, mo, np):
     # Generate reactive plot based on slider values
     x = np.linspace(0, 4 * np.pi, 1000)
     y = amplitude_slider.value * np.sin(frequency_slider.value * x)
 
-    fig, ax = plt.subplots(figsize=(10, 4))
-    ax.plot(x, y, linewidth=2, color='#2FA4A9')
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_title(f'Sine Wave: y = {amplitude_slider.value} × sin({frequency_slider.value}x)')
-    ax.grid(True, alpha=0.3)
-    plt.tight_layout()
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=x, 
+        y=y,
+        mode='lines',
+        line=dict(color='#2FA4A9', width=2),
+        name='Sine Wave'
+    ))
+    
+    fig.update_layout(
+        title=f'Sine Wave: y = {amplitude_slider.value} × sin({frequency_slider.value}x)',
+        xaxis_title='x',
+        yaxis_title='y',
+        template='plotly_white',
+        height=400,
+        showlegend=False
+    )
+    
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.2)')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.2)')
 
     mo.vstack([
         mo.md(
@@ -221,9 +234,9 @@ def __(amplitude_slider, frequency_slider, mo, np, plt):
             - Amplitude: {amplitude_slider.value}
             """
         ),
-        mo.as_html(fig)
+        mo.ui.plotly(fig)
     ])
-    return ax, fig, x, y
+    return fig, x, y
 
 
 @app.cell
@@ -278,19 +291,30 @@ def __(data, mo):
 
 
 @app.cell
-def __(data, mo, plt):
-    # Create a bar chart
-    fig_bar, ax_bar = plt.subplots(figsize=(10, 5))
+def __(data, go, mo):
+    # Create a bar chart with Plotly
     colors = ['#2FA4A9', '#3FB5BA', '#4FC6CB', '#5FD7DC', '#6FE8ED']
-    ax_bar.bar(data['Product'], data['Sales'], color=colors)
-    ax_bar.set_xlabel('Product')
-    ax_bar.set_ylabel('Sales')
-    ax_bar.set_title('Sales by Product')
-    ax_bar.tick_params(axis='x', rotation=45)
-    plt.tight_layout()
+    
+    fig_bar = go.Figure()
+    fig_bar.add_trace(go.Bar(
+        x=data['Product'],
+        y=data['Sales'],
+        marker_color=colors,
+        text=data['Sales'],
+        textposition='auto',
+    ))
+    
+    fig_bar.update_layout(
+        title='Sales by Product',
+        xaxis_title='Product',
+        yaxis_title='Sales',
+        template='plotly_white',
+        height=500,
+        showlegend=False
+    )
 
-    mo.as_html(fig_bar)
-    return ax_bar, colors, fig_bar
+    mo.ui.plotly(fig_bar)
+    return colors, fig_bar
 
 
 @app.cell
@@ -604,7 +628,7 @@ def __(mo):
 
         ✅ **Interactive UI elements** - Sliders, dropdowns, text inputs, and more
         ✅ **Reactive programming** - Automatic cell updates when dependencies change
-        ✅ **Data visualization** - Seamless integration with Matplotlib, Plotly, etc.
+        ✅ **Data visualization** - Seamless integration with Plotly, Matplotlib, etc.
         ✅ **Layout components** - Columns, tabs, accordions for organizing content
         ✅ **Forms** - Batched input collection with submission
         ✅ **Rich formatting** - Markdown and LaTeX support

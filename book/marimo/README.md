@@ -4,13 +4,13 @@ This directory contains interactive [Marimo](https://marimo.io/) notebooks for t
 
 ## Available Notebooks
 
-### 📊 showcase.py - Marimo Feature Showcase
+### 📊 rhiza.py - Marimo Feature Showcase
 
 A comprehensive demonstration of Marimo's most useful features, including:
 
 - **Interactive UI Elements**: Sliders, dropdowns, text inputs, checkboxes, and multiselect
 - **Reactive Programming**: Automatic cell updates when dependencies change
-- **Data Visualization**: Interactive plots using Matplotlib
+- **Data Visualization**: Interactive plots using Plotly
 - **DataFrames**: Working with Pandas data
 - **Layout Components**: Columns, tabs, and accordions for organized content
 - **Forms**: Dictionary-based forms for collecting user input
@@ -40,7 +40,7 @@ This will start the Marimo server and open all notebooks in the `book/marimo` di
 To run a single notebook:
 
 ```bash
-marimo edit book/marimo/showcase.py
+marimo edit book/marimo/rhiza.py
 ```
 
 ### Using uv (Recommended)
@@ -48,7 +48,7 @@ marimo edit book/marimo/showcase.py
 The notebooks include inline dependency metadata, making them self-contained:
 
 ```bash
-uv run book/marimo/showcase.py
+uv run book/marimo/rhiza.py
 ```
 
 This will automatically install the required dependencies and run the notebook.
