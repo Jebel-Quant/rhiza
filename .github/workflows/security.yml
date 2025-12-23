@@ -9,7 +9,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-# Add to .github/workflows/security.yml (partial example)
+
 jobs:
   security:
     runs-on: ubuntu-latest

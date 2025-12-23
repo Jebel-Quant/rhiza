@@ -30,13 +30,14 @@ app = marimo.App(width="medium")
 
 
 @app.cell
-def __():
+def cell_01():
     import marimo as mo
+
     return (mo,)
 
 
 @app.cell
-def __(mo):
+def cell_02(mo):
     mo.md(
         r"""
         # 🎨 Marimo Showcase
@@ -61,13 +62,13 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def cell_03(mo):
     mo.md(r"""---""")
     return
 
 
 @app.cell
-def __(mo):
+def cell_04(mo):
     mo.md(
         r"""
         ## 🎚️ Interactive UI Elements
@@ -79,21 +80,15 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def cell_05(mo):
     # Slider for numeric input
-    slider = mo.ui.slider(
-        start=0,
-        stop=100,
-        value=50,
-        label="Adjust the value:",
-        show_value=True
-    )
+    slider = mo.ui.slider(start=0, stop=100, value=50, label="Adjust the value:", show_value=True)
     slider
     return (slider,)
 
 
 @app.cell
-def __(mo, slider):
+def cell_06(mo, slider):
     mo.md(
         f"""
         The slider value is: **{slider.value}**
@@ -105,19 +100,19 @@ def __(mo, slider):
 
 
 @app.cell
-def __(mo):
+def cell_07(mo):
     # Dropdown for selection
     dropdown = mo.ui.dropdown(
         options=["Python", "JavaScript", "Rust", "Go", "TypeScript"],
         value="Python",
-        label="Choose your favorite language:"
+        label="Choose your favorite language:",
     )
     dropdown
     return (dropdown,)
 
 
 @app.cell
-def __(dropdown, mo):
+def cell_08(dropdown, mo):
     mo.md(
         f"""
         You selected: **{dropdown.value}** 🎉
@@ -129,31 +124,27 @@ def __(dropdown, mo):
 
 
 @app.cell
-def __(mo):
+def cell_09(mo):
     # Text input
-    text_input = mo.ui.text(
-        value="Marimo",
-        label="Enter your name:",
-        placeholder="Type something..."
-    )
+    text_input = mo.ui.text(value="Marimo", label="Enter your name:", placeholder="Type something...")
     text_input
     return (text_input,)
 
 
 @app.cell
-def __(mo, text_input):
+def cell_10(mo, text_input):
     mo.md(f"""Hello, **{text_input.value}**! 👋""")
     return
 
 
 @app.cell
-def __(mo):
+def cell_11(mo):
     mo.md(r"""---""")
     return
 
 
 @app.cell
-def __(mo):
+def cell_12(mo):
     mo.md(
         r"""
         ## 📊 Data Visualization
@@ -166,65 +157,49 @@ def __(mo):
 
 
 @app.cell
-def __():
+def cell_13():
     import numpy as np
     import plotly.graph_objects as go
+
     return go, np
 
 
 @app.cell
-def __(mo):
+def cell_14(mo):
     # Interactive controls for the plot
-    frequency_slider = mo.ui.slider(
-        start=1,
-        stop=10,
-        value=2,
-        label="Wave frequency:",
-        show_value=True
-    )
+    frequency_slider = mo.ui.slider(start=1, stop=10, value=2, label="Wave frequency:", show_value=True)
 
-    amplitude_slider = mo.ui.slider(
-        start=1,
-        stop=5,
-        value=1,
-        label="Wave amplitude:",
-        show_value=True
-    )
+    amplitude_slider = mo.ui.slider(start=1, stop=5, value=1, label="Wave amplitude:", show_value=True)
 
     mo.vstack([frequency_slider, amplitude_slider])
     return amplitude_slider, frequency_slider
 
 
 @app.cell
-def __(amplitude_slider, frequency_slider, go, mo, np):
+def cell_15(amplitude_slider, frequency_slider, go, mo, np):
     # Generate reactive plot based on slider values
     x = np.linspace(0, 4 * np.pi, 1000)
     y = amplitude_slider.value * np.sin(frequency_slider.value * x)
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=x, 
-        y=y,
-        mode='lines',
-        line=dict(color='#2FA4A9', width=2),
-        name='Sine Wave'
-    ))
-    
-    fig.update_layout(
-        title=f'Sine Wave: y = {amplitude_slider.value} × sin({frequency_slider.value}x)',
-        xaxis_title='x',
-        yaxis_title='y',
-        template='plotly_white',
-        height=400,
-        showlegend=False
-    )
-    
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.2)')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(128,128,128,0.2)')
+    fig.add_trace(go.Scatter(x=x, y=y, mode="lines", line=dict(color="#2FA4A9", width=2), name="Sine Wave"))
 
-    mo.vstack([
-        mo.md(
-            f"""
+    fig.update_layout(
+        title=f"Sine Wave: y = {amplitude_slider.value} × sin({frequency_slider.value}x)",
+        xaxis_title="x",
+        yaxis_title="y",
+        template="plotly_white",
+        height=400,
+        showlegend=False,
+    )
+
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor="rgba(128,128,128,0.2)")
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor="rgba(128,128,128,0.2)")
+
+    mo.vstack(
+        [
+            mo.md(
+                f"""
             ### Interactive Sine Wave
 
             Adjust the sliders above to change the wave properties!
@@ -233,20 +208,21 @@ def __(amplitude_slider, frequency_slider, go, mo, np):
             - Frequency: {frequency_slider.value}
             - Amplitude: {amplitude_slider.value}
             """
-        ),
-        mo.ui.plotly(fig)
-    ])
+            ),
+            mo.ui.plotly(fig),
+        ]
+    )
     return fig, x, y
 
 
 @app.cell
-def __(mo):
+def cell_16(mo):
     mo.md(r"""---""")
     return
 
 
 @app.cell
-def __(mo):
+def cell_17(mo):
     mo.md(
         r"""
         ## 📋 Working with DataFrames
@@ -258,21 +234,23 @@ def __(mo):
 
 
 @app.cell
-def __():
+def cell_18():
     import pandas as pd
 
     # Create sample data
-    data = pd.DataFrame({
-        'Product': ['Widget A', 'Widget B', 'Widget C', 'Widget D', 'Widget E'],
-        'Sales': [250, 180, 420, 350, 290],
-        'Revenue': [5000, 3600, 8400, 7000, 5800],
-        'Rating': [4.5, 4.2, 4.8, 4.6, 4.3]
-    })
+    data = pd.DataFrame(
+        {
+            "Product": ["Widget A", "Widget B", "Widget C", "Widget D", "Widget E"],
+            "Sales": [250, 180, 420, 350, 290],
+            "Revenue": [5000, 3600, 8400, 7000, 5800],
+            "Rating": [4.5, 4.2, 4.8, 4.6, 4.3],
+        }
+    )
     return data, pd
 
 
 @app.cell
-def __(data, mo):
+def cell_19(data, mo):
     mo.md(
         r"""
         ### Sample Sales Data
@@ -284,33 +262,35 @@ def __(data, mo):
 
 
 @app.cell
-def __(data, mo):
+def cell_20(data, mo):
     # Display as interactive table
     mo.ui.table(data)
     return
 
 
 @app.cell
-def __(data, go, mo):
+def cell_21(data, go, mo):
     # Create a bar chart with Plotly
-    colors = ['#2FA4A9', '#3FB5BA', '#4FC6CB', '#5FD7DC', '#6FE8ED']
-    
+    colors = ["#2FA4A9", "#3FB5BA", "#4FC6CB", "#5FD7DC", "#6FE8ED"]
+
     fig_bar = go.Figure()
-    fig_bar.add_trace(go.Bar(
-        x=data['Product'],
-        y=data['Sales'],
-        marker_color=colors,
-        text=data['Sales'],
-        textposition='auto',
-    ))
-    
+    fig_bar.add_trace(
+        go.Bar(
+            x=data["Product"],
+            y=data["Sales"],
+            marker_color=colors,
+            text=data["Sales"],
+            textposition="auto",
+        )
+    )
+
     fig_bar.update_layout(
-        title='Sales by Product',
-        xaxis_title='Product',
-        yaxis_title='Sales',
-        template='plotly_white',
+        title="Sales by Product",
+        xaxis_title="Product",
+        yaxis_title="Sales",
+        template="plotly_white",
         height=500,
-        showlegend=False
+        showlegend=False,
     )
 
     mo.ui.plotly(fig_bar)
@@ -318,13 +298,13 @@ def __(data, go, mo):
 
 
 @app.cell
-def __(mo):
+def cell_22(mo):
     mo.md(r"""---""")
     return
 
 
 @app.cell
-def __(mo):
+def cell_23(mo):
     mo.md(
         r"""
         ## 🎯 Layout Components
@@ -336,7 +316,7 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def cell_24(mo):
     # Using columns for side-by-side layout
     left_content = mo.md(
         r"""
@@ -367,7 +347,7 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def cell_25(mo):
     # Using tabs for organized content
     tab1 = mo.md(
         r"""
@@ -409,22 +389,18 @@ def __(mo):
         """
     )
 
-    mo.ui.tabs({
-        "Introduction": tab1,
-        "Details": tab2,
-        "Summary": tab3
-    })
+    mo.ui.tabs({"Introduction": tab1, "Details": tab2, "Summary": tab3})
     return tab1, tab2, tab3
 
 
 @app.cell
-def __(mo):
+def cell_26(mo):
     mo.md(r"""---""")
     return
 
 
 @app.cell
-def __(mo):
+def cell_27(mo):
     mo.md(
         r"""
         ## 📝 Forms and User Input
@@ -436,24 +412,25 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def cell_28(mo):
     # Create a form with multiple inputs
-    form = mo.ui.dictionary({
-        "name": mo.ui.text(label="Your name:", placeholder="Enter name"),
-        "age": mo.ui.slider(start=18, stop=100, value=25, label="Your age:"),
-        "email": mo.ui.text(label="Email:", placeholder="email@example.com"),
-        "subscribe": mo.ui.checkbox(label="Subscribe to newsletter"),
-        "interests": mo.ui.multiselect(
-            options=["Data Science", "Machine Learning", "Web Development", "DevOps"],
-            label="Your interests:"
-        )
-    })
+    form = mo.ui.dictionary(
+        {
+            "name": mo.ui.text(label="Your name:", placeholder="Enter name"),
+            "age": mo.ui.slider(start=18, stop=100, value=25, label="Your age:"),
+            "email": mo.ui.text(label="Email:", placeholder="email@example.com"),
+            "subscribe": mo.ui.checkbox(label="Subscribe to newsletter"),
+            "interests": mo.ui.multiselect(
+                options=["Data Science", "Machine Learning", "Web Development", "DevOps"], label="Your interests:"
+            ),
+        }
+    )
     mo.vstack([mo.md("### User Information Form"), form])
     return (form,)
 
 
 @app.cell
-def __(form, mo):
+def cell_29(form, mo):
     # Display form values - updates reactively as you type/change values
     if form.value and any(form.value.values()):
         interests_text = ", ".join(form.value["interests"]) if form.value["interests"] else "None selected"
@@ -467,7 +444,7 @@ def __(form, mo):
             - **Name:** {form.value["name"] or "(not entered)"}
             - **Age:** {form.value["age"]}
             - **Email:** {form.value["email"] or "(not entered)"}
-            - **Newsletter:** {'Subscribed ✅' if form.value["subscribe"] else 'Not subscribed'}
+            - **Newsletter:** {"Subscribed ✅" if form.value["subscribe"] else "Not subscribed"}
             - **Interests:** {interests_text}
 
             Notice how the values update reactively as you change them!
@@ -479,13 +456,13 @@ def __(form, mo):
 
 
 @app.cell
-def __(mo):
+def cell_30(mo):
     mo.md(r"""---""")
     return
 
 
 @app.cell
-def __(mo):
+def cell_31(mo):
     mo.md(
         r"""
         ## 🎓 Markdown & LaTeX Support
@@ -497,7 +474,7 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def cell_32(mo):
     mo.md(
         r"""
         ### Mathematical Equations
@@ -544,13 +521,13 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def cell_33(mo):
     mo.md(r"""---""")
     return
 
 
 @app.cell
-def __(mo):
+def cell_34(mo):
     mo.md(
         r"""
         ## 🎪 Advanced Features
@@ -562,7 +539,7 @@ def __(mo):
 
 
 @app.cell
-def __(mo):
+def cell_35(mo):
     # Callout boxes for important information
     mo.callout(
         mo.md(
@@ -576,50 +553,52 @@ def __(mo):
             - Compatible with all Python tools
             """
         ),
-        kind="info"
+        kind="info",
     )
     return
 
 
 @app.cell
-def __(mo):
+def cell_36(mo):
     # Accordion for collapsible content
-    mo.accordion({
-        "🔍 Click to learn about Reactive Programming": mo.md(
-            r"""
+    mo.accordion(
+        {
+            "🔍 Click to learn about Reactive Programming": mo.md(
+                r"""
             Marimo uses **reactive programming** to automatically track dependencies
             between cells. When you change a value in one cell, all dependent cells
             automatically update!
 
             This eliminates the common notebook problem of running cells out of order.
             """
-        ),
-        "🚀 Click to learn about Performance": mo.md(
-            r"""
+            ),
+            "🚀 Click to learn about Performance": mo.md(
+                r"""
             Marimo only re-runs cells that are affected by changes, making it
             efficient even for large notebooks. This intelligent execution means
             you get fast feedback without wasting computation.
             """
-        ),
-        "📦 Click to learn about Dependencies": mo.md(
-            r"""
+            ),
+            "📦 Click to learn about Dependencies": mo.md(
+                r"""
             You can specify dependencies right in the notebook using inline metadata.
             This makes notebooks self-contained and reproducible, as seen in the
             header of this notebook!
             """
-        )
-    })
+            ),
+        }
+    )
     return
 
 
 @app.cell
-def __(mo):
+def cell_37(mo):
     mo.md(r"""---""")
     return
 
 
 @app.cell
-def __(mo):
+def cell_38(mo):
     mo.md(
         r"""
         ## 🎉 Conclusion
