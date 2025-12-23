@@ -77,6 +77,7 @@ Bootstrap
   install-uv            ensure uv/uvx is installed
   install-extras        run custom build script (if exists)
   install               install
+  sync                  sync with template repository as defined in .github/rhiza/template.yml
   clean                 clean
 
 Tools
@@ -92,7 +93,6 @@ Releasing and Versioning
   post-release          perform post-release tasks
 
 Meta
-  sync                  sync with template repository as defined in .github/template.yml
   help                  Display this help message
   customisations        list available customisation scripts
   update-readme         update README.md with current Makefile help output

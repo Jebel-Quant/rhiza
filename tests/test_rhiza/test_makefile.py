@@ -167,9 +167,9 @@ class TestMakefile:
 
         proc = run_make(logger, [target], check=False, dry_run=False)
         out = strip_ansi(proc.stdout)
-        #out = strip_ansi(proc.stderr)
+        # out = strip_ansi(proc.stderr)
         assert out == ""
-        #assert out == f"[WARN] Book folder not found. Target '{target}' is not available.\n"
+        # assert out == f"[WARN] Book folder not found. Target '{target}' is not available.\n"
 
         assert proc.returncode == 2  # Fails
 
