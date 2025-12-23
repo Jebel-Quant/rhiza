@@ -109,6 +109,12 @@ make clean       # Clean build artifacts
 - **Use when**: Setting up the project for the first time
 - **Example**: `make install-uv`
 
+#### `make install-extras`
+- Runs custom build script from `.github/scripts/customisations/build-extras.sh` if it exists
+- **Use when**: You need to install additional system dependencies or run custom build steps
+- **Example**: `make install-extras`
+- **Note**: This is automatically called by `make install`
+
 #### `make install`
 - Installs `uv`, runs custom build scripts, creates virtual environment, installs dependencies
 - **Use when**: First time setup or after pulling new changes
@@ -199,6 +205,12 @@ make clean       # Clean build artifacts
 - **Example**: `make post-release`
 
 ### Utility Targets
+
+#### `make help`
+- Displays all available targets organized by category
+- **Use when**: You want to see what commands are available
+- **Example**: `make help`
+- **Note**: This is the default target when running `make` with no arguments
 
 #### `make sync`
 - Syncs with template repository
