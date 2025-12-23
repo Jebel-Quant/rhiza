@@ -245,16 +245,17 @@ npm install -g @marp-team/marp-cli
 Create a custom Marp theme:
 
 1. Create a CSS file with your theme (e.g., `custom-theme.css`)
-2. Reference it in the front matter:
+2. Reference it in the front matter of `PRESENTATION.md`:
    ```yaml
    ---
    marp: true
    theme: custom-theme
    ---
    ```
-3. Pass the theme directory to Marp:
-   ```bash
-   marp PRESENTATION.md --theme-set custom-theme.css -o presentation.html
+3. Modify the Makefile targets to include your theme directory:
+   ```makefile
+   presentation: ## generate presentation slides with custom theme
+   	@marp PRESENTATION.md --theme-set custom-theme.css -o presentation.html
    ```
 
 ### Exporting to PowerPoint
@@ -267,11 +268,27 @@ While Marp doesn't directly export to PowerPoint, you can:
 
 To create additional presentations:
 1. Create a new Markdown file (e.g., `WORKSHOP.md`)
-2. Add new targets to `Makefile.presentation`:
+2. Add new targets to `presentation/Makefile.presentation` following the existing pattern:
    ```makefile
-   workshop: ## generate workshop slides
+   workshop: ## generate workshop slides from WORKSHOP.md using Marp
+   	@printf "${BLUE}[INFO] Checking for Marp CLI...${RESET}\n"
+   	@if ! command -v marp >/dev/null 2>&1; then \
+   	  if command -v npm >/dev/null 2>&1; then \
+   	    printf "${YELLOW}[WARN] Marp CLI not found. Installing with npm...${RESET}\n"; \
+   	    npm install -g @marp-team/marp-cli || { \
+   	      printf "${RED}[ERROR] Failed to install Marp CLI.${RESET}\n"; \
+   	      exit 1; \
+   	    }; \
+   	  else \
+   	    printf "${RED}[ERROR] npm not found.${RESET}\n"; \
+   	    exit 1; \
+   	  fi; \
+   	fi
+   	@printf "${BLUE}[INFO] Generating HTML workshop slides...${RESET}\n"
    	@marp WORKSHOP.md -o workshop.html
+   	@printf "${GREEN}[SUCCESS] Workshop slides generated: workshop.html${RESET}\n"
    ```
+3. Run: `make workshop`
 
 ## Learn More
 
