@@ -48,7 +48,7 @@ marimo edit book/marimo/showcase.py
 The notebooks include inline dependency metadata, making them self-contained:
 
 ```bash
-uvx uv run book/marimo/showcase.py
+uv run book/marimo/showcase.py
 ```
 
 This will automatically install the required dependencies and run the notebook.
@@ -118,7 +118,7 @@ To create a new Marimo notebook:
 
 4. Test it runs in a clean environment:
    ```bash
-   uvx uv run book/marimo/my_notebook.py
+   uv run book/marimo/my_notebook.py
    ```
 
 5. Commit and push - the CI will validate it automatically
