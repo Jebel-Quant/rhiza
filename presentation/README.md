@@ -14,7 +14,7 @@ The presentation system consists of:
 ### Required Tools
 
 1. **Node.js and npm** — Required to install Marp CLI
-   - Download from: https://nodejs.org/
+   - Download from: [https://nodejs.org/](https://nodejs.org/)
    - Check installation: `node --version` and `npm --version`
 
 2. **Marp CLI** — The presentation generator
