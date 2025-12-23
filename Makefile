@@ -31,23 +31,7 @@ RESET := \033[0m
 	post-release \
 	sync \
 	help \
-	update-readme \
-	book \
-	docs \
-	marimushka \
-	test \
-	presentation \
-	presentation-pdf \
-	presentation-serve
-
-book docs marimushka::
-	@printf "${YELLOW}[WARN] Book folder not found. Target '$@' is not available.${RESET}\n"
-
-test::
-	@printf "${YELLOW}[WARN] Tests folder not found. Target '$@' is not available.${RESET}\n"
-
-presentation presentation-pdf presentation-serve::
-	@printf "${YELLOW}[WARN] Presentation folder not found. Target '$@' is not available.${RESET}\n"
+	update-readme
 
 UV_INSTALL_DIR ?= ./bin
 UV_BIN := ${UV_INSTALL_DIR}/uv
@@ -113,6 +97,8 @@ install: install-uv install-extras ## install
 	  printf "${YELLOW}[WARN] No pyproject.toml found, skipping install${RESET}\n"; \
 	fi
 
+sync: install-uv ## sync with template repository as defined in .github/rhiza/template.yml
+	@${UVX_BIN} rhiza materialize --force .
 
 clean: ## clean
 	@printf "${BLUE}Cleaning project...${RESET}\n"
@@ -164,8 +150,6 @@ post-release: install-uv ## perform post-release tasks
 	fi
 
 ##@ Meta
-sync: install-uv ## sync with template repository as defined in .github/template.yml
-	@${UVX_BIN} rhiza materialize --force .
 
 help: ## Display this help message
 	+@printf "$(BOLD)Usage:$(RESET)\n"
