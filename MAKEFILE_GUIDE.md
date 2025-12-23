@@ -261,7 +261,7 @@ Adds:
 
 ### How Targets Override
 
-Notice in the main Makefile (lines 43-45):
+The main Makefile includes default fallback implementations for targets that are defined in sub-Makefiles:
 ```makefile
 book docs marimushka test presentation presentation-pdf presentation-serve::
 	@echo "error: '$@' not implemented in this environment" >&2
@@ -384,7 +384,10 @@ make presentation-serve
 **Solution**: Install make:
 - **Ubuntu/Debian**: `sudo apt-get install build-essential`
 - **macOS**: `xcode-select --install`
-- **Windows**: Use WSL or install via Chocolatey
+- **Windows**: 
+  - Option 1: Install [WSL (Windows Subsystem for Linux)](https://docs.microsoft.com/en-us/windows/wsl/install) and then use the Ubuntu instructions
+  - Option 2: Install via [Chocolatey](https://chocolatey.org/): `choco install make`
+  - Option 3: Use [Git Bash](https://gitforwindows.org/) which includes make
 
 ### "No rule to make target"
 
@@ -458,7 +461,7 @@ The Makefile sets:
 
 You can override variables:
 ```bash
-make install UV_INSTALL_DIR=/custom/path
+make install-uv UV_INSTALL_DIR=/custom/path
 ```
 
 ---
