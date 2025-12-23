@@ -2,7 +2,7 @@
 # This file is included by the main Makefile
 
 # Declare phony targets (they don't produce files)
-.PHONY: tests benchmark
+.PHONY: test benchmark
 
 # Test-specific variables
 TESTS_FOLDER := tests

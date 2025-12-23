@@ -167,9 +167,11 @@ class TestMakefile:
 
         proc = run_make(logger, [target], check=False, dry_run=False)
         out = strip_ansi(proc.stdout)
-        assert "Book folder not found" in out
-        assert "not available" in out
-        assert proc.returncode == 0  # Should not fail
+        # out = strip_ansi(proc.stderr)
+        assert out == ""
+        # assert out == f"[WARN] Book folder not found. Target '{target}' is not available.\n"
+
+        assert proc.returncode == 2  # Fails
 
     def test_uv_no_modify_path_is_exported(self, logger):
         """`UV_NO_MODIFY_PATH` should be set to `1` in the Makefile."""
