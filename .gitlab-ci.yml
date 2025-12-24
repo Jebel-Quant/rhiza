@@ -227,7 +227,7 @@ build-package:
     - |
       if [ -n "$CI_COMMIT_TAG" ]; then
         TAG_VERSION="${CI_COMMIT_TAG#v}"
-        PROJECT_VERSION=$(uv version --short)
+        PROJECT_VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
         if [[ "$PROJECT_VERSION" != "$TAG_VERSION" ]]; then
           echo "Error: Version mismatch - pyproject.toml has '$PROJECT_VERSION' but tag is '$TAG_VERSION'"
           exit 1
