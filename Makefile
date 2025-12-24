@@ -98,7 +98,7 @@ install: install-uv install-extras ## install
 	fi
 
 sync: install-uv ## sync with template repository as defined in .github/rhiza/template.yml
-	@${UVX_BIN} rhiza materialize --force .
+	@${UVX_BIN} "rhiza>=0.7.1" materialize --force .
 
 clean: ## clean
 	@printf "${BLUE}Cleaning project...${RESET}\n"
