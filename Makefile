@@ -34,7 +34,6 @@ RESET := \033[0m
 	update-readme
 
 UV_INSTALL_DIR ?= ./bin
-PYTHON_VERSION ?= 3.12
 UV_BIN := ${UV_INSTALL_DIR}/uv
 UVX_BIN := ${UV_INSTALL_DIR}/uvx
 MARIMO_FOLDER := book/marimo
@@ -80,7 +79,7 @@ install-extras: ## run custom build script (if exists)
 install: install-uv install-extras ## install
 	# Create the virtual environment only if it doesn't exist
 	@if [ ! -d ".venv" ]; then \
-	  ${UV_BIN} venv --python ${PYTHON_VERSION} || { printf "${RED}[ERROR] Failed to create virtual environment${RESET}\n"; exit 1; }; \
+	  ${UV_BIN} venv $(if $(PYTHON_VERSION),--python $(PYTHON_VERSION)) || { printf "${RED}[ERROR] Failed to create virtual environment${RESET}\n"; exit 1; }; \
 	else \
 	  printf "${BLUE}[INFO] Using existing virtual environment at .venv, skipping creation${RESET}\n"; \
 	fi
