@@ -214,6 +214,38 @@ class TestMakefile:
         out = strip_ansi(proc.stdout)
         assert "Value of CUSTOM_SCRIPTS_FOLDER:\n.github/scripts/customisations" in out
 
+    def test_install_target_logic(self, logger, tmp_path):
+        """Test install target logic regarding uv.lock existence."""
+        # Create dummy uv/uvx executables to satisfy dependencies and mock execution
+        bin_dir = tmp_path / "bin"
+        bin_dir.mkdir()
+        uv_bin = bin_dir / "uv"
+        uv_bin.write_text('#!/bin/sh\necho "MOCK_UV $@"\n')
+        uv_bin.chmod(uv_bin.stat().st_mode | 0o111)
+
+        uvx_bin = bin_dir / "uvx"
+        uvx_bin.write_text("#!/bin/sh\n")
+        uvx_bin.chmod(uvx_bin.stat().st_mode | 0o111)
+
+        # Create pyproject.toml
+        (tmp_path / "pyproject.toml").touch()
+
+        # Define args to override variables
+        make_args = ["install", f"UV_BIN={uv_bin}", f"UVX_BIN={uvx_bin}", f"UV_INSTALL_DIR={bin_dir}"]
+
+        # Case 1: No uv.lock -> should run sync (generate lock)
+        # We run with dry_run=False to execute the shell logic in the Makefile
+        proc = run_make(logger, make_args, dry_run=False)
+        out = strip_ansi(proc.stdout)
+        assert "MOCK_UV sync --all-extras" in out
+        assert "--frozen" not in out
+
+        # Case 2: uv.lock exists -> should run sync --frozen
+        (tmp_path / "uv.lock").touch()
+        proc = run_make(logger, make_args, dry_run=False)
+        out = strip_ansi(proc.stdout)
+        assert "MOCK_UV sync --all-extras --frozen" in out
+
 
 class TestMakefileRootFixture:
     """Tests for root fixture usage in Makefile tests."""
