@@ -100,6 +100,9 @@ install: install-uv install-extras ## install
 sync: install-uv ## sync with template repository as defined in .github/rhiza/template.yml
 	@${UVX_BIN} "rhiza>=0.7.1" materialize --force .
 
+validate: install-uv ## validate project structure against template repository as defined in .github/rhiza/template.yml
+	@${UVX_BIN} "rhiza>=0.7.1" validate .
+
 clean: ## clean
 	@printf "${BLUE}Cleaning project...${RESET}\n"
 	# do not clean .env files

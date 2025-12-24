@@ -78,6 +78,7 @@ Bootstrap
   install-extras        run custom build script (if exists)
   install               install
   sync                  sync with template repository as defined in .github/rhiza/template.yml
+  validate              validate project structure against template repository as defined in .github/rhiza/template.yml
   clean                 clean
 
 Tools
