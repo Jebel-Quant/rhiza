@@ -31,6 +31,7 @@ app = marimo.App(width="medium")
 
 @app.cell
 def cell_01():
+    """Import marimo as `mo` and return it for use in subsequent cells."""
     import marimo as mo
 
     return (mo,)
@@ -38,6 +39,7 @@ def cell_01():
 
 @app.cell
 def cell_02(mo):
+    """Render the showcase introduction Markdown content."""
     mo.md(
         r"""
         # 🎨 Marimo Showcase
@@ -63,12 +65,14 @@ def cell_02(mo):
 
 @app.cell
 def cell_03(mo):
+    """Render a horizontal rule to separate sections."""
     mo.md(r"""---""")
     return
 
 
 @app.cell
 def cell_04(mo):
+    """Introduce the Interactive UI Elements section."""
     mo.md(
         r"""
         ## 🎚️ Interactive UI Elements
@@ -81,6 +85,7 @@ def cell_04(mo):
 
 @app.cell
 def cell_05(mo):
+    """Create and display a numeric slider UI component."""
     # Slider for numeric input
     slider = mo.ui.slider(start=0, stop=100, value=50, label="Adjust the value:", show_value=True)
     slider
@@ -89,6 +94,7 @@ def cell_05(mo):
 
 @app.cell
 def cell_06(mo, slider):
+    """Display the current slider value reactively."""
     mo.md(
         f"""
         The slider value is: **{slider.value}**
@@ -101,6 +107,7 @@ def cell_06(mo, slider):
 
 @app.cell
 def cell_07(mo):
+    """Create and display a dropdown for language selection."""
     # Dropdown for selection
     dropdown = mo.ui.dropdown(
         options=["Python", "JavaScript", "Rust", "Go", "TypeScript"],
@@ -113,6 +120,7 @@ def cell_07(mo):
 
 @app.cell
 def cell_08(dropdown, mo):
+    """Display the currently selected language from the dropdown."""
     mo.md(
         f"""
         You selected: **{dropdown.value}** 🎉
@@ -125,6 +133,7 @@ def cell_08(dropdown, mo):
 
 @app.cell
 def cell_09(mo):
+    """Create and display a text input field for the user's name."""
     # Text input
     text_input = mo.ui.text(value="Marimo", label="Enter your name:", placeholder="Type something...")
     text_input
@@ -133,18 +142,21 @@ def cell_09(mo):
 
 @app.cell
 def cell_10(mo, text_input):
+    """Display a personalized greeting using the current text input value."""
     mo.md(f"""Hello, **{text_input.value}**! 👋""")
     return
 
 
 @app.cell
 def cell_11(mo):
+    """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
     return
 
 
 @app.cell
 def cell_12(mo):
+    """Introduce the Data Visualization section."""
     mo.md(
         r"""
         ## 📊 Data Visualization
@@ -158,6 +170,7 @@ def cell_12(mo):
 
 @app.cell
 def cell_13():
+    """Import and return NumPy and Plotly modules for plotting in later cells."""
     import numpy as np
     import plotly.graph_objects as go
 
@@ -166,6 +179,7 @@ def cell_13():
 
 @app.cell
 def cell_14(mo):
+    """Create sliders for wave frequency and amplitude controls for the plot."""
     # Interactive controls for the plot
     frequency_slider = mo.ui.slider(start=1, stop=10, value=2, label="Wave frequency:", show_value=True)
 
@@ -177,6 +191,7 @@ def cell_14(mo):
 
 @app.cell
 def cell_15(amplitude_slider, frequency_slider, go, mo, np):
+    """Build a reactive Plotly sine wave based on the slider values."""
     # Generate reactive plot based on slider values
     x = np.linspace(0, 4 * np.pi, 1000)
     y = amplitude_slider.value * np.sin(frequency_slider.value * x)
@@ -217,12 +232,14 @@ def cell_15(amplitude_slider, frequency_slider, go, mo, np):
 
 @app.cell
 def cell_16(mo):
+    """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
     return
 
 
 @app.cell
 def cell_17(mo):
+    """Introduce the DataFrames section."""
     mo.md(
         r"""
         ## 📋 Working with DataFrames
@@ -235,6 +252,7 @@ def cell_17(mo):
 
 @app.cell
 def cell_18():
+    """Create a sample Pandas DataFrame for use in subsequent cells."""
     import pandas as pd
 
     # Create sample data
@@ -251,6 +269,7 @@ def cell_18():
 
 @app.cell
 def cell_19(data, mo):
+    """Render introductory text for the sample sales dataset."""
     mo.md(
         r"""
         ### Sample Sales Data
@@ -263,6 +282,7 @@ def cell_19(data, mo):
 
 @app.cell
 def cell_20(data, mo):
+    """Display the sample dataset as an interactive table."""
     # Display as interactive table
     mo.ui.table(data)
     return
@@ -270,6 +290,7 @@ def cell_20(data, mo):
 
 @app.cell
 def cell_21(data, go, mo):
+    """Render a Plotly bar chart showing sales by product."""
     # Create a bar chart with Plotly
     colors = ["#2FA4A9", "#3FB5BA", "#4FC6CB", "#5FD7DC", "#6FE8ED"]
 
@@ -299,12 +320,14 @@ def cell_21(data, go, mo):
 
 @app.cell
 def cell_22(mo):
+    """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
     return
 
 
 @app.cell
 def cell_23(mo):
+    """Introduce the layout components section."""
     mo.md(
         r"""
         ## 🎯 Layout Components
@@ -317,6 +340,7 @@ def cell_23(mo):
 
 @app.cell
 def cell_24(mo):
+    """Demonstrate a two-column layout with left and right content."""
     # Using columns for side-by-side layout
     left_content = mo.md(
         r"""
@@ -348,6 +372,7 @@ def cell_24(mo):
 
 @app.cell
 def cell_25(mo):
+    """Demonstrate tabs with Introduction, Details, and Summary content."""
     # Using tabs for organized content
     tab1 = mo.md(
         r"""
@@ -395,12 +420,14 @@ def cell_25(mo):
 
 @app.cell
 def cell_26(mo):
+    """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
     return
 
 
 @app.cell
 def cell_27(mo):
+    """Introduce the forms and user input section."""
     mo.md(
         r"""
         ## 📝 Forms and User Input
@@ -413,6 +440,7 @@ def cell_27(mo):
 
 @app.cell
 def cell_28(mo):
+    """Build and display a multi-input form for collecting user information."""
     # Create a form with multiple inputs
     form = mo.ui.dictionary(
         {
@@ -431,6 +459,7 @@ def cell_28(mo):
 
 @app.cell
 def cell_29(form, mo):
+    """Display current form values reactively as the user edits the form."""
     # Display form values - updates reactively as you type/change values
     if form.value and any(form.value.values()):
         interests_text = ", ".join(form.value["interests"]) if form.value["interests"] else "None selected"
@@ -457,12 +486,14 @@ def cell_29(form, mo):
 
 @app.cell
 def cell_30(mo):
+    """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
     return
 
 
 @app.cell
 def cell_31(mo):
+    """Introduce the Markdown and LaTeX support section."""
     mo.md(
         r"""
         ## 🎓 Markdown & LaTeX Support
@@ -475,6 +506,7 @@ def cell_31(mo):
 
 @app.cell
 def cell_32(mo):
+    """Render rich Markdown with LaTeX equations, code blocks, and formatting examples."""
     mo.md(
         r"""
         ### Mathematical Equations
@@ -522,12 +554,14 @@ def cell_32(mo):
 
 @app.cell
 def cell_33(mo):
+    """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
     return
 
 
 @app.cell
 def cell_34(mo):
+    """Introduce the Advanced Features section."""
     mo.md(
         r"""
         ## 🎪 Advanced Features
@@ -540,6 +574,7 @@ def cell_34(mo):
 
 @app.cell
 def cell_35(mo):
+    """Render an informational callout about Marimo notebooks being plain Python files."""
     # Callout boxes for important information
     mo.callout(
         mo.md(
@@ -560,6 +595,7 @@ def cell_35(mo):
 
 @app.cell
 def cell_36(mo):
+    """Display an accordion with notes on reactivity, performance, and dependencies."""
     # Accordion for collapsible content
     mo.accordion(
         {
@@ -593,12 +629,14 @@ def cell_36(mo):
 
 @app.cell
 def cell_37(mo):
+    """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
     return
 
 
 @app.cell
 def cell_38(mo):
+    """Render the conclusion section of the Marimo showcase notebook."""
     mo.md(
         r"""
         ## 🎉 Conclusion
