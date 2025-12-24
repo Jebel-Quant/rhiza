@@ -214,6 +214,104 @@ class TestMakefile:
         out = strip_ansi(proc.stdout)
         assert "Value of CUSTOM_SCRIPTS_FOLDER:\n.github/rhiza/scripts/customisations" in out
 
+    def test_install_target_python_version(self, logger, tmp_path):
+        """Test install target respects PYTHON_VERSION variable."""
+        # Create dummy uv executable
+        bin_dir = tmp_path / "bin"
+        bin_dir.mkdir()
+        uv_bin = bin_dir / "uv"
+        uv_bin.write_text('#!/bin/sh\necho "MOCK_UV $@"\n')
+        uv_bin.chmod(uv_bin.stat().st_mode | 0o111)
+
+        # Create dummy uvx executable (required for install-uv check)
+        uvx_bin = bin_dir / "uvx"
+        uvx_bin.write_text("#!/bin/sh\n")
+        uvx_bin.chmod(uvx_bin.stat().st_mode | 0o111)
+
+        # Create pyproject.toml
+        (tmp_path / "pyproject.toml").touch()
+
+        # Define args
+        make_args = [
+            "install",
+            f"UV_BIN={uv_bin}",
+            f"UVX_BIN={uvx_bin}",
+            "PYTHON_VERSION=3.11",
+        ]
+
+        # Run make
+        proc = run_make(logger, make_args, dry_run=False)
+        out = strip_ansi(proc.stdout)
+
+        # Check if correct python version was passed
+        assert "MOCK_UV venv --python 3.11" in out
+
+    def test_install_target_default_python(self, logger, tmp_path):
+        """Test install target uses default python discovery when PYTHON_VERSION is not set."""
+        # Create dummy uv executable
+        bin_dir = tmp_path / "bin"
+        bin_dir.mkdir()
+        uv_bin = bin_dir / "uv"
+        uv_bin.write_text('#!/bin/sh\necho "MOCK_UV $@"\n')
+        uv_bin.chmod(uv_bin.stat().st_mode | 0o111)
+
+        # Create dummy uvx executable
+        uvx_bin = bin_dir / "uvx"
+        uvx_bin.write_text("#!/bin/sh\n")
+        uvx_bin.chmod(uvx_bin.stat().st_mode | 0o111)
+
+        # Create pyproject.toml
+        (tmp_path / "pyproject.toml").touch()
+
+        # Define args without PYTHON_VERSION
+        make_args = [
+            "install",
+            f"UV_BIN={uv_bin}",
+            f"UVX_BIN={uvx_bin}",
+        ]
+
+        # Run make
+        proc = run_make(logger, make_args, dry_run=False)
+        out = strip_ansi(proc.stdout)
+
+        # Check that venv is called without --python argument
+        assert "MOCK_UV venv" in out
+        assert "--python" not in out
+
+    def test_install_target_respects_python_version_file(self, logger, tmp_path):
+        """Test install target respects .python-version file by not passing --python flag."""
+        # Create dummy uv executable
+        bin_dir = tmp_path / "bin"
+        bin_dir.mkdir()
+        uv_bin = bin_dir / "uv"
+        uv_bin.write_text('#!/bin/sh\necho "MOCK_UV $@"\n')
+        uv_bin.chmod(uv_bin.stat().st_mode | 0o111)
+
+        # Create dummy uvx executable
+        uvx_bin = bin_dir / "uvx"
+        uvx_bin.write_text("#!/bin/sh\n")
+        uvx_bin.chmod(uvx_bin.stat().st_mode | 0o111)
+
+        # Create pyproject.toml and .python-version
+        (tmp_path / "pyproject.toml").touch()
+        (tmp_path / ".python-version").write_text("3.11")
+
+        # Define args without PYTHON_VERSION
+        make_args = [
+            "install",
+            f"UV_BIN={uv_bin}",
+            f"UVX_BIN={uvx_bin}",
+        ]
+
+        # Run make
+        proc = run_make(logger, make_args, dry_run=False)
+        out = strip_ansi(proc.stdout)
+
+        # Check that venv is called without --python argument
+        # This ensures uv will use the .python-version file
+        assert "MOCK_UV venv" in out
+        assert "--python" not in out
+
     def test_install_target_logic(self, logger, tmp_path):
         """Test install target logic regarding uv.lock existence."""
         # Create dummy uv/uvx executables to satisfy dependencies and mock execution
@@ -245,32 +343,6 @@ class TestMakefile:
         proc = run_make(logger, make_args, dry_run=False)
         out = strip_ansi(proc.stdout)
         assert "MOCK_UV sync --all-extras --frozen" in out
-
-    def test_install_target_python_version(self, logger, tmp_path):
-        """Test install target respects PYTHON_VERSION variable."""
-        # Create dummy uv executable
-        bin_dir = tmp_path / "bin"
-        bin_dir.mkdir()
-        uv_bin = bin_dir / "uv"
-        uv_bin.write_text('#!/bin/sh\necho "MOCK_UV $@"\n')
-        uv_bin.chmod(uv_bin.stat().st_mode | 0o111)
-
-        # Create pyproject.toml
-        (tmp_path / "pyproject.toml").touch()
-
-        # Define args
-        make_args = [
-            "install",
-            f"UV_BIN={uv_bin}",
-            "PYTHON_VERSION=3.10",
-        ]
-
-        # Run make
-        proc = run_make(logger, make_args, dry_run=False)
-        out = strip_ansi(proc.stdout)
-
-        # Check if correct python version was passed
-        assert "MOCK_UV venv --python 3.10" in out
 
 
 class TestMakefileRootFixture:
