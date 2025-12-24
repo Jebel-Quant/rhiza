@@ -246,6 +246,32 @@ class TestMakefile:
         out = strip_ansi(proc.stdout)
         assert "MOCK_UV sync --all-extras --frozen" in out
 
+    def test_install_target_python_version(self, logger, tmp_path):
+        """Test install target respects PYTHON_VERSION variable."""
+        # Create dummy uv executable
+        bin_dir = tmp_path / "bin"
+        bin_dir.mkdir()
+        uv_bin = bin_dir / "uv"
+        uv_bin.write_text('#!/bin/sh\necho "MOCK_UV $@"\n')
+        uv_bin.chmod(uv_bin.stat().st_mode | 0o111)
+
+        # Create pyproject.toml
+        (tmp_path / "pyproject.toml").touch()
+
+        # Define args
+        make_args = [
+            "install",
+            f"UV_BIN={uv_bin}",
+            "PYTHON_VERSION=3.10",
+        ]
+
+        # Run make
+        proc = run_make(logger, make_args, dry_run=False)
+        out = strip_ansi(proc.stdout)
+
+        # Check if correct python version was passed
+        assert "MOCK_UV venv --python 3.10" in out
+
 
 class TestMakefileRootFixture:
     """Tests for root fixture usage in Makefile tests."""
