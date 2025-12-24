@@ -40,13 +40,13 @@ on:
       - '**'
     paths:
       - ".devcontainer/**"
-      - ".github/workflows/devcontainer.yml"
+      - ".github/workflows/rhiza/devcontainer.yml"
 
   pull_request:
     branches: [ main, master ]
     paths:
       - ".devcontainer/**"
-      - ".github/workflows/devcontainer.yml"
+      - ".github/workflows/rhiza/devcontainer.yml"
 
 permissions:
   contents: read
