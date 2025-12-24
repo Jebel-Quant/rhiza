@@ -24,7 +24,7 @@
 #   - Converts repository owner to lowercase for Docker compatibility
 #
 # Publishing:
-#   Publishing only happens during releases via release.yml when the
+#   Publishing only happens during releases via rhiza_release.yml when the
 #   PUBLISH_DEVCONTAINER repository variable is set to "true".
 #
 # For repos without devcontainers:
