@@ -1,0 +1,293 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# GitLab CI/CD Configuration
+#
+# Purpose: This configuration defines CI/CD pipelines for GitLab, reusing
+#          scripts and utilities from .github/rhiza via symbolic links in .gitlab/
+#
+# Structure:
+#   - The .gitlab directory contains symbolic links to .github/rhiza/scripts and utils
+#   - Scripts like book.sh, bump.sh, release.sh, etc. are reused from GitHub workflows
+#   - Python utilities for version management are also reused
+#
+# Pipelines:
+#   - test: Run tests on multiple Python versions
+#   - lint: Run pre-commit hooks and code quality checks
+#   - deptry: Check for dependency issues
+#   - book: Build and deploy documentation (Pages)
+#   - release: Create releases and publish packages
+#
+# Note: This mirrors the functionality of GitHub Actions workflows found in
+#       .github/workflows/ but adapted for GitLab CI/CD conventions.
+
+# Global configuration
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+# Define stages
+stages:
+  - prepare
+  - test
+  - quality
+  - build
+  - deploy
+  - release
+
+# Global variables
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  UV_CACHE_DIR: "$CI_PROJECT_DIR/.cache/uv"
+  PYTHON_DEFAULT_VERSION: "3.14"
+
+# Cache configuration for faster builds
+.cache_template: &cache_template
+  cache:
+    key: "${CI_COMMIT_REF_SLUG}-${CI_JOB_NAME}"
+    paths:
+      - .cache/pip
+      - .cache/uv
+      - .venv/
+
+# Base job template for Python projects
+.python_base:
+  <<: *cache_template
+  before_script:
+    - echo "Setting up Python environment..."
+    # Install uv
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - export PATH="$HOME/.cargo/bin:$PATH"
+    # Create virtual environment
+    - uv venv --python ${PYTHON_VERSION:-${PYTHON_DEFAULT_VERSION}}
+    - source .venv/bin/activate
+    # Sync dependencies if pyproject.toml exists
+    - |
+      if [ -f "pyproject.toml" ]; then
+        uv sync --all-extras
+      fi
+    # Install test requirements if they exist
+    - |
+      if [ -f "tests/requirements.txt" ]; then
+        uv pip install -r tests/requirements.txt
+      fi
+
+# Generate Python version matrix
+generate-matrix:
+  stage: prepare
+  image: python:3.14-slim
+  script:
+    - python .gitlab/utils/version_matrix.py > versions.json
+    - cat versions.json
+  artifacts:
+    paths:
+      - versions.json
+    expire_in: 1 hour
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Test job - runs on multiple Python versions
+test:
+  stage: test
+  extends: .python_base
+  image: python:${PYTHON_VERSION}-slim
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.12", "3.13", "3.14"]
+  script:
+    - echo "Running tests with Python ${PYTHON_VERSION}..."
+    - uv run pytest tests
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    when: always
+    reports:
+      junit: test-results.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - htmlcov/
+      - test-results.xml
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Pre-commit checks
+lint:
+  stage: quality
+  extends: .python_base
+  image: python:${PYTHON_DEFAULT_VERSION}-slim
+  script:
+    - echo "Running pre-commit hooks..."
+    # Install git (required for pre-commit)
+    - apt-get update && apt-get install -y git
+    - uv tool install pre-commit
+    - export PATH="$HOME/.local/bin:$PATH"
+    - pre-commit run --all-files
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Dependency check
+deptry:
+  stage: quality
+  extends: .python_base
+  image: python:${PYTHON_DEFAULT_VERSION}-slim
+  script:
+    - echo "Running deptry..."
+    - |
+      if [ -f "pyproject.toml" ]; then
+        uv tool install deptry
+        export PATH="$HOME/.local/bin:$PATH"
+        deptry src
+      else
+        echo "No pyproject.toml found, skipping deptry"
+      fi
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  allow_failure: true
+
+# Build documentation
+book:
+  stage: build
+  extends: .python_base
+  image: python:${PYTHON_DEFAULT_VERSION}-slim
+  script:
+    - echo "Building documentation book..."
+    # Install make and other dependencies
+    - apt-get update && apt-get install -y make
+    # Run the book build script (reused from .github/rhiza/scripts)
+    - make book
+  artifacts:
+    paths:
+      - _book/
+    expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+# Deploy documentation to GitLab Pages
+pages:
+  stage: deploy
+  dependencies:
+    - book
+  script:
+    - echo "Deploying to GitLab Pages..."
+    - rm -rf public
+    - mv _book public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  environment:
+    name: production
+    url: https://${CI_PROJECT_NAMESPACE}.gitlab.io/${CI_PROJECT_NAME}
+
+# Validate tag format for releases
+validate-tag:
+  stage: prepare
+  image: alpine:latest
+  script:
+    - echo "Validating tag ${CI_COMMIT_TAG}..."
+    - |
+      if ! echo "$CI_COMMIT_TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+'; then
+        echo "Error: Tag must be in format v*.*.* (e.g., v1.2.3)"
+        exit 1
+      fi
+    - echo "Tag validation successful"
+  rules:
+    - if: $CI_COMMIT_TAG
+  artifacts:
+    reports:
+      dotenv: build.env
+
+# Build Python package
+build-package:
+  stage: build
+  extends: .python_base
+  image: python:${PYTHON_DEFAULT_VERSION}-slim
+  script:
+    - echo "Building Python package..."
+    - |
+      if [[ -f pyproject.toml ]] && grep -q '^\[build-system\]' pyproject.toml; then
+        echo "Building package with hatch..."
+        uv tool install hatch
+        export PATH="$HOME/.local/bin:$PATH"
+        hatch build
+      else
+        echo "No build system configured, skipping package build"
+        exit 0
+      fi
+    # Verify version matches tag
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        TAG_VERSION="${CI_COMMIT_TAG#v}"
+        PROJECT_VERSION=$(uv version --short)
+        if [[ "$PROJECT_VERSION" != "$TAG_VERSION" ]]; then
+          echo "Error: Version mismatch - pyproject.toml has '$PROJECT_VERSION' but tag is '$TAG_VERSION'"
+          exit 1
+        fi
+        echo "Version verified: $PROJECT_VERSION matches tag"
+      fi
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_TAG
+  needs:
+    - validate-tag
+
+# Create GitLab release
+create-release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script:
+    - echo "Creating GitLab release for ${CI_COMMIT_TAG}..."
+  release:
+    tag_name: '$CI_COMMIT_TAG'
+    description: 'Release $CI_COMMIT_TAG'
+    assets:
+      links:
+        - name: 'Package'
+          url: '${CI_PROJECT_URL}/-/packages'
+  rules:
+    - if: $CI_COMMIT_TAG
+  needs:
+    - build-package
+
+# Publish to PyPI (optional - requires PYPI_TOKEN variable)
+publish-pypi:
+  stage: release
+  extends: .python_base
+  image: python:${PYTHON_DEFAULT_VERSION}-slim
+  script:
+    - echo "Publishing to PyPI..."
+    - |
+      if [[ ! -d dist ]]; then
+        echo "Warning: No dist/ folder found. Skipping PyPI publish."
+        exit 0
+      fi
+    - |
+      if grep -R "Private :: Do Not Upload" pyproject.toml; then
+        echo "Package marked as private, skipping PyPI publish"
+        exit 0
+      fi
+    - |
+      if [ -n "$PYPI_TOKEN" ]; then
+        uv tool install twine
+        export PATH="$HOME/.local/bin:$PATH"
+        python -m twine upload --skip-existing dist/* -u __token__ -p $PYPI_TOKEN
+      else
+        echo "PYPI_TOKEN not set, skipping PyPI publish"
+      fi
+  rules:
+    - if: $CI_COMMIT_TAG
+  needs:
+    - build-package
+  allow_failure: true
