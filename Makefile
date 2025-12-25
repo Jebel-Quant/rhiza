@@ -102,10 +102,10 @@ install: install-uv install-extras ## install
 	  printf "${YELLOW}[WARN] No pyproject.toml found, skipping install${RESET}\n"; \
 	fi
 
-sync: install-uv ## sync with template repository as defined in .rhiza/template.yml
+sync: install-uv ## sync with template repository as defined in .github/template.yml
 	@${UVX_BIN} "rhiza>=0.7.1" materialize --force .
 
-validate: install-uv ## validate project structure against template repository as defined in .rhiza/template.yml
+validate: install-uv ## validate project structure against template repository as defined in .github/template.yml
 	@${UVX_BIN} "rhiza>=0.7.1" validate .
 
 clean: ## clean
