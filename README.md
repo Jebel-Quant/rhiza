@@ -77,8 +77,8 @@ Bootstrap
   install-uv            ensure uv/uvx is installed
   install-extras        run custom build script (if exists)
   install               install
-  sync                  sync with template repository as defined in .rhiza/template.yml
-  validate              validate project structure against template repository as defined in .rhiza/template.yml
+  sync                  sync with template repository as defined in .github/template.yml
+  validate              validate project structure against template repository as defined in .github/template.yml
   clean                 clean
 
 Tools
