@@ -203,16 +203,16 @@ class TestMakefile:
         assert f"Value of UVX_BIN:\n{expected_bin}" in out
 
     def test_script_folder_is_github_scripts(self, logger):
-        """`SCRIPTS_FOLDER` should point to `.github/rhiza/scripts`."""
+        """`SCRIPTS_FOLDER` should point to `.rhiza/scripts`."""
         proc = run_make(logger, ["print-SCRIPTS_FOLDER"], dry_run=False)
         out = strip_ansi(proc.stdout)
-        assert "Value of SCRIPTS_FOLDER:\n.github/rhiza/scripts" in out
+        assert "Value of SCRIPTS_FOLDER:\n.rhiza/scripts" in out
 
     def test_custom_scripts_folder_is_set(self, logger):
-        """`CUSTOM_SCRIPTS_FOLDER` should point to `.github/rhiza/scripts/customisations`."""
+        """`CUSTOM_SCRIPTS_FOLDER` should point to `.rhiza/scripts/customisations`."""
         proc = run_make(logger, ["print-CUSTOM_SCRIPTS_FOLDER"], dry_run=False)
         out = strip_ansi(proc.stdout)
-        assert "Value of CUSTOM_SCRIPTS_FOLDER:\n.github/rhiza/scripts/customisations" in out
+        assert "Value of CUSTOM_SCRIPTS_FOLDER:\n.rhiza/scripts/customisations" in out
 
     def test_install_target_python_version(self, logger, tmp_path):
         """Test install target respects PYTHON_VERSION variable."""
