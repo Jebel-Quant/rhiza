@@ -35,9 +35,24 @@ jobs:
         run: |
           echo "python-version=$(python ./.github/rhiza/utils/version_max.py)" >> "$GITHUB_OUTPUT"
 
-      - uses: ./.github/rhiza/actions/setup-project
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          python-version: ${{ steps.get-python.outputs.python-version }}
-          uv-extra-index-url: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          version: "0.9.18"
+
+      - name: Build the virtual environment
+        run: uv venv --python ${{ steps.get-python.outputs.python-version }}
+
+      - name: Sync the virtual environment for ${{ github.repository }}
+        run: |
+          if [[ -n "${{ secrets.UV_EXTRA_INDEX_URL }}" ]]; then
+            export UV_EXTRA_INDEX_URL="${{ secrets.UV_EXTRA_INDEX_URL }}"
+          fi
+
+          if [ -f "pyproject.toml" ]; then
+            uv sync --all-extras
+          else
+            echo "No pyproject.toml found, skipping package installation"
+          fi
 
       - uses: pre-commit/action@v3.0.1

@@ -109,12 +109,25 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.ref }}
 
-      # Use the composite action to set up the project
-      - name: Setup the project
-        uses: ./.github/rhiza/actions/setup-project
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          python-version: ${{ vars.PYTHON_DEFAULT_VERSION || '3.14' }}
-          uv-extra-index-url: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          version: "0.9.18"
+
+      - name: Build the virtual environment
+        run: uv venv --python ${{ vars.PYTHON_DEFAULT_VERSION || '3.14' }}
+
+      - name: Sync the virtual environment for ${{ github.repository }}
+        run: |
+          if [[ -n "${{ secrets.UV_EXTRA_INDEX_URL }}" ]]; then
+            export UV_EXTRA_INDEX_URL="${{ secrets.UV_EXTRA_INDEX_URL }}"
+          fi
+
+          if [ -f "pyproject.toml" ]; then
+            uv sync --all-extras
+          else
+            echo "No pyproject.toml found, skipping package installation"
+          fi
 
       - name: Verify version matches tag
         if: hashFiles('pyproject.toml') != ''
