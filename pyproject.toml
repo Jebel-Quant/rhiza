@@ -1,6 +1,6 @@
 [project]
 name = "rhiza"
-version = "0.3.1"
+version = "0.3.2"
 description = "Reusable configuration templates for modern Python projects"
 readme = "README.md"
 requires-python = ">=3.11"
