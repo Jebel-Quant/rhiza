@@ -54,10 +54,10 @@ class TestRootFixture:
                 warnings.warn(f"Expected file {filename} not found", stacklevel=2)
 
     def test_root_can_locate_github_scripts(self, root):
-        """Root should allow locating GitHub scripts."""
-        scripts_dir = root / ".github" / "rhiza" / "scripts"
+        """Root should allow locating rhiza scripts."""
+        scripts_dir = root / ".rhiza" / "scripts"
         if not scripts_dir.exists():
-            warnings.warn("GitHub scripts directory not found", stacklevel=2)
+            warnings.warn("Rhiza scripts directory not found", stacklevel=2)
         else:
             if not (scripts_dir / "release.sh").exists():
                 warnings.warn("Expected script release.sh not found", stacklevel=2)
