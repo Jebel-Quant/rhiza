@@ -77,8 +77,8 @@ Bootstrap
   install-uv            ensure uv/uvx is installed
   install-extras        run custom build script (if exists)
   install               install
-  sync                  sync with template repository as defined in .github/rhiza/template.yml
-  validate              validate project structure against template repository as defined in .github/rhiza/template.yml
+  sync                  sync with template repository as defined in .rhiza/template.yml
+  validate              validate project structure against template repository as defined in .rhiza/template.yml
   clean                 clean
 
 Tools
@@ -325,13 +325,13 @@ git checkout -b rhiza
 
 # Ensure required directories exist
 mkdir -p .github/workflows
-mkdir -p .github/rhiza/scripts
+mkdir -p .rhiza/scripts
 
 # Copy the template configuration
 cp /tmp/rhiza/.github/template.yml .github/template.yml
 
 # Copy the sync helper script
-cp /tmp/rhiza/.github/rhiza/scripts/sync.sh .github/rhiza/scripts
+cp /tmp/rhiza/.rhiza/scripts/sync.sh .rhiza/scripts
 ```
 
 At this stage:
@@ -346,7 +346,7 @@ At this stage:
 Run the sync script to apply the templates defined in '.github/template.yml'
 
 ```bash
-./.github/rhiza/scripts/sync.sh
+./.rhiza/scripts/sync.sh
 ```
 
 This will:
@@ -377,7 +377,7 @@ This approach keeps your project’s configuration in sync with Rhiza’s latest
 Prerequisites:
 
   - A .github/template.yml file exists, defining **which templates to include or exclude**.
-  - The first manual sync (./.github/rhiza/scripts/sync.sh) has been performed.
+  - The first manual sync (./.rhiza/scripts/sync.sh) has been performed.
   - The .github/workflows/sync.yml workflow is present in your repository.
 
 The workflow can run:
@@ -545,7 +545,7 @@ The project includes a hook for installing additional system dependencies and cu
 
 ### Using build-extras.sh
 
-Create a file `.github/rhiza/scripts/customisations/build-extras.sh` in your repository to install system packages or dependencies (this repository uses a dedicated `customisations` folder for repo-specific scripts):
+Create a file `.rhiza/scripts/customisations/build-extras.sh` in your repository to install system packages or dependencies (this repository uses a dedicated `customisations` folder for repo-specific scripts):
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -559,20 +559,20 @@ sudo apt-get install -y graphviz
 
 ### When it Runs
 
-The `build-extras.sh` script (from `.github/rhiza/scripts/customisations`) is automatically invoked during:
+The `build-extras.sh` script (from `.rhiza/scripts/customisations`) is automatically invoked during:
 - `make install` - Initial project setup
 - `make test` - Before running tests
 - `make book` - Before building documentation
 - `make docs` - Before generating API documentation
 
-This ensures custom dependencies are available whenever needed throughout the build lifecycle. The `Makefile` intentionally only checks the `.github/rhiza/scripts/customisations` folder for repository-specific hooks such as `build-extras.sh` and `post-release.sh`.
+This ensures custom dependencies are available whenever needed throughout the build lifecycle. The `Makefile` intentionally only checks the `.rhiza/scripts/customisations` folder for repository-specific hooks such as `build-extras.sh` and `post-release.sh`.
 
 ### Important: Exclude from Template Updates
 
 If you customize this file, add it to the exclude list in your `action.yml` configuration to prevent it from being overwritten during template updates. Use the `customisations` path to avoid clobbering:
 ```yaml
 exclude: |
-  .github/rhiza/scripts/customisations/build-extras.sh
+  .rhiza/scripts/customisations/build-extras.sh
 ```
 
 
@@ -586,7 +586,7 @@ exclude: |
 
 ### Post-release scripts
 
-If you need repository-specific post-release tasks, place a `post-release.sh` script in `.github/rhiza/scripts/customisations/post-release.sh`. The `Makefile` will only look in the `customisations` folder for that hook.
+If you need repository-specific post-release tasks, place a `post-release.sh` script in `.rhiza/scripts/customisations/post-release.sh`. The `Makefile` will only look in the `customisations` folder for that hook.
 
 
 ## 🚀 Releasing

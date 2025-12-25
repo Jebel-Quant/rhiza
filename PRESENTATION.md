@@ -145,10 +145,10 @@ git clone https://github.com/jebel-quant/rhiza.git /tmp/rhiza
 
 # Copy sync mechanism
 cp /tmp/rhiza/.github/template.yml .github/
-cp /tmp/rhiza/.github/rhiza/scripts/sync.sh .github/rhiza/scripts/
+cp /tmp/rhiza/.rhiza/scripts/sync.sh .rhiza/scripts/
 
 # Sync templates
-./.github/rhiza/scripts/sync.sh
+./.rhiza/scripts/sync.sh
 ```
 
 ---
@@ -170,7 +170,7 @@ include: |
   pytest.ini
 
 exclude: |
-  .github/rhiza/scripts/customisations/*
+  .rhiza/scripts/customisations/*
 ```
 
 ---
@@ -276,7 +276,7 @@ make release
 
 ### Build Extras
 
-Create `.github/rhiza/scripts/customisations/build-extras.sh`:
+Create `.rhiza/scripts/customisations/build-extras.sh`:
 
 ```bash
 #!/bin/bash
@@ -510,7 +510,7 @@ classifiers = [
 
 1. **Try it**: `uvx rhiza .` in your project
 2. **Review**: Check the generated `.github/template.yml`
-3. **Sync**: Run `./.github/rhiza/scripts/sync.sh`
+3. **Sync**: Run `./.rhiza/scripts/sync.sh`
 
 ### Or Explore First
 
