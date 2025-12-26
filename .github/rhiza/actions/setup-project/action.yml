@@ -45,5 +45,7 @@ runs:
         if [[ -n "${{ inputs.uv-extra-index-url }}" ]]; then
           export UV_EXTRA_INDEX_URL="${{ inputs.uv-extra-index-url }}"
         fi
-        uv sync --all-extras --frozen --python "${{ inputs.python-version }}"
+        uv venv --python ${{ inputs.python-version }}
+        uv sync --all-extras --frozen
+        #--python "${{ inputs.python-version }}"
         # uv sync --all-extras --frozen
