@@ -26,6 +26,7 @@ inputs:
   uv-extra-index-url:
     description: 'Extra index URL for uv'
     required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -42,10 +43,13 @@ runs:
     - name: "Sync the virtual environment for ${{ github.repository }}"
       shell: bash
       run: |
-        if [[ -n "${{ inputs.uv-extra-index-url }}" ]]; then
-          export UV_EXTRA_INDEX_URL="${{ inputs.uv-extra-index-url }}"
-        fi
+        export UV_EXTRA_INDEX_URL="${{ inputs.uv-extra-index-url }}"
+        #        If the input is empty → the variable is set to an empty string
+        #        uv treats an empty UV_EXTRA_INDEX_URL as unset
+        #        No branching
+        #        No subshell logic
+        #        No readability tax
+
         uv venv --python ${{ inputs.python-version }}
         uv sync --all-extras --frozen
-        #--python "${{ inputs.python-version }}"
-        # uv sync --all-extras --frozen
+
