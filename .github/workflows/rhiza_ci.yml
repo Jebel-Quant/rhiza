@@ -54,11 +54,24 @@ jobs:
         with:
           version: "0.9.18"
 
-      - name: Setup the project
-        uses: ./.github/rhiza/actions/setup-project
-        with:
-          python-version: ${{ matrix.python-version }}
-          uv-extra-index-url: ${{ secrets.UV_EXTRA_INDEX_URL }}
+      - name: "Sync the virtual environment for ${{ github.repository }}"
+        shell: bash
+        run: |
+          export UV_EXTRA_INDEX_URL="${{ secrets.uv-extra-index-url }}"
+          #        If the input is empty → the variable is set to an empty string
+          #        uv treats an empty UV_EXTRA_INDEX_URL as unset
+          #        No branching
+          #        No subshell logic
+          #        No readability tax
+
+          uv venv --python ${{ matrix.python-version }}
+          uv sync --all-extras --frozen
+
+      #- name: Setup the project
+      #  uses: ./.github/rhiza/actions/setup-project
+      #  with:
+      #    python-version: ${{ matrix.python-version }}
+      #    uv-extra-index-url: ${{ secrets.UV_EXTRA_INDEX_URL }}
 
       - name: Install dependencies
         run: |
