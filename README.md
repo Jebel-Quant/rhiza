@@ -232,6 +232,8 @@ Tooling that improves local development, onboarding, and reproducibility.
 Templates related to continuous integration, delivery, and repository automation.
 
 - **.github/** — GitHub Actions workflows, scripts, and repository templates
+- **.gitlab/** — GitLab CI/CD workflows (equivalent to GitHub Actions)
+  - See [GITLAB_CI.md](GITLAB_CI.md) for GitLab CI/CD setup and usage
 
 ## ⚙️ Workflow Configuration
 
