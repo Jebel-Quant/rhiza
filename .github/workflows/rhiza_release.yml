@@ -332,12 +332,19 @@ jobs:
         shell: bash
         run: |
           export UV_EXTRA_INDEX_URL="${{ secrets.uv-extra-index-url }}"
+          # will just use .python-version?
           uv sync --all-extras --frozen
+
+      #- name: "Sync the virtual environment for ${{ github.repository }}"
+      #  shell: bash
+      #  run: |
+      #    export UV_EXTRA_INDEX_URL="${{ secrets.uv-extra-index-url }}"
+      #    uv sync --all-extras --frozen
 
       - name: Set up Python
         uses: actions/setup-python@v6
-        with:
-          python-version: ${{ fromJSON(steps.get-python.outputs.python-version) }}
+      #  with:
+      #    python-version: ${{ fromJSON(steps.get-python.outputs.python-version) }}
 
       - name: Generate Devcontainer Link
         id: devcontainer_link
