@@ -67,12 +67,6 @@ jobs:
           uv venv --python ${{ matrix.python-version }}
           uv sync --all-extras --frozen
 
-      #- name: Setup the project
-      #  uses: ./.github/rhiza/actions/setup-project
-      #  with:
-      #    python-version: ${{ matrix.python-version }}
-      #    uv-extra-index-url: ${{ secrets.UV_EXTRA_INDEX_URL }}
-
       - name: Install dependencies
         run: |
           if [ -f "tests/requirements.txt" ]; then

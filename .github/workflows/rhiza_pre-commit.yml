@@ -35,14 +35,21 @@ jobs:
         with:
           version: "0.9.18"
 
-      - name: Get Python version
-        id: get-python
+      - name: "Sync the virtual environment for ${{ github.repository }}"
+        shell: bash
         run: |
-          echo "python-version=$(python ./.rhiza/utils/version_max.py)" >> "$GITHUB_OUTPUT"
+          export UV_EXTRA_INDEX_URL="${{ secrets.uv-extra-index-url }}"
+          #        If the input is empty → the variable is set to an empty string
+          #        uv treats an empty UV_EXTRA_INDEX_URL as unset
+          #        No branching
+          #        No subshell logic
+          #        No readability tax
 
-      - uses: ./.github/rhiza/actions/setup-project
-        with:
-          python-version: ${{ steps.get-python.outputs.python-version }}
-          uv-extra-index-url: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          uv sync --all-extras --frozen
+
+      #- uses: ./.github/rhiza/actions/setup-project
+      #  with:
+      #    python-version: ${{ steps.get-python.outputs.python-version }}
+      #    uv-extra-index-url: ${{ secrets.UV_EXTRA_INDEX_URL }}
 
       - uses: pre-commit/action@v3.0.1
