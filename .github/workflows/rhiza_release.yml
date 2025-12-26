@@ -7,7 +7,7 @@
 #
 # 📋 Pipeline Phases:
 #   1. 🔍 Validate Tag - Check tag format and ensure release doesn't already exist
-#   2. 🏗️  Build - Build Python package with Hatch (if [build-system] is defined in pyproject.toml
+#   2. 🏗️ Build - Build Python package with Hatch (if [build-system] is defined in pyproject.toml
 #   3. 📝 Draft Release - Create draft GitHub release with build artifacts
 #   4. 🚀 Publish to PyPI - Publish package using OIDC or custom feed
 #   5. 🐳 Publish Devcontainer - Build and publish devcontainer image (conditional)
@@ -107,19 +107,18 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.ref }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
           version: "0.9.18"
 
-      # Use the composite action to set up the project
-      - name: Setup the project
-        uses: ./.github/rhiza/actions/setup-project
-        with:
-          python-version: ${{ vars.PYTHON_DEFAULT_VERSION || '3.14' }}
-          uv-extra-index-url: ${{ secrets.UV_EXTRA_INDEX_URL }}
+      - name: "Sync the virtual environment for ${{ github.repository }}"
+        shell: bash
+        run: |
+          export UV_EXTRA_INDEX_URL="${{ secrets.uv-extra-index-url }}"
+          # will just use .python-version?
+          uv sync --all-extras --frozen
 
       - name: Verify version matches tag
         if: hashFiles('pyproject.toml') != ''
@@ -186,7 +185,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          #ref: ${{ github.ref }}
 
       - name: Download dist artifact
         uses: actions/download-artifact@v7
@@ -235,7 +233,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.ref }}
 
       - name: Check if devcontainer should be published
         id: check_publish
@@ -321,7 +318,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.ref }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -335,16 +331,8 @@ jobs:
           # will just use .python-version?
           uv sync --all-extras --frozen
 
-      #- name: "Sync the virtual environment for ${{ github.repository }}"
-      #  shell: bash
-      #  run: |
-      #    export UV_EXTRA_INDEX_URL="${{ secrets.uv-extra-index-url }}"
-      #    uv sync --all-extras --frozen
-
       - name: Set up Python
         uses: actions/setup-python@v6
-      #  with:
-      #    python-version: ${{ fromJSON(steps.get-python.outputs.python-version) }}
 
       - name: Generate Devcontainer Link
         id: devcontainer_link
