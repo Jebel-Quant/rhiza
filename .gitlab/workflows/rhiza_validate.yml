@@ -1,0 +1,23 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Rhiza Validate (GitLab CI)
+#
+# Purpose: Validates Rhiza configuration
+#
+# Trigger: This workflow runs on every push and on merge requests to main/master
+
+validate:rhiza:
+  stage: test
+  image: ghcr.io/astral-sh/uv:0.9.18-python3.12-trixie
+  script:
+    - |
+      # Don't run this in rhiza itself. Rhiza has no template.yml file.
+      if [ "$CI_PROJECT_PATH" = "jebel-quant/rhiza" ]; then
+        echo "Skipping validation in rhiza repository itself"
+        exit 0
+      fi
+      uvx "rhiza>=0.8.0" validate .
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
