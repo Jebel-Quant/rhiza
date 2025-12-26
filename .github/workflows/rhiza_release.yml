@@ -109,6 +109,11 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.ref }}
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.18"
+
       # Use the composite action to set up the project
       - name: Setup the project
         uses: ./.github/rhiza/actions/setup-project
