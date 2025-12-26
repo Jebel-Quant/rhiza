@@ -75,32 +75,7 @@ git push origin test-gitlab-ci
 
 ---
 
-### 2. Devcontainer Workflow (`rhiza_devcontainer.yml`)
-
-**Test trigger:** Modify files in `.devcontainer/` directory
-
-**Expected behavior:**
-- Only runs when `.devcontainer/` files change
-- Builds devcontainer image
-- Does NOT push to registry (validation only)
-
-**Manual test:**
-```bash
-# Modify devcontainer config
-touch .devcontainer/devcontainer.json
-git add .devcontainer/devcontainer.json
-git commit -m "test: trigger devcontainer workflow"
-git push origin test-gitlab-ci
-```
-
-**Success criteria:**
-- Pipeline shows devcontainer build job
-- Image builds successfully
-- No push to registry occurs
-
----
-
-### 3. Marimo Workflow (`rhiza_marimo.yml`)
+### 2. Marimo Workflow (`rhiza_marimo.yml`)
 
 **Test trigger:** Push to any branch or create merge request
 
@@ -123,7 +98,7 @@ ls -la book/marimo/*.py
 
 ---
 
-### 4. Validate Workflow (`rhiza_validate.yml`)
+### 3. Validate Workflow (`rhiza_validate.yml`)
 
 **Test trigger:** Push to any branch or create merge request
 
@@ -140,7 +115,7 @@ This workflow is designed for repositories that use rhiza as a template, not for
 
 ---
 
-### 5. Deptry Workflow (`rhiza_deptry.yml`)
+### 4. Deptry Workflow (`rhiza_deptry.yml`)
 
 **Test trigger:** Push to any branch or create merge request
 
@@ -161,7 +136,7 @@ uvx deptry src/
 
 ---
 
-### 6. Docker Workflow (`rhiza_docker.yml`)
+### 5. Docker Workflow (`rhiza_docker.yml`)
 
 **Test trigger:** Push to any branch or create merge request
 
@@ -182,7 +157,7 @@ ls -la docker/Dockerfile
 
 ---
 
-### 7. Pre-commit Workflow (`rhiza_pre-commit.yml`)
+### 6. Pre-commit Workflow (`rhiza_pre-commit.yml`)
 
 **Test trigger:** Push to any branch or create merge request
 
@@ -202,7 +177,7 @@ uv run pre-commit run --all-files
 
 ---
 
-### 8. Book Workflow (`rhiza_book.yml`)
+### 7. Book Workflow (`rhiza_book.yml`)
 
 **Test trigger:** Push to `main` or `master` branch
 
@@ -229,7 +204,7 @@ ls -la _book/
 
 ---
 
-### 9. Sync Workflow (`rhiza_sync.yml`)
+### 8. Sync Workflow (`rhiza_sync.yml`)
 
 **Test trigger:** Manual pipeline, scheduled pipeline, or web trigger
 
@@ -256,7 +231,7 @@ ls -la _book/
 
 ---
 
-### 10. Release Workflow (`rhiza_release.yml`)
+### 9. Release Workflow (`rhiza_release.yml`)
 
 **Test trigger:** Push a version tag (e.g., `v1.0.0`)
 
@@ -299,9 +274,6 @@ Set these in GitLab project settings (Settings > CI/CD > Variables):
 
 ### Configuration Variables
 - `UV_EXTRA_INDEX_URL` - Extra index URL for UV (optional)
-- `DEVCONTAINER_REGISTRY` - Container registry (default: registry.gitlab.com)
-- `DEVCONTAINER_IMAGE_NAME` - Custom image name (optional)
-- `PUBLISH_DEVCONTAINER` - Publish devcontainer on release (default: false)
 - `PYPI_REPOSITORY_URL` - Custom PyPI URL (optional)
 - `PUBLISH_COMPANION_BOOK` - Publish documentation (default: true)
 - `CREATE_MR` - Auto-create merge requests (default: true)
@@ -312,7 +284,6 @@ Set these in GitLab project settings (Settings > CI/CD > Variables):
 - [ ] Set up test GitLab repository
 - [ ] Configure required CI/CD variables
 - [ ] Test CI workflow (push to branch)
-- [ ] Test Devcontainer workflow (modify .devcontainer/)
 - [ ] Test Marimo workflow (if notebooks exist)
 - [ ] Test Validate workflow (in downstream project)
 - [ ] Test Deptry workflow

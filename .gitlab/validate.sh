@@ -26,7 +26,7 @@ echo -e "${BLUE}=== GitLab CI/CD Workflow Validation ===${NC}\n"
 validate_yaml() {
     local file="$1"
     TOTAL_FILES=$((TOTAL_FILES + 1))
-    
+
     if python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
         echo -e "${GREEN}✅ $file${NC}"
         VALID_FILES=$((VALID_FILES + 1))
@@ -102,7 +102,6 @@ echo -e "Total workflow files: ${GREEN}$WORKFLOW_COUNT${NC}"
 # Expected workflows
 EXPECTED_WORKFLOWS=(
     "rhiza_ci.yml"
-    "rhiza_devcontainer.yml"
     "rhiza_marimo.yml"
     "rhiza_validate.yml"
     "rhiza_deptry.yml"
@@ -129,7 +128,7 @@ if [ -d ".github/workflows" ]; then
     GITHUB_COUNT=$(find .github/workflows -name "rhiza_*.yml" -type f | wc -l)
     echo -e "GitHub Actions workflows: ${GREEN}$GITHUB_COUNT${NC}"
     echo -e "GitLab CI workflows: ${GREEN}$WORKFLOW_COUNT${NC}"
-    
+
     if [ "$GITHUB_COUNT" -eq "$WORKFLOW_COUNT" ]; then
         echo -e "${GREEN}✅ Workflow count matches${NC}"
     else

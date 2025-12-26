@@ -8,7 +8,6 @@ This document provides a side-by-side comparison of GitHub Actions and GitLab CI
 |---------|----------------|-----------|--------|
 | Main Config | `.github/workflows/*.yml` | `.gitlab-ci.yml` + `.gitlab/workflows/*.yml` | ✅ Complete |
 | CI Testing | `rhiza_ci.yml` | `rhiza_ci.yml` | ✅ Complete |
-| Devcontainer | `rhiza_devcontainer.yml` | `rhiza_devcontainer.yml` | ✅ Complete |
 | Notebooks | `rhiza_marimo.yml` | `rhiza_marimo.yml` | ✅ Complete |
 | Validation | `rhiza_validate.yml` | `rhiza_validate.yml` | ✅ Complete |
 | Dependencies | `rhiza_deptry.yml` | `rhiza_deptry.yml` | ✅ Complete |

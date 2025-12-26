@@ -17,7 +17,6 @@ This implementation provides complete GitLab CI/CD equivalents for all GitHub Ac
 ├── validate.sh             # Validation script
 └── workflows/              # Individual workflow definitions
     ├── rhiza_ci.yml           (1.3 KB) - Python matrix testing
-    ├── rhiza_devcontainer.yml (3.8 KB) - Devcontainer build
     ├── rhiza_marimo.yml       (2.8 KB) - Notebook testing
     ├── rhiza_validate.yml     (0.7 KB) - Config validation
     ├── rhiza_deptry.yml       (0.9 KB) - Dependency check

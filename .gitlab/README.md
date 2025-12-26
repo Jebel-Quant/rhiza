@@ -8,7 +8,6 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 .gitlab/
 ├── workflows/
 │   ├── rhiza_ci.yml           # Continuous Integration - Python matrix testing
-│   ├── rhiza_devcontainer.yml # Devcontainer build and validation
 │   ├── rhiza_marimo.yml       # Marimo notebook testing
 │   ├── rhiza_validate.yml     # Rhiza configuration validation
 │   ├── rhiza_deptry.yml       # Dependency checking
@@ -41,24 +40,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 2. Devcontainer (`rhiza_devcontainer.yml`)
-**Purpose:** Build and validate devcontainer images.
-
-**Trigger:**
-- Changes to `.devcontainer/` directory
-- Changes to the workflow file itself
-
-**Key Features:**
-- Docker-in-Docker for building containers
-- Registry authentication (GitLab Container Registry)
-- Image naming and tagging
-- Validation only (no push except in releases)
-
-**Equivalent GitHub Action:** `.github/workflows/rhiza_devcontainer.yml`
-
----
-
-### 3. Marimo (`rhiza_marimo.yml`)
+### 2. Marimo (`rhiza_marimo.yml`)
 **Purpose:** Discover and execute all Marimo notebooks in parallel.
 
 **Trigger:**
@@ -76,7 +58,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 4. Validate (`rhiza_validate.yml`)
+### 3. Validate (`rhiza_validate.yml`)
 **Purpose:** Validate Rhiza configuration against template.
 
 **Trigger:**
@@ -91,7 +73,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 5. Deptry (`rhiza_deptry.yml`)
+### 4. Deptry (`rhiza_deptry.yml`)
 **Purpose:** Check for missing and obsolete dependencies.
 
 **Trigger:**
@@ -106,7 +88,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 6. Docker (`rhiza_docker.yml`)
+### 5. Docker (`rhiza_docker.yml`)
 **Purpose:** Lint Dockerfile with hadolint and validate build.
 
 **Trigger:**
@@ -122,7 +104,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 7. Pre-commit (`rhiza_pre-commit.yml`)
+### 6. Pre-commit (`rhiza_pre-commit.yml`)
 **Purpose:** Run pre-commit checks for code quality.
 
 **Trigger:**
@@ -137,7 +119,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 8. Book (`rhiza_book.yml`)
+### 7. Book (`rhiza_book.yml`)
 **Purpose:** Build and deploy documentation to GitLab Pages.
 
 **Trigger:**
@@ -154,7 +136,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 9. Sync (`rhiza_sync.yml`)
+### 8. Sync (`rhiza_sync.yml`)
 **Purpose:** Synchronize repository with its template.
 
 **Trigger:**
@@ -173,7 +155,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 10. Release (`rhiza_release.yml`)
+### 9. Release (`rhiza_release.yml`)
 **Purpose:** Create releases and publish packages to PyPI and container registries.
 
 **Trigger:**
@@ -246,9 +228,6 @@ These variables can be set in GitLab CI/CD settings (Settings > CI/CD > Variable
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `UV_EXTRA_INDEX_URL` | `""` | Extra index URL for UV package manager |
-| `DEVCONTAINER_REGISTRY` | `registry.gitlab.com` | Container registry for devcontainer images |
-| `DEVCONTAINER_IMAGE_NAME` | `""` | Custom image name (empty = auto-generated) |
-| `PUBLISH_DEVCONTAINER` | `false` | Whether to publish devcontainer on release |
 | `PYPI_REPOSITORY_URL` | `""` | Custom PyPI repository URL (empty = pypi.org) |
 | `PYPI_TOKEN` | N/A | **Secret** - PyPI authentication token |
 | `PUBLISH_COMPANION_BOOK` | `true` | Whether to publish documentation |
@@ -308,20 +287,16 @@ When migrating from GitHub Actions to GitLab CI:
    - Check if required variables are set
    - Verify token permissions
 
-2. **Devcontainer build fails**
-   - Ensure Docker-in-Docker service is available
-   - Check devcontainer.json syntax
-
-3. **Pages deployment doesn't work**
+2. **Pages deployment doesn't work**
    - Ensure job is named `pages`
    - Verify artifacts are in `public/` directory
    - Check if GitLab Pages is enabled
 
-4. **Matrix jobs don't run in parallel**
+3. **Matrix jobs don't run in parallel**
    - GitLab CI has limitations on dynamic matrices
    - Consider using child pipelines for true parallelism
 
-5. **Release workflow fails**
+4. **Release workflow fails**
    - Verify `PYPI_TOKEN` is set
    - Check tag format (must start with `v`)
    - Ensure version in pyproject.toml matches tag
