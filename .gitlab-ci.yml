@@ -8,7 +8,6 @@
 #
 # Workflows included:
 #   - CI: Run tests on multiple Python versions
-#   - DEVCONTAINER: Build and validate devcontainer images
 #   - MARIMO: Test Marimo notebooks
 #   - VALIDATE: Validate Rhiza configuration
 #   - DEPTRY: Check dependencies
@@ -132,18 +131,13 @@ include:
 variables:
   # UV package manager configuration
   UV_EXTRA_INDEX_URL: ""
-  
-  # Devcontainer configuration
-  DEVCONTAINER_REGISTRY: "registry.gitlab.com"
-  DEVCONTAINER_IMAGE_NAME: ""
-  PUBLISH_DEVCONTAINER: "false"
-  
+
   # PyPI configuration
   PYPI_REPOSITORY_URL: ""
-  
+
   # Documentation configuration
   PUBLISH_COMPANION_BOOK: "true"
-  
+
   # Sync configuration
   CREATE_MR: "true"
 
