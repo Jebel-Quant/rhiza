@@ -89,17 +89,14 @@ install: install-uv install-extras ## install
 	  ${UV_BIN} pip install -r tests/requirements.txt || { printf "${RED}[ERROR] Failed to install test requirements${RESET}\n"; exit 1; }; \
 	fi
 
-	# Install the dependencies from pyproject.toml (if it exists)
-	@if [ -f "pyproject.toml" ]; then \
-	  if [ -f "uv.lock" ]; then \
-	    printf "${BLUE}[INFO] Installing dependencies from lock file${RESET}\n"; \
-	    ${UV_BIN} sync --all-extras --frozen || { printf "${RED}[ERROR] Failed to install dependencies${RESET}\n"; exit 1; }; \
-	  else \
-	    printf "${YELLOW}[WARN] uv.lock not found. Generating lock file and installing dependencies...${RESET}\n"; \
-	    ${UV_BIN} sync --all-extras || { printf "${RED}[ERROR] Failed to install dependencies${RESET}\n"; exit 1; }; \
-	  fi; \
+	# Install dependencies from pyproject.toml
+	# Note: pyproject.toml is assumed to exist (validation would fail otherwise)
+	@if [ -f "uv.lock" ]; then \
+	  printf "${BLUE}[INFO] Installing dependencies from lock file${RESET}\n"; \
+	  ${UV_BIN} sync --all-extras --frozen || { printf "${RED}[ERROR] Failed to install dependencies${RESET}\n"; exit 1; }; \
 	else \
-	  printf "${YELLOW}[WARN] No pyproject.toml found, skipping install${RESET}\n"; \
+	  printf "${YELLOW}[WARN] uv.lock not found. Generating lock file and installing dependencies...${RESET}\n"; \
+	  ${UV_BIN} sync --all-extras || { printf "${RED}[ERROR] Failed to install dependencies${RESET}\n"; exit 1; }; \
 	fi
 
 sync: install-uv ## sync with template repository as defined in .github/template.yml
@@ -129,12 +126,8 @@ marimo: install ## fire up Marimo server
 	fi
 
 ##@ Quality and Formatting
-deptry: install-uv ## run deptry if pyproject.toml exists
-	@if [ -f "pyproject.toml" ]; then \
-	  ${UVX_BIN} deptry "${SOURCE_FOLDER}"; \
-	else \
-	  printf "${YELLOW} No pyproject.toml found, skipping deptry${RESET}\n"; \
-	fi
+deptry: install-uv ## run deptry
+	@${UVX_BIN} deptry "${SOURCE_FOLDER}"
 
 fmt: install-uv ## check the pre-commit hooks and the linting
 	@${UVX_BIN} pre-commit run --all-files

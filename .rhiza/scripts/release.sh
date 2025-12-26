@@ -47,12 +47,6 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-# Check if pyproject.toml exists
-if [ ! -f "pyproject.toml" ]; then
-  printf "%b[ERROR] pyproject.toml not found in current directory%b\n" "$RED" "$RESET"
-  exit 1
-fi
-
 # Check if uv is available
 if [ ! -x "$UV_BIN" ]; then
   printf "%b[ERROR] uv not found at %s. Run 'make install-uv' first.%b\n" "$RED" "$UV_BIN" "$RESET"
