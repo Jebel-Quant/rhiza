@@ -1,4 +1,3 @@
-
 test:{{ JOB_NAME }}:
   stage: test
   image: ghcr.io/astral-sh/uv:0.9.18-python3.12-bookworm

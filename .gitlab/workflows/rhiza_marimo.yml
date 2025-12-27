@@ -61,15 +61,25 @@ marimo:_generate_child_pipeline:
   image: python:3.12-slim
   script:
     - pip install jinja2-cli
-    - NOTEBOOKS=$(cat notebook_matrix.json | jq -r '.[]')
     - CHILD_FILE="child-pipeline.yml"
     - echo "stages: [test]" > "$CHILD_FILE"
     - |
-      if [ "$NOTEBOOKS" = "[]" ]; then
+      # Read notebook list from the artifact
+      NOTEBOOKS=$(cat notebook_matrix.json | jq -r '.[]')
+      
+      # Check if empty
+      if [ -z "$NOTEBOOKS" ]; then
         echo "# No notebooks to run" >> "$CHILD_FILE"
         exit 0
       fi
-    - for notebook in $NOTEBOOKS; do JOB_NAME=$(basename "$notebook" .py | tr -c '[:alnum:]' '_'); jinja2 .gitlab/templates/marimo_job_template.yml NOTEBOOK="$notebook" JOB_NAME="$JOB_NAME" >> "$CHILD_FILE"; done
+      
+      # Generate a job for each notebook using Jinja2 template
+      for notebook in $NOTEBOOKS; do
+        JOB_NAME=$(basename "$notebook" .py | tr -c '[:alnum:]' '_')
+        jinja2 .gitlab/templates/marimo_job_template.yml \
+          NOTEBOOK="$notebook" \
+          JOB_NAME="$JOB_NAME" >> "$CHILD_FILE"
+      done
     - cat "$CHILD_FILE"
   artifacts:
     paths:
