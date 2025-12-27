@@ -1,0 +1,13 @@
+test:{{ JOB_NAME }}:
+  stage: test
+  image: ghcr.io/astral-sh/uv:0.9.18-python3.12-bookworm
+  variables:
+    GIT_LFS_SKIP_SMUDGE: "0"
+  before_script:
+    - apt-get update && apt-get install -y git-lfs
+    - git lfs install
+    - git lfs pull
+  script:
+    - echo "Running notebook: {{ NOTEBOOK }}"
+    - uvx uv run "{{ NOTEBOOK }}"
+  allow_failure: false
