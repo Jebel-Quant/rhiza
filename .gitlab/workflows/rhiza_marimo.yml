@@ -10,7 +10,7 @@ marimo:_list_notebooks:
   script:
     - apk add --no-cache bash jq
     - NOTEBOOK_DIR="book/marimo"
-    - echo "Searching notebooks in: $NOTEBOOK_DIR"
+    - 'echo "Searching notebooks in: $NOTEBOOK_DIR"'
     - |
       if [ ! -d "$NOTEBOOK_DIR" ]; then
         echo "Directory $NOTEBOOK_DIR does not exist. Setting empty matrix."
