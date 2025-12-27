@@ -8,10 +8,8 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 .gitlab/
 ├── workflows/
 │   ├── rhiza_ci.yml           # Continuous Integration - Python matrix testing
-│   ├── rhiza_marimo.yml       # Marimo notebook testing
 │   ├── rhiza_validate.yml     # Rhiza configuration validation
 │   ├── rhiza_deptry.yml       # Dependency checking
-│   ├── rhiza_docker.yml       # Docker linting and building
 │   ├── rhiza_pre-commit.yml   # Pre-commit hooks
 │   ├── rhiza_book.yml         # Documentation building (GitLab Pages)
 │   ├── rhiza_sync.yml         # Template synchronization
@@ -40,25 +38,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 2. Marimo (`rhiza_marimo.yml`)
-**Purpose:** Discover and execute all Marimo notebooks in parallel.
-
-**Trigger:**
-- On push to any branch
-- On merge requests to main/master
-
-**Key Features:**
-- Dynamic notebook discovery
-- Parallel execution (sequential in GitLab due to limitations)
-- Git LFS support for notebook data
-
-**Equivalent GitHub Action:** `.github/workflows/rhiza_marimo.yml`
-
-**Note:** GitLab CI has limited support for dynamic parallel matrices. The current implementation runs notebooks sequentially in a single job. For true parallel execution, consider generating a child pipeline.
-
----
-
-### 3. Validate (`rhiza_validate.yml`)
+### 2. Validate (`rhiza_validate.yml`)
 **Purpose:** Validate Rhiza configuration against template.
 
 **Trigger:**
@@ -73,7 +53,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 4. Deptry (`rhiza_deptry.yml`)
+### 3. Deptry (`rhiza_deptry.yml`)
 **Purpose:** Check for missing and obsolete dependencies.
 
 **Trigger:**
@@ -88,23 +68,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 5. Docker (`rhiza_docker.yml`)
-**Purpose:** Lint Dockerfile with hadolint and validate build.
-
-**Trigger:**
-- On push to any branch
-- On merge requests to main/master
-
-**Key Features:**
-- Hadolint linting
-- Docker build validation
-- Skips if `docker/Dockerfile` doesn't exist
-
-**Equivalent GitHub Action:** `.github/workflows/rhiza_docker.yml`
-
----
-
-### 6. Pre-commit (`rhiza_pre-commit.yml`)
+### 4. Pre-commit (`rhiza_pre-commit.yml`)
 **Purpose:** Run pre-commit checks for code quality.
 
 **Trigger:**
@@ -119,7 +83,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 7. Book (`rhiza_book.yml`)
+### 5. Book (`rhiza_book.yml`)
 **Purpose:** Build and deploy documentation to GitLab Pages.
 
 **Trigger:**
@@ -136,7 +100,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 8. Sync (`rhiza_sync.yml`)
+### 6. Sync (`rhiza_sync.yml`)
 **Purpose:** Synchronize repository with its template.
 
 **Trigger:**
@@ -155,7 +119,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 9. Release (`rhiza_release.yml`)
+### 7. Release (`rhiza_release.yml`)
 **Purpose:** Create releases and publish packages to PyPI and container registries.
 
 **Trigger:**
