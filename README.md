@@ -79,13 +79,13 @@ Bootstrap
   install               install
   sync                  sync with template repository as defined in .github/template.yml
   validate              validate project structure against template repository as defined in .github/template.yml
-  clean                 clean
+  clean                 Clean project artifacts and stale local branches
 
 Tools
   marimo                fire up Marimo server
 
 Quality and Formatting
-  deptry                run deptry if pyproject.toml exists
+  deptry                Run deptry
   fmt                   check the pre-commit hooks and the linting
 
 Releasing and Versioning
