@@ -3,6 +3,9 @@
 .venv
 .ruff_cache
 
+### Don't expose API keys, etc.
+.env
+
 __marimo__
 
 _tests
