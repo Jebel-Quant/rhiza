@@ -7,26 +7,12 @@
 #
 # Trigger: On push and merge requests to main/master branches.
 
-.ci_generate_matrix:
-  stage: .pre
-  image: python:3.12
-  script:
-    - python ./.rhiza/utils/version_matrix.py > matrix.json
-    - cat matrix.json
-  artifacts:
-    paths:
-      - matrix.json
-    expire_in: 1 hour
-
 ci:test:
   stage: test
-  needs:
-    - job: .ci_generate_matrix
-      artifacts: true
   image: ghcr.io/astral-sh/uv:0.9.18-python${PYTHON_VERSION}-bookworm
   parallel:
     matrix:
-      - PYTHON_VERSION: ["3.11", "3.12", "3.13"]
+      - PYTHON_VERSION: ["3.11", "3.12", "3.13", "3.14"]
   variables:
     GIT_LFS_SKIP_SMUDGE: "0"
   before_script:
@@ -47,3 +33,4 @@ ci:test:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
+
