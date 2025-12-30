@@ -661,7 +661,6 @@ def cell_38(mo):
         **Happy exploring! 🚀**
         """
     )
-    assert False
     return
 
 
