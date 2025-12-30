@@ -1,10 +1,6 @@
 ## Makefile.book - Documentation and book-building targets
 # This file is included by the main Makefile
 
-# Book-specific variables
-#BOOK_TITLE := Project Documentation
-#DOCFORMAT :=
-
 # Declare phony targets (they don't produce files)
 .PHONY: docs marimushka book
 
