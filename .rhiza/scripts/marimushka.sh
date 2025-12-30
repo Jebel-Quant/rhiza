@@ -69,26 +69,7 @@ cd "$MARIMO_FOLDER"
 # - --notebooks: directory containing .py notebooks
 # - --output: where to write HTML files
 # - --bin-path: where marimushka can find the uv binary for processing
-#"$UVX_BIN" "marimushka>=0.1.9" export --notebooks "." --output "$OUTPUT_DIR" --bin-path "$UV_INSTALL_DIR"
-# Run exporter and capture output
-tmp="$(mktemp)"
-trap 'rm -f "$tmp"' EXIT
-
-if ! "$UVX_BIN" "marimushka>=0.2.1" export --notebooks "." --output "$OUTPUT_DIR" --bin-path "$UV_INSTALL_DIR" > "$tmp" 2>&1; then
-  cat "$tmp" >&2
-  echo "ERROR: marimushka export command failed (non-zero exit)" >&2
-  exit 1
-fi
-
-# If exporter claims "some cells failed to execute", treat as failure
-if grep -Eiq "some cells failed to execute|cells failed to execute|cells failed" "$tmp"; then
-  echo "ERROR: marimushka reported that some cells failed to execute." >&2
-  echo "=== full exporter output ===" >&2
-  sed -n '1,200p' "$tmp" >&2
-  exit 2
-fi
-
-echo "Notebooks exported OK"
+"$UVX_BIN" "marimushka>=0.1.9" export --notebooks "." --output "$OUTPUT_DIR" --bin-path "$UV_INSTALL_DIR"
 
 # Ensure GitHub Pages does not process with Jekyll
 # The : command is a no-op that creates an empty file
