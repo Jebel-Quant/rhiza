@@ -36,13 +36,15 @@ RESET := \033[0m
 UV_INSTALL_DIR ?= ./bin
 UV_BIN := ${UV_INSTALL_DIR}/uv
 UVX_BIN := ${UV_INSTALL_DIR}/uvx
-MARIMO_FOLDER := book/marimo
-SOURCE_FOLDER := src
-SCRIPTS_FOLDER := .rhiza/scripts
-CUSTOM_SCRIPTS_FOLDER := .rhiza/scripts/customisations
+#MARIMO_FOLDER := book/marimo
+#SOURCE_FOLDER := src
+#SCRIPTS_FOLDER := .rhiza/scripts
+#CUSTOM_SCRIPTS_FOLDER := .rhiza/scripts/customisations
 
 export UV_NO_MODIFY_PATH := 1
 export UV_VENV_CLEAR := 1
+
+-include .rhiza.env
 
 # Include split Makefiles
 -include tests/Makefile.tests
