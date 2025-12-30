@@ -1,8 +1,9 @@
 <div align="center">
 
-# <img src="assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza
-
+# <img src="assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza 
+![GitHub Release](https://img.shields.io/github/v/release/jebel-quant/rhiza?sort=semver&color=0bbbc1&label=rhiza)
 ![Synced with Rhiza](https://img.shields.io/badge/synced%20with-rhiza-2FA4A9?logoUrl=https://github.com/Jebel-Quant/rhiza/blob/main/assets/rhiza-logo.svg)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python versions](https://img.shields.io/badge/Python-3.11%20•%203.12%20•%203.13%20•%203.14-blue?logo=python)](https://www.python.org/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg?logo=ruff)](https://github.com/astral-sh/ruff)
@@ -13,12 +14,12 @@
 ![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat&logo=linux&logoColor=white)
 ![MAC OS](https://img.shields.io/badge/macOS-000000?style=flat&logo=apple&logoColor=white)
 
-[![CI](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_ci.yml/badge.svg)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_ci.yml)
-[![PRE-COMMIT](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_pre-commit.yml/badge.svg)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_pre-commit.yml)
-[![DEPTRY](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_deptry.yml/badge.svg)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_deptry.yml)
-[![MARIMO](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_marimo.yml/badge.svg)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_marimo.yml)
-[![DOCKER](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_docker.yml/badge.svg)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_docker.yml)
-[![DEVCONTAINER](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_devcontainer.yml/badge.svg)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_devcontainer.yml)
+[![CI](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_ci.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_ci.yml)
+[![PRE-COMMIT](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_pre-commit.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_pre-commit.yml)
+[![DEPTRY](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_deptry.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_deptry.yml)
+[![MARIMO](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_marimo.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_marimo.yml)
+[![DOCKER](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_docker.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_docker.yml)
+[![DEVCONTAINER](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_devcontainer.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_devcontainer.yml)
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/jebel-quant/rhiza)
 
