@@ -47,7 +47,7 @@ def test_notebook_execution(notebook_path: Path):
     local_uvx = Path("bin/uvx")
 
     if local_uvx.exists() and local_uvx.is_file():
-        uvx_cmd = str(local_uvx)
+        uvx_cmd = str(local_uvx.resolve())  # Use absolute path
     else:
         uvx_cmd = shutil.which("uvx")
         if uvx_cmd is None:
@@ -64,7 +64,7 @@ def test_notebook_execution(notebook_path: Path):
         "/dev/null",  # We don't need the actual HTML output
     ]
 
-    result = subprocess.run(cmd, capture_output=True, text=True)  # noqa: S603, S607
+    result = subprocess.run(cmd, capture_output=True, text=True)
 
     # Ensure process exit code indicates success
     assert result.returncode == 0, (
