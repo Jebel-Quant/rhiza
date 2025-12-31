@@ -14,6 +14,8 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 │   ├── rhiza_book.yml         # Documentation building (GitLab Pages)
 │   ├── rhiza_sync.yml         # Template synchronization
 │   └── rhiza_release.yml      # Release workflow
+├── template/                  # GitLab CI job templates
+│   └── marimo_job_template.yml.jinja
 └── README.md                  # This file
 
 .gitlab-ci.yml                 # Main GitLab CI configuration (includes all workflows)
