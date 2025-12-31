@@ -1,8 +1,8 @@
 <div align="center">
 
 # <img src="assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza 
-![GitHub Release](https://img.shields.io/github/v/release/jebel-quant/rhiza?sort=semver&color=0bbbc1&label=rhiza)
-![Synced with Rhiza](https://img.shields.io/badge/synced%20with-rhiza-2FA4A9?color=0bbbc1)
+![GitHub Release](https://img.shields.io/github/v/release/jebel-quant/rhiza?sort=semver&color=2FA4A9&label=rhiza)
+![Synced with Rhiza](https://img.shields.io/badge/synced%20with-rhiza-2FA4A9?color=2FA4A9)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python versions](https://img.shields.io/badge/Python-3.11%20•%203.12%20•%203.13%20•%203.14-blue?logo=python)](https://www.python.org/)
