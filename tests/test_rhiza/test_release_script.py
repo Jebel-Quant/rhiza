@@ -29,7 +29,7 @@ def test_release_creates_tag(git_repo):
 
     # Verify the tag exists
     verify_result = subprocess.run(
-        ["git", "tag", "-l", "v0.1.0"],
+        [GIT, "tag", "-l", "v0.1.0"],
         cwd=git_repo,
         capture_output=True,
         text=True,
