@@ -10,7 +10,6 @@ import os
 import shutil
 import subprocess
 
-
 # Get shell path once at module level
 SHELL = shutil.which("sh") or "/bin/sh"
 

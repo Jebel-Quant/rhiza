@@ -7,7 +7,6 @@ This file and its associated tests flow down via a SYNC action from the jebel-qu
 import shutil
 import subprocess
 
-
 # Get shell path once at module level
 SHELL = shutil.which("sh") or "/bin/sh"
 

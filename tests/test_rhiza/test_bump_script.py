@@ -11,7 +11,6 @@ import subprocess
 
 import pytest
 
-
 # Get shell path once at module level
 SHELL = shutil.which("sh") or "/bin/sh"
 
