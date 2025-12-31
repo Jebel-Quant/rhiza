@@ -26,7 +26,7 @@ def test_bump_updates_version_no_commit(git_repo, choice, expected_version):
     # Input: choice -> n (no commit)
     input_str = f"{choice}\nn\n"
 
-    result = subprocess.run([str(script)], cwd=git_repo, input=input_str, capture_output=True, text=True)
+    result = subprocess.run([str(script)], cwd=git_repo, input=input_str, capture_output=True, text=True)  # noqa: S603, S607
 
     assert result.returncode == 0
     assert f"-> {expected_version} in pyproject.toml" in result.stdout
@@ -48,7 +48,7 @@ def test_bump_commit_push(git_repo):
     # Input: 1 (patch) -> y (commit) -> y (push)
     input_str = "1\ny\ny\n"
 
-    result = subprocess.run([str(script)], cwd=git_repo, input=input_str, capture_output=True, text=True)
+    result = subprocess.run([str(script)], cwd=git_repo, input=input_str, capture_output=True, text=True)  # noqa: S603, S607
 
     assert result.returncode == 0
     assert "Version committed" in result.stdout
@@ -74,7 +74,7 @@ def test_uncommitted_changes_failure(git_repo):
         f.write("\n# change")
 
     # Input: 1 (patch)
-    result = subprocess.run([str(script)], cwd=git_repo, input="1\n", capture_output=True, text=True)
+    result = subprocess.run([str(script)], cwd=git_repo, input="1\n", capture_output=True, text=True)  # noqa: S603, S607
 
     assert result.returncode == 1
     assert "You have uncommitted changes" in result.stdout
@@ -97,7 +97,7 @@ def test_bump_explicit_version(git_repo, input_version, expected_version):
     # Input: 4 (explicit) -> input_version -> n (no commit)
     input_str = f"4\n{input_version}\nn\n"
 
-    result = subprocess.run([str(script)], cwd=git_repo, input=input_str, capture_output=True, text=True)
+    result = subprocess.run([str(script)], cwd=git_repo, input=input_str, capture_output=True, text=True)  # noqa: S603, S607
 
     assert result.returncode == 0
     assert f"-> {expected_version} in pyproject.toml" in result.stdout
@@ -114,7 +114,7 @@ def test_bump_explicit_version_invalid(git_repo):
     # Input: 4 (explicit) -> not-a-version
     input_str = f"4\n{version}\n"
 
-    result = subprocess.run([str(script)], cwd=git_repo, input=input_str, capture_output=True, text=True)
+    result = subprocess.run([str(script)], cwd=git_repo, input=input_str, capture_output=True, text=True)  # noqa: S603, S607
 
     assert result.returncode == 1
     assert f"Invalid version format: {version}" in result.stdout
@@ -129,7 +129,7 @@ def test_bump_fails_existing_tag(git_repo):
 
     # Try to bump to 0.1.1 (patch bump from 0.1.0)
     # Input: 1 (patch)
-    result = subprocess.run([str(script)], cwd=git_repo, input="1\n", capture_output=True, text=True)
+    result = subprocess.run([str(script)], cwd=git_repo, input="1\n", capture_output=True, text=True)  # noqa: S603, S607
 
     assert result.returncode == 1
     assert "Tag 'v0.1.1' already exists locally" in result.stdout
@@ -145,7 +145,7 @@ def test_warn_on_non_default_branch(git_repo):
     # Run bump (input 1 (patch), then 'y' to proceed with non-default branch, then n (no commit))
     input_str = "1\ny\nn\n"
 
-    result = subprocess.run([str(script)], cwd=git_repo, input=input_str, capture_output=True, text=True)
+    result = subprocess.run([str(script)], cwd=git_repo, input=input_str, capture_output=True, text=True)  # noqa: S603, S607
     assert result.returncode == 0
     assert "You are on branch 'feature' but the default branch is 'master'" in result.stdout
 
@@ -159,7 +159,7 @@ def test_bump_fails_if_pyproject_toml_dirty(git_repo):
         f.write("\n# dirty")
 
     # Input: 1 (patch)
-    result = subprocess.run([str(script)], cwd=git_repo, input="1\n", capture_output=True, text=True)
+    result = subprocess.run([str(script)], cwd=git_repo, input="1\n", capture_output=True, text=True)  # noqa: S603, S607
 
     assert result.returncode == 1
     assert "You have uncommitted changes" in result.stdout
