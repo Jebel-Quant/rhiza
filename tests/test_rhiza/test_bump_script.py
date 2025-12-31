@@ -13,6 +13,7 @@ import pytest
 
 # Get shell path once at module level
 SHELL = shutil.which("sh") or "/bin/sh"
+GIT = shutil.which("git") or "/usr/bin/git"
 
 
 @pytest.mark.parametrize(
@@ -41,7 +42,7 @@ def test_bump_updates_version_no_commit(git_repo, choice, expected_version):
         assert f'version = "{expected_version}"' in content
 
     # Verify no tag created yet
-    tags = subprocess.check_output(["git", "tag"], cwd=git_repo, text=True)
+    tags = subprocess.check_output([GIT, "tag"], cwd=git_repo, text=True)
     assert f"v{expected_version}" not in tags
 
 
@@ -59,7 +60,7 @@ def test_bump_commit_push(git_repo):
     assert "Pushed to origin/master" in result.stdout
 
     # Verify commit on remote
-    remote_log = subprocess.check_output(["git", "log", "origin/master", "-1", "--pretty=%B"], cwd=git_repo, text=True)
+    remote_log = subprocess.check_output([GIT, "log", "origin/master", "-1", "--pretty=%B"], cwd=git_repo, text=True)
     assert "chore: bump version to 0.1.1" in remote_log
 
 
@@ -70,8 +71,8 @@ def test_uncommitted_changes_failure(git_repo):
     # Create a tracked file and commit it
     tracked_file = git_repo / "tracked_file.txt"
     tracked_file.touch()
-    subprocess.run(["git", "add", "tracked_file.txt"], cwd=git_repo, check=True)
-    subprocess.run(["git", "commit", "-m", "Add tracked file"], cwd=git_repo, check=True)
+    subprocess.run([GIT, "add", "tracked_file.txt"], cwd=git_repo, check=True)
+    subprocess.run([GIT, "commit", "-m", "Add tracked file"], cwd=git_repo, check=True)
 
     # Modify tracked file to create uncommitted change
     with open(tracked_file, "a") as f:
@@ -129,7 +130,7 @@ def test_bump_fails_existing_tag(git_repo):
     script = git_repo / ".rhiza" / "scripts" / "bump.sh"
 
     # Create tag v0.1.1
-    subprocess.run(["git", "tag", "v0.1.1"], cwd=git_repo, check=True)
+    subprocess.run([GIT, "tag", "v0.1.1"], cwd=git_repo, check=True)
 
     # Try to bump to 0.1.1 (patch bump from 0.1.0)
     # Input: 1 (patch)
@@ -144,7 +145,7 @@ def test_warn_on_non_default_branch(git_repo):
     script = git_repo / ".rhiza" / "scripts" / "bump.sh"
 
     # Create and switch to new branch
-    subprocess.run(["git", "checkout", "-b", "feature"], cwd=git_repo, check=True)
+    subprocess.run([GIT, "checkout", "-b", "feature"], cwd=git_repo, check=True)
 
     # Run bump (input 1 (patch), then 'y' to proceed with non-default branch, then n (no commit))
     input_str = "1\ny\nn\n"
