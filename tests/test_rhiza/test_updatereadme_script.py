@@ -8,6 +8,10 @@ import shutil
 import subprocess
 
 
+# Get shell path once at module level
+SHELL = shutil.which("sh") or "/bin/sh"
+
+
 def test_update_readme_success(git_repo):
     """Test successful update of README.md."""
     script = git_repo / ".rhiza" / "scripts" / "update-readme-help.sh"
@@ -29,7 +33,7 @@ Footer content.
     readme_path.write_text(initial_content)
 
     # Run the script
-    result = subprocess.run([shutil.which("sh"), str(script)], cwd=git_repo, capture_output=True, text=True)
+    result = subprocess.run([SHELL, str(script)], cwd=git_repo, capture_output=True, text=True)
 
     assert result.returncode == 0
     assert "README.md updated" in result.stdout
@@ -54,7 +58,7 @@ No help section here.
     readme_path.write_text(initial_content)
 
     # Run the script
-    result = subprocess.run([shutil.which("sh"), str(script)], cwd=git_repo, capture_output=True, text=True)
+    result = subprocess.run([SHELL, str(script)], cwd=git_repo, capture_output=True, text=True)
 
     # The script exits with 0 if pattern not found (based on my reading of the script)
     # Wait, let's check the script again.
@@ -88,7 +92,7 @@ Footer
 """
     readme_path.write_text(initial_content)
 
-    subprocess.run([shutil.which("sh"), str(script)], cwd=git_repo, check=True)
+    subprocess.run([SHELL, str(script)], cwd=git_repo, check=True)
 
     new_content = readme_path.read_text()
     assert new_content.startswith("Header\n\nRun `make help`")
