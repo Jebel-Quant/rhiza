@@ -31,6 +31,19 @@ def parse_version(v: str) -> tuple[int, ...]:
     return tuple(parts)
 
 
+def _check_operator(version_tuple: tuple[int, ...], op: str, spec_v_tuple: tuple[int, ...]) -> bool:
+    """Check if a version tuple satisfies an operator constraint."""
+    operators = {
+        ">=": lambda v, s: v >= s,
+        "<=": lambda v, s: v <= s,
+        ">": lambda v, s: v > s,
+        "<": lambda v, s: v < s,
+        "==": lambda v, s: v == s,
+        "!=": lambda v, s: v != s,
+    }
+    return operators[op](version_tuple, spec_v_tuple)
+
+
 def satisfies(version: str, specifier: str) -> bool:
     """Check if a version satisfies a comma-separated list of specifiers.
 
@@ -55,24 +68,8 @@ def satisfies(version: str, specifier: str) -> bool:
         op, spec_v = match.groups()
         spec_v_tuple = parse_version(spec_v)
 
-        if op == ">=":
-            if not version_tuple >= spec_v_tuple:
-                return False
-        elif op == "<=":
-            if not version_tuple <= spec_v_tuple:
-                return False
-        elif op == ">":
-            if not version_tuple > spec_v_tuple:
-                return False
-        elif op == "<":
-            if not version_tuple < spec_v_tuple:
-                return False
-        elif op == "==":
-            if not version_tuple == spec_v_tuple:
-                return False
-        elif op == "!=":
-            if version_tuple == spec_v_tuple:
-                return False
+        if not _check_operator(version_tuple, op, spec_v_tuple):
+            return False
 
     return True
 
