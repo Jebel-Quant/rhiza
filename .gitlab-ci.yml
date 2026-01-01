@@ -8,11 +8,8 @@
 #
 # Workflows included:
 #   - CI: Run tests on multiple Python versions
-#   - DEVCONTAINER: Build and validate devcontainer images
-#   - MARIMO: Test Marimo notebooks
 #   - VALIDATE: Validate Rhiza configuration
 #   - DEPTRY: Check dependencies
-#   - DOCKER: Lint and build Docker images
 #   - PRE-COMMIT: Run pre-commit checks
 #   - BOOK: Build and deploy documentation
 #   - SYNC: Synchronize with template repository
@@ -48,14 +45,6 @@ include:
       - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       - if: $CI_COMMIT_BRANCH
 
-  # Marimo Notebooks - Test interactive notebooks
-  - local: '.gitlab/workflows/rhiza_marimo.yml'
-    rules:
-      - if: $CI_COMMIT_TAG
-        when: never
-      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      - if: $CI_COMMIT_BRANCH
-
   # Rhiza Validation - Validate project structure
   - local: '.gitlab/workflows/rhiza_validate.yml'
     rules:
@@ -80,29 +69,6 @@ include:
       - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       - if: $CI_COMMIT_BRANCH
 
-# Build Workflows
-  # Docker - Lint and build Docker images
-  - local: '.gitlab/workflows/rhiza_docker.yml'
-    rules:
-      - if: $CI_COMMIT_TAG
-        when: never
-      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      - if: $CI_COMMIT_BRANCH
-
-  # Devcontainer - Build and validate devcontainer
-  - local: '.gitlab/workflows/rhiza_devcontainer.yml'
-    rules:
-      - if: $CI_COMMIT_TAG
-        when: never
-      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-        changes:
-          - ".devcontainer/**/*"
-          - ".gitlab/workflows/rhiza_devcontainer.yml"
-      - if: $CI_COMMIT_BRANCH
-        changes:
-          - ".devcontainer/**/*"
-          - ".gitlab/workflows/rhiza_devcontainer.yml"
-
 # Deployment Workflows
   # Book - Build and deploy documentation to GitLab Pages
   - local: '.gitlab/workflows/rhiza_book.yml'
@@ -116,10 +82,16 @@ include:
   # Sync - Synchronize with template repository
   - local: '.gitlab/workflows/rhiza_sync.yml'
     rules:
-      - if: $CI_PIPELINE_SOURCE == "schedule"
-      - if: $CI_PIPELINE_SOURCE == "web"
-      - when: manual
-        allow_failure: true
+        # Automatic sync for scheduled pipelines
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
+
+        # Automatic sync when triggered from the UI
+        - if: '$CI_PIPELINE_SOURCE == "web"'
+          when: always
+
+        - when: never
+
 
 # Release Workflow
   # Release - Create releases and publish packages
@@ -132,18 +104,13 @@ include:
 variables:
   # UV package manager configuration
   UV_EXTRA_INDEX_URL: ""
-  
-  # Devcontainer configuration
-  DEVCONTAINER_REGISTRY: "registry.gitlab.com"
-  DEVCONTAINER_IMAGE_NAME: ""
-  PUBLISH_DEVCONTAINER: "false"
-  
+
   # PyPI configuration
   PYPI_REPOSITORY_URL: ""
-  
+
   # Documentation configuration
   PUBLISH_COMPANION_BOOK: "true"
-  
+
   # Sync configuration
   CREATE_MR: "true"
 
@@ -153,13 +120,3 @@ variables:
   before_script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
     - uv sync --all-extras --frozen
-
-.docker_base:
-  image: docker:24
-  services:
-    - docker:24-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"
-    DOCKER_TLS_VERIFY: 1
-    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"

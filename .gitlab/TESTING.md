@@ -29,7 +29,7 @@ for file in .gitlab-ci.yml .gitlab/workflows/*.yml; do
 done
 ```
 
-**Result:** All 11 files (1 main + 10 workflows) are valid YAML.
+**Result:** All 8 files (1 main + 7 workflows) are valid YAML.
 
 ### 2. GitLab CI Lint
 
@@ -75,55 +75,7 @@ git push origin test-gitlab-ci
 
 ---
 
-### 2. Devcontainer Workflow (`rhiza_devcontainer.yml`)
-
-**Test trigger:** Modify files in `.devcontainer/` directory
-
-**Expected behavior:**
-- Only runs when `.devcontainer/` files change
-- Builds devcontainer image
-- Does NOT push to registry (validation only)
-
-**Manual test:**
-```bash
-# Modify devcontainer config
-touch .devcontainer/devcontainer.json
-git add .devcontainer/devcontainer.json
-git commit -m "test: trigger devcontainer workflow"
-git push origin test-gitlab-ci
-```
-
-**Success criteria:**
-- Pipeline shows devcontainer build job
-- Image builds successfully
-- No push to registry occurs
-
----
-
-### 3. Marimo Workflow (`rhiza_marimo.yml`)
-
-**Test trigger:** Push to any branch or create merge request
-
-**Expected behavior:**
-- Discovers notebooks in `book/marimo/`
-- Runs each notebook
-- Supports Git LFS for notebook data
-
-**Manual test:**
-```bash
-# Check if notebooks exist
-ls -la book/marimo/*.py
-```
-
-**Success criteria:**
-- All notebooks execute without errors
-- Notebook dependencies are resolved
-
-**Note:** If no notebooks exist, the job gracefully skips.
-
----
-
-### 4. Validate Workflow (`rhiza_validate.yml`)
+### 2. Validate Workflow (`rhiza_validate.yml`)
 
 **Test trigger:** Push to any branch or create merge request
 
@@ -140,7 +92,7 @@ This workflow is designed for repositories that use rhiza as a template, not for
 
 ---
 
-### 5. Deptry Workflow (`rhiza_deptry.yml`)
+### 3. Deptry Workflow (`rhiza_deptry.yml`)
 
 **Test trigger:** Push to any branch or create merge request
 
@@ -161,28 +113,7 @@ uvx deptry src/
 
 ---
 
-### 6. Docker Workflow (`rhiza_docker.yml`)
-
-**Test trigger:** Push to any branch or create merge request
-
-**Expected behavior:**
-- Lints `docker/Dockerfile` with hadolint
-- Builds Docker image for validation
-- Does NOT push to registry
-
-**Manual test:**
-```bash
-# Check if Dockerfile exists
-ls -la docker/Dockerfile
-```
-
-**Success criteria:**
-- If Dockerfile exists: lint passes, build succeeds
-- If Dockerfile doesn't exist: job skips gracefully
-
----
-
-### 7. Pre-commit Workflow (`rhiza_pre-commit.yml`)
+### 4. Pre-commit Workflow (`rhiza_pre-commit.yml`)
 
 **Test trigger:** Push to any branch or create merge request
 
@@ -202,7 +133,7 @@ uv run pre-commit run --all-files
 
 ---
 
-### 8. Book Workflow (`rhiza_book.yml`)
+### 5. Book Workflow (`rhiza_book.yml`)
 
 **Test trigger:** Push to `main` or `master` branch
 
@@ -229,7 +160,7 @@ ls -la _book/
 
 ---
 
-### 9. Sync Workflow (`rhiza_sync.yml`)
+### 6. Sync Workflow (`rhiza_sync.yml`)
 
 **Test trigger:** Manual pipeline, scheduled pipeline, or web trigger
 
@@ -256,7 +187,7 @@ ls -la _book/
 
 ---
 
-### 10. Release Workflow (`rhiza_release.yml`)
+### 7. Release Workflow (`rhiza_release.yml`)
 
 **Test trigger:** Push a version tag (e.g., `v1.0.0`)
 
@@ -299,9 +230,6 @@ Set these in GitLab project settings (Settings > CI/CD > Variables):
 
 ### Configuration Variables
 - `UV_EXTRA_INDEX_URL` - Extra index URL for UV (optional)
-- `DEVCONTAINER_REGISTRY` - Container registry (default: registry.gitlab.com)
-- `DEVCONTAINER_IMAGE_NAME` - Custom image name (optional)
-- `PUBLISH_DEVCONTAINER` - Publish devcontainer on release (default: false)
 - `PYPI_REPOSITORY_URL` - Custom PyPI URL (optional)
 - `PUBLISH_COMPANION_BOOK` - Publish documentation (default: true)
 - `CREATE_MR` - Auto-create merge requests (default: true)
@@ -312,11 +240,8 @@ Set these in GitLab project settings (Settings > CI/CD > Variables):
 - [ ] Set up test GitLab repository
 - [ ] Configure required CI/CD variables
 - [ ] Test CI workflow (push to branch)
-- [ ] Test Devcontainer workflow (modify .devcontainer/)
-- [ ] Test Marimo workflow (if notebooks exist)
 - [ ] Test Validate workflow (in downstream project)
 - [ ] Test Deptry workflow
-- [ ] Test Docker workflow (if Dockerfile exists)
 - [ ] Test Pre-commit workflow
 - [ ] Test Book workflow (push to main)
 - [ ] Test Sync workflow (manual trigger)
@@ -327,7 +252,7 @@ Set these in GitLab project settings (Settings > CI/CD > Variables):
 
 ## Known Limitations
 
-1. **Dynamic Matrix:** GitLab CI has limited support for dynamic parallel matrices. The Marimo workflow runs notebooks sequentially instead of in parallel.
+1. **Dynamic Matrix:** GitLab CI has limited support for dynamic parallel matrices. Where dynamic matrices are needed, consider generating jobs via child pipelines or iterate within a job.
 
 2. **Merge Request Creation:** The Sync workflow doesn't automatically create merge requests via the API (would require additional setup with GitLab CLI or API calls).
 
@@ -346,11 +271,6 @@ Set these in GitLab project settings (Settings > CI/CD > Variables):
 - Ensure required variables are set
 - Check if tokens have correct scopes
 - Verify project permissions
-
-### Docker-in-Docker issues
-- Ensure Docker service is available
-- Check Docker daemon connection
-- Verify certificates are mounted correctly
 
 ### GitLab Pages not deploying
 - Ensure job is named `pages`

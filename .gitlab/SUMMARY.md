@@ -17,11 +17,8 @@ This implementation provides complete GitLab CI/CD equivalents for all GitHub Ac
 ├── validate.sh             # Validation script
 └── workflows/              # Individual workflow definitions
     ├── rhiza_ci.yml           (1.3 KB) - Python matrix testing
-    ├── rhiza_devcontainer.yml (3.8 KB) - Devcontainer build
-    ├── rhiza_marimo.yml       (2.8 KB) - Notebook testing
     ├── rhiza_validate.yml     (0.7 KB) - Config validation
     ├── rhiza_deptry.yml       (0.9 KB) - Dependency check
-    ├── rhiza_docker.yml       (1.7 KB) - Docker lint/build
     ├── rhiza_pre-commit.yml   (0.9 KB) - Code quality
     ├── rhiza_book.yml         (1.7 KB) - Documentation
     ├── rhiza_sync.yml         (2.8 KB) - Template sync
@@ -36,24 +33,21 @@ GITLAB_CI.md                # Quick start guide (3.6 KB)
 
 | # | Workflow | Status | Lines | Features |
 |---|----------|--------|-------|----------|
-| 1 | CI Testing | ✅ Complete | 44 | Python matrix, parallel tests, Git LFS |
-| 2 | Devcontainer | ✅ Complete | 104 | Docker-in-Docker, registry auth, validation |
-| 3 | Marimo Notebooks | ✅ Complete | 75 | Dynamic discovery, sequential execution |
-| 4 | Validation | ✅ Complete | 20 | Rhiza config validation, conditional skip |
-| 5 | Deptry | ✅ Complete | 26 | Dependency checking, auto source detection |
-| 6 | Docker | ✅ Complete | 54 | Hadolint linting, build validation |
-| 7 | Pre-commit | ✅ Complete | 26 | All hooks, UV environment |
-| 8 | Book/Pages | ✅ Complete | 48 | GitLab Pages, docs building |
-| 9 | Sync | ✅ Complete | 73 | Template sync, branch creation |
-| 10 | Release | ✅ Complete | 250 | PyPI, devcontainer, GitLab releases |
+| 1 | CI Testing | ✅ Complete | 50 | Python matrix, parallel tests, Git LFS |
+| 2 | Validation | ✅ Complete | 24 | Rhiza config validation, conditional skip |
+| 3 | Deptry | ✅ Complete | 28 | Dependency checking, auto source detection |
+| 4 | Pre-commit | ✅ Complete | 29 | All hooks, UV environment |
+| 5 | Book/Pages | ✅ Complete | 52 | GitLab Pages, docs building |
+| 6 | Sync | ✅ Complete | 82 | Template sync, branch creation |
+| 7 | Release | ✅ Complete | 287 | PyPI, devcontainer, GitLab releases |
 
-**Total:** 720+ lines of CI/CD configuration
+**Total:** 675 lines of CI/CD configuration
 
 ## Key Features
 
-### ✅ Complete Feature Parity
-- All 10 GitHub Actions workflows have GitLab CI equivalents
-- Same functionality, adapted for GitLab CI syntax
+### ✅ Current Coverage
+- 7 of 10 GitHub Actions workflows have GitLab CI equivalents
+- Same functionality where implemented, adapted for GitLab CI syntax
 - Maintained compatibility with existing project structure
 
 ### ✅ Comprehensive Documentation
@@ -71,9 +65,9 @@ GITLAB_CI.md                # Quick start guide (3.6 KB)
 - Rule-based triggers (vs on:)
 
 ### ✅ Quality Assurance
-- YAML syntax validation (all files valid)
+- YAML syntax validation (all included YAML files valid)
 - Validation script for automated checks
-- Workflow count verification (10/10 matched)
+- Workflow count verification (7/10 currently matched)
 - Documentation completeness check
 
 ## Platform Differences Addressed
@@ -101,8 +95,8 @@ GITLAB_CI.md                # Quick start guide (3.6 KB)
 ## Validation Results
 
 ```
-✅ YAML Syntax: All 11 files valid
-✅ Workflow Count: 10/10 matched with GitHub Actions
+✅ YAML Syntax: All 8 YAML files valid
+✅ Workflow Count: 7/10 matched with GitHub Actions
 ✅ Documentation: All 4 docs present
 ✅ Structure: Complete directory hierarchy
 ✅ Validation Script: Working and executable
@@ -125,7 +119,7 @@ GITLAB_CI.md                # Quick start guide (3.6 KB)
 
 | Category | Status | Details |
 |----------|--------|---------|
-| YAML Syntax | ✅ Validated | All 11 files pass YAML parsing |
+| YAML Syntax | ✅ Validated | All 8 YAML files pass YAML parsing |
 | Structure | ✅ Complete | All workflows and docs present |
 | Logic | ⏳ Ready | Awaiting GitLab repository setup |
 | Integration | ⏳ Ready | Requires CI/CD variable configuration |
@@ -176,10 +170,10 @@ GITLAB_CI.md                # Quick start guide (3.6 KB)
 
 ## Success Metrics
 
-- ✅ 10/10 workflows converted
+- ✅ 7/10 workflows converted
 - ✅ 100% YAML validation pass rate
 - ✅ 56+ KB of documentation
-- ✅ 720+ lines of CI/CD configuration
+- ✅ 675 lines of CI/CD configuration
 - ✅ Automated validation script
 - ✅ Feature parity with GitHub Actions
 

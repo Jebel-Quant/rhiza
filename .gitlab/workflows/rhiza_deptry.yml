@@ -12,6 +12,7 @@
 
 deptry:check:
   stage: test
+  needs: []
   image: ghcr.io/astral-sh/uv:0.9.18-python3.12-trixie
   script:
     - |

@@ -8,11 +8,8 @@ This document provides a side-by-side comparison of GitHub Actions and GitLab CI
 |---------|----------------|-----------|--------|
 | Main Config | `.github/workflows/*.yml` | `.gitlab-ci.yml` + `.gitlab/workflows/*.yml` | ✅ Complete |
 | CI Testing | `rhiza_ci.yml` | `rhiza_ci.yml` | ✅ Complete |
-| Devcontainer | `rhiza_devcontainer.yml` | `rhiza_devcontainer.yml` | ✅ Complete |
-| Notebooks | `rhiza_marimo.yml` | `rhiza_marimo.yml` | ✅ Complete |
 | Validation | `rhiza_validate.yml` | `rhiza_validate.yml` | ✅ Complete |
 | Dependencies | `rhiza_deptry.yml` | `rhiza_deptry.yml` | ✅ Complete |
-| Docker | `rhiza_docker.yml` | `rhiza_docker.yml` | ✅ Complete |
 | Pre-commit | `rhiza_pre-commit.yml` | `rhiza_pre-commit.yml` | ✅ Complete |
 | Documentation | `rhiza_book.yml` | `rhiza_book.yml` | ✅ Complete |
 | Sync | `rhiza_sync.yml` | `rhiza_sync.yml` | ✅ Complete |
@@ -217,11 +214,8 @@ script:
 | Workflow | YAML Valid | Logic Verified | Notes |
 |----------|------------|----------------|-------|
 | CI | ✅ | ⏳ | Needs test with actual Python matrix |
-| Devcontainer | ✅ | ⏳ | Needs test with actual .devcontainer |
-| Marimo | ✅ | ⏳ | Notebooks run sequentially |
 | Validate | ✅ | ⏳ | Skips in rhiza repo |
 | Deptry | ✅ | ⏳ | Needs test with dependencies |
-| Docker | ✅ | ⏳ | Needs test with Dockerfile |
 | Pre-commit | ✅ | ⏳ | Needs test with hooks |
 | Book | ✅ | ⏳ | Needs GitLab Pages setup |
 | Sync | ✅ | ⏳ | Needs PAT_TOKEN |
@@ -262,7 +256,7 @@ Legend:
 
 ## Summary
 
-All GitHub Actions workflows have been successfully converted to GitLab CI with equivalent functionality. The main differences are:
+Most GitHub Actions workflows (7 of 10) have been converted to GitLab CI with equivalent functionality. The main differences are:
 
 1. **Syntax:** Different trigger and job definitions
 2. **Authentication:** Token-based instead of OIDC
