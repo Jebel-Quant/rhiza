@@ -29,6 +29,8 @@ def parse_version(v: str) -> tuple[int, ...]:
             raise ValueError(msg)
         parts.append(int(match.group(0)))
     return tuple(parts)
+
+
 def satisfies(version: str, specifier: str) -> bool:
     """Check if a version satisfies a comma-separated list of specifiers.
 
