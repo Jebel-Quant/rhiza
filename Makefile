@@ -36,6 +36,7 @@ RESET := \033[0m
 UV_INSTALL_DIR ?= ./bin
 UV_BIN := ${UV_INSTALL_DIR}/uv
 UVX_BIN := ${UV_INSTALL_DIR}/uvx
+VENV ?= .venv
 
 export UV_NO_MODIFY_PATH := 1
 export UV_VENV_CLEAR := 1
@@ -77,10 +78,10 @@ install-extras: ## run custom build script (if exists)
 
 install: install-uv install-extras ## install
 	# Create the virtual environment only if it doesn't exist
-	@if [ ! -d ".venv" ]; then \
-	  ${UV_BIN} venv $(if $(PYTHON_VERSION),--python $(PYTHON_VERSION)) || { printf "${RED}[ERROR] Failed to create virtual environment${RESET}\n"; exit 1; }; \
+	@if [ ! -d "${VENV}" ]; then \
+	  ${UV_BIN} venv $(if $(PYTHON_VERSION),--python $(PYTHON_VERSION)) ${VENV} || { printf "${RED}[ERROR] Failed to create virtual environment${RESET}\n"; exit 1; }; \
 	else \
-	  printf "${BLUE}[INFO] Using existing virtual environment at .venv, skipping creation${RESET}\n"; \
+	  printf "${BLUE}[INFO] Using existing virtual environment at ${VENV}, skipping creation${RESET}\n"; \
 	fi
 
 	# Check if there is requirements.txt file in the tests folder
