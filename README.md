@@ -10,6 +10,7 @@
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg)](https://github.com/pypa/hatch)
 [![CodeFactor](https://www.codefactor.io/repository/github/jebel-quant/rhiza/badge)](https://www.codefactor.io/repository/github/jebel-quant/rhiza)
+[![Coverage](https://img.shields.io/endpoint?url=https://jebel-quant.github.io/rhiza/tests/coverage-badge.json)](https://jebel-quant.github.io/rhiza/tests/html-coverage/index.html)
 
 ![Gitlab](https://img.shields.io/badge/GitLab-FC6D26?style=flat&logo=gitlab&logoColor=white)
 ![Github](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)
