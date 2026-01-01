@@ -12,8 +12,8 @@ import shutil
 import subprocess
 
 # Get shell path once at module level
-SHELL = shutil.which("sh") or "/bin/sh"
-GIT = shutil.which("git") or "/usr/bin/git"
+SHELL = "/bin/sh"
+GIT = "/usr/bin/git"
 
 
 def test_release_creates_tag(git_repo):
