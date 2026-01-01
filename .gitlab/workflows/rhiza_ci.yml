@@ -28,7 +28,6 @@ ci:test:
       if [ -f "tests/requirements.txt" ]; then
         uv pip install -r tests/requirements.txt
       fi
-    - uv pip install pytest
     - uv run pytest tests --cov=.rhiza --cov=tests --cov-report=term --cov-fail-under=80
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
