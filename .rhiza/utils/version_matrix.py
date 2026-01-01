@@ -35,7 +35,7 @@ def satisfies(version: str, specifier: str) -> bool:
     """Check if a version satisfies a comma-separated list of specifiers.
 
     This is a simplified version of packaging.specifiers.SpecifierSet.
-    Supported operators: >=, <=, >, <, ==
+    Supported operators: >=, <=, >, <, ==, !=
     """
     version_tuple = parse_version(version)
 
@@ -43,7 +43,7 @@ def satisfies(version: str, specifier: str) -> bool:
     for spec in specifier.split(","):
         spec = spec.strip()
         # Match operator and version part
-        match = re.match(r"(>=|<=|>|<|==)\s*([\d.]+)", spec)
+        match = re.match(r"(>=|<=|>|<|==|!=)\s*([\d.]+)", spec)
         if not match:
             # If no operator, assume ==
             if re.match(r"[\d.]+", spec):
@@ -69,6 +69,9 @@ def satisfies(version: str, specifier: str) -> bool:
                 return False
         elif op == "==":
             if not version_tuple == spec_v_tuple:
+                return False
+        elif op == "!=":
+            if version_tuple == spec_v_tuple:
                 return False
 
     return True
