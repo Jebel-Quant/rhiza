@@ -21,11 +21,16 @@ classifiers = [
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Build Tools",
 ]
-dependencies = [
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "marimo>=0.18.0",
     "numpy>=2.4.0",
     "plotly>=6.5.0",
     "pandas>=2.3.3"
 ]
+
 
 [project.urls]
 Homepage = "https://github.com/jebel-quant/rhiza"
@@ -33,7 +38,7 @@ Repository = "https://github.com/jebel-quant/rhiza"
 Issues = "https://github.com/jebel-quant/rhiza/issues"
 
 
-[tool.deptry]
+#[tool.deptry]
 # Note: Dev dependencies are now in .rhiza/requirements/*.txt files
-exclude = [".rhiza/requirements"]
+#exclude = [".rhiza/requirements"]
 
