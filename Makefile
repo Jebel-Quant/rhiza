@@ -163,12 +163,21 @@ marimo: install ## fire up Marimo server
 
 ##@ Quality and Formatting
 deptry: install-uv ## Run deptry
-	@if [ -d ${SOURCE_FOLDER} ]; then \
-		$(UVX_BIN) deptry ${SOURCE_FOLDER}; \
-	fi
-
-	@if [ -d ${MARIMO_FOLDER} ]; then \
-		$(UVX_BIN) deptry ${MARIMO_FOLDER}; \
+	@FOLDERS=""; \
+	if [ -d ${SOURCE_FOLDER} ]; then \
+		FOLDERS="${SOURCE_FOLDER}"; \
+	fi; \
+	if [ -d ${MARIMO_FOLDER} ]; then \
+		if [ -n "$$FOLDERS" ]; then \
+			FOLDERS="$$FOLDERS ${MARIMO_FOLDER}"; \
+		else \
+			FOLDERS="${MARIMO_FOLDER}"; \
+		fi; \
+	fi; \
+	if [ -n "$$FOLDERS" ]; then \
+		$(UVX_BIN) deptry $$FOLDERS --ignore DEP004; \
+	else \
+		printf "${YELLOW}[WARN] No folders to check with deptry${RESET}\n"; \
 	fi
 
 fmt: install-uv ## check the pre-commit hooks and the linting

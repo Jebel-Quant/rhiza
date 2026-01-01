@@ -17,12 +17,23 @@ deptry:check:
   script:
     - |
       set -euo pipefail
+      FOLDERS=""
       if [ -d "src" ]; then
-        SOURCE_FOLDER="src"
-      else
-        SOURCE_FOLDER="."
+        FOLDERS="src"
       fi
-      uvx deptry "$SOURCE_FOLDER"
+      if [ -d "book/marimo" ]; then
+        if [ -n "$FOLDERS" ]; then
+          FOLDERS="$FOLDERS book/marimo"
+        else
+          FOLDERS="book/marimo"
+        fi
+      fi
+      if [ -n "$FOLDERS" ]; then
+        uvx deptry $FOLDERS --ignore DEP004
+      else
+        echo "No folders to check with deptry"
+        exit 1
+      fi
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
