@@ -34,8 +34,8 @@ RESET := \033[0m
 	update-readme
 
 UV_INSTALL_DIR ?= ./bin
-UV_BIN ?= $(shell command -v uv 2>/dev/null || echo ${UV_INSTALL_DIR}/uv)
-UVX_BIN ?= $(shell command -v uvx 2>/dev/null || echo ${UV_INSTALL_DIR}/uvx)
+UV_BIN ?= ${UV_INSTALL_DIR}/uv
+UVX_BIN ?= ${UV_INSTALL_DIR}/uvx
 VENV ?= .venv
 
 export UV_NO_MODIFY_PATH := 1
