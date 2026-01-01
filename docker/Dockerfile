@@ -17,8 +17,8 @@ USER app_user
 # Install dependencies into .venv (no dev deps)
 RUN uv sync --frozen --no-dev --no-cache
 
-# Copy application code
-COPY --chown=app_user:app_user src ./src
+# Copy application code if the folder src exists
+COPY --chown=app_user:app_user src* ./
 
 # Install the package itself (non-editable, so src/ is not required afterwards)
 RUN uv pip install --no-deps .
