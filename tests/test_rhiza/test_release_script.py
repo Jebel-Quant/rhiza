@@ -8,7 +8,6 @@ Tests call the script from a temporary clone and use a small mock `uv`
 to avoid external dependencies.
 """
 
-import shutil
 import subprocess
 
 # Get shell path once at module level
