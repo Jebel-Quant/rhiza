@@ -26,10 +26,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.21"
+
       - id: versions
         run: |
           # Generate Python versions JSON from the script
-          JSON=$(python ./.rhiza/utils/version_matrix.py)
+          JSON=$(make -s version-matrix)
           echo "list=$JSON" >> "$GITHUB_OUTPUT"
 
       - name: Debug matrix
