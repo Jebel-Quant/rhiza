@@ -201,7 +201,10 @@ class TestMakefile:
         # 2. The UV_INSTALL_DIR/uv fallback (e.g., ./bin/uv)
         assert "Value of UV_BIN:" in out
         # Check that the output contains a path ending with 'uv'
-        assert out.split("Value of UV_BIN:\n")[1].split("\n")[0].endswith("uv")
+        parts = out.split("Value of UV_BIN:\n")
+        assert len(parts) > 1, "Output missing 'Value of UV_BIN:' section"
+        uv_path = parts[1].split("\n")[0] if parts[1] else ""
+        assert uv_path.endswith("uv"), f"Expected UV_BIN path to end with 'uv', got: {uv_path}"
 
     def test_uvx_bin_is_bin_uvx(self, logger, expected_uv_install_dir):
         """`UVX_BIN` is derived from PATH or UV_INSTALL_DIR environment variable or defaults to ./bin/uvx."""
@@ -212,7 +215,10 @@ class TestMakefile:
         # 2. The UV_INSTALL_DIR/uvx fallback (e.g., ./bin/uvx)
         assert "Value of UVX_BIN:" in out
         # Check that the output contains a path ending with 'uvx'
-        assert out.split("Value of UVX_BIN:\n")[1].split("\n")[0].endswith("uvx")
+        parts = out.split("Value of UVX_BIN:\n")
+        assert len(parts) > 1, "Output missing 'Value of UVX_BIN:' section"
+        uvx_path = parts[1].split("\n")[0] if parts[1] else ""
+        assert uvx_path.endswith("uvx"), f"Expected UVX_BIN path to end with 'uvx', got: {uvx_path}"
 
     def test_script_folder_is_github_scripts(self, logger):
         """`SCRIPTS_FOLDER` should point to `.rhiza/scripts`."""
