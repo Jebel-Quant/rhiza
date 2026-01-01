@@ -135,7 +135,7 @@ class TestMakefile:
         proc = run_make(logger, ["fmt"])
         out = proc.stdout
         # Check for uvx command with the configured path
-        assert f"uvx pre-commit run --all-files" in out
+        assert "uvx pre-commit run --all-files" in out
 
     def test_test_target_dry_run(self, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
@@ -153,7 +153,7 @@ class TestMakefile:
         out = proc.stdout
         # Expect marimushka export to install marimo and minibook to be invoked
         # Check for uvx command with the configured path
-        assert f"uvx minibook" in out
+        assert "uvx minibook" in out
 
     @pytest.mark.parametrize("target", ["book", "docs", "marimushka"])
     def test_book_related_targets_fallback_without_book_folder(self, logger, tmp_path, target):
