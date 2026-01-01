@@ -74,5 +74,5 @@ jobs:
           fi
           uv pip install pytest
 
-      - name: Run tests
-        run: uv run pytest tests
+      - name: Run tests with coverage
+        run: uv run pytest tests --cov=.rhiza --cov=tests --cov-report=term --cov-fail-under=80
