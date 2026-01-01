@@ -17,6 +17,7 @@
 
 pages:
   stage: deploy
+  needs: []
   image: ghcr.io/astral-sh/uv:0.9.18-python3.12-bookworm
   variables:
     GIT_LFS_SKIP_SMUDGE: "0"
@@ -33,14 +34,14 @@ pages:
         echo "PUBLISH_COMPANION_BOOK is set to false, skipping deployment"
         exit 0
       fi
-      
+
       # Build the book
       make book
-      
+
       # GitLab Pages expects artifacts in the "public" directory
       # Move _book to public for GitLab Pages
       mv _book public
-      
+
       # Create .nojekyll file if not present
       touch public/.nojekyll
   artifacts:
