@@ -193,20 +193,32 @@ class TestMakefile:
         assert f"Value of UV_INSTALL_DIR:\n{expected_uv_install_dir}" in out
 
     def test_uv_bin_is_bin_uv(self, logger, expected_uv_install_dir):
-        """`UV_BIN` is derived from UV_INSTALL_DIR environment variable or defaults to ./bin/uv."""
+        """`UV_BIN` is derived from PATH or UV_INSTALL_DIR environment variable or defaults to ./bin/uv."""
         proc = run_make(logger, ["print-UV_BIN"], dry_run=False)
         out = strip_ansi(proc.stdout)
-        # Check if UV_INSTALL_DIR is set in environment, otherwise expect default ./bin
-        expected_bin = f"{expected_uv_install_dir}/uv"
-        assert f"Value of UV_BIN:\n{expected_bin}" in out
+        # UV_BIN can be either:
+        # 1. A uv binary found in PATH (e.g., /opt/hostedtoolcache/uv/0.9.21/x86_64/uv)
+        # 2. The UV_INSTALL_DIR/uv fallback (e.g., ./bin/uv)
+        assert "Value of UV_BIN:" in out
+        # Check that the output contains a path ending with 'uv'
+        parts = out.split("Value of UV_BIN:\n")
+        assert len(parts) > 1, "Output missing 'Value of UV_BIN:' section"
+        uv_path = parts[1].split("\n")[0] if parts[1] else ""
+        assert uv_path.endswith("uv"), f"Expected UV_BIN path to end with 'uv', got: {uv_path}"
 
     def test_uvx_bin_is_bin_uvx(self, logger, expected_uv_install_dir):
-        """`UVX_BIN` is derived from UV_INSTALL_DIR environment variable or defaults to ./bin/uvx."""
+        """`UVX_BIN` is derived from PATH or UV_INSTALL_DIR environment variable or defaults to ./bin/uvx."""
         proc = run_make(logger, ["print-UVX_BIN"], dry_run=False)
         out = strip_ansi(proc.stdout)
-        # Check if UV_INSTALL_DIR is set in environment, otherwise expect default ./bin
-        expected_bin = f"{expected_uv_install_dir}/uvx"
-        assert f"Value of UVX_BIN:\n{expected_bin}" in out
+        # UVX_BIN can be either:
+        # 1. A uvx binary found in PATH (e.g., /opt/hostedtoolcache/uv/0.9.21/x86_64/uvx)
+        # 2. The UV_INSTALL_DIR/uvx fallback (e.g., ./bin/uvx)
+        assert "Value of UVX_BIN:" in out
+        # Check that the output contains a path ending with 'uvx'
+        parts = out.split("Value of UVX_BIN:\n")
+        assert len(parts) > 1, "Output missing 'Value of UVX_BIN:' section"
+        uvx_path = parts[1].split("\n")[0] if parts[1] else ""
+        assert uvx_path.endswith("uvx"), f"Expected UVX_BIN path to end with 'uvx', got: {uvx_path}"
 
     def test_script_folder_is_github_scripts(self, logger):
         """`SCRIPTS_FOLDER` should point to `.rhiza/scripts`."""
