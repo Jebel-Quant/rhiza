@@ -104,6 +104,16 @@ def run_make(
     return result
 
 
+def setup_rhiza_git_repo():
+    """Initialize a git repository and set remote to rhiza."""
+    subprocess.run(["git", "init"], check=True, capture_output=True)  # noqa: S603, S607
+    subprocess.run(
+        ["git", "remote", "add", "origin", "https://github.com/Jebel-Quant/rhiza"],  # noqa: S603, S607
+        check=True,
+        capture_output=True,
+    )
+
+
 class TestMakefile:
     """Smoke tests for Makefile help and common targets using make -n."""
 
@@ -257,13 +267,7 @@ class TestMakefileRootFixture:
 
     def test_validate_target_skips_in_rhiza_repo(self, logger):
         """Validate target should skip execution in rhiza repository."""
-        # Initialize git repository and set remote to rhiza
-        subprocess.run(["git", "init"], check=True, capture_output=True)  # noqa: S603, S607
-        subprocess.run(
-            ["git", "remote", "add", "origin", "https://github.com/Jebel-Quant/rhiza"],  # noqa: S603, S607
-            check=True,
-            capture_output=True,
-        )
+        setup_rhiza_git_repo()
 
         proc = run_make(logger, ["validate"], dry_run=False)
         out = strip_ansi(proc.stdout)
@@ -272,13 +276,7 @@ class TestMakefileRootFixture:
 
     def test_sync_target_skips_in_rhiza_repo(self, logger):
         """Sync target should skip execution in rhiza repository."""
-        # Initialize git repository and set remote to rhiza
-        subprocess.run(["git", "init"], check=True, capture_output=True)  # noqa: S603, S607
-        subprocess.run(
-            ["git", "remote", "add", "origin", "https://github.com/Jebel-Quant/rhiza"],  # noqa: S603, S607
-            check=True,
-            capture_output=True,
-        )
+        setup_rhiza_git_repo()
 
         proc = run_make(logger, ["sync"], dry_run=False)
         out = strip_ansi(proc.stdout)
