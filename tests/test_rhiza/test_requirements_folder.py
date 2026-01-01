@@ -4,6 +4,7 @@ This test ensures that the requirements folder exists and contains the expected
 requirement files for development dependencies.
 """
 
+import tomllib
 from pathlib import Path
 
 
@@ -58,8 +59,6 @@ class TestRequirementsFolder:
 
     def test_marimo_not_in_main_dependencies(self, root):
         """marimo should not be in main dependencies of pyproject.toml."""
-        import tomllib
-
         pyproject_path = root / "pyproject.toml"
         assert pyproject_path.exists(), "pyproject.toml should exist"
 

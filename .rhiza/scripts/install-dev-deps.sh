@@ -7,7 +7,7 @@ set -euo pipefail
 REQUIREMENTS_DIR=".rhiza/requirements"
 
 if [ ! -d "$REQUIREMENTS_DIR" ]; then
-    echo "Requirements directory $REQUIREMENTS_DIR not found, skipping dev dependencies install"
+    echo "Warning: Requirements directory $REQUIREMENTS_DIR not found, skipping dev dependencies install" >&2
     exit 0
 fi
 
