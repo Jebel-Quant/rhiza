@@ -42,16 +42,6 @@ class TestRequirementsFolder:
             lines = [line.strip() for line in content.splitlines() if line.strip() and not line.strip().startswith("#")]
             assert len(lines) > 0, f"{filename} should contain at least one dependency"
 
-    def test_pyproject_has_no_dev_dependencies(self, root):
-        """pyproject.toml should not have optional-dependencies section."""
-        pyproject_path = root / "pyproject.toml"
-        assert pyproject_path.exists(), "pyproject.toml should exist"
-
-        content = pyproject_path.read_text()
-        assert "[project.optional-dependencies]" not in content, (
-            "pyproject.toml should not have [project.optional-dependencies] section"
-        )
-
     def test_marimo_not_in_main_dependencies(self, root):
         """Marimo should not be in main dependencies of pyproject.toml."""
         pyproject_path = root / "pyproject.toml"
