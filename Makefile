@@ -16,35 +16,51 @@ RESET := \033[0m
 # Default goal when running `make` with no target
 .DEFAULT_GOAL := help
 
+# Declare phony targets (they don't produce files)
+.PHONY: \
+	install-uv \
+	install \
+	install-extras \
+	clean \
+	marimo \
+	fmt \
+	deptry \
+	bump \
+	release \
+	release-dry-run \
+	post-release \
+	sync \
+	help \
+	update-readme
+
+UV_INSTALL_DIR ?= ./bin
+UV_BIN ?= $(shell command -v uv 2>/dev/null || echo ${UV_INSTALL_DIR}/uv)
+UVX_BIN ?= $(shell command -v uvx 2>/dev/null || echo ${UV_INSTALL_DIR}/uvx)
+VENV ?= .venv
+
+export UV_NO_MODIFY_PATH := 1
+export UV_VENV_CLEAR := 1
+
+# Load .rhiza.env (if present) and export its variables so recipes see them.
+include .rhiza.env
+
 # Include split Makefiles
 -include tests/Makefile.tests
 -include book/Makefile.book
 -include presentation/Makefile.presentation
-
-# Declare phony targets (they don't produce files)
-.PHONY: install-uv install clean marimo fmt deptry release release-dry-run post-release sync help all update-readme
-
-UV_INSTALL_DIR ?= ./bin
-UV_BIN := ${UV_INSTALL_DIR}/uv
-UVX_BIN := ${UV_INSTALL_DIR}/uvx
-MARIMO_FOLDER := book/marimo
-SOURCE_FOLDER := src
-SCRIPTS_FOLDER := .github/scripts
-CUSTOM_SCRIPTS_FOLDER := .github/scripts/customisations
-
-export UV_NO_MODIFY_PATH := 1
-export UV_VENV_CLEAR := 1
 
 ##@ Bootstrap
 install-uv: ## ensure uv/uvx is installed
 	# Ensure the ${UV_INSTALL_DIR} folder exists
 	@mkdir -p ${UV_INSTALL_DIR}
 
-	# Install uv/uvx only if they are not already present
-	@if [ -x "${UV_INSTALL_DIR}/uv" ] && [ -x "${UV_INSTALL_DIR}/uvx" ]; then \
+	# Install uv/uvx only if they are not already present in PATH or in the install dir
+	@if command -v uv >/dev/null 2>&1 && command -v uvx >/dev/null 2>&1; then \
+	  :; \
+	elif [ -x "${UV_INSTALL_DIR}/uv" ] && [ -x "${UV_INSTALL_DIR}/uvx" ]; then \
 	  printf "${BLUE}[INFO] uv and uvx already installed in ${UV_INSTALL_DIR}, skipping.${RESET}\n"; \
 	else \
-	  printf "${BLUE}[INFO] Installing uv and uvx...${RESET}\n"; \
+	  printf "${BLUE}[INFO] Installing uv and uvx into ${UV_INSTALL_DIR}...${RESET}\n"; \
 	  if ! curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR="${UV_INSTALL_DIR}" sh >/dev/null 2>&1; then \
 	    printf "${RED}[ERROR] Failed to install uv${RESET}\n"; \
 	    exit 1; \
@@ -64,10 +80,10 @@ install-extras: ## run custom build script (if exists)
 
 install: install-uv install-extras ## install
 	# Create the virtual environment only if it doesn't exist
-	@if [ ! -d ".venv" ]; then \
-	  ${UV_BIN} venv --python 3.12 || { printf "${RED}[ERROR] Failed to create virtual environment${RESET}\n"; exit 1; }; \
+	@if [ ! -d "${VENV}" ]; then \
+	  ${UV_BIN} venv $(if $(PYTHON_VERSION),--python $(PYTHON_VERSION)) ${VENV} || { printf "${RED}[ERROR] Failed to create virtual environment${RESET}\n"; exit 1; }; \
 	else \
-	  printf "${BLUE}[INFO] Using existing virtual environment at .venv, skipping creation${RESET}\n"; \
+	  printf "${BLUE}[INFO] Using existing virtual environment at ${VENV}, skipping creation${RESET}\n"; \
 	fi
 
 	# Check if there is requirements.txt file in the tests folder
@@ -77,24 +93,54 @@ install: install-uv install-extras ## install
 
 	# Install the dependencies from pyproject.toml (if it exists)
 	@if [ -f "pyproject.toml" ]; then \
-	  printf "${BLUE}[INFO] Installing dependencies${RESET}\n"; \
-	  ${UV_BIN} sync --all-extras --frozen || { printf "${RED}[ERROR] Failed to install dependencies${RESET}\n"; exit 1; }; \
+	  if [ -f "uv.lock" ]; then \
+	    printf "${BLUE}[INFO] Installing dependencies from lock file${RESET}\n"; \
+	    ${UV_BIN} sync --all-extras --frozen || { printf "${RED}[ERROR] Failed to install dependencies${RESET}\n"; exit 1; }; \
+	  else \
+	    printf "${YELLOW}[WARN] uv.lock not found. Generating lock file and installing dependencies...${RESET}\n"; \
+	    ${UV_BIN} sync --all-extras || { printf "${RED}[ERROR] Failed to install dependencies${RESET}\n"; exit 1; }; \
+	  fi; \
 	else \
 	  printf "${YELLOW}[WARN] No pyproject.toml found, skipping install${RESET}\n"; \
 	fi
 
+sync: ## sync with template repository as defined in .github/template.yml
+	@if git remote get-url origin 2>/dev/null | grep -iq 'jebel-quant/rhiza'; then \
+		printf "${BLUE}[INFO] Skipping sync in rhiza repository (no template.yml by design)${RESET}\n"; \
+	else \
+		$(MAKE) install-uv; \
+		${UVX_BIN} "rhiza>=0.7.1" materialize --force .; \
+	fi
 
-clean: ## clean
-	@printf "${BLUE}Cleaning project...${RESET}\n"
-	# do not clean .env files
-	@git clean -d -X -f -e .env -e '.env.*'
-	@rm -rf dist build *.egg-info .coverage .pytest_cache
-	@printf "${BLUE}Removing local branches with no remote counterpart...${RESET}\n"
+validate: ## validate project structure against template repository as defined in .github/template.yml
+	@if git remote get-url origin 2>/dev/null | grep -iq 'jebel-quant/rhiza'; then \
+		printf "${BLUE}[INFO] Skipping validate in rhiza repository (no template.yml by design)${RESET}\n"; \
+	else \
+		$(MAKE) install-uv; \
+		${UVX_BIN} "rhiza>=0.7.1" validate .; \
+	fi
+
+clean: ## Clean project artifacts and stale local branches
+	@printf "%bCleaning project...%b\n" "$(BLUE)" "$(RESET)"
+
+	# Remove ignored files/directories, but keep .env files, tested with futures project
+	@git clean -d -X -f \
+		-e '!.env' \
+		-e '!.env.*'
+
+	# Remove build & test artifacts
+	@rm -rf \
+		dist \
+		build \
+		*.egg-info \
+		.coverage \
+		.pytest_cache
+
+	@printf "%bRemoving local branches with no remote counterpart...%b\n" "$(BLUE)" "$(RESET)"
+
 	@git fetch --prune
-	@git branch -vv \
-	  | grep ': gone]' \
-	  | awk '{print $1}' \
-	  | xargs -r git branch -D 2>/dev/null || true
+
+	@git branch -vv | awk '/: gone]/{print $$1}' | xargs -r git branch -D
 
 ##@ Tools
 marimo: install ## fire up Marimo server
@@ -105,11 +151,13 @@ marimo: install ## fire up Marimo server
 	fi
 
 ##@ Quality and Formatting
-deptry: install-uv ## run deptry if pyproject.toml exists
-	@if [ -f "pyproject.toml" ]; then \
-	  ${UVX_BIN} deptry "${SOURCE_FOLDER}"; \
-	else \
-	  printf "${YELLOW} No pyproject.toml found, skipping deptry${RESET}\n"; \
+deptry: install-uv ## Run deptry
+	@if [ -d ${SOURCE_FOLDER} ]; then \
+		$(UVX_BIN) deptry ${SOURCE_FOLDER}; \
+	fi
+
+	@if [ -d ${MARIMO_FOLDER} ]; then \
+		$(UVX_BIN) deptry ${MARIMO_FOLDER}; \
 	fi
 
 fmt: install-uv ## check the pre-commit hooks and the linting
@@ -134,8 +182,6 @@ post-release: install-uv ## perform post-release tasks
 	fi
 
 ##@ Meta
-sync: install-uv ## sync with template repository as defined in .github/template.yml
-	@${UVX_BIN} rhiza materialize --force .
 
 help: ## Display this help message
 	+@printf "$(BOLD)Usage:$(RESET)\n"
@@ -154,6 +200,9 @@ customisations: ## list available customisation scripts
 
 update-readme: ## update README.md with current Makefile help output
 	@/bin/sh "${SCRIPTS_FOLDER}/update-readme-help.sh"
+
+version-matrix: install-uv ## Emit the list of supported Python versions from pyproject.toml
+	@${UV_BIN} run .rhiza/utils/version_matrix.py
 
 # debugger tools
 custom-%: ## run a custom script (usage: make custom-scriptname)

@@ -1,27 +1,23 @@
 # ================================
 # Stage 1: Builder
 # ================================
-FROM ghcr.io/astral-sh/uv:0.9.18-python3.14-trixie-slim AS builder
+FROM ghcr.io/astral-sh/uv:0.9.21-python3.14-trixie-slim AS builder
 
 WORKDIR /app
 
 # Create non-root user
 RUN useradd -m app_user && chown app_user:app_user /app
 
-# Copy dependency files (for caching)
-COPY pyproject.toml uv.lock README.md ./
-
 # Use non-root user
 USER app_user
 
+# Copy application code if the folder src exists
+COPY --chown=app_user:app_user pyproject.toml uv.lock README.md src* ./
+
 # Install dependencies into .venv (no dev deps)
-RUN uv sync --frozen --no-dev --no-cache
-
-# Copy application code
-COPY --chown=app_user:app_user src ./src
-
-# Install the package itself (non-editable, so src/ is not required afterwards)
-RUN uv pip install --no-deps .
+RUN uv sync --frozen --no-dev --no-cache && \
+    # Install the package itself (non-editable, so src/ is not required afterwards) \
+    uv pip install --no-deps .
 
 # Remove source to shrink image
 RUN rm -rf ./src/ ~/.cache/ && \

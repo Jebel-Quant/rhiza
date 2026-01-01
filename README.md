@@ -1,19 +1,27 @@
 <div align="center">
 
-# <img src="assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza
+# <img src="assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza 
+![GitHub Release](https://img.shields.io/github/v/release/jebel-quant/rhiza?sort=semver&color=2FA4A9&label=rhiza)
+![Synced with Rhiza](https://img.shields.io/badge/synced%20with-rhiza-2FA4A9?color=2FA4A9)
 
-![Created with Rhiza](https://img.shields.io/badge/synced%20with-rhiza-2FA4A9?logoUrl=https://raw.githubusercontent.com/Jebel-Quant/rhiza/main/assets/rhiza-logo.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python versions](https://img.shields.io/badge/Python-3.11%20•%203.12%20•%203.13%20•%203.14-blue?logo=python)](https://www.python.org/)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg?logo=ruff)](https://github.com/astral-sh/ruff)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg)](https://github.com/pypa/hatch)
+[![CodeFactor](https://www.codefactor.io/repository/github/jebel-quant/rhiza/badge)](https://www.codefactor.io/repository/github/jebel-quant/rhiza)
 
-[![CI](https://github.com/Jebel-Quant/rhiza/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Jebel-Quant/rhiza/actions/workflows/ci.yml)
-[![PRE-COMMIT](https://github.com/Jebel-Quant/rhiza/actions/workflows/pre-commit.yml/badge.svg?branch=main)](https://github.com/Jebel-Quant/rhiza/actions/workflows/pre-commit.yml)
-[![DEPTRY](https://github.com/Jebel-Quant/rhiza/actions/workflows/deptry.yml/badge.svg?branch=main)](https://github.com/Jebel-Quant/rhiza/actions/workflows/deptry.yml)
-[![BOOK](https://github.com/Jebel-Quant/rhiza/actions/workflows/book.yml/badge.svg?branch=main)](https://github.com/Jebel-Quant/rhiza/actions/workflows/book.yml)
-[![MARIMO](https://github.com/Jebel-Quant/rhiza/actions/workflows/marimo.yml/badge.svg?branch=main)](https://github.com/Jebel-Quant/rhiza/actions/workflows/marimo.yml)
+![Gitlab](https://img.shields.io/badge/GitLab-FC6D26?style=flat&logo=gitlab&logoColor=white)
+![Github](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat&logo=linux&logoColor=white)
+![MAC OS](https://img.shields.io/badge/macOS-000000?style=flat&logo=apple&logoColor=white)
+
+[![CI](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_ci.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_ci.yml)
+[![PRE-COMMIT](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_pre-commit.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_pre-commit.yml)
+[![DEPTRY](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_deptry.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_deptry.yml)
+[![MARIMO](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_marimo.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_marimo.yml)
+[![DOCKER](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_docker.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_docker.yml)
+[![DEVCONTAINER](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_devcontainer.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_devcontainer.yml)
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/jebel-quant/rhiza)
 
@@ -23,6 +31,7 @@ Save time and maintain consistency across your projects
 with these pre-configured templates.
 
 ![Last Updated](https://img.shields.io/github/last-commit/jebel-quant/rhiza/main?label=Last%20updated&color=blue)
+
 
 In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the literal meaning **root**.
 
@@ -77,13 +86,15 @@ Bootstrap
   install-uv            ensure uv/uvx is installed
   install-extras        run custom build script (if exists)
   install               install
-  clean                 clean
+  sync                  sync with template repository as defined in .github/template.yml
+  validate              validate project structure against template repository as defined in .github/template.yml
+  clean                 Clean project artifacts and stale local branches
 
 Tools
   marimo                fire up Marimo server
 
 Quality and Formatting
-  deptry                run deptry if pyproject.toml exists
+  deptry                Run deptry
   fmt                   check the pre-commit hooks and the linting
 
 Releasing and Versioning
@@ -92,10 +103,10 @@ Releasing and Versioning
   post-release          perform post-release tasks
 
 Meta
-  sync                  sync with template repository as defined in .github/template.yml
   help                  Display this help message
   customisations        list available customisation scripts
   update-readme         update README.md with current Makefile help output
+  version-matrix        Emit the list of supported Python versions from pyproject.toml
 
 Development and Testing
   test                  run all tests
@@ -231,6 +242,8 @@ Tooling that improves local development, onboarding, and reproducibility.
 Templates related to continuous integration, delivery, and repository automation.
 
 - **.github/** — GitHub Actions workflows, scripts, and repository templates
+- **.gitlab/** — GitLab CI/CD workflows (equivalent to GitHub Actions)
+  - See [GITLAB_CI.md](GITLAB_CI.md) for GitLab CI/CD setup and usage
 
 ## ⚙️ Workflow Configuration
 
@@ -324,13 +337,13 @@ git checkout -b rhiza
 
 # Ensure required directories exist
 mkdir -p .github/workflows
-mkdir -p .github/scripts
+mkdir -p .rhiza/scripts
 
 # Copy the template configuration
 cp /tmp/rhiza/.github/template.yml .github/template.yml
 
 # Copy the sync helper script
-cp /tmp/rhiza/.github/scripts/sync.sh .github/scripts
+cp /tmp/rhiza/.rhiza/scripts/sync.sh .rhiza/scripts
 ```
 
 At this stage:
@@ -345,7 +358,7 @@ At this stage:
 Run the sync script to apply the templates defined in '.github/template.yml'
 
 ```bash
-./.github/scripts/sync.sh
+./.rhiza/scripts/sync.sh
 ```
 
 This will:
@@ -376,7 +389,7 @@ This approach keeps your project’s configuration in sync with Rhiza’s latest
 Prerequisites:
 
   - A .github/template.yml file exists, defining **which templates to include or exclude**.
-  - The first manual sync (./.github/scripts/sync.sh) has been performed.
+  - The first manual sync (./.rhiza/scripts/sync.sh) has been performed.
   - The .github/workflows/sync.yml workflow is present in your repository.
 
 The workflow can run:
@@ -544,7 +557,7 @@ The project includes a hook for installing additional system dependencies and cu
 
 ### Using build-extras.sh
 
-Create a file `.github/scripts/customisations/build-extras.sh` in your repository to install system packages or dependencies (this repository uses a dedicated `customisations` folder for repo-specific scripts):
+Create a file `.rhiza/scripts/customisations/build-extras.sh` in your repository to install system packages or dependencies (this repository uses a dedicated `customisations` folder for repo-specific scripts):
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -558,20 +571,20 @@ sudo apt-get install -y graphviz
 
 ### When it Runs
 
-The `build-extras.sh` script (from `.github/scripts/customisations`) is automatically invoked during:
+The `build-extras.sh` script (from `.rhiza/scripts/customisations`) is automatically invoked during:
 - `make install` - Initial project setup
 - `make test` - Before running tests
 - `make book` - Before building documentation
 - `make docs` - Before generating API documentation
 
-This ensures custom dependencies are available whenever needed throughout the build lifecycle. The `Makefile` intentionally only checks the `.github/scripts/customisations` folder for repository-specific hooks such as `build-extras.sh` and `post-release.sh`.
+This ensures custom dependencies are available whenever needed throughout the build lifecycle. The `Makefile` intentionally only checks the `.rhiza/scripts/customisations` folder for repository-specific hooks such as `build-extras.sh` and `post-release.sh`.
 
 ### Important: Exclude from Template Updates
 
 If you customize this file, add it to the exclude list in your `action.yml` configuration to prevent it from being overwritten during template updates. Use the `customisations` path to avoid clobbering:
 ```yaml
 exclude: |
-  .github/scripts/customisations/build-extras.sh
+  .rhiza/scripts/customisations/build-extras.sh
 ```
 
 
@@ -585,7 +598,7 @@ exclude: |
 
 ### Post-release scripts
 
-If you need repository-specific post-release tasks, place a `post-release.sh` script in `.github/scripts/customisations/post-release.sh`. The `Makefile` will only look in the `customisations` folder for that hook.
+If you need repository-specific post-release tasks, place a `post-release.sh` script in `.rhiza/scripts/customisations/post-release.sh`. The `Makefile` will only look in the `customisations` folder for that hook.
 
 
 ## 🚀 Releasing

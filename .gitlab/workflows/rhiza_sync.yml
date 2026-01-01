@@ -1,0 +1,81 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Rhiza Sync (GitLab CI)
+#
+# Purpose: This workflow synchronizes the repository with its template.
+#
+# IMPORTANT: When workflow files (.gitlab-ci.yml or .gitlab/workflows/*.yml) are modified,
+# a Project Access Token or Group Access Token with 'write_repository' scope is required.
+# The token must be set as a CI/CD variable named PAT_TOKEN.
+#
+# Trigger: Manual trigger via pipeline or scheduled
+
+sync:template:
+  stage: deploy
+  image: ghcr.io/astral-sh/uv:0.9.18-python3.12-bookworm
+  before_script:
+    - apt-get update && apt-get install -y git
+    - git config --global user.name "GitLab CI"
+    - git config --global user.email "gitlab-ci@gitlab.com"
+  script:
+    - |
+      # Don't run this in rhiza itself
+      if [ "$CI_PROJECT_PATH" = "jebel-quant/rhiza" ]; then
+        echo "Skipping sync in rhiza repository itself"
+        exit 0
+      fi
+      
+      # Check PAT_TOKEN configuration
+      if [ -z "$PAT_TOKEN" ]; then
+        echo "⚠️ PAT_TOKEN variable is not configured."
+        echo "⚠️ If this sync modifies workflow files, the push will fail."
+        echo "⚠️ Please configure a Project/Group Access Token with write_repository scope."
+        TOKEN="${CI_JOB_TOKEN}"
+      else
+        echo "✓ PAT_TOKEN is configured."
+        TOKEN="${PAT_TOKEN}"
+      fi
+      
+      # Define sync branch name
+      BRANCH_NAME="rhiza/${CI_PIPELINE_ID}"
+      
+      # Fetch all branches
+      git fetch origin
+      
+      # Create and checkout sync branch
+      git checkout -b "$BRANCH_NAME"
+      
+      # Sync template
+      uvx rhiza materialize --force .
+      
+      # Check if there are changes
+      git add -A
+      
+      if git diff --cached --quiet; then
+        echo "No changes detected, skipping commit and push"
+        exit 0
+      fi
+      
+      # Commit changes
+      git commit -m "chore: Update via rhiza"
+      
+      # Construct push URL with token
+      PUSH_URL=$(echo "$CI_REPOSITORY_URL" | sed "s|gitlab-ci-token:[^@]*@|oauth2:${TOKEN}@|")
+      
+      # Push changes
+      git push "$PUSH_URL" "$BRANCH_NAME"
+      
+      # Create merge request if CREATE_MR is true (default)
+      if [ "${CREATE_MR:-true}" = "true" ]; then
+        echo "Creating merge request..."
+        # Note: This requires gitlab CLI or API call
+        # For now, just push the branch - MR can be created manually or via GitLab API
+        echo "Branch $BRANCH_NAME pushed. Please create a merge request manually."
+        echo "Or use GitLab API to create MR automatically."
+      fi
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - when: manual
+  allow_failure: false

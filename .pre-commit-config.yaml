@@ -33,7 +33,7 @@ repos:
         args: ["--verbose"]
 
   - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.9
+    rev: v1.7.10
     hooks:
       - id: actionlint
         args: [ -ignore, SC ]
@@ -47,7 +47,7 @@ repos:
     hooks:
       - id: update-readme-help
         name: Update README with Makefile help output
-        entry: /bin/sh .github/scripts/update-readme-help.sh
+        entry: /bin/sh .rhiza/scripts/update-readme-help.sh
         language: system
         files: '^Makefile$'
         pass_filenames: false

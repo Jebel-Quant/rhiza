@@ -3,6 +3,9 @@
 .venv
 .ruff_cache
 
+### Don't expose API keys, etc.
+.env
+
 __marimo__
 
 _tests
@@ -28,6 +31,9 @@ presentation.pdf
 
 # C extensions
 *.so
+
+# .DS_Store
+.DS_Store
 
 # Distribution / packaging
 .Python
@@ -62,6 +68,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+coverage.json
 *.cover
 *.py,cover
 .hypothesis/

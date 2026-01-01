@@ -1,6 +1,6 @@
 [project]
 name = "rhiza"
-version = "0.3.0"
+version = "0.4.1"
 description = "Reusable configuration templates for modern Python projects"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -21,6 +21,12 @@ classifiers = [
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Build Tools",
 ]
+dependencies = [
+    "marimo>=0.18.0",
+    "numpy>=2.4.0",
+    "plotly>=6.5.0",
+    "pandas>=2.3.3"
+]
 
 [project.urls]
 Homepage = "https://github.com/jebel-quant/rhiza"
@@ -34,8 +40,8 @@ dev = [
     "pytest-html>=4.1.1",
     "pytest==9.0.2",
     "pre-commit==4.5.1",
-    "marimo==0.18.4",
     "pdoc>=16.0.0",
+    "python-dotenv==1.2.1"
 ]
 
 [tool.deptry]
