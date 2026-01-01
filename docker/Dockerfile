@@ -18,13 +18,14 @@ COPY --chown=app_user:app_user pyproject.toml uv.lock README.md src* ./
 #COPY pyproject.toml uv.lock README.md ./
 
 # Install dependencies into .venv (no dev deps)
-RUN uv sync --frozen --no-dev --no-cache
+RUN uv sync --frozen --no-dev --no-cache && \
+    uv pip install --no-deps .
 
 # Copy application code if the folder src exists
 #COPY --chown=app_user:app_user src* ./
 
 # Install the package itself (non-editable, so src/ is not required afterwards)
-RUN uv pip install --no-deps .
+# RUN uv pip install --no-deps .
 
 # Remove source to shrink image
 RUN rm -rf ./src/ ~/.cache/ && \
