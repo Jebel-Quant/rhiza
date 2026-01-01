@@ -164,8 +164,8 @@ marimo: install ## fire up Marimo server
 ##@ Quality and Formatting
 deptry: install-uv ## Run deptry
 	@FOLDERS=""; \
-	[ -d ${SOURCE_FOLDER} ] && FOLDERS="$$FOLDERS ${SOURCE_FOLDER}"; \
-	[ -d ${MARIMO_FOLDER} ] && FOLDERS="$$FOLDERS ${MARIMO_FOLDER}"; \
+	[ -d ${SOURCE_FOLDER} ] && FOLDERS="${SOURCE_FOLDER}"; \
+	[ -d ${MARIMO_FOLDER} ] && FOLDERS="$${FOLDERS:+$$FOLDERS }${MARIMO_FOLDER}"; \
 	if [ -n "$$FOLDERS" ]; then \
 		$(UVX_BIN) deptry $$FOLDERS --ignore DEP004; \
 	else \

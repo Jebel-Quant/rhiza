@@ -18,8 +18,8 @@ deptry:check:
     - |
       set -euo pipefail
       FOLDERS=""
-      [ -d "src" ] && FOLDERS="$FOLDERS src"
-      [ -d "book/marimo" ] && FOLDERS="$FOLDERS book/marimo"
+      [ -d "src" ] && FOLDERS="src"
+      [ -d "book/marimo" ] && FOLDERS="${FOLDERS:+$FOLDERS }book/marimo"
       if [ -n "$FOLDERS" ]; then
         uvx deptry $FOLDERS --ignore DEP004
       else
