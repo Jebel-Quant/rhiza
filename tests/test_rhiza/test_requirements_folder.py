@@ -58,20 +58,20 @@ class TestRequirementsFolder:
 
     def test_marimo_not_in_main_dependencies(self, root):
         """marimo should not be in main dependencies of pyproject.toml."""
+        import tomllib
+
         pyproject_path = root / "pyproject.toml"
         assert pyproject_path.exists(), "pyproject.toml should exist"
 
-        content = pyproject_path.read_text()
+        with open(pyproject_path, "rb") as f:
+            pyproject_data = tomllib.load(f)
 
-        # Find the dependencies section
-        in_dependencies = False
-        for line in content.splitlines():
-            if line.strip().startswith("dependencies = ["):
-                in_dependencies = True
-            elif in_dependencies and "]" in line:
-                in_dependencies = False
-            elif in_dependencies and "marimo" in line.lower():
-                assert False, "marimo should not be in main dependencies"
+        dependencies = pyproject_data.get("project", {}).get("dependencies", [])
+        marimo_deps = [dep for dep in dependencies if "marimo" in dep.lower()]
+
+        assert (
+            len(marimo_deps) == 0
+        ), f"marimo should not be in main dependencies, found: {marimo_deps}"
 
     def test_readme_exists_in_requirements_folder(self, root):
         """README.md should exist in requirements folder."""

@@ -63,13 +63,7 @@ jobs:
           uv sync --frozen
 
       - name: Install dev dependencies
-        run: |
-          for req_file in .rhiza/requirements/*.txt; do
-            if [ -f "$req_file" ]; then
-              echo "Installing requirements from $req_file"
-              uv pip install -r "$req_file"
-            fi
-          done
+        run: bash .rhiza/scripts/install-dev-deps.sh
 
       - name: Run tests
         run: uv run pytest tests
