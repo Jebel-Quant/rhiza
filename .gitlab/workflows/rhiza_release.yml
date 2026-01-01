@@ -172,8 +172,17 @@ release:changelog:
       mv /tmp/CHANGELOG_new.md CHANGELOG.md
       
       # Update the links section at the bottom
-      sed -i "s|\[Unreleased\]:.*|[Unreleased]: https://github.com/Jebel-Quant/rhiza/compare/v${VERSION}...HEAD|" CHANGELOG.md
-      sed -i "/^\[Unreleased\]:/a [$VERSION]: https://github.com/Jebel-Quant/rhiza/releases/tag/v$VERSION" CHANGELOG.md
+      sed -i "s|^\[Unreleased\]:.*|[Unreleased]: https://github.com/Jebel-Quant/rhiza/compare/v${VERSION}...HEAD|" CHANGELOG.md
+      
+      # Find the previous version from the changelog to create comparison link
+      PREV_VERSION=$(grep -oP '^\[\K[0-9]+\.[0-9]+\.[0-9]+(?=\]:)' CHANGELOG.md | head -n 1)
+      
+      # Add the new version link after [Unreleased]
+      if [ -n "$PREV_VERSION" ]; then
+        sed -i "/^\[Unreleased\]: /a [$VERSION]: https://github.com/Jebel-Quant/rhiza/compare/v${PREV_VERSION}...v$VERSION" CHANGELOG.md
+      else
+        sed -i "/^\[Unreleased\]: /a [$VERSION]: https://github.com/Jebel-Quant/rhiza/releases/tag/v$VERSION" CHANGELOG.md
+      fi
       
       # Commit and push
       git add CHANGELOG.md
