@@ -36,5 +36,5 @@ Issues = "https://github.com/jebel-quant/rhiza/issues"
 
 [tool.deptry]
 # Note: Dev dependencies are now in .rhiza/requirements/*.txt files
-exclude = [".rhiza"]
+exclude = [".rhiza/requirements"]
 

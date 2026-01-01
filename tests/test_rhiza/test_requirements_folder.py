@@ -10,6 +10,14 @@ from pathlib import Path
 class TestRequirementsFolder:
     """Tests for the .rhiza/requirements folder structure."""
 
+    # Expected requirements files
+    EXPECTED_REQUIREMENTS_FILES = [
+        "tests.txt",
+        "marimo.txt",
+        "docs.txt",
+        "tools.txt",
+    ]
+
     def test_requirements_folder_exists(self, root):
         """Requirements folder should exist in .rhiza directory."""
         requirements_dir = root / ".rhiza" / "requirements"
@@ -19,13 +27,7 @@ class TestRequirementsFolder:
     def test_requirements_files_exist(self, root):
         """All expected requirements files should exist."""
         requirements_dir = root / ".rhiza" / "requirements"
-        expected_files = [
-            "tests.txt",
-            "marimo.txt",
-            "docs.txt",
-            "tools.txt",
-        ]
-        for filename in expected_files:
+        for filename in self.EXPECTED_REQUIREMENTS_FILES:
             filepath = requirements_dir / filename
             assert filepath.exists(), f"{filename} should exist in requirements folder"
             assert filepath.is_file(), f"{filename} should be a file"
@@ -33,13 +35,7 @@ class TestRequirementsFolder:
     def test_requirements_files_not_empty(self, root):
         """Requirements files should not be empty."""
         requirements_dir = root / ".rhiza" / "requirements"
-        expected_files = [
-            "tests.txt",
-            "marimo.txt",
-            "docs.txt",
-            "tools.txt",
-        ]
-        for filename in expected_files:
+        for filename in self.EXPECTED_REQUIREMENTS_FILES:
             filepath = requirements_dir / filename
             content = filepath.read_text()
             # Filter out comments and empty lines
