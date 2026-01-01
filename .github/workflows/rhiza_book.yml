@@ -50,7 +50,16 @@ jobs:
         run: |
           export UV_EXTRA_INDEX_URL="${{ secrets.uv-extra-index-url }}"
           # will just use .python-version?
-          uv sync --all-extras --frozen
+          uv sync --frozen
+
+      - name: Install dev dependencies
+        run: |
+          for req_file in .rhiza/requirements/*.txt; do
+            if [ -f "$req_file" ]; then
+              echo "Installing requirements from $req_file"
+              uv pip install -r "$req_file"
+            fi
+          done
 
       - name: "Make the book"
         run: |

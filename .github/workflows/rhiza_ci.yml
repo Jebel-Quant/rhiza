@@ -60,14 +60,16 @@ jobs:
         run: |
           export UV_EXTRA_INDEX_URL="${{ secrets.uv-extra-index-url }}"
           uv venv --python ${{ matrix.python-version }}
-          uv sync --all-extras --frozen
+          uv sync --frozen
 
-      - name: Install dependencies
+      - name: Install dev dependencies
         run: |
-          if [ -f "tests/requirements.txt" ]; then
-            uv pip install -r tests/requirements.txt
-          fi
-          uv pip install pytest
+          for req_file in .rhiza/requirements/*.txt; do
+            if [ -f "$req_file" ]; then
+              echo "Installing requirements from $req_file"
+              uv pip install -r "$req_file"
+            fi
+          done
 
       - name: Run tests
         run: uv run pytest tests
