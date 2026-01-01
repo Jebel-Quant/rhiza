@@ -5,7 +5,6 @@ requirement files for development dependencies.
 """
 
 import tomllib
-from pathlib import Path
 
 
 class TestRequirementsFolder:
@@ -40,11 +39,7 @@ class TestRequirementsFolder:
             filepath = requirements_dir / filename
             content = filepath.read_text()
             # Filter out comments and empty lines
-            lines = [
-                line.strip()
-                for line in content.splitlines()
-                if line.strip() and not line.strip().startswith("#")
-            ]
+            lines = [line.strip() for line in content.splitlines() if line.strip() and not line.strip().startswith("#")]
             assert len(lines) > 0, f"{filename} should contain at least one dependency"
 
     def test_pyproject_has_no_dev_dependencies(self, root):
@@ -53,12 +48,12 @@ class TestRequirementsFolder:
         assert pyproject_path.exists(), "pyproject.toml should exist"
 
         content = pyproject_path.read_text()
-        assert (
-            "[project.optional-dependencies]" not in content
-        ), "pyproject.toml should not have [project.optional-dependencies] section"
+        assert "[project.optional-dependencies]" not in content, (
+            "pyproject.toml should not have [project.optional-dependencies] section"
+        )
 
     def test_marimo_not_in_main_dependencies(self, root):
-        """marimo should not be in main dependencies of pyproject.toml."""
+        """Marimo should not be in main dependencies of pyproject.toml."""
         pyproject_path = root / "pyproject.toml"
         assert pyproject_path.exists(), "pyproject.toml should exist"
 
@@ -68,9 +63,7 @@ class TestRequirementsFolder:
         dependencies = pyproject_data.get("project", {}).get("dependencies", [])
         marimo_deps = [dep for dep in dependencies if "marimo" in dep.lower()]
 
-        assert (
-            len(marimo_deps) == 0
-        ), f"marimo should not be in main dependencies, found: {marimo_deps}"
+        assert len(marimo_deps) == 0, f"marimo should not be in main dependencies, found: {marimo_deps}"
 
     def test_readme_exists_in_requirements_folder(self, root):
         """README.md should exist in requirements folder."""
