@@ -8,17 +8,20 @@ WORKDIR /app
 # Create non-root user
 RUN useradd -m app_user && chown app_user:app_user /app
 
-# Copy dependency files (for caching)
-COPY pyproject.toml uv.lock README.md ./
-
 # Use non-root user
 USER app_user
+
+# Copy application code if the folder src exists
+COPY --chown=app_user:app_user pyproject.toml uv.lock README.md src* ./
+
+# Copy dependency files (for caching)
+#COPY pyproject.toml uv.lock README.md ./
 
 # Install dependencies into .venv (no dev deps)
 RUN uv sync --frozen --no-dev --no-cache
 
 # Copy application code if the folder src exists
-COPY --chown=app_user:app_user src* ./
+#COPY --chown=app_user:app_user src* ./
 
 # Install the package itself (non-editable, so src/ is not required afterwards)
 RUN uv pip install --no-deps .
