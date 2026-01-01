@@ -13,11 +13,13 @@ fi
 
 echo "Installing dev dependencies from $REQUIREMENTS_DIR"
 
+shopt -s nullglob
 for req_file in "$REQUIREMENTS_DIR"/*.txt; do
     if [ -f "$req_file" ]; then
         echo "Installing requirements from $req_file"
         uv pip install -r "$req_file"
     fi
 done
+shopt -u nullglob
 
 echo "Dev dependencies installed successfully"
