@@ -924,7 +924,6 @@ source = { virtual = "." }
 dependencies = [
     { name = "marimo" },
     { name = "numpy" },
-    { name = "packaging" },
     { name = "pandas" },
     { name = "plotly" },
 ]
@@ -943,7 +942,6 @@ dev = [
 requires-dist = [
     { name = "marimo", specifier = ">=0.18.0" },
     { name = "numpy", specifier = ">=2.4.0" },
-    { name = "packaging", specifier = ">=25.0" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "pdoc", marker = "extra == 'dev'", specifier = ">=16.0.0" },
     { name = "plotly", specifier = ">=6.5.0" },
