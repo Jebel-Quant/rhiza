@@ -14,10 +14,21 @@ CANDIDATES = ["3.11", "3.12", "3.13", "3.14"]  # extend as needed
 
 
 def parse_version(v: str) -> tuple[int, ...]:
-    """Parse a version string into a tuple of integers."""
-    return tuple(int(x) for x in v.split("."))
+    """Parse a version string into a tuple of integers.
 
-
+    This is intentionally simple and only supports numeric components.
+    If a component contains non-numeric suffixes (e.g. '3.11.0rc1'),
+    the leading numeric portion will be used (e.g. '0rc1' -> 0). If a
+    component has no leading digits at all, a ValueError is raised.
+    """
+    parts: list[int] = []
+    for part in v.split("."):
+        match = re.match(r"\d+", part)
+        if not match:
+            msg = f"Invalid version component {part!r} in version {v!r}; expected a numeric prefix."
+            raise ValueError(msg)
+        parts.append(int(match.group(0)))
+    return tuple(parts)
 def satisfies(version: str, specifier: str) -> bool:
     """Check if a version satisfies a comma-separated list of specifiers.
 
