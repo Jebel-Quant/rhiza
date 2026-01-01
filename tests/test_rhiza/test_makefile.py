@@ -254,3 +254,33 @@ class TestMakefileRootFixture:
         content = makefile.read_text()
 
         assert "UV_BIN" in content or "uv" in content.lower()
+
+    def test_validate_target_skips_in_rhiza_repo(self, logger):
+        """Validate target should skip execution in rhiza repository."""
+        # Initialize git repository and set remote to rhiza
+        subprocess.run(["git", "init"], check=True, capture_output=True)  # noqa: S603, S607
+        subprocess.run(
+            ["git", "remote", "add", "origin", "https://github.com/Jebel-Quant/rhiza"],  # noqa: S603, S607
+            check=True,
+            capture_output=True,
+        )
+
+        proc = run_make(logger, ["validate"], dry_run=False)
+        out = strip_ansi(proc.stdout)
+        assert "[INFO] Skipping validate in rhiza repository" in out
+        assert proc.returncode == 0
+
+    def test_sync_target_skips_in_rhiza_repo(self, logger):
+        """Sync target should skip execution in rhiza repository."""
+        # Initialize git repository and set remote to rhiza
+        subprocess.run(["git", "init"], check=True, capture_output=True)  # noqa: S603, S607
+        subprocess.run(
+            ["git", "remote", "add", "origin", "https://github.com/Jebel-Quant/rhiza"],  # noqa: S603, S607
+            check=True,
+            capture_output=True,
+        )
+
+        proc = run_make(logger, ["sync"], dry_run=False)
+        out = strip_ansi(proc.stdout)
+        assert "[INFO] Skipping sync in rhiza repository" in out
+        assert proc.returncode == 0
