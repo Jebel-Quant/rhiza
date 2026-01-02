@@ -164,11 +164,15 @@ marimo: install ## fire up Marimo server
 ##@ Quality and Formatting
 deptry: install-uv ## Run deptry
 	@if [ -d ${SOURCE_FOLDER} ]; then \
-		$(UVX_BIN) deptry ${SOURCE_FOLDER}; \
+		$(UVX_BIN) deptry ${SOURCE_FOLDER} --verbose; \
 	fi
 
 	@if [ -d ${MARIMO_FOLDER} ]; then \
-		$(UVX_BIN) deptry ${MARIMO_FOLDER}; \
+		if [ -d ${SOURCE_FOLDER} ]; then \
+			$(UVX_BIN) deptry ${MARIMO_FOLDER} ${SOURCE_FOLDER} --verbose --ignore DEP004; \
+		else \
+		  	$(UVX_BIN) deptry ${MARIMO_FOLDER} --verbose; \
+		fi \
 	fi
 
 fmt: install-uv ## check the pre-commit hooks and the linting
