@@ -171,7 +171,7 @@ deptry: install-uv ## Run deptry
 		if [ -d ${SOURCE_FOLDER} ]; then \
 			$(UVX_BIN) deptry ${MARIMO_FOLDER} ${SOURCE_FOLDER} --ignore DEP004; \
 		else \
-		  	$(UVX_BIN) deptry ${MARIMO_FOLDER}; \
+		  	$(UVX_BIN) deptry ${MARIMO_FOLDER} --ignore DEP004; \
 		fi \
 	fi
 
