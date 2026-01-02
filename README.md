@@ -216,6 +216,19 @@ To customize the book:
 1. Create the directory: `mkdir -p book/minibook-templates`
 2. Create your custom template at `book/minibook-templates/custom.html.jinja2`.
 
+## 📝 Architecture Decision Records
+
+This project maintains Architecture Decision Records (ADRs) to document important architectural and design decisions.
+
+ADRs help preserve the reasoning behind key decisions, making it easier for current and future contributors to understand why the project is structured the way it is.
+
+**Browse ADRs**: See [docs/adr/](docs/adr/) for all architecture decisions.
+
+**Key decisions documented:**
+- [ADR-0001: Use Architecture Decision Records](docs/adr/0001-use-architecture-decision-records.md)
+
+For more information about the ADR format and how to create new records, see the [ADR README](docs/adr/README.md).
+
 ## 📁 Available Templates
 
 This repository provides a curated set of reusable configuration templates, organised by purpose.
