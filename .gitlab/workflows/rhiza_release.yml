@@ -52,17 +52,17 @@ variables:
     - |
       TAG="$CI_COMMIT_TAG"
       echo "Validating tag: $TAG"
-      
+
       # Check if release already exists (using GitLab API)
       RELEASE_EXISTS=$(curl --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${TAG}" \
         -s -o /dev/null -w "%{http_code}")
-      
+
       if [ "$RELEASE_EXISTS" = "200" ]; then
         echo "❌ Release '$TAG' already exists. Please use a new tag."
         exit 1
       fi
-      
+
       echo "✅ Tag validation passed"
   artifacts:
     reports:
@@ -79,20 +79,20 @@ release:build:
   script:
     - |
       export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-      uv sync --all-extras --frozen
-      
+      uv sync --all-extras --all-groups --frozen
+
       # Verify version matches tag
       if [ -f "pyproject.toml" ]; then
         TAG_VERSION="${CI_COMMIT_TAG#v}"
         PROJECT_VERSION=$(uv version --short)
-        
+
         if [ "$PROJECT_VERSION" != "$TAG_VERSION" ]; then
           echo "❌ Version mismatch: pyproject.toml has '$PROJECT_VERSION' but tag is '$TAG_VERSION'"
           exit 1
         fi
         echo "✅ Version verified: $PROJECT_VERSION matches tag"
       fi
-      
+
       # Detect buildable Python package
       if [ -f "pyproject.toml" ] && grep -q '^\[build-system\]' pyproject.toml; then
         echo "📦 Building package..."
@@ -116,17 +116,17 @@ release:draft:
   script:
     - |
       TAG="$CI_COMMIT_TAG"
-      
+
       # Create draft release using GitLab API
       RELEASE_NOTES="Release $TAG"
-      
+
       curl --request POST \
         --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
         --data "tag_name=$TAG" \
         --data "name=$TAG" \
         --data "description=$RELEASE_NOTES" \
         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases"
-      
+
       echo "✅ Draft release created"
 
 release:pypi:
@@ -145,12 +145,12 @@ release:pypi:
         echo "⚠️ No dist/ artifacts found. Skipping PyPI publish."
         exit 0
       fi
-      
+
       if grep -R "Private :: Do Not Upload" pyproject.toml; then
         echo "⏭️ Package marked as private. Skipping PyPI publish."
         exit 0
       fi
-      
+
       # Publish to PyPI
       if [ -n "$PYPI_REPOSITORY_URL" ]; then
         echo "📦 Publishing to custom repository: $PYPI_REPOSITORY_URL"
@@ -162,7 +162,7 @@ release:pypi:
         twine upload --username __token__ --password "$PYPI_TOKEN" \
           --skip-existing dist/*
       fi
-      
+
       echo "✅ Published to PyPI"
   rules:
     - if: $CI_COMMIT_TAG =~ /^v.*/
@@ -192,19 +192,19 @@ release:devcontainer:
         echo "⏭️ Skipping devcontainer publish (PUBLISH_DEVCONTAINER not true or .devcontainer missing)"
         exit 0
       fi
-      
+
       echo "🚀 Building and publishing devcontainer image"
-      
+
       # Set registry
       REGISTRY="${DEVCONTAINER_REGISTRY:-registry.gitlab.com}"
       echo "Using registry: $REGISTRY"
-      
+
       # Login to container registry
       echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$REGISTRY"
-      
+
       # Get lowercase repository path
       REPO_PATH_LC=$(echo "$CI_PROJECT_PATH" | tr '[:upper:]' '[:lower:]')
-      
+
       # Get image name component
       if [ -z "$DEVCONTAINER_IMAGE_NAME" ]; then
         REPO_NAME_LC=$(echo "$CI_PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
@@ -213,23 +213,23 @@ release:devcontainer:
       else
         IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME"
       fi
-      
+
       # Validate image name
       if ! echo "$IMAGE_NAME" | grep -qE '^[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*$'; then
         echo "❌ Invalid image name component: $IMAGE_NAME"
         exit 1
       fi
-      
+
       FULL_IMAGE_NAME="$REGISTRY/$REPO_PATH_LC/$IMAGE_NAME"
       echo "✅ Image name: $FULL_IMAGE_NAME:$CI_COMMIT_TAG"
-      
+
       # Build and push devcontainer
       devcontainer build \
         --workspace-folder . \
         --config .devcontainer/devcontainer.json \
         --image-name "$FULL_IMAGE_NAME:$CI_COMMIT_TAG" \
         --push
-      
+
       echo "DEVCONTAINER_IMAGE=$FULL_IMAGE_NAME:$CI_COMMIT_TAG" >> release.env
       echo "✅ Devcontainer published"
   artifacts:
@@ -255,7 +255,7 @@ release:finalize:
     - |
       TAG="$CI_COMMIT_TAG"
       RELEASE_BODY=""
-      
+
       # Add PyPI link if published
       if [ -f "pyproject.toml" ]; then
         PACKAGE_NAME=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['name'])" 2>/dev/null || echo "")
@@ -268,18 +268,18 @@ release:finalize:
           fi
         fi
       fi
-      
+
       # Add Devcontainer link if published
       if [ -n "$DEVCONTAINER_IMAGE" ]; then
         RELEASE_BODY="${RELEASE_BODY}\n\n### Devcontainer Image\n\n\`$DEVCONTAINER_IMAGE\`"
       fi
-      
+
       # Update release with additional information
       curl --request PUT \
         --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
         --data "description=Release $TAG$RELEASE_BODY" \
         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/releases/${TAG}"
-      
+
       echo "✅ Release finalized"
   rules:
     - if: $CI_COMMIT_TAG =~ /^v.*/

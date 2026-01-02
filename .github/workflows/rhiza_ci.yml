@@ -65,7 +65,7 @@ jobs:
         run: |
           export UV_EXTRA_INDEX_URL="${{ secrets.uv-extra-index-url }}"
           uv venv --python ${{ matrix.python-version }}
-          uv sync --all-extras --frozen
+          uv sync --all-extras --all-groups --frozen
 
       - name: Install dev dependencies
         run: bash .rhiza/scripts/install-dev-deps.sh

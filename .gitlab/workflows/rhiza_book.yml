@@ -26,7 +26,7 @@ pages:
     - git lfs install
     - git lfs pull
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-    - uv sync --all-extras --frozen
+    - uv sync --all-extras --all-groups --frozen
   script:
     - |
       # Check if PUBLISH_COMPANION_BOOK is set (defaults to allowing deployment)
