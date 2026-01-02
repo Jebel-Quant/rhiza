@@ -210,6 +210,12 @@ jobs:
           VERSION=${TAG#v}
           DATE=$(date +%Y-%m-%d)
           
+          # Extract release notes once (skip the "What's Changed" header and "Full Changelog" link)
+          RELEASE_NOTES=$(sed -n '/^## What/,/^\*\*Full Changelog/p' /tmp/release_notes.md | sed '1d;$d')
+          if [ -z "$RELEASE_NOTES" ]; then
+            RELEASE_NOTES="See release notes for details."
+          fi
+          
           # Find the [Unreleased] section
           UNRELEASED_LINE=$(grep -n '^## \[Unreleased\]' CHANGELOG.md | head -n 1 | cut -d: -f1 || echo "")
           
@@ -230,14 +236,7 @@ jobs:
                 echo ""
                 echo "## [$VERSION] - $DATE"
                 echo ""
-                
-                # Add release notes (skip the "What's Changed" header and "Full Changelog" link)
-                NOTES=$(sed -n '/^## What/,/^\*\*Full Changelog/p' /tmp/release_notes.md | sed '1d;$d')
-                if [ -n "$NOTES" ]; then
-                  echo "$NOTES"
-                else
-                  echo "See release notes for details."
-                fi
+                echo "$RELEASE_NOTES"
                 echo ""
                 
                 # Add the rest of the changelog starting from the next section
@@ -250,14 +249,7 @@ jobs:
                 echo ""
                 echo "## [$VERSION] - $DATE"
                 echo ""
-                
-                # Add release notes
-                NOTES=$(sed -n '/^## What/,/^\*\*Full Changelog/p' /tmp/release_notes.md | sed '1d;$d')
-                if [ -n "$NOTES" ]; then
-                  echo "$NOTES"
-                else
-                  echo "See release notes for details."
-                fi
+                echo "$RELEASE_NOTES"
                 echo ""
               } > /tmp/CHANGELOG_new.md
             fi
@@ -271,14 +263,7 @@ jobs:
               echo ""
               echo "## [$VERSION] - $DATE"
               echo ""
-              
-              # Add release notes
-              NOTES=$(sed -n '/^## What/,/^\*\*Full Changelog/p' /tmp/release_notes.md | sed '1d;$d')
-              if [ -n "$NOTES" ]; then
-                echo "$NOTES"
-              else
-                echo "See release notes for details."
-              fi
+              echo "$RELEASE_NOTES"
               echo ""
               
               # Add the rest of the changelog (skip header)
@@ -313,10 +298,12 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "Update CHANGELOG.md for ${{ needs.tag.outputs.tag }}"
+            # Store commit hash before checkout to ensure we merge the right commit
+            COMMIT_HASH=$(git rev-parse HEAD)
             # Fetch and checkout main branch before pushing (avoid detached HEAD state)
             git fetch origin main
             git checkout main
-            git merge --ff-only HEAD@{1}
+            git merge --ff-only "$COMMIT_HASH"
             git push origin main
           fi
 

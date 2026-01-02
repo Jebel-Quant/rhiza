@@ -247,10 +247,12 @@ release:changelog:
         echo "No changes to commit"
       else
         git commit -m "Update CHANGELOG.md for $TAG"
+        # Store commit hash before checkout to ensure we merge the right commit
+        COMMIT_HASH=$(git rev-parse HEAD)
         # Fetch and checkout main branch before pushing (avoid detached HEAD state)
         git fetch origin main
         git checkout main
-        git merge --ff-only HEAD@{1}
+        git merge --ff-only "$COMMIT_HASH"
         git push "https://oauth2:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" main
       fi
       
