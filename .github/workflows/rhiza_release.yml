@@ -188,8 +188,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.tag.outputs.tag }}
         run: |
+          set -euo pipefail
+          
           # Get the release notes from the draft release
-          RELEASE_BODY=$(gh release view "$TAG" --json body --jq '.body')
+          RELEASE_BODY=$(gh release view "$TAG" --json body --jq '.body' || echo "")
+          
+          # Validate that release notes were retrieved successfully
+          if [ -z "$RELEASE_BODY" ] || [ "$RELEASE_BODY" = "null" ]; then
+            echo "Error: Failed to retrieve release notes for tag '$TAG'." >&2
+            exit 1
+          fi
           
           # Save to a file for easier processing
           echo "$RELEASE_BODY" > /tmp/release_notes.md
@@ -198,34 +206,92 @@ jobs:
         env:
           TAG: ${{ needs.tag.outputs.tag }}
         run: |
+          set -euo pipefail
           VERSION=${TAG#v}
           DATE=$(date +%Y-%m-%d)
           
-          # Create temporary file with new entry
-          {
-            # Keep the header
-            head -n 6 CHANGELOG.md
+          # Find the [Unreleased] section
+          UNRELEASED_LINE=$(grep -n '^## \[Unreleased\]' CHANGELOG.md | head -n 1 | cut -d: -f1 || echo "")
+          
+          if [ -n "$UNRELEASED_LINE" ]; then
+            # Find the next section after [Unreleased]
+            NEXT_SECTION_LINE=$(tail -n +$((UNRELEASED_LINE + 1)) CHANGELOG.md | grep -n '^## \[' | head -n 1 | cut -d: -f1 || echo "")
             
-            # Add new version entry
-            echo ""
-            echo "## [$VERSION] - $DATE"
-            echo ""
-            
-            # Add release notes (skip the "What's Changed" header and "Full Changelog" link)
-            sed -n '/^## What/,/^\*\*Full Changelog/p' /tmp/release_notes.md | \
-              sed '1d;$d' || echo "See release notes for details."
-            echo ""
-            
-            # Add the rest of the changelog (skip header)
-            tail -n +7 CHANGELOG.md
-          } > /tmp/CHANGELOG_new.md
+            if [ -n "$NEXT_SECTION_LINE" ]; then
+              # Calculate the actual line number for the next section
+              NEXT_SECTION_LINE=$((UNRELEASED_LINE + NEXT_SECTION_LINE))
+              
+              # Create temporary file with new entry, preserving [Unreleased] section
+              {
+                # Keep everything up to the start of the next section after [Unreleased]
+                head -n $((NEXT_SECTION_LINE - 1)) CHANGELOG.md
+                
+                # Add new version entry after [Unreleased]
+                echo ""
+                echo "## [$VERSION] - $DATE"
+                echo ""
+                
+                # Add release notes (skip the "What's Changed" header and "Full Changelog" link)
+                NOTES=$(sed -n '/^## What/,/^\*\*Full Changelog/p' /tmp/release_notes.md | sed '1d;$d')
+                if [ -n "$NOTES" ]; then
+                  echo "$NOTES"
+                else
+                  echo "See release notes for details."
+                fi
+                echo ""
+                
+                # Add the rest of the changelog starting from the next section
+                tail -n +$NEXT_SECTION_LINE CHANGELOG.md
+              } > /tmp/CHANGELOG_new.md
+            else
+              # [Unreleased] exists but no other sections yet
+              {
+                cat CHANGELOG.md
+                echo ""
+                echo "## [$VERSION] - $DATE"
+                echo ""
+                
+                # Add release notes
+                NOTES=$(sed -n '/^## What/,/^\*\*Full Changelog/p' /tmp/release_notes.md | sed '1d;$d')
+                if [ -n "$NOTES" ]; then
+                  echo "$NOTES"
+                else
+                  echo "See release notes for details."
+                fi
+                echo ""
+              } > /tmp/CHANGELOG_new.md
+            fi
+          else
+            # Fallback: No [Unreleased] section found, use old behavior
+            {
+              # Keep the header
+              head -n 6 CHANGELOG.md
+              
+              # Add new version entry
+              echo ""
+              echo "## [$VERSION] - $DATE"
+              echo ""
+              
+              # Add release notes
+              NOTES=$(sed -n '/^## What/,/^\*\*Full Changelog/p' /tmp/release_notes.md | sed '1d;$d')
+              if [ -n "$NOTES" ]; then
+                echo "$NOTES"
+              else
+                echo "See release notes for details."
+              fi
+              echo ""
+              
+              # Add the rest of the changelog (skip header)
+              tail -n +7 CHANGELOG.md
+            } > /tmp/CHANGELOG_new.md
+          fi
           
           # Replace old changelog
           mv /tmp/CHANGELOG_new.md CHANGELOG.md
           
           # Update the links section at the bottom
           # Find the [Unreleased] link and update it
-          sed -i "s|^\[Unreleased\]:.*|[Unreleased]: https://github.com/Jebel-Quant/rhiza/compare/v${VERSION}...HEAD|" CHANGELOG.md
+          sed -i "s#^\[Unreleased\]:.*#[Unreleased]: https://github.com/Jebel-Quant/rhiza/compare/v${VERSION}...HEAD#" CHANGELOG.md
           
           # Find the previous version from the changelog to create comparison link
           PREV_VERSION=$(grep -oP '^\[\K[0-9]+\.[0-9]+\.[0-9]+[^]]*(?=\]:)' CHANGELOG.md | head -n 1)
@@ -247,7 +313,11 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "Update CHANGELOG.md for ${{ needs.tag.outputs.tag }}"
-            git push origin HEAD:main
+            # Fetch and checkout main branch before pushing (avoid detached HEAD state)
+            git fetch origin main
+            git checkout main
+            git merge --ff-only HEAD@{1}
+            git push origin main
           fi
 
   # Decide at step-level whether to publish
