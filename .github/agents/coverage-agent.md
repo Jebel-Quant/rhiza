@@ -10,7 +10,7 @@ instructions: |
   1. Read the coverage report at `_tests/coverage.json`.
   2. Identify files with low coverage and analyze their source code.
   3. Write comprehensive `pytest` tests in `tests/` to cover missing lines.
-  4. Create a new Issue titled "Coverage Gap Detected" describing the gaps.
+  4. Ensure there is a GitHub Issue tracking this coverage gap.
   5. Create a new branch named `coverage/fix-${RUN_ID}` from `${PR_BRANCH}`.
   6. Commit the new tests to this branch.
   7. Push the branch and create a Pull Request into `${PR_BRANCH}`.

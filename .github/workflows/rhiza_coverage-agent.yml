@@ -50,6 +50,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HAS_REPORT: ${{ steps.check.outputs.has_report }}
           IS_RHIZA: ${{ steps.check.outputs.is_rhiza }}
+          ISSUE_ASSIGNEE: ${{ github.actor }}
         run: |
           python -c "
           import json
@@ -68,8 +69,21 @@ jobs:
           ensure_label('coverage', '0E8A16', 'Related to code coverage')
           ensure_label('chore', 'EDEDED', 'Routine tasks and maintenance')
 
+          def get_agent_instructions():
+              try:
+                  with open('.github/agents/coverage-agent.md', 'r') as f:
+                      content = f.read()
+                      # Simple parsing to extract instructions block
+                      if 'instructions: |' in content:
+                          return content.split('instructions: |')[1].strip()
+                      return content
+              except Exception:
+                  return "Please analyze the coverage report and add tests to reach 100% coverage."
+
+          instructions = get_agent_instructions()
           has_report = os.environ.get('HAS_REPORT') == 'true'
           is_rhiza = os.environ.get('IS_RHIZA') == 'true'
+          assignee = os.environ.get('ISSUE_ASSIGNEE')
           
           if not has_report:
               if is_rhiza:
@@ -85,7 +99,8 @@ jobs:
                       '--title', title,
                       '--body', body,
                       '--label', 'coverage',
-                      '--label', 'chore'
+                      '--label', 'chore',
+                      '--assignee', assignee
                   ]
                   subprocess.run(cmd, check=True)
                   print('Issue created successfully.')
@@ -104,7 +119,7 @@ jobs:
                   title = f'Coverage Gap Detected: {coverage:.2f}%'
                   body = (
                       f'Coverage analysis detected gaps. Current coverage is {coverage:.2f}%.\n\n'
-                      'Please analyze the coverage report and add tests to reach 100% coverage.\n\n'
+                      f'{instructions}\n\n'
                       '@github-actions assign to copilot'
                   )
                   
@@ -113,7 +128,8 @@ jobs:
                       '--title', title,
                       '--body', body,
                       '--label', 'coverage',
-                      '--label', 'chore'
+                      '--label', 'chore',
+                      '--assignee', assignee
                   ]
                   
                   subprocess.run(cmd, check=True)
