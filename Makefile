@@ -179,8 +179,15 @@ fmt: install-uv ## check the pre-commit hooks and the linting
 	@${UVX_BIN} pre-commit run --all-files
 
 ##@ Releasing and Versioning
-bump: install-uv ## bump version
-	@UV_BIN="${UV_BIN}" /bin/sh "${SCRIPTS_FOLDER}/bump.sh"
+bump: ## bump version
+	@if [ -f "pyproject.toml" ]; then \
+		$(MAKE) install; \
+		${UVX_BIN} "rhiza[tools]>=0.8.5" tools bump; \
+		printf "${BLUE}[INFO] Updating uv.lock file...${RESET}\n"; \
+		${UV_BIN} lock; \
+	else \
+		printf "${YELLOW}[WARN] No pyproject.toml found, skipping bump${RESET}\n"; \
+	fi 
 
 release: install-uv ## create tag and push to remote with prompts
 	@UV_BIN="${UV_BIN}" /bin/sh "${SCRIPTS_FOLDER}/release.sh"
