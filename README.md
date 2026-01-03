@@ -80,52 +80,66 @@ Run `make help` to see all available targets:
 Usage:
   make <target>
 
-Targets:
+Target                    Description
+------------------------- ----------------------------------------
 
 Bootstrap
-  install-uv            ensure uv/uvx is installed
-  install-extras        run custom build script (if exists)
-  install               install
-  sync                  sync with template repository as defined in .github/template.yml
-  validate              validate project structure against template repository as defined in .github/template.yml
-  clean                 Clean project artifacts and stale local branches
+install-uv                 ensure uv/uvx is installed
+install-extras             run custom build script (if exists)
+install                    install
+sync                       sync with template repository as defined in .github/template.yml
+validate                   validate project structure against template repository as defined in .github/template.yml
+clean                      Clean project artifacts and stale local branches
 
 Tools
-  marimo                fire up Marimo server
+marimo                     fire up Marimo server
 
 Quality and Formatting
-  deptry                Run deptry
-  fmt                   check the pre-commit hooks and the linting
+deptry                     Run deptry
+fmt                        check the pre-commit hooks and the linting
 
 Releasing and Versioning
-  bump                  bump version
-  release               create tag and push to remote with prompts
-  post-release          perform post-release tasks
+bump                       bump version
+release                    create tag and push to remote with prompts
+post-release               perform post-release tasks
 
 Meta
-  help                  Display this help message
-  customisations        list available customisation scripts
-  update-readme         update README.md with current Makefile help output
-  version-matrix        Emit the list of supported Python versions from pyproject.toml
+help                       Display this help message
+customisations             list available customisation scripts
+update-readme              update README.md with current Makefile help output
+version-matrix             Emit the list of supported Python versions from pyproject.toml
 
 Development and Testing
-  test                  run all tests
-  benchmark             run performance benchmarks
+test                       run all tests
+benchmark                  run performance benchmarks
 
 Documentation
-  docs                  create documentation with pdoc
-  marimushka            export Marimo notebooks to HTML
-  book                  compile the companion book
+docs                       create documentation with pdoc
+marimushka                 export Marimo notebooks to HTML
+book                       compile the companion book
 
 Presentation
-  presentation          generate presentation slides from PRESENTATION.md using Marp
-  presentation-pdf      generate PDF presentation from PRESENTATION.md using Marp
-  presentation-serve    serve presentation interactively with Marp
+presentation               generate presentation slides from PRESENTATION.md using Marp
+presentation-pdf           generate PDF presentation from PRESENTATION.md using Marp
+presentation-serve         serve presentation interactively with Marp
 
 Customisations
-  install-extras        run custom build script (if exists)
-  post-release          perform post-release tasks
+install-extras             run custom build script (if exists)
+post-release               perform post-release tasks
 
+Github Maintenance
+gh-install                 check for gh cli existence and install extensions
+prs                        list open pull requests
+issues                     list open issues
+failed-workflows           list recent failing workflow runs
+whoami                     check github auth status
+
+  ____  _     _
+ |  _ \| |__ (_)______ _
+ | |_) | '_ \| |_  / _\`|
+ |  _ <| | | | |/ / (_| |
+ |_| \_\_| |_|_/___\__,_|
+ 
 ```
 
 The [Makefile](Makefile) provides organized targets for bootstrapping, development, testing, and documentation tasks.

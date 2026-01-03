@@ -13,6 +13,16 @@ RED := \033[31m
 YELLOW := \033[33m
 RESET := \033[0m
 
+define RHIZA_LOGO
+  ____  _     _
+ |  _ \| |__ (_)______ _
+ | |_) | '_ \| |_  / _\`|
+ |  _ <| | | | |/ / (_| |
+ |_| \_\_| |_|_/___\__,_|
+ 
+endef
+export RHIZA_LOGO
+
 # Default goal when running `make` with no target
 .DEFAULT_GOAL := help
 
@@ -49,6 +59,8 @@ include .rhiza.env
 -include book/Makefile.book
 -include presentation/Makefile.presentation
 -include .rhiza/customisations/Makefile.customisations
+# -include .rhiza/agentic/Makefile.agentic
+-include .github/Makefile.gh
 
 ##@ Bootstrap
 install-uv: ## ensure uv/uvx is installed
@@ -192,12 +204,15 @@ post-release:: install-uv ## perform post-release tasks
 
 ##@ Meta
 
+print-logo:
+	@printf "${BLUE}$$RHIZA_LOGO${RESET}\n"
+
 help: ## Display this help message
 	+@printf "$(BOLD)Usage:$(RESET)\n"
 	+@printf "  make $(BLUE)<target>$(RESET)\n\n"
-	+@printf "$(BOLD)Targets:$(RESET)\n"
-	+@awk 'BEGIN {FS = ":.*##"; printf ""} /^[a-zA-Z_-]+:.*?##/ { printf "  $(BLUE)%-20s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BOLD)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)
+	+@awk 'BEGIN {FS = ":.*##"; printf "$(BOLD)%-25s %s$(RESET)\n", "Target", "Description"; printf "------------------------- ----------------------------------------\n"} /^[a-zA-Z_-]+:.*?##/ { printf "$(BLUE)%-25s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BOLD)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)
 	+@printf "\n"
+	@$(MAKE) print-logo
 
 customisations: ## list available customisation scripts
 	@printf "${BLUE}${BOLD}Customisation scripts available in ${CUSTOM_SCRIPTS_FOLDER}:$(RESET)\n"
