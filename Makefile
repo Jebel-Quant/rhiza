@@ -182,7 +182,7 @@ fmt: install-uv ## check the pre-commit hooks and the linting
 bump: ## bump version
 	@if [ -f "pyproject.toml" ]; then \
 		$(MAKE) install; \
-		${UVX_BIN} "rhiza[tools]>=0.8.5" tools bump; \
+		${UVX_BIN} "rhiza[tools]>=0.8.6" tools bump; \
 		printf "${BLUE}[INFO] Updating uv.lock file...${RESET}\n"; \
 		${UV_BIN} lock; \
 	else \
