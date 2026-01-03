@@ -2,7 +2,7 @@
 # This file is included by the main Makefile
 
 # Declare phony targets (they don't produce files)
-.PHONY: test benchmark
+.PHONY: test benchmark show-coverage
 
 # Test-specific variables
 TESTS_FOLDER := tests
@@ -28,4 +28,18 @@ benchmark: install ## run performance benchmarks
 	else \
 	  printf "${YELLOW}[WARN] Benchmarks folder not found, skipping benchmarks${RESET}\n"; \
 	fi
+
+show-coverage: ## open the coverage report in the browser
+	@if [ -f _tests/html-coverage/index.html ]; then \
+		if command -v open >/dev/null 2>&1; then \
+			open _tests/html-coverage/index.html; \
+		elif command -v xdg-open >/dev/null 2>&1; then \
+			xdg-open _tests/html-coverage/index.html; \
+		else \
+			printf "${YELLOW}[WARN] Could not open browser. Please open _tests/html-coverage/index.html manually.${RESET}\n"; \
+		fi \
+	else \
+		printf "${YELLOW}[WARN] Coverage report not found. Run 'make test' first.${RESET}\n"; \
+	fi
+
 

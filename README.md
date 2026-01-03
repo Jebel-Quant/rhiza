@@ -111,6 +111,7 @@ Meta
 Development and Testing
   test                  run all tests
   benchmark             run performance benchmarks
+  show-coverage         open the coverage report in the browser
 
 Documentation
   docs                  create documentation with pdoc

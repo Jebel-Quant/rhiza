@@ -1,0 +1,139 @@
+name: RHIZA COVERAGE AGENT
+
+on:
+  pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Run tests and generate coverage
+        run: |
+          make test
+
+      - name: Check Coverage and Create Issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_ASSIGNEE: copilot
+        run: |
+          python -c "
+          import json
+          import subprocess
+          import sys
+          import os
+          
+          def ensure_label(name, color, description):
+              # Attempt to create label. If it fails (e.g. exists), we ignore the error.
+              subprocess.run(
+                  ['gh', 'label', 'create', name, '--color', color, '--description', description],
+                  capture_output=True
+              )
+
+          def create_issue(title, body, labels, assignee):
+              cmd = ['gh', 'issue', 'create', '--title', title, '--body', body]
+              for label in labels:
+                  cmd.extend(['--label', label])
+              
+              try:
+                  # Create issue without assignee first to avoid failure if assignee is invalid
+                  result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                  print('Issue created successfully.')
+                  issue_url = result.stdout.strip()
+                  
+                  # Try to assign
+                  if assignee:
+                      print(f'Attempting to assign to {assignee}...')
+                      assign_cmd = ['gh', 'issue', 'edit', issue_url, '--add-assignee', assignee]
+                      assign_res = subprocess.run(assign_cmd, capture_output=True, text=True)
+                      if assign_res.returncode != 0:
+                          print(f'Warning: Could not assign to {assignee}: {assign_res.stderr}')
+                      else:
+                          print(f'Assigned to {assignee}.')
+              except subprocess.CalledProcessError as e:
+                  print(f'Failed to create issue: {e.stderr}')
+                  raise
+
+          # Ensure labels exist
+          ensure_label('coverage', '0E8A16', 'Related to code coverage')
+          ensure_label('chore', 'EDEDED', 'Routine tasks and maintenance')
+
+          def get_agent_instructions():
+              try:
+                  with open('.github/agents/coverage-agent.md', 'r') as f:
+                      content = f.read()
+                      # Simple parsing to extract instructions block
+                      if 'instructions: |' in content:
+                          return content.split('instructions: |')[1].strip()
+                      return content
+              except Exception:
+                  return "Please analyze the coverage report and add tests to reach 100% coverage."
+
+          instructions = get_agent_instructions()
+          
+          coverage_path = '_tests/coverage.json'
+          has_report = os.path.exists(coverage_path)
+          repo = os.environ.get('GITHUB_REPOSITORY')
+          is_rhiza = repo == 'jebel-quant/rhiza'
+          assignee = os.environ.get('ISSUE_ASSIGNEE')
+          
+          print(f'Checking coverage report at {coverage_path}...')
+          print(f'Repository: {repo}')
+          
+          if not has_report:
+              print('Coverage report not found.')
+              if is_rhiza:
+                  print('Rhiza repository detected. Creating issue for framework test review...')
+                  title = 'Rhiza Framework Test Review Needed'
+                  body = (
+                      'The coverage report was not found, but this is the Rhiza repository.\n\n'
+                      'Please review \`tests/test_rhiza\` and ensure the framework is sufficiently tested.\n\n'
+                      '@github-actions assign to copilot'
+                  )
+                  create_issue(title, body, ['coverage', 'chore'], assignee)
+              else:
+                  print('Not the Rhiza repository. Skipping.')
+              sys.exit(0)
+          
+          try:
+              with open(coverage_path) as f:
+                  data = json.load(f)
+              
+              coverage = data['totals']['percent_covered']
+              print(f'Current Coverage: {coverage:.2f}%')
+              
+              if coverage < 100:
+                  print('Coverage is below 100%. Creating GitHub Issue...')
+                  
+                  title = f'Coverage Gap Detected: {coverage:.2f}%'
+                  body = (
+                      f'Coverage analysis detected gaps. Current coverage is {coverage:.2f}%.\n\n'
+                      f'{instructions}\n\n'
+                      '@github-actions assign to copilot'
+                  )
+                  
+                  create_issue(title, body, ['coverage', 'chore'], assignee)
+              else:
+                  print('Coverage is 100%. No issue needed.')
+          
+          except Exception as e:
+              print(f'Error: {e}')
+              sys.exit(1)
+          "
