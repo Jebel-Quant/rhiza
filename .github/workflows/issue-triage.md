@@ -9,6 +9,7 @@ description: |
 on:
   issues:
     types: [opened, reopened]
+  workflow_dispatch:
   stop-after: +1mo # workflow will no longer trigger after 1 month. Remove this and recompile to run indefinitely
   reaction: eyes
 
