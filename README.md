@@ -122,6 +122,10 @@ Presentation
   presentation-pdf      generate PDF presentation from PRESENTATION.md using Marp
   presentation-serve    serve presentation interactively with Marp
 
+Customisations
+  install-extras        run custom build script (if exists)
+  post-release          perform post-release tasks
+
 ```
 
 The [Makefile](Makefile) provides organized targets for bootstrapping, development, testing, and documentation tasks.

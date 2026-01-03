@@ -48,6 +48,7 @@ include .rhiza.env
 -include tests/Makefile.tests
 -include book/Makefile.book
 -include presentation/Makefile.presentation
+-include .rhiza/customisations/Makefile.customisations
 
 ##@ Bootstrap
 install-uv: ## ensure uv/uvx is installed
@@ -67,16 +68,9 @@ install-uv: ## ensure uv/uvx is installed
 	  fi; \
 	fi
 
-install-extras: ## run custom build script (if exists)
-	@if [ -x "${CUSTOM_SCRIPTS_FOLDER}/build-extras.sh" ]; then \
-		printf "${BLUE}[INFO] Running custom build script from customisations folder...${RESET}\n"; \
-		"${CUSTOM_SCRIPTS_FOLDER}"/build-extras.sh; \
-	elif [ -f "${CUSTOM_SCRIPTS_FOLDER}/build-extras.sh" ]; then \
-		printf "${BLUE}[INFO] Running custom build script from customisations folder...${RESET}\n"; \
-		/bin/sh "${CUSTOM_SCRIPTS_FOLDER}/build-extras.sh"; \
-	else \
-		printf "${BLUE}[INFO] No custom build script in ${CUSTOM_SCRIPTS_FOLDER}, skipping...${RESET}\n"; \
-	fi
+install-extras:: ## run custom build script (if exists)
+	@:
+
 
 install: install-uv install-extras ## install
 	# Create the virtual environment only if it doesn't exist
@@ -192,16 +186,9 @@ bump: ## bump version
 release: install-uv ## create tag and push to remote with prompts
 	@UV_BIN="${UV_BIN}" /bin/sh "${SCRIPTS_FOLDER}/release.sh"
 
-post-release: install-uv ## perform post-release tasks
-	@if [ -x "${CUSTOM_SCRIPTS_FOLDER}/post-release.sh" ]; then \
-		printf "${BLUE}[INFO] Running post-release script from customisations folder...${RESET}\n"; \
-		"${CUSTOM_SCRIPTS_FOLDER}"/post-release.sh; \
-	elif [ -f "${CUSTOM_SCRIPTS_FOLDER}/post-release.sh" ]; then \
-		printf "${BLUE}[INFO] Running post-release script from customisations folder...${RESET}\n"; \
-		/bin/sh "${CUSTOM_SCRIPTS_FOLDER}/post-release.sh"; \
-	else \
-		printf "${BLUE}[INFO] No post-release script in ${CUSTOM_SCRIPTS_FOLDER}, skipping...${RESET}\n"; \
-	fi
+post-release:: install-uv ## perform post-release tasks
+	@:
+
 
 ##@ Meta
 
@@ -225,22 +212,6 @@ update-readme: ## update README.md with current Makefile help output
 
 version-matrix: install-uv ## Emit the list of supported Python versions from pyproject.toml
 	@${UV_BIN} run .rhiza/utils/version_matrix.py
-
-# debugger tools
-custom-%: ## run a custom script (usage: make custom-scriptname)
-	@SCRIPT="${CUSTOM_SCRIPTS_FOLDER}/$*.sh"; \
-	if [ -x "$$SCRIPT" ]; then \
-		printf "${BLUE}[INFO] Running custom script $$SCRIPT...${RESET}\n"; \
-		"$$SCRIPT"; \
-	elif [ -f "$$SCRIPT" ]; then \
-		printf "${BLUE}[INFO] Running custom script $$SCRIPT with /bin/sh...${RESET}\n"; \
-		/bin/sh "$$SCRIPT"; \
-	else \
-		printf "${RED}[ERROR] Custom script '$$SCRIPT' not found.${RESET}\n"; \
-		printf "Available scripts:\n"; \
-		ls -1 "${CUSTOM_SCRIPTS_FOLDER}"/*.sh 2>/dev/null | xargs -n1 basename | sed 's/\.sh$$//' | sed 's/^/  - /'; \
-		exit 1; \
-	fi
 
 print-% : ## print the value of a variable (usage: make print-VARIABLE)
 	@printf "${BLUE}[INFO] Printing value of variable '$*':${RESET}\n"
