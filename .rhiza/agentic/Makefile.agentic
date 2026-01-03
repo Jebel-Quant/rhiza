@@ -1,0 +1,29 @@
+## Makefile.customisations - User-defined scripts and overrides
+# This file is included by the main Makefile
+
+# Declare phony targets
+.PHONY: install-copilot
+
+##@ Agentic Workflows
+
+install-copilot:  ## checks for copilot and prompts to install
+	@if [ -x "${INSTALL_DIR}/copilot" ]; then \
+		printf "${GREEN}[INFO] GitHub Copilot CLI is already installed in ${INSTALL_DIR}.${RESET}\n"; \
+	else \
+		printf "${YELLOW}[WARN] GitHub Copilot CLI not found in ${INSTALL_DIR}.${RESET}\n"; \
+		printf "${BLUE}Do you want to install GitHub Copilot CLI? [y/N] ${RESET}"; \
+		read -r response; \
+		if [ "$$response" = "y" ] || [ "$$response" = "Y" ]; then \
+			printf "${BLUE}[INFO] Installing GitHub Copilot CLI to ${INSTALL_DIR}...${RESET}\n"; \
+			mkdir -p "${INSTALL_DIR}"; \
+			if curl -fsSL https://gh.io/copilot-install | PREFIX="$$(dirname "${INSTALL_DIR}")" bash; then \
+				printf "${GREEN}[INFO] GitHub Copilot CLI installed successfully.${RESET}\n"; \
+			else \
+				printf "${RED}[ERROR] Failed to install GitHub Copilot CLI.${RESET}\n"; \
+				exit 1; \
+			fi; \
+		else \
+			printf "${BLUE}[INFO] Skipping installation.${RESET}\n"; \
+		fi; \
+	fi
+

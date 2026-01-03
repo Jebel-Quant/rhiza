@@ -46,9 +46,9 @@ export RHIZA_LOGO
 	validate \
 	version-matrix
 
-UV_INSTALL_DIR ?= ./bin
-UV_BIN ?= $(shell command -v uv 2>/dev/null || echo ${UV_INSTALL_DIR}/uv)
-UVX_BIN ?= $(shell command -v uvx 2>/dev/null || echo ${UV_INSTALL_DIR}/uvx)
+INSTALL_DIR ?= ./bin
+UV_BIN ?= $(shell command -v uv 2>/dev/null || echo ${INSTALL_DIR}/uv)
+UVX_BIN ?= $(shell command -v uvx 2>/dev/null || echo ${INSTALL_DIR}/uvx)
 VENV ?= .venv
 
 export UV_NO_MODIFY_PATH := 1
@@ -72,17 +72,17 @@ print-logo:
 
 ##@ Bootstrap
 install-uv: ## ensure uv/uvx is installed
-	# Ensure the ${UV_INSTALL_DIR} folder exists
-	@mkdir -p ${UV_INSTALL_DIR}
+	# Ensure the ${INSTALL_DIR} folder exists
+	@mkdir -p ${INSTALL_DIR}
 
 	# Install uv/uvx only if they are not already present in PATH or in the install dir
 	@if command -v uv >/dev/null 2>&1 && command -v uvx >/dev/null 2>&1; then \
 	  :; \
-	elif [ -x "${UV_INSTALL_DIR}/uv" ] && [ -x "${UV_INSTALL_DIR}/uvx" ]; then \
-	  printf "${BLUE}[INFO] uv and uvx already installed in ${UV_INSTALL_DIR}, skipping.${RESET}\n"; \
+	elif [ -x "${INSTALL_DIR}/uv" ] && [ -x "${INSTALL_DIR}/uvx" ]; then \
+	  printf "${BLUE}[INFO] uv and uvx already installed in ${INSTALL_DIR}, skipping.${RESET}\n"; \
 	else \
-	  printf "${BLUE}[INFO] Installing uv and uvx into ${UV_INSTALL_DIR}...${RESET}\n"; \
-	  if ! curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR="${UV_INSTALL_DIR}" sh >/dev/null 2>&1; then \
+	  printf "${BLUE}[INFO] Installing uv and uvx into ${INSTALL_DIR}...${RESET}\n"; \
+	  if ! curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR="${INSTALL_DIR}" sh >/dev/null 2>&1; then \
 	    printf "${RED}[ERROR] Failed to install uv${RESET}\n"; \
 	    exit 1; \
 	  fi; \

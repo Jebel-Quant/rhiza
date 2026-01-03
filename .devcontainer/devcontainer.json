@@ -13,7 +13,7 @@
     ],
     "containerEnv": {
         "SSH_AUTH_SOCK": "${localEnv:SSH_AUTH_SOCK}",
-        "UV_INSTALL_DIR": "/home/vscode/.local/bin"
+        "INSTALL_DIR": "/home/vscode/.local/bin"
     },
     "forwardPorts": [8080],
     "customizations": {
