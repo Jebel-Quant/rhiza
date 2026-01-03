@@ -32,12 +32,16 @@ jobs:
 
       - name: Run Agent to Fix Coverage
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
           PR_BRANCH: ${{ github.head_ref || github.ref_name }}
           RUN_ID: ${{ github.run_id }}
         run: |
-          # Create a temporary prompt file combining instructions and context
-          cat .github/agents/coverage-agent.md > agent_prompt.txt
-          echo -e "\n\nCONTEXT:\nPR_BRANCH: $PR_BRANCH\nRUN_ID: $RUN_ID" >> agent_prompt.txt
+          # Create a task description file with context
+          echo "Please follow the instructions defined in the agent definition." > agent_task.txt
+          echo "" >> agent_task.txt
+          echo "CONTEXT:" >> agent_task.txt
+          echo "PR_BRANCH: $PR_BRANCH" >> agent_task.txt
+          echo "RUN_ID: $RUN_ID" >> agent_task.txt
           
-          gh agent-task create --body-file agent_prompt.txt
+          # Run the agent task using the defined coverage-agent
+          gh agent-task create -a coverage-agent -F agent_task.txt
