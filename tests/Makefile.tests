@@ -29,3 +29,6 @@ benchmark: install ## run performance benchmarks
 	  printf "${YELLOW}[WARN] Benchmarks folder not found, skipping benchmarks${RESET}\n"; \
 	fi
 
+coverage-bot: test ## run the coverage bot to suggest tests
+	@${UV_BIN} run python .rhiza/scripts/utils/coverage_bot.py
+
