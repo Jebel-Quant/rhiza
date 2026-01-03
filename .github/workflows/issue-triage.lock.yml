@@ -35,6 +35,7 @@ name: "Agentic Triage"
     types:
     - opened
     - reopened
+  workflow_dispatch: {}
 
 permissions: read-all
 
