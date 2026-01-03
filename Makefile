@@ -28,20 +28,23 @@ export RHIZA_LOGO
 
 # Declare phony targets (they don't produce files)
 .PHONY: \
-	install-uv \
+	bump \
+	clean \
+	customisations \
+	deptry \
+	fmt \
+	help \
 	install \
 	install-extras \
-	clean \
+	install-uv \
 	marimo \
-	fmt \
-	deptry \
-	bump \
-	release \
-	release-dry-run \
 	post-release \
+	print-logo \
+	release \
 	sync \
-	help \
-	update-readme
+	update-readme \
+	validate \
+	version-matrix
 
 UV_INSTALL_DIR ?= ./bin
 UV_BIN ?= $(shell command -v uv 2>/dev/null || echo ${UV_INSTALL_DIR}/uv)
@@ -61,6 +64,11 @@ include .rhiza.env
 -include .rhiza/customisations/Makefile.customisations
 # -include .rhiza/agentic/Makefile.agentic
 -include .github/Makefile.gh
+
+##@ Meta
+
+print-logo:
+	@printf "${BLUE}$$RHIZA_LOGO${RESET}\n"
 
 ##@ Bootstrap
 install-uv: ## ensure uv/uvx is installed
@@ -204,15 +212,12 @@ post-release:: install-uv ## perform post-release tasks
 
 ##@ Meta
 
-print-logo:
-	@printf "${BLUE}$$RHIZA_LOGO${RESET}\n"
-
-help: ## Display this help message
+help: print-logo ## Display this help message
 	+@printf "$(BOLD)Usage:$(RESET)\n"
 	+@printf "  make $(BLUE)<target>$(RESET)\n\n"
-	+@awk 'BEGIN {FS = ":.*##"; printf "$(BOLD)%-25s %s$(RESET)\n", "Target", "Description"; printf "------------------------- ----------------------------------------\n"} /^[a-zA-Z_-]+:.*?##/ { printf "$(BLUE)%-25s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BOLD)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)
+	+@printf "$(BOLD)Targets:$(RESET)\n"
+	+@awk 'BEGIN {FS = ":.*##"; printf ""} /^[a-zA-Z_-]+:.*?##/ { printf "  $(BLUE)%-20s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BOLD)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)
 	+@printf "\n"
-	@$(MAKE) print-logo
 
 customisations: ## list available customisation scripts
 	@printf "${BLUE}${BOLD}Customisation scripts available in ${CUSTOM_SCRIPTS_FOLDER}:$(RESET)\n"
