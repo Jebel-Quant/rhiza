@@ -54,8 +54,8 @@ VENV ?= .venv
 export UV_NO_MODIFY_PATH := 1
 export UV_VENV_CLEAR := 1
 
-# Load .rhiza/.rhiza.env (if present) and export its variables so recipes see them.
--include .rhiza/.rhiza.env
+# Load .rhiza/.env (if present) and export its variables so recipes see them.
+-include .rhiza/.env
 
 # Include split Makefiles
 -include tests/Makefile.tests
