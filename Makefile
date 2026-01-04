@@ -55,14 +55,14 @@ export UV_NO_MODIFY_PATH := 1
 export UV_VENV_CLEAR := 1
 
 # Load .rhiza.env (if present) and export its variables so recipes see them.
-include .rhiza.env
+include .rhiza/.env
 
 # Include split Makefiles
 -include tests/Makefile.tests
 -include book/Makefile.book
 -include presentation/Makefile.presentation
 -include .rhiza/customisations/Makefile.customisations
-# -include .rhiza/agentic/Makefile.agentic
+-include .rhiza/agentic/Makefile.agentic
 -include .github/Makefile.gh
 
 ##@ Meta
