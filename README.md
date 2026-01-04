@@ -134,6 +134,10 @@ Customisations
   install-extras        run custom build script (if exists)
   post-release          perform post-release tasks
 
+Agentic Workflows
+  analyse-repo          run the analyser agent to update REPOSITORY_ANALYSIS.md
+  install-copilot       checks for copilot and prompts to install
+
 GitHub Helpers
   gh-install            check for gh cli existence and install extensions
   view-prs              list open pull requests
