@@ -135,7 +135,9 @@ Customisations
   post-release          perform post-release tasks
 
 Agentic Workflows
+  copilot               open interactive prompt for copilot
   analyse-repo          run the analyser agent to update REPOSITORY_ANALYSIS.md
+  summarize-changes     summarize changes since the most recent release/tag
   install-copilot       checks for copilot and prompts to install
 
 GitHub Helpers
