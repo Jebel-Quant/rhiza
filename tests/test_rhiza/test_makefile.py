@@ -44,7 +44,10 @@ def setup_tmp_makefile(logger, root, tmp_path: Path):
 
     # Copy the main Makefile into the temporary working directory
     shutil.copy(root / "Makefile", tmp_path / "Makefile")
-    shutil.copy(root / ".rhiza.env", tmp_path / ".rhiza.env")
+
+    if (root / ".rhiza" / ".env").exists():
+        (tmp_path / ".rhiza").mkdir(exist_ok=True)
+        shutil.copy(root / ".rhiza" / ".env", tmp_path / ".rhiza" / ".env")
 
     logger.debug("Copied Makefile from %s to %s", root / "Makefile", tmp_path / "Makefile")
 
