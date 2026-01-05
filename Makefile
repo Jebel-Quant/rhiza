@@ -110,7 +110,7 @@ install: install-uv install-extras ## install
 	fi
 
 sync: ## sync with template repository as defined in .github/template.yml
-	@if git remote get-url origin 2>/dev/null | grep -iq 'jebel-quant/rhiza'; then \
+	@if git remote get-url origin 2>/dev/null | grep -iqE 'jebel-quant/rhiza(\.git)?$$'; then \
 		printf "${BLUE}[INFO] Skipping sync in rhiza repository (no template.yml by design)${RESET}\n"; \
 	else \
 		$(MAKE) install-uv; \
@@ -118,7 +118,7 @@ sync: ## sync with template repository as defined in .github/template.yml
 	fi
 
 validate: ## validate project structure against template repository as defined in .github/template.yml
-	@if git remote get-url origin 2>/dev/null | grep -iq 'jebel-quant/rhiza'; then \
+	@if git remote get-url origin 2>/dev/null | grep -iqE 'jebel-quant/rhiza(\.git)?$$'; then \
 		printf "${BLUE}[INFO] Skipping validate in rhiza repository (no template.yml by design)${RESET}\n"; \
 	else \
 		$(MAKE) install-uv; \
