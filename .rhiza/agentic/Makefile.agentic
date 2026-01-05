@@ -29,7 +29,7 @@ install-copilot:  ## checks for copilot and prompts to install
 		if [ "$$response" = "y" ] || [ "$$response" = "Y" ]; then \
 			printf "${BLUE}[INFO] Installing GitHub Copilot CLI to ${INSTALL_DIR}...${RESET}\n"; \
 			mkdir -p "${INSTALL_DIR}"; \
-			if curl -fsSL https://gh.io/copilot-install | PREFIX="$$(${INSTALL_DIR})" bash; then \
+			if curl -fsSL https://gh.io/copilot-install | PREFIX="." bash; then \
 				printf "${GREEN}[INFO] GitHub Copilot CLI installed successfully.${RESET}\n"; \
 			else \
 				printf "${RED}[ERROR] Failed to install GitHub Copilot CLI.${RESET}\n"; \
