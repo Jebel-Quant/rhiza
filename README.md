@@ -310,20 +310,27 @@ Before integrating Rhiza into your existing project:
 
 ### Quick Start: Automated Injection
 
-The fastest way to integrate Rhiza is using the provided `inject_rhiza.sh` script:
+The fastest way to integrate Rhiza is by following the steps below:
 
 ```bash
 # Navigate to your repository
 cd /path/to/your/project
 
-# Run the injection script
-uvx rhiza .
+# Initialize configuration templates
+uvx rhiza init
 ```
 
 This will:
 - ✅ Create a default template configuration (`.github/template.yml`)
-- ✅ Perform an initial sync of a basic set of templates
-- ✅ Provide clear next steps for review and customization
+
+Then, update the generated `.github/template.yml` file with your chosen templates that you can find from [Available Templates](#-available-templates).
+
+You will then need to run the following, to inject templates into your repository:
+
+```bash
+# Inject templates into your repository
+uvx rhiza materialize
+```
 
 **Options:**
 - `--branch <branch>` - Use a specific rhiza branch (default: main)
