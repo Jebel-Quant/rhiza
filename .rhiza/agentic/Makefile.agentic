@@ -2,12 +2,55 @@
 # This file is included by the main Makefile
 
 # Declare phony targets
-.PHONY: install-copilot analyse-repo summarize-changes
+.PHONY: install-copilot analyse-repo summarize-changes roborev roborev-init roborev-serve roborev-tui roborev-status roborev-stop roborev-review roborev-show
 
 ##@ Agentic Workflows
 
 copilot: install-copilot ## open interactive prompt for copilot
 	@${INSTALL_DIR}/copilot --model "${DEFAULT_AI_MODEL}"
+
+roborev-init: install-roborev ## initialize roborev in the current repository with default agent
+	@${INSTALL_DIR}/roborev init
+	@if [ ! -f .roborev.toml ] || ! grep -q "agent =" .roborev.toml; then \
+		echo 'agent = "$(ROBOREV_AGENT)"' >> .roborev.toml; \
+		printf "${GREEN}[INFO] Set default roborev agent to $(ROBOREV_AGENT) in .roborev.toml${RESET}\n"; \
+	fi
+
+review-latest: install-copilot install-roborev roborev-init roborev-serve ## review the current HEAD commit
+	@PATH="$$(pwd)/${INSTALL_DIR}:${PATH}" ${INSTALL_DIR}/roborev enqueue HEAD --agent $(ROBOREV_AGENT)
+
+review-status: install-roborev ## show code reviews
+	@PATH="$$(pwd)/${INSTALL_DIR}:${PATH}" ${INSTALL_DIR}/roborev status
+
+roborev-serve: install-roborev install-copilot ## start the roborev daemon
+	@PATH="$$(pwd)/${INSTALL_DIR}:${PATH}" ${INSTALL_DIR}/roborev daemon start
+
+review-dashboard: install-roborev install-copilot ## open the roborev interactive terminal UI
+	@PATH="$$(pwd)/${INSTALL_DIR}:${PATH}" ${INSTALL_DIR}/roborev tui
+
+roborev-stop: install-roborev install-copilot ## stop the roborev daemon
+	@PATH="$$(pwd)/${INSTALL_DIR}:${PATH}" ${INSTALL_DIR}/roborev daemon stop
+
+install-roborev: ## checks for roborev and prompts to install
+	@if [ -x "${INSTALL_DIR}/roborev" ]; then \
+		printf "${GREEN}[INFO] roborev is already installed in ${INSTALL_DIR}.${RESET}\n"; \
+	else \
+		printf "${YELLOW}[WARN] roborev not found in ${INSTALL_DIR}.${RESET}\n"; \
+		printf "${BLUE}Do you want to install roborev? [y/N] ${RESET}"; \
+		read -r response; \
+		if [ "$$response" = "y" ] || [ "$$response" = "Y" ]; then \
+			printf "${BLUE}[INFO] Installing roborev to ${INSTALL_DIR}...${RESET}\n"; \
+			mkdir -p "${INSTALL_DIR}"; \
+			if curl -fsSL https://raw.githubusercontent.com/wesm/roborev/main/scripts/install.sh | sed 's|local install_dir=$$(find_install_dir)|local install_dir="${INSTALL_DIR}"|' | bash; then \
+				printf "${GREEN}[INFO] roborev installed successfully.${RESET}\n"; \
+			else \
+				printf "${RED}[ERROR] Failed to install roborev.${RESET}\n"; \
+				exit 1; \
+			fi; \
+		else \
+			printf "${BLUE}[INFO] Skipping installation.${RESET}\n"; \
+		fi; \
+	fi
 
 analyse-repo: install-copilot ## run the analyser agent to update REPOSITORY_ANALYSIS.md
 	@${INSTALL_DIR}/copilot --agent analyser \

@@ -93,4 +93,7 @@ instance/
 # Cython debug symbols
 cython_debug/
 
+# roborev
+.roborev.toml
+
 
