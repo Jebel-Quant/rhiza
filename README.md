@@ -136,6 +136,13 @@ Customisations
 
 Agentic Workflows
   copilot               open interactive prompt for copilot
+  roborev-init          initialize roborev in the current repository with default agent
+  review-latest         review the current HEAD commit
+  review-status         show code reviews
+  roborev-serve         start the roborev daemon
+  review-dashboard      open the roborev interactive terminal UI
+  roborev-stop          stop the roborev daemon
+  install-roborev       checks for roborev and prompts to install
   analyse-repo          run the analyser agent to update REPOSITORY_ANALYSIS.md
   summarize-changes     summarize changes since the most recent release/tag
   install-copilot       checks for copilot and prompts to install
