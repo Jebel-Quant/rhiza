@@ -60,5 +60,6 @@ jobs:
           docker buildx build \
             --file docker/Dockerfile \
             --tag "${REPO_NAME}:ci" \
+            --secret id=UV_EXTRA_INDEX_URL \
             --load \
             .
