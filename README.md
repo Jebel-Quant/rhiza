@@ -25,6 +25,8 @@
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/jebel-quant/rhiza)
 
+**A project’s structure and conventions should be updatable, like a dependency.**
+
 A collection of reusable configuration templates
 for modern Python projects.
 Save time and maintain consistency across your projects
