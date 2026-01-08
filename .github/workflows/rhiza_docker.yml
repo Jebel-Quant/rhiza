@@ -63,3 +63,6 @@ jobs:
             --secret id=UV_EXTRA_INDEX_URL \
             --load \
             .
+        env:
+         UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+
