@@ -9,6 +9,6 @@ This directory contains the configuration for [GitHub Codespaces](https://github
 
 ## Features
 
-- **Python Environment**: Pre-configured with Python 3.12.
+- **Python Environment**: Pre-configured with Python 3.14.
 - **Tools**: Includes `uv` for fast package management and `make` for project tasks.
 - **Extensions**: Recommended VS Code extensions for Python development, including Ruff and Marimo.
