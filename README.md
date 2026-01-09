@@ -25,6 +25,9 @@
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/jebel-quant/rhiza)
 
+# Strong roots
+Creating and maintaining technical harmony across repositories.
+
 A collection of reusable configuration templates
 for modern Python projects.
 Save time and maintain consistency across your projects
