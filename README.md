@@ -97,8 +97,6 @@ Bootstrap
   install-uv            ensure uv/uvx is installed
   install-extras        run custom build script (if exists)
   install               install
-  sync                  sync with template repository as defined in .github/template.yml
-  validate              validate project structure against template repository as defined in .github/template.yml
   clean                 Clean project artifacts and stale local branches
 
 Tools
@@ -142,6 +140,10 @@ Agentic Workflows
   analyse-repo          run the analyser agent to update REPOSITORY_ANALYSIS.md
   summarize-changes     summarize changes since the most recent release/tag
   install-copilot       checks for copilot and prompts to install
+
+Rhiza Workflows
+  sync                  sync with template repository as defined in .rhiza/template.yml
+  validate              validate project structure against template repository as defined in .rhiza/template.yml
 
 GitHub Helpers
   gh-install            check for gh cli existence and install extensions
