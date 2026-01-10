@@ -63,6 +63,7 @@ export UV_VENV_CLEAR := 1
 -include presentation/Makefile.presentation
 -include .rhiza/customisations/Makefile.customisations
 -include .rhiza/agentic/Makefile.agentic
+-include .rhiza/Makefile.rhiza
 -include .github/Makefile.gh
 
 ##@ Meta
@@ -127,22 +128,6 @@ install: install-uv install-extras ## install
 	@if [ -f "tests/requirements.txt" ]; then \
 	  printf "${BLUE}[INFO] Installing requirements from tests/requirements.txt${RESET}\n"; \
 	  ${UV_BIN} pip install -r tests/requirements.txt || { printf "${RED}[ERROR] Failed to install test requirements${RESET}\n"; exit 1; }; \
-	fi
-
-sync: ## sync with template repository as defined in .github/template.yml
-	@if git remote get-url origin 2>/dev/null | grep -iqE 'jebel-quant/rhiza(\.git)?$$'; then \
-		printf "${BLUE}[INFO] Skipping sync in rhiza repository (no template.yml by design)${RESET}\n"; \
-	else \
-		$(MAKE) install-uv; \
-		${UVX_BIN} "rhiza>=0.7.1" materialize --force .; \
-	fi
-
-validate: ## validate project structure against template repository as defined in .github/template.yml
-	@if git remote get-url origin 2>/dev/null | grep -iqE 'jebel-quant/rhiza(\.git)?$$'; then \
-		printf "${BLUE}[INFO] Skipping validate in rhiza repository (no template.yml by design)${RESET}\n"; \
-	else \
-		$(MAKE) install-uv; \
-		${UVX_BIN} "rhiza>=0.7.1" validate .; \
 	fi
 
 clean: ## Clean project artifacts and stale local branches

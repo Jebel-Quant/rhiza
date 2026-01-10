@@ -9,7 +9,7 @@ from dotenv import dotenv_values
 
 # Read .rhiza/.rhiza.env at collection time (no environment side-effects).
 # dotenv_values returns a dict of key -> value (or None for missing).
-RHIZA_ENV_PATH = Path(".rhiza/.rhiza.env")
+RHIZA_ENV_PATH = Path(".rhiza/.env")
 
 
 def collect_marimo_notebooks(env_path: Path = RHIZA_ENV_PATH):
