@@ -2,7 +2,9 @@
 # This file is included by the main Makefile
 
 # Declare phony targets (they don't produce files)
-.PHONY: docs book
+.PHONY: docs book marimushka
+
+-include book/Makefile.marimo
 
 ##@ Documentation
 docs:: install ## create documentation with pdoc
@@ -33,6 +35,14 @@ docs:: install ## create documentation with pdoc
 	  fi; \
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping docs${RESET}\n"; \
+	fi
+
+marimushka:: install-uv ## export Marimo notebooks to HTML
+	@printf "${BLUE}[INFO] Exporting notebooks from ${MARIMO_FOLDER}...${RESET}\n"
+	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
+	  printf "${YELLOW}[WARN] Directory '${MARIMO_FOLDER}' does not exist. Skipping marimushka.${RESET}\n"; \
+	else \
+	  MARIMO_FOLDER="${MARIMO_FOLDER}" UV_BIN="${UV_BIN}" UVX_BIN="${UVX_BIN}" /bin/sh "${SCRIPTS_FOLDER}/marimushka.sh"; \
 	fi
 
 book:: test docs marimushka ## compile the companion book
