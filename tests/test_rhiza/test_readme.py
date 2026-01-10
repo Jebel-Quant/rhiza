@@ -24,6 +24,7 @@ BASH_BLOCK = re.compile(r"```bash\n(.*?)```", re.DOTALL)
 # Get absolute path for bash executable to avoid S607 warnings
 BASH = "bash"
 
+
 def test_readme_runs(logger, root):
     """Execute README code blocks and compare output to documented results."""
     readme = root / "README.md"
@@ -84,6 +85,7 @@ class TestReadmeTestEdgeCases:
 
 class TestReadmeBashFragments:
     """Tests for bash code fragments in README."""
+
     def test_bash_blocks_are_non_empty(self, root):
         """Bash code blocks in README should not be empty."""
         readme = root / "README.md"
@@ -127,4 +129,3 @@ class TestReadmeBashFragments:
 
             if result.returncode != 0:
                 pytest.fail(f"Bash block {i} has syntax errors:\nCode:\n{code}\nError:\n{result.stderr}")
-
