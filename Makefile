@@ -37,7 +37,6 @@ export RHIZA_LOGO
 	install \
 	install-extras \
 	install-uv \
-	marimo \
 	post-release \
 	print-logo \
 	release \
@@ -60,6 +59,7 @@ export UV_VENV_CLEAR := 1
 # Include split Makefiles
 -include tests/Makefile.tests
 -include book/Makefile.book
+-include book/Makefile.marimo
 -include presentation/Makefile.presentation
 -include .rhiza/customisations/Makefile.customisations
 -include .rhiza/agentic/Makefile.agentic
@@ -168,25 +168,11 @@ clean: ## Clean project artifacts and stale local branches
 	@git branch -vv | awk '/: gone]/{print $$1}' | xargs -r git branch -D
 
 ##@ Tools
-marimo: install ## fire up Marimo server
-	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
-	  printf " ${YELLOW}[WARN] Marimo folder '${MARIMO_FOLDER}' not found, skipping start${RESET}\n"; \
-	else \
-	  ${UV_BIN} run --with marimo marimo edit --no-token --headless "${MARIMO_FOLDER}"; \
-	fi
 
 ##@ Quality and Formatting
-deptry: install-uv ## Run deptry
+deptry: install-uv marimo-deptry ## Run deptry
 	@if [ -d ${SOURCE_FOLDER} ]; then \
 		$(UVX_BIN) deptry ${SOURCE_FOLDER}; \
-	fi
-
-	@if [ -d ${MARIMO_FOLDER} ]; then \
-		if [ -d ${SOURCE_FOLDER} ]; then \
-			$(UVX_BIN) deptry ${MARIMO_FOLDER} ${SOURCE_FOLDER} --ignore DEP004; \
-		else \
-		  	$(UVX_BIN) deptry ${MARIMO_FOLDER} --ignore DEP004; \
-		fi \
 	fi
 
 fmt: install-uv ## check the pre-commit hooks and the linting
