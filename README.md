@@ -28,13 +28,11 @@
 # Strong roots
 Creating and maintaining technical harmony across repositories.
 
-A collection of reusable configuration templates
-for modern Python projects.
-Save time and maintain consistency across your projects
-with these pre-configured templates.
+Reusable configuration templates for modern Python projects.
+Repositories opt into specific templates, allowing controlled flexibility while preserving consistency.
+Automated synchronization keeps selected templates applied over time.
 
 ![Last Updated](https://img.shields.io/github/last-commit/jebel-quant/rhiza/main?label=Last%20updated&color=blue)
-
 
 In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the literal meaning **root**.
 
@@ -51,29 +49,66 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 
 ## 🚀 Getting Started
 
-Start by cloning the repository:
+Rhiza is consumed via the rhiza-cli command-line tool, 
+which applies and continuously re-aligns selected templates.
+
+1. Install rhiza
+
+Install the CLI tool in your environment:
 
 ```bash
-# Clone the repository
-git clone https://github.com/jebel-quant/rhiza.git
-cd rhiza
+pip install rhiza
 ```
 
-The project uses a [Makefile](Makefile) as the primary entry point for all tasks.
-It relies on [uv and uvx](https://github.com/astral-sh/uv) for fast Python package management.
-
-Install all dependencies using:
+or better
 
 ```bash
+uvx rhiza --help
+```
+
+2. Initialize the repo
+
+In your repository, declare which Rhiza templates should be applied:
+
+```bash
+uvx rhiza init
+```
+
+This records the selected templates and establishes the repository’s configuration strategy.
+
+3. Apply the templates
+
+Apply the selected templates to your repository:
+
+```bash
+uvx rhiza materialize
+```
+
+This materializes the chosen templates as concrete configuration files (CI, tooling, packaging, etc.).
+
+4. Keep templates aligned
+
+As templates evolve, re-run:
+
+```bash
+uvx rhiza materialize
+```
+
+The CLI re-applies the selected templates, ensuring repositories stay aligned without manual copying or drift.
+This operation is designed to be idempotent and suitable for automation (e.g. CI).
+
+### Contributing to Rhiza
+
+If you want to develop or extend the templates themselves, clone the Rhiza repository and set up the development environment:
+
+```bash
+git clone https://github.com/jebel-quant/rhiza.git
+cd rhiza
 make install
 ```
 
-This will:
-- Install `uv` and `uvx` into the `bin/` directory
-- Create a Python virtual environment in `.venv/`
-- Install all project dependencies from `pyproject.toml`
+This setup is intended for contributors to Rhiza—not for repositories consuming the templates.
 
-Both the `.venv` and `bin` directories are listed in `.gitignore`.
 
 ## 📋 Available Tasks
 
@@ -324,9 +359,9 @@ uvx rhiza init
 ```
 
 This will:
-- ✅ Create a default template configuration (`.github/template.yml`)
+- ✅ Create a default template configuration (`.rhiza/template.yml`)
 
-Then, update the generated `.github/template.yml` file with your chosen templates that you can find from [Available Templates](#-available-templates).
+Then, update the generated `.rhiza/template.yml` file with your chosen templates that you can find from [Available Templates](#-available-templates).
 
 You will then need to run the following, to inject templates into your repository:
 
@@ -345,77 +380,6 @@ uvx rhiza materialize
 uvx --branch develop .
 ```
 
-### Method 1: Manual Integration (Selective Adoption)
-
-This approach is ideal if you want to cherry-pick specific templates or customize them before integration.
-
-#### Step 1: Clone Rhiza
-
-First, clone the Rhiza repository to a temporary location:
-
-```bash
-# Clone to a temporary directory
-cd /tmp
-git clone https://github.com/jebel-quant/rhiza.git
-```
-
-#### Step 2: Copy Desired Templates
-
-Navigate to your project and copy the configuration files you need:
-
-```bash
-# Navigate to your project
-cd /path/to/your/project
-
-# We recommend working on a fresh branch
-git checkout -b rhiza
-
-# Ensure required directories exist
-mkdir -p .github/workflows
-mkdir -p .rhiza/scripts
-
-# Copy the template configuration
-cp /tmp/rhiza/.github/template.yml .github/template.yml
-
-# Copy the sync helper script
-cp /tmp/rhiza/.rhiza/scripts/sync.sh .rhiza/scripts
-```
-
-At this stage:
-
-  - ❌ No templates are copied yet
-  - ❌ No existing files are modified
-  - ✅ Only the sync mechanism is installed
-  - ⚠️ **Do not merge this branch yet.**
-
-#### Step 3: Perform the first sync
-
-Run the sync script to apply the templates defined in '.github/template.yml'
-
-```bash
-./.rhiza/scripts/sync.sh
-```
-
-This will:
-
-  - Fetch the selected templates from the Rhiza repository
-  - Apply them locally according to your include/exclude rules
-  - Stage or commit the resulting changes on the current branch
-
-Review the changes carefully:
-
-```bash
-git status
-git diff
-```
-
-If happy with the suggested changes push them
-
-```bash
-git add .
-git commit -m "Integrate Rhiza templates"
-git push -u origin rhiza
-```
 
 ### Method 2: Automated Sync (Continuous Updates)
 
@@ -423,7 +387,7 @@ This approach keeps your project’s configuration in sync with Rhiza’s latest
 
 Prerequisites:
 
-  - A .github/template.yml file exists, defining **which templates to include or exclude**.
+  - A .rhiza/template.yml file exists, defining **which templates to include or exclude**.
   - The first manual sync (./.rhiza/scripts/sync.sh) has been performed.
   - The .github/workflows/sync.yml workflow is present in your repository.
 
@@ -432,7 +396,7 @@ The workflow can run:
   **On a schedule** — e.g., weekly updates
   **Manually** — via the GitHub Actions “Run workflow” button
 
-⚠️ .github/template.yml remains the **source of truth**. All automated updates are driven by its include/exclude rules.
+⚠️ .rhiza/template.yml remains the **source of truth**. All automated updates are driven by its include/exclude rules.
 
 #### Step 1: Configure GitHub Token
 
