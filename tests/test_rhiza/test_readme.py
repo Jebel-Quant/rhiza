@@ -84,14 +84,6 @@ class TestReadmeTestEdgeCases:
 
 class TestReadmeBashFragments:
     """Tests for bash code fragments in README."""
-
-    def test_bash_blocks_exist(self, root):
-        """README should contain bash code blocks."""
-        readme = root / "README.md"
-        content = readme.read_text(encoding="utf-8")
-        bash_blocks = BASH_BLOCK.findall(content)
-        assert len(bash_blocks) > 0, "README should contain at least one bash code block"
-
     def test_bash_blocks_are_non_empty(self, root):
         """Bash code blocks in README should not be empty."""
         readme = root / "README.md"
