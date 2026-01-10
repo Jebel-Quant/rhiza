@@ -67,8 +67,8 @@ jobs:
           uv venv --python ${{ matrix.python-version }}
           uv sync --all-extras --all-groups --frozen
 
-      - name: Install dev dependencies
-        run: bash .rhiza/scripts/install-dev-deps.sh
+      - name: Install test dependencies
+        run: uv pip install -r .rhiza/requirements/tests.txt
 
       - name: Run tests
         run: uv run pytest tests
