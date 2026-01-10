@@ -21,7 +21,7 @@ RESULT = re.compile(r"```result\n(.*?)```", re.DOTALL)
 # Regex for Bash code blocks
 BASH_BLOCK = re.compile(r"```bash\n(.*?)```", re.DOTALL)
 
-# Get absolute path for bash executable to avoid S607 warnings
+# Bash executable used for syntax checking; subprocess.run below is trusted (noqa: S603).
 BASH = "bash"
 
 
