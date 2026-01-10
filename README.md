@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src="assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza 
+# <img src="assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza
 ![GitHub Release](https://img.shields.io/github/v/release/jebel-quant/rhiza?sort=semver&color=2FA4A9&label=rhiza)
 ![Synced with Rhiza](https://img.shields.io/badge/synced%20with-rhiza-2FA4A9?color=2FA4A9)
 
@@ -28,10 +28,9 @@
 # Strong roots
 Creating and maintaining technical harmony across repositories.
 
-A collection of reusable configuration templates
-for modern Python projects.
-Save time and maintain consistency across your projects
-with these pre-configured templates.
+Reusable configuration templates for modern Python projects.
+Repositories opt into specific templates, allowing controlled flexibility while preserving consistency.
+Automated synchronization keeps selected templates applied over time.
 
 ![Last Updated](https://img.shields.io/github/last-commit/jebel-quant/rhiza/main?label=Last%20updated&color=blue)
 
@@ -44,13 +43,13 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 
 - [✨ Features](#-features)
 - [🚀 Getting Started](#-getting-started)
+- [🧩 Bringing Rhiza into an Existing Project](INTEGRATION.md) *(see dedicated guide)*
 - [📋 Available Tasks](#-available-tasks)
 - [📊 Marimo Notebooks](#-marimo-notebooks)
-- [Testing your documentation](#testing-your-documentation)
+- [🧪 Testing your documentation](#-testing-your-documentation)
 - [🎨 Documentation Customization](#-documentation-customization)
 - [📁 Available Templates](#-available-templates)
 - [⚙️ Workflow Configuration](#-workflow-configuration)
-- [🧩 Bringing Rhiza into an Existing Project](INTEGRATION.md) *(see dedicated guide)*
 - [🖥️ Dev Container Compatibility](.devcontainer/README.md) *(see dedicated guide)*
 - [🔧 Custom Build Extras](#-custom-build-extras)
 - [🚀 Releasing](#-releasing)
@@ -69,29 +68,108 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 
 ## 🚀 Getting Started
 
-Start by cloning the repository:
+Rhiza is consumed via a dedicated command line tool.
+We recommend installing [uv/uvx](https://docs.astral.sh/uv/getting-started/installation/)
+and start with
 
 ```bash
-# Clone the repository
-git clone https://github.com/jebel-quant/rhiza.git
-cd rhiza
+uvx rhiza --help
 ```
 
-The project uses a [Makefile](Makefile) as the primary entry point for all tasks.
-It relies on [uv and uvx](https://github.com/astral-sh/uv) for fast Python package management.
-
-Install all dependencies using:
+and
 
 ```bash
-make install
+uvx rhiza welcome
 ```
 
-This will:
-- Install `uv` and `uvx` into the `bin/` directory
-- Create a Python virtual environment in `.venv/`
-- Install all project dependencies from `pyproject.toml`
+```bash
+╭───────────────────────────────────────────────────────────────╮
+│                                                               │
+│  Welcome to Rhiza v0.8.3                                      │
+│                                                               │
+╰───────────────────────────────────────────────────────────────╯
 
-Both the `.venv` and `bin` directories are listed in `.gitignore`.
+Rhiza helps you maintain consistent configuration across multiple
+Python projects using reusable templates stored in a central repository.
+
+✨ What Rhiza can do for you:
+
+  • Initialize projects with standard configuration templates
+  • Materialize (inject) templates into target repositories
+  • Validate template configurations
+  • Keep project configurations synchronized
+
+🚀 Getting started:
+
+  1. Initialize a project:
+     $ rhiza init
+
+  2. Customize .rhiza/template.yml to match your needs
+
+  3. Materialize templates into your project:
+     $ rhiza materialize
+
+📚 Learn more:
+
+  • View all commands:    rhiza --help
+  • Project repository:   https://github.com/jebel-quant/rhiza-cli
+  • Documentation:        https://jebel-quant.github.io/rhiza-cli/
+
+Happy templating! 🎉
+```
+
+## 🧩 Bringing Rhiza into an Existing Project
+
+Rhiza provides reusable configuration templates that you can integrate
+into your existing Python projects.
+You can choose to adopt all templates or selectively pick the ones that fit your needs.
+
+**📖 [View the complete Integration Guide →](INTEGRATION.md)**
+
+The integration guide covers:
+- Prerequisites and preparation
+- Quick Start with automated injection
+- Manual integration for selective adoption
+- Automated sync for continuous updates
+- What to expect after integration
+- Troubleshooting common issues
+
+## The .rhiza/template.yml file
+
+The `.rhiza/template.yml` file contains the configuration
+for the files and folders that you want to apply to your project.
+
+```yaml
+template-repository: jebel-quant/rhiza
+template-branch: main
+include:
+- .github/workflows
+- tests
+- book
+- presentation
+- .rhiza
+- .editorconfig
+- .gitignore
+- .pre-commit-config.yaml
+- CODE_OF_CONDUCT.md
+- CONTRIBUTING.md
+- Makefile
+- ruff.toml
+- pytest.ini
+- renovate.json
+exclude:
+- .github/workflows/rhiza_docker.yml
+- .github/workflows/rhiza_devcontainer.yml
+```
+
+The `template-repository` and `template-branch` fields specify the repository and branch to pull templates from.
+Of course, you can use your own fork of Rhiza, or a different template repository entirely to customize.
+
+In the example above we include all files and folders from the `.github/workflows` directory,
+the `tests` directory. Behind the scenes a sparse git checkout is performed to extract the files and folders.
+It is possible to specify multiple template repositories.
+
+
 
 ## 📋 Available Tasks
 
@@ -103,7 +181,7 @@ Run `make help` to see all available targets:
  | |_) | '_ \| |_  / _\`|
  |  _ <| | | | |/ / (_| |
  |_| \_\_| |_|_/___\__,_|
- 
+
 Usage:
   make <target>
 
@@ -215,7 +293,7 @@ To use the current package (`rhiza`) within a notebook, you can define it as a d
 
 Adjust the `path` in `[tool.uv.sources]` relative to the notebook's location.
 
-## Testing your documentation
+## 🧪 Testing your documentation
 
 Any README.md file will be scanned for Python code blocks.
 If any are found, they will be tested in [test_readme.py](tests/test_config_templates/test_readme.py).
