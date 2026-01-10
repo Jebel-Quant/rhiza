@@ -2,69 +2,45 @@
 # This file is included by the main Makefile
 
 # Declare phony targets (they don't produce files)
-.PHONY: presentation presentation-pdf presentation-serve
+.PHONY: presentation presentation-pdf presentation-serve install-marp
+
+# Marp binary location - check global first, fall back to local bin
+MARP_BIN ?= $(shell command -v marp 2>/dev/null || echo ${INSTALL_DIR}/node_modules/.bin/marp)
 
 ##@ Presentation
-presentation:: ## generate presentation slides from PRESENTATION.md using Marp
-	@printf "${BLUE}[INFO] Checking for Marp CLI...${RESET}\n"
-	@if ! command -v marp >/dev/null 2>&1; then \
+install-marp: ## ensure marp CLI is installed
+	@mkdir -p ${INSTALL_DIR}
+	@if command -v marp >/dev/null 2>&1; then \
+	  printf "${GREEN}[INFO] Marp CLI is installed globally.${RESET}\n"; \
+	elif [ -x "${INSTALL_DIR}/node_modules/.bin/marp" ]; then \
+	  printf "${GREEN}[INFO] Marp CLI is already installed in ${INSTALL_DIR}.${RESET}\n"; \
+	else \
 	  if command -v npm >/dev/null 2>&1; then \
-	    printf "${YELLOW}[WARN] Marp CLI not found. Installing with npm...${RESET}\n"; \
-	    npm install -g @marp-team/marp-cli || { \
-	      printf "${RED}[ERROR] Failed to install Marp CLI. Please install manually:${RESET}\n"; \
-	      printf "${BLUE}  npm install -g @marp-team/marp-cli${RESET}\n"; \
+	    printf "${BLUE}[INFO] Installing Marp CLI to ${INSTALL_DIR}...${RESET}\n"; \
+	    npm install --prefix "${INSTALL_DIR}" @marp-team/marp-cli || { \
+	      printf "${RED}[ERROR] Failed to install Marp CLI.${RESET}\n"; \
 	      exit 1; \
 	    }; \
+	    printf "${GREEN}[INFO] Marp CLI installed successfully to ${INSTALL_DIR}.${RESET}\n"; \
 	  else \
 	    printf "${RED}[ERROR] npm not found. Please install Node.js and npm first.${RESET}\n"; \
 	    printf "${BLUE}  See: https://nodejs.org/${RESET}\n"; \
-	    printf "${BLUE}  Then run: npm install -g @marp-team/marp-cli${RESET}\n"; \
 	    exit 1; \
 	  fi; \
 	fi
+
+presentation:: install-marp ## generate presentation slides from PRESENTATION.md using Marp
 	@printf "${BLUE}[INFO] Generating HTML presentation...${RESET}\n"
-	@marp PRESENTATION.md -o presentation.html
+	@${MARP_BIN} PRESENTATION.md -o presentation.html
 	@printf "${GREEN}[SUCCESS] Presentation generated: presentation.html${RESET}\n"
 	@printf "${BLUE}[TIP] Open presentation.html in a browser to view slides${RESET}\n"
 
-presentation-pdf:: ## generate PDF presentation from PRESENTATION.md using Marp
-	@printf "${BLUE}[INFO] Checking for Marp CLI...${RESET}\n"
-	@if ! command -v marp >/dev/null 2>&1; then \
-	  if command -v npm >/dev/null 2>&1; then \
-	    printf "${YELLOW}[WARN] Marp CLI not found. Installing with npm...${RESET}\n"; \
-	    npm install -g @marp-team/marp-cli || { \
-	      printf "${RED}[ERROR] Failed to install Marp CLI. Please install manually:${RESET}\n"; \
-	      printf "${BLUE}  npm install -g @marp-team/marp-cli${RESET}\n"; \
-	      exit 1; \
-	    }; \
-	  else \
-	    printf "${RED}[ERROR] npm not found. Please install Node.js and npm first.${RESET}\n"; \
-	    printf "${BLUE}  See: https://nodejs.org/${RESET}\n"; \
-	    printf "${BLUE}  Then run: npm install -g @marp-team/marp-cli${RESET}\n"; \
-	    exit 1; \
-	  fi; \
-	fi
+presentation-pdf:: install-marp ## generate PDF presentation from PRESENTATION.md using Marp
 	@printf "${BLUE}[INFO] Generating PDF presentation...${RESET}\n"
-	@marp PRESENTATION.md -o presentation.pdf --allow-local-files
+	@${MARP_BIN} PRESENTATION.md -o presentation.pdf --allow-local-files
 	@printf "${GREEN}[SUCCESS] Presentation generated: presentation.pdf${RESET}\n"
 
-presentation-serve:: ## serve presentation interactively with Marp
-	@printf "${BLUE}[INFO] Checking for Marp CLI...${RESET}\n"
-	@if ! command -v marp >/dev/null 2>&1; then \
-	  if command -v npm >/dev/null 2>&1; then \
-	    printf "${YELLOW}[WARN] Marp CLI not found. Installing with npm...${RESET}\n"; \
-	    npm install -g @marp-team/marp-cli || { \
-	      printf "${RED}[ERROR] Failed to install Marp CLI. Please install manually:${RESET}\n"; \
-	      printf "${BLUE}  npm install -g @marp-team/marp-cli${RESET}\n"; \
-	      exit 1; \
-	    }; \
-	  else \
-	    printf "${RED}[ERROR] npm not found. Please install Node.js and npm first.${RESET}\n"; \
-	    printf "${BLUE}  See: https://nodejs.org/${RESET}\n"; \
-	    printf "${BLUE}  Then run: npm install -g @marp-team/marp-cli${RESET}\n"; \
-	    exit 1; \
-	  fi; \
-	fi
+presentation-serve:: install-marp ## serve presentation interactively with Marp
 	@printf "${BLUE}[INFO] Starting Marp server...${RESET}\n"
 	@printf "${GREEN}[INFO] Press Ctrl+C to stop the server${RESET}\n"
-	@marp -s .
+	@${MARP_BIN} -s .

@@ -127,6 +127,7 @@ Documentation
   book                  compile the companion book
 
 Presentation
+  install-marp          ensure marp CLI is installed
   presentation          generate presentation slides from PRESENTATION.md using Marp
   presentation-pdf      generate PDF presentation from PRESENTATION.md using Marp
   presentation-serve    serve presentation interactively with Marp
@@ -139,7 +140,7 @@ Agentic Workflows
   copilot               open interactive prompt for copilot
   analyse-repo          run the analyser agent to update REPOSITORY_ANALYSIS.md
   summarize-changes     summarize changes since the most recent release/tag
-  install-copilot       checks for copilot and prompts to install
+  install-copilot       ensure copilot CLI is installed
 
 Rhiza Workflows
   sync                  sync with template repository as defined in .rhiza/template.yml
