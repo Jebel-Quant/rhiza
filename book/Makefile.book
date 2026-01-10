@@ -36,7 +36,6 @@ docs:: install ## create documentation with pdoc
 	fi
 
 book:: test docs marimushka ## compile the companion book
-	@${UV_BIN} pip install marimo
 	@/bin/sh "${SCRIPTS_FOLDER}/book.sh"
 	@TEMPLATE_ARG=""; \
 	if [ -f "${BOOK_TEMPLATE}" ]; then \
