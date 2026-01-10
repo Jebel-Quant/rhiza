@@ -40,6 +40,24 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 
 </div>
 
+## 📑 Table of Contents
+
+- [✨ Features](#-features)
+- [🚀 Getting Started](#-getting-started)
+- [📋 Available Tasks](#-available-tasks)
+- [📊 Marimo Notebooks](#-marimo-notebooks)
+- [Testing your documentation](#testing-your-documentation)
+- [🎨 Documentation Customization](#-documentation-customization)
+- [📁 Available Templates](#-available-templates)
+- [⚙️ Workflow Configuration](#-workflow-configuration)
+- [🧩 Bringing Rhiza into an Existing Project](INTEGRATION.md) *(see dedicated guide)*
+- [🖥️ Dev Container Compatibility](.devcontainer/README.md) *(see dedicated guide)*
+- [🔧 Custom Build Extras](#-custom-build-extras)
+- [🚀 Releasing](#-releasing)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [🙏 Acknowledgments](#-acknowledgments)
+
 ## ✨ Features
 
 - 🚀 **CI/CD Templates** - Ready-to-use GitHub Actions and GitLab CI workflows
@@ -302,289 +320,28 @@ Control which Python versions are used in your workflows:
 Rhiza provides reusable configuration templates that you can integrate into your existing Python projects.
 You can choose to adopt all templates or selectively pick the ones that fit your needs.
 
-### Prerequisites
+**📖 [View the complete Integration Guide →](INTEGRATION.md)**
 
-Before integrating Rhiza into your existing project:
-
-- **Python 3.11+** - Ensure your project supports Python 3.11 or newer
-- **Git** - Your project should be a Git repository
-- **Backup** - Consider committing any uncommitted changes before integration
-- **Review** - Review the [Available Templates](#-available-templates) section to understand what could be added
-
-### Quick Start: Automated Injection
-
-The fastest way to integrate Rhiza is by following the steps below:
-
-```bash
-# Navigate to your repository
-cd /path/to/your/project
-
-# Initialize configuration templates
-uvx rhiza init
-```
-
-This will:
-- ✅ Create a default template configuration (`.github/template.yml`)
-
-Then, update the generated `.github/template.yml` file with your chosen templates that you can find from [Available Templates](#-available-templates).
-
-You will then need to run the following, to inject templates into your repository:
-
-```bash
-# Inject templates into your repository
-uvx rhiza materialize
-```
-
-**Options:**
-- `--branch <branch>` - Use a specific rhiza branch (default: main)
-- `--help` - Show detailed usage information
-
-**Example with branch option:**
-```bash
-# Use a development branch
-uvx --branch develop .
-```
-
-### Method 1: Manual Integration (Selective Adoption)
-
-This approach is ideal if you want to cherry-pick specific templates or customize them before integration.
-
-#### Step 1: Clone Rhiza
-
-First, clone the Rhiza repository to a temporary location:
-
-```bash
-# Clone to a temporary directory
-cd /tmp
-git clone https://github.com/jebel-quant/rhiza.git
-```
-
-#### Step 2: Copy Desired Templates
-
-Navigate to your project and copy the configuration files you need:
-
-```bash
-# Navigate to your project
-cd /path/to/your/project
-
-# We recommend working on a fresh branch
-git checkout -b rhiza
-
-# Ensure required directories exist
-mkdir -p .github/workflows
-mkdir -p .rhiza/scripts
-
-# Copy the template configuration
-cp /tmp/rhiza/.github/template.yml .github/template.yml
-
-# Copy the sync helper script
-cp /tmp/rhiza/.rhiza/scripts/sync.sh .rhiza/scripts
-```
-
-At this stage:
-
-  - ❌ No templates are copied yet
-  - ❌ No existing files are modified
-  - ✅ Only the sync mechanism is installed
-  - ⚠️ **Do not merge this branch yet.**
-
-#### Step 3: Perform the first sync
-
-Run the sync script to apply the templates defined in '.github/template.yml'
-
-```bash
-./.rhiza/scripts/sync.sh
-```
-
-This will:
-
-  - Fetch the selected templates from the Rhiza repository
-  - Apply them locally according to your include/exclude rules
-  - Stage or commit the resulting changes on the current branch
-
-Review the changes carefully:
-
-```bash
-git status
-git diff
-```
-
-If happy with the suggested changes push them
-
-```bash
-git add .
-git commit -m "Integrate Rhiza templates"
-git push -u origin rhiza
-```
-
-### Method 2: Automated Sync (Continuous Updates)
-
-This approach keeps your project’s configuration in sync with Rhiza’s latest templates while giving you control over which files are applied.
-
-Prerequisites:
-
-  - A .github/template.yml file exists, defining **which templates to include or exclude**.
-  - The first manual sync (./.rhiza/scripts/sync.sh) has been performed.
-  - The .github/workflows/sync.yml workflow is present in your repository.
-
-The workflow can run:
-
-  **On a schedule** — e.g., weekly updates
-  **Manually** — via the GitHub Actions “Run workflow” button
-
-⚠️ .github/template.yml remains the **source of truth**. All automated updates are driven by its include/exclude rules.
-
-#### Step 1: Configure GitHub Token
-
-If you want the sync workflow to trigger other workflows (e.g. to create pull requests), create a Personal Access Token (PAT):
-
-1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
-2. Generate a new token with `repo` and `workflow` scopes
-3. Add it as a repository secret named `PAT_TOKEN`
-4. Update the workflow to use `token: ${{ secrets.PAT_TOKEN }}`
-
-#### Step 2: Run Initial Sync (again)
-
-You can trigger the sync workflow manually:
-
-1. Go to your repository's "Actions" tab
-2. Select the "Sync Templates" workflow
-3. Click "Run workflow"
-4. Review and merge the resulting pull request
-
-The workflow will:
-- Download the latest templates from Rhiza
-- Copy them to your project based on your `template.yml` configuration
-- Create a pull request with the changes (if any)
-- Automatically run weekly to keep your templates up to date
-
-### What to Expect After Integration
-
-After integrating Rhiza, your project will have:
-
-- **Automated CI/CD** - GitHub Actions workflows for testing, linting, and releases
-- **Code Quality Tools** - Pre-commit hooks, ruff formatting, and pytest configuration
-- **Task Automation** - Makefile with common development tasks (`make test`, `make fmt`, etc.)
-- **Dev Container** - Optional VS Code/Codespaces development environment
-- **Documentation** - Templates for automated documentation generation
-
-### Next Steps
-
-1. **Test the integration** - Run `make test` to ensure tests pass
-2. **Run pre-commit** - Execute `make fmt` to verify code quality checks
-3. **Review workflows** - Check GitHub Actions tabs to see workflows in action
-4. **Customize** - Adjust templates to match your project's specific needs
-5. **Update documentation** - Add project-specific instructions to your README
-
-### Troubleshooting
-
-**Issue: Makefile targets conflict with existing scripts**
-- Solution: Review the Makefile and merge targets with your existing build scripts, or rename conflicting targets
-
-**Issue: Pre-commit hooks fail on existing code**
-- Solution: Run `make fmt` to fix formatting issues, or temporarily exclude certain files in `.pre-commit-config.yaml`
-
-**Issue: GitHub Actions workflows fail**
-- Solution: Check Python version compatibility and adjust `PYTHON_MAX_VERSION` repository variable if needed
-
-**Issue: Dev container fails to build**
-- Solution: Review `.devcontainer/devcontainer.json` and ensure all dependencies are available for your project
+The integration guide covers:
+- Prerequisites and preparation
+- Quick Start with automated injection
+- Manual integration for selective adoption
+- Automated sync for continuous updates
+- What to expect after integration
+- Troubleshooting common issues
 
 ## 🖥️ Dev Container Compatibility
 
-This repository includes a
-template **Dev Container** configuration
-for seamless development experience in
-both **VS Code** and **GitHub Codespaces**.
+This repository includes a template **Dev Container** configuration for seamless development experience in both **VS Code** and **GitHub Codespaces**.
 
-### What's Configured
+**📖 [View the complete Dev Container Guide →](.devcontainer/README.md)**
 
-The `.devcontainer` setup provides:
-
-- 🐍 **Python 3.14** runtime environment
-- 🔧 **UV Package Manager** - Fast Python package installer and resolver
-- ⚡ **Makefile** - For running project workflows
-- 🧪 **Pre-commit Hooks** - Automated code quality checks
-- 📊 **Marimo Integration** - Interactive notebook support with VS Code extension
-- 🔍 **Python Development Tools** - Pylance, Python extension, and optimized settings
-- 🚀 **Port Forwarding** - Port 8080 for development servers
-- 🔐 **SSH Agent Forwarding** - Full Git functionality with your host SSH keys
-
-### Usage
-
-#### In VS Code
-
-1. Install the "Dev Containers" extension
-2. Open the repository in VS Code
-3. Click "Reopen in Container" when prompted
-4. The environment will automatically set up with all dependencies
-
-#### In GitHub Codespaces
-
-1. Navigate to the repository on GitHub
-2. Click the green "Code" button
-3. Select "Codespaces" tab
-4. Click "Create codespace on main" (or your branch)
-5. Your development environment will be ready in minutes
-
-The dev container automatically runs the initialization script that:
-
-- Installs UV package manager
-- Configures the Python virtual environment
-- Installs project dependencies
-- Sets up pre-commit hooks
-
-### Publishing Devcontainer Images
-
-The repository includes workflows for building and publishing devcontainer images:
-
-#### CI Validation
-
-The **DEVCONTAINER** workflow automatically validates that your devcontainer builds successfully:
-- Triggers on changes to `.devcontainer/**` files or the workflow itself
-- Builds the image without publishing (`push: never`)
-- Works on pushes to any branch and pull requests
-- Gracefully skips if no `.devcontainer/devcontainer.json` exists
-
-### VS Code Dev Container SSH Agent Forwarding
-
-Dev containers launched locally via VS code
-are configured with SSH agent forwarding
-to enable seamless Git operations:
-
-- **Mounts your SSH directory** - Your `~/.ssh` folder is mounted into the container
-- **Forwards SSH agent** - Your host's SSH agent is available inside the container
-- **Enables Git operations** - Push, pull, and clone using your existing SSH keys
-- **Works transparently** - No additional setup required in VS Code dev containers
-
-### Troubleshooting
-
-Common issues and solutions when using this configuration template.
-
----
-
-#### SSH authentication fails on macOS when using devcontainer
-
-**Symptom**: When building or using the devcontainer on macOS, Git operations (pull, push, clone) fail with SSH authentication errors, even though your SSH keys work fine on the host.
-
-**Cause**: macOS SSH config often includes `UseKeychain yes`, which is a macOS-specific directive. When the devcontainer mounts your `~/.ssh` directory, other platforms (Linux containers) don't recognize this directive and fail to parse the SSH config.
-
-**Solution**: Add `IgnoreUnknown UseKeychain` to the top of your `~/.ssh/config` file on your Mac:
-
-```ssh-config
-# At the top of ~/.ssh/config
-IgnoreUnknown UseKeychain
-
-Host *
-  AddKeysToAgent yes
-  UseKeychain yes
-  IdentityFile ~/.ssh/id_rsa
-```
-
-This tells SSH clients on non-macOS platforms to ignore the `UseKeychain` directive instead of failing.
-
-**Reference**: [Stack Overflow solution](https://stackoverflow.com/questions/75613632/trying-to-ssh-to-my-server-from-the-terminal-ends-with-error-line-x-bad-configu/75616369#75616369)
-
+The dev container guide covers:
+- What's configured in the dev container
+- Usage instructions for VS Code and GitHub Codespaces
+- Publishing devcontainer images
+- SSH agent forwarding setup
+- Troubleshooting common issues
 
 ## 🔧 Custom Build Extras
 
