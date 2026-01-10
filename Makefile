@@ -19,7 +19,7 @@ define RHIZA_LOGO
  | |_) | '_ \| |_  / _\`|
  |  _ <| | | | |/ / (_| |
  |_| \_\_| |_|_/___\__,_|
- 
+
 endef
 export RHIZA_LOGO
 
@@ -174,8 +174,8 @@ deptry: install-uv ## Run deptry
 		fi \
 	fi
 
-fmt: install-uv ## check the pre-commit hooks and the linting
-	@${UVX_BIN} pre-commit run --all-files
+fmt: install ## check the pre-commit hooks and the linting
+	@${UV_BIN} run pre-commit run --all-files
 
 ##@ Releasing and Versioning
 bump: ## bump version
@@ -186,7 +186,7 @@ bump: ## bump version
 		${UV_BIN} lock; \
 	else \
 		printf "${YELLOW}[WARN] No pyproject.toml found, skipping bump${RESET}\n"; \
-	fi 
+	fi
 
 release: install-uv ## create tag and push to remote with prompts
 	@UV_BIN="${UV_BIN}" /bin/sh "${SCRIPTS_FOLDER}/release.sh"
