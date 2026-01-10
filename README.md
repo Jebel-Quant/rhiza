@@ -256,42 +256,7 @@ The [Makefile](Makefile) provides organized targets for bootstrapping, developme
 
 ## 📊 Marimo Notebooks
 
-This project supports [Marimo](https://marimo.io/) notebooks. You can run the Marimo server using:
-
-```bash
-make marimo
-```
-
-### Configuration
-
-To ensure Marimo can import the local package (`src/config`), the following configuration is added to `pyproject.toml`:
-
-```toml
-[tool.marimo.runtime]
-pythonpath = ["src"]
-```
-
-### Dependency Management
-
-Marimo notebooks can define their own dependencies using inline script metadata. This allows notebooks to be self-contained and reproducible.
-
-To use the current package (`rhiza`) within a notebook, you can define it as a dependency and point `uv` to the local path. Add the following block at the top of your `.py` notebook file:
-
-```python
-# /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#     "marimo",
-#     "pandas",
-#     "rhiza",
-# ]
-#
-# [tool.uv.sources]
-# rhiza = { path = "../.." }
-# ///
-```
-
-Adjust the `path` in `[tool.uv.sources]` relative to the notebook's location.
+This project supports [Marimo](book/marimo/README.md) notebooks.
 
 ## 🧪 Testing
 
@@ -340,24 +305,7 @@ Hello, World!
 ## 🎨 Documentation Customization
 
 You can customize the look and feel of your documentation by providing your own templates.
-
-### API Documentation (pdoc)
-
-The `make docs` command checks for a directory at `book/pdoc-templates`. If found, it uses the templates within that directory to generate the API documentation.
-
-To customize the API docs:
-1. Create the directory: `mkdir -p book/pdoc-templates`
-2. Add your Jinja2 templates (e.g., `module.html.jinja2`) to this directory.
-
-See the [pdoc documentation](https://pdoc.dev/docs/pdoc.html#templates) for more details on templating.
-
-### Companion Book (minibook)
-
-The `make book` command checks for a template at `book/minibook-templates/custom.html.jinja2`. If found, it uses this template for the minibook generation.
-
-To customize the book:
-1. Create the directory: `mkdir -p book/minibook-templates`
-2. Create your custom template at `book/minibook-templates/custom.html.jinja2`.
+[Documentation](book/README.md)
 
 ## 📁 Available Templates
 
@@ -411,21 +359,6 @@ Control which Python versions are used in your workflows:
 1. Go to your repository Settings → Secrets and variables → Actions → Variables tab
 2. Click "New repository variable"
 3. Add `PYTHON_MAX_VERSION` and/or `PYTHON_DEFAULT_VERSION` with your desired values
-
-## 🧩 Bringing Rhiza into an Existing Project
-
-Rhiza provides reusable configuration templates that you can integrate into your existing Python projects.
-You can choose to adopt all templates or selectively pick the ones that fit your needs.
-
-**📖 [View the complete Integration Guide →](INTEGRATION.md)**
-
-The integration guide covers:
-- Prerequisites and preparation
-- Quick Start with automated injection
-- Manual integration for selective adoption
-- Automated sync for continuous updates
-- What to expect after integration
-- Troubleshooting common issues
 
 ## 🖥️ Dev Container Compatibility
 
