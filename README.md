@@ -43,13 +43,13 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 
 - [✨ Features](#-features)
 - [🚀 Getting Started](#-getting-started)
-- [🧩 Bringing Rhiza into an Existing Project](INTEGRATION.md) *(see dedicated guide)*
 - [📋 Available Tasks](#-available-tasks)
 - [📊 Marimo Notebooks](#-marimo-notebooks)
-- [🧪 Testing your documentation](#-testing-your-documentation)
+- [🧪 Testing](#-testing)
 - [🎨 Documentation Customization](#-documentation-customization)
 - [📁 Available Templates](#-available-templates)
 - [⚙️ Workflow Configuration](#-workflow-configuration)
+- [🧩 Bringing Rhiza into an Existing Project](INTEGRATION.md) *(see dedicated guide)*
 - [🖥️ Dev Container Compatibility](.devcontainer/README.md) *(see dedicated guide)*
 - [🔧 Custom Build Extras](#-custom-build-extras)
 - [🚀 Releasing](#-releasing)
@@ -293,10 +293,29 @@ To use the current package (`rhiza`) within a notebook, you can define it as a d
 
 Adjust the `path` in `[tool.uv.sources]` relative to the notebook's location.
 
-## 🧪 Testing your documentation
+## 🧪 Testing
+
+### Running Tests
+
+Run the test suite using:
+
+```bash
+make test
+```
+
+**📖 [View the complete Test Suite Guide →](tests/test_rhiza/README.md)**
+
+The test suite includes:
+- Git-based workflow validation (version bumping, releasing)
+- Project structure checks
+- Makefile target validation
+- Documentation testing (README code examples, docstrings)
+- Development tool fixtures
+
+### Testing Documentation Examples
 
 Any README.md file will be scanned for Python code blocks.
-If any are found, they will be tested in [test_readme.py](tests/test_config_templates/test_readme.py).
+If any are found, they will be tested in [test_readme.py](tests/test_rhiza/test_readme.py).
 
 ```python
 # Some generic Python code block
@@ -308,7 +327,7 @@ print(round(math.cos(math.pi/4.0), 2))
 ```
 
 For each code block, we define a block of expected output.
-If the output matches the expected output, a [test](tests/test_config_templates/test_readme.py) passes,
+If the output matches the expected output, a [test](tests/test_rhiza/test_readme.py) passes,
 Otherwise, it fails.
 
 ```result
