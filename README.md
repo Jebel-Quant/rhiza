@@ -47,6 +47,7 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 - [📊 Marimo Notebooks](#-marimo-notebooks)
 - [🧪 Testing](#-testing)
 - [🎨 Documentation Customization](#-documentation-customization)
+- [📽️ Presentations](#-presentations)
 - [📁 Available Templates](#-available-templates)
 - [⚙️ Workflow Configuration](#-workflow-configuration)
 - [🧩 Bringing Rhiza into an Existing Project](INTEGRATION.md) *(see dedicated guide)*
@@ -306,6 +307,33 @@ Hello, World!
 
 You can customize the look and feel of your documentation by providing your own templates.
 [Documentation](book/README.md)
+
+## 📽️ Presentations
+
+Create beautiful presentation slides from Markdown using [Marp](https://marp.app/).
+
+**📖 [View the complete Presentation Guide →](presentation/README.md)**
+
+### Quick Start
+
+```bash
+# Generate HTML presentation
+make presentation
+
+# Generate PDF presentation  
+make presentation-pdf
+
+# Serve interactively with live reload
+make presentation-serve
+```
+
+The presentation system:
+- Converts `PRESENTATION.md` to HTML and PDF slides
+- Supports custom themes and styling
+- Provides live reload during editing
+- Automatically installs Marp CLI if needed
+
+Edit `PRESENTATION.md` in the repository root to create your presentation content. See the [presentation guide](presentation/README.md) for detailed documentation on Marp syntax, styling, and advanced features.
 
 ## 📁 Available Templates
 
