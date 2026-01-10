@@ -190,7 +190,7 @@ Run `make help` to see all available targets:
  | |_) | '_ \| |_  / _\`|
  |  _ <| | | | |/ / (_| |
  |_| \_\_| |_|_/___\__,_|
- 
+
 Usage:
   make <target>
 
@@ -227,13 +227,17 @@ Development and Testing
   test                  run all tests
   benchmark             run performance benchmarks
 
+Marimo
+  marimo                fire up Marimo server
+  marimo-deptry         Run deptry on Marimo notebooks
+
 Documentation
   docs                  create documentation with pdoc
+  marimushka            export Marimo notebooks to HTML
   book                  compile the companion book
 
 Marimo
   marimo                fire up Marimo server
-  marimushka            export Marimo notebooks to HTML
   marimo-deptry         Run deptry on Marimo notebooks
 
 Presentation
