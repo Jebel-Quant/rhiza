@@ -12,16 +12,7 @@ endef
 export RHIZA_LOGO
 
 # Declare phony targets
-.PHONY: \
-    sync \
-    validate \
-    print-logo \
-    deptry \
-    fmt \
-    install-uv \
-    install-extras \
-    install \
-    clean
+.PHONY: sync validate print-logo deptry fmt install-uv install-extras install clean
 
 ##@ Rhiza Workflows
 
