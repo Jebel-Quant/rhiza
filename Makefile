@@ -19,7 +19,7 @@ define RHIZA_LOGO
  | |_) | '_ \| |_  / _\`|
  |  _ <| | | | |/ / (_| |
  |_| \_\_| |_|_/___\__,_|
- 
+
 endef
 export RHIZA_LOGO
 
@@ -58,8 +58,8 @@ export UV_VENV_CLEAR := 1
 
 # Include split Makefiles
 -include tests/Makefile.tests
--include book/Makefile.book
 -include book/Makefile.marimo
+-include book/Makefile.book
 -include presentation/Makefile.presentation
 -include .rhiza/customisations/Makefile.customisations
 -include .rhiza/agentic/Makefile.agentic
@@ -187,7 +187,7 @@ bump: ## bump version
 		${UV_BIN} lock; \
 	else \
 		printf "${YELLOW}[WARN] No pyproject.toml found, skipping bump${RESET}\n"; \
-	fi 
+	fi
 
 release: install-uv ## create tag and push to remote with prompts
 	@UV_BIN="${UV_BIN}" /bin/sh "${SCRIPTS_FOLDER}/release.sh"
