@@ -34,7 +34,6 @@ Automated synchronization keeps selected templates applied over time.
 
 ![Last Updated](https://img.shields.io/github/last-commit/jebel-quant/rhiza/main?label=Last%20updated&color=blue)
 
-
 In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the literal meaning **root**.
 
 </div>
@@ -50,6 +49,8 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 - [📽️ Presentations](#-presentations)
 - [📁 Available Templates](#-available-templates)
 - [⚙️ Workflow Configuration](#-workflow-configuration)
+- [🔒 Security](#-security)
+- [♻️ Dependency Management](#-dependency-management)
 - [🧩 Bringing Rhiza into an Existing Project](INTEGRATION.md) *(see dedicated guide)*
 - [🖥️ Dev Container Compatibility](.devcontainer/README.md) *(see dedicated guide)*
 - [🔧 Custom Build Extras](#-custom-build-extras)
@@ -86,7 +87,7 @@ uvx rhiza welcome
 ```bash
 ╭───────────────────────────────────────────────────────────────╮
 │                                                               │
-│  Welcome to Rhiza v0.8.3                                      │
+│  🌿 Welcome to Rhiza v0.8.3                                   │
 │                                                               │
 ╰───────────────────────────────────────────────────────────────╯
 
@@ -118,6 +119,9 @@ Python projects using reusable templates stored in a central repository.
 
 Happy templating! 🎉
 ```
+
+**Note:** This repository (`jebel-quant/rhiza`) contains the configuration templates.
+The actual command line tool is [rhiza-cli](https://github.com/jebel-quant/rhiza-cli).
 
 ## 🧩 Bringing Rhiza into an Existing Project
 
@@ -152,27 +156,31 @@ include:
 - .editorconfig
 - .gitignore
 - .pre-commit-config.yaml
-- CODE_OF_CONDUCT.md
-- CONTRIBUTING.md
 - Makefile
 - ruff.toml
-- pytest.ini
-- renovate.json
 exclude:
 - .github/workflows/rhiza_docker.yml
-- .github/workflows/rhiza_devcontainer.yml
 ```
 
-The `template-repository` and `template-branch` fields specify the repository and branch to pull templates from.
+The `template-repository` and `template-branch` fields specify the repository
+and branch to pull templates from.
 Of course, you can use your own fork of Rhiza, or a different template repository entirely to customize.
 
 In the example above we include all files and folders from the `.github/workflows` directory,
 the `tests` directory. Behind the scenes a sparse git checkout is performed to extract the files and folders.
 It is possible to specify multiple template repositories.
 
+The `exclude` field allows you to exclude files and folders from the template checkout.
+This is useful if you want to customize the template checkout without modifying the original template.
 
+The file is created automatically when you run `rhiza init` and can be modified manually afterwards.
 
 ## 📋 Available Tasks
+
+The `Makefile` provides a convenient way to run common development tasks.
+Rather than having just one Makefile we have multiple Makefiles for different purposes.
+The Makefile on the root level is the central entry point for all tasks.
+The actual list of possible targets depends on the installed templates.
 
 Run `make help` to see all available targets:
 
@@ -199,7 +207,6 @@ Bootstrap
   clean                 Clean project artifacts and stale local branches
 
 Tools
-  marimo                fire up Marimo server
 
 Quality and Formatting
   deptry                Run deptry
@@ -222,8 +229,12 @@ Development and Testing
 
 Documentation
   docs                  create documentation with pdoc
-  marimushka            export Marimo notebooks to HTML
   book                  compile the companion book
+
+Marimo
+  marimo                fire up Marimo server
+  marimushka            export Marimo notebooks to HTML
+  marimo-deptry         Run deptry on Marimo notebooks
 
 Presentation
   presentation          generate presentation slides from PRESENTATION.md using Marp
@@ -278,31 +289,6 @@ The test suite includes:
 - Documentation testing (README code examples, docstrings)
 - Development tool fixtures
 
-### Testing Documentation Examples
-
-Any README.md file will be scanned for Python code blocks.
-If any are found, they will be tested in [test_readme.py](tests/test_rhiza/test_readme.py).
-
-```python
-# Some generic Python code block
-import math
-print("Hello, World!")
-print(1 + 1)
-print(round(math.pi, 2))
-print(round(math.cos(math.pi/4.0), 2))
-```
-
-For each code block, we define a block of expected output.
-If the output matches the expected output, a [test](tests/test_rhiza/test_readme.py) passes,
-Otherwise, it fails.
-
-```result
-Hello, World!
-2
-3.14
-0.71
-```
-
 ## 🎨 Documentation Customization
 
 You can customize the look and feel of your documentation by providing your own templates.
@@ -342,6 +328,7 @@ This repository provides a curated set of reusable configuration templates, orga
 ### 🌱 Core Project Configuration
 Foundational files that define project structure, standards, and contribution practices.
 
+- **.python-version** — Specifies the preferred Python version for tools like `uv` and `pyenv`
 - **.gitignore** — Sensible defaults for Python projects
 - **.editorconfig** — Editor configuration to enforce consistent coding standards
 - **ruff.toml** — Configuration for the Ruff linter and formatter
@@ -349,8 +336,10 @@ Foundational files that define project structure, standards, and contribution pr
 - **Makefile** — Simple make targets for common development tasks
 - **CODE_OF_CONDUCT.md** — Generic code of conduct for open-source projects
 - **CONTRIBUTING.md** — Generic contributing guidelines for open-source projects
+- **renovate.json** — Configuration for automatic dependency updates
 
 ### 🔧 Developer Experience
+
 Tooling that improves local development, onboarding, and reproducibility.
 
 - **.devcontainer/** — Development container setup (VS Code / Dev Containers)
@@ -363,30 +352,6 @@ Templates related to continuous integration, delivery, and repository automation
 - **.github/** — GitHub Actions workflows, scripts, and repository templates
 - **.gitlab/** — GitLab CI/CD workflows (equivalent to GitHub Actions)
   - See [GITLAB_CI.md](GITLAB_CI.md) for GitLab CI/CD setup and usage
-
-## ⚙️ Workflow Configuration
-
-The GitHub Actions workflows can be customized using repository variables:
-
-### Python Version Control
-
-Control which Python versions are used in your workflows:
-
-- **`PYTHON_MAX_VERSION`** - Maximum Python version for CI testing matrix
-  - Default: `'3.14'` (tests on 3.11, 3.12, 3.13, 3.14)
-  - Set to `'3.13'` to test on 3.11, 3.12, 3.13 only
-  - Set to `'3.12'` to test on 3.11, 3.12 only
-  - Set to `'3.11'` to test on 3.11 only
-
-- **`PYTHON_DEFAULT_VERSION`** - Default Python version for release, pre-commit, book, and marimo workflows
-  - Default: `'3.14'`
-  - Set to `'3.12'` or `'3.13'` if dependencies are not compatible with newer versions
-
-**To set these variables:**
-
-1. Go to your repository Settings → Secrets and variables → Actions → Variables tab
-2. Click "New repository variable"
-3. Add `PYTHON_MAX_VERSION` and/or `PYTHON_DEFAULT_VERSION` with your desired values
 
 ## 🖥️ Dev Container Compatibility
 
@@ -531,6 +496,11 @@ The release workflow (`.github/workflows/release.yml`) triggers on the tag push 
 - Override registry with `DEVCONTAINER_REGISTRY` variable (defaults to ghcr.io)
 - Requires `.devcontainer/devcontainer.json` to exist
 - Image published as `{registry}/{owner}/{repository}/devcontainer:vX.Y.Z`
+
+**Python Selection:**
+- The `.python-version` file ensures that tools like `uv` and `pyenv` use the correct
+Python version for local development.
+- This is synchronized with the CI workflows and `pyproject.toml`.
 
 ## 🤝 Contributing
 
