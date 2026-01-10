@@ -43,7 +43,7 @@ uvx rhiza materialize
 **Example with branch option:**
 ```bash
 # Use a development branch
-uvx --branch develop .
+uvx rhiza materialize --branch develop
 ```
 
 ## Method 1: Manual Integration (Selective Adoption)
