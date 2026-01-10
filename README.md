@@ -195,8 +195,20 @@ Usage:
   make <target>
 
 Targets:
+  help                  Display this help message
 
-Meta
+Releasing and Versioning
+  bump                  bump version
+  release               create tag and push to remote with prompts
+  post-release          perform post-release tasks
+  customisations        list available customisation scripts
+  update-readme         update README.md with current Makefile help output
+  version-matrix        Emit the list of supported Python versions from pyproject.toml
+
+Rhiza Workflows
+  print-logo            print the beautiful rhiza logo
+  sync                  sync with template repository as defined in .rhiza/template.yml
+  validate              validate project structure against template repository as defined in .rhiza/template.yml
 
 Bootstrap
   install-uv            ensure uv/uvx is installed
@@ -204,22 +216,9 @@ Bootstrap
   install               install
   clean                 Clean project artifacts and stale local branches
 
-Tools
-
 Quality and Formatting
   deptry                Run deptry
   fmt                   check the pre-commit hooks and the linting
-
-Releasing and Versioning
-  bump                  bump version
-  release               create tag and push to remote with prompts
-  post-release          perform post-release tasks
-
-Meta
-  help                  Display this help message
-  customisations        list available customisation scripts
-  update-readme         update README.md with current Makefile help output
-  version-matrix        Emit the list of supported Python versions from pyproject.toml
 
 Development and Testing
   test                  run all tests
@@ -233,10 +232,6 @@ Documentation
   docs                  create documentation with pdoc
   marimushka            export Marimo notebooks to HTML
   book                  compile the companion book
-
-Marimo
-  marimo                fire up Marimo server
-  marimo-deptry         Run deptry on Marimo notebooks
 
 Presentation
   presentation          generate presentation slides from PRESENTATION.md using Marp
@@ -252,10 +247,6 @@ Agentic Workflows
   analyse-repo          run the analyser agent to update REPOSITORY_ANALYSIS.md
   summarize-changes     summarize changes since the most recent release/tag
   install-copilot       checks for copilot and prompts to install
-
-Rhiza Workflows
-  sync                  sync with template repository as defined in .rhiza/template.yml
-  validate              validate project structure against template repository as defined in .rhiza/template.yml
 
 GitHub Helpers
   gh-install            check for gh cli existence and install extensions
