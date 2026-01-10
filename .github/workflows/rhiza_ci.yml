@@ -64,18 +64,3 @@ jobs:
       - name: Run tests
         run: |
           make test
-
-      #- name: "Sync the virtual environment for ${{ github.repository }}"
-      #  shell: bash
-      #  run: |
-      #    export UV_EXTRA_INDEX_URL="${{ secrets.uv-extra-index-url }}"
-      #    # uv venv --python ${{ matrix.python-version }}
-      #    # uv sync --all-extras --all-groups --frozen
-      #    make install
-
-
-      #- name: Install test dependencies
-      #  run: uv pip install -r .rhiza/requirements/tests.txt
-
-      #- name: Run tests
-      #  run: uv run pytest tests
