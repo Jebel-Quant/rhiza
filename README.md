@@ -299,6 +299,17 @@ Control which Python versions are used in your workflows:
 2. Click "New repository variable"
 3. Add `PYTHON_MAX_VERSION` and/or `PYTHON_DEFAULT_VERSION` with your desired values
 
+### Local Python Version
+
+The **`.python-version`** file specifies the default Python version for local development:
+
+- **Purpose**: Used by tools like `uv`, `pyenv`, and other Python version managers to automatically select the correct Python version
+- **Location**: Root of the repository
+- **Content**: A single line with the Python version number (e.g., `3.12`)
+- **Usage**: When you run commands like `make install` or `uv run`, these tools will automatically use the version specified in this file
+
+This file ensures consistency between local development and CI/CD workflows. If you need to use a different Python version locally, simply update this file with your preferred version.
+
 ## 🧩 Bringing Rhiza into an Existing Project
 
 Rhiza provides reusable configuration templates that you can integrate into your existing Python projects.
@@ -436,14 +447,17 @@ The workflow can run:
 
 ⚠️ .github/template.yml remains the **source of truth**. All automated updates are driven by its include/exclude rules.
 
-#### Step 1: Configure GitHub Token
+#### Step 1: Configure GitHub Token (Optional)
 
-If you want the sync workflow to trigger other workflows (e.g. to create pull requests), create a Personal Access Token (PAT):
+The sync workflow works automatically with the default `GITHUB_TOKEN` and does not require additional configuration. However, if the sync modifies workflow files (`.github/workflows/*.yml`), you may need to configure a Personal Access Token (PAT) with extended permissions:
 
 1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
 2. Generate a new token with `repo` and `workflow` scopes
 3. Add it as a repository secret named `PAT_TOKEN`
-4. Update the workflow to use `token: ${{ secrets.PAT_TOKEN }}`
+
+The workflow will automatically use `PAT_TOKEN` if configured, otherwise it falls back to the default `GITHUB_TOKEN`.
+
+> **Note**: The default `GITHUB_TOKEN` cannot trigger other workflows when pushing changes. If your sync updates workflow files and you want to trigger CI checks on the resulting pull request, configure `PAT_TOKEN`.
 
 #### Step 2: Run Initial Sync (again)
 
