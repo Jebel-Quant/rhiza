@@ -174,7 +174,7 @@ bump: ## bump version
 	fi
 
 release: install-uv ## create tag and push to remote with prompts
-	@UV_BIN="${UV_BIN}" python3 "${SCRIPTS_FOLDER}/release.py"
+	@UV_BIN="${UV_BIN}" ${UV_BIN} run --with typer "${SCRIPTS_FOLDER}/release.py"
 
 post-release:: install-uv ## perform post-release tasks
 	@:

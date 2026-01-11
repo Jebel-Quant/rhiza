@@ -7,11 +7,12 @@ This script:
 - Performs checks (branch, upstream status, clean working tree)
 """
 
-import argparse
 import os
 import subprocess
 import sys
 from pathlib import Path
+
+import typer
 
 
 class Colors:
@@ -434,33 +435,31 @@ def do_release(uv_bin: str) -> None:
         print_colored(Colors.BLUE, f"[INFO] Monitor progress at: https://github.com/{repo_url}/actions")
 
 
-def main() -> None:
-    """Main entry point for the release script."""
-    parser = argparse.ArgumentParser(
-        description="Create tag and push to remote (with prompts)",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  %(prog)s                    (create tag and push with prompts)
-""",
-    )
-    parser.parse_args()
+app = typer.Typer(help="Create tag and push to remote (with prompts)")
 
+
+@app.command()
+def main() -> None:
+    """Create tag and push to remote (with prompts).
+
+    Example:
+        release.py                    (create tag and push with prompts)
+    """
     # Check if pyproject.toml exists
     if not Path("pyproject.toml").exists():
         print_colored(Colors.RED, "[ERROR] pyproject.toml not found in current directory")
-        sys.exit(1)
+        raise typer.Exit(1)
 
     # Check if uv is available
     uv_bin = os.environ.get("UV_BIN", "./bin/uv")
     uv_path = Path(uv_bin)
     if not uv_path.exists() or not os.access(uv_path, os.X_OK):
         print_colored(Colors.RED, f"[ERROR] uv not found at {uv_bin}. Run 'make install-uv' first.")
-        sys.exit(1)
+        raise typer.Exit(1)
 
     # Execute release
     do_release(uv_bin)
 
 
 if __name__ == "__main__":
-    main()
+    app()
