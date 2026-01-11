@@ -71,8 +71,6 @@ export UV_VENV_CLEAR := 1
 -include .rhiza/Makefile.rhiza
 -include .github/Makefile.gh
 
-##@ Meta
-
 print-logo:
 	@printf "${BLUE}$$RHIZA_LOGO${RESET}\n"
 
