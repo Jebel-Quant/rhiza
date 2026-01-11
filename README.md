@@ -271,7 +271,7 @@ Templates related to continuous integration, delivery, and repository automation
 
 - **.github/** — GitHub Actions workflows, scripts, and repository templates
 - **.gitlab/** — GitLab CI/CD workflows (equivalent to GitHub Actions)
-  - See [GITLAB_CI.md](GITLAB_CI.md) for GitLab CI/CD setup and usage
+  - See [.gitlab/README.md](.gitlab/README.md) for detailed GitLab CI/CD setup and usage
 
 ## ⚙️ Workflow Configuration
 
@@ -285,6 +285,52 @@ The **`.python-version`** file specifies the default Python version for local de
 - **Usage**: When you run commands like `make install` or `uv run`, these tools will automatically use the version specified in this file
 
 This file ensures consistency between local development and CI/CD workflows. If you need to use a different Python version locally, simply update this file with your preferred version.
+
+## 🦊 GitLab CI/CD Support
+
+Rhiza provides comprehensive GitLab CI/CD workflow configurations that mirror the functionality of the GitHub Actions workflows. This allows you to use Rhiza templates in GitLab projects with feature parity.
+
+### Available GitLab Workflows
+
+The `.gitlab/` directory contains ready-to-use GitLab CI/CD workflows:
+
+- **CI** - Python matrix testing across multiple versions
+- **Validate** - Rhiza configuration validation
+- **Deptry** - Dependency checking
+- **Pre-commit** - Code quality checks
+- **Book** - Documentation building and GitLab Pages deployment
+- **Sync** - Template synchronization
+- **Release** - Release management and PyPI publishing
+
+### Getting Started with GitLab
+
+1. **Copy the GitLab workflows** to your project:
+   ```bash
+   cp -r .gitlab/ /path/to/your/project/
+   cp .gitlab-ci.yml /path/to/your/project/
+   ```
+
+2. **Configure CI/CD variables** in your GitLab project (Settings > CI/CD > Variables):
+   - `PYPI_TOKEN` - For PyPI publishing (if needed)
+   - `PAT_TOKEN` - Project/Group Access Token for sync workflow
+   - `PUBLISH_COMPANION_BOOK` - Set to `true` to enable documentation publishing
+
+3. **Enable GitLab Pages** (if using the book workflow):
+   - Go to Settings > Pages
+   - Ensure Pages is enabled for your project
+
+4. **Test your workflows** by pushing to GitLab and checking the CI/CD pipelines
+
+### Detailed Documentation
+
+For complete information about GitLab CI/CD workflows, including:
+- Detailed workflow descriptions
+- Configuration variables
+- Key differences from GitHub Actions
+- Migration checklist
+- Troubleshooting tips
+
+See **[.gitlab/README.md](.gitlab/README.md)** for all the details.
 
 ## 🧩 Bringing Rhiza into an Existing Project
 
