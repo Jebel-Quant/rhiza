@@ -197,6 +197,45 @@ To use the current package (`rhiza`) within a notebook, you can define it as a d
 
 Adjust the `path` in `[tool.uv.sources]` relative to the notebook's location.
 
+## 🎤 Presentations
+
+This project supports generating presentation slides using [Marp](https://marp.app/). You can create beautiful, professional presentations from Markdown files.
+
+### Quick Start
+
+Generate HTML presentation slides:
+
+```bash
+make presentation
+```
+
+Generate PDF presentation slides:
+
+```bash
+make presentation-pdf
+```
+
+Serve presentation interactively with live reload:
+
+```bash
+make presentation-serve
+```
+
+### Creating Presentations
+
+The main presentation source file is located at `PRESENTATION.md` in the repository root. Marp extends standard Markdown with special directives for presentations, making it easy to create slides with familiar syntax.
+
+### Learn More
+
+For detailed information about:
+- Setting up and configuring Marp
+- Creating and editing presentation slides
+- Advanced customization options
+- Troubleshooting common issues
+- Creating multiple presentations
+
+See the complete [Presentation Guide](presentation/README.md).
+
 ## Testing your documentation
 
 Any README.md file will be scanned for Python code blocks.
