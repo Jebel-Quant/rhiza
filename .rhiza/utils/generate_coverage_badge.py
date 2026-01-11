@@ -9,6 +9,13 @@ import json
 import sys
 from pathlib import Path
 
+try:
+    import typer
+    from typer import Option
+except ImportError:
+    typer = None
+    Option = None
+
 
 def get_badge_color(coverage: float) -> str:
     """Determine badge color based on coverage percentage.
@@ -101,28 +108,31 @@ def generate_coverage_badge(
     print(f"[INFO] Coverage badge JSON generated at {output_path}")
 
 
-if __name__ == "__main__":
-    # Support optional command-line arguments for paths
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Generate coverage badge endpoint JSON for shields.io")
-    parser.add_argument(
+def cli_main(
+    coverage_json: Path = Option(
+        Path("_tests/coverage.json"),
         "--coverage-json",
-        type=Path,
-        default=Path("_tests/coverage.json"),
-        help="Path to coverage.json file (default: _tests/coverage.json)",
-    )
-    parser.add_argument(
+        help="Path to coverage.json file",
+    ),
+    output: Path = Option(
+        Path("_book/tests/coverage-badge.json"),
         "--output",
-        type=Path,
-        default=Path("_book/tests/coverage-badge.json"),
-        help="Path to output badge JSON (default: _book/tests/coverage-badge.json)",
-    )
-
-    args = parser.parse_args()
-
+        help="Path to output badge JSON",
+    ),
+) -> None:
+    """Generate coverage badge endpoint JSON for shields.io."""
     try:
-        generate_coverage_badge(args.coverage_json, args.output)
+        generate_coverage_badge(coverage_json, output)
     except (OSError, json.JSONDecodeError, ValueError) as e:
         print(f"[ERROR] Unexpected error: {e}", file=sys.stderr)
+        raise typer.Exit(1)
+
+
+if __name__ == "__main__":
+    if typer is None:
+        print("[ERROR] typer is required. Install it with: pip install typer", file=sys.stderr)
         sys.exit(1)
+
+    app = typer.Typer()
+    app.command()(cli_main)
+    app()
