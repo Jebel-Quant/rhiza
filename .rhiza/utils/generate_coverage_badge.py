@@ -125,6 +125,6 @@ if __name__ == "__main__":
 
     try:
         generate_coverage_badge(args.coverage_json, args.output)
-    except Exception as e:
+    except (OSError, json.JSONDecodeError, ValueError) as e:
         print(f"[ERROR] Unexpected error: {e}", file=sys.stderr)
         sys.exit(1)
