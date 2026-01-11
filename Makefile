@@ -35,7 +35,8 @@ RESET := \033[0m
 	validate \
 	version-matrix
 
-INSTALL_DIR ?= ./bin
+# we need absolute paths!
+INSTALL_DIR ?= $(abspath ./bin)
 UV_BIN ?= $(shell command -v uv 2>/dev/null || echo ${INSTALL_DIR}/uv)
 UVX_BIN ?= $(shell command -v uvx 2>/dev/null || echo ${INSTALL_DIR}/uvx)
 VENV ?= .venv
