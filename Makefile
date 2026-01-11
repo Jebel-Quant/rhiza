@@ -29,7 +29,6 @@ RESET := \033[0m
 	install-uv \
 	marimo \
 	post-release \
-	print-logo \
 	release \
 	sync \
 	update-readme \
@@ -55,11 +54,6 @@ export UV_VENV_CLEAR := 1
 -include .rhiza/agentic/Makefile.agentic
 -include .rhiza/Makefile.rhiza
 -include .github/Makefile.gh
-
-##@ Meta
-
-print-logo:
-	@printf "${BLUE}$$RHIZA_LOGO${RESET}\n"
 
 ##@ Bootstrap
 install-uv: ## ensure uv/uvx is installed
