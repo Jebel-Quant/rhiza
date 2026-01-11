@@ -300,12 +300,22 @@ def get_repo_url() -> str:
     try:
         result = run_command(["git", "remote", "get-url", "origin"])
         url = result.stdout.strip()
-        # Convert git@github.com:user/repo.git or https://github.com/user/repo.git to user/repo
-        if "github.com" in url:
-            url = url.replace("git@github.com:", "")
-            url = url.replace("https://github.com/", "")
-            url = url.replace(".git", "")
-            return url
+        
+        # Parse git@github.com:user/repo.git format
+        if url.startswith("git@github.com:"):
+            repo_path = url.replace("git@github.com:", "")
+            if repo_path.endswith(".git"):
+                repo_path = repo_path[:-4]
+            return repo_path
+        
+        # Parse https://github.com/user/repo.git format
+        if url.startswith("https://github.com/"):
+            repo_path = url.replace("https://github.com/", "")
+            if repo_path.endswith(".git"):
+                repo_path = repo_path[:-4]
+            return repo_path
+        
+        # For other URL formats, return the original URL
         return url
     except subprocess.CalledProcessError:
         return ""
