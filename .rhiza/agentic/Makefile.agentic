@@ -22,9 +22,9 @@ summarize-changes: install-copilot ## summarize changes since the most recent re
 
 install-copilot:  ## checks for copilot and prompts to install
 	@if command -v copilot >/dev/null 2>&1; then \
-	  :; \
+	  printf "${GREEN}[INFO] copilot already installed in PATH, skipping install.${RESET}\n"; \
 	elif [ -x "${INSTALL_DIR}/copilot" ]; then \
-	  printf "${BLUE}[INFO] copilot already installed in ${INSTALL_DIR}, skipping.${RESET}\n"; \
+	  printf "${SUCCESS}[INFO] copilot already installed in ${INSTALL_DIR}, skipping install.${RESET}\n"; \
 	else \
 		printf "${YELLOW}[WARN] GitHub Copilot CLI not found in ${INSTALL_DIR}.${RESET}\n"; \
 		printf "${BLUE}Do you want to install GitHub Copilot CLI? [y/N] ${RESET}"; \
