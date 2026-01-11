@@ -29,22 +29,8 @@ marimo-edit: install ## edit a specific Marimo notebook (usage: make marimo-edit
 	@printf "${BLUE}[INFO] Editing notebook ${MARIMO_FOLDER}/$(NOTEBOOK)...${RESET}\n"
 	${UV_BIN} run --with marimo marimo edit --no-token "${MARIMO_FOLDER}/$(NOTEBOOK)"
 
-marimo-export: install ## export all Marimo notebooks to HTML
-	@printf "${BLUE}[INFO] Exporting all notebooks from ${MARIMO_FOLDER} to HTML...${RESET}\n"
-	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
-	  printf "${YELLOW}[WARN] Directory '${MARIMO_FOLDER}' does not exist. Skipping export.${RESET}\n"; \
-	else \
-	  mkdir -p _marimo_export; \
-	  for notebook in ${MARIMO_FOLDER}/*.py; do \
-	    if [ -f "$$notebook" ]; then \
-	      notebook_name=$$(basename "$$notebook" .py); \
-	      printf "${BLUE}[INFO] Exporting $$notebook_name...${RESET}\n"; \
-	      ${UV_BIN} run --with marimo marimo export html "$$notebook" -o "_marimo_export/$$notebook_name.html" || \
-	        printf "${YELLOW}[WARN] Failed to export $$notebook${RESET}\n"; \
-	    fi; \
-	  done; \
-	  printf "${GREEN}[SUCCESS] Notebooks exported to _marimo_export/${RESET}\n"; \
-	fi
+marimo-export: marimushka ## export all Marimo notebooks to HTML (alias for marimushka)
+	@printf "${GREEN}[SUCCESS] Notebooks exported via marimushka${RESET}\n"
 
 marimo-validate: install ## validate all Marimo notebooks can run
 	@printf "${BLUE}[INFO] Validating all notebooks in ${MARIMO_FOLDER}...${RESET}\n"
