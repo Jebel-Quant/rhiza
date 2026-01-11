@@ -15,7 +15,7 @@ marimo-run: install ## run a specific Marimo notebook (usage: make marimo-run NO
 	  exit 1; \
 	fi
 	@printf "${BLUE}[INFO] Running notebook ${MARIMO_FOLDER}/$(NOTEBOOK)...${RESET}\n"
-	${UV_BIN} run "${MARIMO_FOLDER}/$(NOTEBOOK)"
+	${UV_BIN} run --with marimo marimo run "${MARIMO_FOLDER}/$(NOTEBOOK)"
 
 marimo-edit: install ## edit a specific Marimo notebook (usage: make marimo-edit NOTEBOOK=rhiza.py)
 	@if [ -z "$(NOTEBOOK)" ]; then \
@@ -29,7 +29,8 @@ marimo-edit: install ## edit a specific Marimo notebook (usage: make marimo-edit
 	@printf "${BLUE}[INFO] Editing notebook ${MARIMO_FOLDER}/$(NOTEBOOK)...${RESET}\n"
 	${UV_BIN} run --with marimo marimo edit --no-token "${MARIMO_FOLDER}/$(NOTEBOOK)"
 
-marimo-export: marimushka ## export all Marimo notebooks to HTML (alias for marimushka)
+marimo-export: ## export all Marimo notebooks to HTML (uses marimushka)
+	@$(MAKE) marimushka || { printf "${RED}[ERROR] Failed to export notebooks${RESET}\n"; exit 1; }
 	@printf "${GREEN}[SUCCESS] Notebooks exported via marimushka${RESET}\n"
 
 marimo-validate: install ## validate all Marimo notebooks can run
