@@ -56,12 +56,16 @@ def prompt_continue(message: str) -> bool:
     """Prompt user to continue with an operation.
 
     Args:
-        message: Message to display to user
+        message: Message to display to user (optional)
 
     Returns:
         True if user wants to continue, False otherwise
     """
-    print_colored(Colors.YELLOW, f"\n[PROMPT] {message} Continue? [y/N] ")
+    if message:
+        prompt_text = f"\n[PROMPT] {message} Continue? [y/N] "
+    else:
+        prompt_text = "\n[PROMPT] Continue? [y/N] "
+    print_colored(Colors.YELLOW, prompt_text)
     answer = input().strip().lower()
     if answer in ("y", "yes"):
         return True
