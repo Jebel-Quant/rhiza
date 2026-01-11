@@ -4,21 +4,21 @@
 # Declare phony targets
 .PHONY: install-copilot analyse-repo summarize-changes
 
-COPILOT_BIN ?= $(shell command -v uv 2>/dev/null || echo ${INSTALL_DIR}/copilot)
+COPILOT_BIN ?= $(shell command -v copilot 2>/dev/null || echo "$(INSTALL_DIR)/copilot")
 ##@ Agentic Workflows
 
 copilot: install-copilot ## open interactive prompt for copilot
-	@${INSTALL_DIR}/copilot --model "${DEFAULT_AI_MODEL}"
+	@"$(COPILOT_BIN)" --model "$(DEFAULT_AI_MODEL)"
 
 analyse-repo: install-copilot ## run the analyser agent to update REPOSITORY_ANALYSIS.md
-	@${INSTALL_DIR}/copilot --agent analyser \
-		--model "${DEFAULT_AI_MODEL}" \
+	@"$(COPILOT_BIN)" --agent analyser \
+		--model "$(DEFAULT_AI_MODEL)" \
 		--prompt "Analyze the repository and update the journal." \
-    --allow-tool 'write' --deny-tool 'remove' \
+		--allow-tool 'write' --deny-tool 'remove' \
 		--allow-all-paths
 
 summarize-changes: install-copilot ## summarize changes since the most recent release/tag
-	@${INSTALL_DIR}/copilot -p "Show me the commits since the last release/tag and summarize them" --allow-tool 'shell(git)' --model "${DEFAULT_AI_MODEL}" --agent summarise
+	@"$(COPILOT_BIN)" -p "Show me the commits since the last release/tag and summarize them" --allow-tool 'shell(git)' --model "$(DEFAULT_AI_MODEL)" --agent summarise
 
 install-copilot:  ## checks for copilot and prompts to install
 	@if command -v copilot >/dev/null 2>&1; then \
