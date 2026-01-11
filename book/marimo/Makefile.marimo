@@ -2,13 +2,9 @@
 # This file is included by the main Makefile
 
 # Declare phony targets (they don't produce files)
-.PHONY: marimo-export marimo-validate marimo
+.PHONY: marimo-validate marimo marimushka
 
 ##@ Marimo Notebooks
-marimo-export: ## export all Marimo notebooks to HTML (uses marimushka)
-	@$(MAKE) marimushka || { printf "${RED}[ERROR] Failed to export notebooks${RESET}\n"; exit 1; }
-	@printf "${GREEN}[SUCCESS] Notebooks exported via marimushka${RESET}\n"
-
 marimo-validate: install ## validate all Marimo notebooks can run
 	@printf "${BLUE}[INFO] Validating all notebooks in ${MARIMO_FOLDER}...${RESET}\n"
 	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
