@@ -13,16 +13,6 @@ RED := \033[31m
 YELLOW := \033[33m
 RESET := \033[0m
 
-define RHIZA_LOGO
-  ____  _     _
- |  _ \| |__ (_)______ _
- | |_) | '_ \| |_  / _\`|
- |  _ <| | | | |/ / (_| |
- |_| \_\_| |_|_/___\__,_|
-
-endef
-export RHIZA_LOGO
-
 # Default goal when running `make` with no target
 .DEFAULT_GOAL := help
 
