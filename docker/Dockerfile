@@ -1,7 +1,7 @@
 # ================================
 # Stage 1: Builder
 # ================================
-FROM ghcr.io/astral-sh/uv:0.9.22-python3.14-trixie-slim AS builder
+FROM ghcr.io/astral-sh/uv:0.9.24-python3.14-trixie-slim AS builder
 
 WORKDIR /app
 

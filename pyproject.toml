@@ -36,3 +36,10 @@ dev = [
 Homepage = "https://github.com/jebel-quant/rhiza"
 Repository = "https://github.com/jebel-quant/rhiza"
 Issues = "https://github.com/jebel-quant/rhiza/issues"
+
+[tool.deptry.package_module_name_map]
+marimo = "marimo"
+numpy = "numpy"
+plotly = "plotly"
+pandas = "pandas"
+
