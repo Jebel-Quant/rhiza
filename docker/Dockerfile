@@ -15,7 +15,8 @@ USER app_user
 COPY --chown=app_user:app_user pyproject.toml uv.lock README.md src* ./
 
 # Install dependencies into .venv (no dev deps)
-RUN uv sync --frozen --no-dev --no-cache && \
+RUN --mount=type=secret,id=UV_EXTRA_INDEX_URL,env=UV_EXTRA_INDEX_URL \
+    uv sync --frozen --no-dev --no-cache && \
     # Install the package itself (non-editable, so src/ is not required afterwards) \
     uv pip install --no-deps .
 
