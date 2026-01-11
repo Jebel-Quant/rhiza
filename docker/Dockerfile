@@ -5,7 +5,7 @@
 # MUST be passed via --build-arg PYTHON_VERSION=$(cat .python-version)
 # Docker cannot read files before FROM, so the build process must pass this.
 # Use: make docker-build (reads .python-version automatically)
-ARG PYTHON_VERSION
+ARG PYTHON_VERSION=3.12
 
 # ================================
 # Stage 1: Builder
@@ -45,7 +45,6 @@ RUN rm -rf ./src/ ~/.cache/ && \
 # ================================
 # Stage 2: Runtime
 # ================================
-ARG PYTHON_VERSION
 FROM python:${PYTHON_VERSION}-slim AS runtime
 
 WORKDIR /app
