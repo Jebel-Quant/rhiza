@@ -119,7 +119,7 @@ def cli_main(
     """Generate coverage badge endpoint JSON for shields.io."""
     try:
         generate_coverage_badge(coverage_json, output)
-    except (OSError, json.JSONDecodeError, ValueError) as e:
+    except OSError as e:
         print(f"[ERROR] Unexpected error: {e}", file=sys.stderr)
         raise typer.Exit(1)
 
