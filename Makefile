@@ -38,6 +38,10 @@ export RHIZA_LOGO
 	install-extras \
 	install-uv \
 	marimo \
+	marimo-edit \
+	marimo-export \
+	marimo-run \
+	marimo-validate \
 	post-release \
 	print-logo \
 	release \
@@ -60,6 +64,7 @@ export UV_VENV_CLEAR := 1
 # Include split Makefiles
 -include tests/Makefile.tests
 -include book/Makefile.book
+-include marimo/Makefile.marimo
 -include presentation/Makefile.presentation
 -include .rhiza/customisations/Makefile.customisations
 -include .rhiza/agentic/Makefile.agentic
