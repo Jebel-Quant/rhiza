@@ -9,8 +9,8 @@ TESTS_FOLDER := tests
 
 ##@ Development and Testing
 test: install ## run all tests
-    # clean up previous test runs
-    rm -rf _tests
+	# clean up previous test runs
+	rm -rf _tests;
 
 	@if [ -d ${TESTS_FOLDER} ]; then \
 	  mkdir -p _tests/html-coverage _tests/html-report; \
