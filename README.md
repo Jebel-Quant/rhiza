@@ -91,8 +91,6 @@ Usage:
 
 Targets:
 
-Meta
-
 Bootstrap
   install-uv            ensure uv/uvx is installed
   install-extras        run custom build script (if exists)
