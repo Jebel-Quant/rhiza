@@ -2,6 +2,7 @@
 
 import json
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -25,11 +26,11 @@ def test_coverage_badge_generation(tmp_path, root):
     coverage_json.write_text(json.dumps(coverage_data))
 
     # Run the script
-    script_path = root / ".rhiza" / "scripts" / "generate-coverage-badge.sh"
+    script_path = root / ".rhiza" / "utils" / "generate_coverage_badge.py"
 
     # Change to tmp directory for script execution
     result = subprocess.run(
-        ["/bin/sh", str(script_path)],
+        [sys.executable, str(script_path)],
         cwd=tmp_path,
         capture_output=True,
         text=True,
@@ -61,7 +62,7 @@ def test_coverage_badge_colors(root):
         (45, "red"),
     ]
 
-    script_path = root / ".rhiza" / "scripts" / "generate-coverage-badge.sh"
+    script_path = root / ".rhiza" / "utils" / "generate_coverage_badge.py"
 
     for percent, expected_color in test_cases:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -78,7 +79,7 @@ def test_coverage_badge_colors(root):
 
             # Run the script
             result = subprocess.run(
-                ["/bin/sh", str(script_path)],
+                [sys.executable, str(script_path)],
                 cwd=tmp_path,
                 capture_output=True,
                 text=True,

@@ -52,7 +52,7 @@ if [ -f _tests/html-coverage/index.html ]; then
   # Generate coverage badge JSON if coverage.json exists
   if [ -f _tests/coverage.json ]; then
     printf "%b[INFO] Generating coverage badge...%b\n" "$BLUE" "$RESET"
-    /bin/sh "${SCRIPTS_FOLDER}/generate-coverage-badge.sh"
+    python3 "$(dirname "${SCRIPTS_FOLDER}")/utils/generate_coverage_badge.py"
   fi
 else
   printf "%b[WARN] No coverage report found or directory is empty%b\n" "$YELLOW" "$RESET"
