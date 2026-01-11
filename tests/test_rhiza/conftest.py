@@ -208,11 +208,11 @@ def git_repo(root, tmp_path, monkeypatch):
     script_dir = local_dir / ".rhiza" / "scripts"
     script_dir.mkdir(parents=True)
 
-    shutil.copy(root / ".rhiza" / "scripts" / "release.sh", script_dir / "release.sh")
+    shutil.copy(root / ".rhiza" / "scripts" / "release.py", script_dir / "release.py")
     shutil.copy(root / ".rhiza" / "scripts" / "marimushka.sh", script_dir / "marimushka.sh")
     shutil.copy(root / ".rhiza" / "scripts" / "update-readme-help.sh", script_dir / "update-readme-help.sh")
 
-    (script_dir / "release.sh").chmod(0o755)
+    (script_dir / "release.py").chmod(0o755)
     (script_dir / "marimushka.sh").chmod(0o755)
     (script_dir / "update-readme-help.sh").chmod(0o755)
 
