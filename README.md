@@ -277,28 +277,6 @@ Templates related to continuous integration, delivery, and repository automation
 
 ## ⚙️ Workflow Configuration
 
-The GitHub Actions workflows can be customized using repository variables:
-
-### Python Version Control
-
-Control which Python versions are used in your workflows:
-
-- **`PYTHON_MAX_VERSION`** - Maximum Python version for CI testing matrix
-  - Default: `'3.14'` (tests on 3.11, 3.12, 3.13, 3.14)
-  - Set to `'3.13'` to test on 3.11, 3.12, 3.13 only
-  - Set to `'3.12'` to test on 3.11, 3.12 only
-  - Set to `'3.11'` to test on 3.11 only
-
-- **`PYTHON_DEFAULT_VERSION`** - Default Python version for release, pre-commit, book, and marimo workflows
-  - Default: `'3.14'`
-  - Set to `'3.12'` or `'3.13'` if dependencies are not compatible with newer versions
-
-**To set these variables:**
-
-1. Go to your repository Settings → Secrets and variables → Actions → Variables tab
-2. Click "New repository variable"
-3. Add `PYTHON_MAX_VERSION` and/or `PYTHON_DEFAULT_VERSION` with your desired values
-
 ### Local Python Version
 
 The **`.python-version`** file specifies the default Python version for local development:
@@ -337,9 +315,9 @@ uvx rhiza init
 ```
 
 This will:
-- ✅ Create a default template configuration (`.github/template.yml`)
+- ✅ Create a default template configuration (`.rhiza/template.yml`)
 
-Then, update the generated `.github/template.yml` file with your chosen templates that you can find from [Available Templates](#-available-templates).
+Then, update the generated `.rhiza/template.yml` file with your chosen templates that you can find from [Available Templates](#-available-templates).
 
 You will then need to run the following, to inject templates into your repository:
 
@@ -388,7 +366,7 @@ mkdir -p .github/workflows
 mkdir -p .rhiza/scripts
 
 # Copy the template configuration
-cp /tmp/rhiza/.github/template.yml .github/template.yml
+cp /tmp/rhiza/.rhiza/template.yml .rhiza/template.yml
 
 # Copy the sync helper script
 cp /tmp/rhiza/.rhiza/scripts/sync.sh .rhiza/scripts
@@ -403,7 +381,7 @@ At this stage:
 
 #### Step 3: Perform the first sync
 
-Run the sync script to apply the templates defined in '.github/template.yml'
+Run the sync script to apply the templates defined in '.rhiza/template.yml'
 
 ```bash
 ./.rhiza/scripts/sync.sh
@@ -436,7 +414,7 @@ This approach keeps your project’s configuration in sync with Rhiza’s latest
 
 Prerequisites:
 
-  - A .github/template.yml file exists, defining **which templates to include or exclude**.
+  - A .rhiza/template.yml file exists, defining **which templates to include or exclude**.
   - The first manual sync (./.rhiza/scripts/sync.sh) has been performed.
   - The .github/workflows/sync.yml workflow is present in your repository.
 
@@ -445,7 +423,7 @@ The workflow can run:
   **On a schedule** — e.g., weekly updates
   **Manually** — via the GitHub Actions “Run workflow” button
 
-⚠️ .github/template.yml remains the **source of truth**. All automated updates are driven by its include/exclude rules.
+⚠️ .rhiza/template.yml remains the **source of truth**. All automated updates are driven by its include/exclude rules.
 
 #### Step 1: Configure GitHub Token (Optional)
 
@@ -501,7 +479,7 @@ After integrating Rhiza, your project will have:
 - Solution: Run `make fmt` to fix formatting issues, or temporarily exclude certain files in `.pre-commit-config.yaml`
 
 **Issue: GitHub Actions workflows fail**
-- Solution: Check Python version compatibility and adjust `PYTHON_MAX_VERSION` repository variable if needed
+- Solution: Check Python version compatibility in your `.python-version` file and `pyproject.toml`
 
 **Issue: Dev container fails to build**
 - Solution: Review `.devcontainer/devcontainer.json` and ensure all dependencies are available for your project
@@ -712,15 +690,6 @@ The release workflow (`.github/workflows/release.yml`) triggers on the tag push 
 6.  **Finalizes** - Publishes the GitHub release with links to PyPI and container images
 
 ### Configuration Options
-
-**Python Version Configuration:**
-- Set repository variable `PYTHON_MAX_VERSION` to control maximum Python version in CI tests
-  - Options: `'3.11'`, `'3.12'`, `'3.13'`, or `'3.14'` (default)
-  - Example: Set to `'3.13'` to test on Python 3.11, 3.12, and 3.13 only
-- Set repository variable `PYTHON_DEFAULT_VERSION` to control default Python version in workflows
-  - Options: `'3.11'`, `'3.12'`, `'3.13'`, or `'3.14'` (default)
-  - Example: Set to `'3.12'` if dependencies are not compatible with Python 3.14
-  - Used in release, pre-commit, book, and marimo workflows
 
 **PyPI Publishing:**
 - Automatic if package is registered as a Trusted Publisher
