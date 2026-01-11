@@ -12,10 +12,10 @@ from pathlib import Path
 
 def get_badge_color(coverage: float) -> str:
     """Determine badge color based on coverage percentage.
-    
+
     Args:
         coverage: Coverage percentage (0-100)
-        
+
     Returns:
         str: Color name for shields.io badge
     """
@@ -38,11 +38,11 @@ def generate_coverage_badge(
     output_path: Path = Path("_book/tests/coverage-badge.json"),
 ) -> None:
     """Generate coverage badge JSON from coverage report.
-    
+
     Args:
         coverage_json_path: Path to the coverage.json file
         output_path: Path where the badge JSON should be written
-        
+
     Raises:
         FileNotFoundError: If coverage.json doesn't exist
         KeyError: If coverage.json doesn't have expected structure
@@ -55,9 +55,9 @@ def generate_coverage_badge(
             file=sys.stderr,
         )
         return
-    
+
     print(f"[INFO] Generating coverage badge from {coverage_json_path}...")
-    
+
     # Read and parse coverage data
     try:
         with coverage_json_path.open("r") as f:
@@ -65,29 +65,29 @@ def generate_coverage_badge(
     except json.JSONDecodeError as e:
         print(f"[ERROR] Failed to parse coverage JSON: {e}", file=sys.stderr)
         sys.exit(1)
-    
+
     # Extract coverage percentage
     try:
         percent = data["totals"]["percent_covered"]
     except KeyError as e:
         print(f"[ERROR] Missing expected key in coverage JSON: {e}", file=sys.stderr)
         sys.exit(1)
-    
+
     # Round to nearest integer
     coverage = round(percent)
-    
+
     if not 0 <= coverage <= 100:
         print(f"[ERROR] Coverage percentage {coverage} is out of valid range 0-100", file=sys.stderr)
         sys.exit(1)
-    
+
     print(f"[INFO] Coverage: {coverage}%")
-    
+
     # Determine badge color
     color = get_badge_color(coverage)
-    
+
     # Create output directory if it doesn't exist
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # Generate shields.io endpoint JSON
     badge_data = {
         "schemaVersion": 1,
@@ -95,18 +95,18 @@ def generate_coverage_badge(
         "message": f"{coverage}%",
         "color": color,
     }
-    
+
     with output_path.open("w") as f:
         json.dump(badge_data, f, indent=2)
         f.write("\n")  # Add trailing newline
-    
+
     print(f"[INFO] Coverage badge JSON generated at {output_path}")
 
 
 if __name__ == "__main__":
     # Support optional command-line arguments for paths
     import argparse
-    
+
     parser = argparse.ArgumentParser(
         description="Generate coverage badge endpoint JSON for shields.io"
     )
@@ -122,9 +122,9 @@ if __name__ == "__main__":
         default=Path("_book/tests/coverage-badge.json"),
         help="Path to output badge JSON (default: _book/tests/coverage-badge.json)",
     )
-    
+
     args = parser.parse_args()
-    
+
     try:
         generate_coverage_badge(args.coverage_json, args.output)
     except Exception as e:
