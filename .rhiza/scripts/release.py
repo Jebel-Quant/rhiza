@@ -434,7 +434,7 @@ def do_release(uv_bin: str) -> None:
         print_colored(Colors.BLUE, f"[INFO] Monitor progress at: https://github.com/{repo_url}/actions")
 
 
-app = typer.Typer(help="Create tag and push to remote (with prompts)")
+app = typer.Typer()
 
 
 @app.command()
