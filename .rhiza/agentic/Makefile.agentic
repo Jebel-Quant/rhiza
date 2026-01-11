@@ -4,6 +4,7 @@
 # Declare phony targets
 .PHONY: install-copilot analyse-repo summarize-changes
 
+COPILOT_BIN ?= $(shell command -v uv 2>/dev/null || echo ${INSTALL_DIR}/copilot)
 ##@ Agentic Workflows
 
 copilot: install-copilot ## open interactive prompt for copilot
@@ -20,8 +21,10 @@ summarize-changes: install-copilot ## summarize changes since the most recent re
 	@${INSTALL_DIR}/copilot -p "Show me the commits since the last release/tag and summarize them" --allow-tool 'shell(git)' --model "${DEFAULT_AI_MODEL}" --agent summarise
 
 install-copilot:  ## checks for copilot and prompts to install
-	@if [ -x "${INSTALL_DIR}/copilot" ]; then \
-		printf "${GREEN}[INFO] GitHub Copilot CLI is already installed in ${INSTALL_DIR}.${RESET}\n"; \
+	@if command -v copilot >/dev/null 2>&1; then \
+	  :; \
+	elif [ -x "${INSTALL_DIR}/copilot" ]; then \
+	  printf "${BLUE}[INFO] copilot already installed in ${INSTALL_DIR}, skipping.${RESET}\n"; \
 	else \
 		printf "${YELLOW}[WARN] GitHub Copilot CLI not found in ${INSTALL_DIR}.${RESET}\n"; \
 		printf "${BLUE}Do you want to install GitHub Copilot CLI? [y/N] ${RESET}"; \
