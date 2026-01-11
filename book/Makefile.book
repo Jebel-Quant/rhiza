@@ -2,7 +2,7 @@
 # This file is included by the main Makefile
 
 # Declare phony targets (they don't produce files)
-.PHONY: docs marimushka book
+.PHONY: docs book marimushka
 
 ##@ Documentation
 docs:: install ## create documentation with pdoc
@@ -44,7 +44,6 @@ marimushka:: install-uv ## export Marimo notebooks to HTML
 	fi
 
 book:: test docs marimushka ## compile the companion book
-	@${UV_BIN} pip install marimo
 	@/bin/sh "${SCRIPTS_FOLDER}/book.sh"
 	@TEMPLATE_ARG=""; \
 	if [ -f "${BOOK_TEMPLATE}" ]; then \

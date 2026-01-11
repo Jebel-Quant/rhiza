@@ -22,9 +22,14 @@ import pytest
 
 # Split Makefile paths that are included in the main Makefile
 SPLIT_MAKEFILES = [
+    ".rhiza/Makefile.rhiza",
     "tests/Makefile.tests",
+    "book/Makefile.marimo",
     "book/Makefile.book",
     "presentation/Makefile.presentation",
+    ".rhiza/customisations/Makefile.customisations",
+    ".rhiza/agentic/Makefile.agentic",
+    ".github/Makefile.gh",
 ]
 
 
