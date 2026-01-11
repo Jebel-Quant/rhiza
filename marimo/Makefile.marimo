@@ -1,0 +1,73 @@
+## Makefile.marimo - Marimo notebook targets
+# This file is included by the main Makefile
+
+# Declare phony targets (they don't produce files)
+.PHONY: marimo-run marimo-edit marimo-export marimo-validate
+
+##@ Marimo Notebooks
+marimo-run: install ## run a specific Marimo notebook (usage: make marimo-run NOTEBOOK=rhiza.py)
+	@if [ -z "$(NOTEBOOK)" ]; then \
+	  printf "${RED}[ERROR] NOTEBOOK parameter is required. Usage: make marimo-run NOTEBOOK=rhiza.py${RESET}\n"; \
+	  exit 1; \
+	fi
+	@if [ ! -f "${MARIMO_FOLDER}/$(NOTEBOOK)" ]; then \
+	  printf "${RED}[ERROR] Notebook '${MARIMO_FOLDER}/$(NOTEBOOK)' not found${RESET}\n"; \
+	  exit 1; \
+	fi
+	@printf "${BLUE}[INFO] Running notebook ${MARIMO_FOLDER}/$(NOTEBOOK)...${RESET}\n"
+	${UV_BIN} run "${MARIMO_FOLDER}/$(NOTEBOOK)"
+
+marimo-edit: install ## edit a specific Marimo notebook (usage: make marimo-edit NOTEBOOK=rhiza.py)
+	@if [ -z "$(NOTEBOOK)" ]; then \
+	  printf "${RED}[ERROR] NOTEBOOK parameter is required. Usage: make marimo-edit NOTEBOOK=rhiza.py${RESET}\n"; \
+	  exit 1; \
+	fi
+	@if [ ! -f "${MARIMO_FOLDER}/$(NOTEBOOK)" ]; then \
+	  printf "${RED}[ERROR] Notebook '${MARIMO_FOLDER}/$(NOTEBOOK)' not found${RESET}\n"; \
+	  exit 1; \
+	fi
+	@printf "${BLUE}[INFO] Editing notebook ${MARIMO_FOLDER}/$(NOTEBOOK)...${RESET}\n"
+	${UV_BIN} run --with marimo marimo edit --no-token "${MARIMO_FOLDER}/$(NOTEBOOK)"
+
+marimo-export: install ## export all Marimo notebooks to HTML
+	@printf "${BLUE}[INFO] Exporting all notebooks from ${MARIMO_FOLDER} to HTML...${RESET}\n"
+	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
+	  printf "${YELLOW}[WARN] Directory '${MARIMO_FOLDER}' does not exist. Skipping export.${RESET}\n"; \
+	else \
+	  mkdir -p _marimo_export; \
+	  for notebook in ${MARIMO_FOLDER}/*.py; do \
+	    if [ -f "$$notebook" ]; then \
+	      notebook_name=$$(basename "$$notebook" .py); \
+	      printf "${BLUE}[INFO] Exporting $$notebook_name...${RESET}\n"; \
+	      ${UV_BIN} run --with marimo marimo export html "$$notebook" -o "_marimo_export/$$notebook_name.html" || \
+	        printf "${YELLOW}[WARN] Failed to export $$notebook${RESET}\n"; \
+	    fi; \
+	  done; \
+	  printf "${GREEN}[SUCCESS] Notebooks exported to _marimo_export/${RESET}\n"; \
+	fi
+
+marimo-validate: install ## validate all Marimo notebooks can run
+	@printf "${BLUE}[INFO] Validating all notebooks in ${MARIMO_FOLDER}...${RESET}\n"
+	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
+	  printf "${YELLOW}[WARN] Directory '${MARIMO_FOLDER}' does not exist. Skipping validation.${RESET}\n"; \
+	else \
+	  failed=0; \
+	  for notebook in ${MARIMO_FOLDER}/*.py; do \
+	    if [ -f "$$notebook" ]; then \
+	      notebook_name=$$(basename "$$notebook"); \
+	      printf "${BLUE}[INFO] Validating $$notebook_name...${RESET}\n"; \
+	      if ${UV_BIN} run "$$notebook" > /dev/null 2>&1; then \
+	        printf "${GREEN}[SUCCESS] $$notebook_name is valid${RESET}\n"; \
+	      else \
+	        printf "${RED}[ERROR] $$notebook_name failed validation${RESET}\n"; \
+	        failed=$$((failed + 1)); \
+	      fi; \
+	    fi; \
+	  done; \
+	  if [ $$failed -eq 0 ]; then \
+	    printf "${GREEN}[SUCCESS] All notebooks validated successfully${RESET}\n"; \
+	  else \
+	    printf "${RED}[ERROR] $$failed notebook(s) failed validation${RESET}\n"; \
+	    exit 1; \
+	  fi; \
+	fi
