@@ -175,7 +175,7 @@ def git_repo(root, tmp_path, monkeypatch):
 
     make_path = bin_dir / "make"
     with open(make_path, "w") as f:
-       f.write(MOCK_MAKE_SCRIPT)
+        f.write(MOCK_MAKE_SCRIPT)
     make_path.chmod(0o755)
 
     # Ensure our bin comes first on PATH so 'uv' resolves to mock

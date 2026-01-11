@@ -36,6 +36,7 @@ def test_marimushka_target_success(git_repo):
     assert (output_folder / "index.html").exists()
     assert (output_folder / "notebooks" / "notebook.html").exists()
 
+
 def test_marimushka_missing_folder(git_repo):
     """Test marimushka target behavior when MARIMO_FOLDER is missing."""
     env = os.environ.copy()
