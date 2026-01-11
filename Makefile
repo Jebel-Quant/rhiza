@@ -128,7 +128,8 @@ clean: ## Clean project artifacts and stale local branches
 		build \
 		*.egg-info \
 		.coverage \
-		.pytest_cache
+		.pytest_cache \
+		.benchmarks
 
 	@printf "%bRemoving local branches with no remote counterpart...%b\n" "$(BLUE)" "$(RESET)"
 
