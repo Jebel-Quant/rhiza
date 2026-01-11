@@ -44,9 +44,7 @@ def generate_coverage_badge(
         output_path: Path where the badge JSON should be written
 
     Raises:
-        FileNotFoundError: If coverage.json doesn't exist
-        KeyError: If coverage.json doesn't have expected structure
-        ValueError: If coverage percentage is invalid
+        SystemExit: If the coverage JSON is invalid or missing required data
     """
     # Check if coverage.json exists
     if not coverage_json_path.exists():
