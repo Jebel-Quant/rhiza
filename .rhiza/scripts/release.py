@@ -9,7 +9,6 @@ This script:
 
 import os
 import subprocess
-import sys
 from pathlib import Path
 
 import typer
@@ -95,7 +94,7 @@ def get_version(uv_bin: str) -> str:
         return version
     except (subprocess.CalledProcessError, ValueError) as e:
         print_colored(Colors.RED, f"[ERROR] Could not determine version from pyproject.toml: {e}")
-        sys.exit(1)
+        raise typer.Exit(1)
 
 
 def get_current_branch() -> str:
@@ -115,7 +114,7 @@ def get_current_branch() -> str:
         return branch
     except (subprocess.CalledProcessError, ValueError) as e:
         print_colored(Colors.RED, f"[ERROR] Could not determine current branch: {e}")
-        sys.exit(1)
+        raise typer.Exit(1)
 
 
 def get_default_branch() -> str:
@@ -137,7 +136,7 @@ def get_default_branch() -> str:
         raise ValueError("Could not parse default branch")
     except (subprocess.CalledProcessError, ValueError) as e:
         print_colored(Colors.RED, f"[ERROR] Could not determine default branch from remote: {e}")
-        sys.exit(1)
+        raise typer.Exit(1)
 
 
 def check_working_tree_clean() -> None:
@@ -151,7 +150,7 @@ def check_working_tree_clean() -> None:
         print_colored(Colors.RED, "[ERROR] You have uncommitted changes:")
         run_command(["git", "status", "--short"], capture_output=False)
         print_colored(Colors.RED, "\n[ERROR] Please commit or stash your changes before releasing.")
-        sys.exit(1)
+        raise typer.Exit(1)
 
 
 def check_remote_status(current_branch: str) -> None:
@@ -179,11 +178,11 @@ def check_remote_status(current_branch: str) -> None:
         )
         if result.returncode != 0:
             print_colored(Colors.RED, f"[ERROR] No upstream branch configured for {current_branch}")
-            sys.exit(1)
+            raise typer.Exit(1)
         upstream = result.stdout.strip()
     except subprocess.CalledProcessError:
         print_colored(Colors.RED, f"[ERROR] No upstream branch configured for {current_branch}")
-        sys.exit(1)
+        raise typer.Exit(1)
 
     # Get commit hashes
     local_result = run_command(["git", "rev-parse", "@"])
@@ -203,7 +202,7 @@ def check_remote_status(current_branch: str) -> None:
     if local == base:
         # Local is behind remote
         print_colored(Colors.RED, f"[ERROR] Your branch is behind '{upstream}'. Please pull changes.")
-        sys.exit(1)
+        raise typer.Exit(1)
     elif remote == base:
         # Local is ahead of remote
         print_colored(Colors.YELLOW, f"[WARN] Your branch is ahead of '{upstream}'.")
@@ -215,7 +214,7 @@ def check_remote_status(current_branch: str) -> None:
     else:
         # Branches have diverged
         print_colored(Colors.RED, f"[ERROR] Your branch has diverged from '{upstream}'. Please reconcile.")
-        sys.exit(1)
+        raise typer.Exit(1)
 
 
 def check_tag_exists_locally(tag: str) -> bool:
@@ -377,7 +376,7 @@ def do_release(uv_bin: str) -> None:
         )
         print_colored(Colors.YELLOW, "[WARN] Releases are typically created from the default branch.")
         if not prompt_continue(f"Proceed with release from '{current_branch}'?"):
-            sys.exit(0)
+            raise typer.Exit(0)
 
     print_colored(Colors.BLUE, f"[INFO] Current version: {current_version}")
     print_colored(Colors.BLUE, f"[INFO] Tag to create: {tag}")
@@ -393,21 +392,21 @@ def do_release(uv_bin: str) -> None:
     if check_tag_exists_locally(tag):
         print_colored(Colors.YELLOW, f"[WARN] Tag '{tag}' already exists locally")
         if not prompt_continue("Tag exists. Skip tag creation and proceed to push?"):
-            sys.exit(0)
+            raise typer.Exit(0)
         skip_tag_create = True
 
     # Check if tag exists on remote
     if check_tag_exists_remotely(tag):
         print_colored(Colors.RED, f"[ERROR] Tag '{tag}' already exists on remote")
         print(f"The release for version {current_version} has already been published.")
-        sys.exit(1)
+        raise typer.Exit(1)
 
     # Step 1: Create the tag (if it doesn't exist)
     if not skip_tag_create:
         print_colored(Colors.BLUE, "\n=== Step 1: Create Tag ===")
         print(f"Creating tag '{tag}' for version {current_version}")
         if not prompt_continue(""):
-            sys.exit(0)
+            raise typer.Exit(0)
 
         create_tag(tag)
 
@@ -422,7 +421,7 @@ def do_release(uv_bin: str) -> None:
         print(f"Commits since {last_tag}: {commit_count}")
 
     if not prompt_continue(""):
-        sys.exit(0)
+        raise typer.Exit(0)
 
     # Push the tag
     push_tag(tag)
