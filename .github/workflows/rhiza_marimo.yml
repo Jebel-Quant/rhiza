@@ -40,7 +40,15 @@ jobs:
       - name: Find notebooks and build matrix
         id: notebooks
         run: |
-          NOTEBOOK_DIR="book/marimo"
+          # Load .rhiza/.env if it exists and extract MARIMO_FOLDER
+          if [ -f ".rhiza/.env" ]; then
+            # Extract MARIMO_FOLDER value, removing possible quotes or carriage returns
+            MARIMO_FOLDER=$(grep '^MARIMO_FOLDER=' .rhiza/.env | cut -d '=' -f2- | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//" | tr -d '\r')
+          fi
+
+          # Fallback to default if not set in .env
+          NOTEBOOK_DIR="${MARIMO_FOLDER:-marimo}"
+
           echo "Searching notebooks in: $NOTEBOOK_DIR"
           # Check if directory exists
           if [ ! -d "$NOTEBOOK_DIR" ]; then
