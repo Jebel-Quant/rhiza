@@ -43,13 +43,20 @@ marimushka:: install-uv ## export Marimo notebooks to HTML
 	  mkdir -p "${MARIMUSHKA_OUTPUT}"; \
 	  if ! ls "${MARIMO_FOLDER}"/*.py >/dev/null 2>&1; then \
 	    printf "${YELLOW}[WARN] No Python files found in '${MARIMO_FOLDER}'.${RESET}\n"; \
-	    printf '<html><head><title>Marimo Notebooks</title></head><body><h1>Marimo Notebooks</h1><p>No notebooks found.</p></body></html>' > "${MARIMUSHKA_OUTPUT}/index.html"; \
+	    printf '%s\n' '<html><head><title>Marimo Notebooks</title></head>' \
+	      '<body><h1>Marimo Notebooks</h1><p>No notebooks found.</p></body></html>' \
+	      > "${MARIMUSHKA_OUTPUT}/index.html"; \
 	  else \
 	    CURRENT_DIR=$$(pwd); \
 	    OUTPUT_DIR="$$CURRENT_DIR/${MARIMUSHKA_OUTPUT}"; \
 	    UV_INSTALL_DIR=$$(dirname "${UV_BIN}"); \
+	    case "${UVX_BIN}" in \
+	      /*) UVX_RESOLVED="${UVX_BIN}" ;; \
+	      */*) UVX_RESOLVED="$$CURRENT_DIR/${UVX_BIN}" ;; \
+	      *) UVX_RESOLVED="${UVX_BIN}" ;; \
+	    esac; \
 	    cd "${MARIMO_FOLDER}" && \
-	    "$$CURRENT_DIR/${UVX_BIN}" "marimushka>=0.1.9" export --notebooks "." --output "$$OUTPUT_DIR" --bin-path "$$UV_INSTALL_DIR" && \
+	    "$$UVX_RESOLVED" "marimushka>=0.1.9" export --notebooks "." --output "$$OUTPUT_DIR" --bin-path "$$UV_INSTALL_DIR" && \
 	    cd "$$CURRENT_DIR"; \
 	  fi; \
 	  touch "${MARIMUSHKA_OUTPUT}/.nojekyll"; \
