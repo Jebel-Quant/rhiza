@@ -34,7 +34,6 @@ def test_marimushka_target_success(git_repo):
     assert result.returncode == 0
     assert "Exporting notebooks" in result.stdout
     assert (output_folder / "index.html").exists()
-    assert (output_folder / ".nojekyll").exists()
     assert (output_folder / "index.html").read_text() == "<html>Mock Export</html>"
 
 

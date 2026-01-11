@@ -30,15 +30,26 @@ import sys
 import os
 
 # args look like: marimushka>=0.1.9 export --notebooks . --output /path/to/output --bin-path ...
+# OR: marimo export html --sandbox <notebook> --output <output_file>
 args = sys.argv[1:]
 if "export" in args:
     try:
         if "--output" in args:
             output_idx = args.index("--output")
-            output_dir = args[output_idx + 1]
-            os.makedirs(output_dir, exist_ok=True)
-            with open(os.path.join(output_dir, "index.html"), "w") as f:
-                f.write("<html>Mock Export</html>")
+            output_path = args[output_idx + 1]
+
+            # If it's a directory (old marimushka style), create index.html inside
+            if os.path.isdir(output_path) or output_path.endswith("/") or not output_path.endswith(".html"):
+                os.makedirs(output_path, exist_ok=True)
+                with open(os.path.join(output_path, "index.html"), "w") as f:
+                    f.write("<html>Mock Export</html>")
+            else:
+                # If it's a file (new marimo export style), create the file
+                output_dir = os.path.dirname(output_path)
+                if output_dir:
+                    os.makedirs(output_dir, exist_ok=True)
+                with open(output_path, "w") as f:
+                    f.write("<html>Mock Export</html>")
     except ValueError:
         pass
 """
@@ -210,6 +221,9 @@ def git_repo(root, tmp_path, monkeypatch):
 
     shutil.copy(root / ".rhiza" / "scripts" / "release.sh", script_dir / "release.sh")
     shutil.copy(root / ".rhiza" / "scripts" / "update-readme-help.sh", script_dir / "update-readme-help.sh")
+    shutil.copy(root / "Makefile", local_dir / "Makefile")
+    os.makedirs(local_dir / "book", exist_ok=True)
+    shutil.copy(root / "book" / "Makefile.book", local_dir / "book" / "Makefile.book")
 
     (script_dir / "release.sh").chmod(0o755)
     (script_dir / "update-readme-help.sh").chmod(0o755)

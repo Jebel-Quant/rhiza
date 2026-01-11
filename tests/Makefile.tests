@@ -9,6 +9,9 @@ TESTS_FOLDER := tests
 
 ##@ Development and Testing
 test: install ## run all tests
+    # clean up previous test runs
+    rm -rf _tests
+
 	@if [ -d ${TESTS_FOLDER} ]; then \
 	  mkdir -p _tests/html-coverage _tests/html-report; \
 	  ${VENV}/bin/python -m pytest ${TESTS_FOLDER} --ignore=${TESTS_FOLDER}/benchmarks --cov=${SOURCE_FOLDER} --cov-report=term --cov-report=html:_tests/html-coverage --cov-report=json:_tests/coverage.json --html=_tests/html-report/report.html; \
