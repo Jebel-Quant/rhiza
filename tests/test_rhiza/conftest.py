@@ -25,35 +25,6 @@ if len(sys.argv) > 1 and sys.argv[1] == "help":
     print("target: ## Description")
 """
 
-MOCK_UVX_SCRIPT = """#!/usr/bin/env python3
-import sys
-import os
-
-# args look like: marimushka>=0.1.9 export --notebooks . --output /path/to/output --bin-path ...
-# OR: marimo export html --sandbox <notebook> --output <output_file>
-args = sys.argv[1:]
-if "export" in args:
-    try:
-        if "--output" in args:
-            output_idx = args.index("--output")
-            output_path = args[output_idx + 1]
-
-            # If it's a directory (old marimushka style), create index.html inside
-            if os.path.isdir(output_path) or output_path.endswith("/") or not output_path.endswith(".html"):
-                os.makedirs(output_path, exist_ok=True)
-                with open(os.path.join(output_path, "index.html"), "w") as f:
-                    f.write("<html>Mock Export</html>")
-            else:
-                # If it's a file (new marimo export style), create the file
-                output_dir = os.path.dirname(output_path)
-                if output_dir:
-                    os.makedirs(output_dir, exist_ok=True)
-                with open(output_path, "w") as f:
-                    f.write("<html>Mock Export</html>")
-    except ValueError:
-        pass
-"""
-
 MOCK_UV_SCRIPT = """#!/usr/bin/env python3
 import sys
 import re
@@ -202,14 +173,9 @@ def git_repo(root, tmp_path, monkeypatch):
         f.write(MOCK_UV_SCRIPT)
     uv_path.chmod(0o755)
 
-    uvx_path = bin_dir / "uvx"
-    with open(uvx_path, "w") as f:
-        f.write(MOCK_UVX_SCRIPT)
-    uvx_path.chmod(0o755)
-
     make_path = bin_dir / "make"
     with open(make_path, "w") as f:
-        f.write(MOCK_MAKE_SCRIPT)
+       f.write(MOCK_MAKE_SCRIPT)
     make_path.chmod(0o755)
 
     # Ensure our bin comes first on PATH so 'uv' resolves to mock
