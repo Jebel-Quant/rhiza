@@ -9,12 +9,8 @@ import json
 import sys
 from pathlib import Path
 
-try:
-    import typer
-    from typer import Option
-except ImportError:
-    typer = None
-    Option = None
+import typer
+from typer import Option
 
 
 def get_badge_color(coverage: float) -> str:
@@ -129,10 +125,6 @@ def cli_main(
 
 
 if __name__ == "__main__":
-    if typer is None:
-        print("[ERROR] typer is required. Install it with: pip install typer", file=sys.stderr)
-        sys.exit(1)
-
     app = typer.Typer()
     app.command()(cli_main)
     app()
