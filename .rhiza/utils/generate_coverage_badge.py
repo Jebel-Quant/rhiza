@@ -107,9 +107,7 @@ if __name__ == "__main__":
     # Support optional command-line arguments for paths
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Generate coverage badge endpoint JSON for shields.io"
-    )
+    parser = argparse.ArgumentParser(description="Generate coverage badge endpoint JSON for shields.io")
     parser.add_argument(
         "--coverage-json",
         type=Path,
