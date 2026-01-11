@@ -69,20 +69,6 @@ def prompt_continue(message: str) -> bool:
     return False
 
 
-def prompt_yes_no(message: str) -> bool:
-    """Prompt user for yes/no answer.
-
-    Args:
-        message: Message to display to user
-
-    Returns:
-        True if user answered yes, False otherwise
-    """
-    print_colored(Colors.YELLOW, f"\n[PROMPT] {message} [y/N] ")
-    answer = input().strip().lower()
-    return answer in ("y", "yes")
-
-
 def get_version(uv_bin: str) -> str:
     """Get the current version from pyproject.toml using uv.
 
