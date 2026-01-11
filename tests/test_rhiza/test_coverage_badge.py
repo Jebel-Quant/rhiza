@@ -2,6 +2,7 @@
 
 import json
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -29,7 +30,7 @@ def test_coverage_badge_generation(tmp_path, root):
 
     # Change to tmp directory for script execution
     result = subprocess.run(
-        ["python3", str(script_path)],
+        [sys.executable, str(script_path)],
         cwd=tmp_path,
         capture_output=True,
         text=True,
@@ -78,7 +79,7 @@ def test_coverage_badge_colors(root):
 
             # Run the script
             result = subprocess.run(
-                ["python3", str(script_path)],
+                [sys.executable, str(script_path)],
                 cwd=tmp_path,
                 capture_output=True,
                 text=True,
