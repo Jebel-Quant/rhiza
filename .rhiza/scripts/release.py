@@ -62,9 +62,10 @@ def prompt_continue(message: str) -> bool:
         True if user wants to continue, False otherwise
     """
     if message:
-        prompt_text = f"\n[PROMPT] {message} Continue? [y/N] "
+        prompt_text = f"[PROMPT] {message} Continue? [y/N] "
     else:
-        prompt_text = "\n[PROMPT] Continue? [y/N] "
+        prompt_text = "[PROMPT] Continue? [y/N] "
+    print()  # Print newline before prompt
     print_colored(Colors.YELLOW, prompt_text)
     answer = input().strip().lower()
     if answer in ("y", "yes"):
@@ -164,7 +165,10 @@ def check_remote_status(current_branch: str) -> None:
     print_colored(Colors.BLUE, "[INFO] Checking remote status...")
 
     # Fetch latest changes from remote
-    run_command(["git", "fetch", "origin"], capture_output=False, check=False)
+    result = run_command(["git", "fetch", "origin"], capture_output=True, check=False)
+    if result.returncode != 0:
+        print_colored(Colors.YELLOW, "[WARN] Failed to fetch from remote. Continuing with local information.")
+        # Continue anyway - the user might be offline or have auth issues but still want to proceed
 
     # Get upstream branch
     try:
