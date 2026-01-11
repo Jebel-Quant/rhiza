@@ -40,7 +40,19 @@ marimushka:: install-uv ## export Marimo notebooks to HTML
 	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
 	  printf "${YELLOW}[WARN] Directory '${MARIMO_FOLDER}' does not exist. Skipping marimushka.${RESET}\n"; \
 	else \
-	  MARIMO_FOLDER="${MARIMO_FOLDER}" UV_BIN="${UV_BIN}" UVX_BIN="${UVX_BIN}" /bin/sh "${SCRIPTS_FOLDER}/marimushka.sh"; \
+	  mkdir -p "${MARIMUSHKA_OUTPUT}"; \
+	  if ! ls "${MARIMO_FOLDER}"/*.py >/dev/null 2>&1; then \
+	    printf "${YELLOW}[WARN] No Python files found in '${MARIMO_FOLDER}'.${RESET}\n"; \
+	    printf '<html><head><title>Marimo Notebooks</title></head><body><h1>Marimo Notebooks</h1><p>No notebooks found.</p></body></html>' > "${MARIMUSHKA_OUTPUT}/index.html"; \
+	  else \
+	    CURRENT_DIR=$$(pwd); \
+	    OUTPUT_DIR="$$CURRENT_DIR/${MARIMUSHKA_OUTPUT}"; \
+	    UV_INSTALL_DIR=$$(dirname "${UV_BIN}"); \
+	    cd "${MARIMO_FOLDER}" && \
+	    "$$CURRENT_DIR/${UVX_BIN}" "marimushka>=0.1.9" export --notebooks "." --output "$$OUTPUT_DIR" --bin-path "$$UV_INSTALL_DIR" && \
+	    cd "$$CURRENT_DIR"; \
+	  fi; \
+	  touch "${MARIMUSHKA_OUTPUT}/.nojekyll"; \
 	fi
 
 book:: test docs marimushka ## compile the companion book
