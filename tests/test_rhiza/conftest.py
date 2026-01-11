@@ -78,7 +78,7 @@ def bump_version(current, bump_type):
 
 def main():
     args = sys.argv[1:]
-    # Expected invocations from release.sh start with 'version'
+    # Expected invocations from release.py start with 'version'
     if not args:
         sys.exit(1)
 
