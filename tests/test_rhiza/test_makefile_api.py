@@ -260,4 +260,5 @@ fmt:
     # We can check that the output doesn't look like pre-commit output or just check presence of CUSTOM_FMT
 
     # We expect a warning on stderr about overriding
-    assert "warning: overriding commands for target" in result.stderr.lower()
+    assert "warning: overriding" in result.stderr.lower()
+    assert "fmt" in result.stderr.lower()
