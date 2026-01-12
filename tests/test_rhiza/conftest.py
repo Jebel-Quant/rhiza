@@ -186,13 +186,11 @@ def git_repo(root, tmp_path, monkeypatch):
     script_dir.mkdir(parents=True)
 
     shutil.copy(root / ".rhiza" / "scripts" / "release.sh", script_dir / "release.sh")
-    shutil.copy(root / ".rhiza" / "scripts" / "update-readme-help.sh", script_dir / "update-readme-help.sh")
     shutil.copy(root / "Makefile", local_dir / "Makefile")
     os.makedirs(local_dir / "book", exist_ok=True)
     shutil.copy(root / "book" / "Makefile.book", local_dir / "book" / "Makefile.book")
 
     (script_dir / "release.sh").chmod(0o755)
-    (script_dir / "update-readme-help.sh").chmod(0o755)
 
     # Commit and push initial state
     subprocess.run([GIT, "config", "user.email", "test@example.com"], check=True)
