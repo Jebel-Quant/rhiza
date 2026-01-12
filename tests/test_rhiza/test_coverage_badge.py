@@ -7,6 +7,26 @@ import tempfile
 from pathlib import Path
 
 
+def _get_uvx_command() -> str:
+    """Get the uvx command path.
+    
+    Returns:
+        str: Path to uvx executable
+        
+    Raises:
+        RuntimeError: If uvx is not found
+    """
+    uvx = shutil.which("uvx")
+    if not uvx:
+        # Try to find it in bin directory
+        bin_uvx = Path(__file__).parent.parent.parent / "bin" / "uvx"
+        if bin_uvx.exists():
+            uvx = str(bin_uvx)
+        else:
+            raise RuntimeError("uvx not found in PATH or bin directory")
+    return uvx
+
+
 def test_coverage_badge_generation(tmp_path):
     """Test that the coverage badge generation works correctly using rhiza-tools."""
     # Setup
@@ -26,14 +46,7 @@ def test_coverage_badge_generation(tmp_path):
     coverage_json.write_text(json.dumps(coverage_data))
 
     # Get uvx command
-    uvx = shutil.which("uvx")
-    if not uvx:
-        # Try to find it in bin directory
-        bin_uvx = Path(__file__).parent.parent.parent / "bin" / "uvx"
-        if bin_uvx.exists():
-            uvx = str(bin_uvx)
-        else:
-            raise RuntimeError("uvx not found in PATH or bin directory")
+    uvx = _get_uvx_command()
 
     # Run rhiza-tools generate-coverage-badge
     result = subprocess.run(
@@ -70,14 +83,7 @@ def test_coverage_badge_colors():
     ]
 
     # Get uvx command
-    uvx = shutil.which("uvx")
-    if not uvx:
-        # Try to find it in bin directory
-        bin_uvx = Path(__file__).parent.parent.parent / "bin" / "uvx"
-        if bin_uvx.exists():
-            uvx = str(bin_uvx)
-        else:
-            raise RuntimeError("uvx not found in PATH or bin directory")
+    uvx = _get_uvx_command()
 
     for percent, expected_color in test_cases:
         with tempfile.TemporaryDirectory() as tmp_dir:
