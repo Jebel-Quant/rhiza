@@ -333,17 +333,17 @@ def get_last_tag() -> str:
     return ""
 
 
-def count_commits_since_tag(last_tag: str, current_tag: str) -> int:
-    """Count commits between two tags.
+def count_commits_since_tag(last_tag: str, current_ref: str) -> int:
+    """Count commits between two references.
 
     Args:
         last_tag: Previous tag name
-        current_tag: Current tag name
+        current_ref: Current tag or git reference (e.g., HEAD)
 
     Returns:
-        Number of commits between tags
+        Number of commits between references
     """
-    result = run_command(["git", "rev-list", f"{last_tag}..{current_tag}", "--count"], check=False)
+    result = run_command(["git", "rev-list", f"{last_tag}..{current_ref}", "--count"], check=False)
     if result.returncode == 0:
         try:
             return int(result.stdout.strip())
