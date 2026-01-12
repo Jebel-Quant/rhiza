@@ -63,8 +63,8 @@ def setup_api_env(logger, root, tmp_path: Path):
                 shutil.rmtree(dest)
             shutil.copytree(src, dest)
 
-    # Create make.d and ensure no local.mk exists initially
-    (tmp_path / "make.d").mkdir(exist_ok=True)
+    # Create .rhiza/make.d and ensure no local.mk exists initially
+    (tmp_path / ".rhiza" / "make.d").mkdir(parents=True, exist_ok=True)
     if (tmp_path / "local.mk").exists():
         (tmp_path / "local.mk").unlink()
 
@@ -154,8 +154,8 @@ def test_minimal_setup_works(setup_api_env):
 
 
 def test_extension_mechanism(setup_api_env):
-    """Test that make.d/*.mk files are included."""
-    ext_file = setup_api_env / "make.d" / "50-custom.mk"
+    """Test that .rhiza/make.d/*.mk files are included."""
+    ext_file = setup_api_env / ".rhiza" / "make.d" / "50-custom.mk"
     ext_file.write_text("""
 .PHONY: custom-target
 custom-target:
@@ -225,7 +225,7 @@ def test_hooks_flow(setup_api_env):
 def test_hook_execution_order(setup_api_env):
     """Define hooks and verify execution order."""
     # Create an extension that defines visible hooks (using double-colon)
-    (setup_api_env / "make.d" / "hooks.mk").write_text("""
+    (setup_api_env / ".rhiza" / "make.d" / "hooks.mk").write_text("""
 pre-sync::
 	@echo "STARTING_SYNC"
 
@@ -250,14 +250,14 @@ post-sync::
 def test_override_core_target(setup_api_env):
     """Verify that a repo extension can override a core target (with warning)."""
     # Override 'fmt' which is defined in Makefile.rhiza
-    (setup_api_env / "make.d" / "override.mk").write_text("""
+    (setup_api_env / ".rhiza" / "make.d" / "override.mk").write_text("""
 fmt:
 	@echo "CUSTOM_FMT"
 """)
 
     result = run_make(["fmt"], dry_run=False)
     assert result.returncode == 0
-    # It should run the custom one because make.d is included later
+    # It should run the custom one because .rhiza/make.d is included later
     assert "CUSTOM_FMT" in result.stdout
     # It should NOT run the original one (which runs pre-commit)
     # The original one has "@${UV_BIN} run pre-commit..."

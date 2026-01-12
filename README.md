@@ -170,7 +170,7 @@ Rhiza uses a modular Makefile system designed for both stability and extensibili
 
 1.  **Core API (`.rhiza/rhiza.mk`)**: Contains the "Stable API" targets (`install`, `test`, `sync`, etc.). This file is managed by Rhiza and updated during syncs.
 2.  **Root Wrapper ([Makefile](Makefile))**: The entry point for developers. It includes the core API and provides points for extensions.
-3.  **Committed Extensions ([make.d/](make.d/))**: For repository-specific logic that should be shared with the team.
+3.  **Committed Extensions ([.rhiza/make.d/](.rhiza/make.d/))**: For repository-specific logic that should be shared with the team.
 4.  **Local Overrides (`local.mk`)**: For developer-specific shortcuts or secrets. This file is git-ignored.
 
 ### Extension Points (Hooks)
@@ -183,7 +183,7 @@ Available hooks include:
 - `post-install`
 
 **Example: Adding a post-install step**
-Create `make.d/99-setup.mk`:
+Create `.rhiza/make.d/99-setup.mk`:
 ```makefile
 post-install::
 	@echo "Installing specialized dependencies..."
@@ -192,7 +192,7 @@ post-install::
 
 ### Ordering
 
-Files in `make.d/` are included in alphabetical order. We recommend using double digits (`00-`, `01-`, etc.) to manage dependencies between modules.
+Files in `.rhiza/make.d/` are included in alphabetical order. We recommend using double digits (`00-`, `01-`, etc.) to manage dependencies between modules.
 
 - **00-19**: Environment and variable setup
 - **20-79**: Custom tasks and targets

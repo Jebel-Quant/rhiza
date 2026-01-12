@@ -5,7 +5,7 @@
 include .rhiza/rhiza.mk
 
 # Optional: repo extensions (committed)
--include make.d/*.mk
+-include .rhiza/make.d/*.mk
 
 # Optional: developer-local extensions (not committed)
 -include local.mk
