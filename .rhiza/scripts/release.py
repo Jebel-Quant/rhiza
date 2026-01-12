@@ -334,11 +334,11 @@ def get_last_tag() -> str:
 
 
 def count_commits_since_tag(last_tag: str, current_ref: str) -> int:
-    """Count commits between two references.
+    """Count commits between a tag and a git reference.
 
     Args:
         last_tag: Previous tag name
-        current_ref: Current tag or git reference (e.g., HEAD)
+        current_ref: Git reference (commit hash, branch, HEAD, tag, etc.)
 
     Returns:
         Number of commits between references
@@ -427,7 +427,7 @@ def do_release(uv_bin: str, dry_run: bool = False) -> None:
     # Show commits since last tag
     last_tag = get_last_tag()
     if last_tag and last_tag != tag:
-        # Always use HEAD for commit counting since tag may not exist yet or be pushed
+        # Use HEAD to count commits from current state (works in both dry-run and normal modes)
         commit_count = count_commits_since_tag(last_tag, "HEAD")
         print(f"Commits since {last_tag}: {commit_count}")
 
