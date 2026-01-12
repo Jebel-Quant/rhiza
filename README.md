@@ -154,12 +154,48 @@ GitHub Helpers
   view-issues           list open issues
   failed-workflows      list recent failing workflow runs
   whoami                check github auth status
-
-Local Helpers
+  hello-rhiza           a custom greeting task
+  post-install          run custom logic after core install
   my-local-target       an example personal target
 
 
 ```
+
+## 🛠️ Makefile Architecture & Customisation
+
+Rhiza uses a modular Makefile system designed for both stability and extensibility.
+
+### Structure
+
+1.  **Core API (`.rhiza/rhiza.mk`)**: Contains the "Stable API" targets (`install`, `test`, `sync`, etc.). This file is managed by Rhiza and updated during syncs.
+2.  **Root Wrapper ([Makefile](Makefile))**: The entry point for developers. It includes the core API and provides points for extensions.
+3.  **Committed Extensions ([make.d/](make.d/))**: For repository-specific logic that should be shared with the team.
+4.  **Local Overrides (`local.mk`)**: For developer-specific shortcuts or secrets. This file is git-ignored.
+
+### Extension Points (Hooks)
+
+You can extend standard workflows without modifying core files by using **Hooks**. Hooks use the double-colon syntax (`::`) allowing multiple definitions across files.
+
+Available hooks include:
+- `pre-sync / post-sync`
+- `pre-validate / post-validate`
+- `post-install`
+
+**Example: Adding a post-install step**
+Create `make.d/99-setup.mk`:
+```makefile
+post-install::
+	@echo "Installing specialized dependencies..."
+	@pip install some-private-lib
+```
+
+### Ordering
+
+Files in `make.d/` are included in alphabetical order. We recommend using double digits (`00-`, `01-`, etc.) to manage dependencies between modules.
+
+- **00-19**: Environment and variable setup
+- **20-79**: Custom tasks and targets
+- **80-99**: Hooks and integration logic
 
 The [Makefile](Makefile) provides organized targets for bootstrapping, development, testing, and documentation tasks.
 
