@@ -129,6 +129,11 @@ Presentation
   presentation-pdf      generate PDF presentation from PRESENTATION.md using Marp
   presentation-serve    serve presentation interactively with Marp
 
+Docker
+  docker-build          build Docker image 
+  docker-run            run the Docker container
+  docker-clean          remove Docker image
+
 Customisations
   install-extras        run custom build script (if exists)
   post-release          perform post-release tasks

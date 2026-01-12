@@ -7,20 +7,49 @@ This directory contains the Dockerfile and related configuration for building co
 - Dockerfile — Multi-stage Docker build configuration
 - Dockerfile.dockerignore — Build-context ignore rules scoped to this Dockerfile (see Notes)
 
-## Building the Image
+## Python Version
 
-Build from the repository root, using the root directory as the build context:
+The Python version is controlled by the `.python-version` file in the repository root (single source of truth).
+
+### Building with Make (Recommended)
+
+The Makefile automatically reads `.python-version` and passes it to Docker:
 
 ```bash
-# Validate locally (loads the image into your Docker engine)
+make docker-build
+```
+
+### Building Manually
+
+If building manually, pass the version from `.python-version`:
+
+```bash
 docker buildx build \
   --file docker/Dockerfile \
+  --build-arg PYTHON_VERSION=$(cat .python-version) \
   --tag <image-name> \
   --load \
   .
 ```
 
-This is the same command used by the CI workflow (see .github/workflows/docker.yml).
+## Building the Image
+
+Build from the repository root, using the root directory as the build context:
+
+```bash
+# Recommended: Use make target (reads .python-version automatically)
+make docker-build
+
+# Or manually with explicit version
+docker buildx build \
+  --file docker/Dockerfile \
+  --build-arg PYTHON_VERSION=$(cat .python-version) \
+  --tag <image-name> \
+  --load \
+  .
+```
+
+This is the same approach used by the CI workflow (see .github/workflows/rhiza_docker.yml).
 
 ## Notes on Dockerfile.dockerignore
 

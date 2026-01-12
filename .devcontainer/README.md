@@ -5,13 +5,25 @@ This directory contains the configuration for [GitHub Codespaces](https://github
 ## Contents
 
 - `devcontainer.json`: The primary configuration file defining the development environment.
-- `bootstrap.sh`: A script that runs after the container is created to initialize the environment (installing dependencies, setting up tools).
+- `bootstrap.sh`: Post-create script that initializes the environment (installing dependencies, setting up tools).
+
+## Python Version
+
+The Python version is controlled by the `.python-version` file in the repository root (single source of truth).
+
+**How it works:**
+1. The devcontainer uses a base Python image (3.12)
+2. `bootstrap.sh` reads `.python-version` and exports `PYTHON_VERSION`
+3. `make install` uses UV to create a venv with the exact Python version specified
+4. UV automatically downloads the correct Python version if needed
+
+No manual setup required - UV handles Python version management!
 
 ## What's Configured
 
 The `.devcontainer` setup provides:
 
-- 🐍 **Python 3.14** runtime environment
+- 🐍 **Python** runtime environment
 - 🔧 **UV Package Manager** - Fast Python package installer and resolver
 - ⚡ **Makefile** - For running project workflows
 - 🧪 **Pre-commit Hooks** - Automated code quality checks
