@@ -44,6 +44,10 @@ UV_BIN ?= $(shell command -v uv 2>/dev/null || echo ${INSTALL_DIR}/uv)
 UVX_BIN ?= $(shell command -v uvx 2>/dev/null || echo ${INSTALL_DIR}/uvx)
 VENV ?= .venv
 
+# Read Python version from .python-version (single source of truth)
+PYTHON_VERSION ?= $(shell cat .python-version 2>/dev/null || echo "3.12")
+export PYTHON_VERSION
+
 export UV_NO_MODIFY_PATH := 1
 export UV_VENV_CLEAR := 1
 
@@ -55,6 +59,7 @@ export UV_VENV_CLEAR := 1
 -include book/Makefile.book
 -include marimo/Makefile.marimo
 -include presentation/Makefile.presentation
+-include docker/Makefile.docker
 -include .rhiza/customisations/Makefile.customisations
 -include .rhiza/agentic/Makefile.agentic
 -include .rhiza/Makefile.rhiza
@@ -133,7 +138,8 @@ clean: ## Clean project artifacts and stale local branches
 		build \
 		*.egg-info \
 		.coverage \
-		.pytest_cache
+		.pytest_cache \
+		.benchmarks
 
 	@printf "%bRemoving local branches with no remote counterpart...%b\n" "$(BLUE)" "$(RESET)"
 
