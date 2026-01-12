@@ -18,8 +18,8 @@ def _get_uvx_command() -> str:
     """
     uvx = shutil.which("uvx")
     if not uvx:
-        # Try to find it in bin directory
-        bin_uvx = Path(__file__).parent.parent.parent / "bin" / "uvx"
+        # Try to find it in bin directory (2 levels up from test file: tests/test_rhiza/test_coverage_badge.py -> repo_root)
+        bin_uvx = Path(__file__).parents[2] / "bin" / "uvx"
         if bin_uvx.exists():
             uvx = str(bin_uvx)
         else:
