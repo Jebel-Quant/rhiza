@@ -25,6 +25,9 @@
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/jebel-quant/rhiza)
 
+# Strong roots
+Creating and maintaining technical harmony across repositories.
+
 A collection of reusable configuration templates
 for modern Python projects.
 Save time and maintain consistency across your projects
@@ -77,6 +80,12 @@ Both the `.venv` and `bin` directories are listed in `.gitignore`.
 Run `make help` to see all available targets:
 
 ```makefile
+  ____  _     _
+ |  _ \| |__ (_)______ _
+ | |_) | '_ \| |_  / _\`|
+ |  _ <| | | | |/ / (_| |
+ |_| \_\_| |_|_/___\__,_|
+
 Usage:
   make <target>
 
@@ -86,8 +95,6 @@ Bootstrap
   install-uv            ensure uv/uvx is installed
   install-extras        run custom build script (if exists)
   install               install
-  sync                  sync with template repository as defined in .github/template.yml
-  validate              validate project structure against template repository as defined in .github/template.yml
   clean                 Clean project artifacts and stale local branches
 
 Tools
@@ -121,6 +128,32 @@ Presentation
   presentation          generate presentation slides from PRESENTATION.md using Marp
   presentation-pdf      generate PDF presentation from PRESENTATION.md using Marp
   presentation-serve    serve presentation interactively with Marp
+
+Docker
+  docker-build          build Docker image 
+  docker-run            run the Docker container
+  docker-clean          remove Docker image
+
+Customisations
+  install-extras        run custom build script (if exists)
+  post-release          perform post-release tasks
+
+Agentic Workflows
+  copilot               open interactive prompt for copilot
+  analyse-repo          run the analyser agent to update REPOSITORY_ANALYSIS.md
+  summarize-changes     summarize changes since the most recent release/tag
+  install-copilot       checks for copilot and prompts to install
+
+Rhiza Workflows
+  sync                  sync with template repository as defined in .rhiza/template.yml
+  validate              validate project structure against template repository as defined in .rhiza/template.yml
+
+GitHub Helpers
+  gh-install            check for gh cli existence and install extensions
+  view-prs              list open pull requests
+  view-issues           list open issues
+  failed-workflows      list recent failing workflow runs
+  whoami                check github auth status
 
 ```
 
@@ -169,6 +202,45 @@ To use the current package (`rhiza`) within a notebook, you can define it as a d
 
 Adjust the `path` in `[tool.uv.sources]` relative to the notebook's location.
 
+## 🎤 Presentations
+
+This project supports generating presentation slides using [Marp](https://marp.app/). You can create beautiful, professional presentations from Markdown files.
+
+### Quick Start
+
+Generate HTML presentation slides:
+
+```bash
+make presentation
+```
+
+Generate PDF presentation slides:
+
+```bash
+make presentation-pdf
+```
+
+Serve presentation interactively with live reload:
+
+```bash
+make presentation-serve
+```
+
+### Creating Presentations
+
+The main presentation source file is located at `PRESENTATION.md` in the repository root. Marp extends standard Markdown with special directives for presentations, making it easy to create slides with familiar syntax.
+
+### Learn More
+
+For detailed information about:
+- Setting up and configuring Marp
+- Creating and editing presentation slides
+- Advanced customization options
+- Troubleshooting common issues
+- Creating multiple presentations
+
+See the complete [Presentation Guide](presentation/README.md).
+
 ## Testing your documentation
 
 Any README.md file will be scanned for Python code blocks.
@@ -196,25 +268,7 @@ Hello, World!
 
 ## 🎨 Documentation Customization
 
-You can customize the look and feel of your documentation by providing your own templates.
-
-### API Documentation (pdoc)
-
-The `make docs` command checks for a directory at `book/pdoc-templates`. If found, it uses the templates within that directory to generate the API documentation.
-
-To customize the API docs:
-1. Create the directory: `mkdir -p book/pdoc-templates`
-2. Add your Jinja2 templates (e.g., `module.html.jinja2`) to this directory.
-
-See the [pdoc documentation](https://pdoc.dev/docs/pdoc.html#templates) for more details on templating.
-
-### Companion Book (minibook)
-
-The `make book` command checks for a template at `book/minibook-templates/custom.html.jinja2`. If found, it uses this template for the minibook generation.
-
-To customize the book:
-1. Create the directory: `mkdir -p book/minibook-templates`
-2. Create your custom template at `book/minibook-templates/custom.html.jinja2`.
+For information on customizing the look and feel of your documentation, see [book/README.md](book/README.md).
 
 ## 📁 Available Templates
 
@@ -243,31 +297,66 @@ Templates related to continuous integration, delivery, and repository automation
 
 - **.github/** — GitHub Actions workflows, scripts, and repository templates
 - **.gitlab/** — GitLab CI/CD workflows (equivalent to GitHub Actions)
-  - See [GITLAB_CI.md](GITLAB_CI.md) for GitLab CI/CD setup and usage
+  - See [.gitlab/README.md](.gitlab/README.md) for detailed GitLab CI/CD setup and usage
 
 ## ⚙️ Workflow Configuration
 
-The GitHub Actions workflows can be customized using repository variables:
+### Local Python Version
 
-### Python Version Control
+The **`.python-version`** file specifies the default Python version for local development:
 
-Control which Python versions are used in your workflows:
+- **Purpose**: Used by tools like `uv`, `pyenv`, and other Python version managers to automatically select the correct Python version
+- **Location**: Root of the repository
+- **Content**: A single line with the Python version number (e.g., `3.12`)
+- **Usage**: When you run commands like `make install` or `uv run`, these tools will automatically use the version specified in this file
 
-- **`PYTHON_MAX_VERSION`** - Maximum Python version for CI testing matrix
-  - Default: `'3.14'` (tests on 3.11, 3.12, 3.13, 3.14)
-  - Set to `'3.13'` to test on 3.11, 3.12, 3.13 only
-  - Set to `'3.12'` to test on 3.11, 3.12 only
-  - Set to `'3.11'` to test on 3.11 only
+This file ensures consistency between local development and CI/CD workflows. If you need to use a different Python version locally, simply update this file with your preferred version.
 
-- **`PYTHON_DEFAULT_VERSION`** - Default Python version for release, pre-commit, book, and marimo workflows
-  - Default: `'3.14'`
-  - Set to `'3.12'` or `'3.13'` if dependencies are not compatible with newer versions
+## 🦊 GitLab CI/CD Support
 
-**To set these variables:**
+Rhiza provides comprehensive GitLab CI/CD workflow configurations that mirror the functionality of the GitHub Actions workflows. This allows you to use Rhiza templates in GitLab projects with feature parity.
 
-1. Go to your repository Settings → Secrets and variables → Actions → Variables tab
-2. Click "New repository variable"
-3. Add `PYTHON_MAX_VERSION` and/or `PYTHON_DEFAULT_VERSION` with your desired values
+### Available GitLab Workflows
+
+The `.gitlab/` directory contains ready-to-use GitLab CI/CD workflows:
+
+- **CI** - Python matrix testing across multiple versions
+- **Validate** - Rhiza configuration validation
+- **Deptry** - Dependency checking
+- **Pre-commit** - Code quality checks
+- **Book** - Documentation building and GitLab Pages deployment
+- **Sync** - Template synchronization
+- **Release** - Release management and PyPI publishing
+
+### Getting Started with GitLab
+
+1. **Copy the GitLab workflows** to your project:
+   ```bash
+   cp -r .gitlab/ /path/to/your/project/
+   cp .gitlab-ci.yml /path/to/your/project/
+   ```
+
+2. **Configure CI/CD variables** in your GitLab project (Settings > CI/CD > Variables):
+   - `PYPI_TOKEN` - For PyPI publishing (if needed)
+   - `PAT_TOKEN` - Project/Group Access Token for sync workflow
+   - `PUBLISH_COMPANION_BOOK` - Set to `true` to enable documentation publishing
+
+3. **Enable GitLab Pages** (if using the book workflow):
+   - Go to Settings > Pages
+   - Ensure Pages is enabled for your project
+
+4. **Test your workflows** by pushing to GitLab and checking the CI/CD pipelines
+
+### Detailed Documentation
+
+For complete information about GitLab CI/CD workflows, including:
+- Detailed workflow descriptions
+- Configuration variables
+- Key differences from GitHub Actions
+- Migration checklist
+- Troubleshooting tips
+
+See **[.gitlab/README.md](.gitlab/README.md)** for all the details.
 
 ## 🧩 Bringing Rhiza into an Existing Project
 
@@ -285,20 +374,27 @@ Before integrating Rhiza into your existing project:
 
 ### Quick Start: Automated Injection
 
-The fastest way to integrate Rhiza is using the provided `inject_rhiza.sh` script:
+The fastest way to integrate Rhiza is by following the steps below:
 
 ```bash
 # Navigate to your repository
 cd /path/to/your/project
 
-# Run the injection script
-uvx rhiza .
+# Initialize configuration templates
+uvx rhiza init
 ```
 
 This will:
-- ✅ Create a default template configuration (`.github/template.yml`)
-- ✅ Perform an initial sync of a basic set of templates
-- ✅ Provide clear next steps for review and customization
+- ✅ Create a default template configuration (`.rhiza/template.yml`)
+
+Then, update the generated `.rhiza/template.yml` file with your chosen templates that you can find from [Available Templates](#-available-templates).
+
+You will then need to run the following, to inject templates into your repository:
+
+```bash
+# Inject templates into your repository
+uvx rhiza materialize
+```
 
 **Options:**
 - `--branch <branch>` - Use a specific rhiza branch (default: main)
@@ -340,7 +436,7 @@ mkdir -p .github/workflows
 mkdir -p .rhiza/scripts
 
 # Copy the template configuration
-cp /tmp/rhiza/.github/template.yml .github/template.yml
+cp /tmp/rhiza/.rhiza/template.yml .rhiza/template.yml
 
 # Copy the sync helper script
 cp /tmp/rhiza/.rhiza/scripts/sync.sh .rhiza/scripts
@@ -355,7 +451,7 @@ At this stage:
 
 #### Step 3: Perform the first sync
 
-Run the sync script to apply the templates defined in '.github/template.yml'
+Run the sync script to apply the templates defined in '.rhiza/template.yml'
 
 ```bash
 ./.rhiza/scripts/sync.sh
@@ -388,7 +484,7 @@ This approach keeps your project’s configuration in sync with Rhiza’s latest
 
 Prerequisites:
 
-  - A .github/template.yml file exists, defining **which templates to include or exclude**.
+  - A .rhiza/template.yml file exists, defining **which templates to include or exclude**.
   - The first manual sync (./.rhiza/scripts/sync.sh) has been performed.
   - The .github/workflows/sync.yml workflow is present in your repository.
 
@@ -397,16 +493,19 @@ The workflow can run:
   **On a schedule** — e.g., weekly updates
   **Manually** — via the GitHub Actions “Run workflow” button
 
-⚠️ .github/template.yml remains the **source of truth**. All automated updates are driven by its include/exclude rules.
+⚠️ .rhiza/template.yml remains the **source of truth**. All automated updates are driven by its include/exclude rules.
 
-#### Step 1: Configure GitHub Token
+#### Step 1: Configure GitHub Token (Optional)
 
-If you want the sync workflow to trigger other workflows (e.g. to create pull requests), create a Personal Access Token (PAT):
+The sync workflow works automatically with the default `GITHUB_TOKEN` and does not require additional configuration. However, if the sync modifies workflow files (`.github/workflows/*.yml`), you may need to configure a Personal Access Token (PAT) with extended permissions:
 
 1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
 2. Generate a new token with `repo` and `workflow` scopes
 3. Add it as a repository secret named `PAT_TOKEN`
-4. Update the workflow to use `token: ${{ secrets.PAT_TOKEN }}`
+
+The workflow will automatically use `PAT_TOKEN` if configured, otherwise it falls back to the default `GITHUB_TOKEN`.
+
+> **Note**: The default `GITHUB_TOKEN` cannot trigger other workflows when pushing changes. If your sync updates workflow files and you want to trigger CI checks on the resulting pull request, configure `PAT_TOKEN`.
 
 #### Step 2: Run Initial Sync (again)
 
@@ -450,105 +549,16 @@ After integrating Rhiza, your project will have:
 - Solution: Run `make fmt` to fix formatting issues, or temporarily exclude certain files in `.pre-commit-config.yaml`
 
 **Issue: GitHub Actions workflows fail**
-- Solution: Check Python version compatibility and adjust `PYTHON_MAX_VERSION` repository variable if needed
+- Solution: Check Python version compatibility in your `.python-version` file and `pyproject.toml`
 
 **Issue: Dev container fails to build**
-- Solution: Review `.devcontainer/devcontainer.json` and ensure all dependencies are available for your project
+- Solution: See [.devcontainer/README.md](.devcontainer/README.md) for comprehensive troubleshooting guidance
 
 ## 🖥️ Dev Container Compatibility
 
-This repository includes a
-template **Dev Container** configuration
-for seamless development experience in
-both **VS Code** and **GitHub Codespaces**.
+This repository includes a template **Dev Container** configuration for seamless development experience in both **VS Code** and **GitHub Codespaces**.
 
-### What's Configured
-
-The `.devcontainer` setup provides:
-
-- 🐍 **Python 3.14** runtime environment
-- 🔧 **UV Package Manager** - Fast Python package installer and resolver
-- ⚡ **Makefile** - For running project workflows
-- 🧪 **Pre-commit Hooks** - Automated code quality checks
-- 📊 **Marimo Integration** - Interactive notebook support with VS Code extension
-- 🔍 **Python Development Tools** - Pylance, Python extension, and optimized settings
-- 🚀 **Port Forwarding** - Port 8080 for development servers
-- 🔐 **SSH Agent Forwarding** - Full Git functionality with your host SSH keys
-
-### Usage
-
-#### In VS Code
-
-1. Install the "Dev Containers" extension
-2. Open the repository in VS Code
-3. Click "Reopen in Container" when prompted
-4. The environment will automatically set up with all dependencies
-
-#### In GitHub Codespaces
-
-1. Navigate to the repository on GitHub
-2. Click the green "Code" button
-3. Select "Codespaces" tab
-4. Click "Create codespace on main" (or your branch)
-5. Your development environment will be ready in minutes
-
-The dev container automatically runs the initialization script that:
-
-- Installs UV package manager
-- Configures the Python virtual environment
-- Installs project dependencies
-- Sets up pre-commit hooks
-
-### Publishing Devcontainer Images
-
-The repository includes workflows for building and publishing devcontainer images:
-
-#### CI Validation
-
-The **DEVCONTAINER** workflow automatically validates that your devcontainer builds successfully:
-- Triggers on changes to `.devcontainer/**` files or the workflow itself
-- Builds the image without publishing (`push: never`)
-- Works on pushes to any branch and pull requests
-- Gracefully skips if no `.devcontainer/devcontainer.json` exists
-
-### VS Code Dev Container SSH Agent Forwarding
-
-Dev containers launched locally via VS code
-are configured with SSH agent forwarding
-to enable seamless Git operations:
-
-- **Mounts your SSH directory** - Your `~/.ssh` folder is mounted into the container
-- **Forwards SSH agent** - Your host's SSH agent is available inside the container
-- **Enables Git operations** - Push, pull, and clone using your existing SSH keys
-- **Works transparently** - No additional setup required in VS Code dev containers
-
-### Troubleshooting
-
-Common issues and solutions when using this configuration template.
-
----
-
-#### SSH authentication fails on macOS when using devcontainer
-
-**Symptom**: When building or using the devcontainer on macOS, Git operations (pull, push, clone) fail with SSH authentication errors, even though your SSH keys work fine on the host.
-
-**Cause**: macOS SSH config often includes `UseKeychain yes`, which is a macOS-specific directive. When the devcontainer mounts your `~/.ssh` directory, other platforms (Linux containers) don't recognize this directive and fail to parse the SSH config.
-
-**Solution**: Add `IgnoreUnknown UseKeychain` to the top of your `~/.ssh/config` file on your Mac:
-
-```ssh-config
-# At the top of ~/.ssh/config
-IgnoreUnknown UseKeychain
-
-Host *
-  AddKeysToAgent yes
-  UseKeychain yes
-  IdentityFile ~/.ssh/id_rsa
-```
-
-This tells SSH clients on non-macOS platforms to ignore the `UseKeychain` directive instead of failing.
-
-**Reference**: [Stack Overflow solution](https://stackoverflow.com/questions/75613632/trying-to-ssh-to-my-server-from-the-terminal-ends-with-error-line-x-bad-configu/75616369#75616369)
+For detailed documentation on using dev containers, including setup, configuration, troubleshooting, and publishing, see [.devcontainer/README.md](.devcontainer/README.md).
 
 
 ## 🔧 Custom Build Extras
@@ -661,15 +671,6 @@ The release workflow (`.github/workflows/release.yml`) triggers on the tag push 
 6.  **Finalizes** - Publishes the GitHub release with links to PyPI and container images
 
 ### Configuration Options
-
-**Python Version Configuration:**
-- Set repository variable `PYTHON_MAX_VERSION` to control maximum Python version in CI tests
-  - Options: `'3.11'`, `'3.12'`, `'3.13'`, or `'3.14'` (default)
-  - Example: Set to `'3.13'` to test on Python 3.11, 3.12, and 3.13 only
-- Set repository variable `PYTHON_DEFAULT_VERSION` to control default Python version in workflows
-  - Options: `'3.11'`, `'3.12'`, `'3.13'`, or `'3.14'` (default)
-  - Example: Set to `'3.12'` if dependencies are not compatible with Python 3.14
-  - Used in release, pre-commit, book, and marimo workflows
 
 **PyPI Publishing:**
 - Automatic if package is registered as a Trusted Publisher

@@ -23,7 +23,7 @@ ci:test:
     - echo "Testing with Python $PYTHON_VERSION"
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
     - uv venv --python ${PYTHON_VERSION}
-    - uv sync --all-extras --frozen
+    - uv sync --all-extras --all-groups --frozen
     - |
       if [ -f "tests/requirements.txt" ]; then
         uv pip install -r tests/requirements.txt

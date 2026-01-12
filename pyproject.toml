@@ -1,6 +1,6 @@
 [project]
 name = "rhiza"
-version = "0.4.1"
+version = "0.5.0"
 description = "Reusable configuration templates for modern Python projects"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -21,30 +21,25 @@ classifiers = [
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Build Tools",
 ]
-dependencies = [
+dependencies = []
+
+[dependency-groups]
+dev = [
     "marimo>=0.18.0",
     "numpy>=2.4.0",
     "plotly>=6.5.0",
     "pandas>=2.3.3"
 ]
 
+
 [project.urls]
 Homepage = "https://github.com/jebel-quant/rhiza"
 Repository = "https://github.com/jebel-quant/rhiza"
 Issues = "https://github.com/jebel-quant/rhiza/issues"
 
-
-[project.optional-dependencies]
-dev = [
-    "pytest-cov>=7.0.0",
-    "pytest-html>=4.1.1",
-    "pytest==9.0.2",
-    "pre-commit==4.5.1",
-    "pdoc>=16.0.0",
-    "python-dotenv==1.2.1"
-]
-
-[tool.deptry]
-# see https://deptry.com/usage/#pep-621-dev-dependency-groups
-pep621_dev_dependency_groups = ["dev"]
+[tool.deptry.package_module_name_map]
+marimo = "marimo"
+numpy = "numpy"
+plotly = "plotly"
+pandas = "pandas"
 
