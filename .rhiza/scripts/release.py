@@ -427,9 +427,8 @@ def do_release(uv_bin: str, dry_run: bool = False) -> None:
     # Show commits since last tag
     last_tag = get_last_tag()
     if last_tag and last_tag != tag:
-        # In dry-run mode, use HEAD since the tag doesn't exist yet
-        ref_to_check = "HEAD" if dry_run else tag
-        commit_count = count_commits_since_tag(last_tag, ref_to_check)
+        # Always use HEAD for commit counting since tag may not exist yet or be pushed
+        commit_count = count_commits_since_tag(last_tag, "HEAD")
         print(f"Commits since {last_tag}: {commit_count}")
 
     if dry_run:
