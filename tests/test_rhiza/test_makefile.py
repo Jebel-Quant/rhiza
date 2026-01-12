@@ -22,6 +22,7 @@ import pytest
 
 # Split Makefile paths that are included in the main Makefile
 SPLIT_MAKEFILES = [
+    ".rhiza/rhiza.mk",
     "tests/tests.mk",
     "book/book.mk",
     "presentation/presentation.mk",
@@ -45,9 +46,12 @@ def setup_tmp_makefile(logger, root, tmp_path: Path):
     # Copy the main Makefile into the temporary working directory
     shutil.copy(root / "Makefile", tmp_path / "Makefile")
 
+    # Copy core Rhiza Makefiles
+    (tmp_path / ".rhiza").mkdir(exist_ok=True)
+    shutil.copy(root / ".rhiza" / "rhiza.mk", tmp_path / ".rhiza" / "rhiza.mk")
+
     # Create a minimal, deterministic .rhiza/.env for tests so they don't
     # depend on the developer's local configuration which may vary.
-    (tmp_path / ".rhiza").mkdir(exist_ok=True)
     env_content = "SCRIPTS_FOLDER=.rhiza/scripts\nCUSTOM_SCRIPTS_FOLDER=.rhiza/customisations/scripts\n"
     (tmp_path / ".rhiza" / ".env").write_text(env_content)
 
@@ -230,6 +234,12 @@ class TestMakefileRootFixture:
         """Makefile should define UV-related variables."""
         makefile = root / "Makefile"
         content = makefile.read_text()
+
+        # Read split Makefiles as well
+        for split_file in SPLIT_MAKEFILES:
+            split_path = root / split_file
+            if split_path.exists():
+                content += "\n" + split_path.read_text()
 
         assert "UV_BIN" in content or "uv" in content.lower()
 

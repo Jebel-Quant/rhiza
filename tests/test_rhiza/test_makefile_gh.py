@@ -28,6 +28,11 @@ def setup_gh_makefile(logger, root, tmp_path: Path):
     if (root / "Makefile").exists():
         shutil.copy(root / "Makefile", tmp_path / "Makefile")
 
+    # Copy core Rhiza Makefiles
+    if (root / ".rhiza" / "rhiza.mk").exists():
+        (tmp_path / ".rhiza").mkdir(exist_ok=True)
+        shutil.copy(root / ".rhiza" / "rhiza.mk", tmp_path / ".rhiza" / "rhiza.mk")
+
     if (root / ".rhiza" / ".env").exists():
         (tmp_path / ".rhiza").mkdir(exist_ok=True)
         shutil.copy(root / ".rhiza" / ".env", tmp_path / ".rhiza" / ".env")
