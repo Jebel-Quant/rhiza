@@ -1,14 +1,14 @@
-"""Tests for coverage badge generation script."""
+"""Tests for coverage badge generation using rhiza-tools."""
 
 import json
+import shutil
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 
 
-def test_coverage_badge_generation(tmp_path, root):
-    """Test that the coverage badge generation script works correctly."""
+def test_coverage_badge_generation(tmp_path):
+    """Test that the coverage badge generation works correctly using rhiza-tools."""
     # Setup
     tests_dir = tmp_path / "_tests"
     book_dir = tmp_path / "_book" / "tests"
@@ -25,19 +25,26 @@ def test_coverage_badge_generation(tmp_path, root):
     coverage_json = tests_dir / "coverage.json"
     coverage_json.write_text(json.dumps(coverage_data))
 
-    # Run the script
-    script_path = root / ".rhiza" / "utils" / "generate_coverage_badge.py"
+    # Get uvx command
+    uvx = shutil.which("uvx")
+    if not uvx:
+        # Try to find it in bin directory
+        bin_uvx = Path(__file__).parent.parent.parent / "bin" / "uvx"
+        if bin_uvx.exists():
+            uvx = str(bin_uvx)
+        else:
+            raise RuntimeError("uvx not found in PATH or bin directory")
 
-    # Change to tmp directory for script execution
+    # Run rhiza-tools generate-coverage-badge
     result = subprocess.run(
-        [sys.executable, str(script_path)],
+        [uvx, "rhiza-tools", "generate-coverage-badge"],
         cwd=tmp_path,
         capture_output=True,
         text=True,
     )
 
-    # Verify the script ran successfully
-    assert result.returncode == 0, f"Script failed: {result.stderr}"
+    # Verify the command ran successfully
+    assert result.returncode == 0, f"Command failed: {result.stderr}"
 
     # Verify the badge JSON was created
     badge_json = book_dir / "coverage-badge.json"
@@ -51,7 +58,7 @@ def test_coverage_badge_generation(tmp_path, root):
     assert badge_data["color"] == "green"
 
 
-def test_coverage_badge_colors(root):
+def test_coverage_badge_colors():
     """Test that coverage badge uses correct colors for different percentages."""
     test_cases = [
         (95, "brightgreen"),
@@ -62,7 +69,15 @@ def test_coverage_badge_colors(root):
         (45, "red"),
     ]
 
-    script_path = root / ".rhiza" / "utils" / "generate_coverage_badge.py"
+    # Get uvx command
+    uvx = shutil.which("uvx")
+    if not uvx:
+        # Try to find it in bin directory
+        bin_uvx = Path(__file__).parent.parent.parent / "bin" / "uvx"
+        if bin_uvx.exists():
+            uvx = str(bin_uvx)
+        else:
+            raise RuntimeError("uvx not found in PATH or bin directory")
 
     for percent, expected_color in test_cases:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -77,15 +92,15 @@ def test_coverage_badge_colors(root):
             coverage_json = tests_dir / "coverage.json"
             coverage_json.write_text(json.dumps(coverage_data))
 
-            # Run the script
+            # Run rhiza-tools generate-coverage-badge
             result = subprocess.run(
-                [sys.executable, str(script_path)],
+                [uvx, "rhiza-tools", "generate-coverage-badge"],
                 cwd=tmp_path,
                 capture_output=True,
                 text=True,
             )
 
-            assert result.returncode == 0, f"Script failed for {percent}%: {result.stderr}"
+            assert result.returncode == 0, f"Command failed for {percent}%: {result.stderr}"
 
             # Verify the color
             badge_json = book_dir / "coverage-badge.json"
