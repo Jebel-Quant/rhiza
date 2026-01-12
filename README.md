@@ -112,7 +112,6 @@ Releasing and Versioning
 Meta
   help                  Display this help message
   customisations        list available customisation scripts
-  update-readme         update README.md with current Makefile help output
   version-matrix        Emit the list of supported Python versions from pyproject.toml
 
 Development and Testing
