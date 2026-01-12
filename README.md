@@ -154,9 +154,10 @@ GitHub Helpers
   view-issues           list open issues
   failed-workflows      list recent failing workflow runs
   whoami                check github auth status
+
+Custom Tasks
   hello-rhiza           a custom greeting task
   post-install          run custom logic after core install
-  my-local-target       an example personal target
 
 
 ```

@@ -2,6 +2,8 @@
 # This file example shows how to add new targets.
 
 .PHONY: hello-rhiza
+
+##@ Custom Tasks
 hello-rhiza: ## a custom greeting task
 	@printf "${GREEN}[INFO] Hello from the customized Rhiza project!${RESET}\n"
 
