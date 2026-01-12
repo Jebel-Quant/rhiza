@@ -7,8 +7,11 @@ import tempfile
 from pathlib import Path
 
 
-def _get_uvx_command() -> str:
+def _get_uvx_command(root: Path) -> str:
     """Get the uvx command path.
+    
+    Args:
+        root: Repository root directory
     
     Returns:
         str: Path to uvx executable
@@ -18,8 +21,8 @@ def _get_uvx_command() -> str:
     """
     uvx = shutil.which("uvx")
     if not uvx:
-        # Try to find it in bin directory (2 levels up from test file: tests/test_rhiza/test_coverage_badge.py -> repo_root)
-        bin_uvx = Path(__file__).parents[2] / "bin" / "uvx"
+        # Try to find it in bin directory
+        bin_uvx = root / "bin" / "uvx"
         if bin_uvx.exists():
             uvx = str(bin_uvx)
         else:
@@ -27,7 +30,7 @@ def _get_uvx_command() -> str:
     return uvx
 
 
-def test_coverage_badge_generation(tmp_path):
+def test_coverage_badge_generation(tmp_path, root):
     """Test that the coverage badge generation works correctly using rhiza-tools."""
     # Setup
     tests_dir = tmp_path / "_tests"
@@ -46,7 +49,7 @@ def test_coverage_badge_generation(tmp_path):
     coverage_json.write_text(json.dumps(coverage_data))
 
     # Get uvx command
-    uvx = _get_uvx_command()
+    uvx = _get_uvx_command(root)
 
     # Run rhiza-tools generate-coverage-badge
     result = subprocess.run(
@@ -71,7 +74,7 @@ def test_coverage_badge_generation(tmp_path):
     assert badge_data["color"] == "green"
 
 
-def test_coverage_badge_colors():
+def test_coverage_badge_colors(root):
     """Test that coverage badge uses correct colors for different percentages."""
     test_cases = [
         (95, "brightgreen"),
@@ -83,7 +86,7 @@ def test_coverage_badge_colors():
     ]
 
     # Get uvx command
-    uvx = _get_uvx_command()
+    uvx = _get_uvx_command(root)
 
     for percent, expected_color in test_cases:
         with tempfile.TemporaryDirectory() as tmp_dir:
