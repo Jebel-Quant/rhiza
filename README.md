@@ -109,7 +109,6 @@ Releasing and Versioning
 Meta
   help                  Display this help message
   customisations        list available customisation scripts
-  update-readme         update README.md with current Makefile help output
   version-matrix        Emit the list of supported Python versions from pyproject.toml
 
 Development and Testing
@@ -143,6 +142,7 @@ Agentic Workflows
 Rhiza Workflows
   sync                  sync with template repository as defined in .rhiza/template.yml
   validate              validate project structure against template repository as defined in .rhiza/template.yml
+  readme                update README.md with current Makefile help output
 
 GitHub Helpers
   gh-install            check for gh cli existence and install extensions
@@ -150,6 +150,7 @@ GitHub Helpers
   view-issues           list open issues
   failed-workflows      list recent failing workflow runs
   whoami                check github auth status
+
 
 ```
 
