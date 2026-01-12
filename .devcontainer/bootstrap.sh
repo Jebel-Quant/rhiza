@@ -2,6 +2,12 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# Read Python version from .python-version (single source of truth)
+if [ -f ".python-version" ]; then
+    export PYTHON_VERSION=$(cat .python-version | tr -d '[:space:]')
+    echo "Using Python version from .python-version: $PYTHON_VERSION"
+fi
+
 # Use INSTALL_DIR from environment or default to local bin
 # In devcontainer, this is set to /home/vscode/.local/bin to avoid conflict with host
 export INSTALL_DIR="${INSTALL_DIR:-./bin}"
