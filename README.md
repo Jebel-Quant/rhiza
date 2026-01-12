@@ -91,6 +91,11 @@ Usage:
 
 Targets:
 
+Rhiza Workflows
+  sync                  sync with template repository as defined in .rhiza/template.yml
+  validate              validate project structure against template repository as defined in .rhiza/template.yml
+  readme                update README.md with current Makefile help output
+
 Bootstrap
   install-uv            ensure uv/uvx is installed
   install-extras        run custom build script (if exists)
@@ -143,17 +148,15 @@ Agentic Workflows
   summarize-changes     summarize changes since the most recent release/tag
   install-copilot       checks for copilot and prompts to install
 
-Rhiza Workflows
-  sync                  sync with template repository as defined in .rhiza/template.yml
-  validate              validate project structure against template repository as defined in .rhiza/template.yml
-  readme                update README.md with current Makefile help output
-
 GitHub Helpers
   gh-install            check for gh cli existence and install extensions
   view-prs              list open pull requests
   view-issues           list open issues
   failed-workflows      list recent failing workflow runs
   whoami                check github auth status
+
+Local Helpers
+  my-local-target       an example personal target
 
 
 ```
