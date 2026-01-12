@@ -1,26 +1,62 @@
-# Makefile Extensions (`.rhiza/make.d/`)
+# Makefile Cookbook
 
-This directory contains repository-specific Makefile modules. Files in this directory are automatically included by the root `Makefile` in lexicographical order.
+This directory (`.rhiza/make.d/`) is the designated place for **repository-specific build logic**. Any `.mk` file added here is automatically absorbed by the main Makefile.
 
-## How to use
+Use this cookbook to find copy-paste patterns for common development needs.
 
-1.  Create a file with a `.mk` extension (e.g., `.rhiza/make.d/50-data-science.mk`).
-2.  Use double digits at the start of the filename to control the order of inclusion if needed.
-3.  Add your custom targets and variables.
+## 🥘 Recipes
 
-## Comparison: `.rhiza/make.d/` vs `local.mk`
+### 1. Add a Simple Task
+**Goal**: Run a script with `make train-model`.
 
-| Feature | `.rhiza/make.d/*.mk` | `local.mk` |
-| :--- | :--- | :--- |
-| **Persistence** | Committed to the repository | Local to your machine (git-ignored) |
-| **Purpose** | Project-specific shared tasks | Personal developer preferences/secrets |
-| **Inclusion** | Included after core API | Included after `.rhiza/make.d/*.mk` |
-
-## Example: Adding a hook
-
-You can use core Rhiza hooks to inject logic into standard workflows:
-
+Create `.rhiza/make.d/50-model.mk`:
 ```makefile
-pre-sync::
-	@echo "Checking for uncommitted changes before sync..."
+##@ Machine Learning
+train-model: ## Train the model using local data
+	@echo "Training model..."
+	@uv run python src/train.py
 ```
+
+### 2. Inject Code into Standard Workflows (Hooks)
+**Goal**: Run a database migration automatically after `make sync`.
+
+Create `.rhiza/make.d/90-hooks.mk`:
+```makefile
+post-sync::
+	@echo "Applying database migrations..."
+	@uv run alembic upgrade head
+```
+*Note: Use double-colons (`::`) for hooks to avoid conflicts.*
+
+### 3. Define Global Variables
+**Goal**: Set a default timeout for all test runs.
+
+Create `.rhiza/make.d/01-config.mk`:
+```makefile
+# Override default timeout (defaults to 60s)
+export TEST_TIMEOUT := 120
+```
+
+### 4. Create a Private Shortcut
+**Goal**: Create a command that only exists on my machine (not committed).
+
+Do not use `.rhiza/make.d/`. Instead, create a `local.mk` in the project root:
+```makefile
+deploy-dev:
+	@./scripts/deploy-to-my-sandbox.sh
+```
+
+---
+
+## ℹ️ Reference
+
+### Execution Order
+Files are loaded alphabetically. We use numeric prefixes to ensure dependencies resolve correctly:
+- `00-19`: Configuration & Variables
+- `20-79`: Custom Tasks & Rules
+- `80-99`: Hooks & Lifecycle logic
+
+### Available Hooks
+- `pre-install` / `post-install`: Runs around `uv sync`.
+- `pre-sync` / `post-sync`: Runs around repository synchronization.
+- `pre-clean` / `post-clean`: Runs around artifact cleanup.

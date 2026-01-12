@@ -170,7 +170,7 @@ Rhiza uses a modular Makefile system designed for both stability and extensibili
 
 1.  **Core API (`.rhiza/rhiza.mk`)**: Contains the "Stable API" targets (`install`, `test`, `sync`, etc.). This file is managed by Rhiza and updated during syncs.
 2.  **Root Wrapper ([Makefile](Makefile))**: The entry point for developers. It includes the core API and provides points for extensions.
-3.  **Committed Extensions ([.rhiza/make.d/](.rhiza/make.d/))**: For repository-specific logic that should be shared with the team.
+3.  **Committed Extensions ([.rhiza/make.d/](.rhiza/make.d/))**: For repository-specific logic that should be shared with the team. See the [Makefile Cookbook](.rhiza/make.d/README.md).
 4.  **Local Overrides (`local.mk`)**: For developer-specific shortcuts or secrets. This file is git-ignored.
 
 ### Extension Points (Hooks)
