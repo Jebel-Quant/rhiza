@@ -13,6 +13,9 @@ from pathlib import Path
 
 import pytest
 
+# Get absolute paths for executables to avoid S607 warnings from CodeFactor/Bandit
+MAKE = shutil.which("make") or "/usr/bin/make"
+
 # We need to copy these files to the temp dir for the tests to work
 REQUIRED_FILES = [
     ".github/github.mk",
@@ -61,7 +64,7 @@ def run_make(
     logger, args: list[str] | None = None, check: bool = True, dry_run: bool = True
 ) -> subprocess.CompletedProcess:
     """Run `make` with optional arguments."""
-    cmd = ["make"]
+    cmd = [MAKE]
     if args:
         cmd.extend(args)
     flags = "-sn" if dry_run else "-s"

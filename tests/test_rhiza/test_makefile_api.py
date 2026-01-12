@@ -7,6 +7,10 @@ from pathlib import Path
 
 import pytest
 
+# Get absolute paths for executables to avoid S607 warnings from CodeFactor/Bandit
+GIT = shutil.which("git") or "/usr/bin/git"
+MAKE = shutil.which("make") or "/usr/bin/make"
+
 # Files required for the API test environment
 REQUIRED_FILES = [
     "Makefile",
@@ -65,13 +69,13 @@ def setup_api_env(logger, root, tmp_path: Path):
         (tmp_path / "local.mk").unlink()
 
     # Initialize git repo for rhiza tools (required for sync/validate)
-    subprocess.run(["git", "init"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run([GIT, "init"], cwd=tmp_path, check=True, capture_output=True)
     # Configure git user for commits if needed (some rhiza checks might need commits)
-    subprocess.run(["git", "config", "user.email", "you@example.com"], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run(["git", "config", "user.name", "Rhiza Test"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run([GIT, "config", "user.email", "you@example.com"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run([GIT, "config", "user.name", "Rhiza Test"], cwd=tmp_path, check=True, capture_output=True)
     # Add origin remote to simulate being in the rhiza repo (triggers the skip logic in rhiza.mk)
     subprocess.run(
-        ["git", "remote", "add", "origin", "https://github.com/jebel-quant/rhiza.git"],
+        [GIT, "remote", "add", "origin", "https://github.com/jebel-quant/rhiza.git"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
@@ -88,7 +92,7 @@ def setup_api_env(logger, root, tmp_path: Path):
 
 def run_make(args: list[str] = None, dry_run: bool = True) -> subprocess.CompletedProcess:
     """Run make in the current directory."""
-    cmd = ["make"]
+    cmd = [MAKE]
     if dry_run:
         cmd.append("-n")
     if args:
@@ -99,7 +103,7 @@ def run_make(args: list[str] = None, dry_run: bool = True) -> subprocess.Complet
         # For dry-run, we often want to see the commands
         pass
     else:
-        cmd[:1] = ["make", "-s"]
+        cmd[:1] = [MAKE, "-s"]
 
     return subprocess.run(cmd, capture_output=True, text=True)
 

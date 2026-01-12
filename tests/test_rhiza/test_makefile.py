@@ -20,6 +20,9 @@ from pathlib import Path
 
 import pytest
 
+# Get absolute paths for executables to avoid S607 warnings from CodeFactor/Bandit
+MAKE = shutil.which("make") or "/usr/bin/make"
+
 # Split Makefile paths that are included in the main Makefile
 SPLIT_MAKEFILES = [
     ".rhiza/rhiza.mk",
@@ -88,7 +91,7 @@ def run_make(
         check: If True, raise on non-zero return code
         dry_run: If True, use -n to avoid executing commands
     """
-    cmd = ["make"]
+    cmd = [MAKE]
     if args:
         cmd.extend(args)
     # Use -s to reduce noise, -n to avoid executing commands
