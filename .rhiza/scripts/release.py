@@ -370,11 +370,12 @@ def _validate_branch(current_branch: str, default_branch: str, dry_run: bool) ->
             raise typer.Exit(0)
 
 
-def _check_tag_status(tag: str, dry_run: bool) -> bool:
+def _check_tag_status(tag: str, current_version: str, dry_run: bool) -> bool:
     """Check if tag exists and determine if creation should be skipped.
 
     Args:
         tag: Tag name to check
+        current_version: Current version from pyproject.toml
         dry_run: Whether this is a dry run
 
     Returns:
@@ -389,7 +390,7 @@ def _check_tag_status(tag: str, dry_run: bool) -> bool:
 
     if check_tag_exists_remotely(tag):
         print_colored(Colors.RED, f"[ERROR] Tag '{tag}' already exists on remote")
-        print(f"The release for tag {tag} has already been published.")
+        print(f"The release for version {current_version} has already been published.")
         raise typer.Exit(1)
 
     return skip_tag_create
@@ -501,7 +502,7 @@ def do_release(uv_bin: str, dry_run: bool = False) -> None:
     check_remote_status(current_branch)
 
     # Check tag status
-    skip_tag_create = _check_tag_status(tag, dry_run)
+    skip_tag_create = _check_tag_status(tag, current_version, dry_run)
 
     # Execute release steps
     _create_tag_step(tag, current_version, skip_tag_create, dry_run)
