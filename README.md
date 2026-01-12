@@ -98,7 +98,6 @@ Rhiza Workflows
 
 Bootstrap
   install-uv            ensure uv/uvx is installed
-  install-extras        run custom build script (if exists)
   install               install
   clean                 Clean project artifacts and stale local branches
 
@@ -112,11 +111,9 @@ Quality and Formatting
 Releasing and Versioning
   bump                  bump version
   release               create tag and push to remote with prompts
-  post-release          perform post-release tasks
 
 Meta
   help                  Display this help message
-  customisations        list available customisation scripts
   version-matrix        Emit the list of supported Python versions from pyproject.toml
 
 Development and Testing
@@ -137,10 +134,6 @@ Docker
   docker-build          build Docker image 
   docker-run            run the Docker container
   docker-clean          remove Docker image
-
-Customisations
-  install-extras        run custom build script (if exists)
-  post-release          perform post-release tasks
 
 Agentic Workflows
   copilot               open interactive prompt for copilot
@@ -170,7 +163,8 @@ Rhiza uses a modular Makefile system designed for both stability and extensibili
 
 1.  **Core API (`.rhiza/rhiza.mk`)**: Contains the "Stable API" targets (`install`, `test`, `sync`, etc.). This file is managed by Rhiza and updated during syncs.
 2.  **Root Wrapper ([Makefile](Makefile))**: The entry point for developers. It includes the core API and provides points for extensions.
-3.  **Committed Extensions ([.rhiza/make.d/](.rhiza/make.d/))**: For repository-specific logic that should be shared with the team. See the [Makefile Cookbook](.rhiza/make.d/README.md).
+3.  **Committed Extensions ([.rhiza/make.d/](.rhiza/make.d/))**: For repository-specific logic that should be shared with the team.
+    > 📖 **See the [Makefile Cookbook](.rhiza/make.d/README.md) for direct recipes.**
 4.  **Local Overrides (`local.mk`)**: For developer-specific shortcuts or secrets. This file is git-ignored.
 
 ### Extension Points (Hooks)
@@ -178,9 +172,11 @@ Rhiza uses a modular Makefile system designed for both stability and extensibili
 You can extend standard workflows without modifying core files by using **Hooks**. Hooks use the double-colon syntax (`::`) allowing multiple definitions across files.
 
 Available hooks include:
+- `pre-install / post-install`
 - `pre-sync / post-sync`
 - `pre-validate / post-validate`
-- `post-install`
+- `pre-release / post-release`
+- `pre-bump / post-bump`
 
 **Example: Adding a post-install step**
 Create `.rhiza/make.d/99-setup.mk`:

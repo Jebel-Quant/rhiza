@@ -20,15 +20,22 @@ RESET := \033[0m
 .PHONY: \
 	bump \
 	clean \
-	customisations \
 	deptry \
 	fmt \
 	help \
 	install \
-	install-extras \
 	install-uv \
 	marimo \
+	post-bump \
+	post-install \
 	post-release \
+	post-sync \
+	post-validate \
+	pre-bump \
+	pre-install \
+	pre-release \
+	pre-sync \
+	pre-validate \
 	release \
 	sync \
 	update-readme \
@@ -56,7 +63,6 @@ export UV_VENV_CLEAR := 1
 -include book/book.mk
 -include presentation/presentation.mk
 -include docker/docker.mk
--include .rhiza/customisations/customisations.mk
 -include .rhiza/agentic/agentic.mk
 # .rhiza/rhiza.mk is INLINED below
 -include .github/github.mk
@@ -84,6 +90,12 @@ pre-sync:: ; @:
 post-sync:: ; @:
 pre-validate:: ; @:
 post-validate:: ; @:
+pre-install:: ; @:
+post-install:: ; @:
+pre-release:: ; @:
+post-release:: ; @:
+pre-bump:: ; @:
+post-bump:: ; @:
 
 ##@ Rhiza Workflows
 
@@ -134,11 +146,7 @@ install-uv: ## ensure uv/uvx is installed
 	  fi; \
 	fi
 
-install-extras:: ## run custom build script (if exists)
-	@:
-
-
-install: install-uv install-extras ## install
+install: pre-install install-uv ## install
 	# Create the virtual environment only if it doesn't exist
 	@if [ ! -d "${VENV}" ]; then \
 	  ${UV_BIN} venv $(if $(PYTHON_VERSION),--python $(PYTHON_VERSION)) ${VENV} || { printf "${RED}[ERROR] Failed to create virtual environment${RESET}\n"; exit 1; }; \
@@ -174,6 +182,7 @@ install: install-uv install-extras ## install
 	  printf "${BLUE}[INFO] Installing requirements from tests/requirements.txt${RESET}\n"; \
 	  ${UV_BIN} pip install -r tests/requirements.txt || { printf "${RED}[ERROR] Failed to install test requirements${RESET}\n"; exit 1; }; \
 	fi
+	@$(MAKE) post-install
 
 clean: ## Clean project artifacts and stale local branches
 	@printf "%bCleaning project...%b\n" "$(BLUE)" "$(RESET)"
@@ -224,7 +233,7 @@ fmt: install ## check the pre-commit hooks and the linting
 	@${UV_BIN} run pre-commit run --all-files
 
 ##@ Releasing and Versioning
-bump: ## bump version
+bump: pre-bump ## bump version
 	@if [ -f "pyproject.toml" ]; then \
 		$(MAKE) install; \
 		${UVX_BIN} "rhiza[tools]>=0.8.6" tools bump; \
@@ -233,12 +242,11 @@ bump: ## bump version
 	else \
 		printf "${YELLOW}[WARN] No pyproject.toml found, skipping bump${RESET}\n"; \
 	fi
+	@$(MAKE) post-bump
 
-release: install-uv ## create tag and push to remote with prompts
-	@UV_BIN="${UV_BIN}" /bin/sh "${SCRIPTS_FOLDER}/release.sh"
-
-post-release:: install-uv ## perform post-release tasks
-	@:
+release: pre-release install-uv ## create tag and push to remote with prompts
+	@UV_BIN="${UV_BIN}" /bin/sh ".rhiza/scripts/release.sh"
+	@$(MAKE) post-release
 
 
 ##@ Meta
@@ -249,14 +257,6 @@ help: print-logo ## Display this help message
 	+@printf "$(BOLD)Targets:$(RESET)\n"
 	+@awk 'BEGIN {FS = ":.*##"; printf ""} /^[a-zA-Z_-]+:.*?##/ { printf "  $(BLUE)%-20s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BOLD)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)
 	+@printf "\n"
-
-customisations: ## list available customisation scripts
-	@printf "${BLUE}${BOLD}Customisation scripts available in ${CUSTOM_SCRIPTS_FOLDER}:$(RESET)\n"
-	@if [ -d "${CUSTOM_SCRIPTS_FOLDER}" ]; then \
-		ls -1 "${CUSTOM_SCRIPTS_FOLDER}"/*.sh 2>/dev/null || printf "  (none)\n"; \
-	else \
-		printf "${YELLOW}[INFO] No customisations found in ${CUSTOM_SCRIPTS_FOLDER}${RESET}\n"; \
-	fi
 
 version-matrix: install-uv ## Emit the list of supported Python versions from pyproject.toml
 	@${UV_BIN} run .rhiza/utils/version_matrix.py

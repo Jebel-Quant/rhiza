@@ -45,6 +45,25 @@ deploy-dev:
 	@./scripts/deploy-to-my-sandbox.sh
 ```
 
+### 5. Install System Dependencies
+**Goal**: Ensure `graphviz` is installed for Marimo notebooks using a hook.
+
+Create `.rhiza/make.d/20-dependencies.mk`:
+```makefile
+pre-install::
+	@if ! command -v dot >/dev/null 2>&1; then \
+		echo "Graphviz not found. Installing..."; \
+		if command -v brew >/dev/null 2>&1; then \
+			brew install graphviz; \
+		elif command -v apt-get >/dev/null 2>&1; then \
+			sudo apt-get install -y graphviz; \
+		else \
+			echo "Please install graphviz manually."; \
+			exit 1; \
+		fi \
+	fi
+```
+
 ---
 
 ## ℹ️ Reference
@@ -56,6 +75,8 @@ Files are loaded alphabetically. We use numeric prefixes to ensure dependencies 
 - `80-99`: Hooks & Lifecycle logic
 
 ### Available Hooks
-- `pre-install` / `post-install`: Runs around `uv sync`.
+- `pre-install` / `post-install`: Runs around `make install`.
 - `pre-sync` / `post-sync`: Runs around repository synchronization.
-- `pre-clean` / `post-clean`: Runs around artifact cleanup.
+- `pre-validate` / `post-validate`: Runs around validation checks.
+- `pre-release` / `post-release`: Runs around release process.
+- `pre-bump` / `post-bump`: Runs around version bumping.

@@ -196,12 +196,6 @@ class TestMakefile:
         out = strip_ansi(proc.stdout)
         assert "Value of SCRIPTS_FOLDER:\n.rhiza/scripts" in out
 
-    def test_custom_scripts_folder_is_set(self, logger):
-        """`CUSTOM_SCRIPTS_FOLDER` should point to `.rhiza/customisations/scripts`."""
-        proc = run_make(logger, ["print-CUSTOM_SCRIPTS_FOLDER"], dry_run=False)
-        out = strip_ansi(proc.stdout)
-        assert "Value of CUSTOM_SCRIPTS_FOLDER:\n.rhiza/customisations/scripts" in out
-
 
 class TestMakefileRootFixture:
     """Tests for root fixture usage in Makefile tests."""
