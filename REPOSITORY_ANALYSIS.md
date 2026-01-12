@@ -78,8 +78,8 @@ Rhiza is a sophisticated, well-engineered collection of reusable configuration t
 #### Strengths:
 - **Comprehensive Test Suite**: 
   - 1,291 lines of test code across 10 test files
-  - Tests for scripts (bump, release, marimushka)
-  - Tests for Makefile targets
+  - Tests for scripts (bump, release)
+  - Tests for Makefile targets (including marimushka)
   - Tests for README code blocks
   - Structural validation tests
 - **Multi-Version CI Matrix**: 
