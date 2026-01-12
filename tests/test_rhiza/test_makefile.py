@@ -22,9 +22,9 @@ import pytest
 
 # Split Makefile paths that are included in the main Makefile
 SPLIT_MAKEFILES = [
-    "tests/Makefile.tests",
-    "book/Makefile.book",
-    "presentation/Makefile.presentation",
+    "tests/tests.mk",
+    "book/book.mk",
+    "presentation/presentation.mk",
 ]
 
 

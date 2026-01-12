@@ -1,6 +1,6 @@
 """Tests for the GitHub Makefile targets using safe dry-runs.
 
-These tests validate that the .github/Makefile.gh targets are correctly exposed
+These tests validate that the .github/github.mk targets are correctly exposed
 and emit the expected commands without actually executing them.
 """
 
@@ -15,7 +15,7 @@ import pytest
 
 # We need to copy these files to the temp dir for the tests to work
 REQUIRED_FILES = [
-    ".github/Makefile.gh",
+    ".github/github.mk",
 ]
 
 
