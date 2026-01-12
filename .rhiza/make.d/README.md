@@ -12,19 +12,18 @@ Use this cookbook to find copy-paste patterns for common development needs.
 Create `.rhiza/make.d/50-model.mk`:
 ```makefile
 ##@ Machine Learning
-train-model: ## Train the model using local data
+train: ## Train the model using local data
 	@echo "Training model..."
-	@uv run python src/train.py
+	@uv run python scripts/train.py
 ```
 
 ### 2. Inject Code into Standard Workflows (Hooks)
-**Goal**: Run a database migration automatically after `make sync`.
+**Goal**: Apply task after `make sync`.
 
 Create `.rhiza/make.d/90-hooks.mk`:
 ```makefile
 post-sync::
-	@echo "Applying database migrations..."
-	@uv run alembic upgrade head
+	@echo "Applying something..."
 ```
 *Note: Use double-colons (`::`) for hooks to avoid conflicts.*
 
