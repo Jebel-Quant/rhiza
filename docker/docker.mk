@@ -1,4 +1,4 @@
-## Makefile.docker - Docker build targets
+## docker.mk - Docker build targets
 # This file is included by the main Makefile
 
 # Declare phony targets (they don't produce files)

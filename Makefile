@@ -52,14 +52,14 @@ export UV_VENV_CLEAR := 1
 -include .rhiza/.env
 
 # Include split Makefiles
--include tests/Makefile.tests
--include book/Makefile.book
--include presentation/Makefile.presentation
--include docker/Makefile.docker
--include .rhiza/customisations/Makefile.customisations
--include .rhiza/agentic/Makefile.agentic
--include .rhiza/Makefile.rhiza
--include .github/Makefile.gh
+-include tests/tests.mk
+-include book/book.mk
+-include presentation/presentation.mk
+-include docker/docker.mk
+-include .rhiza/customisations/customisations.mk
+-include .rhiza/agentic/agentic.mk
+-include .rhiza/rhiza.mk
+-include .github/github.mk
 
 ##@ Bootstrap
 install-uv: ## ensure uv/uvx is installed

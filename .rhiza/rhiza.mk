@@ -1,4 +1,4 @@
-## Makefile.rhiza - rhiza actions
+## rhiza.mk- rhiza actions
 # This file is included by the main Makefile
 
 # RHIZA_LOGO definition
