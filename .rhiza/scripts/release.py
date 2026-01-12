@@ -352,27 +352,14 @@ def count_commits_since_tag(last_tag: str, current_ref: str) -> int:
     return 0
 
 
-def do_release(uv_bin: str, dry_run: bool = False) -> None:
-    """Execute the release process.
+def _validate_branch(current_branch: str, default_branch: str, dry_run: bool) -> None:
+    """Validate that release is from the correct branch.
 
     Args:
-        uv_bin: Path to uv binary
-        dry_run: If True, show what would happen without making changes
+        current_branch: Current git branch
+        default_branch: Default branch for the repository
+        dry_run: Whether this is a dry run
     """
-    # Get current version
-    current_version = get_version(uv_bin)
-    tag = f"v{current_version}"
-
-    if dry_run:
-        print_colored(Colors.YELLOW, "[DRY RUN] No changes will be made")
-
-    # Get current branch
-    current_branch = get_current_branch()
-
-    # Get default branch
-    default_branch = get_default_branch()
-
-    # Warn if not on default branch
     if current_branch != default_branch:
         print_colored(
             Colors.YELLOW,
@@ -382,16 +369,17 @@ def do_release(uv_bin: str, dry_run: bool = False) -> None:
         if not dry_run and not prompt_continue(f"Proceed with release from '{current_branch}'?"):
             raise typer.Exit(0)
 
-    print_colored(Colors.BLUE, f"[INFO] Current version: {current_version}")
-    print_colored(Colors.BLUE, f"[INFO] Tag to create: {tag}")
 
-    # Check for uncommitted changes
-    check_working_tree_clean()
+def _check_tag_status(tag: str, dry_run: bool) -> bool:
+    """Check if tag exists and determine if creation should be skipped.
 
-    # Check remote status
-    check_remote_status(current_branch)
+    Args:
+        tag: Tag name to check
+        dry_run: Whether this is a dry run
 
-    # Check if tag exists locally
+    Returns:
+        True if tag creation should be skipped, False otherwise
+    """
     skip_tag_create = False
     if check_tag_exists_locally(tag):
         print_colored(Colors.YELLOW, f"[WARN] Tag '{tag}' already exists locally")
@@ -399,25 +387,43 @@ def do_release(uv_bin: str, dry_run: bool = False) -> None:
             raise typer.Exit(0)
         skip_tag_create = True
 
-    # Check if tag exists on remote
     if check_tag_exists_remotely(tag):
         print_colored(Colors.RED, f"[ERROR] Tag '{tag}' already exists on remote")
-        print(f"The release for version {current_version} has already been published.")
+        print(f"The release for tag {tag} has already been published.")
         raise typer.Exit(1)
 
-    # Step 1: Create the tag (if it doesn't exist)
-    if not skip_tag_create:
-        print_colored(Colors.BLUE, "\n=== Step 1: Create Tag ===")
-        if dry_run:
-            print_colored(Colors.YELLOW, f"[DRY RUN] Would create tag '{tag}' for version {current_version}")
-        else:
-            print(f"Creating tag '{tag}' for version {current_version}")
-            if not prompt_continue(""):
-                raise typer.Exit(0)
+    return skip_tag_create
 
-            create_tag(tag)
 
-    # Step 2: Push the tag to remote
+def _create_tag_step(tag: str, current_version: str, skip_tag_create: bool, dry_run: bool) -> None:
+    """Execute tag creation step.
+
+    Args:
+        tag: Tag name to create
+        current_version: Current version from pyproject.toml
+        skip_tag_create: Whether to skip tag creation
+        dry_run: Whether this is a dry run
+    """
+    if skip_tag_create:
+        return
+
+    print_colored(Colors.BLUE, "\n=== Step 1: Create Tag ===")
+    if dry_run:
+        print_colored(Colors.YELLOW, f"[DRY RUN] Would create tag '{tag}' for version {current_version}")
+    else:
+        print(f"Creating tag '{tag}' for version {current_version}")
+        if not prompt_continue(""):
+            raise typer.Exit(0)
+        create_tag(tag)
+
+
+def _push_tag_step(tag: str, dry_run: bool) -> None:
+    """Execute tag push step.
+
+    Args:
+        tag: Tag name to push
+        dry_run: Whether this is a dry run
+    """
     print_colored(Colors.BLUE, "\n=== Step 2: Push Tag to Remote ===")
     if dry_run:
         print_colored(Colors.YELLOW, f"[DRY RUN] Would push tag '{tag}' to origin")
@@ -427,30 +433,79 @@ def do_release(uv_bin: str, dry_run: bool = False) -> None:
     # Show commits since last tag
     last_tag = get_last_tag()
     if last_tag and last_tag != tag:
-        # Use HEAD to count commits from current state (works in both dry-run and normal modes)
         commit_count = count_commits_since_tag(last_tag, "HEAD")
         print(f"Commits since {last_tag}: {commit_count}")
 
     if dry_run:
-        print_colored(Colors.GREEN, f"\n[DRY RUN] Would have created and pushed release tag {tag}")
-        repo_url = get_repo_url()
-        if repo_url:
-            print_colored(
-                Colors.BLUE, f"[INFO] Release workflow would be triggered at: https://github.com/{repo_url}/actions"
-            )
+        _show_dry_run_summary(tag)
     else:
         if not prompt_continue(""):
             raise typer.Exit(0)
-
-        # Push the tag
         push_tag(tag)
+        _show_success_message(tag)
 
-        # Show success message
-        repo_url = get_repo_url()
-        print_colored(Colors.GREEN, f"\n[SUCCESS] Release tag {tag} pushed to remote!")
-        print_colored(Colors.BLUE, "[INFO] The release workflow will now be triggered automatically.")
-        if repo_url:
-            print_colored(Colors.BLUE, f"[INFO] Monitor progress at: https://github.com/{repo_url}/actions")
+
+def _show_dry_run_summary(tag: str) -> None:
+    """Show dry-run summary message.
+
+    Args:
+        tag: Tag that would be created
+    """
+    print_colored(Colors.GREEN, f"\n[DRY RUN] Would have created and pushed release tag {tag}")
+    repo_url = get_repo_url()
+    if repo_url:
+        print_colored(
+            Colors.BLUE, f"[INFO] Release workflow would be triggered at: https://github.com/{repo_url}/actions"
+        )
+
+
+def _show_success_message(tag: str) -> None:
+    """Show success message after pushing tag.
+
+    Args:
+        tag: Tag that was pushed
+    """
+    repo_url = get_repo_url()
+    print_colored(Colors.GREEN, f"\n[SUCCESS] Release tag {tag} pushed to remote!")
+    print_colored(Colors.BLUE, "[INFO] The release workflow will now be triggered automatically.")
+    if repo_url:
+        print_colored(Colors.BLUE, f"[INFO] Monitor progress at: https://github.com/{repo_url}/actions")
+
+
+def do_release(uv_bin: str, dry_run: bool = False) -> None:
+    """Execute the release process.
+
+    Args:
+        uv_bin: Path to uv binary
+        dry_run: If True, show what would happen without making changes
+    """
+    # Get version and tag info
+    current_version = get_version(uv_bin)
+    tag = f"v{current_version}"
+
+    if dry_run:
+        print_colored(Colors.YELLOW, "[DRY RUN] No changes will be made")
+
+    # Get branch information
+    current_branch = get_current_branch()
+    default_branch = get_default_branch()
+
+    # Validate branch
+    _validate_branch(current_branch, default_branch, dry_run)
+
+    print_colored(Colors.BLUE, f"[INFO] Current version: {current_version}")
+    print_colored(Colors.BLUE, f"[INFO] Tag to create: {tag}")
+
+    # Perform validation checks
+    check_working_tree_clean()
+    check_remote_status(current_branch)
+
+    # Check tag status
+    skip_tag_create = _check_tag_status(tag, dry_run)
+
+    # Execute release steps
+    _create_tag_step(tag, current_version, skip_tag_create, dry_run)
+    _push_tag_step(tag, dry_run)
 
 
 app = typer.Typer()
