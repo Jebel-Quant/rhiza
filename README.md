@@ -122,6 +122,11 @@ Documentation
   marimushka            export Marimo notebooks to HTML
   book                  compile the companion book
 
+Marimo Notebooks
+  marimo-validate       validate all Marimo notebooks can run
+  marimo                fire up Marimo server
+  marimushka            export Marimo notebooks to HTML
+
 Presentation
   presentation          generate presentation slides from PRESENTATION.md using Marp
   presentation-pdf      generate PDF presentation from PRESENTATION.md using Marp
