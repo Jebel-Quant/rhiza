@@ -300,7 +300,7 @@ For detailed information about:
 
 See the complete [Presentation Guide](presentation/README.md).
 
-## Testing your documentation
+## 🧪 Testing your documentation
 
 Any README.md file will be scanned for Python code blocks.
 If any are found, they will be tested in [test_readme.py](tests/test_config_templates/test_readme.py).
