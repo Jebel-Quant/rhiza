@@ -458,7 +458,7 @@ def _show_success_message(tag: str) -> None:
         tag: Tag that was pushed
     """
     repo_url = get_repo_url()
-    logger.success(f"\n[SUCCESS] Release tag {tag} pushed to remote!")
+    logger.success(f"Release tag {tag} pushed to remote!")
     logger.info("The release workflow will now be triggered automatically.")
     if repo_url:
         logger.info(f"Monitor progress at: https://github.com/{repo_url}/actions")
