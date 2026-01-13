@@ -48,7 +48,7 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 - [🛠️ Makefile Architecture & Customisation](#️-makefile-architecture--customisation)
 - [📊 Marimo Notebooks](#-marimo-notebooks)
 - [🎤 Presentations](#-presentations)
-- [🧪 Testing your documentation](#testing-your-documentation)
+- [🧪 Testing your documentation](#-testing-your-documentation)
 - [🎨 Documentation Customization](#-documentation-customization)
 - [📁 Available Templates](#-available-templates)
 - [⚙️ Workflow Configuration](#️-workflow-configuration)
