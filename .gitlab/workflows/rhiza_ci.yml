@@ -25,8 +25,6 @@ ci:test:
     - uv venv --python ${PYTHON_VERSION}
     # install without --frozen
     - uv sync --all-groups
-    # pytest is not defined via pyproject.toml!
-    - uv pip install pytest
     - uv run pytest tests
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
