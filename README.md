@@ -101,9 +101,6 @@ Bootstrap
   install               install
   clean                 Clean project artifacts and stale local branches
 
-Tools
-  marimo                fire up Marimo server
-
 Quality and Formatting
   deptry                Run deptry
   fmt                   check the pre-commit hooks and the linting
@@ -124,6 +121,11 @@ Documentation
   docs                  create documentation with pdoc
   marimushka            export Marimo notebooks to HTML
   book                  compile the companion book
+
+Marimo Notebooks
+  marimo-validate       validate all Marimo notebooks can run
+  marimo                fire up Marimo server
+  marimushka            export Marimo notebooks to HTML
 
 Presentation
   presentation          generate presentation slides from PRESENTATION.md using Marp

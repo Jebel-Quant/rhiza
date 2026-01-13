@@ -25,7 +25,6 @@ RESET := \033[0m
 	help \
 	install \
 	install-uv \
-	marimo \
 	post-bump \
 	post-install \
 	post-release \
@@ -61,6 +60,7 @@ export UV_VENV_CLEAR := 1
 # Include split Makefiles
 -include tests/tests.mk
 -include book/book.mk
+-include book/marimo/marimo.mk
 -include presentation/presentation.mk
 -include docker/docker.mk
 -include .rhiza/agentic/agentic.mk
@@ -206,14 +206,6 @@ clean: ## Clean project artifacts and stale local branches
 	@git fetch --prune
 
 	@git branch -vv | awk '/: gone]/{print $$1}' | xargs -r git branch -D
-
-##@ Tools
-marimo: install ## fire up Marimo server
-	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
-	  printf " ${YELLOW}[WARN] Marimo folder '${MARIMO_FOLDER}' not found, skipping start${RESET}\n"; \
-	else \
-	  ${UV_BIN} run --with marimo marimo edit --no-token --headless "${MARIMO_FOLDER}"; \
-	fi
 
 ##@ Quality and Formatting
 deptry: install-uv ## Run deptry
