@@ -91,9 +91,13 @@ Usage:
 
 Targets:
 
+Rhiza Workflows
+  sync                  sync with template repository as defined in .rhiza/template.yml
+  validate              validate project structure against template repository as defined in .rhiza/template.yml
+  readme                update README.md with current Makefile help output
+
 Bootstrap
   install-uv            ensure uv/uvx is installed
-  install-extras        run custom build script (if exists)
   install               install
   clean                 Clean project artifacts and stale local branches
 
@@ -107,11 +111,9 @@ Quality and Formatting
 Releasing and Versioning
   bump                  bump version
   release               create tag and push to remote with prompts
-  post-release          perform post-release tasks
 
 Meta
   help                  Display this help message
-  customisations        list available customisation scripts
   version-matrix        Emit the list of supported Python versions from pyproject.toml
 
 Development and Testing
@@ -133,20 +135,11 @@ Docker
   docker-run            run the Docker container
   docker-clean          remove Docker image
 
-Customisations
-  install-extras        run custom build script (if exists)
-  post-release          perform post-release tasks
-
 Agentic Workflows
   copilot               open interactive prompt for copilot
   analyse-repo          run the analyser agent to update REPOSITORY_ANALYSIS.md
   summarize-changes     summarize changes since the most recent release/tag
   install-copilot       checks for copilot and prompts to install
-
-Rhiza Workflows
-  sync                  sync with template repository as defined in .rhiza/template.yml
-  validate              validate project structure against template repository as defined in .rhiza/template.yml
-  readme                update README.md with current Makefile help output
 
 GitHub Helpers
   gh-install            check for gh cli existence and install extensions
@@ -155,8 +148,51 @@ GitHub Helpers
   failed-workflows      list recent failing workflow runs
   whoami                check github auth status
 
+Custom Tasks
+  hello-rhiza           a custom greeting task
+  post-install          run custom logic after core install
+
 
 ```
+
+## 🛠️ Makefile Architecture & Customisation
+
+Rhiza uses a modular Makefile system designed for both stability and extensibility.
+
+### Structure
+
+1.  **Core API (`.rhiza/rhiza.mk`)**: Contains the "Stable API" targets (`install`, `test`, `sync`, etc.). This file is managed by Rhiza and updated during syncs.
+2.  **Root Wrapper ([Makefile](Makefile))**: The entry point for developers. It includes the core API and provides points for extensions.
+3.  **Committed Extensions ([.rhiza/make.d/](.rhiza/make.d/))**: For repository-specific logic that should be shared with the team.
+    > 📖 **See the [Makefile Cookbook](.rhiza/make.d/README.md) for direct recipes.**
+4.  **Local Overrides (`local.mk`)**: For developer-specific shortcuts or secrets. This file is git-ignored.
+
+### Extension Points (Hooks)
+
+You can extend standard workflows without modifying core files by using **Hooks**. Hooks use the double-colon syntax (`::`) allowing multiple definitions across files.
+
+Available hooks include:
+- `pre-install / post-install`
+- `pre-sync / post-sync`
+- `pre-validate / post-validate`
+- `pre-release / post-release`
+- `pre-bump / post-bump`
+
+**Example: Adding a post-install step**
+Create `.rhiza/make.d/99-setup.mk`:
+```makefile
+post-install::
+	@echo "Installing specialized dependencies..."
+	@pip install some-private-lib
+```
+
+### Ordering
+
+Files in `.rhiza/make.d/` are included in alphabetical order. We recommend using double digits (`00-`, `01-`, etc.) to manage dependencies between modules.
+
+- **00-19**: Environment and variable setup
+- **20-79**: Custom tasks and targets
+- **80-99**: Hooks and integration logic
 
 The [Makefile](Makefile) provides organized targets for bootstrapping, development, testing, and documentation tasks.
 
