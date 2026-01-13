@@ -5,24 +5,11 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from dotenv import dotenv_values
 
 # Read .rhiza/.env at collection time (no environment side-effects).
 # dotenv_values returns a dict of key -> value (or None for missing).
 RHIZA_ENV_PATH = Path(".rhiza/.env")
-
-
-def load_dotenv(env_path: Path = RHIZA_ENV_PATH):
-    """Load .rhiza/.rhiza.env into process environment."""
-    values = {}
-    if not env_path.exists():
-        return values
-
-    with open(env_path) as f:
-        for line in f:
-            if "=" in line:
-                key, value = line.strip().split("=", 1)
-                values[key] = value
-        return values
 
 
 def collect_marimo_notebooks(env_path: Path = RHIZA_ENV_PATH):
@@ -31,8 +18,11 @@ def collect_marimo_notebooks(env_path: Path = RHIZA_ENV_PATH):
     - Reads MARIMO_FOLDER from .rhiza/.env (if present), otherwise falls back to "marimo".
     - Returns [] if the folder does not exist.
     """
-    values = load_dotenv(env_path)
-    marimo_folder = values.get("MARIMO_FOLDER", "book/marimo")
+    values = {}
+    if env_path.exists():
+        values = dotenv_values(env_path)
+
+    marimo_folder = values.get("MARIMO_FOLDER",  "book/marimo/notebooks")
     marimo_path = Path(marimo_folder)
 
     if not marimo_path.exists():
