@@ -57,7 +57,7 @@ export UV_VENV_CLEAR := 1
 -include presentation/Makefile.presentation
 -include docker/Makefile.docker
 -include .rhiza/customisations/Makefile.customisations
--include .rhiza/agentic/Makefile.agentic
+-include .github/Makefile.agentic
 -include .rhiza/Makefile.rhiza
 -include .github/Makefile.gh
 
@@ -165,8 +165,9 @@ deptry: install-uv ## Run deptry
 		fi \
 	fi
 
-fmt: install ## check the pre-commit hooks and the linting
-	@${UV_BIN} run pre-commit run --all-files
+fmt: install-uv ## check the pre-commit hooks and the linting
+	#@${UV_BIN} run pre-commit run --all-files
+	@${UVX_BIN} pre-commit run --all-files
 
 ##@ Releasing and Versioning
 bump: ## bump version
