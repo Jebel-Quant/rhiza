@@ -217,16 +217,20 @@ marimo: install ## fire up Marimo server
 
 ##@ Quality and Formatting
 deptry: install-uv ## Run deptry
-	@if [ -d ${SOURCE_FOLDER} ]; then \
-		$(UVX_BIN) deptry ${SOURCE_FOLDER}; \
-	fi
-
-	@if [ -d ${MARIMO_FOLDER} ]; then \
-		if [ -d ${SOURCE_FOLDER} ]; then \
-			$(UVX_BIN) deptry ${MARIMO_FOLDER} ${SOURCE_FOLDER} --ignore DEP004; \
-		else \
-		  	$(UVX_BIN) deptry ${MARIMO_FOLDER} --ignore DEP004; \
-		fi \
+	@AVAILABLE_PATHS=""; \
+	for path in ${SOURCE_FOLDER} ${MARIMO_FOLDER} tests; do \
+		if [ -d "$$path" ]; then \
+			if [ -z "$$AVAILABLE_PATHS" ]; then \
+				AVAILABLE_PATHS="$$path"; \
+			else \
+				AVAILABLE_PATHS="$$AVAILABLE_PATHS $$path"; \
+			fi; \
+		fi; \
+	done; \
+	if [ -n "$$AVAILABLE_PATHS" ]; then \
+		$(UVX_BIN) deptry $$AVAILABLE_PATHS --exclude "venv|\.venv|\.direnv|\.git|setup\.py" --ignore DEP004; \
+	else \
+		printf "${YELLOW}[WARN] No paths available for deptry check${RESET}\n"; \
 	fi
 
 fmt: install ## check the pre-commit hooks and the linting
