@@ -8,12 +8,13 @@ Tests call the script from a temporary clone and use a small mock `uv`
 to avoid external dependencies.
 """
 
+import shutil
 import subprocess
 import sys
 
-# Get shell path once at module level
-PYTHON = sys.executable
-GIT = "/usr/bin/git"
+# Get absolute paths for executables to avoid S607 warnings from CodeFactor/Bandit
+SHELL = shutil.which("sh") or "/bin/sh"
+GIT = shutil.which("git") or "/usr/bin/git"
 
 
 def test_release_creates_tag(git_repo):
