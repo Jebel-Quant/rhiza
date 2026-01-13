@@ -63,7 +63,7 @@ export UV_VENV_CLEAR := 1
 -include book/marimo/marimo.mk
 -include presentation/presentation.mk
 -include docker/docker.mk
--include .rhiza/agentic/agentic.mk
+-include .github/agents/agentic.mk
 # .rhiza/rhiza.mk is INLINED below
 -include .github/github.mk
 
