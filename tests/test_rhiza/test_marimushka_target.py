@@ -36,6 +36,9 @@ def test_marimushka_target_success(git_repo):
     (git_repo / "bin" / "uvx").touch()
     (git_repo / "bin" / "uvx").chmod(0o755)
 
+    # Put our bin on the PATH so 'command -v uvx' finds it in the test
+    env["PATH"] = f"{git_repo}/bin:{env.get('PATH', '')}"
+
     # In tests, we don't want to actually run marimushka as it's not installed in the mock env
     # But we want to test that the Makefile logic works.
     # We can mock the marimushka CLI call by creating a script that generates the expected files.
