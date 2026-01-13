@@ -30,9 +30,6 @@ dev = [
     "plotly>=6.5.0",
     "pandas>=2.3.3"
 ]
-test = [
-    "pytest>=9.0"
-]
 
 [project.urls]
 Homepage = "https://github.com/jebel-quant/rhiza"
