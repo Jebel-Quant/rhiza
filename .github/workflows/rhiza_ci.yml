@@ -66,5 +66,5 @@ jobs:
       - name: Run tests
         run: |
           uv sync --all-groups --all-extras
-          uv pip install pytest python-dotenv
+          uv pip install pytest
           uv run pytest tests
