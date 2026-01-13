@@ -61,9 +61,6 @@ jobs:
           version: "0.9.24"
           python-version: ${{ matrix.python-version }}
 
-      # do not use make test or --frozen
-      # assume pytest is installed as a dependency
       - name: Run tests
         run: |
-          uv sync --all-groups --all-extras
-          uv run pytest tests
+          make -f .rhiza/rhiza.mk test
