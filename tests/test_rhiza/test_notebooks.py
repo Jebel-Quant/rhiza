@@ -22,7 +22,7 @@ def collect_marimo_notebooks(env_path: Path = RHIZA_ENV_PATH):
     if env_path.exists():
         values = dotenv_values(env_path)
 
-    marimo_folder = values.get("MARIMO_FOLDER") or "marimo"
+    marimo_folder = values.get("MARIMO_FOLDER", "book/marimo/notebooks")
     marimo_path = Path(marimo_folder)
 
     if not marimo_path.exists():

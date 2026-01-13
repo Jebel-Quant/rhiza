@@ -16,13 +16,7 @@ deptry:check:
   image: ghcr.io/astral-sh/uv:0.9.24-trixie
   script:
     - |
-      set -euo pipefail
-      if [ -d "src" ]; then
-        SOURCE_FOLDER="src"
-      else
-        SOURCE_FOLDER="."
-      fi
-      uvx deptry "$SOURCE_FOLDER"
+      make deptry
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH

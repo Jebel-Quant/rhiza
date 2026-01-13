@@ -31,7 +31,6 @@ dev = [
     "pandas>=2.3.3"
 ]
 
-
 [project.urls]
 Homepage = "https://github.com/jebel-quant/rhiza"
 Repository = "https://github.com/jebel-quant/rhiza"
