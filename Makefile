@@ -27,11 +27,6 @@ RESET := \033[0m
 	install \
 	install-extras \
 	install-uv \
-	marimo \
-	marimo-edit \
-	marimo-export \
-	marimo-run \
-	marimo-validate \
 	post-release \
 	release \
 	sync \
