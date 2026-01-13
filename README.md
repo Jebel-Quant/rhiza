@@ -40,6 +40,27 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 
 </div>
 
+## 📚 Table of Contents
+
+- [✨ Features](#-features)
+- [🚀 Getting Started](#-getting-started)
+- [📋 Available Tasks](#-available-tasks)
+- [🛠️ Makefile Architecture & Customisation](#️-makefile-architecture--customisation)
+- [📊 Marimo Notebooks](#-marimo-notebooks)
+- [🎤 Presentations](#-presentations)
+- [🧪 Testing your documentation](#testing-your-documentation)
+- [🎨 Documentation Customization](#-documentation-customization)
+- [📁 Available Templates](#-available-templates)
+- [⚙️ Workflow Configuration](#️-workflow-configuration)
+- [🦊 GitLab CI/CD Support](#-gitlab-cicd-support)
+- [🧩 Bringing Rhiza into an Existing Project](#-bringing-rhiza-into-an-existing-project)
+- [🖥️ Dev Container Compatibility](#️-dev-container-compatibility)
+- [🔧 Custom Build Extras](#-custom-build-extras)
+- [🚀 Releasing](#-releasing)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [🙏 Acknowledgments](#-acknowledgments)
+
 ## ✨ Features
 
 - 🚀 **CI/CD Templates** - Ready-to-use GitHub Actions and GitLab CI workflows
