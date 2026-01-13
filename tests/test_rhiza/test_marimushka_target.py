@@ -38,12 +38,16 @@ def test_marimushka_target_success(git_repo):
 
     # In tests, we don't want to actually run marimushka as it's not installed in the mock env
     # But we want to test that the Makefile logic works.
-    # We can mock marimushka by creating a script that generates the expected files.
+    # We can mock the marimushka CLI call by creating a script that generates the expected files.
     with open(git_repo / "bin" / "marimushka", "w") as f:
-        f.write(f"#!/bin/sh\nmkdir -p {output_folder}/notebooks\ntouch {output_folder}/index.html\ntouch {output_folder}/notebooks/notebook.html\n")
+        f.write(
+            f"#!/bin/sh\nmkdir -p {output_folder}/notebooks\n"
+            f"touch {output_folder}/index.html\n"
+            f"touch {output_folder}/notebooks/notebook.html\n"
+        )
     (git_repo / "bin" / "marimushka").chmod(0o755)
 
-    # Override UVX_BIN to use our mock marimushka
+    # Override UVX_BIN to use our mock marimushka CLI
     env["UVX_BIN"] = str(git_repo / "bin" / "marimushka")
 
     result = subprocess.run([MAKE, "marimushka"], env=env, cwd=git_repo, capture_output=True, text=True)
