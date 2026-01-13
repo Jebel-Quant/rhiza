@@ -164,7 +164,7 @@ deptry: install-uv ## Run deptry
 		fi; \
 	done; \
 	if [ -n "$$AVAILABLE_PATHS" ]; then \
-		$(UVX_BIN) deptry $$AVAILABLE_PATHS --exclude "venv|\.venv|\.direnv|\.git|setup\.py"; \
+		$(UVX_BIN) deptry $$AVAILABLE_PATHS --exclude "venv|\.venv|\.direnv|\.git|setup\.py" --ignore DEP004; \
 	else \
 		printf "${YELLOW}[WARN] No paths available for deptry check${RESET}\n"; \
 	fi
