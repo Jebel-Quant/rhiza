@@ -153,26 +153,26 @@ All essential information was preserved:
 
 ### Before
 
-1. User lands on README
-2. Sees 22 badges (visual overload)
-3. Reads "Getting Started" focused on developing Rhiza itself
-4. Scrolls through 79 lines of Makefile output
-5. Encounters Makefile architecture details
-6. Finds Marimo and Presentations sections
-7. Finally reaches "Bringing Rhiza into an Existing Project" at line 417
-8. Discovers primary use case 416 lines in
+- User lands on README
+- Sees 22 badges (visual overload)
+- Reads "Getting Started" focused on developing Rhiza itself
+- Scrolls through 79 lines of Makefile output
+- Encounters Makefile architecture details
+- Finds Marimo and Presentations sections
+- Finally reaches "Bringing Rhiza into an Existing Project" at line 417
+- Discovers primary use case 416 lines in
 
 ### After
 
-1. User lands on README
-2. Sees 6 essential badges
-3. Reads Table of Contents with clear navigation
-4. Quick Start section presents three clear paths (lines 30-80)
-5. Primary integration use case at line 45
-6. "What You Get" shows value proposition at line 83
-7. Integration Guide provides detailed steps at line 120
-8. Advanced topics clearly separated at line 260
-9. Contributing to Rhiza clearly distinguished at line 380
+- User lands on README
+- Sees 6 essential badges
+- Reads Table of Contents with clear navigation
+- Quick Start section presents three clear paths (lines 30-80)
+- Primary integration use case at line 45
+- "What You Get" shows value proposition at line 83
+- Integration Guide provides detailed steps at line 120
+- Advanced topics clearly separated at line 260
+- Contributing to Rhiza clearly distinguished at line 380
 
 ## Recommendations Implemented
 

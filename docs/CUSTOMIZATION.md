@@ -8,7 +8,9 @@ The project includes a hook for installing additional system dependencies and cu
 
 ### Using build-extras.sh
 
-Create a file `.rhiza/scripts/customisations/build-extras.sh` in your repository to install system packages or dependencies (this repository uses a dedicated `customisations` folder for repo-specific scripts):
+Create a file `.rhiza/scripts/customisations/build-extras.sh` in your repository to install system packages or dependencies.
+
+> **Note:** This repository uses a dedicated `customisations` folder for repo-specific scripts to avoid conflicts with template updates.
 
 ```bash
 #!/bin/bash
