@@ -61,10 +61,10 @@ jobs:
           version: "0.9.24"
           python-version: ${{ matrix.python-version }}
 
+      # do not use make test or --frozen
+      # note that pytest is typically not defined in pyproject.toml
       - name: Run tests
         run: |
-          # install without --frozen
-          - uv sync --all-groups --all-extras
-          # pytest is not defined via pyproject.toml!
-          - uv pip install pytest
-          - uv run pytest tests
+          uv sync --all-groups --all-extras
+          uv pip install pytest
+          uv run pytest tests
