@@ -1,4 +1,5 @@
 """Tests for Marimo notebooks in the book/marimo directory."""
+
 import shutil
 import subprocess
 from pathlib import Path
@@ -8,6 +9,7 @@ import pytest
 # Read .rhiza/.rhiza.env at collection time (no environment side-effects).
 # dotenv_values returns a dict of key -> value (or None for missing).
 RHIZA_ENV_PATH = Path(".rhiza/.env")
+
 
 def load_dotenv(env_path: Path = RHIZA_ENV_PATH):
     """Load .rhiza/.rhiza.env into process environment."""
@@ -21,6 +23,7 @@ def load_dotenv(env_path: Path = RHIZA_ENV_PATH):
                 key, value = line.strip().split("=", 1)
                 values[key] = value
         return values
+
 
 def collect_marimo_notebooks(env_path: Path = RHIZA_ENV_PATH):
     """Return a sorted list of notebook script Paths discovered from .rhiza/.rhiza.env.
