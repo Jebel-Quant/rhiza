@@ -23,7 +23,11 @@ ci:test:
     - echo "Testing with Python $PYTHON_VERSION"
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
     - uv venv --python ${PYTHON_VERSION}
-    - make test
+    # install without --frozen
+    - uv sync --all-groups
+    # pytest is not defined via pyproject.toml!
+    - uv pip install pytest
+    - uv run pytest tests
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH

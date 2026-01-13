@@ -63,4 +63,8 @@ jobs:
 
       - name: Run tests
         run: |
-          make test
+          # install without --frozen
+          - uv sync --all-groups --all-extras
+          # pytest is not defined via pyproject.toml!
+          - uv pip install pytest
+          - uv run pytest tests
