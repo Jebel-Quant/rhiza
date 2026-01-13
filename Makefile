@@ -156,7 +156,11 @@ deptry: install-uv ## Run deptry
 	@AVAILABLE_PATHS=""; \
 	for path in ${SOURCE_FOLDER} ${MARIMO_FOLDER} tests; do \
 		if [ -d "$$path" ]; then \
-			AVAILABLE_PATHS="$$AVAILABLE_PATHS $$path"; \
+			if [ -z "$$AVAILABLE_PATHS" ]; then \
+				AVAILABLE_PATHS="$$path"; \
+			else \
+				AVAILABLE_PATHS="$$AVAILABLE_PATHS $$path"; \
+			fi; \
 		fi; \
 	done; \
 	if [ -n "$$AVAILABLE_PATHS" ]; then \
