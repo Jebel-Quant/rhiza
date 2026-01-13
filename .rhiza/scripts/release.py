@@ -9,24 +9,20 @@ This script:
 
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import typer
+from loguru import logger
 
-
-class Colors:
-    """ANSI color codes for terminal output."""
-
-    BLUE = "\033[36m"
-    RED = "\033[31m"
-    GREEN = "\033[32m"
-    YELLOW = "\033[33m"
-    RESET = "\033[0m"
-
-
-def print_colored(color: str, message: str) -> None:
-    """Print a colored message to stdout."""
-    print(f"{color}{message}{Colors.RESET}")
+# Configure loguru logger
+logger.remove()  # Remove default handler
+logger.add(
+    sys.stdout,
+    format="<level>{message}</level>",
+    level="INFO",
+    colorize=True,
+)
 
 
 def run_command(
@@ -56,7 +52,7 @@ def prompt_continue(message: str) -> bool:
     """Prompt user to continue with an operation.
 
     Args:
-        message: Message to display to user (optional)
+        message: Message to display to user
 
     Returns:
         True if user wants to continue, False otherwise
@@ -66,11 +62,11 @@ def prompt_continue(message: str) -> bool:
     else:
         prompt_text = "[PROMPT] Continue? [y/N] "
     print()  # Print newline before prompt
-    print_colored(Colors.YELLOW, prompt_text)
+    logger.warning(prompt_text)
     answer = input().strip().lower()
     if answer in ("y", "yes"):
         return True
-    print_colored(Colors.YELLOW, "[INFO] Aborted by user")
+    logger.info("Aborted by user")
     return False
 
 
@@ -84,7 +80,7 @@ def get_version(uv_bin: str) -> str:
         Version string
 
     Raises:
-        SystemExit: If version cannot be determined
+        typer.Exit: If version cannot be determined
     """
     try:
         result = run_command([uv_bin, "version", "--short"])
@@ -93,7 +89,7 @@ def get_version(uv_bin: str) -> str:
             raise ValueError("Empty version string")
         return version
     except (subprocess.CalledProcessError, ValueError) as e:
-        print_colored(Colors.RED, f"[ERROR] Could not determine version from pyproject.toml: {e}")
+        logger.error(f"Could not determine version from pyproject.toml: {e}")
         raise typer.Exit(1)
 
 
@@ -113,7 +109,7 @@ def get_current_branch() -> str:
             raise ValueError("Empty branch name")
         return branch
     except (subprocess.CalledProcessError, ValueError) as e:
-        print_colored(Colors.RED, f"[ERROR] Could not determine current branch: {e}")
+        logger.error(f"Could not determine current branch: {e}")
         raise typer.Exit(1)
 
 
@@ -135,7 +131,7 @@ def get_default_branch() -> str:
                     return branch
         raise ValueError("Could not parse default branch")
     except (subprocess.CalledProcessError, ValueError) as e:
-        print_colored(Colors.RED, f"[ERROR] Could not determine default branch from remote: {e}")
+        logger.error(f"Could not determine default branch from remote: {e}")
         raise typer.Exit(1)
 
 
@@ -147,9 +143,9 @@ def check_working_tree_clean() -> None:
     """
     result = run_command(["git", "status", "--porcelain"])
     if result.stdout.strip():
-        print_colored(Colors.RED, "[ERROR] You have uncommitted changes:")
+        logger.error("You have uncommitted changes:")
         run_command(["git", "status", "--short"], capture_output=False)
-        print_colored(Colors.RED, "\n[ERROR] Please commit or stash your changes before releasing.")
+        logger.error("\n[ERROR] Please commit or stash your changes before releasing.")
         raise typer.Exit(1)
 
 
@@ -162,12 +158,12 @@ def check_remote_status(current_branch: str) -> None:
     Raises:
         SystemExit: If branch is behind remote or diverged
     """
-    print_colored(Colors.BLUE, "[INFO] Checking remote status...")
+    logger.info("Checking remote status...")
 
     # Fetch latest changes from remote
     result = run_command(["git", "fetch", "origin"], capture_output=True, check=False)
     if result.returncode != 0:
-        print_colored(Colors.YELLOW, "[WARN] Failed to fetch from remote. Continuing with local information.")
+        logger.warning("Failed to fetch from remote. Continuing with local information.")
         # Continue anyway - the user might be offline or have auth issues but still want to proceed
 
     # Get upstream branch
@@ -177,11 +173,11 @@ def check_remote_status(current_branch: str) -> None:
             check=False,
         )
         if result.returncode != 0:
-            print_colored(Colors.RED, f"[ERROR] No upstream branch configured for {current_branch}")
+            logger.error(f"No upstream branch configured for {current_branch}")
             raise typer.Exit(1)
         upstream = result.stdout.strip()
     except subprocess.CalledProcessError:
-        print_colored(Colors.RED, f"[ERROR] No upstream branch configured for {current_branch}")
+        logger.error(f"No upstream branch configured for {current_branch}")
         raise typer.Exit(1)
 
     # Get commit hashes
@@ -201,11 +197,11 @@ def check_remote_status(current_branch: str) -> None:
 
     if local == base:
         # Local is behind remote
-        print_colored(Colors.RED, f"[ERROR] Your branch is behind '{upstream}'. Please pull changes.")
+        logger.error(f"Your branch is behind '{upstream}'. Please pull changes.")
         raise typer.Exit(1)
     elif remote == base:
         # Local is ahead of remote
-        print_colored(Colors.YELLOW, f"[WARN] Your branch is ahead of '{upstream}'.")
+        logger.warning(f"Your branch is ahead of '{upstream}'.")
         print("Unpushed commits:")
         run_command(["git", "log", "--oneline", "--graph", "--decorate", f"{upstream}..HEAD"], capture_output=False)
 
@@ -213,7 +209,7 @@ def check_remote_status(current_branch: str) -> None:
             run_command(["git", "push", "origin", current_branch], capture_output=False)
     else:
         # Branches have diverged
-        print_colored(Colors.RED, f"[ERROR] Your branch has diverged from '{upstream}'. Please reconcile.")
+        logger.error(f"Your branch has diverged from '{upstream}'. Please reconcile.")
         raise typer.Exit(1)
 
 
@@ -273,13 +269,13 @@ def create_tag(tag: str) -> None:
         tag: Tag name to create
     """
     if is_gpg_signing_enabled():
-        print_colored(Colors.BLUE, "[INFO] GPG signing is enabled. Creating signed tag.")
+        logger.info("GPG signing is enabled. Creating signed tag.")
         run_command(["git", "tag", "-s", tag, "-m", f"Release {tag}"], capture_output=False)
     else:
-        print_colored(Colors.BLUE, "[INFO] GPG signing is not enabled. Creating unsigned tag.")
+        logger.info("GPG signing is not enabled. Creating unsigned tag.")
         run_command(["git", "tag", "-a", tag, "-m", f"Release {tag}"], capture_output=False)
 
-    print_colored(Colors.GREEN, f"[SUCCESS] Tag '{tag}' created locally")
+    logger.success(f"Tag '{tag}' created locally")
 
 
 def push_tag(tag: str) -> None:
@@ -361,11 +357,8 @@ def _validate_branch(current_branch: str, default_branch: str, dry_run: bool) ->
         dry_run: Whether this is a dry run
     """
     if current_branch != default_branch:
-        print_colored(
-            Colors.YELLOW,
-            f"[WARN] You are on branch '{current_branch}' but the default branch is '{default_branch}'",
-        )
-        print_colored(Colors.YELLOW, "[WARN] Releases are typically created from the default branch.")
+        logger.warning(f"You are on branch '{current_branch}' but the default branch is '{default_branch}'")
+        logger.warning("Releases are typically created from the default branch.")
         if not dry_run and not prompt_continue(f"Proceed with release from '{current_branch}'?"):
             raise typer.Exit(0)
 
@@ -383,13 +376,13 @@ def _check_tag_status(tag: str, current_version: str, dry_run: bool) -> bool:
     """
     skip_tag_create = False
     if check_tag_exists_locally(tag):
-        print_colored(Colors.YELLOW, f"[WARN] Tag '{tag}' already exists locally")
+        logger.warning(f"Tag '{tag}' already exists locally")
         if not dry_run and not prompt_continue("Tag exists. Skip tag creation and proceed to push?"):
             raise typer.Exit(0)
         skip_tag_create = True
 
     if check_tag_exists_remotely(tag):
-        print_colored(Colors.RED, f"[ERROR] Tag '{tag}' already exists on remote")
+        logger.error(f"Tag '{tag}' already exists on remote")
         print(f"The release for version {current_version} has already been published.")
         raise typer.Exit(1)
 
@@ -408,9 +401,9 @@ def _create_tag_step(tag: str, current_version: str, skip_tag_create: bool, dry_
     if skip_tag_create:
         return
 
-    print_colored(Colors.BLUE, "\n=== Step 1: Create Tag ===")
+    logger.info("\n=== Step 1: Create Tag ===")
     if dry_run:
-        print_colored(Colors.YELLOW, f"[DRY RUN] Would create tag '{tag}' for version {current_version}")
+        logger.warning(f"[DRY RUN] Would create tag '{tag}' for version {current_version}")
     else:
         print(f"Creating tag '{tag}' for version {current_version}")
         if not prompt_continue(""):
@@ -425,9 +418,9 @@ def _push_tag_step(tag: str, dry_run: bool) -> None:
         tag: Tag name to push
         dry_run: Whether this is a dry run
     """
-    print_colored(Colors.BLUE, "\n=== Step 2: Push Tag to Remote ===")
+    logger.info("\n=== Step 2: Push Tag to Remote ===")
     if dry_run:
-        print_colored(Colors.YELLOW, f"[DRY RUN] Would push tag '{tag}' to origin")
+        logger.warning(f"[DRY RUN] Would push tag '{tag}' to origin")
     else:
         print(f"Pushing tag '{tag}' to origin will trigger the release workflow.")
 
@@ -452,12 +445,10 @@ def _show_dry_run_summary(tag: str) -> None:
     Args:
         tag: Tag that would be created
     """
-    print_colored(Colors.GREEN, f"\n[DRY RUN] Would have created and pushed release tag {tag}")
+    logger.success(f"[DRY RUN] Would have created and pushed release tag {tag}")
     repo_url = get_repo_url()
     if repo_url:
-        print_colored(
-            Colors.BLUE, f"[INFO] Release workflow would be triggered at: https://github.com/{repo_url}/actions"
-        )
+        logger.info(f"Release workflow would be triggered at: https://github.com/{repo_url}/actions")
 
 
 def _show_success_message(tag: str) -> None:
@@ -467,10 +458,10 @@ def _show_success_message(tag: str) -> None:
         tag: Tag that was pushed
     """
     repo_url = get_repo_url()
-    print_colored(Colors.GREEN, f"\n[SUCCESS] Release tag {tag} pushed to remote!")
-    print_colored(Colors.BLUE, "[INFO] The release workflow will now be triggered automatically.")
+    logger.success(f"\n[SUCCESS] Release tag {tag} pushed to remote!")
+    logger.info("The release workflow will now be triggered automatically.")
     if repo_url:
-        print_colored(Colors.BLUE, f"[INFO] Monitor progress at: https://github.com/{repo_url}/actions")
+        logger.info(f"Monitor progress at: https://github.com/{repo_url}/actions")
 
 
 def do_release(uv_bin: str, dry_run: bool = False) -> None:
@@ -485,7 +476,7 @@ def do_release(uv_bin: str, dry_run: bool = False) -> None:
     tag = f"v{current_version}"
 
     if dry_run:
-        print_colored(Colors.YELLOW, "[DRY RUN] No changes will be made")
+        logger.warning("[DRY RUN] No changes will be made")
 
     # Get branch information
     current_branch = get_current_branch()
@@ -494,8 +485,8 @@ def do_release(uv_bin: str, dry_run: bool = False) -> None:
     # Validate branch
     _validate_branch(current_branch, default_branch, dry_run)
 
-    print_colored(Colors.BLUE, f"[INFO] Current version: {current_version}")
-    print_colored(Colors.BLUE, f"[INFO] Tag to create: {tag}")
+    logger.info(f"Current version: {current_version}")
+    logger.info(f"Tag to create: {tag}")
 
     # Perform validation checks
     check_working_tree_clean()
@@ -529,14 +520,14 @@ def main(
     """
     # Check if pyproject.toml exists
     if not Path("pyproject.toml").exists():
-        print_colored(Colors.RED, "[ERROR] pyproject.toml not found in current directory")
+        logger.error("pyproject.toml not found in current directory")
         raise typer.Exit(1)
 
     # Check if uv is available
     uv_bin = os.environ.get("UV_BIN", "./bin/uv")
     uv_path = Path(uv_bin)
     if not uv_path.exists() or not os.access(uv_path, os.X_OK):
-        print_colored(Colors.RED, f"[ERROR] uv not found at {uv_bin}. Run 'make install-uv' first.")
+        logger.error(f"uv not found at {uv_bin}. Run 'make install-uv' first.")
         raise typer.Exit(1)
 
     # Execute release
