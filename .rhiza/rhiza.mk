@@ -61,6 +61,7 @@ export UV_VENV_CLEAR := 1
 # Include split Makefiles
 -include tests/tests.mk
 -include book/book.mk
+-include book/marimo/marimo.mk
 -include presentation/presentation.mk
 -include docker/docker.mk
 -include .rhiza/agentic/agentic.mk
