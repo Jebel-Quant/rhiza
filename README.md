@@ -119,7 +119,6 @@ Development and Testing
 
 Documentation
   docs                  create documentation with pdoc
-  marimushka            export Marimo notebooks to HTML
   book                  compile the companion book
 
 Marimo Notebooks
