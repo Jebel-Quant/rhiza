@@ -15,6 +15,7 @@ import sys
 # Get absolute paths for executables to avoid S607 warnings from CodeFactor/Bandit
 SHELL = shutil.which("sh") or "/bin/sh"
 GIT = shutil.which("git") or "/usr/bin/git"
+PYTHON = sys.executable
 
 
 def test_release_creates_tag(git_repo):

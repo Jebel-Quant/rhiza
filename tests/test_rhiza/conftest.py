@@ -185,7 +185,7 @@ def git_repo(root, tmp_path, monkeypatch):
     script_dir = local_dir / ".rhiza" / "scripts"
     script_dir.mkdir(parents=True)
 
-    shutil.copy(root / ".rhiza" / "scripts" / "release.sh", script_dir / "release.sh")
+    shutil.copy(root / ".rhiza" / "scripts" / "release.py", script_dir / "release.py")
     shutil.copy(root / ".rhiza" / "rhiza.mk", local_dir / ".rhiza" / "rhiza.mk")
     shutil.copy(root / "Makefile", local_dir / "Makefile")
     os.makedirs(local_dir / "book", exist_ok=True)
