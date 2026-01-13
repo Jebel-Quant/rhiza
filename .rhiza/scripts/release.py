@@ -100,7 +100,7 @@ def get_current_branch() -> str:
         Branch name
 
     Raises:
-        SystemExit: If branch cannot be determined
+        typer.Exit: If branch cannot be determined
     """
     try:
         result = run_command(["git", "rev-parse", "--abbrev-ref", "HEAD"])
@@ -120,7 +120,7 @@ def get_default_branch() -> str:
         Default branch name
 
     Raises:
-        SystemExit: If default branch cannot be determined
+        typer.Exit: If default branch cannot be determined
     """
     try:
         result = run_command(["git", "remote", "show", "origin"])
@@ -139,13 +139,13 @@ def check_working_tree_clean() -> None:
     """Check if the working tree is clean.
 
     Raises:
-        SystemExit: If there are uncommitted changes
+        typer.Exit: If there are uncommitted changes
     """
     result = run_command(["git", "status", "--porcelain"])
     if result.stdout.strip():
         logger.error("You have uncommitted changes:")
         run_command(["git", "status", "--short"], capture_output=False)
-        logger.error("\n[ERROR] Please commit or stash your changes before releasing.")
+        logger.error("\nPlease commit or stash your changes before releasing.")
         raise typer.Exit(1)
 
 
@@ -156,7 +156,7 @@ def check_remote_status(current_branch: str) -> None:
         current_branch: Name of the current branch
 
     Raises:
-        SystemExit: If branch is behind remote or diverged
+        typer.Exit: If branch is behind remote or diverged
     """
     logger.info("Checking remote status...")
 
