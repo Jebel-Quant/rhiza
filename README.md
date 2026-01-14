@@ -31,6 +31,34 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 
 **Unlike traditional project templates** (like cookiecutter or copier) that generate a one-time snapshot of configuration files, **Rhiza provides living templates** that evolve with your project. Classic templates help you start a project, but once generated, your configuration drifts away from the template as best practices change. Rhiza takes a different approach: it enables **continuous synchronization**, allowing you to selectively pull template updates into your project over time through automated workflows. This means you can benefit from improvements to CI/CD workflows, linting rules, and development tooling without manually tracking upstream changes. Think of it as keeping your project's foundation fresh and aligned with modern practices, while maintaining full control over what gets updated.
 
+### How It Works
+
+Rhiza uses a simple configuration file (`.rhiza/template.yml`) to control which templates sync to your project:
+
+```yaml
+# .rhiza/template.yml
+repository: Jebel-Quant/rhiza
+ref: main
+
+include: |
+  .github/workflows/*.yml
+  .pre-commit-config.yaml
+  ruff.toml
+  pytest.ini
+  Makefile
+
+exclude: |
+  .rhiza/scripts/customisations/*
+```
+
+**What you're seeing:**
+- **`repository`** - The upstream template source (Rhiza's repository)
+- **`ref`** - Which branch/tag to sync from (usually `main`)
+- **`include`** - File patterns to pull from the template (CI workflows, linting configs, etc.)
+- **`exclude`** - Paths to skip, protecting your customizations
+
+When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhiza fetches only the files matching your `include` patterns, skips anything in `exclude`, and creates a clean diff for you to review. You stay in control of what updates and when.
+
 ## 📚 Table of Contents
 
 - [Why Rhiza?](#-why-rhiza)
