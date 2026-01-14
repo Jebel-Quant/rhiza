@@ -52,12 +52,14 @@ exclude: |
 ```
 
 **What you're seeing:**
-- **`repository`** - The upstream template source (Rhiza's repository)
+- **`repository`** - The upstream template source (**can be any repository, not just Rhiza!**)
 - **`ref`** - Which branch/tag to sync from (usually `main`)
 - **`include`** - File patterns to pull from the template (CI workflows, linting configs, etc.)
 - **`exclude`** - Paths to skip, protecting your customizations
 
 When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhiza fetches only the files matching your `include` patterns, skips anything in `exclude`, and creates a clean diff for you to review. You stay in control of what updates and when.
+
+**💡 Pro Tip:** While you can use `Jebel-Quant/rhiza` directly, **we recommend forking Rhiza** and pointing to your fork instead. This lets you customize the templates for your organization's specific needs and constraints—adjusting CI workflows, coding standards, or tooling choices—while still benefiting from Rhiza's sync mechanism. Your fork becomes your team's source of truth, and you can selectively pull updates from upstream Rhiza when desired.
 
 ## 📚 Table of Contents
 
