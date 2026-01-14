@@ -27,8 +27,13 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 
 </div>
 
+## 🌟 Why Rhiza?
+
+**Unlike traditional project templates** (like cookiecutter or copier) that generate a one-time snapshot of configuration files, **Rhiza provides living templates** that evolve with your project. Classic templates help you start a project, but once generated, your configuration drifts away from the template as best practices change. Rhiza takes a different approach: it enables **continuous synchronization**, allowing you to selectively pull template updates into your project over time through automated workflows. This means you can benefit from improvements to CI/CD workflows, linting rules, and development tooling without manually tracking upstream changes. Think of it as keeping your project's foundation fresh and aligned with modern practices, while maintaining full control over what gets updated.
+
 ## 📚 Table of Contents
 
+- [Why Rhiza?](#-why-rhiza)
 - [Quick Start](#-quick-start)
 - [What You Get](#-what-you-get)
 - [Integration Guide](#-integration-guide)
