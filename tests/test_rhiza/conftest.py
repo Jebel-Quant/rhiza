@@ -14,6 +14,40 @@ import subprocess
 
 import pytest
 
+
+def pytest_addoption(parser):
+    """Add custom command-line options for pytest."""
+    parser.addoption(
+        "--run-integration",
+        action="store_true",
+        default=False,
+        help="Run integration tests (require network and real tools)",
+    )
+    parser.addoption(
+        "--run-slow",
+        action="store_true",
+        default=False,
+        help="Run slow tests",
+    )
+
+
+def pytest_configure(config):
+    """Configure pytest with custom markers."""
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
+    config.addinivalue_line("markers", "slow: marks tests as slow")
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip integration and slow tests unless explicitly requested."""
+    skip_integration = pytest.mark.skip(reason="Need --run-integration option to run")
+    skip_slow = pytest.mark.skip(reason="Need --run-slow option to run")
+
+    for item in items:
+        if "integration" in item.keywords and not config.getoption("--run-integration"):
+            item.add_marker(skip_integration)
+        if "slow" in item.keywords and not config.getoption("--run-slow"):
+            item.add_marker(skip_slow)
+
 # Get absolute paths for executables to avoid S607 warnings
 GIT = shutil.which("git") or "/usr/bin/git"
 

@@ -16,15 +16,17 @@ These tests validate the foundational infrastructure and workflows that are shar
 ## Test Organization
 
 - `conftest.py` - Pytest fixtures including the `git_repo` fixture for sandboxed testing
-- `test_bump_script.py` - Tests for version bumping workflow
 - `test_docstrings.py` - Doctest validation across all modules
+- `test_e2e_workflow.py` - End-to-end integration tests (init → materialize → install → test)
 - `test_git_repo_fixture.py` - Validation of the mock git repository fixture
 - `test_makefile.py` - Makefile target validation using dry-runs
-- `test_marimushka_script.py` - Testing the marimushka Makefile target (exports notebooks to static HTML)
+- `test_makefile_api.py` - Makefile API tests
+- `test_marimushka_target.py` - Testing the marimushka Makefile target (exports notebooks to static HTML)
+- `test_notebooks.py` - Marimo notebook validation
 - `test_readme.py` - README code example execution and validation
 - `test_release_script.py` - Release and tagging workflow tests
+- `test_requirements_folder.py` - Requirements folder validation
 - `test_structure.py` - Project structure and file existence checks
-- `test_updatereadme_script` - Testing our abilities to embed the output of make directly in markdown files.
 
 ## Exclusion from Sync
 
@@ -50,15 +52,47 @@ If you must exclude tests, do so selectively rather than excluding the entire `t
 ## Running the Tests
 
 ```bash
-# Run all Rhiza tests
+# Run all Rhiza tests (excludes integration and slow tests)
 make test
 
 # Run specific test files
-pytest tests/test_rhiza/test_bump_script.py -v
+pytest tests/test_rhiza/test_makefile.py -v
 
 # Run tests with detailed output
 pytest tests/test_rhiza/ -vv
 ```
+
+## Integration Tests
+
+The `test_e2e_workflow.py` file contains end-to-end integration tests that validate the complete Rhiza workflow:
+
+1. **init** - Initialise a new project with Rhiza configuration
+2. **materialize** - Sync templates from the Rhiza repository
+3. **install** - Run `make install` to set up the development environment
+4. **test** - Run `make test` to verify the setup
+5. **release** - Test version bumping and release workflows
+
+### Requirements
+
+Integration tests require:
+- Network access (to clone templates from GitHub)
+- `uvx` available in PATH
+- Several minutes to complete (marked as `slow`)
+
+### Running Integration Tests
+
+```bash
+# Run integration tests only
+pytest tests/test_rhiza/test_e2e_workflow.py -v --run-integration --run-slow
+
+# Run all tests including integration
+pytest tests/test_rhiza/ -v --run-integration --run-slow
+
+# Run a specific integration test
+pytest tests/test_rhiza/test_e2e_workflow.py::TestFullWorkflow::test_init_materialize_install -v --run-integration --run-slow
+```
+
+Integration tests are skipped by default to keep regular test runs fast. Use the flags above to include them when needed.
 
 ## Customization
 

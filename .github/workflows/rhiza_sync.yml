@@ -49,8 +49,14 @@ jobs:
             echo "✓ PAT_TOKEN is configured."
           fi
 
+      - name: Get uv version
+        id: uv-version
+        run: echo "version=$(cat .rhiza/uv-version.txt)" >> $GITHUB_OUTPUT
+
       - name: Install uv
         uses: astral-sh/setup-uv@v7
+        with:
+          version: ${{ steps.uv-version.outputs.version }}
 
       - name: Sync template
         id: sync
