@@ -2,79 +2,79 @@
 
 This guide covers advanced customization options for Rhiza-based projects.
 
-## 🔧 Custom Build Extras
+## 🛠️ Makefile Hooks & Extensions
 
-The project includes a hook for installing additional system dependencies and custom build steps needed across all build phases.
+Rhiza uses a modular Makefile system with extension points (hooks) that let you customize workflows without modifying core files.
 
-### Using build-extras.sh
+### Available Hooks
 
-Create a file `.rhiza/scripts/customisations/build-extras.sh` in your repository to install system packages or dependencies.
+You can hook into standard workflows using double-colon syntax (`::`) in `.rhiza/make.d/` files:
 
-> **Note:** This repository uses a dedicated `customisations` folder for repo-specific scripts to avoid conflicts with template updates.
+- `pre-install / post-install` - Runs around `make install`
+- `pre-sync / post-sync` - Runs around repository synchronization
+- `pre-validate / post-validate` - Runs around validation checks
+- `pre-release / post-release` - Runs around release process
+- `pre-bump / post-bump` - Runs around version bumping
 
-```bash
-#!/bin/bash
-set -euo pipefail
+### Example: Installing System Dependencies
 
-# Example: Install graphviz for diagram generation
-sudo apt-get update
-sudo apt-get install -y graphviz
+Create `.rhiza/make.d/20-dependencies.mk`:
 
-# Add other custom installation commands here
+```makefile
+pre-install::
+	@if ! command -v dot >/dev/null 2>&1; then \
+		echo "Installing graphviz..."; \
+		sudo apt-get update && sudo apt-get install -y graphviz; \
+	fi
 ```
 
-### When it Runs
+This hook runs automatically before `make install`, ensuring graphviz is available.
 
-The `build-extras.sh` script (from `.rhiza/scripts/customisations`) is automatically invoked during:
-- `make install` - Initial project setup
-- `make test` - Before running tests
-- `make book` - Before building documentation
-- `make docs` - Before generating API documentation
+### Example: Post-Release Tasks
 
-This ensures custom dependencies are available whenever needed throughout the build lifecycle. The `Makefile` intentionally only checks the `.rhiza/scripts/customisations` folder for repository-specific hooks such as `build-extras.sh` and `post-release.sh`.
+Create `.rhiza/make.d/90-hooks.mk`:
 
-### Important: Exclude from Template Updates
-
-If you customize this file, add it to the exclude list in your `action.yml` configuration to prevent it from being overwritten during template updates. Use the `customisations` path to avoid clobbering:
-
-```yaml
-exclude: |
-  .rhiza/scripts/customisations/build-extras.sh
+```makefile
+post-release::
+	@echo "Running post-release tasks..."
+	@./scripts/notify-team.sh
+	@./scripts/update-changelog.sh
 ```
 
-### Common Use Cases
+This runs automatically after `make release` completes.
 
-- Installing graphviz for diagram rendering
-- Adding LaTeX for mathematical notation
-- Installing system libraries for specialized tools
-- Setting up additional build dependencies
-- Downloading external resources or tools
+### Example: Custom Build Steps
 
-### Post-release scripts
-
-If you need repository-specific post-release tasks, place a `post-release.sh` script in `.rhiza/scripts/customisations/post-release.sh`. The `Makefile` will only look in the `customisations` folder for that hook.
-
-## 🛠️ Makefile Architecture & Extension
-
-For detailed information about extending and customizing the Makefile system, see [.rhiza/make.d/README.md](../.rhiza/make.d/README.md).
-
-### Quick Reference
-
-**Extension Points (Hooks):**
-- `pre-install / post-install`
-- `pre-sync / post-sync`
-- `pre-validate / post-validate`
-- `pre-release / post-release`
-- `pre-bump / post-bump`
-
-**Example: Adding a post-install step**
-
-Create `.rhiza/make.d/99-setup.mk`:
+Create `.rhiza/make.d/50-custom.mk`:
 
 ```makefile
 post-install::
 	@echo "Installing specialized dependencies..."
 	@pip install some-private-lib
+	
+##@ Custom Tasks
+train-model: ## Train the ML model
+	@uv run python scripts/train.py
 ```
 
-See the [Makefile Cookbook](../.rhiza/make.d/README.md) for more recipes and patterns.
+### Ordering
+
+Files in `.rhiza/make.d/` are loaded alphabetically. Use numeric prefixes to control order:
+
+- `00-19`: Configuration & Variables
+- `20-79`: Custom Tasks & Rules
+- `80-99`: Hooks & Lifecycle logic
+
+### Excluding from Template Updates
+
+If you add custom `.mk` files, add them to the exclude list in your `.rhiza/template.yml`:
+
+```yaml
+exclude: |
+  .rhiza/make.d/20-dependencies.mk
+  .rhiza/make.d/90-hooks.mk
+```
+
+## 📖 Complete Documentation
+
+For detailed information about extending and customizing the Makefile system, see [.rhiza/make.d/README.md](../.rhiza/make.d/README.md).
