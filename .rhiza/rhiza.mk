@@ -67,6 +67,8 @@ export UV_VENV_CLEAR := 1
 # .rhiza/rhiza.mk is INLINED below
 -include .github/github.mk
 
+
+
 # ==============================================================================
 # Rhiza Core Actions (formerly .rhiza/rhiza.mk)
 # ==============================================================================
@@ -260,3 +262,7 @@ print-% : ## print the value of a variable (usage: make print-VARIABLE)
 	@printf "%s\n" "$($*)"
 	@printf "${RESET}"
 	@printf "${BLUE}[INFO] End of value for '$*'${RESET}\n"
+
+# Optional: repo extensions (committed)
+-include .rhiza/make.d/*.mk
+
