@@ -3,7 +3,7 @@
 This notebook showcases the most useful features of Marimo, including:
 - Interactive UI elements (sliders, dropdowns, text inputs)
 - Reactive programming (automatic cell updates)
-- Data visualization with popular libraries
+- Data visualisation with popular libraries
 - Markdown and LaTeX support
 - Layout components (columns, tabs, accordions)
 - Forms and user input handling
@@ -156,12 +156,12 @@ def cell_11(mo):
 
 @app.cell
 def cell_12(mo):
-    """Introduce the Data Visualization section."""
+    """Introduce the Data Visualisation section."""
     mo.md(
         r"""
-        ## 📊 Data Visualization
+        ## 📊 Data Visualisation
 
-        Marimo works seamlessly with popular visualization libraries like Plotly,
+        Marimo works seamlessly with popular visualisation libraries like Plotly,
         Altair, and Matplotlib. Let's create interactive plots!
         """
     )
@@ -292,14 +292,14 @@ def cell_20(data, mo):
 def cell_21(data, go, mo):
     """Render a Plotly bar chart showing sales by product."""
     # Create a bar chart with Plotly
-    colors = ["#2FA4A9", "#3FB5BA", "#4FC6CB", "#5FD7DC", "#6FE8ED"]
+    colours = ["#2FA4A9", "#3FB5BA", "#4FC6CB", "#5FD7DC", "#6FE8ED"]
 
     fig_bar = go.Figure()
     fig_bar.add_trace(
         go.Bar(
             x=data["Product"],
             y=data["Sales"],
-            marker_color=colors,
+            marker_color=colours,
             text=data["Sales"],
             textposition="auto",
         )
@@ -315,7 +315,7 @@ def cell_21(data, go, mo):
     )
 
     mo.ui.plotly(fig_bar)
-    return colors, fig_bar
+    return colours, fig_bar
 
 
 @app.cell
@@ -332,7 +332,7 @@ def cell_23(mo):
         r"""
         ## 🎯 Layout Components
 
-        Marimo provides powerful layout primitives to organize your content.
+        Marimo provides powerful layout primitives to organise your content.
         """
     )
     return
@@ -373,16 +373,16 @@ def cell_24(mo):
 @app.cell
 def cell_25(mo):
     """Demonstrate tabs with Introduction, Details, and Summary content."""
-    # Using tabs for organized content
+    # Using tabs for organised content
     tab1 = mo.md(
         r"""
         ## Tab 1: Introduction
 
-        This is the content of the first tab. Tabs are great for organizing
+        This is the content of the first tab. Tabs are great for organising
         related content without cluttering the interface.
 
         **Key points:**
-        - Clean organization
+        - Clean organisation
         - Reduced clutter
         - Easy navigation
         """
@@ -396,7 +396,7 @@ def cell_25(mo):
 
         You can include any content here:
         - Code examples
-        - Visualizations
+        - Visualisations
         - Interactive elements
         """
     )
@@ -410,7 +410,7 @@ def cell_25(mo):
         Tabs are perfect for:
         1. Step-by-step guides
         2. Different views of data
-        3. Organizing complex notebooks
+        3. Organising complex notebooks
         """
     )
 
@@ -645,8 +645,8 @@ def cell_38(mo):
 
         ✅ **Interactive UI elements** - Sliders, dropdowns, text inputs, and more
         ✅ **Reactive programming** - Automatic cell updates when dependencies change
-        ✅ **Data visualization** - Seamless integration with Plotly, Matplotlib, etc.
-        ✅ **Layout components** - Columns, tabs, accordions for organizing content
+        ✅ **Data visualisation** - Seamless integration with Plotly, Matplotlib, etc.
+        ✅ **Layout components** - Columns, tabs, accordions for organising content
         ✅ **Forms** - Batched input collection with submission
         ✅ **Rich formatting** - Markdown and LaTeX support
         ✅ **Pure Python** - Notebooks are version-control friendly `.py` files

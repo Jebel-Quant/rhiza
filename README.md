@@ -55,11 +55,11 @@ exclude: |
 - **`repository`** - The upstream template source (**can be any repository, not just Rhiza!**)
 - **`ref`** - Which branch/tag to sync from (usually `main`)
 - **`include`** - File patterns to pull from the template (CI workflows, linting configs, etc.)
-- **`exclude`** - Paths to skip, protecting your customizations
+- **`exclude`** - Paths to skip, protecting your customisations
 
 When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhiza fetches only the files matching your `include` patterns, skips anything in `exclude`, and creates a clean diff for you to review. You stay in control of what updates and when.
 
-**💡 Pro Tip:** While you can use `Jebel-Quant/rhiza` directly, **we recommend creating your own template repository** using GitHub's "Use this template" button. This gives you a clean copy to customize for your organization's specific needs and constraints—adjusting CI workflows, coding standards, or tooling choices—while still benefiting from Rhiza's sync mechanism. Your template repo becomes your team's source of truth, and you can selectively pull updates from upstream Rhiza when desired.
+**💡 Pro Tip:** While you can use `Jebel-Quant/rhiza` directly, **we recommend creating your own template repository** using GitHub's "Use this template" button. This gives you a clean copy to customise for your organisation's specific needs and constraints—adjusting CI workflows, coding standards, or tooling choices—while still benefiting from Rhiza's sync mechanism. Your template repo becomes your team's source of truth, and you can selectively pull updates from upstream Rhiza when desired.
 
 ## 📚 Table of Contents
 
@@ -82,7 +82,7 @@ Create a new project with Rhiza templates:
 # Navigate to your project directory
 cd /path/to/your/project
 
-# Initialize Rhiza configuration
+# Initialise Rhiza configuration
 uvx rhiza init
 
 # Edit .rhiza/template.yml to select desired templates
@@ -98,7 +98,7 @@ Integrate Rhiza into an existing Python project:
 # Navigate to your repository
 cd /path/to/your/project
 
-# Initialize and configure
+# Initialise and configure
 uvx rhiza init
 
 # Review and edit .rhiza/template.yml
@@ -174,7 +174,7 @@ The fastest way to integrate Rhiza:
 # Navigate to your repository
 cd /path/to/your/project
 
-# Initialize configuration templates
+# Initialise configuration templates
 uvx rhiza init
 
 # Edit .rhiza/template.yml to select desired templates
@@ -188,7 +188,7 @@ uvx rhiza materialize
 
 ### Manual Integration (Selective Adoption)
 
-For cherry-picking specific templates or customizing before integration:
+For cherry-picking specific templates or customising before integration:
 
 1. **Clone Rhiza** to a temporary location:
    ```bash
@@ -320,7 +320,7 @@ Docker
 Agentic Workflows
   copilot               open interactive prompt for copilot
   analyse-repo          run the analyser agent to update REPOSITORY_ANALYSIS.md
-  summarize-changes     summarize changes since the most recent release/tag
+  summarise-changes     summarise changes since the most recent release/tag
   install-copilot       checks for copilot and prompts to install
 
 GitHub Helpers
@@ -364,7 +364,7 @@ make presentation-pdf    # Generate PDF slides
 make presentation-serve  # Serve with live reload
 ```
 
-For detailed information about creating and customizing presentations, see [presentation/README.md](presentation/README.md).
+For detailed information about creating and customising presentations, see [presentation/README.md](presentation/README.md).
 
 ### Testing Documentation
 
@@ -386,17 +386,17 @@ Hello, World!
 0.71
 ```
 
-### Documentation Customization
+### Documentation Customisation
 
-For information on customizing the look and feel of your documentation, see [book/README.md](book/README.md).
+For information on customising the look and feel of your documentation, see [book/README.md](book/README.md).
 
 ### Python Version Management
 
 The `.python-version` file specifies the default Python version for local development. Tools like `uv` and `pyenv` automatically use this version. Simply update this file to change your local Python version.
 
-### Makefile Customization
+### Makefile Customisation
 
-Rhiza uses a modular Makefile system with extension points (hooks) for customization. See [.rhiza/make.d/README.md](.rhiza/make.d/README.md) for the complete guide including:
+Rhiza uses a modular Makefile system with extension points (hooks) for customisation. See [.rhiza/make.d/README.md](.rhiza/make.d/README.md) for the complete guide including:
 - Extension points and hooks
 - Custom target creation
 - Module ordering conventions

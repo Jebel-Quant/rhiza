@@ -33,7 +33,7 @@ default:
       - stuck_or_timeout_failure
 
 # Include individual workflow files
-# These files are organized by purpose and mirror the GitHub Actions structure
+# These files are organised by purpose and mirror the GitHub Actions structure
 
 # CI/CD Testing Workflows
 include:
