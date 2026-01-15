@@ -1,6 +1,7 @@
 # Rhiza Project Analysis
 
 **Date**: 2026-01-15
+**Last Updated**: 2026-01-15
 **Analysed by**: Claude Code (claude-opus-4-5-20251101)
 
 ---
@@ -178,19 +179,20 @@ Once a package is published to PyPI, it cannot be unpublished (only deleted). No
 
 ### Medium Priority Issues
 
-#### Hard-Coded Versions Across Workflows
-```yaml
-# Appears in 4+ workflow files
-astral-sh/setup-uv@v7
-version: "0.9.24"
-```
-Dependabot updates one place; manual synchronisation needed for others.
+#### ~~Hard-Coded Versions Across Workflows~~ ✅ RESOLVED
+~~Previously, uv version `0.9.24` was hardcoded in 6 places across 5 workflow files.~~
 
-**Affected files**:
-- `.github/workflows/rhiza_ci.yml`
-- `.github/workflows/rhiza_release.yml`
-- `.github/workflows/rhiza_pre-commit.yml`
-- `.github/workflows/rhiza_deptry.yml`
+**Resolution**: Created `.rhiza/uv-version.txt` as single source of truth. All workflows now read version dynamically:
+```yaml
+- name: Get uv version
+  id: uv-version
+  run: echo "version=$(cat .rhiza/uv-version.txt)" >> $GITHUB_OUTPUT
+
+- name: Install uv
+  uses: astral-sh/setup-uv@v7
+  with:
+    version: ${{ steps.uv-version.outputs.version }}
+```
 
 #### No Conflict Resolution in Template Sync
 If a user modifies a synced file, no strategy exists for handling conflicts during `uvx rhiza materialize`. The file is overwritten without warning.
@@ -220,14 +222,14 @@ import re
 
 ### Minor Issues
 
-| Issue | Impact |
-|-------|--------|
-| No coverage badge | Metrics not visible to contributors |
-| No end-to-end tests | Full workflow not validated |
-| No ADRs | Design decisions undocumented |
-| No `make print-*` targets | Debugging Makefile variables difficult |
-| 40+ targets without search | Discovery friction |
-| No deprecation strategy | Breaking changes undocumented |
+| Issue | Impact | Status |
+|-------|--------|--------|
+| No coverage badge | Metrics not visible to contributors | Open |
+| ~~No end-to-end tests~~ | ~~Full workflow not validated~~ | ✅ Resolved |
+| No ADRs | Design decisions undocumented | Open |
+| No `make print-*` targets | Debugging Makefile variables difficult | Open |
+| 40+ targets without search | Discovery friction | Open |
+| No deprecation strategy | Breaking changes undocumented | Open |
 
 ---
 

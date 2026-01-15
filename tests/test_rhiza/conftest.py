@@ -48,6 +48,7 @@ def pytest_collection_modifyitems(config, items):
         if "slow" in item.keywords and not config.getoption("--run-slow"):
             item.add_marker(skip_slow)
 
+
 # Get absolute paths for executables to avoid S607 warnings
 GIT = shutil.which("git") or "/usr/bin/git"
 

@@ -15,7 +15,6 @@ The workflow tested:
     5. release - Test the release workflow (version bumping, tagging)
 """
 
-import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -147,9 +146,7 @@ class TestRhizaInit:
             fresh_project / ".rhiza" / "template.yml",
             fresh_project / ".github" / "rhiza" / "template.yml",
         ]
-        assert any(
-            loc.exists() for loc in template_locations
-        ), "template.yml not created in expected locations"
+        assert any(loc.exists() for loc in template_locations), "template.yml not created in expected locations"
 
 
 class TestRhizaMaterialize:
@@ -213,9 +210,7 @@ class TestFullWorkflow:
             cwd=fresh_project,
             timeout=120,
         )
-        assert (
-            materialize_result.returncode == 0
-        ), f"materialize failed: {materialize_result.stderr}"
+        assert materialize_result.returncode == 0, f"materialize failed: {materialize_result.stderr}"
 
         # Verify Makefile exists before install
         makefile = fresh_project / "Makefile"
