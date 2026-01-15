@@ -78,11 +78,12 @@ Colour-coded output with consistent formatting:
 
 ### 3. Strong Test Infrastructure
 
-**Coverage**: 1,736 lines across 13 test files
+**Coverage**: ~2,050 lines across 14 test files
 
 | Test File | Purpose |
 |-----------|---------|
-| `conftest.py` | Fixtures: `root`, `logger`, `git_repo` |
+| `conftest.py` | Fixtures: `root`, `logger`, `git_repo`, pytest hooks |
+| `test_e2e_workflow.py` | End-to-end integration tests (7 tests) |
 | `test_makefile.py` | Makefile target validation |
 | `test_makefile_api.py` | Makefile API tests |
 | `test_release_script.py` | Release automation (236 lines) |
@@ -238,12 +239,10 @@ import re
 ### 1. Copy-Paste Configuration
 Files like `pre-commit-config.yaml`, `ruff.toml`, `pytest.ini` are replicated across downstream projects with no centralised reference. Drift is inevitable.
 
-### 2. Version Drift Risk
-```
-uv version: 0.9.24
-Locations: 4+ workflow files
-Update mechanism: Manual after Dependabot PR
-```
+### ~~2. Version Drift Risk~~ ✅ RESOLVED
+~~Previously uv version was hardcoded in multiple workflow files.~~
+
+**Resolution**: Version now centralised in `.rhiza/uv-version.txt`. To update uv across all workflows, edit this single file.
 
 ### 3. Test Fixture Complexity
 Mock scripts embedded in `conftest.py` are:
@@ -263,11 +262,12 @@ Mock scripts embedded in `conftest.py` are:
 | Metric | Value |
 |--------|-------|
 | Total Makefile lines | ~693 (across all .mk files) |
-| Test lines | 1,736 |
+| Test lines | ~2,050 (including new e2e tests) |
 | GitHub workflow files | 11 |
 | README length | 471 lines |
 | Python versions supported | 3.11, 3.12, 3.13, 3.14 |
 | Make targets | 40+ |
+| Integration test count | 7 (in `test_e2e_workflow.py`) |
 
 ---
 
@@ -288,15 +288,8 @@ Mock scripts embedded in `conftest.py` are:
        @echo '$*=$($*)'
    ```
 
-3. **Centralise uv version**
-   Create `.rhiza/uv-version.txt`:
-   ```
-   0.9.24
-   ```
-   Reference in workflows:
-   ```yaml
-   version: ${{ file('.rhiza/uv-version.txt') }}
-   ```
+3. ~~**Centralise uv version**~~ ✅ **COMPLETED**
+   Created `.rhiza/uv-version.txt` with version `0.9.24`. Updated all 5 workflow files (7 occurrences) to read version dynamically using `$GITHUB_OUTPUT`.
 
 ### Short-Term (2-4 weeks)
 
@@ -317,8 +310,15 @@ Mock scripts embedded in `conftest.py` are:
    fi
    ```
 
-6. **Create end-to-end test**
-   Test full workflow: init → materialize → install → test → release
+6. ~~**Create end-to-end test**~~ ✅ **COMPLETED**
+   Created `tests/test_rhiza/test_e2e_workflow.py` with 7 integration tests covering:
+   - `TestRhizaInit` - Tests `rhiza init` command
+   - `TestRhizaMaterialize` - Tests `rhiza materialize` command
+   - `TestFullWorkflow` - Tests init → materialize → install → test → fmt
+   - `TestVersionBump` - Tests version operations
+   - `TestCleanProject` - Tests `make clean`
+
+   Run with: `pytest tests/test_rhiza/test_e2e_workflow.py -v --run-integration --run-slow`
 
 7. **Add ADRs**
    Document key decisions:
@@ -348,12 +348,58 @@ Mock scripts embedded in `conftest.py` are:
 
 ---
 
+## Changes Implemented
+
+The following improvements have been made based on this analysis:
+
+### 1. Centralised uv Version (Recommendation #3) ✅
+
+**Problem**: uv version `0.9.24` was hardcoded in 6 places across 5 workflow files.
+
+**Solution**:
+- Created `.rhiza/uv-version.txt` containing the version
+- Updated all workflows to read version dynamically:
+  - `rhiza_ci.yml` (2 places)
+  - `rhiza_release.yml` (2 places)
+  - `rhiza_book.yml` (1 place)
+  - `rhiza_marimo.yml` (1 place)
+  - `rhiza_sync.yml` (1 place)
+
+**Impact**: To update uv version across all workflows, now edit a single file.
+
+### 2. End-to-End Integration Tests (Recommendation #6) ✅
+
+**Problem**: No tests validated the full Rhiza workflow.
+
+**Solution**:
+- Created `tests/test_rhiza/test_e2e_workflow.py` (320 lines, 7 tests)
+- Added `--run-integration` and `--run-slow` pytest flags
+- Updated `pytest.ini` with custom markers
+- Updated `conftest.py` with skip logic
+- Documented in `tests/test_rhiza/README.md`
+
+**Tests cover**:
+- `rhiza init` command
+- `rhiza materialize` command
+- Full workflow: init → materialize → install → test → fmt
+- Version operations
+- Project cleanup
+
+**Usage**:
+```bash
+pytest tests/test_rhiza/test_e2e_workflow.py -v --run-integration --run-slow
+```
+
+---
+
 ## Conclusion
 
 Rhiza is a well-engineered project that successfully addresses the "template drift" problem in Python development. The modular Makefile system, comprehensive CI/CD, and professional documentation make it an excellent choice for teams managing multiple repositories.
 
 **Key strengths**: Extensibility, security posture, developer experience, testing coverage.
 
-**Priority improvements**: Error recovery, conflict resolution, audit logging, version synchronisation.
+**Priority improvements**: Error recovery, conflict resolution, audit logging.
+
+**Recently resolved**: Version synchronisation, end-to-end testing.
 
 The project is production-ready and demonstrates thoughtful engineering decisions throughout.
