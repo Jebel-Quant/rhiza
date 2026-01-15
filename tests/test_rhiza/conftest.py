@@ -50,7 +50,7 @@ def pytest_collection_modifyitems(config, items):
 
 
 # Get absolute paths for executables to avoid S607 warnings
-GIT = shutil.which("git") or "/usr/bin/git"
+GIT = os.getenv("GIT", shutil.which("git") or "/usr/bin/git")
 
 MOCK_MAKE_SCRIPT = """#!/usr/bin/env python3
 import sys
