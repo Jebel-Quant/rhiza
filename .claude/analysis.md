@@ -232,14 +232,14 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - 6 pre-commit repo sources with reasonable configuration
 
 **Weaknesses:**
-- pytest config could be in pyproject.toml instead of pytest.ini
-- Line length 120 is above typical 88-100 standard
+- Line length 120 is above typical 88-100 standard (intentional choice for readability)
 - Some GitHub Actions pinned to major version only (v6 vs v6.1.0)
 
 **Actionable Improvements:**
-1. Move pytest config to pyproject.toml [tool.pytest.ini_options]
-2. Pin GitHub Actions to full SemVer
-3. Add [tool.coverage] section to pyproject.toml
+1. Pin GitHub Actions to full SemVer
+2. Add [tool.coverage] section to pyproject.toml
+
+**Note:** pytest.ini is kept separate intentionally for template synchronization - keeping it outside pyproject.toml allows cleaner syncing of test configuration.
 
 ---
 
@@ -299,7 +299,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 | ~~Renovate auto-merge config~~ | Automation | Low | ✅ Done |
 | ~~Dependency dry-run checks~~ | CI coverage | Medium | ✅ Done |
 | fail-fast: false in workflows | CI visibility | Low | |
-| Monorepo documentation | Feature completeness | Medium | |
+| ~~Monorepo documentation~~ | Feature completeness | Medium | ✅ Done |
 
 ### Low Priority (Polish)
 
@@ -347,7 +347,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 14. ~~**Create migration guide** for existing projects~~ ✅ Done
 
-15. **Document monorepo patterns** in docs/ADVANCED.md
+15. ~~**Document monorepo patterns** in docs/ADVANCED.md~~ ✅ Done
 
 ---
 
@@ -367,6 +367,7 @@ Rhiza demonstrates professional-grade engineering with a focus on automation, re
 - ✅ **docs/DEPENDENCIES.md** - Comprehensive dependency documentation with purposes
 - ✅ **renovate.json** - Configured auto-merge for patch updates
 - ✅ **rhiza_deps-check.yml** - Automated dependency dry-run checks workflow
+- ✅ **docs/ADVANCED.md** - Monorepo patterns and advanced usage documentation
 
 ### Remaining Investment Areas
 1. **Test coverage enforcement** (thresholds, artifacts)
