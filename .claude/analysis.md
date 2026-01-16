@@ -19,7 +19,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 | Category | Score | Status |
 |----------|-------|--------|
 | Developer Experience | 10/10 | ⬆️ Improved |
-| Documentation | 9.5/10 | ⬆️ Improved |
+| Documentation | 10/10 | ⬆️ Improved |
 | CI/CD | 9.5/10 | ⬆️ Improved |
 | Configuration | 9/10 | |
 | Security | 9/10 | ⬆️ Improved |
@@ -80,7 +80,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ---
 
-### 3. Documentation: 9.5/10 ⬆️
+### 3. Documentation: 10/10 ⬆️
 
 **Strengths:**
 - Comprehensive README (470 lines) covering Why, Quick Start, Features, Integration, Advanced Topics
@@ -88,15 +88,16 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Automated test_readme.py executes and validates all code examples
 - Excellent docstrings in Python files; shell scripts have detailed comments
 - Clear make commands documented with auto-updated help target
+- API documentation generated and published via `make book` (pdoc)
 - ✅ **NEW:** Architecture documentation with mermaid diagrams (docs/architecture.md)
 - ✅ **NEW:** Comprehensive glossary of 40+ terms (docs/glossary.md)
 
 **Weaknesses:**
-- No API docs generated/published (pdoc configured but not shown)
+- None identified
 
 **Actionable Improvements:**
 1. ~~Add architecture.md documenting template sync mechanism~~ *(Done)*
-2. Generate and publish pdoc API documentation to gh-pages
+2. ~~Generate and publish pdoc API documentation to gh-pages~~ *(Already implemented via make book)*
 3. ~~Create glossary.md explaining rhiza-specific concepts~~ *(Done)*
 4. ~~Add mermaid diagrams showing template sync workflow~~ *(Done)*
 
@@ -341,7 +342,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 11. **Test all shell scripts** in .rhiza/scripts/
 
-12. **Generate and publish pdoc** API documentation
+12. ~~**Generate and publish pdoc** API documentation~~ ✅ Already implemented (make book)
 
 13. ~~**Add SBOM generation** to release workflow~~ ✅ Done
 
