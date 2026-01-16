@@ -1,4 +1,4 @@
-"""Tests for the release.sh script using a sandboxed git environment.
+"""Tests for the release.py script using a sandboxed git environment.
 
 This file and its associated tests flow down via a SYNC action from the jebel-quant/rhiza repository
 (https://github.com/jebel-quant/rhiza).
@@ -10,20 +10,22 @@ to avoid external dependencies.
 
 import shutil
 import subprocess
+import sys
 
 # Get absolute paths for executables to avoid S607 warnings from CodeFactor/Bandit
 SHELL = shutil.which("sh") or "/bin/sh"
 GIT = shutil.which("git") or "/usr/bin/git"
+PYTHON = sys.executable
 
 
 def test_release_creates_tag(git_repo):
     """Release creates a tag."""
-    script = git_repo / ".rhiza" / "scripts" / "release.sh"
+    script = git_repo / ".rhiza" / "scripts" / "release.py"
 
     # Run release
     # 1. Prompts to create tag -> y
     # 2. Prompts to push tag -> y
-    result = subprocess.run([SHELL, str(script)], cwd=git_repo, input="y\ny\n", capture_output=True, text=True)
+    result = subprocess.run([PYTHON, str(script)], cwd=git_repo, input="y\ny\n", capture_output=True, text=True)
     assert result.returncode == 0
     assert "Tag 'v0.1.0' created locally" in result.stdout
 
@@ -39,13 +41,13 @@ def test_release_creates_tag(git_repo):
 
 def test_release_fails_if_local_tag_exists(git_repo):
     """If the target tag already exists locally, release should warn and abort if user says no."""
-    script = git_repo / ".rhiza" / "scripts" / "release.sh"
+    script = git_repo / ".rhiza" / "scripts" / "release.py"
 
     # Create a local tag that matches current version
     subprocess.run([GIT, "tag", "v0.1.0"], cwd=git_repo, check=True)
 
     # Input 'n' to abort
-    result = subprocess.run([SHELL, str(script)], cwd=git_repo, input="n\n", capture_output=True, text=True)
+    result = subprocess.run([PYTHON, str(script)], cwd=git_repo, input="n\n", capture_output=True, text=True)
 
     assert result.returncode == 0
     assert "Tag 'v0.1.0' already exists locally" in result.stdout
@@ -54,13 +56,13 @@ def test_release_fails_if_local_tag_exists(git_repo):
 
 def test_release_fails_if_remote_tag_exists(git_repo):
     """Release fails if tag exists on remote."""
-    script = git_repo / ".rhiza" / "scripts" / "release.sh"
+    script = git_repo / ".rhiza" / "scripts" / "release.py"
 
     # Create tag locally and push to remote
     subprocess.run([GIT, "tag", "v0.1.0"], cwd=git_repo, check=True)
     subprocess.run([GIT, "push", "origin", "v0.1.0"], cwd=git_repo, check=True)
 
-    result = subprocess.run([SHELL, str(script)], cwd=git_repo, input="y\n", capture_output=True, text=True)
+    result = subprocess.run([PYTHON, str(script)], cwd=git_repo, input="y\n", capture_output=True, text=True)
 
     assert result.returncode == 1
     assert "already exists on remote" in result.stdout
@@ -68,13 +70,13 @@ def test_release_fails_if_remote_tag_exists(git_repo):
 
 def test_release_uncommitted_changes_failure(git_repo):
     """Release fails if there are uncommitted changes (even pyproject.toml)."""
-    script = git_repo / ".rhiza" / "scripts" / "release.sh"
+    script = git_repo / ".rhiza" / "scripts" / "release.py"
 
     # Modify pyproject.toml (which is allowed in bump but NOT in release)
     with open(git_repo / "pyproject.toml", "a") as f:
         f.write("\n# comment")
 
-    result = subprocess.run([SHELL, str(script)], cwd=git_repo, capture_output=True, text=True)
+    result = subprocess.run([PYTHON, str(script)], cwd=git_repo, capture_output=True, text=True)
 
     assert result.returncode == 1
     assert "You have uncommitted changes" in result.stdout
@@ -82,7 +84,7 @@ def test_release_uncommitted_changes_failure(git_repo):
 
 def test_release_pushes_if_ahead_of_remote(git_repo):
     """Release prompts to push if local branch is ahead of remote."""
-    script = git_repo / ".rhiza" / "scripts" / "release.sh"
+    script = git_repo / ".rhiza" / "scripts" / "release.py"
 
     # Create a commit locally that isn't on remote
     tracked_file = git_repo / "file.txt"
@@ -94,7 +96,7 @@ def test_release_pushes_if_ahead_of_remote(git_repo):
     # 1. Prompts to push -> y
     # 2. Prompts to create tag -> y
     # 3. Prompts to push tag -> y
-    result = subprocess.run([SHELL, str(script)], cwd=git_repo, input="y\ny\ny\n", capture_output=True, text=True)
+    result = subprocess.run([PYTHON, str(script)], cwd=git_repo, input="y\ny\ny\n", capture_output=True, text=True)
 
     assert result.returncode == 0
     assert "Your branch is ahead" in result.stdout
@@ -105,7 +107,7 @@ def test_release_pushes_if_ahead_of_remote(git_repo):
 
 def test_release_fails_if_behind_remote(git_repo):
     """Release fails if local branch is behind remote."""
-    script = git_repo / ".rhiza" / "scripts" / "release.sh"
+    script = git_repo / ".rhiza" / "scripts" / "release.py"
 
     # Create a commit on remote that isn't local
     # We need to clone another repo to push to remote
@@ -124,7 +126,7 @@ def test_release_fails_if_behind_remote(git_repo):
     subprocess.run([GIT, "push"], cwd=other_clone, check=True)
 
     # Run release (it will fetch and see it's behind)
-    result = subprocess.run([SHELL, str(script)], cwd=git_repo, capture_output=True, text=True)
+    result = subprocess.run([PYTHON, str(script)], cwd=git_repo, capture_output=True, text=True)
 
     assert result.returncode == 1
     assert "Your branch is behind" in result.stdout

@@ -60,7 +60,7 @@ def bump_version(current, bump_type):
 
 def main():
     args = sys.argv[1:]
-    # Expected invocations from release.sh start with 'version'
+    # Expected invocations from release.py start with 'version'
     if not args:
         sys.exit(1)
 
@@ -185,14 +185,14 @@ def git_repo(root, tmp_path, monkeypatch):
     script_dir = local_dir / ".rhiza" / "scripts"
     script_dir.mkdir(parents=True)
 
-    shutil.copy(root / ".rhiza" / "scripts" / "release.sh", script_dir / "release.sh")
+    shutil.copy(root / ".rhiza" / "scripts" / "release.py", script_dir / "release.py")
     shutil.copy(root / ".rhiza" / "rhiza.mk", local_dir / ".rhiza" / "rhiza.mk")
     shutil.copy(root / "Makefile", local_dir / "Makefile")
     os.makedirs(local_dir / "book" / "marimo", exist_ok=True)
     shutil.copy(root / "book" / "book.mk", local_dir / "book" / "book.mk")
     shutil.copy(root / "book" / "marimo" / "marimo.mk", local_dir / "book" / "marimo" / "marimo.mk")
 
-    (script_dir / "release.sh").chmod(0o755)
+    (script_dir / "release.py").chmod(0o755)
 
     # Commit and push initial state
     subprocess.run([GIT, "config", "user.email", "test@example.com"], check=True)
