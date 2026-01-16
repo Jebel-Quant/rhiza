@@ -123,7 +123,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 **Actionable Improvements:**
 1. ~~Create .github/WORKFLOWS.md documenting each workflow~~ *(Done)*
 2. ~~Add artifact upload steps for coverage reports~~ *(N/A - coverage published via make book)*
-3. Document required repository secrets in CONTRIBUTING.md
+3. ~~Document required repository secrets in CONTRIBUTING.md~~ *(Done)*
 4. Add `fail-fast: false` to matrix jobs to see all failures
 
 ---
