@@ -24,11 +24,11 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 | Configuration | 9/10 | |
 | Security | 8.5/10 | ⬆️ Improved |
 | Architecture | 8.5/10 | ⬆️ Improved |
+| Shell Scripts | 8.5/10 | ⬆️ Improved |
 | Code Quality | 8/10 | |
 | Dependency Management | 8/10 | |
-| Shell Scripts | 8/10 | |
 | Test Coverage | 7/10 | |
-| **Overall** | **8.6/10** | ⬆️ +0.4 |
+| **Overall** | **8.65/10** | ⬆️ +0.45 |
 
 ---
 
@@ -239,7 +239,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ---
 
-### 10. Shell Scripts: 8/10
+### 10. Shell Scripts: 8.5/10 ⬆️
 
 **Strengths:**
 - POSIX compliance (#!/bin/sh with POSIX-compatible syntax)
@@ -248,6 +248,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Interactive prompts with confirm logic
 - Sophisticated git operations with branch status checks
 - Clear usage() function documentation
+- ✅ **NEW:** Comprehensive script documentation (.rhiza/scripts/README.md)
 
 **Weaknesses:**
 - release.sh is 235 lines; could be modularized
@@ -259,7 +260,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 1. Run shellcheck: `shellcheck .rhiza/scripts/release.sh`
 2. Add `--dry-run` flag to release.sh
 3. Add `set -u` for undefined variable catching
-4. Create .rhiza/scripts/README.md documenting each script
+4. ~~Create .rhiza/scripts/README.md documenting each script~~ *(Done)*
 5. Extract git operations into helper script
 
 ---
@@ -357,6 +358,7 @@ Rhiza demonstrates professional-grade engineering with a focus on automation, re
 - ✅ **docs/glossary.md** - 40+ Rhiza-specific terms and concepts defined
 - ✅ **docs/QUICK_REFERENCE.md** - Essential 10 commands and daily workflow guide
 - ✅ **docs/MIGRATION.md** - Step-by-step migration guide for legacy projects
+- ✅ **.rhiza/scripts/README.md** - Shell script documentation with conventions and examples
 
 ### Remaining Investment Areas
 1. **SBOM generation** - Add to release workflow for supply chain security
