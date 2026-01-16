@@ -146,3 +146,44 @@ For PyPI releases, we recommend using OIDC trusted publishing instead of tokens:
    - Environment: `release`
 
 This eliminates the need for stored PyPI credentials.
+
+### Branch Protection Rules
+
+We recommend configuring branch protection rules for the `main` branch to ensure code quality and prevent accidental changes.
+
+**To configure branch protection:**
+
+1. Navigate to your repository on GitHub
+2. Go to **Settings** → **Branches**
+3. Click **Add branch protection rule**
+4. Set **Branch name pattern** to `main`
+
+**Recommended settings:**
+
+| Setting | Recommended | Description |
+|---------|-------------|-------------|
+| **Require a pull request before merging** | ✅ Yes | Prevents direct pushes to main |
+| **Require approvals** | 1+ | Number of required review approvals |
+| **Dismiss stale pull request approvals** | ✅ Yes | Re-review required after new commits |
+| **Require status checks to pass** | ✅ Yes | CI must pass before merge |
+| **Require branches to be up to date** | ✅ Yes | Branch must be current with main |
+| **Require conversation resolution** | ✅ Yes | All review comments must be resolved |
+| **Require signed commits** | Optional | Enforce GPG-signed commits |
+| **Include administrators** | ✅ Yes | Rules apply to admins too |
+| **Allow force pushes** | ❌ No | Prevent history rewriting |
+| **Allow deletions** | ❌ No | Prevent branch deletion |
+
+**Required status checks:**
+
+Add these workflows as required status checks:
+
+- `(RHIZA) CI` - Tests must pass on all Python versions
+- `(RHIZA) PRE-COMMIT` - Code formatting and linting
+- `(RHIZA) DEPTRY` - Dependency hygiene
+
+**For organizations using GitHub Enterprise:**
+
+Consider also enabling:
+- **Require code owner reviews** - CODEOWNERS file determines reviewers
+- **Restrict who can push** - Limit to specific teams
+- **Require linear history** - Enforce squash or rebase merges

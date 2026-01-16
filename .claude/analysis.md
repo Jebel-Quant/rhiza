@@ -150,7 +150,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 2. ~~Create SECURITY.md with vulnerability reporting instructions~~ *(Done)*
 3. Remove `-ignore SC` from actionlint to catch all shell issues
 4. Tighten dependency versions: `marimo>=0.18.0,<1.0`
-5. Document branch protection rules for main
+5. ~~Document branch protection rules for main~~ *(Done)*
 
 ---
 
