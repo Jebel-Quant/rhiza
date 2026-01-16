@@ -2,7 +2,7 @@
 
 **Repository**: Rhiza
 **Analysis Date**: 2026-01-16
-**Overall Score**: 8.9/10 *(Updated from 8.7 after dependency management improvements)*
+**Overall Score**: 9.1/10 *(Updated from 8.9 after coverage clarifications)*
 
 ---
 
@@ -24,11 +24,11 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 | Configuration | 9/10 | |
 | Security | 9/10 | ⬆️ Improved |
 | Dependency Management | 9.5/10 | ⬆️ Improved |
+| Test Coverage | 9/10 | ⬆️ Improved |
 | Architecture | 8.5/10 | ⬆️ Improved |
 | Shell Scripts | 8.5/10 | ⬆️ Improved |
 | Code Quality | 8/10 | |
-| Test Coverage | 7/10 | |
-| **Overall** | **8.9/10** | ⬆️ +0.7 |
+| **Overall** | **9.1/10** | ⬆️ +0.9 |
 
 ---
 
@@ -56,7 +56,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ---
 
-### 2. Test Coverage: 7/10
+### 2. Test Coverage: 9/10 ⬆️
 
 **Strengths:**
 - 1,366 lines of test code across 13 test files
@@ -64,19 +64,21 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Sophisticated git_repo fixture creates full bare repo + local clone for integration testing
 - Good use of mocking to avoid external dependencies
 - Tests for edge cases: uncommitted changes, tag conflicts, branch divergence
+- Coverage measured and uploaded via CI
+- HTML coverage reports published as part of `make book`
+- Coverage badge generated for README
 
 **Weaknesses:**
-- No coverage thresholds enforced in CI
 - Only release.sh tested among shell scripts
-- Coverage reporting exists but not visible in CI artifacts
 - Benchmark directory exists but not integrated into CI
 
+**Note:** No coverage thresholds enforced because this is a template repository without a `src/` folder containing application code to measure.
+
 **Actionable Improvements:**
-1. Add `pytest.ini` coverage thresholds: `--cov-fail-under=80`
+1. ~~Add coverage thresholds~~ *(N/A - template repo has no src folder)*
 2. Create tests for version_matrix.py edge cases
 3. Test all shell scripts in .rhiza/scripts/
 4. Integrate benchmark results into CI with performance regression detection
-5. Add HTML coverage reports to artifact uploads
 
 ---
 
@@ -273,9 +275,9 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 | Issue | Impact | Effort |
 |-------|--------|--------|
-| No test coverage thresholds in CI | Quality regression risk | Low |
+| ~~No test coverage thresholds in CI~~ | ~~Quality regression risk~~ | ~~Low~~ | N/A (template repo) |
 | Release script lacks --dry-run | Risk of accidental releases | Medium |
-| No API documentation published | Reduced discoverability | Low |
+| ~~No API documentation published~~ | ~~Reduced discoverability~~ | ~~Low~~ | ✅ Done (make book) |
 | Incomplete shell script testing | Untested critical paths | Medium |
 
 ### High Priority (Next Sprint)
@@ -313,10 +315,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ### Immediate Actions (< 1 hour each)
 
-1. **Add coverage threshold** to pytest.ini:
-   ```ini
-   addopts = --cov=. --cov-fail-under=80
-   ```
+1. ~~**Add coverage threshold** to pytest.ini~~ *(N/A - template repo has no src folder)*
 
 2. ~~**Create SECURITY.md** with vulnerability reporting process~~ ✅ Done
 
@@ -334,7 +333,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 8. **Write tests for version_matrix.py** edge cases
 
-9. **Configure artifact uploads** for coverage reports in CI
+9. ~~**Configure artifact uploads** for coverage reports in CI~~ ✅ Already implemented (make book)
 
 10. **Add make setup-hooks target** for local development
 
