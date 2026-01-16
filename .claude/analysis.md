@@ -163,14 +163,14 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Pytest fixtures follow proper scoping (session → function)
 - Docker multi-stage build pattern
 - ✅ **NEW:** Comprehensive architecture documentation (docs/architecture.md)
+- ✅ **NEW:** Monorepo patterns and advanced usage (docs/ADVANCED.md)
 
 **Weaknesses:**
-- No monorepo support documentation
 - No conflict resolution guide for template syncs
 - No validation of custom Makefile targets
 
 **Actionable Improvements:**
-1. Document monorepo patterns in docs/ADVANCED.md
+1. ~~Document monorepo patterns in docs/ADVANCED.md~~ *(Done)*
 2. Create conflict resolution guide for template syncs
 3. Add Makefile target validation in pre-commit
 4. Create example "custom" template repository
