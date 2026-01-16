@@ -73,14 +73,14 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 **Weaknesses:**
 - No API docs generated/published (pdoc configured but not shown)
-- No high-level architecture diagram
+- ~~No high-level architecture diagram~~ *(Fixed: docs/architecture.md added)*
 - No glossary for template-specific terminology
 
 **Actionable Improvements:**
-1. Add architecture.md documenting template sync mechanism
+1. ~~Add architecture.md documenting template sync mechanism~~ *(Done)*
 2. Generate and publish pdoc API documentation to gh-pages
 3. Create glossary.md explaining rhiza-specific concepts
-4. Add mermaid diagrams showing template sync workflow
+4. ~~Add mermaid diagrams showing template sync workflow~~ *(Done)*
 
 ---
 
@@ -334,6 +334,7 @@ Rhiza demonstrates professional-grade engineering with a focus on automation, re
 ### Completed Improvements (This PR)
 - ✅ **SECURITY.md** - Vulnerability reporting instructions added
 - ✅ **.github/WORKFLOWS.md** - All 11 workflows documented with triggers, permissions, and required configuration
+- ✅ **docs/architecture.md** - Template sync mechanism, Makefile hierarchy, and release pipeline with mermaid diagrams
 
 ### Remaining Investment Areas
 1. **SBOM generation** - Add to release workflow for supply chain security
