@@ -2,15 +2,33 @@
 
 **Repository**: Rhiza
 **Analysis Date**: 2026-01-16
-**Overall Score**: 8.2/10
+**Overall Score**: 8.5/10 *(Updated from 8.2 after PR improvements)*
 
 ---
 
 ## Executive Summary
 
-Rhiza is a well-architected, professionally-maintained repository implementing an innovative "living templates" pattern that solves the real problem of configuration drift in Python projects. The execution across CI/CD, testing, and documentation is solid. Main improvement areas are security documentation, test coverage thresholds, and shell script coverage.
+Rhiza is a well-architected, professionally-maintained repository implementing an innovative "living templates" pattern that solves the real problem of configuration drift in Python projects. The execution across CI/CD, testing, and documentation is solid. Remaining improvement areas are test coverage thresholds and shell script hardening.
 
 **Quality Tier**: Enterprise-Grade / Production-Ready
+
+---
+
+## Score Summary
+
+| Category | Score | Status |
+|----------|-------|--------|
+| Documentation | 9.5/10 | ⬆️ Improved |
+| CI/CD | 9.5/10 | ⬆️ Improved |
+| Developer Experience | 9/10 | |
+| Configuration | 9/10 | |
+| Security | 8.5/10 | ⬆️ Improved |
+| Architecture | 8.5/10 | ⬆️ Improved |
+| Code Quality | 8/10 | |
+| Dependency Management | 8/10 | |
+| Shell Scripts | 8/10 | |
+| Test Coverage | 7/10 | |
+| **Overall** | **8.5/10** | ⬆️ +0.3 |
 
 ---
 
@@ -62,7 +80,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ---
 
-### 3. Documentation: 9/10
+### 3. Documentation: 9.5/10 ⬆️
 
 **Strengths:**
 - Comprehensive README (470 lines) covering Why, Quick Start, Features, Integration, Advanced Topics
@@ -70,11 +88,11 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Automated test_readme.py executes and validates all code examples
 - Excellent docstrings in Python files; shell scripts have detailed comments
 - Clear make commands documented with auto-updated help target
+- ✅ **NEW:** Architecture documentation with mermaid diagrams (docs/architecture.md)
+- ✅ **NEW:** Comprehensive glossary of 40+ terms (docs/glossary.md)
 
 **Weaknesses:**
 - No API docs generated/published (pdoc configured but not shown)
-- ~~No high-level architecture diagram~~ *(Fixed: docs/architecture.md added)*
-- ~~No glossary for template-specific terminology~~ *(Fixed: docs/glossary.md added)*
 
 **Actionable Improvements:**
 1. ~~Add architecture.md documenting template sync mechanism~~ *(Done)*
@@ -84,7 +102,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ---
 
-### 4. CI/CD: 9/10
+### 4. CI/CD: 9.5/10 ⬆️
 
 **Strengths:**
 - 11 workflows covering CI, pre-commit, release, book, marimo, docker, devcontainer, codeql, deptry, sync, validate
@@ -93,12 +111,12 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - OIDC authentication for PyPI (trusted publishing without stored credentials)
 - Minimal permissions (contents: read) for security
 - Sophisticated release workflow with multi-phase (validate → build → draft → publish)
+- ✅ **NEW:** Comprehensive workflow documentation (.github/WORKFLOWS.md)
+- ✅ **NEW:** Required secrets and variables documented
 
 **Weaknesses:**
-- ~~No centralized workflow documentation~~ *(Fixed: .github/WORKFLOWS.md added)*
 - Test artifacts/coverage not uploaded
 - Some workflows missing `fail-fast: false`
-- ~~No guidance on required secrets/tokens~~ *(Fixed: documented in WORKFLOWS.md)*
 
 **Actionable Improvements:**
 1. ~~Create .github/WORKFLOWS.md documenting each workflow~~ *(Done)*
@@ -108,7 +126,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ---
 
-### 5. Security: 8/10
+### 5. Security: 8.5/10 ⬆️
 
 **Strengths:**
 - CodeQL analysis for Python and shell scripts
@@ -117,12 +135,12 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Dockerfile: multi-stage build, non-root user, slim base images
 - uv.lock ensures reproducible builds
 - Minimal workflow permissions by default
+- ✅ **NEW:** SECURITY.md with vulnerability reporting process
 
 **Weaknesses:**
 - No SBOM (Software Bill of Materials) generation
 - Some dependencies use loose versions (`marimo>=0.18.0`)
 - actionlint runs with `-ignore SC` (ignoring ShellCheck warnings)
-- ~~No SECURITY.md for vulnerability reporting~~ *(Fixed: SECURITY.md added)*
 - Git tag signing is optional
 
 **Actionable Improvements:**
@@ -134,7 +152,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ---
 
-### 6. Architecture: 8/10
+### 6. Architecture: 8.5/10 ⬆️
 
 **Strengths:**
 - Novel "living templates" approach via .rhiza/template.yml and sync.sh
@@ -142,6 +160,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Clean configuration separation (ruff.toml, pytest.ini, .pre-commit-config.yaml)
 - Pytest fixtures follow proper scoping (session → function)
 - Docker multi-stage build pattern
+- ✅ **NEW:** Comprehensive architecture documentation (docs/architecture.md)
 
 **Weaknesses:**
 - No monorepo support documentation
@@ -276,11 +295,11 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ### Low Priority (Polish)
 
-| Issue | Impact | Effort |
-|-------|--------|--------|
-| Quick reference card | Minor DX improvement | Low |
-| Extract git helper scripts | Code organization | Medium |
-| Architecture diagrams | Documentation completeness | Medium |
+| Issue | Impact | Effort | Status |
+|-------|--------|--------|--------|
+| Quick reference card | Minor DX improvement | Low | |
+| Extract git helper scripts | Code organization | Medium | |
+| ~~Architecture diagrams~~ | Documentation completeness | Medium | ✅ Done |
 
 ---
 
