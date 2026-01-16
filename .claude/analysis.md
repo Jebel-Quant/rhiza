@@ -2,7 +2,7 @@
 
 **Repository**: Rhiza
 **Analysis Date**: 2026-01-16
-**Overall Score**: 8.5/10 *(Updated from 8.2 after PR improvements)*
+**Overall Score**: 8.7/10 *(Updated from 8.2 after PR improvements)*
 
 ---
 
@@ -287,12 +287,12 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ### Medium Priority (Backlog)
 
-| Issue | Impact | Effort |
-|-------|--------|--------|
-| Custom exception classes | Code quality | Low |
-| Shell script documentation | Maintainability | Low |
-| fail-fast: false in workflows | CI visibility | Low |
-| Monorepo documentation | Feature completeness | Medium |
+| Issue | Impact | Effort | Status |
+|-------|--------|--------|--------|
+| Custom exception classes | Code quality | Low | |
+| ~~Shell script documentation~~ | Maintainability | Low | ✅ Done |
+| fail-fast: false in workflows | CI visibility | Low | |
+| Monorepo documentation | Feature completeness | Medium | |
 
 ### Low Priority (Polish)
 
@@ -339,9 +339,9 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 12. **Generate and publish pdoc** API documentation
 
-13. **Add SBOM generation** to release workflow
+13. ~~**Add SBOM generation** to release workflow~~ ✅ Done
 
-14. **Create migration guide** for existing projects
+14. ~~**Create migration guide** for existing projects~~ ✅ Done
 
 15. **Document monorepo patterns** in docs/ADVANCED.md
 
