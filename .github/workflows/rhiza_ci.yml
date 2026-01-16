@@ -7,7 +7,7 @@
 #
 # Trigger: On push and pull requests to main/master branches.
 
-name: CI
+name: (RHIZA) CI
 
 permissions:
   contents: read

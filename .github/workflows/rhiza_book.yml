@@ -14,7 +14,7 @@
 #   - 🧪 Run tests and generate coverage reports
 #   - 🚀 Deploy combined documentation to GitHub Pages
 
-name: "BOOK"
+name: "(RHIZA) BOOK"
 
 on:
   push:

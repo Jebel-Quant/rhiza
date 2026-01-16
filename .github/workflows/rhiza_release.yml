@@ -53,7 +53,7 @@
 #   set to "true" or .devcontainer directory doesn't exist.
 
 
-name: RELEASE
+name: (RHIZA) RELEASE
 
 on:
   push:
