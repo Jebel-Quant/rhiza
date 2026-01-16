@@ -11,6 +11,7 @@ This document describes all GitHub Actions workflows in this repository.
 | [CI](#ci) | Push/PR to main | Run tests on multiple Python versions |
 | [Pre-commit](#pre-commit) | Push/PR to main | Code quality and formatting checks |
 | [Deptry](#deptry) | Push/PR to main | Detect missing/obsolete dependencies |
+| [Deps-Check](#deps-check) | Weekly/Manual | Dry-run dependency update checks |
 | [CodeQL](#codeql) | Push/PR/Weekly | Security vulnerability scanning |
 | [Docker](#docker) | Push/PR to main | Lint and validate Dockerfile |
 | [Devcontainer](#devcontainer) | Changes to .devcontainer/ | Validate devcontainer builds |
@@ -78,6 +79,37 @@ This document describes all GitHub Actions workflows in this repository.
 - Executes `make deptry` to check dependency hygiene
 
 **Permissions:** `contents: read`
+
+---
+
+### Deps-Check
+
+**File:** `rhiza_deps-check.yml`
+**Name:** (RHIZA) DEPS-CHECK
+
+**Purpose:** Validate dependency updates before they are applied, running dry-run checks to catch potential issues.
+
+**Triggers:**
+- Weekly schedule (Mondays at 06:00 UTC, before Renovate)
+- Manual dispatch with optional package filter
+
+**How it works:**
+1. Syncs the virtual environment
+2. Lists all outdated packages
+3. Performs dry-run lock upgrade to detect resolution issues
+4. Validates current lock file integrity
+5. Generates a summary report in GitHub Actions
+
+**Permissions:** `contents: read`
+
+**Inputs (manual dispatch):**
+- `package` (optional) - Specific package to check; if empty, checks all packages
+
+**Reports:**
+- Outdated packages list
+- Lock file upgrade dry-run results
+- Resolution conflict detection
+- Lock file validation status
 
 ---
 

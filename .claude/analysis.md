@@ -2,7 +2,7 @@
 
 **Repository**: Rhiza
 **Analysis Date**: 2026-01-16
-**Overall Score**: 8.7/10 *(Updated from 8.2 after PR improvements)*
+**Overall Score**: 8.9/10 *(Updated from 8.7 after dependency management improvements)*
 
 ---
 
@@ -23,12 +23,12 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 | CI/CD | 9.5/10 | ⬆️ Improved |
 | Configuration | 9/10 | |
 | Security | 9/10 | ⬆️ Improved |
+| Dependency Management | 9.5/10 | ⬆️ Improved |
 | Architecture | 8.5/10 | ⬆️ Improved |
 | Shell Scripts | 8.5/10 | ⬆️ Improved |
 | Code Quality | 8/10 | |
-| Dependency Management | 8/10 | |
 | Test Coverage | 7/10 | |
-| **Overall** | **8.7/10** | ⬆️ +0.5 |
+| **Overall** | **8.9/10** | ⬆️ +0.7 |
 
 ---
 
@@ -105,7 +105,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 ### 4. CI/CD: 9.5/10 ⬆️
 
 **Strengths:**
-- 11 workflows covering CI, pre-commit, release, book, marimo, docker, devcontainer, codeql, deptry, sync, validate
+- 12 workflows covering CI, pre-commit, release, book, marimo, docker, devcontainer, codeql, deptry, deps-check, sync, validate
 - Dynamic Python version matrix from pyproject.toml
 - CodeQL security scanning on schedule and PR/push
 - OIDC authentication for PyPI (trusted publishing without stored credentials)
@@ -197,7 +197,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ---
 
-### 8. Dependency Management: 8/10
+### 8. Dependency Management: 9.5/10 ⬆️
 
 **Strengths:**
 - uv.lock ensures reproducible builds
@@ -205,16 +205,17 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Zero runtime dependencies (only dev dependencies)
 - Tool version pinning in workflows (uv 0.9.26, ruff v0.14.13)
 - Deptry integration for dependency hygiene
+- ✅ **NEW:** Comprehensive dependency documentation (docs/DEPENDENCIES.md)
+- ✅ **NEW:** Renovate configured with auto-merge for patches
+- ✅ **NEW:** Automated dependency dry-run checks workflow
 
 **Weaknesses:**
-- No documentation explaining why each dev dependency exists
-- Renovate update strategy unclear
-- Some version constraints too loose
+- Some version constraints still loose (acceptable trade-off for flexibility)
 
 **Actionable Improvements:**
-1. Document each dev dependency purpose
-2. Configure Renovate with auto-merge for patch updates
-3. Add automated update dry-run checks to CI
+1. ~~Document each dev dependency purpose~~ *(Done)*
+2. ~~Configure Renovate with auto-merge for patch updates~~ *(Done)*
+3. ~~Add automated update dry-run checks to CI~~ *(Done)*
 
 ---
 
@@ -291,6 +292,9 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 |-------|--------|--------|--------|
 | Custom exception classes | Code quality | Low | |
 | ~~Shell script documentation~~ | Maintainability | Low | ✅ Done |
+| ~~Document dev dependencies~~ | Clarity | Low | ✅ Done |
+| ~~Renovate auto-merge config~~ | Automation | Low | ✅ Done |
+| ~~Dependency dry-run checks~~ | CI coverage | Medium | ✅ Done |
 | fail-fast: false in workflows | CI visibility | Low | |
 | Monorepo documentation | Feature completeness | Medium | |
 
@@ -323,7 +327,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ### Short-term Actions (1-4 hours each)
 
-6. ~~**Create .github/WORKFLOWS.md** documenting all 11 workflows~~ ✅ Done
+6. ~~**Create .github/WORKFLOWS.md** documenting all 12 workflows~~ ✅ Done
 
 7. **Add --dry-run flag** to release.sh script
 
@@ -353,13 +357,16 @@ Rhiza demonstrates professional-grade engineering with a focus on automation, re
 
 ### Completed Improvements (This PR)
 - ✅ **SECURITY.md** - Vulnerability reporting instructions added
-- ✅ **.github/WORKFLOWS.md** - All 11 workflows documented with triggers, permissions, and required configuration
+- ✅ **.github/WORKFLOWS.md** - All 12 workflows documented with triggers, permissions, and required configuration
 - ✅ **docs/architecture.md** - Template sync mechanism, Makefile hierarchy, and release pipeline with mermaid diagrams
 - ✅ **docs/glossary.md** - 40+ Rhiza-specific terms and concepts defined
 - ✅ **docs/QUICK_REFERENCE.md** - Essential 10 commands and daily workflow guide
 - ✅ **docs/MIGRATION.md** - Step-by-step migration guide for legacy projects
 - ✅ **.rhiza/scripts/README.md** - Shell script documentation with conventions and examples
 - ✅ **SBOM generation** - Added to release workflow (SPDX and CycloneDX formats via Syft)
+- ✅ **docs/DEPENDENCIES.md** - Comprehensive dependency documentation with purposes
+- ✅ **renovate.json** - Configured auto-merge for patch updates
+- ✅ **rhiza_deps-check.yml** - Automated dependency dry-run checks workflow
 
 ### Remaining Investment Areas
 1. **Test coverage enforcement** (thresholds, artifacts)

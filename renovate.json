@@ -1,15 +1,15 @@
 {
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": [
         "config:recommended",
         ":enablePreCommit",
-        ":automergeMinor",
         ":dependencyDashboard",
         ":maintainLockFilesWeekly",
-        ":semanticCommits",
-        ":pinDevDependencies"
+        ":semanticCommits"
     ],
     "enabledManagers": [
         "pep621",
+        "pip_requirements",
         "pre-commit",
         "github-actions",
         "devcontainer",
@@ -21,9 +21,49 @@
     ],
     "packageRules": [
       {
+        "description": "Auto-merge patch updates for all dependencies",
+        "matchUpdateTypes": ["patch"],
+        "automerge": true,
+        "automergeType": "pr",
+        "automergeStrategy": "squash"
+      },
+      {
+        "description": "Auto-merge minor updates for dev dependencies",
+        "matchDepTypes": ["devDependencies", "dev"],
+        "matchUpdateTypes": ["minor"],
+        "automerge": true,
+        "automergeType": "pr",
+        "automergeStrategy": "squash"
+      },
+      {
+        "description": "Auto-merge GitHub Actions minor and patch updates",
+        "matchManagers": ["github-actions"],
+        "matchUpdateTypes": ["minor", "patch"],
+        "automerge": true,
+        "automergeType": "pr",
+        "automergeStrategy": "squash"
+      },
+      {
+        "description": "Group all pre-commit hook updates",
+        "matchManagers": ["pre-commit"],
+        "groupName": "pre-commit hooks"
+      },
+      {
+        "description": "Group all GitHub Actions updates",
+        "matchManagers": ["github-actions"],
+        "groupName": "github-actions"
+      },
+      {
+        "description": "Disable Python version updates (managed manually)",
         "matchManagers": ["pep621"],
         "matchPackageNames": ["python"],
         "enabled": false
       }
-    ]
+    ],
+    "vulnerabilityAlerts": {
+      "enabled": true,
+      "labels": ["security"]
+    },
+    "prConcurrentLimit": 5,
+    "prHourlyLimit": 2
 }
