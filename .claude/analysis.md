@@ -118,12 +118,11 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - ✅ **NEW:** Required secrets and variables documented
 
 **Weaknesses:**
-- Test artifacts/coverage not uploaded
 - Some workflows missing `fail-fast: false`
 
 **Actionable Improvements:**
 1. ~~Create .github/WORKFLOWS.md documenting each workflow~~ *(Done)*
-2. Add artifact upload steps for coverage reports
+2. ~~Add artifact upload steps for coverage reports~~ *(N/A - coverage published via make book)*
 3. Document required repository secrets in CONTRIBUTING.md
 4. Add `fail-fast: false` to matrix jobs to see all failures
 
@@ -370,7 +369,6 @@ Rhiza demonstrates professional-grade engineering with a focus on automation, re
 - ✅ **docs/ADVANCED.md** - Monorepo patterns and advanced usage documentation
 
 ### Remaining Investment Areas
-1. **Test coverage enforcement** (thresholds, artifacts)
-2. **Shell script hardening** (dry-run, testing, ShellCheck)
+1. **Shell script hardening** (dry-run flag, testing, ShellCheck integration)
 
 With these remaining improvements, the repository would achieve a 9+/10 quality score suitable for broad enterprise adoption.
