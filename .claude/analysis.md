@@ -95,13 +95,13 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Sophisticated release workflow with multi-phase (validate → build → draft → publish)
 
 **Weaknesses:**
-- No centralized workflow documentation
+- ~~No centralized workflow documentation~~ *(Fixed: .github/WORKFLOWS.md added)*
 - Test artifacts/coverage not uploaded
 - Some workflows missing `fail-fast: false`
-- No guidance on required secrets/tokens
+- ~~No guidance on required secrets/tokens~~ *(Fixed: documented in WORKFLOWS.md)*
 
 **Actionable Improvements:**
-1. Create .github/WORKFLOWS.md documenting each workflow
+1. ~~Create .github/WORKFLOWS.md documenting each workflow~~ *(Done)*
 2. Add artifact upload steps for coverage reports
 3. Document required repository secrets in CONTRIBUTING.md
 4. Add `fail-fast: false` to matrix jobs to see all failures
@@ -122,12 +122,12 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - No SBOM (Software Bill of Materials) generation
 - Some dependencies use loose versions (`marimo>=0.18.0`)
 - actionlint runs with `-ignore SC` (ignoring ShellCheck warnings)
-- No SECURITY.md for vulnerability reporting
+- ~~No SECURITY.md for vulnerability reporting~~ *(Fixed: SECURITY.md added)*
 - Git tag signing is optional
 
 **Actionable Improvements:**
 1. Add SBOM generation (syft) to release workflow
-2. Create SECURITY.md with vulnerability reporting instructions
+2. ~~Create SECURITY.md with vulnerability reporting instructions~~ *(Done)*
 3. Remove `-ignore SC` from actionlint to catch all shell issues
 4. Tighten dependency versions: `marimo>=0.18.0,<1.0`
 5. Document branch protection rules for main
@@ -258,12 +258,12 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ### High Priority (Next Sprint)
 
-| Issue | Impact | Effort |
-|-------|--------|--------|
-| Create .github/WORKFLOWS.md | Onboarding friction | Low |
-| Add SECURITY.md | Security posture | Low |
-| Add SBOM generation to release | Supply chain security | Medium |
-| Implement make setup-hooks | Developer friction | Low |
+| Issue | Impact | Effort | Status |
+|-------|--------|--------|--------|
+| ~~Create .github/WORKFLOWS.md~~ | Onboarding friction | Low | ✅ Done |
+| ~~Add SECURITY.md~~ | Security posture | Low | ✅ Done |
+| Add SBOM generation to release | Supply chain security | Medium | |
+| Implement make setup-hooks | Developer friction | Low | |
 
 ### Medium Priority (Backlog)
 
@@ -293,7 +293,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
    addopts = --cov=. --cov-fail-under=80
    ```
 
-2. **Create SECURITY.md** with vulnerability reporting process
+2. ~~**Create SECURITY.md** with vulnerability reporting process~~ ✅ Done
 
 3. **Pin GitHub Actions** to full SemVer in all workflows
 
@@ -303,7 +303,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ### Short-term Actions (1-4 hours each)
 
-6. **Create .github/WORKFLOWS.md** documenting all 11 workflows
+6. ~~**Create .github/WORKFLOWS.md** documenting all 11 workflows~~ ✅ Done
 
 7. **Add --dry-run flag** to release.sh script
 
@@ -329,11 +329,15 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ## Conclusion
 
-Rhiza demonstrates professional-grade engineering with a focus on automation, reproducibility, and developer experience. The "living templates" concept is innovative and well-executed. Primary investment areas should be:
+Rhiza demonstrates professional-grade engineering with a focus on automation, reproducibility, and developer experience. The "living templates" concept is innovative and well-executed.
 
-1. **Security documentation** (SECURITY.md, SBOM)
+### Completed Improvements (This PR)
+- ✅ **SECURITY.md** - Vulnerability reporting instructions added
+- ✅ **.github/WORKFLOWS.md** - All 11 workflows documented with triggers, permissions, and required configuration
+
+### Remaining Investment Areas
+1. **SBOM generation** - Add to release workflow for supply chain security
 2. **Test coverage enforcement** (thresholds, artifacts)
 3. **Shell script hardening** (dry-run, testing, ShellCheck)
-4. **CI/CD documentation** (workflow purposes, required secrets)
 
-With these improvements, the repository would achieve a 9+/10 quality score suitable for broad enterprise adoption.
+With these remaining improvements, the repository would achieve a 9+/10 quality score suitable for broad enterprise adoption.
