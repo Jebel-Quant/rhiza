@@ -22,13 +22,13 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 | Documentation | 9.5/10 | ⬆️ Improved |
 | CI/CD | 9.5/10 | ⬆️ Improved |
 | Configuration | 9/10 | |
-| Security | 8.5/10 | ⬆️ Improved |
+| Security | 9/10 | ⬆️ Improved |
 | Architecture | 8.5/10 | ⬆️ Improved |
 | Shell Scripts | 8.5/10 | ⬆️ Improved |
 | Code Quality | 8/10 | |
 | Dependency Management | 8/10 | |
 | Test Coverage | 7/10 | |
-| **Overall** | **8.65/10** | ⬆️ +0.45 |
+| **Overall** | **8.7/10** | ⬆️ +0.5 |
 
 ---
 
@@ -126,7 +126,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ---
 
-### 5. Security: 8.5/10 ⬆️
+### 5. Security: 9/10 ⬆️
 
 **Strengths:**
 - CodeQL analysis for Python and shell scripts
@@ -136,15 +136,15 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - uv.lock ensures reproducible builds
 - Minimal workflow permissions by default
 - ✅ **NEW:** SECURITY.md with vulnerability reporting process
+- ✅ **NEW:** SBOM generation in release workflow (SPDX and CycloneDX formats)
 
 **Weaknesses:**
-- No SBOM (Software Bill of Materials) generation
 - Some dependencies use loose versions (`marimo>=0.18.0`)
 - actionlint runs with `-ignore SC` (ignoring ShellCheck warnings)
 - Git tag signing is optional
 
 **Actionable Improvements:**
-1. Add SBOM generation (syft) to release workflow
+1. ~~Add SBOM generation (syft) to release workflow~~ *(Done)*
 2. ~~Create SECURITY.md with vulnerability reporting instructions~~ *(Done)*
 3. Remove `-ignore SC` from actionlint to catch all shell issues
 4. Tighten dependency versions: `marimo>=0.18.0,<1.0`
@@ -282,7 +282,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 |-------|--------|--------|--------|
 | ~~Create .github/WORKFLOWS.md~~ | Onboarding friction | Low | ✅ Done |
 | ~~Add SECURITY.md~~ | Security posture | Low | ✅ Done |
-| Add SBOM generation to release | Supply chain security | Medium | |
+| ~~Add SBOM generation to release~~ | Supply chain security | Medium | ✅ Done |
 | Implement make setup-hooks | Developer friction | Low | |
 
 ### Medium Priority (Backlog)
@@ -359,10 +359,10 @@ Rhiza demonstrates professional-grade engineering with a focus on automation, re
 - ✅ **docs/QUICK_REFERENCE.md** - Essential 10 commands and daily workflow guide
 - ✅ **docs/MIGRATION.md** - Step-by-step migration guide for legacy projects
 - ✅ **.rhiza/scripts/README.md** - Shell script documentation with conventions and examples
+- ✅ **SBOM generation** - Added to release workflow (SPDX and CycloneDX formats via Syft)
 
 ### Remaining Investment Areas
-1. **SBOM generation** - Add to release workflow for supply chain security
-2. **Test coverage enforcement** (thresholds, artifacts)
-3. **Shell script hardening** (dry-run, testing, ShellCheck)
+1. **Test coverage enforcement** (thresholds, artifacts)
+2. **Shell script hardening** (dry-run, testing, ShellCheck)
 
 With these remaining improvements, the repository would achieve a 9+/10 quality score suitable for broad enterprise adoption.

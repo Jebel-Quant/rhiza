@@ -258,10 +258,11 @@ This document describes all GitHub Actions workflows in this repository.
 **Pipeline phases:**
 1. **Validate Tag** - Check tag format, ensure release doesn't already exist
 2. **Build** - Build Python package with Hatch (if `[build-system]` defined)
-3. **Draft Release** - Create draft GitHub release
-4. **Publish to PyPI** - Publish using OIDC trusted publishing
-5. **Publish Devcontainer** - Build and push devcontainer image (conditional)
-6. **Finalize Release** - Publish the GitHub release with links
+3. **Generate SBOM** - Create Software Bill of Materials (SPDX and CycloneDX formats)
+4. **Draft Release** - Create draft GitHub release with SBOM artifacts
+5. **Publish to PyPI** - Publish using OIDC trusted publishing
+6. **Publish Devcontainer** - Build and push devcontainer image (conditional)
+7. **Finalize Release** - Publish the GitHub release with links
 
 **Permissions:** `contents: write`, `id-token: write`, `packages: write`
 
