@@ -69,16 +69,14 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Coverage badge generated for README
 
 **Weaknesses:**
-- Only release.sh tested among shell scripts
 - Benchmark directory exists but not integrated into CI
 
-**Note:** No coverage thresholds enforced because this is a template repository without a `src/` folder containing application code to measure.
+**Note:** No coverage thresholds enforced because this is a template repository without a `src/` folder containing application code to measure. The only shell script (release.sh) is tested.
 
 **Actionable Improvements:**
 1. ~~Add coverage thresholds~~ *(N/A - template repo has no src folder)*
 2. Create tests for version_matrix.py edge cases
-3. Test all shell scripts in .rhiza/scripts/
-4. Integrate benchmark results into CI with performance regression detection
+3. Integrate benchmark results into CI with performance regression detection
 
 ---
 
@@ -277,7 +275,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 | ~~No test coverage thresholds in CI~~ | ~~Quality regression risk~~ | ~~Low~~ | N/A (template repo) |
 | Release script lacks --dry-run | Risk of accidental releases | Medium |
 | ~~No API documentation published~~ | ~~Reduced discoverability~~ | ~~Low~~ | ✅ Done (make book) |
-| Incomplete shell script testing | Untested critical paths | Medium |
+| ~~Incomplete shell script testing~~ | ~~Untested critical paths~~ | ~~Medium~~ | N/A (only release.sh exists, tested) |
 
 ### High Priority (Next Sprint)
 
@@ -338,7 +336,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ### Medium-term Actions (1-2 days each)
 
-11. **Test all shell scripts** in .rhiza/scripts/
+11. ~~**Test all shell scripts** in .rhiza/scripts/~~ *(N/A - only release.sh exists, already tested)*
 
 12. ~~**Generate and publish pdoc** API documentation~~ ✅ Already implemented (make book)
 
@@ -369,6 +367,6 @@ Rhiza demonstrates professional-grade engineering with a focus on automation, re
 - ✅ **docs/ADVANCED.md** - Monorepo patterns and advanced usage documentation
 
 ### Remaining Investment Areas
-1. **Shell script hardening** (dry-run flag, testing, ShellCheck integration)
+1. **Shell script hardening** (dry-run flag for release.sh, ShellCheck integration)
 
 With these remaining improvements, the repository would achieve a 9+/10 quality score suitable for broad enterprise adoption.
