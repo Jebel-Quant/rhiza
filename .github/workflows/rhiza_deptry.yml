@@ -10,7 +10,7 @@
 # Trigger: This workflow runs on every push and on pull requests to main/master
 #          branches (including from forks)
 
-name: "DEPTRY"
+name: "(RHIZA) DEPTRY"
 
 # Permissions: Only read access to repository contents is needed
 permissions:
