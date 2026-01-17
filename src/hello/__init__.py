@@ -1,5 +1,6 @@
 """A simple hello world script."""
 
+
 def print_hello(name: str) -> None:
     """Print a hello message.
 
@@ -11,5 +12,3 @@ def print_hello(name: str) -> None:
         Hello, World!
     """
     print(f"Hello, {name}!")
-
-
