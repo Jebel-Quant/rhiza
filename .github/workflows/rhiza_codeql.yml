@@ -50,7 +50,7 @@ jobs:
     # To disable this workflow, set CODEQL_ENABLED repository variable to 'false'
     # To enable this workflow for private repos with Advanced Security, set CODEQL_ENABLED to 'true'
     if: |
-      vars.CODEQL_ENABLED == 'true' || 
+      vars.CODEQL_ENABLED == 'true' ||
       (vars.CODEQL_ENABLED != 'false' && github.event.repository.visibility == 'public')
     permissions:
       # required for all workflows
