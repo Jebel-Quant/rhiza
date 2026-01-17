@@ -106,9 +106,9 @@ def test_sbom_generation_cyclonedx(temp_project):
     assert sbom_data.get("bomFormat") == "CycloneDX", "Not a valid CycloneDX document"
     assert "components" in sbom_data, "Missing components field"
     
-    # Verify components were detected
+    # Verify components field is a list (can be empty)
     components = sbom_data.get("components", [])
-    assert len(components) >= 0, "Components field should be present"
+    assert isinstance(components, list), "Components should be a list"
 
 
 def test_sbom_contains_project_metadata(temp_project):
