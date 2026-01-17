@@ -224,7 +224,7 @@ deptry: install-uv ## Run deptry
 		fi \
 	fi
 
-fmt: install_uv ## check the pre-commit hooks and the linting
+fmt: install-uv ## check the pre-commit hooks and the linting
 	@${UVX_BIN} pre-commit run --all-files
 
 mypy: install ## run mypy analysis
