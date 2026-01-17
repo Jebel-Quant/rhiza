@@ -120,8 +120,7 @@ Or delete the workflow file:
 
 ```bash
 # Remove CodeQL workflow
-rm .github/workflows/rhiza_codeql.yml
-git add .github/workflows/rhiza_codeql.yml
+git rm .github/workflows/rhiza_codeql.yml
 git commit -m "Remove CodeQL workflow"
 ```
 
