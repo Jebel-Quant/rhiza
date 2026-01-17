@@ -1,4 +1,14 @@
 """A simple hello world script."""
 
-if __name__ == "__main__":
-    print("Hello World!")
+def print_hello(name: str) -> None:
+    """Print a hello message.
+
+    Args:
+        name: The name to greet.
+
+    Example:
+        >>> print_hello("World")
+        Hello, World!
+    """
+    print(f"Hello, {name}")
+
