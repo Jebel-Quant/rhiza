@@ -4,7 +4,7 @@
 # executing performance benchmarks.
 
 # Declare phony targets (they don't produce files)
-.PHONY: test benchmark
+.PHONY: test benchmark docs-coverage
 
 # Default directory for tests
 TESTS_FOLDER := tests
@@ -42,5 +42,16 @@ benchmark: install ## run performance benchmarks
 	  ${VENV}/bin/python tests/test_rhiza/benchmarks/analyze_benchmarks.py ; \
 	else \
 	  printf "${YELLOW}[WARN] Benchmarks folder not found, skipping benchmarks${RESET}\n"; \
+	fi
+
+# The 'docs-coverage' target checks documentation coverage using interrogate.
+# 1. Checks if SOURCE_FOLDER exists.
+# 2. Runs interrogate on the source folder with verbose output.
+docs-coverage: install ## check documentation coverage with interrogate
+	@if [ -d "${SOURCE_FOLDER}" ]; then \
+	  printf "${BLUE}[INFO] Checking documentation coverage in ${SOURCE_FOLDER}...${RESET}\n"; \
+	  ${VENV}/bin/python -m interrogate -vv ${SOURCE_FOLDER}; \
+	else \
+	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping docs-coverage${RESET}\n"; \
 	fi
 
