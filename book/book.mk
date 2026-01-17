@@ -96,16 +96,37 @@ book:: test docs marimushka ## compile the companion book
 	@printf "${BLUE}[INFO] Generated links.json:${RESET}\n"
 	@cat _book/links.json
 
-	@TEMPLATE_ARG=""; \
-	if [ -f "$(BOOK_TEMPLATE)" ]; then \
-	  TEMPLATE_ARG="--template $(BOOK_TEMPLATE)"; \
-	  printf "${BLUE}[INFO] Using book template $(BOOK_TEMPLATE)${RESET}\n"; \
-	fi; \
-	"$(UVX_BIN)" minibook \
-	  --title "$(BOOK_TITLE)" \
-	  --subtitle "$(BOOK_SUBTITLE)" \
-	  $$TEMPLATE_ARG \
-	  --links "$$(python3 -c 'import json;print(json.dumps(json.load(open("_book/links.json"))))')" \
-	  --output "_book"
+	@printf "${BLUE}[INFO] Generating index.html from template...${RESET}\n"
+	@$(UV_BIN) run python3 -c '\
+import json;\
+import sys;\
+from datetime import datetime;\
+from pathlib import Path;\
+try:\
+    from jinja2 import Template;\
+except ImportError:\
+    import subprocess;\
+    subprocess.run([sys.executable, "-m", "pip", "install", "jinja2"], check=True);\
+    from jinja2 import Template;\
+links_data = json.load(open("_book/links.json"));\
+links = list(links_data.items());\
+template_path = "$(BOOK_TEMPLATE)" if Path("$(BOOK_TEMPLATE)").exists() else None;\
+if template_path:\
+    template_content = open(template_path).read();\
+else:\
+    template_content = """<!DOCTYPE html>\n<html>\n<head><title>{{ title }}</title></head>\n<body>\n<h1>{{ title }}</h1>\n<ul>\n{% for name, url in links %}<li><a href=\"{{ url }}\">{{ name }}</a></li>\n{% endfor %}\n</ul>\n</body>\n</html>""";\
+template = Template(template_content);\
+html = template.render(\
+    title="$(BOOK_TITLE)",\
+    description="$(BOOK_SUBTITLE)",\
+    subtitle="$(BOOK_SUBTITLE)",\
+    repository_url="https://github.com/Jebel-Quant/rhiza",\
+    links=links,\
+    timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")\
+);\
+with open("_book/index.html", "w") as f:\
+    f.write(html);\
+print("Generated _book/index.html");\
+'
 
 	@touch "_book/.nojekyll"
