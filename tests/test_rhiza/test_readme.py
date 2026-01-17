@@ -121,7 +121,7 @@ class TestReadmeBashFragments:
             # Use bash -n to check syntax without executing
             # Trust boundary: we use bash -n which only parses without executing
             result = subprocess.run(
-                [BASH, "-n"],  # noqa: S603
+                [BASH, "-n"],
                 input=code,
                 capture_output=True,
                 text=True,

@@ -64,7 +64,7 @@ select = ["D", "E", "F", "I", "N", "W", "UP"]
 # private/underscored modules by explicitly selecting the relevant pydocstyle
 # rules in addition to the D set. This makes the intent clear and future-proof
 # if the default pydocstyle selection changes.
-extend-select = ["D105", "D107"]
+extend-select = ["D105", "D107", "B", "C4", "SIM", "PT", "RUF", "S", "ERA", "T10", "TRY", "ICN", "PIE", "PL"]
 
 # Resolve incompatible pydocstyle rules: prefer D211 and D212 over D203 and D213
 ignore = ["D203", "D213"]

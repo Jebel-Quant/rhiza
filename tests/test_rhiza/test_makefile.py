@@ -115,7 +115,7 @@ def setup_rhiza_git_repo():
     git = shutil.which("git") or "/usr/bin/git"
     subprocess.run([git, "init"], check=True, capture_output=True)  # noqa: S603
     subprocess.run(
-        [git, "remote", "add", "origin", "https://github.com/jebel-quant/rhiza"],  # noqa: S603
+        [git, "remote", "add", "origin", "https://github.com/jebel-quant/rhiza"],
         check=True,
         capture_output=True,
     )
