@@ -75,6 +75,55 @@ exclude: |
   .rhiza/make.d/90-hooks.mk
 ```
 
+## 🔒 CodeQL Configuration
+
+The CodeQL workflow (`.github/workflows/rhiza_codeql.yml`) performs security analysis on your code. However, **CodeQL requires GitHub Advanced Security**, which is:
+
+- ✅ **Available for free** on public repositories
+- ⚠️ **Requires GitHub Enterprise license** for private repositories
+
+### Automatic Behavior
+
+By default, the CodeQL workflow:
+- **Runs automatically** on public repositories
+- **Skips automatically** on private repositories (unless you have Advanced Security)
+
+### Controlling CodeQL
+
+You can override the default behavior using a repository variable:
+
+1. Go to your repository → **Settings** → **Secrets and variables** → **Actions** → **Variables** tab
+2. Create a new repository variable named `CODEQL_ENABLED`
+3. Set the value:
+   - `true` - Force CodeQL to run (use if you have Advanced Security on a private repo)
+   - `false` - Disable CodeQL entirely (e.g., if it's causing issues)
+
+### For Private Repositories with Advanced Security
+
+If you have a GitHub Enterprise license with Advanced Security enabled:
+
+```bash
+# Enable CodeQL for your private repository
+gh variable set CODEQL_ENABLED --body "true"
+```
+
+### For Users Without Advanced Security
+
+No action needed! The workflow will automatically skip for private repositories. If you want to completely disable it:
+
+```bash
+# Disable CodeQL workflow
+gh variable set CODEQL_ENABLED --body "false"
+```
+
+Or delete the workflow file:
+
+```bash
+# Remove CodeQL workflow
+git rm .github/workflows/rhiza_codeql.yml
+git commit -m "Remove CodeQL workflow"
+```
+
 ## 📖 Complete Documentation
 
 For detailed information about extending and customizing the Makefile system, see [.rhiza/make.d/README.md](../.rhiza/make.d/README.md).
