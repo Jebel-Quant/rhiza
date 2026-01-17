@@ -31,10 +31,6 @@ dev = [
     "pandas>=2.3.3"
 ]
 
-mypy = [
-    "mypy>=1.19.0",
-]
-
 [project.urls]
 Homepage = "https://github.com/jebel-quant/rhiza"
 Repository = "https://github.com/jebel-quant/rhiza"
@@ -45,4 +41,3 @@ marimo = "marimo"
 numpy = "numpy"
 plotly = "plotly"
 pandas = "pandas"
-mypy = "mypy"
