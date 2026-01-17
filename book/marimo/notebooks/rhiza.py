@@ -60,14 +60,12 @@ def cell_02(mo):
         - 📦 **Version control friendly** - Easy to diff and merge
         """
     )
-    return
 
 
 @app.cell
 def cell_03(mo):
     """Render a horizontal rule to separate sections."""
     mo.md(r"""---""")
-    return
 
 
 @app.cell
@@ -80,7 +78,6 @@ def cell_04(mo):
         Marimo provides rich UI components that automatically trigger reactive updates.
         """
     )
-    return
 
 
 @app.cell
@@ -102,7 +99,6 @@ def cell_06(mo, slider):
         This text updates automatically when you move the slider! ✨
         """
     )
-    return
 
 
 @app.cell
@@ -128,7 +124,6 @@ def cell_08(dropdown, mo):
         Great choice! {dropdown.value} is an excellent programming language.
         """
     )
-    return
 
 
 @app.cell
@@ -144,14 +139,12 @@ def cell_09(mo):
 def cell_10(mo, text_input):
     """Display a personalized greeting using the current text input value."""
     mo.md(f"""Hello, **{text_input.value}**! 👋""")
-    return
 
 
 @app.cell
 def cell_11(mo):
     """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
-    return
 
 
 @app.cell
@@ -165,7 +158,6 @@ def cell_12(mo):
         Altair, and Matplotlib. Let's create interactive plots!
         """
     )
-    return
 
 
 @app.cell
@@ -197,7 +189,7 @@ def cell_15(amplitude_slider, frequency_slider, go, mo, np):
     y = amplitude_slider.value * np.sin(frequency_slider.value * x)
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=x, y=y, mode="lines", line=dict(color="#2FA4A9", width=2), name="Sine Wave"))
+    fig.add_trace(go.Scatter(x=x, y=y, mode="lines", line={"color": "#2FA4A9", "width": 2}, name="Sine Wave"))
 
     fig.update_layout(
         title=f"Sine Wave: y = {amplitude_slider.value} × sin({frequency_slider.value}x)",
@@ -234,7 +226,6 @@ def cell_15(amplitude_slider, frequency_slider, go, mo, np):
 def cell_16(mo):
     """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
-    return
 
 
 @app.cell
@@ -247,7 +238,6 @@ def cell_17(mo):
         Marimo provides excellent support for working with Pandas DataFrames.
         """
     )
-    return
 
 
 @app.cell
@@ -277,7 +267,6 @@ def cell_19(data, mo):
         Here's our dataset displayed as an interactive table:
         """
     )
-    return
 
 
 @app.cell
@@ -285,7 +274,6 @@ def cell_20(data, mo):
     """Display the sample dataset as an interactive table."""
     # Display as interactive table
     mo.ui.table(data)
-    return
 
 
 @app.cell
@@ -322,7 +310,6 @@ def cell_21(data, go, mo):
 def cell_22(mo):
     """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
-    return
 
 
 @app.cell
@@ -335,7 +322,6 @@ def cell_23(mo):
         Marimo provides powerful layout primitives to organise your content.
         """
     )
-    return
 
 
 @app.cell
@@ -422,7 +408,6 @@ def cell_25(mo):
 def cell_26(mo):
     """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
-    return
 
 
 @app.cell
@@ -435,7 +420,6 @@ def cell_27(mo):
         Marimo forms allow you to batch multiple inputs and submit them together.
         """
     )
-    return
 
 
 @app.cell
@@ -481,14 +465,12 @@ def cell_29(form, mo):
         )
     else:
         mo.md("*The form values will appear here as you interact with them.*")
-    return
 
 
 @app.cell
 def cell_30(mo):
     """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
-    return
 
 
 @app.cell
@@ -501,7 +483,6 @@ def cell_31(mo):
         Marimo has excellent support for rich text formatting using Markdown and LaTeX.
         """
     )
-    return
 
 
 @app.cell
@@ -549,14 +530,12 @@ def cell_32(mo):
         > This is a blockquote with important information!
         """
     )
-    return
 
 
 @app.cell
 def cell_33(mo):
     """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
-    return
 
 
 @app.cell
@@ -569,7 +548,6 @@ def cell_34(mo):
         Here are some more advanced Marimo features worth exploring.
         """
     )
-    return
 
 
 @app.cell
@@ -590,7 +568,6 @@ def cell_35(mo):
         ),
         kind="info",
     )
-    return
 
 
 @app.cell
@@ -624,14 +601,12 @@ def cell_36(mo):
             ),
         }
     )
-    return
 
 
 @app.cell
 def cell_37(mo):
     """Render a horizontal rule to visually separate sections."""
     mo.md(r"""---""")
-    return
 
 
 @app.cell
@@ -661,7 +636,6 @@ def cell_38(mo):
         **Happy exploring! 🚀**
         """
     )
-    return
 
 
 if __name__ == "__main__":
