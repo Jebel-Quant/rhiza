@@ -32,7 +32,7 @@ dev = [
 ]
 
 mypy = [
-    "mypy>=1.14.0",
+    "mypy>=1.19.0",
 ]
 
 [project.urls]
