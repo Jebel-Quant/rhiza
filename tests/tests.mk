@@ -46,12 +46,10 @@ benchmark: install ## run performance benchmarks
 
 # The 'docs-coverage' target checks documentation coverage using interrogate.
 # 1. Checks if SOURCE_FOLDER exists.
-# 2. Installs interrogate if not already present.
-# 3. Runs interrogate on the source folder with verbose output.
+# 2. Runs interrogate on the source folder with verbose output.
 docs-coverage: install ## check documentation coverage with interrogate
 	@if [ -d "${SOURCE_FOLDER}" ]; then \
 	  printf "${BLUE}[INFO] Checking documentation coverage in ${SOURCE_FOLDER}...${RESET}\n"; \
-	  ${UV_BIN} pip install interrogate>=1.7.0; \
 	  ${VENV}/bin/python -m interrogate -vv ${SOURCE_FOLDER}; \
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping docs-coverage${RESET}\n"; \
