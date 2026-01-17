@@ -11,5 +11,3 @@ def print_hello(name: str) -> None:
         Hello, World!
     """
     print(f"Hello, {name}!")
-
-
