@@ -17,6 +17,9 @@ updates:
       day: "tuesday"
       time: "09:00"
       timezone: "Asia/Dubai"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
@@ -41,6 +44,9 @@ updates:
       day: "tuesday"
       time: "09:00"
       timezone: "Asia/Dubai"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
