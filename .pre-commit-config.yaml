@@ -65,3 +65,10 @@ repos:
         language: system
         files: '^Makefile$'
         pass_filenames: false
+
+      - id: check-rhiza-workflow-names
+        name: Check and Fix Rhiza workflow names
+        entry: python .rhiza/scripts/check_workflow_names.py
+        language: python
+        additional_dependencies: [PyYAML]
+        files: ^\.github/workflows/rhiza_.*\.ya?ml$
