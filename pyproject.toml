@@ -45,5 +45,4 @@ marimo = "marimo"
 numpy = "numpy"
 plotly = "plotly"
 pandas = "pandas"
-
-mpypy = "mypy"
+mypy = "mypy"
