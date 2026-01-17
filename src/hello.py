@@ -10,5 +10,6 @@ def print_hello(name: str) -> None:
         >>> print_hello("World")
         Hello, World!
     """
-    print(f"Hello, {name}")
+    print(f"Hello, {name}!")
+
 
