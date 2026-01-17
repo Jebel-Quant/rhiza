@@ -83,6 +83,6 @@ line-ending = "auto"
 
 # File-specific rule exceptions
 [lint.per-file-ignores]
-"tests/**/*.py" = ["S101"]        # Allow assert statements in tests
+"tests/**/*.py" = ["S101", "S603", "PLW1510"]  # Allow assert statements, subprocess calls, and subprocess without check in tests
 "book/marimo/*.py" = ["N803", "S101"] # Allow non-lowercase variable names (N803)
                                       # and assert statements in marimo files
