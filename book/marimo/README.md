@@ -96,91 +96,38 @@ The `.github/workflows/rhiza_marimo.yml` workflow automatically:
 
 This guarantees that all notebooks remain functional and up-to-date.
 
-### Book Workflow
+### Book Workflow with Custom Environment Variables
 
-The `.github/workflows/rhiza_book.yml` workflow builds the documentation book, including:
+The `.github/workflows/rhiza_book.yml` workflow builds the documentation book, including exporting Marimo notebooks to static HTML.
 
-1. Exporting Marimo notebooks to static HTML
-2. Generating API documentation
-3. Creating test coverage reports
-4. Deploying to GitHub Pages
+**Passing Custom Environment Variables to Notebooks:**
 
-#### Custom Environment Variables for Notebooks
+You can pass custom environment variables and secrets to notebooks during the book build without modifying the workflow file.
 
-The book workflow supports passing custom environment variables and secrets to notebooks during the build process. This is useful when your notebooks need access to API keys, database URLs, or other configuration values.
-
-**Recommended Approach: Using .env.marimo file**
-
-This approach doesn't require modifying the workflow file, so it won't be affected by template sync:
-
-1. **Create `.env.marimo`** in your repository root:
-   ```bash
-   # .env.marimo
-   API_KEY=your-api-key-here
-   DATABASE_URL=postgresql://localhost/mydb
-   DEBUG_MODE=true
-   ```
-
-2. **The workflow automatically sources this file** before building the book. No workflow changes needed!
-
-3. **Access in your notebook**:
-   ```python
-   import os
-   
-   api_key = os.environ.get('API_KEY')
-   database_url = os.environ.get('DATABASE_URL')
-   ```
-
-4. **Using GitHub Secrets with .env.marimo**:
-   
-   To use GitHub repository secrets with the `.env.marimo` approach, you have two options:
-   
-   **Option A**: Reference secrets in the workflow and write them to .env.marimo (recommended for CI):
-   - In `.github/workflows/rhiza_book.yml`, add a step before "Make the book":
-     ```yaml
-     - name: Create .env.marimo from secrets
-       run: |
-         cat > .env.marimo << EOF
-         API_KEY=${{ secrets.API_KEY }}
-         DATABASE_URL=${{ secrets.DATABASE_URL }}
-         EOF
-     ```
-   
-   **Option B**: Commit .env.marimo with placeholder values:
-   - Commit `.env.marimo` with dummy values for CI to use
-   - Override with real values locally for development
-   - This is simpler but less secure for sensitive data
-
-**Alternative Approach: Direct workflow env: section**
-
-If you prefer to define variables directly in the workflow (requires modifying the workflow file):
-
-1. **Define secrets or variables** in GitHub repository settings:
+1. **Define secrets or variables** in your repository settings:
    - Go to Settings > Secrets and variables > Actions
-   - Create secrets (for sensitive data) or variables (for non-sensitive config)
+   - Add repository secrets (for sensitive data) or variables (for configuration)
+   - Use the `MARIMO_` prefix (e.g., `MARIMO_API_KEY`, `MARIMO_DATABASE_URL`)
 
-2. **Update the workflow** (`.github/workflows/rhiza_book.yml`):
-   ```yaml
-   - name: "Make the book"
-     env:
-       API_KEY: ${{ secrets.MARIMO_ENV_API_KEY }}
-       DATABASE_URL: ${{ vars.MARIMO_ENV_DATABASE_URL }}
-     run: |
-       # ... existing commands
-   ```
-
-3. **Access in your notebook**:
+2. **Access in your notebooks**:
    ```python
    import os
    
+   # The MARIMO_ prefix is stripped, so MARIMO_API_KEY becomes API_KEY
    api_key = os.environ.get('API_KEY')
    database_url = os.environ.get('DATABASE_URL')
    ```
 
-**Note**: 
-- `.env.marimo` is gitignored to protect sensitive data
-- The file won't be overwritten by template sync operations
-- For local development, you can create `.env.marimo` with test values
+3. **Supported variables** (all optional):
+   - `MARIMO_API_KEY` → available as `API_KEY`
+   - `MARIMO_DATABASE_URL` → available as `DATABASE_URL`
+   - `MARIMO_AUTH_TOKEN` → available as `AUTH_TOKEN`
+   - `MARIMO_CONFIG_VALUE` → available as `CONFIG_VALUE`
+   - `MARIMO_FEATURE_FLAG` → available as `FEATURE_FLAG`
+
+If you need additional variables, you can add them to the `env:` section in the workflow's "Make the book" step.
+
+**Note**: These environment variables are only available during the GitHub Actions book build, not when running notebooks locally. For local development, use `.rhiza/.env` or set variables in your shell.
 
 ## Creating New Notebooks
 
