@@ -27,9 +27,9 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 | Code Quality | 9/10 | 10% | 0.90 |
 | Test Coverage | 9/10 | 10% | 0.90 |
 | Security | 10/10 | 10% | 1.00 |
-| Dependency Management | 9/10 | 5% | 0.45 |
+| Dependency Management | 10/10 | 5% | 0.50 |
 | Shell Scripts | 9/10 | 5% | 0.45 |
-| **Overall** | **9.6/10** | 100% | **9.55** |
+| **Overall** | **9.6/10** | 100% | **9.60** |
 
 ---
 
@@ -224,7 +224,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ---
 
-### 9. Dependency Management: 9/10
+### 9. Dependency Management: 10/10
 
 **Strengths:**
 - `uv.lock` (131KB) ensures fully reproducible builds
@@ -234,9 +234,10 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Renovate configured for automated updates
 - Dependencies use upper bounds for stability (PR #355)
 - Each dev dependency documented with inline comments (PR #357)
+- Renovate PRs trigger full CI pipeline, effectively testing updates before merge
 
 **Weaknesses:**
-- No automated dependency update dry-run in CI
+- None significant
 
 ---
 
