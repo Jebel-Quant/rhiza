@@ -107,25 +107,39 @@ You can pass custom environment variables and secrets to notebooks during the bo
 1. **Define secrets or variables** in your repository settings:
    - Go to Settings > Secrets and variables > Actions
    - Add repository secrets (for sensitive data) or variables (for configuration)
-   - Use the `MARIMO_` prefix (e.g., `MARIMO_API_KEY`, `MARIMO_DATABASE_URL`)
+   - Use the `MARIMO_ENV_VAR_N` naming pattern (e.g., `MARIMO_ENV_VAR_1`, `MARIMO_ENV_VAR_2`)
 
 2. **Access in your notebooks**:
    ```python
    import os
    
-   # The MARIMO_ prefix is stripped, so MARIMO_API_KEY becomes API_KEY
-   api_key = os.environ.get('API_KEY')
-   database_url = os.environ.get('DATABASE_URL')
+   # Access ENV_VAR_1, ENV_VAR_2, etc.
+   api_key = os.environ.get('ENV_VAR_1')
+   database_url = os.environ.get('ENV_VAR_2')
+   auth_token = os.environ.get('ENV_VAR_3')
    ```
 
-3. **Supported variables** (all optional):
-   - `MARIMO_API_KEY` → available as `API_KEY`
-   - `MARIMO_DATABASE_URL` → available as `DATABASE_URL`
-   - `MARIMO_AUTH_TOKEN` → available as `AUTH_TOKEN`
-   - `MARIMO_CONFIG_VALUE` → available as `CONFIG_VALUE`
-   - `MARIMO_FEATURE_FLAG` → available as `FEATURE_FLAG`
+3. **Available variable slots**:
+   - 20 generic slots: `ENV_VAR_1` through `ENV_VAR_20`
+   - Each can be defined as either a secret or a regular variable
+   - Use them for any purpose: API keys, database URLs, feature flags, test credentials, etc.
 
-If you need additional variables, you can add them to the `env:` section in the workflow's "Make the book" step.
+**Example usage for E2E tests:**
+```bash
+# In GitHub Settings, define:
+# Secret: MARIMO_ENV_VAR_1 = "my-api-key"
+# Secret: MARIMO_ENV_VAR_2 = "postgresql://user:pass@host/db"
+# Variable: MARIMO_ENV_VAR_3 = "true"
+```
+
+```python
+# In your notebook:
+import os
+
+api_key = os.environ.get('ENV_VAR_1')  # Your API key
+db_url = os.environ.get('ENV_VAR_2')   # Your database URL
+enable_tests = os.environ.get('ENV_VAR_3')  # Feature flag
+```
 
 **Note**: These environment variables are only available during the GitHub Actions book build, not when running notebooks locally. For local development, use `.rhiza/.env` or set variables in your shell.
 

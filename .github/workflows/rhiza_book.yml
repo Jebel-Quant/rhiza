@@ -19,18 +19,22 @@
 #   Marimo notebooks without requiring you to modify this file.
 #
 #   To use this feature:
-#   1. Go to Settings > Secrets and variables > Actions (repository secrets/vars)
-#      OR Settings > Environments > github-pages (environment secrets/vars)
-#   2. Add secrets or variables with a MARIMO_ prefix:
-#      - MARIMO_API_KEY (secret)
-#      - MARIMO_DATABASE_URL (secret)
-#      - MARIMO_CONFIG_VALUE (variable)
-#   3. They will be available in notebooks as API_KEY, DATABASE_URL, CONFIG_VALUE
-#      (the MARIMO_ prefix is stripped)
-#   4. Access them in notebooks with: os.environ.get('API_KEY')
+#   1. Go to Settings > Secrets and variables > Actions
+#   2. Add secrets or variables with MARIMO_ENV_ prefix:
+#      - For secrets: MARIMO_ENV_VAR_1, MARIMO_ENV_VAR_2, etc.
+#      - For variables: MARIMO_ENV_VAR_1, MARIMO_ENV_VAR_2, etc.
+#   3. They will be available in notebooks as ENV_VAR_1, ENV_VAR_2, etc.
+#   4. Access them in notebooks with: os.environ.get('ENV_VAR_1')
 #
-#   If you need additional variables beyond the ones listed in the workflow,
-#   you can add them to the env: section in the "Make the book" step below.
+#   20 generic variable slots (ENV_VAR_1 through ENV_VAR_20) are available.
+#   Each can be either a secret or a regular variable.
+#   Use them for any purpose: API keys, database URLs, feature flags, etc.
+#
+#   Example usage:
+#   - Define MARIMO_ENV_VAR_1 as secret containing your API key
+#   - Define MARIMO_ENV_VAR_2 as variable containing database URL
+#   - In notebook: api_key = os.environ.get('ENV_VAR_1')
+#   - In notebook: db_url = os.environ.get('ENV_VAR_2')
 
 name: "(RHIZA) BOOK"
 
@@ -72,14 +76,32 @@ jobs:
 
       - name: "Make the book"
         env:
-          # Pass through optional custom environment variables for Marimo notebooks
-          # Define these in your repository settings with MARIMO_ prefix
+          # Custom environment variables for Marimo notebooks
+          # Define secrets/vars in your repository settings with MARIMO_ENV_ prefix
           # They will be available to notebooks without the prefix
-          API_KEY: ${{ secrets.MARIMO_API_KEY }}
-          DATABASE_URL: ${{ secrets.MARIMO_DATABASE_URL }}
-          AUTH_TOKEN: ${{ secrets.MARIMO_AUTH_TOKEN }}
-          CONFIG_VALUE: ${{ vars.MARIMO_CONFIG_VALUE }}
-          FEATURE_FLAG: ${{ vars.MARIMO_FEATURE_FLAG }}
+          # Example: MARIMO_ENV_API_KEY → API_KEY, MARIMO_ENV_DATABASE_URL → DATABASE_URL
+          #
+          # Generic variables (use for any purpose - secrets, config, feature flags, etc.):
+          ENV_VAR_1: ${{ secrets.MARIMO_ENV_VAR_1 || vars.MARIMO_ENV_VAR_1 }}
+          ENV_VAR_2: ${{ secrets.MARIMO_ENV_VAR_2 || vars.MARIMO_ENV_VAR_2 }}
+          ENV_VAR_3: ${{ secrets.MARIMO_ENV_VAR_3 || vars.MARIMO_ENV_VAR_3 }}
+          ENV_VAR_4: ${{ secrets.MARIMO_ENV_VAR_4 || vars.MARIMO_ENV_VAR_4 }}
+          ENV_VAR_5: ${{ secrets.MARIMO_ENV_VAR_5 || vars.MARIMO_ENV_VAR_5 }}
+          ENV_VAR_6: ${{ secrets.MARIMO_ENV_VAR_6 || vars.MARIMO_ENV_VAR_6 }}
+          ENV_VAR_7: ${{ secrets.MARIMO_ENV_VAR_7 || vars.MARIMO_ENV_VAR_7 }}
+          ENV_VAR_8: ${{ secrets.MARIMO_ENV_VAR_8 || vars.MARIMO_ENV_VAR_8 }}
+          ENV_VAR_9: ${{ secrets.MARIMO_ENV_VAR_9 || vars.MARIMO_ENV_VAR_9 }}
+          ENV_VAR_10: ${{ secrets.MARIMO_ENV_VAR_10 || vars.MARIMO_ENV_VAR_10 }}
+          ENV_VAR_11: ${{ secrets.MARIMO_ENV_VAR_11 || vars.MARIMO_ENV_VAR_11 }}
+          ENV_VAR_12: ${{ secrets.MARIMO_ENV_VAR_12 || vars.MARIMO_ENV_VAR_12 }}
+          ENV_VAR_13: ${{ secrets.MARIMO_ENV_VAR_13 || vars.MARIMO_ENV_VAR_13 }}
+          ENV_VAR_14: ${{ secrets.MARIMO_ENV_VAR_14 || vars.MARIMO_ENV_VAR_14 }}
+          ENV_VAR_15: ${{ secrets.MARIMO_ENV_VAR_15 || vars.MARIMO_ENV_VAR_15 }}
+          ENV_VAR_16: ${{ secrets.MARIMO_ENV_VAR_16 || vars.MARIMO_ENV_VAR_16 }}
+          ENV_VAR_17: ${{ secrets.MARIMO_ENV_VAR_17 || vars.MARIMO_ENV_VAR_17 }}
+          ENV_VAR_18: ${{ secrets.MARIMO_ENV_VAR_18 || vars.MARIMO_ENV_VAR_18 }}
+          ENV_VAR_19: ${{ secrets.MARIMO_ENV_VAR_19 || vars.MARIMO_ENV_VAR_19 }}
+          ENV_VAR_20: ${{ secrets.MARIMO_ENV_VAR_20 || vars.MARIMO_ENV_VAR_20 }}
         run: |
           make -f .rhiza/rhiza.mk book
 
