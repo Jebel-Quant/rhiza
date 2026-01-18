@@ -47,8 +47,9 @@ jobs:
 
       - name: "Sync the virtual environment for ${{ github.repository }}"
         shell: bash
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.uv-extra-index-url }}
         run: |
-          export UV_EXTRA_INDEX_URL="${{ secrets.uv-extra-index-url }}"
           # will just use .python-version?
           uv sync --all-extras --all-groups --frozen
 
