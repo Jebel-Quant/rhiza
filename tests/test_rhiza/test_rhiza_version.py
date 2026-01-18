@@ -140,9 +140,11 @@ class TestSummariseSync:
         """Summarise-sync target should skip execution in rhiza repository."""
         setup_rhiza_git_repo()
 
-        proc = run_make(logger, ["summarise-sync"], dry_run=False)
+        proc = run_make(logger, ["summarise-sync"], dry_run=True)
         # Should succeed but skip the actual summarise
         assert proc.returncode == 0
+        # Verify the skip message is in the output
+        assert "Skipping summarise-sync in rhiza repository" in proc.stdout
 
     def test_summarise_sync_requires_install_uv(self, logger):
         """Summarise-sync should ensure uv is installed first."""
