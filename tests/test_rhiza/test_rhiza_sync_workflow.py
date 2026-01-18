@@ -83,8 +83,8 @@ class TestRhizaSyncWorkflow:
         """The workflow should use the version variable in uvx commands."""
         content = workflow_file.read_text()
 
-        # Check that uvx uses the version variable
-        assert 'uvx "rhiza>=' in content or "uvx \"rhiza>=" in content
+        # Check that uvx uses the version variable with either single or double quotes
+        assert 'uvx "rhiza>=' in content
         assert "${RHIZA_VERSION}" in content or "${{ steps.rhiza-version.outputs.version }}" in content
 
     def test_workflow_generates_pr_description(self, workflow_file):
