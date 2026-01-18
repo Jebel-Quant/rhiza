@@ -169,14 +169,14 @@ def test_dry_run_no_git_operations(git_repo):
     ).stdout
     assert tags_before == tags_after
 
-    # Verify tag doesn't exist
+    # Verify tag doesn't exist using consistent pattern with other tests
     tag_check = subprocess.run(
-        [GIT, "rev-parse", "v0.1.0"],
+        [GIT, "tag", "-l", "v0.1.0"],
         cwd=git_repo,
         capture_output=True,
         text=True,
     )
-    assert tag_check.returncode != 0  # Tag should not exist
+    assert "v0.1.0" not in tag_check.stdout
 
 
 def test_dry_run_shows_appropriate_messages(git_repo):
@@ -187,9 +187,9 @@ def test_dry_run_shows_appropriate_messages(git_repo):
 
     assert result.returncode == 0
 
-    # Check for key dry-run messages
+    # Check for key dry-run messages indicating simulation mode
     assert "[DRY-RUN]" in result.stdout
-    assert "Would prompt to continue" in result.stdout or "Would prompt yes/no" in result.stdout
+    assert "Would prompt" in result.stdout
     assert "Would run: git tag" in result.stdout
     assert "would be created locally" in result.stdout
     assert "Would run: git push origin refs/tags/v0.1.0" in result.stdout
@@ -225,6 +225,6 @@ def test_dry_run_exits_successfully_without_creating_tags(git_repo):
     )
     assert "v0.1.0" not in remote_tag_check.stdout
 
-    # Verify output indicates success
+    # Verify output indicates dry-run mode with specific indicators
     assert "[DRY-RUN]" in result.stdout
-    assert "would be" in result.stdout.lower() or "would run" in result.stdout.lower()
+    assert "Would run:" in result.stdout
