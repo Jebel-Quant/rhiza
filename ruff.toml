@@ -50,14 +50,6 @@ exclude = ["**/[{][{]*/", "**/*[}][}]*/"]
 # TRY: flake8-try-except-raise - Try/except/raise checks
 # YTT: flake8-2020 - Python 2020+ compatibility
 
-# Selected rule sets to enforce:
-# D: pydocstyle - Check docstring style
-# E: pycodestyle errors - PEP 8 style guide
-# F: pyflakes - Detect logical errors
-# I: isort - Sort imports
-# N: pep8-naming - Check PEP 8 naming conventions
-# W: pycodestyle warnings - PEP 8 style guide warnings
-# UP: pyupgrade - Upgrade syntax for newer Python
 select = [
     "D",   # pydocstyle - Check docstring style
     "E",   # pycodestyle errors - PEP 8 style guide
