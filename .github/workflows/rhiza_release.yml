@@ -8,10 +8,11 @@
 # 📋 Pipeline Phases:
 #   1. 🔍 Validate Tag - Check tag format and ensure release doesn't already exist
 #   2. 🏗️ Build - Build Python package with Hatch (if [build-system] is defined in pyproject.toml
-#   3. 📝 Draft Release - Create draft GitHub release with build artifacts
-#   4. 🚀 Publish to PyPI - Publish package using OIDC or custom feed
-#   5. 🐳 Publish Devcontainer - Build and publish devcontainer image (conditional)
-#   6. ✅ Finalize Release - Publish the GitHub release with links
+#   3. 📦 SBOM - Generate Software Bill of Materials for supply chain security
+#   4. 📝 Draft Release - Create draft GitHub release with build artifacts
+#   5. 🚀 Publish to PyPI - Publish package using OIDC or custom feed
+#   6. 🐳 Publish Devcontainer - Build and publish devcontainer image (conditional)
+#   7. ✅ Finalize Release - Publish the GitHub release with links
 #
 # 🐳 Devcontainer Publishing:
 #   - Only occurs when PUBLISH_DEVCONTAINER repository variable is set to "true"
@@ -156,13 +157,62 @@ jobs:
           name: dist
           path: dist
 
-  # Don't try to upload artifacts to GitHub Release at all
+  # Generate Software Bill of Materials for supply chain security
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    needs: [tag, build]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Download dist artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: dist
+          path: dist
+        continue-on-error: true
+
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: Generate SBOM for repository
+        run: |
+          # Generate SBOM in multiple formats
+          syft . -o spdx-json=sbom-${{ needs.tag.outputs.tag }}.spdx.json
+          syft . -o cyclonedx-json=sbom-${{ needs.tag.outputs.tag }}.cyclonedx.json
+
+          # If dist artifacts exist, also scan them
+          if [[ -d dist ]]; then
+            echo "Scanning dist/ artifacts..."
+            syft dist/ -o spdx-json=sbom-dist-${{ needs.tag.outputs.tag }}.spdx.json
+          fi
+
+          echo "✅ SBOM files generated:"
+          ls -la sbom-*.json
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: sbom
+          path: sbom-*.json
+
+  # Create draft release and attach SBOM artifacts
   draft-release:
     name: Draft GitHub Release
     runs-on: ubuntu-latest
-    needs: [tag, build]
+    needs: [tag, build, sbom]
 
     steps:
+      - name: Download SBOM artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: sbom
+          path: sbom
+        continue-on-error: true
+
       - name: Create GitHub Release with artifacts
         uses: softprops/action-gh-release@v2.5.0
         with:
@@ -170,6 +220,8 @@ jobs:
           name: ${{ needs.tag.outputs.tag }}
           generate_release_notes: true
           draft: true
+          files: |
+            sbom/*.json
 
   # Decide at step-level whether to publish
   pypi:
@@ -373,6 +425,17 @@ jobs:
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
+      - name: Generate SBOM Link
+        id: sbom_link
+        run: |
+          {
+            echo "message<<EOF"
+            echo "### Supply Chain Security"
+            echo ""
+            echo "SBOM (Software Bill of Materials) files are attached to this release in SPDX and CycloneDX formats."
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
       - name: Publish Release
         uses: softprops/action-gh-release@v2.5.0
         with:
@@ -382,4 +445,5 @@ jobs:
           body: |
             ${{ steps.devcontainer_link.outputs.message }}
             ${{ steps.pypi_link.outputs.message }}
+            ${{ steps.sbom_link.outputs.message }}
 

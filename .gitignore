@@ -20,6 +20,10 @@ _benchmarks
 # folder used for programs, e.g. uv, uvx, task, etc.
 bin
 
+# SBOM files
+sbom*.json
+sbom-*.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
