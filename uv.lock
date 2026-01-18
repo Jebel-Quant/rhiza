@@ -579,10 +579,10 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "marimo", specifier = ">=0.18.0" },
-    { name = "numpy", specifier = ">=2.4.0" },
-    { name = "pandas", specifier = ">=2.3.3" },
-    { name = "plotly", specifier = ">=6.5.0" },
+    { name = "marimo", specifier = ">=0.18.0,<1.0" },
+    { name = "numpy", specifier = ">=2.4.0,<3.0" },
+    { name = "pandas", specifier = ">=2.3.3,<3.0" },
+    { name = "plotly", specifier = ">=6.5.0,<7.0" },
 ]
 
 [[package]]
