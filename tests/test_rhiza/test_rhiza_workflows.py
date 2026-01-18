@@ -17,7 +17,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from conftest import GIT, run_make, setup_rhiza_git_repo, strip_ansi
 
 
@@ -50,10 +49,28 @@ def setup_tmp_makefile(logger, root, tmp_path: Path):
         "Copied Makefile from %s to %s", root / "Makefile", tmp_path / "Makefile"
     )
 
+    # Create a minimal .rhiza/template.yml
+    (tmp_path / ".rhiza" / "template.yml").write_text(
+        "repository: Jebel-Quant/rhiza\nref: main\n"
+    )
+
+    # Sort out pyproject.toml
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "test-project"\nversion = "0.1.0"\n'
+    )
+
     # Move into tmp directory for isolation
     old_cwd = Path.cwd()
     os.chdir(tmp_path)
     logger.debug("Changed working directory to %s", tmp_path)
+
+    # Initialize a git repo so that commands checking for it (like materialize) don't fail validation
+    setup_rhiza_git_repo()
+
+    # Create src and tests directories to satisfy validate
+    (tmp_path / "src").mkdir(exist_ok=True)
+    (tmp_path / "tests").mkdir(exist_ok=True)
+
     try:
         yield
     finally:
@@ -138,7 +155,7 @@ class TestSummariseSync:
 
     def test_summarise_sync_skips_in_rhiza_repo(self, logger):
         """Summarise-sync target should skip execution in rhiza repository."""
-        setup_rhiza_git_repo()
+        # setup_rhiza_git_repo() is already called by fixture
 
         proc = run_make(logger, ["summarise-sync"], dry_run=True)
         # Should succeed but skip the actual summarise
