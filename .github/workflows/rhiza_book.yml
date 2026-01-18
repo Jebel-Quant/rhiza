@@ -79,7 +79,7 @@ jobs:
           # Custom environment variables for Marimo notebooks
           # Define secrets/vars in your repository settings with MARIMO_ENV_ prefix
           # They will be available to notebooks without the prefix
-          # Example: MARIMO_ENV_API_KEY → API_KEY, MARIMO_ENV_DATABASE_URL → DATABASE_URL
+          # Example: MARIMO_ENV_VAR_1 → ENV_VAR_1, MARIMO_ENV_VAR_2 → ENV_VAR_2
           #
           # Generic variables (use for any purpose - secrets, config, feature flags, etc.):
           ENV_VAR_1: ${{ secrets.MARIMO_ENV_VAR_1 || vars.MARIMO_ENV_VAR_1 }}
