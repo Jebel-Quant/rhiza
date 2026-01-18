@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from hypothesis import given, assume, settings
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 # Add the utils directory to the path for imports
@@ -371,17 +371,17 @@ class TestSatisfiesProperties:
 
     @given(v=valid_version_str, s=valid_version_str)
     def test_greater_equal_opposite_of_less_than(self, v: str, s: str):
-        """v >= s is equivalent to not (v < s)."""
+        """V >= s is equivalent to not (v < s)."""
         assert satisfies(v, f">={s}") == (not satisfies(v, f"<{s}"))
 
     @given(v=valid_version_str, s=valid_version_str)
     def test_less_equal_opposite_of_greater_than(self, v: str, s: str):
-        """v <= s is equivalent to not (v > s)."""
+        """V <= s is equivalent to not (v > s)."""
         assert satisfies(v, f"<={s}") == (not satisfies(v, f">{s}"))
 
     @given(v=valid_version_str, s=valid_version_str)
     def test_equal_opposite_of_not_equal(self, v: str, s: str):
-        """v == s is equivalent to not (v != s)."""
+        """V == s is equivalent to not (v != s)."""
         assert satisfies(v, f"=={s}") == (not satisfies(v, f"!={s}"))
 
     @given(v=valid_version_str, s=valid_version_str)
