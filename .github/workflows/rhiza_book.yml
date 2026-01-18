@@ -65,13 +65,15 @@ jobs:
           uv sync --all-extras --all-groups --frozen
 
       - name: "Make the book"
-        env:
-          # Custom environment variables for Marimo notebooks
-          # Add your custom secrets/vars here with MARIMO_ENV_ prefix from repository settings
-          # Example: API_KEY: ${{ secrets.MARIMO_ENV_API_KEY }}
-          # Example: DATABASE_URL: ${{ vars.MARIMO_ENV_DATABASE_URL }}
-          # These will be available to notebooks during the build process
-          PLACEHOLDER: "add-your-custom-env-vars-here"
+        # To pass custom environment variables/secrets to notebooks during build:
+        # 1. Define secrets/vars in GitHub Settings > Secrets and variables > Actions
+        # 2. Uncomment the env: section below and add your variables
+        # 3. Access them in notebooks with: os.environ.get('VAR_NAME')
+        #
+        # Example:
+        # env:
+        #   API_KEY: ${{ secrets.MARIMO_ENV_API_KEY }}
+        #   DATABASE_URL: ${{ vars.MARIMO_ENV_DATABASE_URL }}
         run: |
           make -f .rhiza/rhiza.mk book
 
