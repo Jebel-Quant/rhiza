@@ -16,9 +16,12 @@ from pathlib import Path
 
 import pytest
 
-# Get absolute paths for executables to avoid S607 warnings
-SHELL = shutil.which("sh") or "/bin/sh"
-UVX = shutil.which("uvx") or "/usr/local/bin/uvx"
+# Syft is a standalone Go binary from Anchore, NOT a Python package.
+# It must be installed separately (e.g., brew install syft)
+SYFT = shutil.which("syft")
+
+# Skip all tests in this module if syft binary is not available
+pytestmark = pytest.mark.skipif(SYFT is None, reason="syft binary not installed (install via: brew install syft)")
 
 
 @pytest.fixture
@@ -53,7 +56,7 @@ def test_sbom_generation_spdx(temp_project):
 
     # Generate SBOM using syft
     result = subprocess.run(
-        [UVX, "syft", str(temp_project), "-o", f"spdx-json={output_file}"],
+        [SYFT, str(temp_project), "-o", f"spdx-json={output_file}"],
         capture_output=True,
         text=True,
         timeout=60,
@@ -85,7 +88,7 @@ def test_sbom_generation_cyclonedx(temp_project):
 
     # Generate SBOM using syft
     result = subprocess.run(
-        [UVX, "syft", str(temp_project), "-o", f"cyclonedx-json={output_file}"],
+        [SYFT, str(temp_project), "-o", f"cyclonedx-json={output_file}"],
         capture_output=True,
         text=True,
         timeout=60,
@@ -117,7 +120,7 @@ def test_sbom_contains_project_metadata(temp_project):
 
     # Generate SBOM
     result = subprocess.run(
-        [UVX, "syft", str(temp_project), "-o", f"spdx-json={output_file}"],
+        [SYFT, str(temp_project), "-o", f"spdx-json={output_file}"],
         capture_output=True,
         text=True,
         timeout=60,
@@ -144,7 +147,7 @@ def test_sbom_on_actual_repo():
     try:
         # Generate SBOM for the actual repo
         result = subprocess.run(
-            [UVX, "syft", str(repo_root), "-o", f"spdx-json={output_file}"],
+            [SYFT, str(repo_root), "-o", f"spdx-json={output_file}"],
             capture_output=True,
             text=True,
             timeout=120,
