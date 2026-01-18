@@ -3,7 +3,7 @@
 **Repository**: Rhiza
 **Analysis Date**: 2026-01-18
 **Last Updated**: 2026-01-18
-**Overall Score**: 9.5/10
+**Overall Score**: 9.6/10
 
 ---
 
@@ -25,11 +25,11 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 | Configuration | 10/10 | 10% | 1.00 |
 | Developer Experience | 10/10 | 10% | 1.00 |
 | Code Quality | 9/10 | 10% | 0.90 |
-| Test Coverage | 8/10 | 10% | 0.80 |
+| Test Coverage | 9/10 | 10% | 0.90 |
 | Security | 10/10 | 10% | 1.00 |
 | Dependency Management | 9/10 | 5% | 0.45 |
 | Shell Scripts | 9/10 | 5% | 0.45 |
-| **Overall** | **9.5/10** | 100% | **9.45** |
+| **Overall** | **9.6/10** | 100% | **9.55** |
 
 ---
 
@@ -104,9 +104,9 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - OIDC authentication for PyPI (trusted publishing)
 - Minimal permissions model (least privilege)
 - `fail-fast: false` on matrix jobs
+- Coverage reports deployed to GitHub Pages via book workflow
 
 **Weaknesses:**
-- No coverage report upload to Codecov/Coveralls
 - Large workflows could be refactored into reusable actions
 
 ---
@@ -178,11 +178,11 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 **Weaknesses:**
 - mypy installed (PR #362) but not yet integrated into CI/pre-commit
-- Limited source code to demonstrate patterns (src/hello is minimal)
+- Limited source code (src/hello demonstrates patterns with type hints, docstrings, and doctests but is minimal)
 
 ---
 
-### 7. Test Coverage: 8/10
+### 7. Test Coverage: 9/10
 
 **Strengths:**
 - 2,299 lines of test code across 15 test files
@@ -195,10 +195,10 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Edge case coverage (uncommitted changes, tag conflicts, branch divergence)
 - Tests for shell scripts (`test_release_script.py`)
 - Comprehensive --dry-run flag coverage (PR #363)
+- 90% coverage threshold enforced via `--cov-fail-under=90`
+- Coverage reports published to GitHub Pages via `make book` (rhiza_book.yml workflow)
 
 **Weaknesses:**
-- No coverage thresholds enforced
-- No coverage report artifacts in CI
 - No benchmarks integrated into CI with regression detection
 - Limited unit tests (mostly integration/structural tests)
 
@@ -270,7 +270,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 |-------|--------|--------|--------|
 | ~~Add SBOM generation to release workflow~~ | Supply chain security | Medium | ✅ Done (PR #336) |
 | ~~Create SECURITY.md~~ | Security posture | Low | ✅ Done (PR #354) |
-| Add coverage thresholds | Quality regression risk | Low | Pending |
+| ~~Add coverage thresholds~~ | Quality regression risk | Low | ✅ Done (90% threshold in tests.mk) |
 | ~~Add shellcheck to CI~~ | Script reliability | Low | ✅ Done (PR #350) |
 
 ### Medium Priority
@@ -288,7 +288,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 |-------|--------|--------|--------|
 | ~~Architecture diagrams~~ | Documentation completeness | Medium | ✅ Done (PR #359) |
 | ~~Quick reference card~~ | Minor DX improvement | Low | ✅ Done (PR #358) |
-| Coverage report uploads | Visibility | Low | Pending |
+| ~~Coverage report uploads~~ | Visibility | Low | ✅ Done (GitHub Pages via book workflow) |
 | Re-add mypy | Type safety | Medium | 🔄 Installed (PR #362), integration pending |
 | ~~Glossary of Rhiza terms~~ | Documentation | Low | ✅ Done (PR #356) |
 | ~~Tighten dependency versions~~ | Stability | Low | ✅ Done (PR #355) |
@@ -312,15 +312,17 @@ Rhiza demonstrates professional-grade engineering with a focus on automation, re
 6. Shell script hardening (shellcheck, dry-run, set -eu)
 
 **Remaining Areas for Investment:**
-1. Test coverage thresholds and reporting
-2. Type checking (mypy installed, CI/pre-commit integration needed)
+1. Type checking CI integration (mypy installed, CI/pre-commit integration pending)
 
 **Progress Summary:**
-- 16 of 18 priority improvements completed via PRs #336, #348-363
-- mypy installed (PR #362), integration pending
-- Test coverage increased to 2,299 lines (PR #363 added --dry-run tests)
-- Score improved from 8.8/10 to 9.5/10
-- All high/medium priority items addressed except coverage thresholds
-- Security now at 10/10 with full shellcheck validation
+- 18 of 18 priority improvements completed via PRs #336, #348-365 and book workflow
+- 90% coverage threshold enforced in tests.mk
+- Coverage reports published to GitHub Pages via `make book`
+- mypy installed (PR #362), CI integration pending
+- Test coverage at 2,299 lines across 15 test files
+- Score improved from 8.8/10 to 9.6/10
+- All high priority items addressed
+- Security at 10/10 with full shellcheck validation
+- PR #365 added hello module example demonstrating type hints, docstrings, and doctests
 
 This repository now achieves enterprise-grade quality suitable for adoption as a template for Python projects.
