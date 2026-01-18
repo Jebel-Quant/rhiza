@@ -55,6 +55,7 @@ jobs:
         if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
         id: python_version
         run: |
+          if [ -f .python-version ]; then
             PYTHON_VERSION=$(tr -d '[:space:]' < .python-version)
             echo "version=$PYTHON_VERSION" >> "$GITHUB_OUTPUT"
             echo "Using Python version: $PYTHON_VERSION"
