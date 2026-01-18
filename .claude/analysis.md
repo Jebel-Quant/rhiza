@@ -3,7 +3,7 @@
 **Repository**: Rhiza
 **Analysis Date**: 2026-01-18
 **Last Updated**: 2026-01-18
-**Overall Score**: 9.4/10
+**Overall Score**: 9.5/10
 
 ---
 
@@ -26,10 +26,10 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 | Developer Experience | 10/10 | 10% | 1.00 |
 | Code Quality | 9/10 | 10% | 0.90 |
 | Test Coverage | 8/10 | 10% | 0.80 |
-| Security | 9/10 | 10% | 0.90 |
+| Security | 10/10 | 10% | 1.00 |
 | Dependency Management | 9/10 | 5% | 0.45 |
 | Shell Scripts | 9/10 | 5% | 0.45 |
-| **Overall** | **9.4/10** | 100% | **9.35** |
+| **Overall** | **9.5/10** | 100% | **9.45** |
 
 ---
 
@@ -75,8 +75,11 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Clear `make help` output with 40+ documented targets
 
 **Weaknesses:**
-- No architecture diagram (mermaid or similar)
-- No video/animated GIF showing workflow
+- None significant
+
+**Recent additions:**
+- `docs/ARCHITECTURE.md` - 8 mermaid diagrams (PR #359)
+- `docs/DEMO.md` - Recording instructions and scripts (PR #360)
 
 ---
 
@@ -200,7 +203,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ---
 
-### 8. Security: 9/10
+### 8. Security: 10/10
 
 **Strengths:**
 - CodeQL analysis for Python and GitHub Actions
@@ -213,9 +216,10 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - SLSA provenance attestations for release artifacts (PR #353)
 - SECURITY.md with vulnerability reporting process (PR #354)
 - SBOM test suite validates generation capability (PR #336)
+- Full shellcheck validation in actionlint (PR #361)
 
 **Weaknesses:**
-- Actionlint runs with `-ignore SC` (ignoring some ShellCheck warnings)
+- None significant
 
 ---
 
@@ -281,7 +285,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 | Issue | Impact | Effort | Status |
 |-------|--------|--------|--------|
-| Architecture diagrams | Documentation completeness | Medium | Pending |
+| ~~Architecture diagrams~~ | Documentation completeness | Medium | ✅ Done (PR #359) |
 | ~~Quick reference card~~ | Minor DX improvement | Low | ✅ Done (PR #358) |
 | Coverage report uploads | Visibility | Low | Pending |
 | Re-add mypy | Type safety | Medium | Pending |
@@ -289,6 +293,8 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 | ~~Tighten dependency versions~~ | Stability | Low | ✅ Done (PR #355) |
 | ~~Pin GitHub Actions to SemVer~~ | Reproducibility | Low | ✅ Done (PR #348) |
 | ~~SLSA provenance~~ | Supply chain security | Medium | ✅ Done (PR #353) |
+| ~~Demo recording instructions~~ | Onboarding | Low | ✅ Done (PR #360) |
+| ~~Enable full shellcheck in actionlint~~ | CI reliability | Low | ✅ Done (PR #361) |
 
 ---
 
@@ -297,21 +303,21 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 Rhiza demonstrates professional-grade engineering with a focus on automation, reproducibility, and developer experience. The "living templates" concept is innovative and well-executed. The modular Makefile system with hooks is particularly elegant.
 
 **Key Strengths:**
-1. Architecture excellence (living templates, modular Makefile)
-2. Comprehensive CI/CD (14 workflows)
-3. Excellent documentation (glossary, quick reference, customization guides)
-4. Strong security posture (SLSA, SECURITY.md, SBOM tests)
+1. Architecture excellence (living templates, modular Makefile, mermaid diagrams)
+2. Comprehensive CI/CD (14 workflows, full shellcheck validation)
+3. Excellent documentation (glossary, quick reference, architecture diagrams, demo instructions)
+4. Strong security posture (SLSA, SECURITY.md, SBOM tests, actionlint)
 5. Great developer experience
 6. Shell script hardening (shellcheck, dry-run, set -eu)
 
 **Remaining Areas for Investment:**
 1. Test coverage thresholds and reporting
-2. Architecture diagrams
-3. Type checking (mypy)
+2. Type checking (mypy)
 
 **Progress Summary:**
-- 12 of 15 priority improvements completed via PRs #336, #348-358
-- Score improved from 8.8/10 to 9.4/10
+- 16 of 18 priority improvements completed via PRs #336, #348-361
+- Score improved from 8.8/10 to 9.5/10
 - All high/medium priority items addressed except coverage thresholds
+- Security now at 10/10 with full shellcheck validation
 
 This repository now achieves enterprise-grade quality suitable for adoption as a template for Python projects.
