@@ -13,6 +13,18 @@
 #   - 📖 Generate API documentation with pdoc
 #   - 🧪 Run tests and generate coverage reports
 #   - 🚀 Deploy combined documentation to GitHub Pages
+#
+# Custom Environment Variables:
+#   This workflow supports passing custom environment variables and secrets to Marimo notebooks
+#   during the book build. To use this feature:
+#   1. Define GitHub secrets or variables with a MARIMO_ENV_ prefix in your repository settings
+#   2. Add them to the env: section of the "Make the book" step below
+#   3. They will be available to your notebooks during execution
+#
+#   Example:
+#     - In GitHub Settings > Secrets, create: MARIMO_ENV_API_KEY
+#     - In the workflow env: section, add: API_KEY: ${{ secrets.MARIMO_ENV_API_KEY }}
+#     - In your notebook, access it: os.environ.get('API_KEY')
 
 name: "(RHIZA) BOOK"
 
@@ -53,6 +65,13 @@ jobs:
           uv sync --all-extras --all-groups --frozen
 
       - name: "Make the book"
+        env:
+          # Custom environment variables for Marimo notebooks
+          # Add your custom secrets/vars here with MARIMO_ENV_ prefix from repository settings
+          # Example: API_KEY: ${{ secrets.MARIMO_ENV_API_KEY }}
+          # Example: DATABASE_URL: ${{ vars.MARIMO_ENV_DATABASE_URL }}
+          # These will be available to notebooks during the build process
+          PLACEHOLDER: "add-your-custom-env-vars-here"
         run: |
           make -f .rhiza/rhiza.mk book
 

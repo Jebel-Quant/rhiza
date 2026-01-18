@@ -85,7 +85,9 @@ pythonpath = ["src"]
 
 ## CI/CD Integration
 
-The `.github/workflows/marimo.yml` workflow automatically:
+### Marimo Workflow
+
+The `.github/workflows/rhiza_marimo.yml` workflow automatically:
 
 1. Discovers all `.py` files in this directory
 2. Runs each notebook in a fresh environment
@@ -93,6 +95,46 @@ The `.github/workflows/marimo.yml` workflow automatically:
 4. Ensures reproducibility
 
 This guarantees that all notebooks remain functional and up-to-date.
+
+### Book Workflow
+
+The `.github/workflows/rhiza_book.yml` workflow builds the documentation book, including:
+
+1. Exporting Marimo notebooks to static HTML
+2. Generating API documentation
+3. Creating test coverage reports
+4. Deploying to GitHub Pages
+
+#### Custom Environment Variables for Notebooks
+
+The book workflow supports passing custom environment variables and secrets to notebooks during the build process. This is useful when your notebooks need access to API keys, database URLs, or other configuration values.
+
+**To use custom environment variables:**
+
+1. **Define secrets or variables** in your GitHub repository:
+   - Go to Settings > Secrets and variables > Actions
+   - Create secrets (for sensitive data) or variables (for non-sensitive config)
+   - Use a `MARIMO_ENV_` prefix for clarity (e.g., `MARIMO_ENV_API_KEY`)
+
+2. **Update the workflow** (`.github/workflows/rhiza_book.yml`):
+   ```yaml
+   - name: "Make the book"
+     env:
+       API_KEY: ${{ secrets.MARIMO_ENV_API_KEY }}
+       DATABASE_URL: ${{ vars.MARIMO_ENV_DATABASE_URL }}
+     run: |
+       make -f .rhiza/rhiza.mk book
+   ```
+
+3. **Access in your notebook**:
+   ```python
+   import os
+   
+   api_key = os.environ.get('API_KEY')
+   database_url = os.environ.get('DATABASE_URL')
+   ```
+
+**Note**: Environment variables are only available during the book build process, not when running notebooks locally with `make marimo` or `marimo edit`. For local development, you can set these variables in your shell or use a `.env` file.
 
 ## Creating New Notebooks
 
