@@ -57,10 +57,10 @@ jobs:
         run: |
           if [ -f .python-version ]; then
             PYTHON_VERSION=$(cat .python-version | tr -d '[:space:]')
-            echo "version=$PYTHON_VERSION" >> $GITHUB_OUTPUT
+            echo "version=$PYTHON_VERSION" >> "$GITHUB_OUTPUT"
             echo "Using Python version: $PYTHON_VERSION"
           else
-            echo "version=3.12" >> $GITHUB_OUTPUT
+            echo "version=3.12" >> "$GITHUB_OUTPUT"
             echo "::warning::.python-version not found, using default 3.12"
           fi
 
