@@ -6,8 +6,6 @@ Tests the workflow name prefix checker used in pre-commit hooks.
 import sys
 from pathlib import Path
 
-import pytest
-
 # Add .rhiza/scripts to path so we can import check_workflow_names
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / ".rhiza" / "scripts"))
 
@@ -33,7 +31,7 @@ class TestCheckFile:
 
         assert result is False
         content = workflow.read_text()
-        assert '(RHIZA) My Workflow' in content
+        assert "(RHIZA) My Workflow" in content
 
     def test_missing_name_field_returns_false(self, tmp_path, capsys):
         """File without name field returns False with error message."""
@@ -86,7 +84,7 @@ jobs:
 
         content = workflow.read_text()
         # Check name was updated
-        assert '(RHIZA) CI Pipeline' in content
+        assert "(RHIZA) CI Pipeline" in content
         # Check other content preserved
         assert "branches: [main]" in content
         assert "runs-on: ubuntu-latest" in content
