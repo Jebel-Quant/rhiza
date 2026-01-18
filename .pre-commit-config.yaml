@@ -64,3 +64,8 @@ repos:
         language: python
         additional_dependencies: [PyYAML]
         files: ^\.github/workflows/rhiza_.*\.ya?ml$
+
+      - id: mypy
+        name: mypy
+        entry: make mypy
+        language: system
