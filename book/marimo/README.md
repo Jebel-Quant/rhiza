@@ -107,7 +107,7 @@ You can pass custom environment variables and secrets to notebooks during the bo
 1. **Define secrets or variables** in your repository settings:
    - Go to Settings > Secrets and variables > Actions
    - Add repository secrets (for sensitive data) or variables (for configuration)
-   - Use the `MARIMO_ENV_VAR_N` naming pattern (e.g., `MARIMO_ENV_VAR_1`, `MARIMO_ENV_VAR_2`)
+   - Use the `MARIMO_ENV_VAR_` prefix with numbers 1-20 (e.g., `MARIMO_ENV_VAR_1`, `MARIMO_ENV_VAR_2`)
 
 2. **Access in your notebooks**:
    ```python

@@ -20,9 +20,9 @@
 #
 #   To use this feature:
 #   1. Go to Settings > Secrets and variables > Actions
-#   2. Add secrets or variables with MARIMO_ENV_ prefix:
-#      - For secrets: MARIMO_ENV_VAR_1, MARIMO_ENV_VAR_2, etc.
-#      - For variables: MARIMO_ENV_VAR_1, MARIMO_ENV_VAR_2, etc.
+#   2. Add secrets or variables with MARIMO_ENV_VAR_ prefix:
+#      - For secrets: MARIMO_ENV_VAR_1, MARIMO_ENV_VAR_2, etc. (up to 20)
+#      - For variables: MARIMO_ENV_VAR_1, MARIMO_ENV_VAR_2, etc. (up to 20)
 #   3. They will be available in notebooks as ENV_VAR_1, ENV_VAR_2, etc.
 #   4. Access them in notebooks with: os.environ.get('ENV_VAR_1')
 #
