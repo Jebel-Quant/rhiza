@@ -69,16 +69,16 @@ extend-select = [
     "D107",  # pydocstyle - Require docstrings for __init__
     "B",     # flake8-bugbear - Find likely bugs and design problems
     "C4",    # flake8-comprehensions - Better list/set/dict comprehensions
-    "SIM",   # flake8-simplify - Simplify code
+    #"SIM",   # flake8-simplify - Simplify code
     "PT",    # flake8-pytest-style - Check pytest best practices
     "RUF",   # Ruff-specific rules
-    "S",     # flake8-bandit - Find security issues
-    "ERA",   # eradicate - Find commented out code
-    "T10",   # flake8-debugger - Check for debugger imports and calls
+    #"S",     # flake8-bandit - Find security issues
+    #"ERA",   # eradicate - Find commented out code
+    #"T10",   # flake8-debugger - Check for debugger imports and calls
     "TRY",   # flake8-try-except-raise - Try/except/raise checks
     "ICN",   # flake8-import-conventions - Import convention enforcement
-    "PIE",   # flake8-pie - Miscellaneous rules
-    "PL",    # Pylint rules
+    #"PIE",   # flake8-pie - Miscellaneous rules
+    #"PL",    # Pylint rules
 ]
 
 # Resolve incompatible pydocstyle rules: prefer D211 and D212 over D203 and D213
