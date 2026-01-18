@@ -44,7 +44,6 @@ jobs:
 
       - name: Run benchmarks
         run: |
-          make install
           make benchmark
 
       - name: Upload benchmark results
@@ -53,18 +52,20 @@ jobs:
         with:
           name: benchmark-results
           path: |
-            tests/test_rhiza/benchmarks/benchmarks.json
-            tests/test_rhiza/benchmarks/benchmarks.svg
-            tests/test_rhiza/benchmarks/benchmarks.html
+            _benchmarks/benchmarks.json
+            _benchmarks/benchmarks.svg
+            _benchmarks/benchmarks.html
 
       # Regression detection using github-action-benchmark
       # Stores benchmark history in gh-pages branch under /benchmarks
       # Alerts if performance degrades by more than 150% of baseline
       - name: Store benchmark result and check for regression
         uses: benchmark-action/github-action-benchmark@v1
+        # run this only if _benchmarks/benchmarks.json exists
+        if: hashFiles('_benchmarks/benchmarks.json') != ''
         with:
           tool: 'pytest'
-          output-file-path: tests/test_rhiza/benchmarks/benchmarks.json
+          output-file-path: _benchmarks/benchmarks.json
           # Store benchmark data in gh-pages branch
           gh-pages-branch: gh-pages
           benchmark-data-dir-path: benchmarks
