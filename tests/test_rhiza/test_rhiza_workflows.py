@@ -17,7 +17,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
-from conftest import GIT, run_make, setup_rhiza_git_repo, strip_ansi
+from conftest import run_make, setup_rhiza_git_repo, strip_ansi
 
 
 @pytest.fixture(autouse=True)
@@ -37,27 +37,19 @@ def setup_tmp_makefile(logger, root, tmp_path: Path):
 
     # Copy .rhiza-version if it exists
     if (root / ".rhiza" / ".rhiza-version").exists():
-        shutil.copy(
-            root / ".rhiza" / ".rhiza-version", tmp_path / ".rhiza" / ".rhiza-version"
-        )
+        shutil.copy(root / ".rhiza" / ".rhiza-version", tmp_path / ".rhiza" / ".rhiza-version")
 
     # Create a minimal, deterministic .rhiza/.env for tests
     env_content = "SCRIPTS_FOLDER=.rhiza/scripts\nCUSTOM_SCRIPTS_FOLDER=.rhiza/customisations/scripts\n"
     (tmp_path / ".rhiza" / ".env").write_text(env_content)
 
-    logger.debug(
-        "Copied Makefile from %s to %s", root / "Makefile", tmp_path / "Makefile"
-    )
+    logger.debug("Copied Makefile from %s to %s", root / "Makefile", tmp_path / "Makefile")
 
     # Create a minimal .rhiza/template.yml
-    (tmp_path / ".rhiza" / "template.yml").write_text(
-        "repository: Jebel-Quant/rhiza\nref: main\n"
-    )
+    (tmp_path / ".rhiza" / "template.yml").write_text("repository: Jebel-Quant/rhiza\nref: main\n")
 
     # Sort out pyproject.toml
-    (tmp_path / "pyproject.toml").write_text(
-        '[project]\nname = "test-project"\nversion = "0.1.0"\n'
-    )
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "test-project"\nversion = "0.1.0"\n')
 
     # Move into tmp directory for isolation
     old_cwd = Path.cwd()
@@ -183,7 +175,7 @@ class TestWorkflowSync:
 
         # Simulate the workflow's version reading step
         result = subprocess.run(
-            ["cat", str(version_file)],
+            [shutil.which("cat") or "cat", str(version_file)],
             capture_output=True,
             text=True,
             check=True,
@@ -202,7 +194,7 @@ class TestWorkflowSync:
         # Simulate the workflow's version reading with fallback using proper subprocess
         try:
             result = subprocess.run(
-                ["cat", str(version_file)],
+                [shutil.which("cat") or "cat", str(version_file)],
                 capture_output=True,
                 text=True,
                 check=True,
