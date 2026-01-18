@@ -37,6 +37,7 @@ RESET := \033[0m
 	pre-validate \
 	release \
 	sync \
+	summarise-sync \
 	update-readme \
 	validate \
 	version-matrix
@@ -50,6 +51,10 @@ VENV ?= .venv
 # Read Python version from .python-version (single source of truth)
 PYTHON_VERSION ?= $(shell cat .python-version 2>/dev/null || echo "3.12")
 export PYTHON_VERSION
+
+# Read Rhiza version from .rhiza/.rhiza-version (single source of truth for rhiza-tools)
+RHIZA_VERSION ?= $(shell cat .rhiza/.rhiza-version 2>/dev/null || echo "0.9.0")
+export RHIZA_VERSION
 
 export UV_NO_MODIFY_PATH := 1
 export UV_VENV_CLEAR := 1
@@ -110,16 +115,24 @@ sync: pre-sync ## sync with template repository as defined in .rhiza/template.ym
 		printf "${BLUE}[INFO] Skipping sync in rhiza repository (no template.yml by design)${RESET}\n"; \
 	else \
 		$(MAKE) install-uv; \
-		${UVX_BIN} "rhiza>=0.7.1" materialize --force .; \
+		${UVX_BIN} "rhiza>=$(RHIZA_VERSION)" materialize --force .; \
 	fi
 	@$(MAKE) post-sync
+
+summarise-sync: install-uv ## summarise differences with template repository as defined in .rhiza/template.yml
+	@if git remote get-url origin 2>/dev/null | grep -iqE 'jebel-quant/rhiza(\.git)?$$'; then \
+		printf "${BLUE}[INFO] Skipping summarise-sync in rhiza repository (no template.yml by design)${RESET}\n"; \
+	else \
+		$(MAKE) install-uv; \
+		${UVX_BIN} "rhiza>=$(RHIZA_VERSION)" summarise .; \
+	fi
 
 validate: pre-validate ## validate project structure against template repository as defined in .rhiza/template.yml
 	@if git remote get-url origin 2>/dev/null | grep -iqE 'jebel-quant/rhiza(\.git)?$$'; then \
 		printf "${BLUE}[INFO] Skipping validate in rhiza repository (no template.yml by design)${RESET}\n"; \
 	else \
 		$(MAKE) install-uv; \
-		${UVX_BIN} "rhiza>=0.7.1" validate .; \
+		${UVX_BIN} "rhiza>=$(RHIZA_VERSION)" validate .; \
 	fi
 	@$(MAKE) post-validate
 
