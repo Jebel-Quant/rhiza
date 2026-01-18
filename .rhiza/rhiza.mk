@@ -119,7 +119,7 @@ sync: pre-sync ## sync with template repository as defined in .rhiza/template.ym
 	fi
 	@$(MAKE) post-sync
 
-summarise-sync: ## summarise differences created by sync with template repository
+summarise-sync: install-uv ## summarise differences created by sync with template repository
 	@if git remote get-url origin 2>/dev/null | grep -iqE 'jebel-quant/rhiza(\.git)?$$'; then \
 		printf "${BLUE}[INFO] Skipping summarise-sync in rhiza repository (no template.yml by design)${RESET}\n"; \
 	else \
