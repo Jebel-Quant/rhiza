@@ -131,10 +131,23 @@ This approach doesn't require modifying the workflow file, so it won't be affect
    database_url = os.environ.get('DATABASE_URL')
    ```
 
-4. **For secrets in GitHub Actions**:
-   - Store the secret value in GitHub Settings > Secrets and variables > Actions
-   - Create `.env.marimo` with placeholder values for local development
-   - In GitHub Actions, the secrets will be available as environment variables
+4. **Using GitHub Secrets with .env.marimo**:
+   
+   To use GitHub repository secrets with the `.env.marimo` approach, you have two options:
+   
+   **Option A**: Reference secrets in the workflow and write them to .env.marimo (recommended for CI):
+   - In `.github/workflows/rhiza_book.yml`, add a step before "Make the book":
+     ```yaml
+     - name: Create .env.marimo from secrets
+       run: |
+         echo "API_KEY=${{ secrets.API_KEY }}" > .env.marimo
+         echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.marimo
+     ```
+   
+   **Option B**: Commit .env.marimo with placeholder values:
+   - Commit `.env.marimo` with dummy values for CI to use
+   - Override with real values locally for development
+   - This is simpler but less secure for sensitive data
 
 **Alternative Approach: Direct workflow env: section**
 

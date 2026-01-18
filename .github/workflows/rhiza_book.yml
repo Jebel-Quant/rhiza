@@ -93,6 +93,12 @@ jobs:
           # Source .env.marimo if it exists (for custom env vars)
           if [ -f .env.marimo ]; then
             echo "Loading environment variables from .env.marimo"
+            # Basic validation: check for dangerous shell patterns before sourcing
+            if grep -qE '(\$\(|`|&&|\|\||;)' .env.marimo 2>/dev/null; then
+              echo "ERROR: .env.marimo contains potentially unsafe shell syntax"
+              echo "Please use only simple KEY=value pairs (one per line)"
+              exit 1
+            fi
             set -a
             source .env.marimo
             set +a
