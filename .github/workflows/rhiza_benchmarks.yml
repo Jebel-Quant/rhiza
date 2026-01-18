@@ -43,6 +43,8 @@ jobs:
           python-version: "3.12"
 
       - name: Run benchmarks
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.uv-extra-index-url }}
         run: |
           make benchmark
 
