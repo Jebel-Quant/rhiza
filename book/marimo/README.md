@@ -140,8 +140,10 @@ This approach doesn't require modifying the workflow file, so it won't be affect
      ```yaml
      - name: Create .env.marimo from secrets
        run: |
-         echo "API_KEY=${{ secrets.API_KEY }}" > .env.marimo
-         echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env.marimo
+         cat > .env.marimo << EOF
+         API_KEY=${{ secrets.API_KEY }}
+         DATABASE_URL=${{ secrets.DATABASE_URL }}
+         EOF
      ```
    
    **Option B**: Commit .env.marimo with placeholder values:
