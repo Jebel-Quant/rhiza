@@ -61,6 +61,8 @@ jobs:
       # Alerts if performance degrades by more than 150% of baseline
       - name: Store benchmark result and check for regression
         uses: benchmark-action/github-action-benchmark@v1
+        # run this only if _benchmarks/benchmarks.json exists
+        if: hashFiles('_benchmarks/benchmarks.json') != ''
         with:
           tool: 'pytest'
           output-file-path: _benchmarks/benchmarks.json
