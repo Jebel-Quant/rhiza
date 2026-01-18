@@ -124,12 +124,12 @@ class TestRhizaSyncWorkflow:
 
         assert pr_step is not None, "Create pull request step not found"
 
-        # Check that it uses body-path instead of body
+        # Check that it uses body-path
         with_params = pr_step.get("with", {})
         assert "body-path" in with_params
         assert with_params.get("body-path") == "pr-description.md"
-        # Ensure old static body is not used
-        assert "body" not in with_params or with_params.get("body") == ""
+        # Ensure old static body is not present
+        assert "body" not in with_params
 
     def test_workflow_version_fallback_to_0_9_0(self, workflow_file):
         """The workflow should fallback to version 0.9.0 if file doesn't exist."""
