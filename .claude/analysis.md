@@ -177,7 +177,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Comprehensive tests for version_matrix.py (35 tests, PR #349)
 
 **Weaknesses:**
-- No mypy/type checker integration (removed in #337)
+- mypy installed (PR #362) but not yet integrated into CI/pre-commit
 - Limited source code to demonstrate patterns (src/hello is minimal)
 
 ---
@@ -185,7 +185,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 ### 7. Test Coverage: 8/10
 
 **Strengths:**
-- 1,735 lines of test code across 12 test files
+- 2,299 lines of test code across 15 test files
 - Creative testing strategies:
   - README code block execution (`test_readme.py`)
   - Makefile target validation via dry-run (`test_makefile.py`)
@@ -194,6 +194,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Sophisticated `git_repo` fixture with mocked `uv` and `make`
 - Edge case coverage (uncommitted changes, tag conflicts, branch divergence)
 - Tests for shell scripts (`test_release_script.py`)
+- Comprehensive --dry-run flag coverage (PR #363)
 
 **Weaknesses:**
 - No coverage thresholds enforced
@@ -288,7 +289,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 | ~~Architecture diagrams~~ | Documentation completeness | Medium | ✅ Done (PR #359) |
 | ~~Quick reference card~~ | Minor DX improvement | Low | ✅ Done (PR #358) |
 | Coverage report uploads | Visibility | Low | Pending |
-| Re-add mypy | Type safety | Medium | Pending |
+| Re-add mypy | Type safety | Medium | 🔄 Installed (PR #362), integration pending |
 | ~~Glossary of Rhiza terms~~ | Documentation | Low | ✅ Done (PR #356) |
 | ~~Tighten dependency versions~~ | Stability | Low | ✅ Done (PR #355) |
 | ~~Pin GitHub Actions to SemVer~~ | Reproducibility | Low | ✅ Done (PR #348) |
@@ -312,10 +313,12 @@ Rhiza demonstrates professional-grade engineering with a focus on automation, re
 
 **Remaining Areas for Investment:**
 1. Test coverage thresholds and reporting
-2. Type checking (mypy)
+2. Type checking (mypy installed, CI/pre-commit integration needed)
 
 **Progress Summary:**
-- 16 of 18 priority improvements completed via PRs #336, #348-361
+- 16 of 18 priority improvements completed via PRs #336, #348-363
+- mypy installed (PR #362), integration pending
+- Test coverage increased to 2,299 lines (PR #363 added --dry-run tests)
 - Score improved from 8.8/10 to 9.5/10
 - All high/medium priority items addressed except coverage thresholds
 - Security now at 10/10 with full shellcheck validation
