@@ -14,17 +14,21 @@
 #   - 🧪 Run tests and generate coverage reports
 #   - 🚀 Deploy combined documentation to GitHub Pages
 #
-# Custom Environment Variables:
-#   This workflow supports passing custom environment variables and secrets to Marimo notebooks
-#   during the book build. To use this feature:
-#   1. Define GitHub secrets or variables with a MARIMO_ENV_ prefix in your repository settings
-#   2. Add them to the env: section of the "Make the book" step below
-#   3. They will be available to your notebooks during execution
+# Custom Environment Variables for Marimo Notebooks:
+#   This workflow supports passing custom environment variables to notebooks during build.
 #
-#   Example:
-#     - In GitHub Settings > Secrets, create: MARIMO_ENV_API_KEY
-#     - In the workflow env: section, add: API_KEY: ${{ secrets.MARIMO_ENV_API_KEY }}
-#     - In your notebook, access it: os.environ.get('API_KEY')
+#   Recommended approach (no workflow modification needed):
+#     1. Create a .env.marimo file in your repository root
+#     2. Add KEY=value pairs (one per line)
+#     3. The workflow automatically sources this file before building
+#     4. Access variables in notebooks: os.environ.get('KEY')
+#
+#   Alternative approach (requires workflow modification):
+#     1. Define secrets/vars in GitHub Settings > Secrets and variables > Actions
+#     2. Uncomment env: section in "Make the book" step and add your variables
+#     3. Reference them: ${{ secrets.YOUR_SECRET }} or ${{ vars.YOUR_VAR }}
+#
+#   Note: .env.marimo is gitignored and won't be overwritten by template sync
 
 name: "(RHIZA) BOOK"
 
@@ -66,15 +70,33 @@ jobs:
 
       - name: "Make the book"
         # To pass custom environment variables/secrets to notebooks during build:
-        # 1. Define secrets/vars in GitHub Settings > Secrets and variables > Actions
-        # 2. Uncomment the env: section below and add your variables
-        # 3. Access them in notebooks with: os.environ.get('VAR_NAME')
         #
-        # Example:
+        # Option 1 (Recommended): Use .env.marimo file (not synced by template)
+        #   - Create .env.marimo in your repository root with KEY=value pairs
+        #   - This file is gitignored and won't be overwritten by template sync
+        #   - Variables are automatically loaded before the book build
+        #
+        # Option 2: Define directly in workflow (requires modifying this file)
+        #   - Uncomment the env: section below and add your variables
+        #   - Define secrets/vars in GitHub Settings > Secrets and variables > Actions
+        #   - Access them in notebooks with: os.environ.get('VAR_NAME')
+        #
+        # Example .env.marimo:
+        #   API_KEY=my-api-key-from-secret
+        #   DATABASE_URL=postgresql://localhost/mydb
+        #
+        # Example env: section:
         # env:
         #   API_KEY: ${{ secrets.MARIMO_ENV_API_KEY }}
         #   DATABASE_URL: ${{ vars.MARIMO_ENV_DATABASE_URL }}
         run: |
+          # Source .env.marimo if it exists (for custom env vars)
+          if [ -f .env.marimo ]; then
+            echo "Loading environment variables from .env.marimo"
+            set -a
+            source .env.marimo
+            set +a
+          fi
           make -f .rhiza/rhiza.mk book
 
       # Step 5: Package all artifacts for GitHub Pages deployment

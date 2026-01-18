@@ -5,6 +5,8 @@
 
 ### Don't expose API keys, etc.
 .env
+.env.local
+.env.marimo
 
 __marimo__
 

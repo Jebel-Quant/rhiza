@@ -109,12 +109,40 @@ The `.github/workflows/rhiza_book.yml` workflow builds the documentation book, i
 
 The book workflow supports passing custom environment variables and secrets to notebooks during the build process. This is useful when your notebooks need access to API keys, database URLs, or other configuration values.
 
-**To use custom environment variables:**
+**Recommended Approach: Using .env.marimo file**
 
-1. **Define secrets or variables** in your GitHub repository:
+This approach doesn't require modifying the workflow file, so it won't be affected by template sync:
+
+1. **Create `.env.marimo`** in your repository root:
+   ```bash
+   # .env.marimo
+   API_KEY=your-api-key-here
+   DATABASE_URL=postgresql://localhost/mydb
+   DEBUG_MODE=true
+   ```
+
+2. **The workflow automatically sources this file** before building the book. No workflow changes needed!
+
+3. **Access in your notebook**:
+   ```python
+   import os
+   
+   api_key = os.environ.get('API_KEY')
+   database_url = os.environ.get('DATABASE_URL')
+   ```
+
+4. **For secrets in GitHub Actions**:
+   - Store the secret value in GitHub Settings > Secrets and variables > Actions
+   - Create `.env.marimo` with placeholder values for local development
+   - In GitHub Actions, the secrets will be available as environment variables
+
+**Alternative Approach: Direct workflow env: section**
+
+If you prefer to define variables directly in the workflow (requires modifying the workflow file):
+
+1. **Define secrets or variables** in GitHub repository settings:
    - Go to Settings > Secrets and variables > Actions
    - Create secrets (for sensitive data) or variables (for non-sensitive config)
-   - Use a `MARIMO_ENV_` prefix for clarity (e.g., `MARIMO_ENV_API_KEY`)
 
 2. **Update the workflow** (`.github/workflows/rhiza_book.yml`):
    ```yaml
@@ -123,7 +151,7 @@ The book workflow supports passing custom environment variables and secrets to n
        API_KEY: ${{ secrets.MARIMO_ENV_API_KEY }}
        DATABASE_URL: ${{ vars.MARIMO_ENV_DATABASE_URL }}
      run: |
-       make -f .rhiza/rhiza.mk book
+       # ... existing commands
    ```
 
 3. **Access in your notebook**:
@@ -134,7 +162,10 @@ The book workflow supports passing custom environment variables and secrets to n
    database_url = os.environ.get('DATABASE_URL')
    ```
 
-**Note**: Environment variables are only available during the book build process, not when running notebooks locally with `make marimo` or `marimo edit`. For local development, you can set these variables in your shell or use a `.env` file.
+**Note**: 
+- `.env.marimo` is gitignored to protect sensitive data
+- The file won't be overwritten by template sync operations
+- For local development, you can create `.env.marimo` with test values
 
 ## Creating New Notebooks
 
