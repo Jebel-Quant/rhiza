@@ -1,13 +1,15 @@
 """Tests for version_matrix.py utility.
 
 Tests cover version parsing, specifier validation, and edge cases
-for malformed inputs.
+for malformed inputs. Includes property-based tests using hypothesis.
 """
 
 import sys
 from pathlib import Path
 
 import pytest
+from hypothesis import given, assume, settings
+from hypothesis import strategies as st
 
 # Add the utils directory to the path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / ".rhiza" / "utils"))
@@ -262,3 +264,158 @@ class TestEdgeCases:
         """Handle multiple constraints."""
         assert satisfies("3.12", ">=3.11,<3.14,!=3.13") is True
         assert satisfies("3.13", ">=3.11,<3.14,!=3.13") is False
+
+
+# =============================================================================
+# Property-based tests using Hypothesis
+# =============================================================================
+
+# Custom strategies for generating version-like data
+version_component = st.integers(min_value=0, max_value=999)
+version_tuple = st.tuples(version_component, version_component).map(lambda t: t) | st.tuples(
+    version_component, version_component, version_component
+).map(lambda t: t)
+
+
+def tuple_to_version_str(t: tuple[int, ...]) -> str:
+    """Convert a version tuple to a version string."""
+    return ".".join(str(x) for x in t)
+
+
+# Strategy for valid version strings (2 or 3 components)
+valid_version_str = version_tuple.map(tuple_to_version_str)
+
+
+class TestParseVersionProperties:
+    """Property-based tests for parse_version function."""
+
+    @given(components=st.lists(version_component, min_size=1, max_size=5))
+    def test_output_length_equals_component_count(self, components: list[int]):
+        """Parsing a valid version string produces a tuple with the same number of components."""
+        version_str = ".".join(str(c) for c in components)
+        result = parse_version(version_str)
+        assert len(result) == len(components)
+
+    @given(components=st.lists(version_component, min_size=1, max_size=5))
+    def test_all_output_elements_are_non_negative_integers(self, components: list[int]):
+        """All elements in the parsed tuple are non-negative integers."""
+        version_str = ".".join(str(c) for c in components)
+        result = parse_version(version_str)
+        assert all(isinstance(x, int) and x >= 0 for x in result)
+
+    @given(components=st.lists(version_component, min_size=1, max_size=5))
+    def test_roundtrip_preserves_values(self, components: list[int]):
+        """Parsing a version string and converting back gives the same values."""
+        version_str = ".".join(str(c) for c in components)
+        result = parse_version(version_str)
+        # The values should match (leading zeros are stripped by int())
+        assert result == tuple(components)
+
+    @given(components=st.lists(version_component, min_size=1, max_size=5))
+    def test_parsing_is_idempotent(self, components: list[int]):
+        """Parsing, converting to string, and parsing again gives the same result."""
+        version_str = ".".join(str(c) for c in components)
+        first_parse = parse_version(version_str)
+        reconstructed = ".".join(str(x) for x in first_parse)
+        second_parse = parse_version(reconstructed)
+        assert first_parse == second_parse
+
+    @given(
+        components=st.lists(version_component, min_size=1, max_size=3),
+        suffix=st.sampled_from(["", "rc1", "a1", "b2", "alpha", "beta", "dev1"]),
+    )
+    def test_suffix_is_stripped_from_last_component(self, components: list[int], suffix: str):
+        """Suffixes on the last component are stripped, keeping the numeric prefix."""
+        parts = [str(c) for c in components]
+        parts[-1] = parts[-1] + suffix  # Add suffix to last component
+        version_str = ".".join(parts)
+        result = parse_version(version_str)
+        # The numeric values should be preserved
+        assert result == tuple(components)
+
+    @given(garbage=st.text(alphabet="abcdefghijklmnopqrstuvwxyz", min_size=1, max_size=10))
+    def test_non_numeric_prefix_raises_error(self, garbage: str):
+        """Version components without numeric prefix raise VersionSpecifierError."""
+        with pytest.raises(VersionSpecifierError):
+            parse_version(garbage)
+
+
+class TestSatisfiesProperties:
+    """Property-based tests for satisfies function."""
+
+    @given(v=valid_version_str)
+    def test_reflexivity_equality(self, v: str):
+        """A version always satisfies equality with itself."""
+        assert satisfies(v, f"=={v}") is True
+
+    @given(v=valid_version_str)
+    def test_reflexivity_greater_or_equal(self, v: str):
+        """A version always satisfies >= itself."""
+        assert satisfies(v, f">={v}") is True
+
+    @given(v=valid_version_str)
+    def test_reflexivity_less_or_equal(self, v: str):
+        """A version always satisfies <= itself."""
+        assert satisfies(v, f"<={v}") is True
+
+    @given(v=valid_version_str)
+    def test_strict_inequality_never_satisfied_by_self(self, v: str):
+        """A version never satisfies strict inequality with itself."""
+        assert satisfies(v, f">{v}") is False
+        assert satisfies(v, f"<{v}") is False
+
+    @given(v=valid_version_str)
+    def test_not_equal_to_self_is_false(self, v: str):
+        """A version never satisfies != itself."""
+        assert satisfies(v, f"!={v}") is False
+
+    @given(v=valid_version_str, s=valid_version_str)
+    def test_greater_equal_opposite_of_less_than(self, v: str, s: str):
+        """v >= s is equivalent to not (v < s)."""
+        assert satisfies(v, f">={s}") == (not satisfies(v, f"<{s}"))
+
+    @given(v=valid_version_str, s=valid_version_str)
+    def test_less_equal_opposite_of_greater_than(self, v: str, s: str):
+        """v <= s is equivalent to not (v > s)."""
+        assert satisfies(v, f"<={s}") == (not satisfies(v, f">{s}"))
+
+    @given(v=valid_version_str, s=valid_version_str)
+    def test_equal_opposite_of_not_equal(self, v: str, s: str):
+        """v == s is equivalent to not (v != s)."""
+        assert satisfies(v, f"=={s}") == (not satisfies(v, f"!={s}"))
+
+    @given(v=valid_version_str, s=valid_version_str)
+    def test_trichotomy(self, v: str, s: str):
+        """Exactly one of <, ==, > holds for any two versions."""
+        lt = satisfies(v, f"<{s}")
+        eq = satisfies(v, f"=={s}")
+        gt = satisfies(v, f">{s}")
+        assert sum([lt, eq, gt]) == 1
+
+    @given(v=valid_version_str, s1=valid_version_str, s2=valid_version_str)
+    def test_conjunction_of_constraints(self, v: str, s1: str, s2: str):
+        """Comma-separated constraints are a conjunction (AND)."""
+        combined = satisfies(v, f">={s1},<={s2}")
+        separate = satisfies(v, f">={s1}") and satisfies(v, f"<={s2}")
+        assert combined == separate
+
+    @given(
+        major=st.integers(min_value=0, max_value=99),
+        minor=st.integers(min_value=0, max_value=99),
+    )
+    def test_ordering_consistency(self, major: int, minor: int):
+        """If v1 < v2, then satisfies reflects this ordering correctly."""
+        v1 = f"{major}.{minor}"
+        v2 = f"{major}.{minor + 1}"
+        # v1 < v2 should always hold
+        assert satisfies(v1, f"<{v2}") is True
+        assert satisfies(v2, f">{v1}") is True
+        assert satisfies(v1, f"<={v2}") is True
+        assert satisfies(v2, f">={v1}") is True
+
+    @given(v=valid_version_str, s=valid_version_str)
+    @settings(max_examples=50)
+    def test_whitespace_tolerance(self, v: str, s: str):
+        """Whitespace around operators doesn't affect the result."""
+        assert satisfies(v, f">={s}") == satisfies(v, f">= {s}")
+        assert satisfies(v, f"<={s}") == satisfies(v, f"<= {s}")
