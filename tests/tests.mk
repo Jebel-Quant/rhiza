@@ -51,7 +51,7 @@ security: install ## run security scans (pip-audit and bandit)
 	@printf "${BLUE}[INFO] Running pip-audit for dependency vulnerabilities...${RESET}\n"
 	@${UVX_BIN} pip-audit
 	@printf "${BLUE}[INFO] Running bandit security scan...${RESET}\n"
-	@${UVX_BIN} bandit -r ${SOURCE_FOLDER} -ll -q || true
+	@${UVX_BIN} bandit -r ${SOURCE_FOLDER} -ll -q
 
 # The 'mutate' target performs mutation testing using mutmut.
 # 1. Runs mutmut to apply mutations to the source code and check if tests fail.
@@ -59,7 +59,7 @@ security: install ## run security scans (pip-audit and bandit)
 mutate: install ## run mutation testing with mutmut (slow, for CI or thorough testing)
 	@printf "${BLUE}[INFO] Running mutation testing with mutmut...${RESET}\n"
 	@printf "${YELLOW}[WARN] This may take a while...${RESET}\n"
-	@${UVX_BIN} mutmut run --paths-to-mutate=${SOURCE_FOLDER} || true
+	@${UVX_BIN} mutmut run --paths-to-mutate=${SOURCE_FOLDER}
 	@${UVX_BIN} mutmut results
 
 # The 'benchmark' target runs performance benchmarks using pytest-benchmark.
