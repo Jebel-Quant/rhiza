@@ -159,6 +159,26 @@ class TestMakefile:
         # expected_uv = f"{expected_uv_install_dir}/uv"
         # assert f"{expected_uv} run pytest" in out
 
+    def test_test_target_without_source_folder(self, logger, tmp_path):
+        """Test target should run without coverage when SOURCE_FOLDER doesn't exist."""
+        # Update .env to set SOURCE_FOLDER to a non-existent directory
+        env_file = tmp_path / ".rhiza" / ".env"
+        env_content = env_file.read_text()
+        env_content += "\nSOURCE_FOLDER=nonexistent_src\n"
+        env_file.write_text(env_content)
+
+        # Create tests folder
+        tests_folder = tmp_path / "tests"
+        tests_folder.mkdir(exist_ok=True)
+
+        proc = run_make(logger, ["test"])
+        out = proc.stdout
+        # Should see warning about missing source folder
+        assert "if [ -d nonexistent_src ]" in out
+        # Should still run pytest but without coverage flags
+        assert "pytest tests" in out
+        assert "--html=_tests/html-report/report.html" in out
+
     def test_book_target_dry_run(self, logger):
         """Book target should run inline commands to assemble the book."""
         proc = run_make(logger, ["book"])
