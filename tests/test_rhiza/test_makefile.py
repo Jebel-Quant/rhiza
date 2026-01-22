@@ -53,6 +53,10 @@ def setup_tmp_makefile(logger, root, tmp_path: Path):
     (tmp_path / ".rhiza").mkdir(exist_ok=True)
     shutil.copy(root / ".rhiza" / "rhiza.mk", tmp_path / ".rhiza" / "rhiza.mk")
 
+    # Copy .python-version file for PYTHON_VERSION variable
+    if (root / ".python-version").exists():
+        shutil.copy(root / ".python-version", tmp_path / ".python-version")
+
     # Create a minimal, deterministic .rhiza/.env for tests so they don't
     # depend on the developer's local configuration which may vary.
     env_content = "SCRIPTS_FOLDER=.rhiza/scripts\nCUSTOM_SCRIPTS_FOLDER=.rhiza/customisations/scripts\n"
@@ -142,12 +146,65 @@ class TestMakefile:
         assert "Targets:" in out
         assert "Bootstrap" in out or "Meta" in out  # section headers
 
-    def test_fmt_target_dry_run(self, logger):
-        """Fmt target should invoke pre-commit via uvx in dry-run output."""
+    def test_fmt_target_dry_run(self, logger, tmp_path):
+        """Fmt target should invoke pre-commit via uvx with Python version in dry-run output."""
         proc = run_make(logger, ["fmt"])
         out = proc.stdout
-        # Check for uv command with the configured path
-        assert "uvx pre-commit run --all-files" in out
+        # Check for uvx command with the Python version flag
+        # The PYTHON_VERSION should be read from .python-version file (e.g., "3.12")
+        python_version_file = tmp_path / ".python-version"
+        if python_version_file.exists():
+            python_version = python_version_file.read_text().strip()
+            assert f"uvx -p {python_version} pre-commit run --all-files" in out
+        else:
+            # Fallback check if .python-version doesn't exist
+            assert "uvx -p" in out and "pre-commit run --all-files" in out
+
+    def test_deptry_target_dry_run(self, logger, tmp_path):
+        """Deptry target should invoke deptry via uvx with Python version in dry-run output."""
+        # Create a mock SOURCE_FOLDER directory so the deptry command runs
+        source_folder = tmp_path / "src"
+        source_folder.mkdir(exist_ok=True)
+        
+        # Update .env to set SOURCE_FOLDER
+        env_file = tmp_path / ".rhiza" / ".env"
+        env_content = env_file.read_text()
+        env_content += "\nSOURCE_FOLDER=src\n"
+        env_file.write_text(env_content)
+        
+        proc = run_make(logger, ["deptry"])
+        out = proc.stdout
+        # Check for uvx command with the Python version flag
+        python_version_file = tmp_path / ".python-version"
+        if python_version_file.exists():
+            python_version = python_version_file.read_text().strip()
+            assert f"uvx -p {python_version} deptry src" in out
+        else:
+            # Fallback check if .python-version doesn't exist
+            assert "uvx -p" in out and "deptry src" in out
+
+    def test_mypy_target_dry_run(self, logger, tmp_path):
+        """Mypy target should invoke mypy via uvx with Python version in dry-run output."""
+        # Create a mock SOURCE_FOLDER directory so the mypy command runs
+        source_folder = tmp_path / "src"
+        source_folder.mkdir(exist_ok=True)
+        
+        # Update .env to set SOURCE_FOLDER
+        env_file = tmp_path / ".rhiza" / ".env"
+        env_content = env_file.read_text()
+        env_content += "\nSOURCE_FOLDER=src\n"
+        env_file.write_text(env_content)
+        
+        proc = run_make(logger, ["mypy"])
+        out = proc.stdout
+        # Check for uvx command with the Python version flag
+        python_version_file = tmp_path / ".python-version"
+        if python_version_file.exists():
+            python_version = python_version_file.read_text().strip()
+            assert f"uvx -p {python_version} mypy src --strict --config-file=pyproject.toml" in out
+        else:
+            # Fallback check if .python-version doesn't exist
+            assert "uvx -p" in out and "mypy src --strict --config-file=pyproject.toml" in out
 
     def test_test_target_dry_run(self, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
