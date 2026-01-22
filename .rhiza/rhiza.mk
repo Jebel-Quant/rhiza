@@ -49,7 +49,7 @@ UVX_BIN ?= $(shell command -v uvx 2>/dev/null || echo ${INSTALL_DIR}/uvx)
 VENV ?= .venv
 
 # Read Python version from .python-version (single source of truth)
-PYTHON_VERSION ?= $(shell cat .python-version 2>/dev/null || echo "3.12")
+PYTHON_VERSION ?= $(shell cat .python-version 2>/dev/null || echo "3.13")
 export PYTHON_VERSION
 
 export UV_NO_MODIFY_PATH := 1
