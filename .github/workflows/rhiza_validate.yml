@@ -13,7 +13,7 @@ jobs:
   validation:
     runs-on: ubuntu-latest
     # don't run this in rhiza itself. Rhiza has no template.yml file.
-    if: ${{ github.repository != 'jebel-quant/rhiza' }}
+    # if: ${{ github.repository != 'jebel-quant/rhiza' }}
     container:
       image: ghcr.io/astral-sh/uv:0.9.26-python3.12-trixie
 
