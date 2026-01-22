@@ -1,0 +1,25 @@
+name: 'Load Context'
+description: 'Loads environment variables and secrets based on a manifest file.'
+inputs:
+  manifest:
+    description: 'Path to the manifest file (JSON or YAML)'
+    required: true
+    default: '.github/context.yml'
+  secrets-context:
+    description: 'The secrets context as JSON (pass ${{ toJSON(secrets) }})'
+    required: false
+    default: '{}'
+  strict:
+    description: 'Fail if any secret defined in the manifest is missing from secrets-context.'
+    required: false
+    default: 'false'
+runs:
+  using: "composite"
+  steps:
+    - name: Load Context
+      shell: bash
+      env:
+        INPUT_MANIFEST: ${{ inputs.manifest }}
+        INPUT_SECRETS_CONTEXT: ${{ inputs.secrets-context }}
+        INPUT_STRICT: ${{ inputs.strict }}
+      run: python3 ${{ github.action_path }}/load_context.py

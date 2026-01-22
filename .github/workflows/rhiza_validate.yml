@@ -21,6 +21,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Load Context
+        uses: ./.github/actions/load-context
+        with:
+          manifest: .github/context.json
+          secrets-context: ${{ toJSON(secrets) }}
+          strict: true
+
       - name: Validate Rhiza config
         shell: bash
         run: |

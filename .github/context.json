@@ -1,0 +1,8 @@
+{
+  "env": {
+    "RHIZA_ENV": "ci"
+  },
+  "secrets": {
+    "UV_EXTRA_INDEX_URL": "uv-extra-index-url"
+  }
+}
