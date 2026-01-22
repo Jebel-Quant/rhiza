@@ -85,7 +85,11 @@ def setup_tmp_makefile(logger, root, tmp_path: Path):
 
 
 def run_make(
-    logger, args: list[str] | None = None, check: bool = True, dry_run: bool = True
+    logger,
+    args: list[str] | None = None,
+    check: bool = True,
+    dry_run: bool = True,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess:
     """Run `make` with optional arguments and return the completed process.
 
@@ -94,6 +98,7 @@ def run_make(
         args: Additional arguments for make
         check: If True, raise on non-zero return code
         dry_run: If True, use -n to avoid executing commands
+        env: Optional environment variables to pass to the subprocess
     """
     cmd = [MAKE]
     if args:
@@ -102,7 +107,7 @@ def run_make(
     flags = "-sn" if dry_run else "-s"
     cmd.insert(1, flags)
     logger.info("Running command: %s", " ".join(cmd))
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, env=env)
     logger.debug("make exited with code %d", result.returncode)
     if result.stdout:
         logger.debug("make stdout (truncated to 500 chars):\n%s", result.stdout[:500])
@@ -158,20 +163,21 @@ class TestMakefile:
             assert f"uvx -p {python_version} pre-commit run --all-files" in out
         else:
             # Fallback check if .python-version doesn't exist
-            assert "uvx -p" in out and "pre-commit run --all-files" in out
+            assert "uvx -p" in out
+            assert "pre-commit run --all-files" in out
 
     def test_deptry_target_dry_run(self, logger, tmp_path):
         """Deptry target should invoke deptry via uvx with Python version in dry-run output."""
         # Create a mock SOURCE_FOLDER directory so the deptry command runs
         source_folder = tmp_path / "src"
         source_folder.mkdir(exist_ok=True)
-        
+
         # Update .env to set SOURCE_FOLDER
         env_file = tmp_path / ".rhiza" / ".env"
         env_content = env_file.read_text()
         env_content += "\nSOURCE_FOLDER=src\n"
         env_file.write_text(env_content)
-        
+
         proc = run_make(logger, ["deptry"])
         out = proc.stdout
         # Check for uvx command with the Python version flag
@@ -181,20 +187,21 @@ class TestMakefile:
             assert f"uvx -p {python_version} deptry src" in out
         else:
             # Fallback check if .python-version doesn't exist
-            assert "uvx -p" in out and "deptry src" in out
+            assert "uvx -p" in out
+            assert "deptry src" in out
 
     def test_mypy_target_dry_run(self, logger, tmp_path):
         """Mypy target should invoke mypy via uvx with Python version in dry-run output."""
         # Create a mock SOURCE_FOLDER directory so the mypy command runs
         source_folder = tmp_path / "src"
         source_folder.mkdir(exist_ok=True)
-        
+
         # Update .env to set SOURCE_FOLDER
         env_file = tmp_path / ".rhiza" / ".env"
         env_content = env_file.read_text()
         env_content += "\nSOURCE_FOLDER=src\n"
         env_file.write_text(env_content)
-        
+
         proc = run_make(logger, ["mypy"])
         out = proc.stdout
         # Check for uvx command with the Python version flag
@@ -204,7 +211,8 @@ class TestMakefile:
             assert f"uvx -p {python_version} mypy src --strict --config-file=pyproject.toml" in out
         else:
             # Fallback check if .python-version doesn't exist
-            assert "uvx -p" in out and "mypy src --strict --config-file=pyproject.toml" in out
+            assert "uvx -p" in out
+            assert "mypy src --strict --config-file=pyproject.toml" in out
 
     def test_test_target_dry_run(self, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
@@ -260,6 +268,21 @@ class TestMakefile:
         # assert out == f"[WARN] Book folder not found. Target '{target}' is not available.\n"
 
         assert proc.returncode == 2  # Fails
+
+    def test_python_version_defaults_to_3_13_if_missing(self, logger, tmp_path):
+        """`PYTHON_VERSION` should default to `3.13` if .python-version is missing."""
+        # Ensure .python-version does not exist
+        python_version_file = tmp_path / ".python-version"
+        if python_version_file.exists():
+            python_version_file.unlink()
+
+        # Create clean environment without PYTHON_VERSION
+        env = os.environ.copy()
+        env.pop("PYTHON_VERSION", None)
+
+        proc = run_make(logger, ["print-PYTHON_VERSION"], dry_run=False, env=env)
+        out = strip_ansi(proc.stdout)
+        assert "Value of PYTHON_VERSION:\n3.13" in out
 
     def test_uv_no_modify_path_is_exported(self, logger):
         """`UV_NO_MODIFY_PATH` should be set to `1` in the Makefile."""
