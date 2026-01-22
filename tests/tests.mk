@@ -9,6 +9,10 @@
 # Default directory for tests
 TESTS_FOLDER := tests
 
+# Minimum coverage percent for tests to pass
+# (Can be overridden in local.mk or via environment variable)
+COVERAGE_FAIL_UNDER ?= 90
+
 ##@ Development and Testing
 
 # The 'test' target runs the complete test suite.
@@ -27,7 +31,7 @@ test: install ## run all tests
 	    --cov=${SOURCE_FOLDER} \
 	    --cov-report=term \
 	    --cov-report=html:_tests/html-coverage \
-	    --cov-fail-under=90 \
+	    --cov-fail-under=$(COVERAGE_FAIL_UNDER) \
 	    --cov-report=json:_tests/coverage.json \
 	    --html=_tests/html-report/report.html; \
 	  else \
