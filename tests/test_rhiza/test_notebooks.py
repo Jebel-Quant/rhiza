@@ -79,9 +79,9 @@ def test_notebook_execution(notebook_path: Path):
     lower_output = combined_output.lower()
 
     failure_keywords = [
-        "some cells failed to execute",
         "cells failed to execute",
         "marimoexceptionraisederror",
+        "Couldn't parse requirement",  # sandbox setup fails because of invalid dependencies section in the notebook
     ]
     for kw in failure_keywords:
         assert kw.lower() not in lower_output, (
