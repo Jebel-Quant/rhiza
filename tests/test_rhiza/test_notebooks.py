@@ -61,12 +61,12 @@ def test_notebook_execution(notebook_path: Path):
         "export",
         "html",
         "--sandbox",
-        str(notebook_path),
+        str(notebook_path.name),
         "-o",
         "/dev/null",  # We don't need the actual HTML output
     ]
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=notebook_path.parent)
 
     # Ensure process exit code indicates success
     assert result.returncode == 0, (
