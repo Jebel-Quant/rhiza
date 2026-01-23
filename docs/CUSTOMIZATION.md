@@ -123,6 +123,30 @@ Or delete the workflow file:
 git rm .github/workflows/rhiza_codeql.yml
 git commit -m "Remove CodeQL workflow"
 ```
+## ⚙️ Configuration Variables
+
+You can configure certain aspects of the Makefile by overriding variables. These can be set in your main `Makefile`, a `local.mk` file (for local developer overrides), or passed as environment variables / command-line arguments.
+
+### Global Configuration
+
+Add these to your `Makefile` or `local.mk` to make them persistent for the project or your environment:
+
+```makefile
+# Override default Python version
+PYTHON_VERSION = 3.12
+
+# Override test coverage threshold (default: 90)
+COVERAGE_FAIL_UNDER = 80
+```
+
+### On-Demand Configuration
+
+You can also pass variables directly to `make` for one-off commands:
+
+```bash
+# Run tests requiring only 80% coverage
+make test COVERAGE_FAIL_UNDER=80
+```
 
 ## 🎨 Documentation Customization
 
