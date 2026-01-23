@@ -216,6 +216,17 @@ class TestMakefile:
         out = strip_ansi(proc.stdout)
         assert "Value of SCRIPTS_FOLDER:\n.rhiza/scripts" in out
 
+    def test_that_target_coverage_is_configurable(self, logger):
+        """Test target should respond to COVERAGE_FAIL_UNDER variable."""
+        # Default case (90%)
+        proc = run_make(logger, ["test"])
+        assert "--cov-fail-under=90" in proc.stdout
+
+        # Override case (80%)
+        # Note: We pass the variable as an argument to make
+        proc_override = run_make(logger, ["test", "COVERAGE_FAIL_UNDER=80"])
+        assert "--cov-fail-under=80" in proc_override.stdout
+
 
 class TestMakefileRootFixture:
     """Tests for root fixture usage in Makefile tests."""
