@@ -78,7 +78,7 @@ jobs:
           echo "changes_detected=true" >> "$GITHUB_OUTPUT"
 
           # Generate PR description based on staged changes
-          uvx "rhiza>=${RHIZA_VERSION}" summarise --output pr-description.md
+          uvx "rhiza>=${RHIZA_VERSION}" summarise --output "${RUNNER_TEMP}/pr-description.md"
 
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -97,4 +97,4 @@ jobs:
           branch: ${{ steps.branch.outputs.name }}
           delete-branch: true
           title: "chore: Sync with rhiza"
-          body-path: pr-description.md
+          body-path: ${{ runner.temp }}/pr-description.md
