@@ -50,7 +50,7 @@ UVX_BIN ?= $(shell command -v uvx 2>/dev/null || echo ${INSTALL_DIR}/uvx)
 VENV ?= .venv
 
 # Read Python version from .python-version (single source of truth)
-PYTHON_VERSION ?= $(shell cat .python-version 2>/dev/null || echo "3.12")
+PYTHON_VERSION ?= $(shell cat .python-version 2>/dev/null || echo "3.13")
 export PYTHON_VERSION
 
 # Read Rhiza version from .rhiza/.rhiza-version (single source of truth for rhiza-tools)
@@ -226,23 +226,23 @@ clean: ## Clean project artifacts and stale local branches
 ##@ Quality and Formatting
 deptry: install-uv ## Run deptry
 	@if [ -d ${SOURCE_FOLDER} ]; then \
-		$(UVX_BIN) deptry ${SOURCE_FOLDER}; \
+		$(UVX_BIN) -p ${PYTHON_VERSION} deptry ${SOURCE_FOLDER}; \
 	fi
 
 	@if [ -d ${MARIMO_FOLDER} ]; then \
 		if [ -d ${SOURCE_FOLDER} ]; then \
-			$(UVX_BIN) deptry ${MARIMO_FOLDER} ${SOURCE_FOLDER} --ignore DEP004; \
+			$(UVX_BIN) -p ${PYTHON_VERSION} deptry ${MARIMO_FOLDER} ${SOURCE_FOLDER} --ignore DEP004; \
 		else \
-		  	$(UVX_BIN) deptry ${MARIMO_FOLDER} --ignore DEP004; \
+		  	$(UVX_BIN) -p ${PYTHON_VERSION} deptry ${MARIMO_FOLDER} --ignore DEP004; \
 		fi \
 	fi
 
 fmt: install-uv ## check the pre-commit hooks and the linting
-	@${UVX_BIN} pre-commit run --all-files
+	@${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --all-files
 
 mypy: install-uv ## run mypy analysis
 	@if [ -d ${SOURCE_FOLDER} ]; then \
-		${UVX_BIN} mypy ${SOURCE_FOLDER} --strict --config-file=pyproject.toml; \
+		${UVX_BIN} -p ${PYTHON_VERSION} mypy ${SOURCE_FOLDER} --strict --config-file=pyproject.toml; \
 	fi
 
 ##@ Releasing and Versioning
