@@ -10,6 +10,7 @@
 # Default output directory for Marimushka (HTML exports of notebooks)
 MARIMUSHKA_OUTPUT ?= _marimushka
 
+
 # Logo file for pdoc (relative to project root).
 # 1. Defaults to the Rhiza logo if present.
 # 2. Can be overridden in Makefile or local.mk (e.g. LOGO_FILE := my-logo.png)
@@ -78,6 +79,29 @@ docs:: install ## create documentation with pdoc
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping docs${RESET}\n"; \
 	fi
+
+# Define a default no-op marimushka target that will be used
+# when book/marimo/marimo.mk doesn't exist or doesn't define marimushka
+marimushka:: install-uv
+	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
+	  printf "${BLUE}[INFO] No Marimo directory found, creating placeholder${RESET}\n"; \
+	  mkdir -p "${MARIMUSHKA_OUTPUT}"; \
+	  printf '%s\n' '<html><head><title>Marimo Notebooks</title></head>' \
+	    '<body><h1>Marimo Notebooks</h1><p>No notebooks found.</p></body></html>' \
+	    > "${MARIMUSHKA_OUTPUT}/index.html"; \
+	elif [ -z "$$(find "${MARIMO_FOLDER}" -maxdepth 1 -name '*.py' 2>/dev/null)" ]; then \
+	  printf "${BLUE}[INFO] No Python files found in ${MARIMO_FOLDER}, creating placeholder${RESET}\n"; \
+	  mkdir -p "${MARIMUSHKA_OUTPUT}"; \
+	  printf '%s\n' '<html><head><title>Marimo Notebooks</title></head>' \
+	    '<body><h1>Marimo Notebooks</h1><p>No notebooks found.</p></body></html>' \
+	    > "${MARIMUSHKA_OUTPUT}/index.html"; \
+	else \
+	  printf "${BLUE}[INFO] Exporting notebooks from ${MARIMO_FOLDER}...${RESET}\n"; \
+	  "${UVX_BIN}" marimushka "${MARIMO_FOLDER}" --output "${MARIMUSHKA_OUTPUT}"; \
+	fi
+
+# Default output directory for Marimushka (HTML exports of notebooks)
+MARIMUSHKA_OUTPUT ?= _marimushka
 
 # The 'book' target assembles the final documentation book.
 # 1. Aggregates API docs, coverage, test reports, and notebooks into _book.
