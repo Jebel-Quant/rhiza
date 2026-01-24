@@ -237,9 +237,12 @@ def git_repo(root, tmp_path, monkeypatch):
     shutil.copy(root / ".rhiza" / "scripts" / "release.sh", script_dir / "release.sh")
     shutil.copy(root / ".rhiza" / "rhiza.mk", local_dir / ".rhiza" / "rhiza.mk")
     shutil.copy(root / "Makefile", local_dir / "Makefile")
-    os.makedirs(local_dir / "book" / "marimo", exist_ok=True)
+
+    os.makedirs(local_dir / "book", exist_ok=True)
     shutil.copy(root / "book" / "book.mk", local_dir / "book" / "book.mk")
-    shutil.copy(root / "book" / "marimo" / "marimo.mk", local_dir / "book" / "marimo" / "marimo.mk")
+
+    # Note: book/marimo/marimo.mk is optional and included via -include in rhiza.mk
+    # Projects using Marimo can create this file to customize the marimushka/jupyter targets
 
     (script_dir / "release.sh").chmod(0o755)
 
