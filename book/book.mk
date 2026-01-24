@@ -87,6 +87,23 @@ book:: test docs marimushka ## compile the companion book
 	@printf "${BLUE}[INFO] Building combined documentation...${RESET}\n"
 	@rm -rf _book && mkdir -p _book
 
+	@if [ -f "_tests/coverage.json" ]; then \
+	  printf "${BLUE}[INFO] Generating coverage badge JSON...${RESET}\n"; \
+	  mkdir -p _book/tests; \
+	  ${UV_BIN} run python -c "\
+import json; \
+data = json.load(open('_tests/coverage.json')); \
+pct = int(data['totals']['percent_covered']); \
+color = 'brightgreen' if pct >= 90 else 'green' if pct >= 80 else 'yellow' if pct >= 70 else 'orange' if pct >= 60 else 'red'; \
+badge = {'schemaVersion': 1, 'label': 'coverage', 'message': f'{pct}%', 'color': color}; \
+json.dump(badge, open('_book/tests/coverage-badge.json', 'w'))"; \
+	  printf "${BLUE}[INFO] Coverage badge JSON:${RESET}\n"; \
+	  cat _book/tests/coverage-badge.json; \
+	  printf "\n"; \
+	else \
+	  printf "${YELLOW}[WARN] No coverage.json found, skipping badge generation${RESET}\n"; \
+	fi
+
 	@printf "{\n" > _book/links.json
 	@first=1; \
 	for entry in $(BOOK_SECTIONS); do \
