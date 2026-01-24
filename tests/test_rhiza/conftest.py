@@ -238,7 +238,10 @@ def git_repo(root, tmp_path, monkeypatch):
     shutil.copy(root / ".rhiza" / "rhiza.mk", local_dir / ".rhiza" / "rhiza.mk")
     shutil.copy(root / "Makefile", local_dir / "Makefile")
 
-    shutil.copytree(root / "book", local_dir / "book", dirs_exist_ok=True)
+    book_src = root / "book"
+    book_dst = local_dir / "book"
+    if book_src.is_dir():
+        shutil.copytree(book_src, book_dst, dirs_exist_ok=True)
 
     (script_dir / "release.sh").chmod(0o755)
 
