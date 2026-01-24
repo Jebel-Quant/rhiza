@@ -1,3 +1,5 @@
+"""Tests for book-related Makefile targets and their resilience."""
+
 import shutil
 import subprocess
 
@@ -5,7 +7,9 @@ import pytest
 
 MAKE = shutil.which("make") or "/usr/bin/make"
 
+
 def test_no_book_folder(git_repo):
+    """Test that make targets fail gracefully when book folder is missing."""
     shutil.rmtree(git_repo / "book")
     assert not (git_repo / "book").exists()
 
@@ -18,6 +22,7 @@ def test_no_book_folder(git_repo):
 
 
 def test_book_folder_but_no_mk(git_repo):
+    """Test behavior when book folder exists but book.mk is missing."""
     # ensure book folder exists but has no Makefile
     shutil.rmtree(git_repo / "book")
     # create an empty book folder. Make treats an existing directory as an “up-to-date” target.
@@ -45,6 +50,7 @@ def test_book_folder_but_no_mk(git_repo):
 
 
 def test_book_folder(git_repo):
+    """Test that book.mk defines the expected phony targets."""
     # if file book/book.mk exists, make should run successfully
     if not (git_repo / "book" / "book.mk").exists():
         pytest.skip("book.mk not found, skipping test")
@@ -55,5 +61,6 @@ def test_book_folder(git_repo):
     # get the list of phony targets from the Makefile
     phony_targets = [line.strip() for line in content.splitlines() if line.startswith(".PHONY:")]
     targets = set(phony_targets[0].split(":")[1].strip().split())
-    assert { "book", "docs", "marimushka" } == targets, f"Expected phony targets to include book, docs, and marimushka, got {targets}"
-
+    assert {"book", "docs", "marimushka"} == targets, (
+        f"Expected phony targets to include book, docs, and marimushka, got {targets}"
+    )
