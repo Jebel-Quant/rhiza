@@ -240,14 +240,6 @@ def git_repo(root, tmp_path, monkeypatch):
 
     shutil.copytree(root / "book", local_dir / "book", dirs_exist_ok=True)
 
-    # assert False
-
-    # shutil.copy(local_dir / "book" / "marimo", local_dir / "marimo.mk")
-    # os.makedirs(local_dir / "book", exist_ok=True)
-    # os.makedirs(local_dir / "book" / "marimo", exist_ok=True)
-    # shutil.copy(root / "book" / "book.mk", local_dir / "book" / "book.mk")
-    # shutil.copy(root / "book" / "marimo" / "marimo.mk", local_dir / "book" / "marimo" / "marimo.mk")
-
     (script_dir / "release.sh").chmod(0o755)
 
     # Commit and push initial state
