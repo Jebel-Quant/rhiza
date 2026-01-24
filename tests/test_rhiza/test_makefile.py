@@ -253,7 +253,7 @@ class TestMakefile:
             assert "mkdir -p _book" in out
             assert "links.json" in out
             assert "minibook" in out
-        except AssertionError as e:
+        except AssertionError:
             pass
 
     @pytest.mark.parametrize("target", ["book", "docs", "marimushka"])
