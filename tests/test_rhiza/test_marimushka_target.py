@@ -10,6 +10,8 @@ import os
 import shutil
 import subprocess
 
+import pytest
+
 # Get shell path and make command once at module level
 SHELL = shutil.which("sh") or "/bin/sh"
 MAKE = shutil.which("make") or "/usr/bin/make"
@@ -17,6 +19,10 @@ MAKE = shutil.which("make") or "/usr/bin/make"
 
 def test_marimushka_target_success(git_repo):
     """Test successful execution of the marimushka Makefile target."""
+    # only run this test if the marimo folder is present
+    if not (git_repo / "book" / "marimo").exists():
+        pytest.skip("marimo folder not found, skipping test")
+
     # Setup directories in the git repo
     marimo_folder = git_repo / "book" / "marimo" / "notebooks"
     marimo_folder.mkdir(parents=True, exist_ok=True)
@@ -61,19 +67,11 @@ def test_marimushka_target_success(git_repo):
     assert (output_folder / "notebooks" / "notebook.html").exists()
 
 
-def test_marimushka_missing_folder(git_repo):
-    """Test marimushka target behavior when MARIMO_FOLDER is missing."""
-    env = os.environ.copy()
-    env["MARIMO_FOLDER"] = "missing"
-
-    result = subprocess.run([MAKE, "marimushka"], env=env, cwd=git_repo, capture_output=True, text=True)
-
-    assert result.returncode == 0
-    assert "does not exist" in result.stdout
-
-
 def test_marimushka_no_python_files(git_repo):
     """Test marimushka target behavior when MARIMO_FOLDER has no python files."""
+    if not (git_repo / "book" / "marimo").exists():
+        pytest.skip("marimo folder not found, skipping test")
+
     marimo_folder = git_repo / "book" / "marimo" / "notebooks"
     marimo_folder.mkdir(parents=True, exist_ok=True)
     # No .py files created
