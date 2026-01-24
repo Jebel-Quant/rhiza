@@ -246,15 +246,12 @@ class TestMakefile:
 
     def test_book_target_dry_run(self, logger):
         """Book target should run inline commands to assemble the book."""
-        try:
-            proc = run_make(logger, ["book"])
-            out = proc.stdout
-            # Expect directory creation, links.json generation and minibook to be invoked
-            assert "mkdir -p _book" in out
-            assert "links.json" in out
-            assert "minibook" in out
-        except AssertionError:
-            pass
+        proc = run_make(logger, ["book"])
+        out = proc.stdout
+        # Expect directory creation, links.json generation and minibook to be invoked
+        assert "mkdir -p _book" in out
+        assert "links.json" in out
+        assert "minibook" in out
 
     @pytest.mark.parametrize("target", ["book", "docs", "marimushka"])
     def test_book_related_targets_fallback_without_book_folder(self, logger, tmp_path, target):
