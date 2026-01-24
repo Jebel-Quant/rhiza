@@ -74,6 +74,11 @@ def test_marimushka_no_python_files(git_repo):
 
     marimo_folder = git_repo / "book" / "marimo" / "notebooks"
     marimo_folder.mkdir(parents=True, exist_ok=True)
+
+    # Delete all .py files in the marimo folder
+    for file in marimo_folder.glob("*.py"):
+        file.unlink()
+
     # No .py files created
 
     output_folder = git_repo / "_marimushka"
