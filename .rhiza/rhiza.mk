@@ -67,6 +67,7 @@ export UV_VENV_CLEAR := 1
 -include tests/tests.mk
 -include book/book.mk
 -include book/marimo/marimo.mk
+-include book/jupyter/jupyter.mk
 -include presentation/presentation.mk
 -include docker/docker.mk
 -include .github/agents/agentic.mk
