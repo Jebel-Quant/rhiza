@@ -43,6 +43,7 @@ def test_book_folder_but_no_mk(git_repo):
         assert result.returncode != 0
         assert "no rule to make target" in result.stderr.lower()
 
+
 def test_book_folder(git_repo):
     # if file book/book.mk exists, make should run successfully
     if not (git_repo / "book" / "book.mk").exists():
@@ -50,9 +51,6 @@ def test_book_folder(git_repo):
 
     makefile = git_repo / "book" / "book.mk"
     content = makefile.read_text()
-
-    # extract the list of phony targets from book.mk
-    print(content)
 
     # get the list of phony targets from the Makefile
     phony_targets = [line.strip() for line in content.splitlines() if line.startswith(".PHONY:")]
