@@ -7,6 +7,17 @@
 # Declare phony targets (they don't produce files)
 .PHONY: docs marimushka book
 
+# Define a default no-op marimushka target that will be used
+# when book/marimo/marimo.mk doesn't exist or doesn't define marimushka
+marimushka:: install-uv
+	@if [ ! -d "book/marimo" ]; then \
+	  printf "${BLUE}[INFO] No Marimo directory found, creating placeholder${RESET}\n"; \
+	  mkdir -p "${MARIMUSHKA_OUTPUT}"; \
+	  printf '%s\n' '<html><head><title>Marimo Notebooks</title></head>' \
+	    '<body><h1>Marimo Notebooks</h1><p>No notebooks found.</p></body></html>' \
+	    > "${MARIMUSHKA_OUTPUT}/index.html"; \
+	fi
+
 # Default output directory for Marimushka (HTML exports of notebooks)
 MARIMUSHKA_OUTPUT ?= _marimushka
 
