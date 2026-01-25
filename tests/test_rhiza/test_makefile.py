@@ -13,12 +13,10 @@ changes.
 from __future__ import annotations
 
 import os
-import re
 import shutil
 from pathlib import Path
 
 import pytest
-
 from conftest import run_make, setup_rhiza_git_repo, strip_ansi
 
 # Split Makefile paths that are included in the main Makefile
@@ -97,11 +95,14 @@ class TestMakefile:
         assert "Targets:" in out
         assert "Bootstrap" in out or "Meta" in out  # section headers
 
-    @pytest.mark.parametrize("target,needs_src,expected_cmd", [
-        ("fmt", False, "pre-commit run --all-files"),
-        ("deptry", True, "deptry src"),
-        ("mypy", True, "mypy src --strict --config-file=pyproject.toml"),
-    ])
+    @pytest.mark.parametrize(
+        ("target", "needs_src", "expected_cmd"),
+        [
+            ("fmt", False, "pre-commit run --all-files"),
+            ("deptry", True, "deptry src"),
+            ("mypy", True, "mypy src --strict --config-file=pyproject.toml"),
+        ],
+    )
     def test_tool_target_dry_run(self, setup_tmp_makefile, logger, tmp_path, target, needs_src, expected_cmd):
         """Tool target should invoke tool via uvx with Python version in dry-run output."""
         if needs_src:

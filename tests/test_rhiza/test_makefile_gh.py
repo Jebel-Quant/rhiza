@@ -11,7 +11,6 @@ import shutil
 from pathlib import Path
 
 import pytest
-
 from conftest import run_make
 
 # We need to copy these files to the temp dir for the tests to work
@@ -69,13 +68,16 @@ def test_gh_targets_exist(logger):
         assert target in output, f"Target {target} not found in help output"
 
 
-@pytest.mark.parametrize("target", [
-    "gh-install",
-    "view-prs",
-    "view-issues",
-    "failed-workflows",
-    "whoami",
-])
+@pytest.mark.parametrize(
+    "target",
+    [
+        "gh-install",
+        "view-prs",
+        "view-issues",
+        "failed-workflows",
+        "whoami",
+    ],
+)
 def test_gh_target_dry_run(logger, target):
     """Verify GitHub Makefile target dry-run succeeds."""
     result = run_make(logger, [target])
