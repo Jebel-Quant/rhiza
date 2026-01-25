@@ -214,10 +214,14 @@ class TestMakefile:
             assert "uvx -p" in out
             assert "mypy src --strict --config-file=pyproject.toml" in out
 
-    def test_test_target_dry_run(self, logger):
+    def test_test_target_dry_run(self, git_repo, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
-        if not Path("tests").exists():
+        if not Path(git_repo /"tests").exists():
             pytest.skip("Skipping test target dry-run because tests folder doesn't exist")
+
+        if not Path(git_repo / "tests" / "tests.mk").exists():
+            pytest.skip("Skipping test target dry-run because tests.mk doesn't exist")
+
         proc = run_make(logger, ["test"])
         out = proc.stdout
         # Expect key steps
@@ -231,17 +235,9 @@ class TestMakefile:
             pytest.skip("Skipping test target without source folder because tests folder doesn't exist")
 
         assert not (git_repo / "src").exists()
-        # shutil.rmtree(git_repo / "src")
 
-        # Update .env to set SOURCE_FOLDER to a non-existent directory
-        #env_file = tmp_path / ".rhiza" / ".env"
-        #env_content = env_file.read_text()
-        #env_content += "\nSOURCE_FOLDER=nonexistent_src\n"
-        #env_file.write_text(env_content)
-
-        # Create tests folder
-        tests_folder = tmp_path / "tests"
-        tests_folder.mkdir(exist_ok=True)
+        if not (git_repo / "tests" / "tests.mk").exists():
+            pytest.skip("Skipping test target without source folder because tests.mk doesn't exist")
 
         proc = run_make(logger, ["test"])
         out = proc.stdout

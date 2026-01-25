@@ -13,12 +13,83 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
+
+from conftest import MOCK_UV_SCRIPT
+
 # Get absolute path for git to avoid S607 warnings
 GIT = shutil.which("git") or "/usr/bin/git"
 
 
 class TestGitRepoFixture:
-    """Tests for the git_repo fixture that sets up a mock git repository."""
+    """Tests for the git_repo fixture that sets up a mock git repository.
+
+    Uses a class-scoped shared repo since all tests are read-only inspections.
+    """
+
+    @pytest.fixture(scope="class")
+    def _shared_git_repo(self, request, root, tmp_path_factory):
+        """Create a git repo once for the entire test class (read-only tests only)."""
+        tmp_path = tmp_path_factory.mktemp("git_repo")
+        remote_dir = tmp_path / "remote.git"
+        local_dir = tmp_path / "local"
+
+        # 1. Create bare remote
+        remote_dir.mkdir()
+        subprocess.run([GIT, "init", "--bare", str(remote_dir)], check=True, capture_output=True)
+        subprocess.run([GIT, "symbolic-ref", "HEAD", "refs/heads/master"], cwd=remote_dir, check=True)
+
+        # 2. Clone to local
+        subprocess.run([GIT, "clone", str(remote_dir), str(local_dir)], check=True, capture_output=True)
+
+        # Ensure local default branch is 'master'
+        subprocess.run([GIT, "checkout", "-b", "master"], cwd=local_dir, check=True, capture_output=True)
+
+        # Create pyproject.toml
+        (local_dir / "pyproject.toml").write_text('[project]\nname = "test-project"\nversion = "0.1.0"\n')
+
+        # Create dummy uv.lock
+        (local_dir / "uv.lock").write_text("")
+
+        # Create bin/uv mock
+        bin_dir = local_dir / "bin"
+        bin_dir.mkdir()
+        uv_path = bin_dir / "uv"
+        uv_path.write_text(MOCK_UV_SCRIPT)
+        uv_path.chmod(0o755)
+
+        # Copy scripts and core Rhiza Makefiles
+        shutil.copytree(root / ".rhiza", local_dir / ".rhiza")
+        shutil.copy(root / "Makefile", local_dir / "Makefile")
+
+        tests_src = root / "tests"
+        if tests_src.is_dir():
+            shutil.copytree(tests_src, local_dir / "tests", dirs_exist_ok=True)
+
+        book_src = root / "book"
+        if book_src.is_dir():
+            shutil.copytree(book_src, local_dir / "book", dirs_exist_ok=True)
+
+        # Commit and push initial state
+        subprocess.run([GIT, "config", "user.email", "test@example.com"], cwd=local_dir, check=True)
+        subprocess.run([GIT, "config", "user.name", "Test User"], cwd=local_dir, check=True)
+        subprocess.run([GIT, "add", "."], cwd=local_dir, check=True)
+        subprocess.run([GIT, "commit", "-m", "Initial commit"], cwd=local_dir, check=True, capture_output=True)
+        subprocess.run([GIT, "push", "origin", "master"], cwd=local_dir, check=True, capture_output=True)
+
+        return local_dir
+
+    @pytest.fixture
+    def git_repo(self, _shared_git_repo, monkeypatch):
+        """Function-scoped fixture that reuses shared repo but sets up environment per-test."""
+        local_dir = _shared_git_repo
+        bin_dir = local_dir / "bin"
+
+        # Use monkeypatch for per-test chdir and PATH modification
+        monkeypatch.chdir(local_dir)
+        monkeypatch.setenv("PATH", f"{bin_dir}:{os.environ.get('PATH', '')}")
+
+        return local_dir
 
     def test_git_repo_creates_temporary_directory(self, git_repo):
         """Git repo fixture should create a temporary directory."""
