@@ -181,12 +181,12 @@ class TestMakefile:
         out = strip_ansi(proc.stdout)
         assert "Value of SCRIPTS_FOLDER:\n.rhiza/scripts" in out
 
-    def test_that_target_coverage_is_configurable(self, setup_tmp_makefile, logger):
+    def test_that_target_coverage_is_configurable(self, root, setup_tmp_makefile, logger):
         """Test target should respond to COVERAGE_FAIL_UNDER variable."""
-        if not Path("tests").exists():
+        if not Path(root / "tests").exists():
             pytest.skip("Skipping test target coverage override because tests folder doesn't exist")
 
-        if not (Path("tests") / "tests.mk").exists():
+        if not (root / Path("tests") / "tests.mk").exists():
             pytest.skip("Skipping test target coverage override because tests.mk doesn't exist")
         # Default case (90%)
         proc = run_make(logger, ["test"])
