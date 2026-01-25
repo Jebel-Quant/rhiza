@@ -186,6 +186,8 @@ class TestMakefile:
         if not Path("tests").exists():
             pytest.skip("Skipping test target coverage override because tests folder doesn't exist")
 
+        if not (Path("tests") / "tests.mk").exists():
+            pytest.skip("Skipping test target coverage override because tests.mk doesn't exist")
         # Default case (90%)
         proc = run_make(logger, ["test"])
         assert "--cov-fail-under=90" in proc.stdout
