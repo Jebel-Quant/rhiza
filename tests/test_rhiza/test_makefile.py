@@ -38,7 +38,7 @@ def strip_ansi(text: str) -> str:
     return ansi_escape.sub("", text)
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def setup_tmp_makefile(logger, root, tmp_path: Path):
     """Copy the Makefile and split Makefiles into a temp directory and chdir there.
 
@@ -133,7 +133,7 @@ def setup_rhiza_git_repo():
 class TestMakefile:
     """Smoke tests for Makefile help and common targets using make -n."""
 
-    def test_default_goal_is_help(self, logger):
+    def test_default_goal_is_help(self, setup_tmp_makefile, logger):
         """Default goal should render the help index with known targets."""
         proc = run_make(logger)
         out = proc.stdout
@@ -143,7 +143,7 @@ class TestMakefile:
         for target in ["install", "fmt", "deptry", "help"]:
             assert target in out
 
-    def test_help_target(self, logger):
+    def test_help_target(self, setup_tmp_makefile, logger):
         """Explicit `make help` prints usage, targets, and section headers."""
         proc = run_make(logger, ["help"])
         out = proc.stdout
@@ -151,7 +151,7 @@ class TestMakefile:
         assert "Targets:" in out
         assert "Bootstrap" in out or "Meta" in out  # section headers
 
-    def test_fmt_target_dry_run(self, logger, tmp_path):
+    def test_fmt_target_dry_run(self, setup_tmp_makefile, logger, tmp_path):
         """Fmt target should invoke pre-commit via uvx with Python version in dry-run output."""
         proc = run_make(logger, ["fmt"])
         out = proc.stdout
@@ -166,7 +166,7 @@ class TestMakefile:
             assert "uvx -p" in out
             assert "pre-commit run --all-files" in out
 
-    def test_deptry_target_dry_run(self, logger, tmp_path):
+    def test_deptry_target_dry_run(self, setup_tmp_makefile, logger, tmp_path):
         """Deptry target should invoke deptry via uvx with Python version in dry-run output."""
         # Create a mock SOURCE_FOLDER directory so the deptry command runs
         source_folder = tmp_path / "src"
@@ -190,7 +190,7 @@ class TestMakefile:
             assert "uvx -p" in out
             assert "deptry src" in out
 
-    def test_mypy_target_dry_run(self, logger, tmp_path):
+    def test_mypy_target_dry_run(self, setup_tmp_makefile, logger, tmp_path):
         """Mypy target should invoke mypy via uvx with Python version in dry-run output."""
         # Create a mock SOURCE_FOLDER directory so the mypy command runs
         source_folder = tmp_path / "src"
@@ -247,7 +247,7 @@ class TestMakefile:
         assert "pytest tests" in out
         assert "--html=_tests/html-report/report.html" in out
 
-    def test_python_version_defaults_to_3_13_if_missing(self, logger, tmp_path):
+    def test_python_version_defaults_to_3_13_if_missing(self, setup_tmp_makefile, logger, tmp_path):
         """`PYTHON_VERSION` should default to `3.13` if .python-version is missing."""
         # Ensure .python-version does not exist
         python_version_file = tmp_path / ".python-version"
@@ -262,19 +262,19 @@ class TestMakefile:
         out = strip_ansi(proc.stdout)
         assert "Value of PYTHON_VERSION:\n3.13" in out
 
-    def test_uv_no_modify_path_is_exported(self, logger):
+    def test_uv_no_modify_path_is_exported(self, setup_tmp_makefile, logger):
         """`UV_NO_MODIFY_PATH` should be set to `1` in the Makefile."""
         proc = run_make(logger, ["print-UV_NO_MODIFY_PATH"], dry_run=False)
         out = strip_ansi(proc.stdout)
         assert "Value of UV_NO_MODIFY_PATH:\n1" in out
 
-    def test_script_folder_is_github_scripts(self, logger):
+    def test_script_folder_is_github_scripts(self, setup_tmp_makefile, logger):
         """`SCRIPTS_FOLDER` should point to `.rhiza/scripts`."""
         proc = run_make(logger, ["print-SCRIPTS_FOLDER"], dry_run=False)
         out = strip_ansi(proc.stdout)
         assert "Value of SCRIPTS_FOLDER:\n.rhiza/scripts" in out
 
-    def test_that_target_coverage_is_configurable(self, logger):
+    def test_that_target_coverage_is_configurable(self, setup_tmp_makefile, logger):
         """Test target should respond to COVERAGE_FAIL_UNDER variable."""
         if not Path("tests").exists():
             pytest.skip("Skipping test target coverage override because tests folder doesn't exist")
@@ -332,7 +332,7 @@ class TestMakefileRootFixture:
 
         assert "UV_BIN" in content or "uv" in content.lower()
 
-    def test_validate_target_skips_in_rhiza_repo(self, logger):
+    def test_validate_target_skips_in_rhiza_repo(self, setup_tmp_makefile, logger):
         """Validate target should skip execution in rhiza repository."""
         setup_rhiza_git_repo()
 
@@ -341,7 +341,7 @@ class TestMakefileRootFixture:
         # assert "[INFO] Skipping validate in rhiza repository" in out
         assert proc.returncode == 0
 
-    def test_sync_target_skips_in_rhiza_repo(self, logger):
+    def test_sync_target_skips_in_rhiza_repo(self, setup_tmp_makefile, logger):
         """Sync target should skip execution in rhiza repository."""
         setup_rhiza_git_repo()
 
@@ -391,7 +391,7 @@ if "tools" in args and "bump" in args:
 
         return bin_dir
 
-    def test_bump_execution(self, logger, mock_bin, tmp_path):
+    def test_bump_execution(self, setup_tmp_makefile, logger, mock_bin, tmp_path):
         """Test 'make bump' execution with mocked tools and verify version change."""
         # Create dummy pyproject.toml with initial version
         pyproject = tmp_path / "pyproject.toml"
@@ -414,7 +414,7 @@ if "tools" in args and "bump" in args:
         new_content = pyproject.read_text()
         assert 'version = "0.1.1"' in new_content
 
-    def test_bump_no_pyproject(self, logger, mock_bin, tmp_path):
+    def test_bump_no_pyproject(self, setup_tmp_makefile, logger, mock_bin, tmp_path):
         """Test 'make bump' execution without pyproject.toml."""
         # Ensure pyproject.toml does not exist
         pyproject = tmp_path / "pyproject.toml"
