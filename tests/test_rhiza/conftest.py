@@ -27,15 +27,20 @@ def strip_ansi(text: str) -> str:
 
 
 def run_make(
-    logger, args: list[str] | None = None, check: bool = True, dry_run: bool = True
+    logger=None,
+    args: list[str] | None = None,
+    check: bool = True,
+    dry_run: bool = True,
+    env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess:
     """Run `make` with optional arguments and return the completed process.
 
     Args:
-        logger: Logger used to emit diagnostic messages during the run
+        logger: Logger used to emit diagnostic messages during the run (optional)
         args: Additional arguments for make
         check: If True, raise on non-zero return code
         dry_run: If True, use -n to avoid executing commands
+        env: Optional environment variables to pass to the subprocess
     """
     cmd = [MAKE]
     if args:
@@ -43,13 +48,15 @@ def run_make(
     # Use -s to reduce noise, -n to avoid executing commands
     flags = "-sn" if dry_run else "-s"
     cmd.insert(1, flags)
-    logger.info("Running command: %s", " ".join(cmd))
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    logger.debug("make exited with code %d", result.returncode)
-    if result.stdout:
-        logger.debug("make stdout (truncated to 500 chars):\n%s", result.stdout[:500])
-    if result.stderr:
-        logger.debug("make stderr (truncated to 500 chars):\n%s", result.stderr[:500])
+    if logger:
+        logger.info("Running command: %s", " ".join(cmd))
+    result = subprocess.run(cmd, capture_output=True, text=True, env=env)
+    if logger:
+        logger.debug("make exited with code %d", result.returncode)
+        if result.stdout:
+            logger.debug("make stdout (truncated to 500 chars):\n%s", result.stdout[:500])
+        if result.stderr:
+            logger.debug("make stderr (truncated to 500 chars):\n%s", result.stderr[:500])
     if check and result.returncode != 0:
         msg = f"make failed with code {result.returncode}:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
         raise AssertionError(msg)

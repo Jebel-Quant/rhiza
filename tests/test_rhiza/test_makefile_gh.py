@@ -8,13 +8,11 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
 
-# Get absolute paths for executables to avoid S607 warnings from CodeFactor/Bandit
-MAKE = shutil.which("make") or "/usr/bin/make"
+from conftest import run_make
 
 # We need to copy these files to the temp dir for the tests to work
 REQUIRED_FILES = [
@@ -60,25 +58,6 @@ def setup_gh_makefile(logger, root, tmp_path: Path):
         os.chdir(old_cwd)
 
 
-def run_make(
-    logger, args: list[str] | None = None, check: bool = True, dry_run: bool = True
-) -> subprocess.CompletedProcess:
-    """Run `make` with optional arguments."""
-    cmd = [MAKE]
-    if args:
-        cmd.extend(args)
-    flags = "-sn" if dry_run else "-s"
-    cmd.insert(1, flags)
-
-    logger.info("Running command: %s", " ".join(cmd))
-    result = subprocess.run(cmd, capture_output=True, text=True)
-
-    if check and result.returncode != 0:
-        msg = f"make failed with code {result.returncode}:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
-        raise AssertionError(msg)
-    return result
-
-
 def test_gh_targets_exist(logger):
     """Verify that GitHub targets are listed in help."""
     result = run_make(logger, ["help"], dry_run=False)
@@ -90,35 +69,14 @@ def test_gh_targets_exist(logger):
         assert target in output, f"Target {target} not found in help output"
 
 
-def test_gh_install_dry_run(logger):
-    """Verify gh-install target dry-run."""
-    result = run_make(logger, ["gh-install"])
-    # In dry-run, we expect to see the shell commands that would be executed.
-    # Since the recipe uses @if, make -n might verify the syntax or show the command if not silenced.
-    # However, with -s (silent), make -n might not show much for @ commands unless they are echoed.
-    # But we mainly want to ensure it runs without error.
-    assert result.returncode == 0
-
-
-def test_view_prs_dry_run(logger):
-    """Verify view-prs target dry-run."""
-    result = run_make(logger, ["view-prs"])
-    assert result.returncode == 0
-
-
-def test_view_issues_dry_run(logger):
-    """Verify view-issues target dry-run."""
-    result = run_make(logger, ["view-issues"])
-    assert result.returncode == 0
-
-
-def test_failed_workflows_dry_run(logger):
-    """Verify failed-workflows target dry-run."""
-    result = run_make(logger, ["failed-workflows"])
-    assert result.returncode == 0
-
-
-def test_whoami_dry_run(logger):
-    """Verify whoami target dry-run."""
-    result = run_make(logger, ["whoami"])
+@pytest.mark.parametrize("target", [
+    "gh-install",
+    "view-prs",
+    "view-issues",
+    "failed-workflows",
+    "whoami",
+])
+def test_gh_target_dry_run(logger, target):
+    """Verify GitHub Makefile target dry-run succeeds."""
+    result = run_make(logger, [target])
     assert result.returncode == 0

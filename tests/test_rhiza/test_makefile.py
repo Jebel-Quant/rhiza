@@ -15,13 +15,11 @@ from __future__ import annotations
 import os
 import re
 import shutil
-import subprocess
 from pathlib import Path
 
 import pytest
 
-# Get absolute paths for executables to avoid S607 warnings from CodeFactor/Bandit
-MAKE = shutil.which("make") or "/usr/bin/make"
+from conftest import run_make, setup_rhiza_git_repo, strip_ansi
 
 # Split Makefile paths that are included in the main Makefile
 SPLIT_MAKEFILES = [
@@ -30,12 +28,6 @@ SPLIT_MAKEFILES = [
     "book/book.mk",
     "presentation/presentation.mk",
 ]
-
-
-def strip_ansi(text: str) -> str:
-    """Strip ANSI escape sequences from text."""
-    ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
-    return ansi_escape.sub("", text)
 
 
 @pytest.fixture
@@ -84,52 +76,6 @@ def setup_tmp_makefile(logger, root, tmp_path: Path):
         logger.debug("Restored working directory to %s", old_cwd)
 
 
-def run_make(
-    logger,
-    args: list[str] | None = None,
-    check: bool = True,
-    dry_run: bool = True,
-    env: dict[str, str] | None = None,
-) -> subprocess.CompletedProcess:
-    """Run `make` with optional arguments and return the completed process.
-
-    Args:
-        logger: Logger used to emit diagnostic messages during the run
-        args: Additional arguments for make
-        check: If True, raise on non-zero return code
-        dry_run: If True, use -n to avoid executing commands
-        env: Optional environment variables to pass to the subprocess
-    """
-    cmd = [MAKE]
-    if args:
-        cmd.extend(args)
-    # Use -s to reduce noise, -n to avoid executing commands
-    flags = "-sn" if dry_run else "-s"
-    cmd.insert(1, flags)
-    logger.info("Running command: %s", " ".join(cmd))
-    result = subprocess.run(cmd, capture_output=True, text=True, env=env)
-    logger.debug("make exited with code %d", result.returncode)
-    if result.stdout:
-        logger.debug("make stdout (truncated to 500 chars):\n%s", result.stdout[:500])
-    if result.stderr:
-        logger.debug("make stderr (truncated to 500 chars):\n%s", result.stderr[:500])
-    if check and result.returncode != 0:
-        msg = f"make failed with code {result.returncode}:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
-        raise AssertionError(msg)
-    return result
-
-
-def setup_rhiza_git_repo():
-    """Initialize a git repository and set remote to rhiza."""
-    git = shutil.which("git") or "/usr/bin/git"
-    subprocess.run([git, "init"], check=True, capture_output=True)
-    subprocess.run(
-        [git, "remote", "add", "origin", "https://github.com/jebel-quant/rhiza"],
-        check=True,
-        capture_output=True,
-    )
-
-
 class TestMakefile:
     """Smoke tests for Makefile help and common targets using make -n."""
 
@@ -151,68 +97,28 @@ class TestMakefile:
         assert "Targets:" in out
         assert "Bootstrap" in out or "Meta" in out  # section headers
 
-    def test_fmt_target_dry_run(self, setup_tmp_makefile, logger, tmp_path):
-        """Fmt target should invoke pre-commit via uvx with Python version in dry-run output."""
-        proc = run_make(logger, ["fmt"])
+    @pytest.mark.parametrize("target,needs_src,expected_cmd", [
+        ("fmt", False, "pre-commit run --all-files"),
+        ("deptry", True, "deptry src"),
+        ("mypy", True, "mypy src --strict --config-file=pyproject.toml"),
+    ])
+    def test_tool_target_dry_run(self, setup_tmp_makefile, logger, tmp_path, target, needs_src, expected_cmd):
+        """Tool target should invoke tool via uvx with Python version in dry-run output."""
+        if needs_src:
+            (tmp_path / "src").mkdir(exist_ok=True)
+            env_file = tmp_path / ".rhiza" / ".env"
+            env_file.write_text(env_file.read_text() + "\nSOURCE_FOLDER=src\n")
+
+        proc = run_make(logger, [target])
         out = proc.stdout
-        # Check for uvx command with the Python version flag
-        # The PYTHON_VERSION should be read from .python-version file (e.g., "3.12")
+
         python_version_file = tmp_path / ".python-version"
         if python_version_file.exists():
             python_version = python_version_file.read_text().strip()
-            assert f"uvx -p {python_version} pre-commit run --all-files" in out
+            assert f"uvx -p {python_version} {expected_cmd}" in out
         else:
-            # Fallback check if .python-version doesn't exist
             assert "uvx -p" in out
-            assert "pre-commit run --all-files" in out
-
-    def test_deptry_target_dry_run(self, setup_tmp_makefile, logger, tmp_path):
-        """Deptry target should invoke deptry via uvx with Python version in dry-run output."""
-        # Create a mock SOURCE_FOLDER directory so the deptry command runs
-        source_folder = tmp_path / "src"
-        source_folder.mkdir(exist_ok=True)
-
-        # Update .env to set SOURCE_FOLDER
-        env_file = tmp_path / ".rhiza" / ".env"
-        env_content = env_file.read_text()
-        env_content += "\nSOURCE_FOLDER=src\n"
-        env_file.write_text(env_content)
-
-        proc = run_make(logger, ["deptry"])
-        out = proc.stdout
-        # Check for uvx command with the Python version flag
-        python_version_file = tmp_path / ".python-version"
-        if python_version_file.exists():
-            python_version = python_version_file.read_text().strip()
-            assert f"uvx -p {python_version} deptry src" in out
-        else:
-            # Fallback check if .python-version doesn't exist
-            assert "uvx -p" in out
-            assert "deptry src" in out
-
-    def test_mypy_target_dry_run(self, setup_tmp_makefile, logger, tmp_path):
-        """Mypy target should invoke mypy via uvx with Python version in dry-run output."""
-        # Create a mock SOURCE_FOLDER directory so the mypy command runs
-        source_folder = tmp_path / "src"
-        source_folder.mkdir(exist_ok=True)
-
-        # Update .env to set SOURCE_FOLDER
-        env_file = tmp_path / ".rhiza" / ".env"
-        env_content = env_file.read_text()
-        env_content += "\nSOURCE_FOLDER=src\n"
-        env_file.write_text(env_content)
-
-        proc = run_make(logger, ["mypy"])
-        out = proc.stdout
-        # Check for uvx command with the Python version flag
-        python_version_file = tmp_path / ".python-version"
-        if python_version_file.exists():
-            python_version = python_version_file.read_text().strip()
-            assert f"uvx -p {python_version} mypy src --strict --config-file=pyproject.toml" in out
-        else:
-            # Fallback check if .python-version doesn't exist
-            assert "uvx -p" in out
-            assert "mypy src --strict --config-file=pyproject.toml" in out
+            assert expected_cmd in out
 
     def test_test_target_dry_run(self, git_repo, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
