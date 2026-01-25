@@ -253,8 +253,6 @@ def git_repo(root, tmp_path, monkeypatch):
     if book_src.is_dir():
         shutil.copytree(book_src, book_dst, dirs_exist_ok=True)
 
-    # (script_dir / "release.sh").chmod(0o755)
-
     # Commit and push initial state
     subprocess.run([GIT, "config", "user.email", "test@example.com"], check=True)
     subprocess.run([GIT, "config", "user.name", "Test User"], check=True)
