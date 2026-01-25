@@ -14,7 +14,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from conftest import MOCK_UV_SCRIPT
 
 # Get absolute path for git to avoid S607 warnings

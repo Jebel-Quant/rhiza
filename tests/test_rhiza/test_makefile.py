@@ -216,7 +216,7 @@ class TestMakefile:
 
     def test_test_target_dry_run(self, git_repo, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
-        if not Path(git_repo /"tests").exists():
+        if not Path(git_repo / "tests").exists():
             pytest.skip("Skipping test target dry-run because tests folder doesn't exist")
 
         if not Path(git_repo / "tests" / "tests.mk").exists():

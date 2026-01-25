@@ -184,7 +184,7 @@ def logger():
     return logging.getLogger(__name__)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def git_repo(root, tmp_path, monkeypatch):
     """Sets up a remote bare repo and a local clone with necessary files."""
     remote_dir = tmp_path / "remote.git"
@@ -246,7 +246,7 @@ def git_repo(root, tmp_path, monkeypatch):
     if book_src.is_dir():
         shutil.copytree(book_src, book_dst, dirs_exist_ok=True)
 
-    #(script_dir / "release.sh").chmod(0o755)
+    # (script_dir / "release.sh").chmod(0o755)
 
     # Commit and push initial state
     subprocess.run([GIT, "config", "user.email", "test@example.com"], check=True)
