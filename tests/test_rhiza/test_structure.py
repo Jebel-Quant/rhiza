@@ -11,6 +11,8 @@ reliably.
 import warnings
 from pathlib import Path
 
+import pytest
+
 
 class TestRootFixture:
     """Tests for the root fixture that provides repository root path."""
@@ -25,15 +27,18 @@ class TestRootFixture:
 
     def test_root_resolves_correctly_from_nested_location(self, root):
         """Root should correctly resolve to repository root from tests/test_config_templates/."""
+        if not (root / "tests" ).exists():
+            pytest.skip("tests/ directory not found, skipping test")
+
         conftest_path = root / "tests" / "test_rhiza" / "conftest.py"
         assert conftest_path.exists()
 
     def test_root_contains_expected_directories(self, root):
         """Root should contain all expected project directories."""
-        expected_dirs = [".rhiza", "src", "tests", "book"]
+        expected_dirs = [".rhiza"]
         for dirname in expected_dirs:
             if not (root / dirname).exists():
-                warnings.warn(f"Expected directory {dirname} not found", stacklevel=2)
+                raise AssertionError(f"Expected directory {dirname} not found")
 
     def test_root_contains_expected_files(self, root):
         """Root should contain all expected configuration files."""

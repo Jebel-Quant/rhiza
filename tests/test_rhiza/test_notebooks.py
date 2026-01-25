@@ -9,7 +9,8 @@ from dotenv import dotenv_values
 
 # Read .rhiza/.env at collection time (no environment side-effects).
 # dotenv_values returns a dict of key -> value (or None for missing).
-RHIZA_ENV_PATH = Path(".rhiza/.env")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+RHIZA_ENV_PATH = PROJECT_ROOT / ".rhiza/.env"
 
 
 def collect_marimo_notebooks(env_path: Path = RHIZA_ENV_PATH):
@@ -23,7 +24,7 @@ def collect_marimo_notebooks(env_path: Path = RHIZA_ENV_PATH):
         values = dotenv_values(env_path)
 
     marimo_folder = values.get("MARIMO_FOLDER", "book/marimo/notebooks")
-    marimo_path = Path(marimo_folder)
+    marimo_path = PROJECT_ROOT / marimo_folder
 
     if not marimo_path.exists():
         return []

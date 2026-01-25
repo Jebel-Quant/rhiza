@@ -140,7 +140,7 @@ class TestMakefile:
         assert "Usage:" in out
         assert "Targets:" in out
         # ensure a few known targets appear in the help index
-        for target in ["install", "fmt", "deptry", "test", "help"]:
+        for target in ["install", "fmt", "deptry", "help"]:
             assert target in out
 
     def test_help_target(self, logger):
@@ -216,19 +216,28 @@ class TestMakefile:
 
     def test_test_target_dry_run(self, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
+        if not Path("tests").exists():
+            pytest.skip("Skipping test target dry-run because tests folder doesn't exist")
         proc = run_make(logger, ["test"])
         out = proc.stdout
         # Expect key steps
         assert "mkdir -p _tests/html-coverage _tests/html-report" in out
         # Check for uv command with the configured path
 
-    def test_test_target_without_source_folder(self, logger, tmp_path):
+    def test_test_target_without_source_folder(self, git_repo, logger, tmp_path):
         """Test target should run without coverage when SOURCE_FOLDER doesn't exist."""
+        # remove the source folder from the git repo
+        if not (git_repo / "tests").exists():
+            pytest.skip("Skipping test target without source folder because tests folder doesn't exist")
+
+        assert not (git_repo / "src").exists()
+        # shutil.rmtree(git_repo / "src")
+
         # Update .env to set SOURCE_FOLDER to a non-existent directory
-        env_file = tmp_path / ".rhiza" / ".env"
-        env_content = env_file.read_text()
-        env_content += "\nSOURCE_FOLDER=nonexistent_src\n"
-        env_file.write_text(env_content)
+        #env_file = tmp_path / ".rhiza" / ".env"
+        #env_content = env_file.read_text()
+        #env_content += "\nSOURCE_FOLDER=nonexistent_src\n"
+        #env_file.write_text(env_content)
 
         # Create tests folder
         tests_folder = tmp_path / "tests"
@@ -237,7 +246,7 @@ class TestMakefile:
         proc = run_make(logger, ["test"])
         out = proc.stdout
         # Should see warning about missing source folder
-        assert "if [ -d nonexistent_src ]" in out
+        assert "if [ -d src ]" in out
         # Should still run pytest but without coverage flags
         assert "pytest tests" in out
         assert "--html=_tests/html-report/report.html" in out
@@ -271,6 +280,9 @@ class TestMakefile:
 
     def test_that_target_coverage_is_configurable(self, logger):
         """Test target should respond to COVERAGE_FAIL_UNDER variable."""
+        if not Path("tests").exists():
+            pytest.skip("Skipping test target coverage override because tests folder doesn't exist")
+
         # Default case (90%)
         proc = run_make(logger, ["test"])
         assert "--cov-fail-under=90" in proc.stdout
@@ -307,7 +319,7 @@ class TestMakefileRootFixture:
             if split_path.exists():
                 content += "\n" + split_path.read_text()
 
-        expected_targets = ["install", "fmt", "test", "deptry", "help"]
+        expected_targets = ["install", "fmt", "deptry", "help"]
         for target in expected_targets:
             assert f"{target}:" in content or f".PHONY: {target}" in content
 

@@ -231,19 +231,22 @@ def git_repo(root, tmp_path, monkeypatch):
     monkeypatch.setenv("PATH", f"{bin_dir}:{os.environ.get('PATH', '')}")
 
     # Copy scripts and core Rhiza Makefiles
-    script_dir = local_dir / ".rhiza" / "scripts"
-    script_dir.mkdir(parents=True)
+    shutil.copytree(root / ".rhiza", local_dir / ".rhiza")
 
-    shutil.copy(root / ".rhiza" / "scripts" / "release.sh", script_dir / "release.sh")
-    shutil.copy(root / ".rhiza" / "rhiza.mk", local_dir / ".rhiza" / "rhiza.mk")
     shutil.copy(root / "Makefile", local_dir / "Makefile")
+
+    tests_src = root / "tests"
+    tests_dst = local_dir / "tests"
+
+    if tests_src.is_dir():
+        shutil.copytree(tests_src, tests_dst, dirs_exist_ok=True)
 
     book_src = root / "book"
     book_dst = local_dir / "book"
     if book_src.is_dir():
         shutil.copytree(book_src, book_dst, dirs_exist_ok=True)
 
-    (script_dir / "release.sh").chmod(0o755)
+    #(script_dir / "release.sh").chmod(0o755)
 
     # Commit and push initial state
     subprocess.run([GIT, "config", "user.email", "test@example.com"], check=True)
