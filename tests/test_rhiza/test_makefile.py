@@ -228,7 +228,7 @@ class TestMakefile:
         assert "mkdir -p _tests/html-coverage _tests/html-report" in out
         # Check for uv command with the configured path
 
-    def test_test_target_without_source_folder(self, git_repo, logger, tmp_path):
+    def test_test_target_without_source_folder(self, git_repo, logger):
         """Test target should run without coverage when SOURCE_FOLDER doesn't exist."""
         # remove the source folder from the git repo
         if not (git_repo / "tests").exists():
