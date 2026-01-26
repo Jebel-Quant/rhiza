@@ -44,7 +44,7 @@ jobs:
 
       - name: Run benchmarks
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.uv-extra-index-url }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: |
           make benchmark
 
