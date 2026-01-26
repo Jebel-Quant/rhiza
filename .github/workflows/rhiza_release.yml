@@ -115,13 +115,6 @@ jobs:
         with:
           version: "0.9.26"
 
-      - name: "Sync the virtual environment for ${{ github.repository }}"
-        shell: bash
-        run: |
-          export UV_EXTRA_INDEX_URL="${{ secrets.UV_EXTRA_INDEX_URL }}"
-          # will just use .python-version?
-          uv sync --all-extras --all-groups --frozen
-
       - name: Verify version matches tag
         if: hashFiles('pyproject.toml') != ''
         run: |
@@ -331,16 +324,6 @@ jobs:
         with:
           version: "0.9.26"
 
-      - name: "Sync the virtual environment for ${{ github.repository }}"
-        shell: bash
-        run: |
-          export UV_EXTRA_INDEX_URL="${{ secrets.UV_EXTRA_INDEX_URL }}"
-          # will just use .python-version?
-          uv sync --all-extras --all-groups --frozen
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-
       - name: Generate Devcontainer Link
         id: devcontainer_link
         if: needs.devcontainer.outputs.should_publish == 'true' && needs.devcontainer.result == 'success'
@@ -358,7 +341,7 @@ jobs:
         id: pypi_link
         if: needs.pypi.outputs.should_publish == 'true' && needs.pypi.result == 'success'
         run: |
-          PACKAGE_NAME=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['name'])")
+          PACKAGE_NAME=$(uv run python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['name'])")
           VERSION="${{ needs.tag.outputs.tag }}"
           VERSION=${VERSION#v}
 
