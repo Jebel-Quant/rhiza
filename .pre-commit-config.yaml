@@ -46,7 +46,7 @@ repos:
     rev: 1.9.3
     hooks:
       - id: bandit
-        args: ["--skip", "B101", "--exclude", ".venv,tests,.git,.pytest_cache"]
+        args: ["-c", "bandit.toml"]
 
   - repo: local
     hooks:

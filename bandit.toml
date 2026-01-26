@@ -1,0 +1,3 @@
+[tool.bandit]
+exclude_dirs=[".venv", "tests", ".git", ".pytest_cache"]
+skips = ["B101"]
