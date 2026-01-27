@@ -33,7 +33,7 @@
 #   - No PyPI credentials stored; relies on Trusted Publishing via GitHub OIDC
 #   - For custom feeds, PYPI_TOKEN secret is used with default username __token__
 #   - Container registry uses GITHUB_TOKEN for authentication
-#   - SLSA provenance attestations generated for build artifacts (supply chain security)
+#   - SLSA provenance attestations generated for build artifacts (public repos only)
 #
 # 📄 Requirements:
 #   - pyproject.toml with top-level version field (for Python packages)
@@ -65,7 +65,7 @@ permissions:
   contents: write       # Needed to create releases
   id-token: write       # Needed for OIDC authentication with PyPI
   packages: write       # Needed to publish devcontainer image
-  attestations: write   # Needed for SLSA provenance attestations
+  attestations: write   # Needed for SLSA provenance attestations (public repos only)
 
 jobs:
   tag:
@@ -144,7 +144,7 @@ jobs:
           uvx hatch build
 
       - name: Generate SLSA provenance attestations
-        if: steps.buildable.outputs.buildable == 'true'
+        if: steps.buildable.outputs.buildable == 'true' && github.event.repository.private == false
         uses: actions/attest-build-provenance@v3
         with:
           subject-path: dist/*

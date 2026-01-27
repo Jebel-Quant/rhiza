@@ -73,7 +73,7 @@ This project implements several security measures:
 - **pip-audit**: Dependency vulnerability scanning
 
 ### Supply Chain Security
-- **SLSA Provenance**: Build attestations for release artifacts
+- **SLSA Provenance**: Build attestations for release artifacts (public repositories only)
 - **Locked Dependencies**: `uv.lock` ensures reproducible builds
 - **Renovate**: Automated dependency updates with security patches
 
