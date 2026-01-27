@@ -33,7 +33,7 @@ jobs:
 
       - id: versions
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.uv-extra-index-url }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: |
           # Generate Python versions JSON from the script
           JSON=$(make -f .rhiza/rhiza.mk -s version-matrix)
@@ -65,6 +65,6 @@ jobs:
 
       - name: Run tests
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.uv-extra-index-url }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: |
-          make -f .rhiza/rhiza.mk test
+          make test

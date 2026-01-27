@@ -48,16 +48,16 @@ jobs:
       - name: "Sync the virtual environment for ${{ github.repository }}"
         shell: bash
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.uv-extra-index-url }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: |
           # will just use .python-version?
           uv sync --all-extras --all-groups --frozen
 
       - name: "Make the book"
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.uv-extra-index-url }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: |
-          make -f .rhiza/rhiza.mk book
+          make book
 
       # Step 5: Package all artifacts for GitHub Pages deployment
       # This prepares the combined outputs for deployment by creating a single artifact
