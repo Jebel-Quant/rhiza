@@ -37,6 +37,7 @@ RESET := \033[0m
 	pre-sync \
 	pre-validate \
 	release \
+	sbom \
 	sync \
 	summarise-sync \
 	update-readme \
@@ -260,6 +261,16 @@ bump: pre-bump ## bump version
 release: pre-release install-uv ## create tag and push to remote with prompts
 	@UV_BIN="${UV_BIN}" /bin/sh ".rhiza/scripts/release.sh"
 	@$(MAKE) post-release
+
+sbom: install-uv ## generate SBOM (Software Bill of Materials) files
+	@printf "${BLUE}[INFO] Generating SBOM files...${RESET}\n"
+	@${UVX_BIN} syft . -o spdx-json=sbom.spdx.json
+	@${UVX_BIN} syft . -o cyclonedx-json=sbom.cyclonedx.json
+	@printf "${GREEN}[SUCCESS] SBOM files generated:${RESET}\n"
+	@printf "  - sbom.spdx.json\n"
+	@printf "  - sbom.cyclonedx.json\n"
+	@printf "${BLUE}[INFO] File sizes:${RESET}\n"
+	@ls -lh sbom.*.json | awk '{printf "  - %s: %s\n", $$9, $$5}'
 
 
 ##@ Meta
