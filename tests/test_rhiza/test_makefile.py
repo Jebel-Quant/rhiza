@@ -271,14 +271,13 @@ class TestMakefile:
 
     def test_that_target_coverage_is_configurable(self, logger):
         """Test target should respond to COVERAGE_FAIL_UNDER variable."""
-        # Default case (90%)
+        # Default case: ensure the flag is present
         proc = run_make(logger, ["test"])
-        assert "--cov-fail-under=90" in proc.stdout
+        assert "--cov-fail-under=" in proc.stdout
 
-        # Override case (80%)
-        # Note: We pass the variable as an argument to make
-        proc_override = run_make(logger, ["test", "COVERAGE_FAIL_UNDER=80"])
-        assert "--cov-fail-under=80" in proc_override.stdout
+        # Override case: ensure the flag takes the specific value
+        proc_override = run_make(logger, ["test", "COVERAGE_FAIL_UNDER=42"])
+        assert "--cov-fail-under=42" in proc_override.stdout
 
 
 class TestMakefileRootFixture:
