@@ -94,8 +94,17 @@ docs:: install ## create documentation with pdoc
 # 1. Aggregates API docs, coverage, test reports, and notebooks into _book.
 # 2. Generates links.json to define the book structure.
 # 3. Uses 'minibook' to compile the final HTML site.
-book:: test docs marimushka ## compile the companion book
+book:: docs marimushka ## compile the companion book
 	@printf "${BLUE}[INFO] Building combined documentation...${RESET}\n"
+	
+	# Run tests if test folder exists, but don't fail book if tests fail or don't exist
+	@if [ -d "${TESTS_FOLDER}" ]; then \
+	  printf "${BLUE}[INFO] Running tests for book...${RESET}\n"; \
+	  $(MAKE) test || printf "${YELLOW}[WARN] Tests failed or incomplete, continuing with book generation${RESET}\n"; \
+	else \
+	  printf "${YELLOW}[WARN] No test folder found, skipping tests for book${RESET}\n"; \
+	fi
+	
 	@rm -rf _book && mkdir -p _book
 
 	@if [ -f "_tests/coverage.json" ]; then \
