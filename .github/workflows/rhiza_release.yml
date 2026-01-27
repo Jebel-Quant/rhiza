@@ -34,6 +34,7 @@
 #   - No PyPI credentials stored; relies on Trusted Publishing via GitHub OIDC
 #   - For custom feeds, PYPI_TOKEN secret is used with default username __token__
 #   - Container registry uses GITHUB_TOKEN for authentication
+#   - SLSA provenance attestations generated for build artifacts (supply chain security)
 #
 # 📄 Requirements:
 #   - pyproject.toml with top-level version field (for Python packages)
@@ -62,9 +63,10 @@ on:
       - 'v*'
 
 permissions:
-  contents: write  # Needed to create releases
-  id-token: write  # Needed for OIDC authentication with PyPI
-  packages: write  # Needed to publish devcontainer image
+  contents: write       # Needed to create releases
+  id-token: write       # Needed for OIDC authentication with PyPI
+  packages: write       # Needed to publish devcontainer image
+  attestations: write   # Needed for SLSA provenance attestations
 
 jobs:
   tag:
@@ -74,7 +76,7 @@ jobs:
       tag: ${{ steps.set_tag.outputs.tag }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
@@ -82,7 +84,7 @@ jobs:
         id: set_tag
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Validate Release
         env:
@@ -105,21 +107,14 @@ jobs:
     needs: tag
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v7.2.0
         with:
-          version: "0.9.26"
-
-      - name: "Sync the virtual environment for ${{ github.repository }}"
-        shell: bash
-        run: |
-          export UV_EXTRA_INDEX_URL="${{ secrets.uv-extra-index-url }}"
-          # will just use .python-version?
-          uv sync --all-extras --all-groups --frozen
+          version: "0.9.27"
 
       - name: Verify version matches tag
         if: hashFiles('pyproject.toml') != ''
@@ -149,10 +144,15 @@ jobs:
           printf "[INFO] Building package...\n"
           uvx hatch build
 
+      - name: Generate SLSA provenance attestations
+        if: steps.buildable.outputs.buildable == 'true'
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: dist/*
 
       - name: Upload dist artifact
         if: steps.buildable.outputs.buildable == 'true'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: dist
           path: dist
@@ -234,12 +234,12 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
       - name: Download dist artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v7.0.0
         with:
           name: dist
           path: dist
@@ -251,15 +251,15 @@ jobs:
         run: |
           if [[ ! -d dist ]]; then
             echo "::warning::No folder dist/. Skipping PyPI publish."
-            echo "should_publish=false" >> $GITHUB_OUTPUT
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
           else
             if grep -R "Private :: Do Not Upload" pyproject.toml; then
-              echo "should_publish=false" >> $GITHUB_OUTPUT
+              echo "should_publish=false" >> "$GITHUB_OUTPUT"
             else
-              echo "should_publish=true" >> $GITHUB_OUTPUT
+              echo "should_publish=true" >> "$GITHUB_OUTPUT"
             fi
           fi
-          cat $GITHUB_OUTPUT
+          cat "$GITHUB_OUTPUT"
 
       # this should not take place, as "Private :: Do Not Upload" set in pyproject.toml
       # repository-url and password only used for custom feeds, not for PyPI with OIDC
@@ -282,7 +282,7 @@ jobs:
       image_name: ${{ steps.image_name.outputs.image_name }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
@@ -292,10 +292,10 @@ jobs:
           PUBLISH_DEVCONTAINER: ${{ vars.PUBLISH_DEVCONTAINER }}
         run: |
           if [[ "$PUBLISH_DEVCONTAINER" == "true" ]] && [[ -d ".devcontainer" ]]; then
-            echo "should_publish=true" >> $GITHUB_OUTPUT
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
             echo "🚀 Will build and publish devcontainer image"
           else
-            echo "should_publish=false" >> $GITHUB_OUTPUT
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
             echo "⏭️  Skipping devcontainer publish (PUBLISH_DEVCONTAINER not true or .devcontainer missing)"
           fi
 
@@ -307,11 +307,11 @@ jobs:
           if [ -z "$REGISTRY" ]; then
             REGISTRY="ghcr.io"
           fi
-          echo "registry=$REGISTRY" >> $GITHUB_OUTPUT
+          echo "registry=$REGISTRY" >> "$GITHUB_OUTPUT"
 
       - name: Login to Container Registry
         if: steps.check_publish.outputs.should_publish == 'true'
-        uses: docker/login-action@v3
+        uses: docker/login-action@v3.6.0
         with:
           registry: ${{ steps.registry.outputs.registry }}
           username: ${{ github.repository_owner }}
@@ -320,7 +320,7 @@ jobs:
       - name: Get lowercase repository owner
         if: steps.check_publish.outputs.should_publish == 'true'
         id: repo_owner
-        run: echo "owner_lc=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+        run: echo "owner_lc=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
       - name: Get Image Name
         if: steps.check_publish.outputs.should_publish == 'true'
@@ -349,7 +349,7 @@ jobs:
 
           IMAGE_NAME="${{ steps.registry.outputs.registry }}/${{ steps.repo_owner.outputs.owner_lc }}/$IMAGE_NAME"
           echo "✅ Final image name: $IMAGE_NAME"
-          echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "image_name=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Build and Publish Devcontainer Image
         if: steps.check_publish.outputs.should_publish == 'true'
@@ -367,30 +367,29 @@ jobs:
     if: needs.pypi.result == 'success' || needs.devcontainer.result == 'success'
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v7.2.0
         with:
-          version: "0.9.26"
+          version: "0.9.27"
 
       - name: "Sync the virtual environment for ${{ github.repository }}"
         shell: bash
         run: |
-          export UV_EXTRA_INDEX_URL="${{ secrets.uv-extra-index-url }}"
+          export UV_EXTRA_INDEX_URL="${{ secrets.uv_extra_index_url }}"
           # will just use .python-version?
           uv sync --all-extras --all-groups --frozen
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v6.1.0
 
       - name: Generate Devcontainer Link
         id: devcontainer_link
         if: needs.devcontainer.outputs.should_publish == 'true' && needs.devcontainer.result == 'success'
         run: |
-          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           FULL_IMAGE="${{ needs.devcontainer.outputs.image_name }}:${{ needs.tag.outputs.tag }}"
           {
             echo "message<<EOF"
@@ -398,13 +397,13 @@ jobs:
             echo ""
             echo "\`$FULL_IMAGE\`"
             echo "EOF"
-          } >> $GITHUB_OUTPUT
+          } >> "$GITHUB_OUTPUT"
 
       - name: Generate PyPI Link
         id: pypi_link
         if: needs.pypi.outputs.should_publish == 'true' && needs.pypi.result == 'success'
         run: |
-          PACKAGE_NAME=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['name'])")
+          PACKAGE_NAME=$(uv run python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['name'])")
           VERSION="${{ needs.tag.outputs.tag }}"
           VERSION=${VERSION#v}
 
@@ -423,7 +422,7 @@ jobs:
             echo ""
             echo "[$PACKAGE_NAME]($LINK)"
             echo "EOF"
-          } >> $GITHUB_OUTPUT
+          } >> "$GITHUB_OUTPUT"
 
       - name: Generate SBOM Link
         id: sbom_link

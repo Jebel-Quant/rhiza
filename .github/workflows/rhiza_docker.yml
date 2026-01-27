@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
 
       - name: Detect docker/Dockerfile presence
         id: check_dockerfile
@@ -49,18 +49,18 @@ jobs:
 
       - name: Set up Docker Buildx
         if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v3.12.0
 
       - name: Read Python version from .python-version
         if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
         id: python_version
         run: |
           if [ -f .python-version ]; then
-            PYTHON_VERSION=$(cat .python-version | tr -d '[:space:]')
-            echo "version=$PYTHON_VERSION" >> $GITHUB_OUTPUT
+            PYTHON_VERSION=$(tr -d '[:space:]' < .python-version)
+            echo "version=$PYTHON_VERSION" >> "$GITHUB_OUTPUT"
             echo "Using Python version: $PYTHON_VERSION"
           else
-            echo "version=3.12" >> $GITHUB_OUTPUT
+            echo "version=3.12" >> "$GITHUB_OUTPUT"
             echo "::warning::.python-version not found, using default 3.12"
           fi
 
