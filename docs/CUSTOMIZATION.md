@@ -123,6 +123,53 @@ Or delete the workflow file:
 git rm .github/workflows/rhiza_codeql.yml
 git commit -m "Remove CodeQL workflow"
 ```
+## ⚙️ Configuration Variables
+
+You can configure certain aspects of the Makefile by overriding variables. These can be set in your main `Makefile`, a `local.mk` file (for local developer overrides), or passed as environment variables / command-line arguments.
+
+### Global Configuration
+
+Add these to your `Makefile` or `local.mk` to make them persistent for the project or your environment:
+
+```makefile
+# Override default Python version
+PYTHON_VERSION = 3.12
+
+# Override test coverage threshold (default: 90)
+COVERAGE_FAIL_UNDER = 80
+```
+
+### On-Demand Configuration
+
+You can also pass variables directly to `make` for one-off commands:
+
+```bash
+# Run tests requiring only 80% coverage
+make test COVERAGE_FAIL_UNDER=80
+```
+
+## 🎨 Documentation Customization
+
+You can customize the API documentation and companion book.
+
+### Project Logo
+
+The API documentation includes a logo in the sidebar. You can override the default logo (`assets/rhiza-logo.svg`) by setting the `LOGO_FILE` variable in your Makefile or `local.mk`:
+
+```makefile
+LOGO_FILE := assets/my-custom-logo.png
+```
+
+### Custom Templates
+
+You can customize the look and feel of the API documentation by providing your own Jinja2 templates.
+Place your custom templates in the `book/pdoc-templates` directory.
+
+For example, to override the main module template, create `book/pdoc-templates/module.html.jinja2`.
+
+See the [pdoc documentation on templates](https://pdoc.dev/docs/pdoc.html#edit-pdocs-html-template) for full details on how to override specific parts of the documentation.
+
+For more details on customizing the documentation, see [book/README.md](../book/README.md).
 
 ## 📖 Complete Documentation
 
