@@ -13,7 +13,7 @@
 #   - PRs will show a warning comment but not fail
 #   - Main branch updates the baseline for future comparisons
 
-name: (RHIZA) Benchmarks
+name: "(RHIZA) BENCHMARKS"
 
 permissions:
   contents: write
