@@ -65,6 +65,7 @@ export UV_VENV_CLEAR := 1
 
 # Include split Makefiles
 -include tests/tests.mk
+-include security/security.mk
 -include book/book.mk
 -include book/marimo/marimo.mk
 -include presentation/presentation.mk

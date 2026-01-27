@@ -4,7 +4,7 @@
 # executing performance benchmarks.
 
 # Declare phony targets (they don't produce files)
-.PHONY: test benchmark typecheck security mutate docs-coverage
+.PHONY: test benchmark typecheck mutate docs-coverage
 
 # Default directory for tests
 TESTS_FOLDER := tests
@@ -54,15 +54,6 @@ typecheck: install ## run mypy type checking
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping typecheck${RESET}\n"; \
 	fi
-
-# The 'security' target performs security vulnerability scans.
-# 1. Runs pip-audit to check for known vulnerabilities in dependencies.
-# 2. Runs bandit to find common security issues in the source code.
-security: install ## run security scans (pip-audit and bandit)
-	@printf "${BLUE}[INFO] Running pip-audit for dependency vulnerabilities...${RESET}\n"
-	@${UVX_BIN} pip-audit
-	@printf "${BLUE}[INFO] Running bandit security scan...${RESET}\n"
-	@${UVX_BIN} bandit -r ${SOURCE_FOLDER} -ll -q
 
 # The 'mutate' target performs mutation testing using mutmut.
 # 1. Runs mutmut to apply mutations to the source code and check if tests fail.
