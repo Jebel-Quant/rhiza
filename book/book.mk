@@ -97,13 +97,8 @@ docs:: install ## create documentation with pdoc
 book:: docs marimushka ## compile the companion book
 	@printf "${BLUE}[INFO] Building combined documentation...${RESET}\n"
 	
-	# Run tests if test folder exists, but don't fail book if tests fail or don't exist
-	@if [ -d "${TESTS_FOLDER}" ]; then \
-	  printf "${BLUE}[INFO] Running tests for book...${RESET}\n"; \
-	  $(MAKE) test || printf "${YELLOW}[WARN] Tests failed or incomplete, continuing with book generation${RESET}\n"; \
-	else \
-	  printf "${YELLOW}[WARN] No test folder found, skipping tests for book${RESET}\n"; \
-	fi
+	# Run tests but don't fail book if tests fail or don't exist
+	@$(MAKE) test || printf "${YELLOW}[WARN] Tests failed or unavailable, continuing with book generation${RESET}\n"
 	
 	@rm -rf _book && mkdir -p _book
 
