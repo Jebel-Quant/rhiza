@@ -94,8 +94,14 @@ docs:: install ## create documentation with pdoc
 # 1. Aggregates API docs, coverage, test reports, and notebooks into _book.
 # 2. Generates links.json to define the book structure.
 # 3. Uses 'minibook' to compile the final HTML site.
-book:: docs marimushka ## compile the companion book
+book:: install-uv ## compile the companion book
 	@printf "${BLUE}[INFO] Building combined documentation...${RESET}\n"
+	
+	# Run docs but don't fail book if docs fail or are unavailable
+	@$(MAKE) docs || printf "${YELLOW}[WARN] Docs generation failed or unavailable, continuing with book generation${RESET}\n"
+	
+	# Run marimushka but don't fail book if marimushka fails or is unavailable
+	@$(MAKE) marimushka || printf "${YELLOW}[WARN] Marimushka export failed or unavailable, continuing with book generation${RESET}\n"
 	
 	# Run tests but don't fail book if tests fail or don't exist
 	@$(MAKE) test || printf "${YELLOW}[WARN] Tests failed or unavailable, continuing with book generation${RESET}\n"
