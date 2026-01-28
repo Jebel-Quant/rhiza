@@ -1,0 +1,3 @@
+## src.mk - Documentation targets
+# This file is included by the main Makefile.
+# It provides targets for ...
