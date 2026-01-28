@@ -4,7 +4,7 @@
 # Contribute to deptry folders (notebooks need --ignore DEP004)
 MARIMUSHKA_OUTPUT ?= _marimushka
 DEPTRY_FOLDERS += ${MARIMO_FOLDER}
-DEPTRY_IGNORE := --ignore DEP004
+DEPTRY_IGNORE += --ignore DEP004
 
 # Declare phony targets (they don't produce files)
 .PHONY: marimo-validate marimo marimushka
