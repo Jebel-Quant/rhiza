@@ -16,21 +16,21 @@ LOGO_FILE ?= assets/rhiza-logo.svg
 # The 'mypy' target runs static type analysis using pyproject.toml config.
 mypy: install ## run mypy type checking
 	@printf "${BLUE}[INFO] Running mypy type checking...${RESET}\n"
-	@${UVX_BIN} -p ${PYTHON_VERSION} mypy "${SOURCE_FOLDER}" --strict --config-file=pyproject.toml
+	@${UVX_BIN} -p ${PYTHON_VERSION} mypy "src" --strict --config-file=pyproject.toml
 
 # The 'docs' target generates API documentation using pdoc.
 # Finds Python packages by locating __init__.py files under the source folder.
 # Detects docformat from ruff.toml or defaults to google.
 docs:: install ## create documentation with pdoc
 	@rm -rf _pdoc
-	@PKGS=$$(find "${SOURCE_FOLDER}" -name "__init__.py" -type f | \
-	  sed "s|^${SOURCE_FOLDER}/||" | \
+	@PKGS=$$(find "src" -name "__init__.py" -type f | \
+	  sed "s|^src/||" | \
 	  sed 's|/[^/]*$$||' | \
 	  cut -d'/' -f1 | \
 	  sort -u | \
 	  tr '\n' ' '); \
 	if [ -z "$$PKGS" ]; then \
-	  printf "${YELLOW}[WARN] No packages found under ${SOURCE_FOLDER}, skipping docs${RESET}\n"; \
+	  printf "${YELLOW}[WARN] No packages found under src, skipping docs${RESET}\n"; \
 	else \
 	  TEMPLATE_ARG=""; \
 	  if [ -d "${PDOC_TEMPLATE_DIR}" ]; then \
@@ -57,7 +57,7 @@ docs:: install ## create documentation with pdoc
 	    printf "${BLUE}[INFO] Embedding logo: $(LOGO_FILE)${RESET}\n"; \
 	  fi; \
 	  ${UV_BIN} pip install pdoc && \
-	  PYTHONPATH="${SOURCE_FOLDER}" ${UV_BIN} run pdoc --docformat $$DOCFORMAT --output-dir _pdoc $$TEMPLATE_ARG $$LOGO_ARG $$PKGS; \
+	  PYTHONPATH="src" ${UV_BIN} run pdoc --docformat $$DOCFORMAT --output-dir _pdoc $$TEMPLATE_ARG $$LOGO_ARG $$PKGS; \
 	fi
 
 # The 'security' target performs security vulnerability scans.
@@ -66,4 +66,4 @@ security: install ## run security scans (pip-audit and bandit)
 	@printf "${BLUE}[INFO] Running pip-audit for dependency vulnerabilities...${RESET}\n"
 	@${UVX_BIN} pip-audit
 	@printf "${BLUE}[INFO] Running bandit security scan...${RESET}\n"
-	@${UVX_BIN} bandit -r "${SOURCE_FOLDER}" -ll -q
+	@${UVX_BIN} bandit -r "src" -ll -q
