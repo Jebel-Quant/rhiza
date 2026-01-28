@@ -3,7 +3,7 @@
 # It provides targets for type checking, documentation, and security analysis.
 
 # Declare phony targets (they don't produce files)
-.PHONY: mypy docs security
+.PHONY: mypy docs security typecheck
 
 # Logo file for pdoc (relative to project root).
 # 1. Defaults to the Rhiza logo if present.
@@ -67,3 +67,11 @@ security: install ## run security scans (pip-audit and bandit)
 	@${UVX_BIN} pip-audit
 	@printf "${BLUE}[INFO] Running bandit security scan...${RESET}\n"
 	@${UVX_BIN} bandit -r "src" -ll -q
+
+# The 'typecheck' target runs static type analysis using mypy.
+# 1. Checks if the source directory exists.
+# 2. Runs mypy on the source folder using the configuration in pyproject.toml.
+typecheck: install ## run mypy type checking
+	printf "${BLUE}[INFO] Running mypy type checking...${RESET}\n";
+	${UVX_BIN} mypy src --config-file pyproject.toml;
+
