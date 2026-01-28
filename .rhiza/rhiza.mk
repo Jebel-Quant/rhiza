@@ -225,7 +225,11 @@ clean: ## Clean project artifacts and stale local branches
 
 ##@ Quality and Formatting
 deptry: install-uv ## Run deptry
-	@[ -n "$(strip ${DEPTRY_FOLDERS})" ] && $(UVX_BIN) -p ${PYTHON_VERSION} deptry ${DEPTRY_FOLDERS} ${DEPTRY_IGNORE} || true
+	@printf "${BLUE}[INFO] DEPTRY_FOLDERS: ${DEPTRY_FOLDERS}${RESET}\n"
+	@if [ -n "$(strip ${DEPTRY_FOLDERS})" ]; then \
+		printf "${BLUE}[INFO] Running: $(UVX_BIN) -p ${PYTHON_VERSION} deptry ${DEPTRY_FOLDERS} ${DEPTRY_IGNORE}${RESET}\n"; \
+		$(UVX_BIN) -p ${PYTHON_VERSION} deptry ${DEPTRY_FOLDERS} ${DEPTRY_IGNORE}; \
+	fi
 
 fmt: install-uv ## check the pre-commit hooks and the linting
 	@${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --all-files
