@@ -2,6 +2,7 @@
 # This file is included by the main Makefile
 
 # Contribute to deptry folders (notebooks need --ignore DEP004)
+MARIMUSHKA_OUTPUT ?= _marimushka
 DEPTRY_FOLDERS += ${MARIMO_FOLDER}
 DEPTRY_IGNORE := --ignore DEP004
 
