@@ -63,6 +63,6 @@ def test_book_folder(git_repo):
     # get the list of phony targets from the Makefile
     phony_targets = [line.strip() for line in content.splitlines() if line.startswith(".PHONY:")]
     targets = set(phony_targets[0].split(":")[1].strip().split())
-    assert {"book", "docs", "marimushka"} == targets, (
-        f"Expected phony targets to include book, docs, and marimushka, got {targets}"
+    assert {"book"} == targets, (
+        f"Expected phony targets to include book, got {targets}"
     )
