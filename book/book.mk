@@ -1,31 +1,27 @@
-## book.mk - Documentation and book-building targets
+## book.mk - Book-building targets
 # This file is included by the main Makefile.
-# It provides targets for generating API documentation (pdoc),
-# exporting Marimo notebooks to HTML (marimushka), and compiling
-# a companion book (minibook).
+# It provides the 'book' target which compiles a companion book (minibook)
+# aggregating API docs, coverage, test reports, and notebooks.
+# No-op fallbacks are provided for dependencies (test, docs, marimushka)
+# in case their respective .mk files are not included.
 
 # Declare phony targets (they don't produce files)
-.PHONY: docs marimushka book
+.PHONY: book
+
+# Define a default no-op test target that will be used
+# when tests/tests.mk doesn't exist or doesn't define test
+test::
+	@printf "${BLUE}[INFO] No test target defined, skipping tests${RESET}\n"
+
+# Define a default no-op docs target that will be used
+# when src/src.mk doesn't exist or doesn't define docs
+docs::
+	@printf "${BLUE}[INFO] No docs target defined, skipping API documentation${RESET}\n"
 
 # Define a default no-op marimushka target that will be used
 # when book/marimo/marimo.mk doesn't exist or doesn't define marimushka
-marimushka:: install-uv
-	@if [ ! -d "book/marimo" ]; then \
-	  printf "${BLUE}[INFO] No Marimo directory found, creating placeholder${RESET}\n"; \
-	  mkdir -p "${MARIMUSHKA_OUTPUT}"; \
-	  printf '%s\n' '<html><head><title>Marimo Notebooks</title></head>' \
-	    '<body><h1>Marimo Notebooks</h1><p>No notebooks found.</p></body></html>' \
-	    > "${MARIMUSHKA_OUTPUT}/index.html"; \
-	fi
-
-# Default output directory for Marimushka (HTML exports of notebooks)
-MARIMUSHKA_OUTPUT ?= _marimushka
-
-# Logo file for pdoc (relative to project root).
-# 1. Defaults to the Rhiza logo if present.
-# 2. Can be overridden in Makefile or local.mk (e.g. LOGO_FILE := my-logo.png)
-# 3. If set to empty string, no logo will be used.
-LOGO_FILE ?= assets/rhiza-logo.svg
+marimushka::
+	@printf "${BLUE}[INFO] No marimushka target defined, skipping Marimo notebooks${RESET}\n"
 
 # ----------------------------
 # Book sections (declarative)
@@ -40,55 +36,7 @@ BOOK_SECTIONS := \
   "Notebooks|_marimushka/index.html|marimushka/index.html|_marimushka|marimushka"
 
 
-##@ Documentation
-
-# The 'docs' target generates API documentation using pdoc.
-# 1. Identifies Python packages within the source folder.
-# 2. Detects the docformat (google, numpy, or sphinx) from ruff.toml or defaults to google.
-# 3. Installs pdoc and generates HTML documentation in _pdoc.
-docs:: install ## create documentation with pdoc
-	# Clean up previous docs
-	rm -rf _pdoc;
-
-	@if [ -d "${SOURCE_FOLDER}" ]; then \
-	  PKGS=""; for d in "${SOURCE_FOLDER}"/*; do [ -d "$$d" ] && PKGS="$$PKGS $$(basename "$$d")"; done; \
-	  if [ -z "$$PKGS" ]; then \
-	    printf "${YELLOW}[WARN] No packages found under ${SOURCE_FOLDER}, skipping docs${RESET}\n"; \
-	  else \
-	    TEMPLATE_ARG=""; \
-	    if [ -d "${PDOC_TEMPLATE_DIR}" ]; then \
-	      TEMPLATE_ARG="-t ${PDOC_TEMPLATE_DIR}"; \
-	      printf "${BLUE}[INFO] Using pdoc templates from ${PDOC_TEMPLATE_DIR}${RESET}\n"; \
-	    fi; \
-	    DOCFORMAT="$(DOCFORMAT)"; \
-	    if [ -z "$$DOCFORMAT" ]; then \
-	      if [ -f "ruff.toml" ]; then \
-	        DOCFORMAT=$$(${UV_BIN} run python -c "import tomllib; print(tomllib.load(open('ruff.toml', 'rb')).get('lint', {}).get('pydocstyle', {}).get('convention', ''))"); \
-	      fi; \
-	      if [ -z "$$DOCFORMAT" ]; then \
-	        DOCFORMAT="google"; \
-	      fi; \
-	      printf "${BLUE}[INFO] Detected docformat: $$DOCFORMAT${RESET}\n"; \
-	    else \
-	      printf "${BLUE}[INFO] Using provided docformat: $$DOCFORMAT${RESET}\n"; \
-	    fi; \
-	    LOGO_ARG=""; \
-	    if [ -n "$(LOGO_FILE)" ]; then \
-	      if [ -f "$(LOGO_FILE)" ]; then \
-	        MIME=$$(file --mime-type -b "$(LOGO_FILE)"); \
-	        DATA=$$(base64 < "$(LOGO_FILE)" | tr -d '\n'); \
-	        LOGO_ARG="--logo data:$$MIME;base64,$$DATA"; \
-	        printf "${BLUE}[INFO] Embedding logo: $(LOGO_FILE)${RESET}\n"; \
-	      else \
-	        printf "${YELLOW}[WARN] Logo file $(LOGO_FILE) not found, skipping${RESET}\n"; \
-	      fi; \
-	    fi; \
-	    ${UV_BIN} pip install pdoc && \
-	    PYTHONPATH="${SOURCE_FOLDER}" ${UV_BIN} run pdoc --docformat $$DOCFORMAT --output-dir _pdoc $$TEMPLATE_ARG $$LOGO_ARG $$PKGS; \
-	  fi; \
-	else \
-	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping docs${RESET}\n"; \
-	fi
+##@ Book
 
 # The 'book' target assembles the final documentation book.
 # 1. Aggregates API docs, coverage, test reports, and notebooks into _book.
