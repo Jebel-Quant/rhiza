@@ -28,6 +28,7 @@ SPLIT_MAKEFILES = [
     ".rhiza/rhiza.mk",
     "tests/tests.mk",
     "book/book.mk",
+    "src/src.mk",
     "presentation/presentation.mk",
 ]
 
@@ -193,14 +194,14 @@ class TestMakefile:
     def test_mypy_target_dry_run(self, logger, tmp_path):
         """Mypy target should invoke mypy via uvx with Python version in dry-run output."""
         # Create a mock SOURCE_FOLDER directory so the mypy command runs
-        source_folder = tmp_path / "src"
-        source_folder.mkdir(exist_ok=True)
+        #source_folder = tmp_path / "src"
+        #source_folder.mkdir(exist_ok=True)
 
         # Update .env to set SOURCE_FOLDER
-        env_file = tmp_path / ".rhiza" / ".env"
-        env_content = env_file.read_text()
-        env_content += "\nSOURCE_FOLDER=src\n"
-        env_file.write_text(env_content)
+        #env_file = tmp_path / ".rhiza" / ".env"
+        #env_content = env_file.read_text()
+        #env_content += "\nSOURCE_FOLDER=src\n"
+        #env_file.write_text(env_content)
 
         proc = run_make(logger, ["mypy"])
         out = proc.stdout
@@ -208,11 +209,11 @@ class TestMakefile:
         python_version_file = tmp_path / ".python-version"
         if python_version_file.exists():
             python_version = python_version_file.read_text().strip()
-            assert f"uvx -p {python_version} mypy src --strict --config-file=pyproject.toml" in out
+            assert f'uvx -p {python_version} mypy "src" --strict --config-file=pyproject.toml' in out
         else:
             # Fallback check if .python-version doesn't exist
             assert "uvx -p" in out
-            assert "mypy src --strict --config-file=pyproject.toml" in out
+            assert 'mypy "src" --strict --config-file=pyproject.toml' in out
 
     def test_test_target_dry_run(self, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
