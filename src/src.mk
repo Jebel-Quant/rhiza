@@ -6,7 +6,7 @@
 DEPTRY_FOLDERS += src
 
 # Declare phony targets (they don't produce files)
-.PHONY: mypy docs security typecheck
+.PHONY: mypy docs docs-coverage security typecheck
 
 # Logo file for pdoc (relative to project root).
 # 1. Defaults to the Rhiza logo if present.
@@ -81,5 +81,17 @@ typecheck: install ## run mypy type checking
 	else \
 	  printf "${BLUE}[INFO] Running mypy type checking...${RESET}\n"; \
 	  ${UVX_BIN} mypy src --config-file pyproject.toml; \
+	fi
+
+# The 'docs-coverage' target checks documentation coverage using interrogate.
+# 1. Checks if the source directory contains Python files.
+# 2. Runs interrogate on the source folder with verbose output.
+docs-coverage: install ## check documentation coverage with interrogate
+	@PY_FILES=$$(find "src" -name "*.py" -type f 2>/dev/null | head -1); \
+	if [ -z "$$PY_FILES" ]; then \
+	  printf "${YELLOW}[WARN] No Python files found under src, skipping docs-coverage${RESET}\n"; \
+	else \
+	  printf "${BLUE}[INFO] Checking documentation coverage in src...${RESET}\n"; \
+	  ${VENV}/bin/python -m interrogate -vv src; \
 	fi
 
