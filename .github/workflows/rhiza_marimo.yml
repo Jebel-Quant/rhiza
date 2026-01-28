@@ -35,6 +35,8 @@ jobs:
     steps:
       # Check out the repository code
       - uses: actions/checkout@v6.0.2
+        with:
+          lfs: true
 
       # Find all Python files in the marimo folder and create a matrix for parallel execution
       - name: Find notebooks and build matrix

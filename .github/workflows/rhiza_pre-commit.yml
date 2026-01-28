@@ -30,6 +30,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6.0.2
+        with:
+          lfs: true
 
       # Run pre-commit
       - name: Run pre-commit

@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
+        with:
+          lfs: true
 
       - name: Detect docker/Dockerfile presence
         id: check_dockerfile
