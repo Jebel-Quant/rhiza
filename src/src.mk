@@ -73,14 +73,13 @@ security: install ## run security scans (pip-audit and bandit)
 
 # The 'typecheck' target runs static type analysis using mypy.
 # 1. Checks if the source directory contains Python files.
-# 2. Runs mypy on the source folder using the configuration in pyproject.toml.
+# 2. Delegates to the 'mypy' target to perform strict type checking.
 typecheck: install ## run mypy type checking
 	@PY_FILES=$$(find "src" -name "*.py" -type f 2>/dev/null | head -1); \
 	if [ -z "$$PY_FILES" ]; then \
 	  printf "${YELLOW}[WARN] No Python files found under src, skipping typecheck${RESET}\n"; \
 	else \
-	  printf "${BLUE}[INFO] Running mypy type checking...${RESET}\n"; \
-	  ${UVX_BIN} mypy src --config-file pyproject.toml; \
+	  $(MAKE) mypy; \
 	fi
 
 # The 'docs-coverage' target checks documentation coverage using interrogate.
