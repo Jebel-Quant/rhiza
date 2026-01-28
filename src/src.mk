@@ -2,6 +2,9 @@
 # This file is included by the main Makefile.
 # It provides targets for type checking, documentation, and security analysis.
 
+# Contribute to deptry folders
+DEPTRY_FOLDERS += src
+
 # Declare phony targets (they don't produce files)
 .PHONY: mypy docs security typecheck
 
