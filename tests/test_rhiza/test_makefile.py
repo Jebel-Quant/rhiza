@@ -193,16 +193,6 @@ class TestMakefile:
 
     def test_mypy_target_dry_run(self, logger, tmp_path):
         """Mypy target should invoke mypy via uvx with Python version in dry-run output."""
-        # Create a mock SOURCE_FOLDER directory so the mypy command runs
-        # source_folder = tmp_path / "src"
-        # source_folder.mkdir(exist_ok=True)
-
-        # Update .env to set SOURCE_FOLDER
-        # env_file = tmp_path / ".rhiza" / ".env"
-        # env_content = env_file.read_text()
-        # env_content += "\nSOURCE_FOLDER=src\n"
-        # env_file.write_text(env_content)
-
         proc = run_make(logger, ["mypy"])
         out = proc.stdout
         # Check for uvx command with the Python version flag
