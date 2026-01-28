@@ -22,7 +22,6 @@ RESET := \033[0m
 	clean \
 	deptry \
 	fmt \
-	mypy \
 	help \
 	install \
 	install-uv \
@@ -240,11 +239,6 @@ deptry: install-uv ## Run deptry
 
 fmt: install-uv ## check the pre-commit hooks and the linting
 	@${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --all-files
-
-mypy: install-uv ## run mypy analysis
-	@if [ -d ${SOURCE_FOLDER} ]; then \
-		${UVX_BIN} -p ${PYTHON_VERSION} mypy ${SOURCE_FOLDER} --strict --config-file=pyproject.toml; \
-	fi
 
 ##@ Releasing and Versioning
 bump: pre-bump ## bump version
