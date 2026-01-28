@@ -1,9 +1,9 @@
-## src.mk - Documentation targets
+## src.mk - Source code targets
 # This file is included by the main Makefile.
-# It provides targets for ...
+# It provides targets for type checking, documentation, and security analysis.
 
 # Declare phony targets (they don't produce files)
-.PHONY: mypy docs
+.PHONY: mypy docs security
 
 # Logo file for pdoc (relative to project root).
 # 1. Defaults to the Rhiza logo if present.
@@ -12,13 +12,20 @@
 LOGO_FILE ?= assets/rhiza-logo.svg
 
 ##@ src
-mypy: install-uv ## run mypy analysis
-	@if [ -d ${SOURCE_FOLDER} ]; then \
-		${UVX_BIN} -p ${PYTHON_VERSION} mypy ${SOURCE_FOLDER} --strict --config-file=pyproject.toml; \
+
+# The 'mypy' target runs static type analysis.
+# 1. Checks if the source directory exists.
+# 2. Runs mypy in strict mode using the configuration in pyproject.toml.
+mypy: install ## run mypy type checking
+	@if [ -d "${SOURCE_FOLDER}" ]; then \
+	  printf "${BLUE}[INFO] Running mypy type checking...${RESET}\n"; \
+	  ${UVX_BIN} -p ${PYTHON_VERSION} mypy "${SOURCE_FOLDER}" --strict --config-file=pyproject.toml; \
+	else \
+	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping mypy${RESET}\n"; \
 	fi
 
 # The 'docs' target generates API documentation using pdoc.
-# 1. Identifies Python packages within the source folder.
+# 1. Finds Python packages by locating __init__.py files under the source folder.
 # 2. Detects the docformat (google, numpy, or sphinx) from ruff.toml or defaults to google.
 # 3. Installs pdoc and generates HTML documentation in _pdoc.
 docs:: install ## create documentation with pdoc
@@ -26,7 +33,12 @@ docs:: install ## create documentation with pdoc
 	rm -rf _pdoc;
 
 	@if [ -d "${SOURCE_FOLDER}" ]; then \
-	  PKGS=""; for d in "${SOURCE_FOLDER}"/*; do [ -d "$$d" ] && PKGS="$$PKGS $$(basename "$$d")"; done; \
+	  PKGS=$$(find "${SOURCE_FOLDER}" -name "__init__.py" -type f 2>/dev/null | \
+	    sed "s|^${SOURCE_FOLDER}/||" | \
+	    sed 's|/[^/]*$$||' | \
+	    cut -d'/' -f1 | \
+	    sort -u | \
+	    tr '\n' ' '); \
 	  if [ -z "$$PKGS" ]; then \
 	    printf "${YELLOW}[WARN] No packages found under ${SOURCE_FOLDER}, skipping docs${RESET}\n"; \
 	  else \
@@ -64,3 +76,12 @@ docs:: install ## create documentation with pdoc
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping docs${RESET}\n"; \
 	fi
+
+# The 'security' target performs security vulnerability scans.
+# 1. Runs pip-audit to check for known vulnerabilities in dependencies.
+# 2. Runs bandit to find common security issues in the source code.
+security: install ## run security scans (pip-audit and bandit)
+	@printf "${BLUE}[INFO] Running pip-audit for dependency vulnerabilities...${RESET}\n"
+	@${UVX_BIN} pip-audit
+	@printf "${BLUE}[INFO] Running bandit security scan...${RESET}\n"
+	@${UVX_BIN} bandit -r "${SOURCE_FOLDER}" -ll -q
