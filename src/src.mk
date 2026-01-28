@@ -80,7 +80,7 @@ typecheck: install ## run mypy type checking
 	  printf "${YELLOW}[WARN] No Python files found under src, skipping typecheck${RESET}\n"; \
 	else \
 	  printf "${BLUE}[INFO] Running mypy type checking...${RESET}\n"; \
-	  ${UVX_BIN} mypy src --config-file pyproject.toml; \
+	  ${UVX_BIN} mypy "src" --config-file pyproject.toml; \
 	fi
 
 # The 'docs-coverage' target checks documentation coverage using interrogate.
@@ -92,6 +92,6 @@ docs-coverage: install ## check documentation coverage with interrogate
 	  printf "${YELLOW}[WARN] No Python files found under src, skipping docs-coverage${RESET}\n"; \
 	else \
 	  printf "${BLUE}[INFO] Checking documentation coverage in src...${RESET}\n"; \
-	  ${VENV}/bin/python -m interrogate -vv src; \
+	  ${VENV}/bin/python -m interrogate -vv "src"; \
 	fi
 
