@@ -59,8 +59,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
-        with:
-          lfs: true
 
       - name: Set registry
         id: registry
