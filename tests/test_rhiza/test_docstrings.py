@@ -43,7 +43,7 @@ def test_doctests(logger, root, monkeypatch: pytest.MonkeyPatch, capsys: pytest.
     values = {}
     if env_path.exists():
         values = dotenv_values(env_path)
-    
+
     source_folder = values.get("SOURCE_FOLDER", "src")
     src_path = root / source_folder
 
