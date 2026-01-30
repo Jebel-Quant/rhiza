@@ -120,3 +120,4 @@ variables:
   before_script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
     - uv sync --all-extras --all-groups --frozen
+    - apt-get update && apt-get install -y git-lfs
