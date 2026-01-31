@@ -28,6 +28,7 @@ SPLIT_MAKEFILES = [
     ".rhiza/rhiza.mk",
     "tests/tests.mk",
     "book/book.mk",
+    "src/src.mk",
     "presentation/presentation.mk",
 ]
 

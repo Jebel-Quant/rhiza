@@ -22,7 +22,6 @@ RESET := \033[0m
 	clean \
 	deptry \
 	fmt \
-	mypy \
 	help \
 	install \
 	install-uv \
@@ -67,6 +66,7 @@ export UV_VENV_CLEAR := 1
 -include tests/tests.mk
 -include book/book.mk
 -include book/marimo/marimo.mk
+-include src/src.mk
 -include presentation/presentation.mk
 -include docker/docker.mk
 -include .github/agents/agentic.mk
@@ -225,16 +225,10 @@ clean: ## Clean project artifacts and stale local branches
 
 ##@ Quality and Formatting
 deptry: install-uv ## Run deptry
-	@if [ -d ${SOURCE_FOLDER} ]; then \
-		$(UVX_BIN) -p ${PYTHON_VERSION} deptry ${SOURCE_FOLDER}; \
-	fi
-
-	@if [ -d ${MARIMO_FOLDER} ]; then \
-		if [ -d ${SOURCE_FOLDER} ]; then \
-			$(UVX_BIN) -p ${PYTHON_VERSION} deptry ${MARIMO_FOLDER} ${SOURCE_FOLDER} --ignore DEP004; \
-		else \
-		  	$(UVX_BIN) -p ${PYTHON_VERSION} deptry ${MARIMO_FOLDER} --ignore DEP004; \
-		fi \
+	@printf "${BLUE}[INFO] DEPTRY_FOLDERS: ${DEPTRY_FOLDERS}${RESET}\n"
+	@if [ -n "$(strip ${DEPTRY_FOLDERS})" ]; then \
+		printf "${BLUE}[INFO] Running: $(UVX_BIN) -p ${PYTHON_VERSION} deptry ${DEPTRY_FOLDERS} ${DEPTRY_IGNORE}${RESET}\n"; \
+		$(UVX_BIN) -p ${PYTHON_VERSION} deptry ${DEPTRY_FOLDERS} ${DEPTRY_IGNORE}; \
 	fi
 
 fmt: install-uv ## check the pre-commit hooks and the linting
