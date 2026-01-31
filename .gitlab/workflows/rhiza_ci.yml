@@ -9,7 +9,7 @@
 
 ci:test:
   stage: test
-  image: ghcr.io/astral-sh/uv:0.9.22-bookworm
+  image: ghcr.io/astral-sh/uv:0.9.28-bookworm
   parallel:
     matrix:
       - PYTHON_VERSION: ["3.11", "3.12", "3.13", "3.14"]
@@ -17,7 +17,6 @@ ci:test:
     GIT_LFS_SKIP_SMUDGE: "0"
   before_script:
     - apt-get update && apt-get install -y git-lfs
-    - git lfs install
     - git lfs pull
   script:
     - echo "Testing with Python $PYTHON_VERSION"
@@ -31,7 +30,7 @@ ci:test:
 
 ci:docs-coverage:
   stage: test
-  image: ghcr.io/astral-sh/uv:0.9.22-bookworm
+  image: ghcr.io/astral-sh/uv:0.9.28-bookworm
   script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
     - uv venv

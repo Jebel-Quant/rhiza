@@ -10,7 +10,7 @@ ARG PYTHON_VERSION=3.12
 # ================================
 # Stage 1: Builder
 # ================================
-FROM ghcr.io/astral-sh/uv:0.9.24-python${PYTHON_VERSION}-trixie-slim AS builder
+FROM ghcr.io/astral-sh/uv:0.9.24-python${PYTHON_VERSION}-bookworm-slim AS builder
 
 WORKDIR /app
 
