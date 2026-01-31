@@ -18,7 +18,7 @@
 # Define pipeline stages
 stages:
   - .pre          # Pre-pipeline jobs (matrix generation, validation)
-  - build         # Build jobs (Docker, devcontainer)
+  - build         # Build jobs
   - test          # Test jobs (CI, marimo, validate, deptry, pre-commit)
   - deploy        # Deployment jobs (pages, sync)
   - .post         # Post-pipeline jobs (finalization)
