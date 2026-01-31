@@ -12,6 +12,7 @@
         "pep621",
         "pre-commit",
         "github-actions",
+        "gitlab-ci",
         "devcontainer",
         "dockerfile"
     ],
