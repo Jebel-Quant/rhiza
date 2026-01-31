@@ -135,7 +135,7 @@ release:pypi:
     - job: release:build
       artifacts: true
     - job: release:draft
-  image: python:3.12
+  image: python:3.14
   before_script:
     - pip install twine
   script:
