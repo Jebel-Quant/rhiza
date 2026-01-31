@@ -42,3 +42,6 @@ numpy = "numpy"
 plotly = "plotly"
 pandas = "pandas"
 
+[tool.bandit]
+exclude_dirs=[".venv", "tests", ".git", ".pytest_cache"]
+skips = ["B101"]
