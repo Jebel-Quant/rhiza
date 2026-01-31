@@ -174,9 +174,9 @@ release:devcontainer:
   needs:
     - job: release:build
     - job: release:draft
-  image: docker:24
+  image: docker:29
   services:
-    - docker:24-dind
+    - docker:29-dind
   variables:
     DOCKER_HOST: tcp://docker:2376
     DOCKER_TLS_CERTDIR: "/certs"
