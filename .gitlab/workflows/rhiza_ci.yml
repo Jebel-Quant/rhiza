@@ -17,7 +17,6 @@ ci:test:
     GIT_LFS_SKIP_SMUDGE: "0"
   before_script:
     - apt-get update && apt-get install -y git-lfs
-    - git lfs install
     - git lfs pull
   script:
     - echo "Testing with Python $PYTHON_VERSION"
