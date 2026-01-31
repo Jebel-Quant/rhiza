@@ -136,7 +136,7 @@ release:pypi:
     - job: release:build
       artifacts: true
     - job: release:draft
-  image: ghrc.io/astral-uv/uv:0.9.18-bookworm
+  image: ghrc.io/astral-uv/uv:0.9.28-bookworm
   before_scri:
     - uv python install $(cat .python-version)
     - uv pip install twine
@@ -176,9 +176,9 @@ release:devcontainer:
   needs:
     - job: release:build
     - job: release:draft
-  image: docker:24
+  image: docker:29
   services:
-    - docker:24-dind
+    - docker:29-dind
   variables:
     DOCKER_HOST: tcp://docker:2376
     DOCKER_TLS_CERTDIR: "/certs"
