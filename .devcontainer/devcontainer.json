@@ -41,7 +41,8 @@
                 "ms-vscode.makefile-tools",
                 // AI Assistance
                 "github.copilot-chat",
-                "github.copilot"
+                "github.copilot",
+                "anthropic.claude-code"
             ]
         }
     },
