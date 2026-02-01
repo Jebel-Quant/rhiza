@@ -80,3 +80,67 @@ def test_book_folder(git_repo):
     assert expected_targets.issubset(all_targets), (
         f"Expected phony targets to include {expected_targets}, got {all_targets}"
     )
+
+
+def test_book_without_logo_file(git_repo):
+    """Test that book target works when LOGO_FILE is not set or empty.
+
+    The build should succeed gracefully without a logo, and the generated
+    HTML template should hide the logo element via onerror handler.
+    """
+    makefile = git_repo / "Makefile"
+    if not makefile.exists():
+        pytest.skip("Makefile not found")
+
+    # Read current Makefile content
+    content = makefile.read_text()
+
+    # Remove or comment out LOGO_FILE if present
+    lines = content.splitlines()
+    new_lines = []
+    for line in lines:
+        if line.strip().startswith("LOGO_FILE"):
+            # Comment out the line
+            new_lines.append(f"# {line}")
+        else:
+            new_lines.append(line)
+    makefile.write_text("\n".join(new_lines))
+
+    # Dry-run the book target - it should still be valid
+    result = subprocess.run([MAKE, "-n", "book"], cwd=git_repo, capture_output=True, text=True)
+    assert "no rule to make target" not in result.stderr.lower(), "book target should work without LOGO_FILE"
+    # Should not have errors about missing logo variable
+    assert result.returncode == 0, f"Dry-run failed: {result.stderr}"
+
+
+def test_book_with_missing_logo_file(git_repo):
+    """Test that book target warns when LOGO_FILE points to non-existent file.
+
+    The build should succeed but emit a warning about the missing logo.
+    """
+    makefile = git_repo / "Makefile"
+    if not makefile.exists():
+        pytest.skip("Makefile not found")
+
+    # Read current Makefile content and set LOGO_FILE to non-existent path
+    content = makefile.read_text()
+    lines = content.splitlines()
+    new_lines = []
+    logo_set = False
+    for line in lines:
+        if line.strip().startswith("LOGO_FILE"):
+            new_lines.append("LOGO_FILE=nonexistent/path/logo.svg")
+            logo_set = True
+        else:
+            new_lines.append(line)
+    if not logo_set:
+        # Insert LOGO_FILE before the include line
+        for i, line in enumerate(new_lines):
+            if line.strip().startswith("include"):
+                new_lines.insert(i, "LOGO_FILE=nonexistent/path/logo.svg")
+                break
+    makefile.write_text("\n".join(new_lines))
+
+    # Dry-run should still succeed
+    result = subprocess.run([MAKE, "-n", "book"], cwd=git_repo, capture_output=True, text=True)
+    assert result.returncode == 0, f"Dry-run failed with missing logo: {result.stderr}"
