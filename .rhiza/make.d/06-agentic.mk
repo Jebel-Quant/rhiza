@@ -6,6 +6,8 @@
 
 COPILOT_BIN ?= $(shell command -v copilot 2>/dev/null || echo "$(INSTALL_DIR)/copilot")
 CLAUDE_BIN ?= $(shell command -v claude 2>/dev/null || echo "$(INSTALL_DIR)/claude")
+DEFAULT_AI_MODEL ?= gpt-4.1
+
 ##@ Agentic Workflows
 
 copilot: install-copilot ## open interactive prompt for copilot
