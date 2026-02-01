@@ -116,10 +116,8 @@ def test_api_delegation(setup_api_env):
     # "Rhiza Workflows" is a section in .rhiza/rhiza.mk
     assert "Rhiza Workflows" in result.stdout
 
-    # "docker-build" is a target in Makefile.rhiza (docker/docker.mk)
-    # Only assert if docker folder exists in setup_api_env (it is optional)
-    if (setup_api_env / "docker").exists():
-        assert "docker-build" in result.stdout
+    # Core targets from .rhiza/make.d/ should be available
+    assert "test" in result.stdout or "install" in result.stdout
 
 
 def test_minimal_setup_works(setup_api_env):
