@@ -46,7 +46,7 @@ repos:
     rev: 1.9.3
     hooks:
       - id: bandit
-        args: ["--skip", "B101", "--exclude", ".venv,tests,.git,.pytest_cache"]
+        args: ["--skip", "B101", "--exclude", ".venv,tests,.git,.pytest_cache", "-c", "pyproject.toml"] 
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
     rev: v0.1.2  # Use the latest release
