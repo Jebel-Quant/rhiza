@@ -1,7 +1,7 @@
 # This file is part of the jebel-quant/rhiza repository
 # (https://github.com/jebel-quant/rhiza).
 #
-# Release Workflow for Python Packages with Optional Devcontainer Publishing (GitLab CI)
+# Release Workflow for Python Packages (GitLab CI)
 #
 # This workflow implements a secure, maintainable release pipeline with distinct phases:
 #
@@ -10,15 +10,7 @@
 #   2. 🏗️ Build - Build Python package with Hatch (if [build-system] is defined in pyproject.toml
 #   3. 📝 Draft Release - Create draft GitLab release with build artifacts
 #   4. 🚀 Publish to PyPI - Publish package using token or custom feed
-#   5. 🐳 Publish Devcontainer - Build and publish devcontainer image (conditional)
-#   6. ✅ Finalize Release - Publish the GitLab release with links
-#
-# 🐳 Devcontainer Publishing:
-#   - Only occurs when PUBLISH_DEVCONTAINER variable is set to "true"
-#   - Requires .devcontainer directory to exist
-#   - Uses the release tag (e.g., v1.2.3) as the image tag
-#   - Image name: {registry}/{group}/{repository}/devcontainer
-#   - Registry defaults to registry.gitlab.com (override with DEVCONTAINER_REGISTRY variable)
+#   5. ✅ Finalize Release - Publish the GitLab release with links
 #
 # 🚀 PyPI Publishing:
 #   - Skipped if no dist/ artifacts exist
@@ -29,8 +21,6 @@
 # 📄 Requirements:
 #   - pyproject.toml with top-level version field (for Python packages)
 #   - PYPI_TOKEN variable for PyPI publishing
-#   - PUBLISH_DEVCONTAINER variable set to "true" (for devcontainer publishing)
-#   - .devcontainer/devcontainer.json file (for devcontainer publishing)
 #
 # ✅ To Trigger:
 #   Create and push a version tag:
@@ -73,12 +63,13 @@ release:build:
   needs:
     - job: .release_validate_tag
       optional: true
-  image: ghcr.io/astral-sh/uv:0.9.18-python3.12-bookworm
+  image: ghcr.io/astral-sh/uv:0.9.28-bookworm
   before_script:
     - git fetch --tags
   script:
     - |
       export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
+      uv python install $(cat .python-version)
       uv sync --all-extras --all-groups --frozen
 
       # Verify version matches tag
@@ -135,9 +126,10 @@ release:pypi:
     - job: release:build
       artifacts: true
     - job: release:draft
-  image: python:3.12
-  before_script:
-    - pip install twine
+  image: ghrc.io/astral-uv/uv:0.9.28-bookworm
+  before_scri:
+    - uv python install $(cat .python-version)
+    - uv pip install twine
   script:
     - |
       # Check if dist contains artifacts and not marked as private
@@ -169,84 +161,11 @@ release:pypi:
       when: on_success
   allow_failure: false
 
-release:devcontainer:
-  stage: deploy
-  needs:
-    - job: release:build
-    - job: release:draft
-  image: docker:24
-  services:
-    - docker:24-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2376
-    DOCKER_TLS_CERTDIR: "/certs"
-    DOCKER_TLS_VERIFY: 1
-    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
-  before_script:
-    - apk add --no-cache bash jq curl nodejs npm git
-    - npm install -g @devcontainers/cli
-  script:
-    - |
-      # Check if devcontainer should be published
-      if [ "${PUBLISH_DEVCONTAINER}" != "true" ] || [ ! -d ".devcontainer" ]; then
-        echo "⏭️ Skipping devcontainer publish (PUBLISH_DEVCONTAINER not true or .devcontainer missing)"
-        exit 0
-      fi
-
-      echo "🚀 Building and publishing devcontainer image"
-
-      # Set registry
-      REGISTRY="${DEVCONTAINER_REGISTRY:-registry.gitlab.com}"
-      echo "Using registry: $REGISTRY"
-
-      # Login to container registry
-      echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$REGISTRY"
-
-      # Get lowercase repository path
-      REPO_PATH_LC=$(echo "$CI_PROJECT_PATH" | tr '[:upper:]' '[:lower:]')
-
-      # Get image name component
-      if [ -z "$DEVCONTAINER_IMAGE_NAME" ]; then
-        REPO_NAME_LC=$(echo "$CI_PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
-        REPO_NAME_SANITIZED=$(echo "$REPO_NAME_LC" | sed 's/^[._-]*//; s/[._-][._-]*/-/g')
-        IMAGE_NAME="$REPO_NAME_SANITIZED/devcontainer"
-      else
-        IMAGE_NAME="$DEVCONTAINER_IMAGE_NAME"
-      fi
-
-      # Validate image name
-      if ! echo "$IMAGE_NAME" | grep -qE '^[a-z0-9]+([._-][a-z0-9]+)*(/[a-z0-9]+([._-][a-z0-9]+)*)*$'; then
-        echo "❌ Invalid image name component: $IMAGE_NAME"
-        exit 1
-      fi
-
-      FULL_IMAGE_NAME="$REGISTRY/$REPO_PATH_LC/$IMAGE_NAME"
-      echo "✅ Image name: $FULL_IMAGE_NAME:$CI_COMMIT_TAG"
-
-      # Build and push devcontainer
-      devcontainer build \
-        --workspace-folder . \
-        --config .devcontainer/devcontainer.json \
-        --image-name "$FULL_IMAGE_NAME:$CI_COMMIT_TAG" \
-        --push
-
-      echo "DEVCONTAINER_IMAGE=$FULL_IMAGE_NAME:$CI_COMMIT_TAG" >> release.env
-      echo "✅ Devcontainer published"
-  artifacts:
-    reports:
-      dotenv: release.env
-  rules:
-    - if: $CI_COMMIT_TAG =~ /^v.*/
-      when: on_success
-  allow_failure: false
-
 release:finalize:
   stage: .post
   needs:
     - job: release:build
     - job: release:pypi
-      optional: true
-    - job: release:devcontainer
       optional: true
   image: alpine:latest
   before_script:
@@ -267,11 +186,6 @@ release:finalize:
             RELEASE_BODY="${RELEASE_BODY}\n\n### Custom Feed Package\n\n[$PACKAGE_NAME]($PYPI_REPOSITORY_URL)"
           fi
         fi
-      fi
-
-      # Add Devcontainer link if published
-      if [ -n "$DEVCONTAINER_IMAGE" ]; then
-        RELEASE_BODY="${RELEASE_BODY}\n\n### Devcontainer Image\n\n\`$DEVCONTAINER_IMAGE\`"
       fi
 
       # Update release with additional information

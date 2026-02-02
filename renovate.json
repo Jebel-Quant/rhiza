@@ -12,6 +12,7 @@
         "pip_requirements",
         "pre-commit",
         "github-actions",
+        "gitlabci",
         "devcontainer",
         "dockerfile"
     ],

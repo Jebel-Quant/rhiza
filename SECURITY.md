@@ -56,10 +56,10 @@ This security policy applies to:
 
 The following are not considered security vulnerabilities:
 
-- Vulnerabilities in dependencies (report these to the respective projects)
-- Issues in projects that use Rhiza templates (report these to those projects)
-- Denial of service through resource exhaustion in CI workflows
-- Security issues requiring physical access to a machine
+### Supply Chain Security
+- **SLSA Provenance**: Build attestations for release artifacts (public repositories only)
+- **Locked Dependencies**: `uv.lock` ensures reproducible builds
+- **Renovate**: Automated dependency updates with security patches
 
 ## Security Best Practices
 
