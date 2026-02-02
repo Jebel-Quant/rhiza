@@ -173,6 +173,12 @@ install: pre-install install-uv ## install
 	# Install the dependencies from pyproject.toml (if it exists)
 	@if [ -f "pyproject.toml" ]; then \
 	  if [ -f "uv.lock" ]; then \
+	    if ! ${UV_BIN} lock --check >/dev/null 2>&1; then \
+	      printf "${YELLOW}[WARN] uv.lock is out of sync with pyproject.toml${RESET}\n"; \
+	      printf "${YELLOW}       Run 'uv sync' to update your lock file and environment${RESET}\n"; \
+	      printf "${YELLOW}       Or run 'uv lock' to update only the lock file${RESET}\n"; \
+	      exit 1; \
+	    fi; \
 	    printf "${BLUE}[INFO] Installing dependencies from lock file${RESET}\n"; \
 	    ${UV_BIN} sync --all-extras --all-groups --frozen || { printf "${RED}[ERROR] Failed to install dependencies${RESET}\n"; exit 1; }; \
 	  else \
