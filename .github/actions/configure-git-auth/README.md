@@ -9,11 +9,13 @@ Add this step before installing dependencies that include private GitHub package
 ```yaml
 - name: Configure git auth
   uses: ./.github/actions/configure-git-auth
+  with:
+    token: ${{ github.token }}
 ```
 
 ### With Custom Token
 
-By default, it uses `github.token` (the automatic `GITHUB_TOKEN`). To use a different token:
+To use a different token (e.g., for cross-org dependencies):
 
 ```yaml
 - name: Configure git auth
@@ -64,6 +66,8 @@ jobs:
 
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
+        with:
+          token: ${{ github.token }}
 
       - name: Install dependencies
         run: uv sync --frozen

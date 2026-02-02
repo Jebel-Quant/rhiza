@@ -47,6 +47,8 @@ jobs:
 
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
+        with:
+          token: ${{ github.token }}
 
       - name: "Sync the virtual environment for ${{ github.repository }}"
         shell: bash

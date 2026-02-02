@@ -3,9 +3,8 @@ description: 'Configure git to use token authentication for private GitHub packa
 
 inputs:
   token:
-    description: 'GitHub token to use for authentication (defaults to GITHUB_TOKEN)'
-    required: false
-    default: ${{ github.token }}
+    description: 'GitHub token to use for authentication (use github.token)'
+    required: true
 
 runs:
   using: composite

@@ -67,6 +67,8 @@ jobs:
 
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
+        with:
+          token: ${{ github.token }}
 
       - name: Run tests
         env:
@@ -88,6 +90,8 @@ jobs:
 
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
+        with:
+          token: ${{ github.token }}
 
       - name: Check docs coverage
         env:

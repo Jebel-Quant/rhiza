@@ -87,6 +87,8 @@ jobs:
 
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
+        with:
+          token: ${{ github.token }}
 
       # Execute the notebook with the appropriate runner based on its content
       - name: Run notebook
