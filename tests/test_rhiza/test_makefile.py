@@ -24,11 +24,14 @@ import pytest
 MAKE = shutil.which("make") or "/usr/bin/make"
 
 # Split Makefile paths that are included in the main Makefile
+# These are now located in .rhiza/make.d/ directory
 SPLIT_MAKEFILES = [
     ".rhiza/rhiza.mk",
-    "tests/tests.mk",
-    "book/book.mk",
-    "presentation/presentation.mk",
+    ".rhiza/make.d/01-test.mk",
+    ".rhiza/make.d/02-book.mk",
+    ".rhiza/make.d/03-marimo.mk",
+    ".rhiza/make.d/04-presentation.mk",
+    ".rhiza/make.d/05-github.mk",
 ]
 
 
@@ -153,7 +156,11 @@ class TestMakefile:
 
     def test_fmt_target_dry_run(self, logger, tmp_path):
         """Fmt target should invoke pre-commit via uvx with Python version in dry-run output."""
-        proc = run_make(logger, ["fmt"])
+        # Create clean environment without PYTHON_VERSION so Makefile reads from .python-version
+        env = os.environ.copy()
+        env.pop("PYTHON_VERSION", None)
+
+        proc = run_make(logger, ["fmt"], env=env)
         out = proc.stdout
         # Check for uvx command with the Python version flag
         # The PYTHON_VERSION should be read from .python-version file (e.g., "3.12")
@@ -178,7 +185,12 @@ class TestMakefile:
         env_content += "\nSOURCE_FOLDER=src\n"
         env_file.write_text(env_content)
 
-        proc = run_make(logger, ["deptry"])
+        # Create clean environment without PYTHON_VERSION so Makefile reads from .python-version
+        env = os.environ.copy()
+        env.pop("PYTHON_VERSION", None)
+
+        proc = run_make(logger, ["deptry"], env=env)
+
         out = proc.stdout
         # Check for uvx command with the Python version flag
         python_version_file = tmp_path / ".python-version"
@@ -191,7 +203,7 @@ class TestMakefile:
             assert "deptry src" in out
 
     def test_mypy_target_dry_run(self, logger, tmp_path):
-        """Mypy target should invoke mypy via uvx with Python version in dry-run output."""
+        """Mypy target should invoke mypy via uv run in dry-run output."""
         # Create a mock SOURCE_FOLDER directory so the mypy command runs
         source_folder = tmp_path / "src"
         source_folder.mkdir(exist_ok=True)
@@ -204,15 +216,8 @@ class TestMakefile:
 
         proc = run_make(logger, ["mypy"])
         out = proc.stdout
-        # Check for uvx command with the Python version flag
-        python_version_file = tmp_path / ".python-version"
-        if python_version_file.exists():
-            python_version = python_version_file.read_text().strip()
-            assert f"uvx -p {python_version} mypy src --strict --config-file=pyproject.toml" in out
-        else:
-            # Fallback check if .python-version doesn't exist
-            assert "uvx -p" in out
-            assert "mypy src --strict --config-file=pyproject.toml" in out
+        # Check for uv run command instead of uvx
+        assert "uv run mypy src --strict --config-file=pyproject.toml" in out
 
     def test_test_target_dry_run(self, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""

@@ -9,7 +9,7 @@ DOCKER_FOLDER := docker
 DOCKER_IMAGE_NAME ?= $(shell basename $(CURDIR))
 
 ##@ Docker
-docker-build: ## build Docker image 
+docker-build: ## build Docker image
 	@if [ ! -f "${DOCKER_FOLDER}/Dockerfile" ]; then \
 	  printf "${YELLOW}[WARN] No ${DOCKER_FOLDER}/Dockerfile found, skipping build${RESET}\n"; \
 	else \

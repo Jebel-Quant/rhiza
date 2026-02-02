@@ -63,15 +63,15 @@ export UV_VENV_CLEAR := 1
 # Load .rhiza/.env (if present) and export its variables so recipes see them.
 -include .rhiza/.env
 
-# Include split Makefiles
--include tests/tests.mk
--include book/book.mk
--include book/marimo/marimo.mk
--include presentation/presentation.mk
--include docker/docker.mk
--include .github/agents/agentic.mk
-# .rhiza/rhiza.mk is INLINED below
--include .github/github.mk
+# # Include split Makefiles
+# -include tests/tests.mk
+# -include book/book.mk
+# -include book/marimo/marimo.mk
+# -include presentation/presentation.mk
+# -include docker/docker.mk
+# -include .github/agents/agentic.mk
+# # .rhiza/rhiza.mk is INLINED below
+# -include .github/github.mk
 
 
 
@@ -240,9 +240,9 @@ deptry: install-uv ## Run deptry
 fmt: install-uv ## check the pre-commit hooks and the linting
 	@${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --all-files
 
-mypy: install-uv ## run mypy analysis
+mypy: install ## run mypy analysis
 	@if [ -d ${SOURCE_FOLDER} ]; then \
-		${UVX_BIN} -p ${PYTHON_VERSION} mypy ${SOURCE_FOLDER} --strict --config-file=pyproject.toml; \
+		${UV_BIN} run mypy ${SOURCE_FOLDER} --strict --config-file=pyproject.toml; \
 	fi
 
 ##@ Releasing and Versioning

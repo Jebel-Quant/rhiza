@@ -18,12 +18,11 @@
 pages:
   stage: deploy
   needs: []
-  image: ghcr.io/astral-sh/uv:0.9.22-bookworm
+  image: ghcr.io/astral-sh/uv:0.9.28-bookworm
   variables:
     GIT_LFS_SKIP_SMUDGE: "0"
   before_script:
     - apt-get update && apt-get install -y git-lfs make
-    - git lfs install
     - git lfs pull
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
   script:

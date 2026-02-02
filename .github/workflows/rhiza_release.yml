@@ -33,7 +33,7 @@
 #   - No PyPI credentials stored; relies on Trusted Publishing via GitHub OIDC
 #   - For custom feeds, PYPI_TOKEN secret is used with default username __token__
 #   - Container registry uses GITHUB_TOKEN for authentication
-#   - SLSA provenance attestations generated for build artifacts (supply chain security)
+#   - SLSA provenance attestations generated for build artifacts (public repos only)
 #
 # 📄 Requirements:
 #   - pyproject.toml with top-level version field (for Python packages)
@@ -65,7 +65,7 @@ permissions:
   contents: write       # Needed to create releases
   id-token: write       # Needed for OIDC authentication with PyPI
   packages: write       # Needed to publish devcontainer image
-  attestations: write   # Needed for SLSA provenance attestations
+  attestations: write   # Needed for SLSA provenance attestations (public repos only)
 
 jobs:
   tag:
@@ -111,9 +111,9 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7.2.0
+        uses: astral-sh/setup-uv@v7.2.1
         with:
-          version: "0.9.27"
+          version: "0.9.28"
 
       - name: Verify version matches tag
         if: hashFiles('pyproject.toml') != ''
@@ -144,7 +144,7 @@ jobs:
           uvx hatch build
 
       - name: Generate SLSA provenance attestations
-        if: steps.buildable.outputs.buildable == 'true'
+        if: steps.buildable.outputs.buildable == 'true' && github.event.repository.private == false
         uses: actions/attest-build-provenance@v3
         with:
           subject-path: dist/*
@@ -259,7 +259,7 @@ jobs:
 
       - name: Login to Container Registry
         if: steps.check_publish.outputs.should_publish == 'true'
-        uses: docker/login-action@v3.6.0
+        uses: docker/login-action@v3.7.0
         with:
           registry: ${{ steps.registry.outputs.registry }}
           username: ${{ github.repository_owner }}
@@ -320,9 +320,9 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7.2.0
+        uses: astral-sh/setup-uv@v7.2.1
         with:
-          version: "0.9.27"
+          version: "0.9.28"
 
       - name: "Sync the virtual environment for ${{ github.repository }}"
         shell: bash
@@ -332,7 +332,7 @@ jobs:
           uv sync --all-extras --all-groups --frozen
 
       - name: Set up Python
-        uses: actions/setup-python@v6.1.0
+        uses: actions/setup-python@v6.2.0
 
       - name: Generate Devcontainer Link
         id: devcontainer_link
