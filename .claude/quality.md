@@ -1,9 +1,9 @@
 # Repository Quality Scoring
 
 **Repository**: Rhiza
-**Assessment Date**: 2026-01-18
-**Version Analyzed**: 0.6.0
-**Overall Score**: 9.3/10
+**Assessment Date**: 2026-02-02
+**Version Analyzed**: 0.6.1
+**Overall Score**: 9.4/10
 
 ---
 
@@ -21,7 +21,7 @@
 | Developer Experience | 9/10 | 10% | 0.90 |
 | Maintainability | 9/10 | 5% | 0.45 |
 | Shell Scripts | 9/10 | 5% | 0.45 |
-| **Overall** | **9.3/10** | 100% | **9.40** |
+| **Overall** | **9.4/10** | 100% | **9.40** |
 
 **Quality Tier**: Enterprise-Grade / Production-Ready
 
@@ -32,11 +32,11 @@
 ### 1. Code Quality: 9/10
 
 **Strengths**:
-- Comprehensive Ruff configuration with 15+ rule sets (D, E, F, I, N, W, UP, B, C4, PT, RUF, TRY, ICN)
-- Google-style docstrings enforced via pydocstyle rules
-- Strong type annotations in Python utilities with `from __future__ import annotations`
+- Comprehensive Ruff configuration with 9 actively enforced rule sets (D, E, F, I, N, W, UP, B, C4, PT, RUF, TRY, ICN)
+- Google-style docstrings enforced via pydocstyle rules with explicit magic method coverage
+- Strong type annotations encouraged with `from __future__ import annotations` pattern
 - 120-character line length with consistent formatting
-- Modern Python syntax enforced via pyupgrade rules
+- Modern Python syntax enforced via pyupgrade rules (Python 3.11+)
 - Import sorting via isort integration
 - PEP 8 naming conventions enforced
 
@@ -49,8 +49,8 @@
 ### 2. Testing: 10/10
 
 **Strengths**:
-- 15 dedicated test files with 120+ test functions
-- Multiple test types: unit, integration, doctest, README code execution
+- 14 dedicated test files with 150+ test functions and methods
+- Multiple test types: unit, integration, doctest, README code execution, benchmarks
 - Sophisticated fixtures in conftest.py for git repository mocking
 - README code blocks validated via test_readme.py
 - Release script tested with mock git environments
@@ -110,7 +110,6 @@
 
 **Weaknesses**:
 - No manual approval gates for publishing
-- GitLab CI exists but not actively maintained
 
 ---
 
@@ -143,13 +142,12 @@
 - Extension hooks (pre-install, post-install, pre-release, etc.)
 - Clear separation of concerns:
   - Core config in .rhiza/
-  - Source in src/hello/
   - Tests in tests/test_rhiza/
   - Docs in book/ and docs/
   - Workflows in .github/workflows/
 - Configuration as code (pyproject.toml, ruff.toml, pytest.ini)
-- Minimal root Makefile (4 lines) delegating to .rhiza/rhiza.mk
-- Reusable Python utilities with proper exception handling
+- Minimal root Makefile (12 lines) delegating to .rhiza/rhiza.mk
+- Reusable Python utilities in .rhiza/utils/ with proper exception handling
 
 **Weaknesses**:
 - Mixed paradigms (Bash, Python, Make, YAML)
@@ -160,14 +158,14 @@
 ### 7. Dependency Management: 10/10
 
 **Strengths**:
-- uv.lock file (707 lines) ensuring reproducible builds
+- uv.lock file (708 lines) ensuring reproducible builds
 - Modern uv package manager
 - Zero production dependencies (template system only)
 - Isolated dev dependencies with strict version bounds:
   - marimo>=0.18.0,<1.0
   - numpy>=2.4.0,<3.0
   - plotly>=6.5.0,<7.0
-  - pandas>=2.3.3,<3.0
+  - pandas>=3,<3.1
 - Deptry integration for dependency hygiene
 - Renovate automation for updates (pep621, pre-commit, github-actions, dockerfile)
 - Lock file committed for reproducibility
@@ -185,7 +183,7 @@
 - 40+ Makefile targets with auto-generated help
 - Single entry point: `make install` and `make help`
 - .editorconfig for cross-IDE consistency
-- 10 pre-commit hooks for local validation
+- 8 pre-commit hooks for local validation
 - GitHub Codespaces support with .devcontainer
 - Colored output in scripts (BLUE, RED, YELLOW)
 - Dry-run support in release.sh
