@@ -30,31 +30,29 @@ jobs:
         with:
           lfs: true
 
-      # 2️⃣ Fail early if PAT is missing (optional but recommended)
-      # Remove this step if you don't use private GitHub packages
-      - name: Ensure GitHub PAT is configured
-        if: secrets.GH_PAT != ''
-        run: |
-          if [ -z "${{ secrets.GH_PAT }}" ]; then
-            echo "::warning::GH_PAT secret is not set. Private GitHub packages will not be accessible."
-          fi
-
-      # 3️⃣ Configure git to use the PAT for all GitHub HTTPS repos
+      # 2️⃣ Configure git to use the PAT for all GitHub HTTPS repos
       # This allows uv/pip to access private GitHub repositories
       # Remove this step if you don't use private GitHub packages
+      # Note: The step will run but have no effect if GH_PAT is not set
       - name: Configure git for private GitHub repos
-        if: secrets.GH_PAT != ''
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
+          if [ -n "$GH_PAT" ]; then
+            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
+            echo "✅ Git configured for private GitHub repositories"
+          else
+            echo "⚠️ GH_PAT not set - private GitHub packages will not be accessible"
+          fi
 
-      # 4️⃣ Install uv
+      # 3️⃣ Install uv
       - name: Install uv
         uses: astral-sh/setup-uv@v7.2.1
         with:
           version: "0.9.28"
           python-version: "3.12"
 
-      # 5️⃣ Run your build/install/test steps
+      # 4️⃣ Run your build/install/test steps
       - name: Install dependencies
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
