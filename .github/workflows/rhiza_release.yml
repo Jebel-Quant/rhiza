@@ -433,7 +433,7 @@ jobs:
             echo ""
             echo "SBOM (Software Bill of Materials) files are attached to this release in SPDX and CycloneDX formats."
             echo "EOF"
-          } >> $GITHUB_OUTPUT
+          } >> "$GITHUB_OUTPUT"
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2.5.0

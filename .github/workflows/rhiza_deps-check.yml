@@ -41,20 +41,24 @@ jobs:
       - name: Check for outdated packages
         id: outdated
         run: |
-          echo "## 📦 Dependency Update Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 📦 Dependency Update Report"
+            echo ""
+            echo "Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           # Sync environment first
           uv sync --all-extras --all-groups --frozen
 
           # Check for outdated packages
-          echo "### Outdated Packages" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          uv pip list --outdated 2>&1 | tee outdated.txt >> $GITHUB_STEP_SUMMARY || true
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo "### Outdated Packages"
+            echo ""
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          uv pip list --outdated 2>&1 | tee outdated.txt >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
 
           # Count outdated packages
           OUTDATED_COUNT=$(grep -c "^[a-zA-Z]" outdated.txt 2>/dev/null || echo "0")
@@ -62,60 +66,74 @@ jobs:
             # Subtract 1 for header line
             OUTDATED_COUNT=$((OUTDATED_COUNT - 1))
           fi
-          echo "outdated_count=$OUTDATED_COUNT" >> $GITHUB_OUTPUT
+          echo "outdated_count=$OUTDATED_COUNT" >> "$GITHUB_OUTPUT"
 
       - name: Dry-run lock upgrade
         id: dry_run
         run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Lock File Upgrade (Dry Run)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "### Lock File Upgrade (Dry Run)"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           # Perform dry-run upgrade
           if [ -n "${{ inputs.package }}" ]; then
-            echo "Checking specific package: ${{ inputs.package }}" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            uv lock --upgrade-package "${{ inputs.package }}" --dry-run 2>&1 | tee upgrade.txt >> $GITHUB_STEP_SUMMARY || true
-            echo '```' >> $GITHUB_STEP_SUMMARY
+            {
+              echo "Checking specific package: ${{ inputs.package }}"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            uv lock --upgrade-package "${{ inputs.package }}" --dry-run 2>&1 | tee upgrade.txt >> "$GITHUB_STEP_SUMMARY" || true
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "Checking all packages..." >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            uv lock --upgrade --dry-run 2>&1 | tee upgrade.txt >> $GITHUB_STEP_SUMMARY || true
-            echo '```' >> $GITHUB_STEP_SUMMARY
+            {
+              echo "Checking all packages..."
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            uv lock --upgrade --dry-run 2>&1 | tee upgrade.txt >> "$GITHUB_STEP_SUMMARY" || true
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
 
           # Check for resolution issues
           if grep -qi "error\|conflict\|failed" upgrade.txt; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "⚠️ **Warning:** Potential resolution issues detected" >> $GITHUB_STEP_SUMMARY
-            echo "resolution_ok=false" >> $GITHUB_OUTPUT
+            {
+              echo ""
+              echo "⚠️ **Warning:** Potential resolution issues detected"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "resolution_ok=false" >> "$GITHUB_OUTPUT"
           else
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "✅ Lock file resolution successful" >> $GITHUB_STEP_SUMMARY
-            echo "resolution_ok=true" >> $GITHUB_OUTPUT
+            {
+              echo ""
+              echo "✅ Lock file resolution successful"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "resolution_ok=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Validate lock file
         run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Lock File Validation" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "### Lock File Validation"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
           # Verify current lock file is valid
           if uv sync --all-extras --all-groups --frozen --dry-run 2>&1; then
-            echo "✅ Current lock file is valid and frozen sync succeeds" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Current lock file is valid and frozen sync succeeds" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "❌ Lock file validation failed" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Lock file validation failed" >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
 
       - name: Summary
         run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Actions" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Renovate** will automatically create PRs for updates (Tuesdays before 10am Dubai)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Manual upgrade**: Run \`uv lock --upgrade\` locally" >> $GITHUB_STEP_SUMMARY
-          echo "- **Single package**: Run \`uv lock --upgrade-package <name>\`" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "---"
+            echo ""
+            echo "### Actions"
+            echo ""
+            echo "- **Renovate** will automatically create PRs for updates (Tuesdays before 10am Dubai)"
+            echo "- **Manual upgrade**: Run \`uv lock --upgrade\` locally"
+            echo "- **Single package**: Run \`uv lock --upgrade-package <name>\`"
+          } >> "$GITHUB_STEP_SUMMARY"
