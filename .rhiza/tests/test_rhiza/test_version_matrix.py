@@ -4,14 +4,10 @@ Tests cover version parsing, specifier validation, and edge cases
 for malformed inputs.
 """
 
-import sys
-from pathlib import Path
-
 import pytest
 
-# Add the utils directory to the path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / ".rhiza" / "utils"))
-
+# PYTHONPATH is set to .rhiza/utils by the rhiza-tests make target
+# to allow importing version_matrix without package installation
 from version_matrix import (
     CANDIDATES,
     PyProjectError,

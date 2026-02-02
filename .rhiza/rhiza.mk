@@ -142,7 +142,7 @@ validate: pre-validate ## validate project structure against template repository
 rhiza-tests: install-uv ## run rhiza internal tests in isolated mode
 	@if [ -d ".rhiza/tests" ]; then \
 		printf "${BLUE}[INFO] Running rhiza tests in isolated mode...${RESET}\n"; \
-		PYTHONPATH=.rhiza/utils:$$PYTHONPATH ${UV_BIN} run \
+		PYTHONPATH=.rhiza/utils ${UV_BIN} run \
 			--isolated \
 			--no-project \
 			--with-requirements .rhiza/requirements/tests.txt \

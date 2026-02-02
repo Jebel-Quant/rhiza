@@ -12,8 +12,16 @@ import pathlib
 import re
 import shutil
 import subprocess  # nosec B404
+import sys
 
 import pytest
+
+# Ensure .rhiza/utils is importable (for version_matrix.py, etc.)
+# This is set by PYTHONPATH in `make rhiza-tests`, but we add it here
+# as a fallback for direct pytest invocation.
+_UTILS_PATH = pathlib.Path(__file__).parent.parent.parent / "utils"
+if _UTILS_PATH.is_dir() and str(_UTILS_PATH) not in sys.path:
+    sys.path.insert(0, str(_UTILS_PATH))
 
 # Get absolute paths for executables to avoid S607 warnings
 GIT = shutil.which("git") or "/usr/bin/git"
