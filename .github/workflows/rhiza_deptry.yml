@@ -32,6 +32,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
 
+      - name: Configure git auth for private packages
+        run: |
+          git config --global url."https://${{ github.token }}@github.com/".insteadOf "https://github.com/"
+
       - name: Run deptry
         run: make deptry
         # NOTE: make deptry is good style because it encapsulates the folders to check
