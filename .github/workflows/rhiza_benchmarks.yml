@@ -42,6 +42,9 @@ jobs:
           version: "0.9.28"
           python-version: "3.12"
 
+      - name: Configure git auth for private packages
+        uses: ./.github/actions/configure-git-auth
+
       - name: Run benchmarks
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}

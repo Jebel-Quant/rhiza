@@ -45,6 +45,9 @@ jobs:
         with:
           version: "0.9.28"
 
+      - name: Configure git auth for private packages
+        uses: ./.github/actions/configure-git-auth
+
       - name: "Sync the virtual environment for ${{ github.repository }}"
         shell: bash
         env:

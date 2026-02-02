@@ -32,6 +32,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
 
+      - name: Configure git auth for private packages
+        run: |
+          git config --global url."https://${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+
       - name: Run security scans
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
