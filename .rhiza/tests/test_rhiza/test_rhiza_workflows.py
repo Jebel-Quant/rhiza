@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
+import subprocess  # nosec B404
 from pathlib import Path
 
 import pytest
@@ -175,7 +175,7 @@ class TestWorkflowSync:
         version_file.write_text("0.9.5\n")
 
         # Simulate the workflow's version reading step
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603
             [shutil.which("cat") or "cat", str(version_file)],
             capture_output=True,
             text=True,
@@ -194,7 +194,7 @@ class TestWorkflowSync:
 
         # Simulate the workflow's version reading with fallback using proper subprocess
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603
                 [shutil.which("cat") or "cat", str(version_file)],
                 capture_output=True,
                 text=True,

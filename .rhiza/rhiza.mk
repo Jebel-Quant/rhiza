@@ -37,6 +37,7 @@ RESET := \033[0m
 	pre-sync \
 	pre-validate \
 	release \
+	rhiza-tests \
 	sync \
 	summarise-sync \
 	update-readme \
@@ -135,7 +136,26 @@ validate: pre-validate ## validate project structure against template repository
 		$(MAKE) install-uv; \
 		${UVX_BIN} "rhiza>=$(RHIZA_VERSION)" validate .; \
 	fi
+	@$(MAKE) rhiza-tests
 	@$(MAKE) post-validate
+
+rhiza-tests: install-uv ## run rhiza internal tests in isolated mode
+	@if [ -d ".rhiza/tests" ]; then \
+		printf "${BLUE}[INFO] Running rhiza tests in isolated mode...${RESET}\n"; \
+		PYTHONPATH=.rhiza/utils:$$PYTHONPATH ${UV_BIN} run \
+			--isolated \
+			--no-project \
+			--with-requirements .rhiza/requirements/tests.txt \
+			pytest .rhiza/tests \
+			--cov=.rhiza \
+			--cov-report=term \
+			--cov-report=html:_tests/rhiza-html-coverage \
+			--cov-fail-under=90 \
+			--html=_tests/rhiza-html-report/report.html \
+			|| { printf "${RED}[ERROR] Rhiza tests failed${RESET}\n"; exit 1; }; \
+	else \
+		printf "${YELLOW}[WARN] .rhiza/tests folder not found, skipping rhiza tests${RESET}\n"; \
+	fi
 
 readme: install-uv ## update README.md with current Makefile help output
 	@${UVX_BIN} "rhiza-tools>=0.2.0" update-readme

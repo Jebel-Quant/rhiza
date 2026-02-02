@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
+import subprocess  # nosec B404
 from pathlib import Path
 
 import pytest
@@ -69,7 +69,7 @@ def run_make(
     cmd.insert(1, flags)
 
     logger.info("Running command: %s", " ".join(cmd))
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
 
     if check and result.returncode != 0:
         msg = f"make failed with code {result.returncode}:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"

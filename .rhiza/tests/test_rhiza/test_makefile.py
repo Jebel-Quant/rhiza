@@ -15,7 +15,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
-import subprocess
+import subprocess  # nosec B404
 from pathlib import Path
 
 import pytest
@@ -110,7 +110,7 @@ def run_make(
     flags = "-sn" if dry_run else "-s"
     cmd.insert(1, flags)
     logger.info("Running command: %s", " ".join(cmd))
-    result = subprocess.run(cmd, capture_output=True, text=True, env=env)
+    result = subprocess.run(cmd, capture_output=True, text=True, env=env)  # nosec B603
     logger.debug("make exited with code %d", result.returncode)
     if result.stdout:
         logger.debug("make stdout (truncated to 500 chars):\n%s", result.stdout[:500])
@@ -125,8 +125,8 @@ def run_make(
 def setup_rhiza_git_repo():
     """Initialize a git repository and set remote to rhiza."""
     git = shutil.which("git") or "/usr/bin/git"
-    subprocess.run([git, "init"], check=True, capture_output=True)
-    subprocess.run(
+    subprocess.run([git, "init"], check=True, capture_output=True)  # nosec B603
+    subprocess.run(  # nosec B603
         [git, "remote", "add", "origin", "https://github.com/jebel-quant/rhiza"],
         check=True,
         capture_output=True,

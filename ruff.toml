@@ -101,7 +101,7 @@ line-ending = "auto"
 
 # File-specific rule exceptions
 [lint.per-file-ignores]
-"tests/**/*.py" = [
+".rhiza/tests/**/*.py" = [
     "S101",     # Allow assert statements in tests
     "S603",     # Allow subprocess calls without shell=False check
     "PLW1510",  # Allow subprocess without explicit check parameter

@@ -21,7 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
 
-      - name: Validate Rhiza config
+      - name: Validate & Test Rhiza
         shell: bash
         run: |
-          uvx "rhiza>=0.8.0" validate .
+          make validate

@@ -2,7 +2,7 @@
 
 import os
 import shutil
-import subprocess
+import subprocess  # nosec B404
 from pathlib import Path
 
 import pytest
@@ -70,12 +70,12 @@ def setup_api_env(logger, root, tmp_path: Path):
         (tmp_path / "local.mk").unlink()
 
     # Initialize git repo for rhiza tools (required for sync/validate)
-    subprocess.run([GIT, "init"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run([GIT, "init"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
     # Configure git user for commits if needed (some rhiza checks might need commits)
-    subprocess.run([GIT, "config", "user.email", "you@example.com"], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run([GIT, "config", "user.name", "Rhiza Test"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run([GIT, "config", "user.email", "you@example.com"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
+    subprocess.run([GIT, "config", "user.name", "Rhiza Test"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
     # Add origin remote to simulate being in the rhiza repo (triggers the skip logic in rhiza.mk)
-    subprocess.run(
+    subprocess.run(  # nosec B603
         [GIT, "remote", "add", "origin", "https://github.com/jebel-quant/rhiza.git"],
         cwd=tmp_path,
         check=True,
@@ -106,7 +106,7 @@ def run_make(args: list[str] | None = None, dry_run: bool = True) -> subprocess.
     else:
         cmd[:1] = [MAKE, "-s"]
 
-    return subprocess.run(cmd, capture_output=True, text=True)
+    return subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
 
 
 def test_api_delegation(setup_api_env):

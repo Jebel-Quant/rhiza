@@ -1,7 +1,7 @@
 """Tests for Marimo notebooks."""
 
 import shutil
-import subprocess
+import subprocess  # nosec B404
 from pathlib import Path
 
 import pytest
@@ -66,7 +66,7 @@ def test_notebook_execution(notebook_path: Path):
         "/dev/null",  # We don't need the actual HTML output
     ]
 
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=notebook_path.parent)
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=notebook_path.parent)  # nosec B603
 
     # Ensure process exit code indicates success
     assert result.returncode == 0, (
