@@ -23,7 +23,8 @@ COVERAGE_FAIL_UNDER ?= 90
 test: install ## run all tests
 	@rm -rf _tests;
 
-	@if [ -d ${TESTS_FOLDER} ]; then \
+	# Check if tests folder exists AND has actual test files (not just .gitkeep)
+	@if [ -d ${TESTS_FOLDER} ] && find ${TESTS_FOLDER} -name 'test_*.py' -o -name '*_test.py' 2>/dev/null | grep -q .; then \
 	  mkdir -p _tests/html-coverage _tests/html-report; \
 	  if [ -d ${SOURCE_FOLDER} ]; then \
 	    ${VENV}/bin/python -m pytest ${TESTS_FOLDER} \
@@ -41,7 +42,8 @@ test: install ## run all tests
 	    --html=_tests/html-report/report.html; \
 	  fi \
 	else \
-	  printf "${YELLOW}[WARN] Test folder ${TESTS_FOLDER} not found, skipping tests${RESET}\n"; \
+	  printf "${YELLOW}[WARN] No test files found in ${TESTS_FOLDER}, skipping tests${RESET}\n"; \
+	  mkdir -p _tests/html-coverage _tests/html-report; \
 	fi
 
 # The 'typecheck' target runs static type analysis using mypy.
