@@ -34,7 +34,7 @@ jobs:
 
       - name: Configure git auth for private packages
         run: |
-          git config --global url."https://${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://${{ github.token }}@github.com/".insteadOf "https://github.com/"
 
       - name: Run deptry
         run: make deptry
