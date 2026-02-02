@@ -1,0 +1,68 @@
+# Example GitHub Actions Workflow with Private GitHub Packages Support
+#
+# This template demonstrates how to configure a workflow to access private
+# GitHub packages during dependency installation.
+#
+# To use this template:
+# 1. Create a GH_PAT secret in your repository settings (see .rhiza/docs/PRIVATE_PACKAGES.md)
+# 2. Copy this file to .github/workflows/ and customize as needed
+# 3. The git configuration step will allow uv/pip to access private GitHub repositories
+
+name: Example CI with Private Packages
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1️⃣ Checkout the code
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+        with:
+          lfs: true
+
+      # 2️⃣ Fail early if PAT is missing (optional but recommended)
+      # Remove this step if you don't use private GitHub packages
+      - name: Ensure GitHub PAT is configured
+        if: secrets.GH_PAT != ''
+        run: |
+          if [ -z "${{ secrets.GH_PAT }}" ]; then
+            echo "::warning::GH_PAT secret is not set. Private GitHub packages will not be accessible."
+          fi
+
+      # 3️⃣ Configure git to use the PAT for all GitHub HTTPS repos
+      # This allows uv/pip to access private GitHub repositories
+      # Remove this step if you don't use private GitHub packages
+      - name: Configure git for private GitHub repos
+        if: secrets.GH_PAT != ''
+        run: |
+          git config --global url."https://${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
+
+      # 4️⃣ Install uv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7.2.1
+        with:
+          version: "0.9.28"
+          python-version: "3.12"
+
+      # 5️⃣ Run your build/install/test steps
+      - name: Install dependencies
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        run: |
+          make install
+
+      - name: Run tests
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        run: |
+          make test

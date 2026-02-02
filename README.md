@@ -425,6 +425,7 @@ The `.github/` directory contains comprehensive GitHub Actions workflows for:
 - Docker and devcontainer validation
 - Release automation
 - Template synchronization
+- **Support for private GitHub packages** - See [.rhiza/docs/PRIVATE_PACKAGES.md](.rhiza/docs/PRIVATE_PACKAGES.md) for configuration details
 
 ### GitLab CI/CD
 
