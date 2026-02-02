@@ -1,0 +1,25 @@
+name: 'Configure Git Auth for Private Packages'
+description: 'Configure git to use token authentication for private GitHub packages'
+
+inputs:
+  token:
+    description: 'GitHub token to use for authentication (defaults to GITHUB_TOKEN)'
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Configure git authentication
+      shell: bash
+      run: |
+        # Configure git to use token authentication for GitHub URLs
+        # This allows uv/pip to install private packages from GitHub
+        git config --global url."https://${{ inputs.token }}@github.com/".insteadOf "https://github.com/"
+        
+        echo "✓ Git configured to use token authentication for GitHub"
+        echo "  Private packages from the same organization will now be accessible"
+
+branding:
+  icon: 'shield'
+  color: 'blue'
