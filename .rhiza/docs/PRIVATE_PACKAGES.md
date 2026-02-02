@@ -56,7 +56,7 @@ Or for container-based workflows:
 ```yaml
 - name: Configure git auth for private packages
   run: |
-    git config --global url."https://${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+    git config --global url."https://${{ github.token }}@github.com/".insteadOf "https://github.com/"
 ```
 
 **For custom workflows** (not synced from Rhiza), add the git authentication step yourself:
@@ -64,7 +64,7 @@ Or for container-based workflows:
 ```yaml
 - name: Configure git auth for private packages
   run: |
-    git config --global url."https://${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+    git config --global url."https://${{ github.token }}@github.com/".insteadOf "https://github.com/"
 ```
 
 This configuration tells git to automatically inject the `GITHUB_TOKEN` into all HTTPS GitHub URLs.
@@ -107,7 +107,7 @@ jobs:
 
       - name: Configure git auth for private packages
         run: |
-          git config --global url."https://${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://${{ github.token }}@github.com/".insteadOf "https://github.com/"
 
       - name: Install dependencies
         run: |
