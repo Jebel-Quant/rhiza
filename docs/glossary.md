@@ -1,367 +1,169 @@
-# Glossary
+# Rhiza Glossary
 
-This glossary defines terms and concepts specific to Rhiza and its template synchronization system.
-
----
+A comprehensive glossary of terms used in the Rhiza template system.
 
 ## Core Concepts
 
 ### Living Templates
+A template approach where configuration files remain synchronized with an upstream source over time, as opposed to traditional "one-shot" template generators (like cookiecutter or copier) that generate files once and then disconnect from the source.
 
-A template system that enables **continuous synchronization** between your project and an upstream template repository. Unlike traditional generators (cookiecutter, copier) that create a one-time snapshot, living templates allow you to pull updates over time while preserving your customizations.
+### Template Sync
+The process of pulling updates from the upstream Rhiza repository into a downstream project. Executed via `make sync`. Allows projects to receive ongoing improvements without manual copying.
 
-**Related:** [Template Repository](#template-repository), [Sync](#sync)
+### Downstream Project
+A project that has adopted Rhiza templates. It receives updates from the upstream Rhiza repository through template sync.
 
----
+### Upstream Repository
+The source Rhiza repository (`jebel-quant/rhiza`) that contains the canonical template configurations. Changes here propagate to downstream projects via sync.
 
-### Template Repository
+## Directory Structure
 
-The upstream repository that serves as the source of truth for configuration files, workflows, and tooling. By default, this is `Jebel-Quant/rhiza`, but you can point to any repository (including your own fork).
+### `.rhiza/`
+The core directory containing Rhiza's template system files. This directory is synced from upstream and should generally not be modified directly.
 
-**Configuration:**
-```yaml
-# .rhiza/template.yml
-repository: Jebel-Quant/rhiza
-ref: main
-```
+### `.rhiza/rhiza.mk`
+The main Makefile containing core Rhiza functionality. Included by the project's root `Makefile`. Contains 268+ lines of make targets and logic.
 
-**Related:** [template.yml](#templateyml)
+### `.rhiza/make.d/`
+Directory for modular Makefile extensions. Files are auto-loaded in numeric order:
+- `00-19`: Configuration files
+- `20-79`: Task definitions
+- `80-99`: Hook implementations
 
----
+### `.rhiza/scripts/`
+Shell scripts for Rhiza operations (e.g., `release.sh`). POSIX-compliant for portability.
 
-### Sync
+### `.rhiza/utils/`
+Python utility scripts (e.g., `version_matrix.py` for CI matrix generation).
 
-The process of pulling updates from a [template repository](#template-repository) into your project. Sync respects include/exclude patterns defined in `template.yml`.
+### `.rhiza/template.yml`
+Configuration file defining which files to sync from upstream, include/exclude patterns, and sync behavior.
 
-**Commands:**
-- `make sync` - Pull updates from template
-- `uvx rhiza materialize` - Direct CLI command
+### `local.mk`
+Optional file for project-specific Makefile extensions. Not synced from upstream, allowing local customization without conflicts.
 
-**Related:** [Materialize](#materialize), [Validate](#validate)
+## Makefile System
 
----
-
-### Materialize
-
-The action of applying template files to your project. Rhiza reads your `template.yml` configuration, fetches matching files from the template repository, and writes them to your project directory.
-
-**Command:** `uvx rhiza materialize --force .`
-
-**Related:** [Sync](#sync)
-
----
-
-### Validate
-
-Check whether your project's files match the template repository without making changes. Useful for CI pipelines to detect configuration drift.
-
-**Commands:**
-- `make validate` - Run validation
-- `uvx rhiza validate .` - Direct CLI command
-
-**Related:** [Sync](#sync)
-
----
-
-## Configuration Files
-
-### template.yml
-
-The configuration file (`.rhiza/template.yml`) that controls template synchronization. Defines what files to sync and what to exclude.
-
-**Fields:**
-
-| Field | Description | Example |
-|-------|-------------|---------|
-| `repository` | GitHub repository in `owner/repo` format | `Jebel-Quant/rhiza` |
-| `ref` | Branch, tag, or commit to sync from | `main`, `v0.6.0` |
-| `include` | Glob patterns for files to sync | `*.yml`, `.github/**` |
-| `exclude` | Glob patterns for files to skip | `.rhiza/make.d/*` |
-
-**Example:**
-```yaml
-repository: Jebel-Quant/rhiza
-ref: main
-
-include: |
-  .github/workflows/*.yml
-  ruff.toml
-  pytest.ini
-
-exclude: |
-  .rhiza/make.d/*
-```
-
----
-
-### rhiza.mk
-
-The core Makefile module (`.rhiza/rhiza.mk`) containing Rhiza's automation logic. Implements targets for sync, validate, install, release, and other common tasks.
-
-**Key targets defined:**
-- `sync`, `validate`, `readme`
-- `install`, `install-uv`, `clean`
-- `bump`, `release`
-- `fmt`, `deptry`
-- `help`, `version-matrix`
-
----
-
-### make.d/
-
-The directory (`.rhiza/make.d/`) for project-specific Makefile extensions. Files here are automatically included and are **not synced** from the template, allowing you to add custom targets without conflicts.
-
-**Naming convention:**
-| Prefix | Purpose |
-|--------|---------|
-| 00-19 | Configuration & Variables |
-| 20-79 | Custom Tasks & Rules |
-| 80-99 | Hooks & Lifecycle Logic |
-
-**Example:** `.rhiza/make.d/50-ml-training.mk`
-
----
-
-### local.mk
-
-An optional Makefile (`local.mk` in project root) for developer-specific shortcuts. This file is gitignored and never synced, making it ideal for personal convenience targets.
-
-**Example:**
-```makefile
-# local.mk
-dev-deploy:
-    @./scripts/deploy-to-my-sandbox.sh
-```
-
----
-
-## Hooks
+### Double-Colon Targets (`::`)
+Make targets defined with `::` instead of `:`. These are "hook" targets that can be extended by downstream projects without overriding the original implementation.
 
 ### Hook Targets
+Extension points in the Makefile system. Available hooks:
+- `pre-install::` / `post-install::` - Before/after dependency installation
+- `pre-sync::` / `post-sync::` - Before/after template sync
+- `pre-validate::` / `post-validate::` - Before/after project validation
+- `pre-release::` / `post-release::` - Before/after release creation
+- `pre-bump::` / `post-bump::` - Before/after version bump
 
-Double-colon Makefile targets that allow you to inject custom logic before or after standard operations. Hooks are defined in `rhiza.mk` and can be extended in `.rhiza/make.d/`.
+### Make Target
+A named command in the Makefile (e.g., `make test`, `make fmt`). Rhiza provides 40+ targets out of the box.
 
-**Available hooks:**
+## Version Management
 
-| Hook | Triggered |
-|------|-----------|
-| `pre-install::` / `post-install::` | Around `make install` |
-| `pre-sync::` / `post-sync::` | Around `make sync` |
-| `pre-validate::` / `post-validate::` | Around `make validate` |
-| `pre-bump::` / `post-bump::` | Around `make bump` |
-| `pre-release::` / `post-release::` | Around `make release` |
+### Version Bump
+Incrementing the version number in `pyproject.toml`. Types:
+- `major`: Breaking changes (1.0.0 → 2.0.0)
+- `minor`: New features (1.0.0 → 1.1.0)
+- `patch`: Bug fixes (1.0.0 → 1.0.1)
 
-**Usage:**
-```makefile
-# .rhiza/make.d/90-hooks.mk
-post-install::
-    @echo "Running custom setup..."
-    @./scripts/setup-local-config.sh
-```
+### Release Tag
+A git tag prefixed with `v` (e.g., `v1.2.3`) that triggers the release workflow.
 
-**Note:** Use double-colon (`::`) syntax to allow multiple definitions across files.
+### Version Matrix
+A JSON array of Python versions to test against, generated from `pyproject.toml`'s `requires-python` field. Used in CI for matrix testing.
 
----
+## CI/CD
+
+### OIDC Publishing
+OpenID Connect-based authentication for PyPI publishing. Uses GitHub's identity provider instead of stored API tokens. More secure than traditional token-based auth.
+
+### Trusted Publisher
+A PyPI configuration that allows a specific GitHub repository/workflow to publish packages without API tokens, using OIDC authentication.
+
+### Matrix Testing
+Running CI tests across multiple Python versions simultaneously. Rhiza supports Python 3.11, 3.12, 3.13, and 3.14.
+
+### SLSA Provenance
+Supply-chain Levels for Software Artifacts. Cryptographic attestations proving that build artifacts were produced by a specific CI workflow. Enables supply chain verification.
+
+### SBOM (Software Bill of Materials)
+A formal record of components used to build software. Generated in SPDX or CycloneDX formats for supply chain transparency.
 
 ## Tools
 
 ### uv
+A fast Python package installer and resolver from Astral. Rhiza uses `uv` for all Python operations:
+- `uv sync` - Install dependencies
+- `uv run` - Execute Python code
+- `uvx` - Run external tools
 
-A fast Python package manager from Astral. Rhiza uses uv exclusively for all Python operations including virtual environment management, dependency installation, and script execution.
-
-**Key commands:**
-| Command | Purpose |
-|---------|---------|
-| `uv sync` | Install dependencies from lock file |
-| `uv run` | Execute in project virtual environment |
-| `uv pip install` | Install additional packages |
-| `uv venv` | Create virtual environment |
-| `uv lock` | Generate/update lock file |
-
-**Related:** [uvx](#uvx)
-
----
-
-### uvx
-
-A command for running Python tools in ephemeral (temporary) environments. Used for external tools that shouldn't pollute your project's virtual environment.
-
-**Examples:**
-```bash
-uvx ruff check .           # Run ruff without installing
-uvx rhiza materialize .    # Run rhiza CLI
-uvx pre-commit run         # Run pre-commit hooks
-```
-
-**Related:** [uv](#uv)
-
----
-
-### Deptry
-
-A tool for detecting missing and obsolete dependencies. Rhiza includes deptry in its standard workflow to maintain dependency hygiene.
-
-**Command:** `make deptry`
-
----
+### Ruff
+A fast Python linter and formatter from Astral. Replaces flake8, isort, black, and many other tools. Configured in `ruff.toml`.
 
 ### Hatch
+A Python build backend used to create distribution packages (wheels and sdists). Invoked via `uvx hatch build`.
 
-A Python build backend used by the release workflow to build distributable packages (wheels and source distributions).
+### Deptry
+A tool that checks for unused and missing dependencies in Python projects. Integrated in CI via `make deptry`.
 
-**Command:** `uvx hatch build`
+### Bandit
+A security linter for Python code. Finds common security issues. Integrated in pre-commit and CI.
 
----
+### CodeQL
+GitHub's semantic code analysis engine. Scans for security vulnerabilities in Python code and GitHub Actions workflows.
+
+### Marimo
+A reactive Python notebook format. Rhiza includes support for marimo notebooks in the `book/` directory.
+
+## Configuration Files
+
+### `pyproject.toml`
+The central Python project configuration file (PEP 518/621). Contains project metadata, dependencies, and tool configurations.
+
+### `uv.lock`
+Lock file containing exact versions of all dependencies. Ensures reproducible builds across environments.
+
+### `.python-version`
+Single-line file specifying the default Python version for the project. Used by `uv` and other tools.
+
+### `ruff.toml`
+Configuration for the Ruff linter/formatter. Defines enabled rules, line length, and per-file exceptions.
+
+### `pytest.ini`
+Configuration for pytest test runner. Sets logging levels and output options.
+
+### `.pre-commit-config.yaml`
+Configuration for pre-commit hooks. Defines checks that run before each git commit.
+
+### `.editorconfig`
+Cross-editor configuration for consistent coding style (indentation, line endings, etc.).
+
+### `renovate.json`
+Configuration for Renovate, an automated dependency update bot.
 
 ## Workflows
 
 ### CI Workflow
-
-The continuous integration workflow (`rhiza_ci.yml`) that runs tests across multiple Python versions. Uses a dynamic matrix generated from `pyproject.toml`.
-
-**Trigger:** Push/PR to main branch
-
----
-
-### Sync Workflow
-
-The automated synchronization workflow (`rhiza_sync.yml`) that periodically pulls updates from the template repository and creates a pull request.
-
-**Trigger:** Weekly schedule or manual dispatch
-**Requirement:** `PAT_TOKEN` secret with `workflow` scope
-
----
+Continuous Integration workflow that runs tests on every push and pull request.
 
 ### Release Workflow
+Multi-phase workflow triggered by version tags. Builds packages, creates GitHub releases, publishes to PyPI, and optionally publishes devcontainer images.
 
-The release pipeline (`rhiza_release.yml`) triggered by version tags. Handles building, publishing to PyPI, and creating GitHub releases.
+### Sync Workflow
+Workflow that synchronizes template files from upstream Rhiza repository.
 
-**Trigger:** Push of tags matching `v*`
-**Phases:** Validate → Build → Draft → Publish → Finalize
+### Security Workflow
+Workflow running security scans (pip-audit, bandit) on the codebase.
 
----
+## Commands Reference
 
-## Versioning
-
-### Version Source of Truth
-
-The `version` field in `pyproject.toml` is the single source of truth for the project version. All version operations read from and write to this location.
-
-```toml
-[project]
-version = "0.6.0"
-```
-
----
-
-### Bump
-
-The process of incrementing the project version. Rhiza provides an interactive bump command that updates `pyproject.toml` and regenerates `uv.lock`.
-
-**Command:** `make bump`
-
-**Bump types:**
-- `major` - Breaking changes (1.0.0 → 2.0.0)
-- `minor` - New features (1.0.0 → 1.1.0)
-- `patch` - Bug fixes (1.0.0 → 1.0.1)
-
----
-
-### Release
-
-The process of creating a version tag and pushing it to trigger the release workflow.
-
-**Command:** `make release`
-
-**Steps:**
-1. Verify clean working tree
-2. Confirm version
-3. Create git tag (`v{version}`)
-4. Push tag to origin
-
----
-
-## Publishing
-
-### Trusted Publishing (OIDC)
-
-A secure method for publishing to PyPI without storing credentials. Uses GitHub's OpenID Connect (OIDC) tokens to authenticate with PyPI.
-
-**Requirements:**
-- Package registered on PyPI as a Trusted Publisher
-- `id-token: write` permission in workflow
-
----
-
-### Private :: Do Not Upload
-
-A PyPI classifier that prevents accidental package publication. When present in `pyproject.toml`, the release workflow skips PyPI upload.
-
-```toml
-classifiers = [
-    "Private :: Do Not Upload",
-]
-```
-
----
-
-## Patterns
-
-### Include Pattern
-
-A glob pattern in `template.yml` specifying files to sync from the template repository.
-
-**Examples:**
-```yaml
-include: |
-  .github/workflows/*.yml    # All workflow files
-  *.toml                     # Root-level TOML files
-  .rhiza/**                  # Everything in .rhiza
-```
-
----
-
-### Exclude Pattern
-
-A glob pattern in `template.yml` specifying files to skip during sync, protecting your customizations.
-
-**Examples:**
-```yaml
-exclude: |
-  .rhiza/make.d/*            # Custom make extensions
-  .github/workflows/custom_* # Custom workflows
-```
-
----
-
-### Configuration Drift
-
-When your project's configuration files diverge from the template repository over time. Rhiza's living templates approach helps prevent drift through regular synchronization.
-
-**Detection:** `make validate`
-**Resolution:** `make sync`
-
----
-
-## Environment
-
-### .python-version
-
-A file containing the default Python version for the project. Read by uv, pyenv, and other tools.
-
-**Example content:** `3.12`
-
----
-
-### .venv
-
-The default virtual environment directory created by `make install`. Contains installed dependencies isolated from the system Python.
-
----
-
-### uv.lock
-
-The lock file generated by uv containing exact versions of all dependencies. Ensures reproducible builds across environments.
-
-**Generate:** `uv lock`
-**Install from:** `uv sync --frozen`
+| Command | Description |
+|---------|-------------|
+| `make install` | Install dependencies and set up environment |
+| `make test` | Run pytest with coverage |
+| `make fmt` | Format and lint code with ruff |
+| `make sync` | Sync templates from upstream |
+| `make bump` | Bump version number |
+| `make release` | Create and push release tag |
+| `make deptry` | Check for unused/missing dependencies |
+| `make help` | Show all available targets |

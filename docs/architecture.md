@@ -1,394 +1,244 @@
 # Rhiza Architecture
 
-This document describes the architecture of Rhiza's "living templates" system, including the template synchronization mechanism, Makefile hierarchy, and extension points.
+Visual diagrams of Rhiza's architecture and component interactions.
 
----
-
-## Overview
-
-Rhiza implements a **living templates** pattern that differs from traditional template generators (cookiecutter, copier). Instead of generating a one-time snapshot, Rhiza enables continuous synchronization between your project and an upstream template repository.
+## System Overview
 
 ```mermaid
 flowchart TB
-    subgraph Template["Template Repository (Jebel-Quant/rhiza)"]
-        TW[Workflows<br>.yml files]
-        TC[Configs<br>ruff.toml, pytest.ini]
-        TS[Scripts<br>release.sh]
-        TM[Makefile System]
+    subgraph User["User Interface"]
+        make[make commands]
+        local[local.mk]
     end
 
-    subgraph Project["Your Project"]
-        subgraph Config["Configuration"]
-            YAML[".rhiza/template.yml<br>• repository: Jebel-Quant/rhiza<br>• ref: main<br>• include/exclude patterns"]
-        end
-
-        SW[Synced Workflows]
-        SC[Synced Configs]
-        EX[Excluded<br>Custom Files]
-        YC[Your Code]
+    subgraph Core[".rhiza/ Core"]
+        rhizamk[rhiza.mk<br/>Core Logic]
+        maked[make.d/*.mk<br/>Extensions]
+        scripts[scripts/<br/>Shell Scripts]
+        utils[utils/<br/>Python Utils]
+        template[template.yml<br/>Sync Config]
     end
 
-    Template -->|"uvx rhiza materialize<br>(controlled by template.yml)"| Project
-    TW -.->|include pattern| SW
-    TC -.->|include pattern| SC
-    TS -.->|exclude pattern| EX
+    subgraph Config["Configuration"]
+        pyproject[pyproject.toml]
+        ruff[ruff.toml]
+        precommit[.pre-commit-config.yaml]
+        editorconfig[.editorconfig]
+    end
+
+    subgraph CI["GitHub Actions"]
+        ci[CI Workflow]
+        release[Release Workflow]
+        security[Security Workflow]
+        sync[Sync Workflow]
+    end
+
+    make --> rhizamk
+    local -.-> rhizamk
+    rhizamk --> maked
+    rhizamk --> scripts
+    rhizamk --> utils
+    maked --> pyproject
+    utils --> pyproject
+    ci --> make
+    release --> make
+    security --> make
+    sync --> template
 ```
 
----
-
-## Template Synchronization
-
-### Configuration File: template.yml
-
-Projects using Rhiza define their sync configuration in `.rhiza/template.yml`:
-
-```yaml
-# .rhiza/template.yml
-repository: Jebel-Quant/rhiza    # Upstream template source
-ref: main                         # Branch or tag to sync from
-
-include: |                        # Files to pull from template
-  .github/workflows/*.yml
-  .pre-commit-config.yaml
-  ruff.toml
-  pytest.ini
-  Makefile
-
-exclude: |                        # Paths to skip (protect customizations)
-  .rhiza/scripts/customisations/*
-  .rhiza/make.d/50-*.mk
-```
-
-### Sync Commands
-
-| Command | Description |
-|---------|-------------|
-| `make sync` | Pull updates from template repository |
-| `make validate` | Check if project matches template (without modifying) |
-| `uvx rhiza materialize` | Direct CLI for sync operation |
-| `uvx rhiza validate` | Direct CLI for validation |
-
-### Sync Process Flow
+## Makefile Hierarchy
 
 ```mermaid
 flowchart TD
-    A[make sync] --> B[pre-sync:: hook]
-    B --> C[uvx rhiza materialize --force .]
-
-    subgraph Materialize["Materialize Process"]
-        C --> D[Read .rhiza/template.yml]
-        D --> E[Fetch files from repository at ref]
-        E --> F[Apply include patterns]
-        F --> G[Skip exclude patterns]
-        G --> H[Write files to project]
+    subgraph Entry["Entry Point"]
+        Makefile[Makefile<br/>9 lines]
     end
 
-    H --> I[post-sync:: hook]
+    subgraph Core["Core Logic"]
+        rhizamk[.rhiza/rhiza.mk<br/>268 lines]
+    end
 
-    style B fill:#e1f5fe
-    style I fill:#e1f5fe
+    subgraph Extensions["Auto-loaded Extensions"]
+        config[00-19: Configuration]
+        tasks[20-79: Task Definitions]
+        hooks[80-99: Hook Implementations]
+    end
+
+    subgraph Local["Local Customization"]
+        localmk[local.mk<br/>Not synced]
+    end
+
+    Makefile -->|includes| rhizamk
+    rhizamk -->|includes| config
+    rhizamk -->|includes| tasks
+    rhizamk -->|includes| hooks
+    rhizamk -.->|optional| localmk
 ```
 
-### Automated Sync Workflow
-
-The `rhiza_sync.yml` workflow automates synchronization:
-
-- **Schedule**: Weekly (Mondays at 00:00 UTC)
-- **Manual trigger**: Via workflow_dispatch
-- **Output**: Creates a pull request with template updates
-- **Requirement**: `PAT_TOKEN` secret with `workflow` scope (for modifying workflow files)
-
----
-
-## Makefile Architecture
-
-### Hierarchy
-
-Rhiza uses a modular Makefile system with clear separation of concerns:
+## Hook System
 
 ```mermaid
-flowchart TD
-    subgraph Root["Project Root"]
-        MF[Makefile]
+flowchart LR
+    subgraph Hooks["Double-Colon Targets"]
+        pre_install[pre-install::]
+        post_install[post-install::]
+        pre_sync[pre-sync::]
+        post_sync[post-sync::]
+        pre_release[pre-release::]
+        post_release[post-release::]
+        pre_bump[pre-bump::]
+        post_bump[post-bump::]
     end
 
-    subgraph Core["Core Logic (Synced)"]
-        RMK[.rhiza/rhiza.mk]
-        TMK[tests/tests.mk]
-        BMK[book/book.mk]
-        DMK[docker/docker.mk]
-        PMK[presentation/presentation.mk]
-        GMK[.github/github.mk]
+    subgraph Targets["Main Targets"]
+        install[make install]
+        sync[make sync]
+        release[make release]
+        bump[make bump]
     end
 
-    subgraph Extensions["Custom Extensions (Not Synced)"]
-        E1[01-custom-env.mk<br>Variables & Config]
-        E2[10-custom-task.mk<br>Custom Tasks]
-        E3[90-hooks.mk<br>Hook Implementations]
-    end
-
-    subgraph Local["Developer Local"]
-        LMK[local.mk<br>Not committed]
-    end
-
-    MF -->|include| RMK
-    RMK -->|include| TMK
-    RMK -->|include| BMK
-    RMK -->|include| DMK
-    RMK -->|include| PMK
-    RMK -->|include| GMK
-    RMK -->|"include .rhiza/make.d/*.mk"| Extensions
-    MF -->|"-include"| LMK
-
-    style Extensions fill:#fff3e0
-    style Local fill:#fce4ec
+    pre_install --> install --> post_install
+    pre_sync --> sync --> post_sync
+    pre_release --> release --> post_release
+    pre_bump --> bump --> post_bump
 ```
-
-### File Responsibilities
-
-| File | Purpose | Synced? |
-|------|---------|---------|
-| `Makefile` | Entry point, minimal (~8 lines) | Yes |
-| `.rhiza/rhiza.mk` | Core targets (install, sync, release) | Yes |
-| `tests/tests.mk` | Test targets | Yes |
-| `book/book.mk` | Documentation targets | Yes |
-| `.rhiza/make.d/*.mk` | Project-specific extensions | No |
-| `local.mk` | Developer-local shortcuts | No (gitignored) |
-
-### Hook System
-
-Rhiza provides double-colon hook targets for customization:
-
-```makefile
-# Available hooks (defined in rhiza.mk)
-pre-install::   post-install::
-pre-sync::      post-sync::
-pre-validate::  post-validate::
-pre-release::   post-release::
-pre-bump::      post-bump::
-```
-
-**Usage in .rhiza/make.d/90-hooks.mk:**
-
-```makefile
-post-install::
-	@echo "Running custom post-install steps..."
-	@./scripts/setup-local-config.sh
-
-pre-release::
-	@echo "Validating release requirements..."
-	@make test
-```
-
-### Extension Point Conventions
-
-Files in `.rhiza/make.d/` are loaded alphabetically. Use numeric prefixes:
-
-| Range | Purpose | Example |
-|-------|---------|---------|
-| 00-19 | Configuration & Variables | `01-custom-env.mk` |
-| 20-79 | Custom Tasks & Rules | `50-ml-training.mk` |
-| 80-99 | Hooks & Lifecycle Logic | `90-hooks.mk` |
-
----
-
-## Tool Execution Model
-
-### uv-First Approach
-
-All Python execution flows through `uv`:
-
-```mermaid
-flowchart TD
-    MT[Makefile Target]
-
-    MT --> UV_RUN[uv run<br>Project venv]
-    MT --> UVX[uvx<br>Ephemeral env]
-    MT --> UV_PIP[uv pip install<br>Dependencies]
-
-    UV_RUN --> PYTEST[pytest<br>scripts]
-    UVX --> RUFF[ruff<br>pre-commit]
-    UV_PIP --> VENV[.venv<br>packages]
-
-    style UV_RUN fill:#c8e6c9
-    style UVX fill:#bbdefb
-    style UV_PIP fill:#fff9c4
-```
-
-| Command | Usage |
-|---------|-------|
-| `uv run` | Execute in project virtual environment |
-| `uvx` | Execute in ephemeral environment (external tools) |
-| `uv sync` | Install dependencies from lock file |
-| `uv pip install` | Install additional packages |
-
-### Environment Variables
-
-```makefile
-# Core variables (from rhiza.mk)
-INSTALL_DIR ?= ./bin           # Where uv is installed if not in PATH
-UV_BIN ?= $(command -v uv)     # Path to uv binary
-UVX_BIN ?= $(command -v uvx)   # Path to uvx binary
-VENV ?= .venv                  # Virtual environment path
-PYTHON_VERSION ?= 3.12         # From .python-version file
-
-# Environment settings
-UV_NO_MODIFY_PATH := 1         # Don't modify shell PATH
-UV_VENV_CLEAR := 1             # Clear venv before creation
-```
-
----
-
-## Directory Structure
-
-```
-project-root/
-├── .rhiza/
-│   ├── template.yml        # Sync configuration (your project)
-│   ├── rhiza.mk            # Core Makefile logic
-│   ├── .env                # Environment variables
-│   ├── .cfg.toml           # Additional configuration
-│   ├── docs/               # Rhiza documentation
-│   │   ├── CONFIG.md
-│   │   └── TOKEN_SETUP.md
-│   ├── make.d/             # Custom Makefile extensions
-│   │   ├── 01-custom-env.mk
-│   │   ├── 10-custom-task.mk
-│   │   └── README.md
-│   ├── requirements/       # Additional pip requirements
-│   │   ├── tools.txt
-│   │   ├── tests.txt
-│   │   └── docs.txt
-│   ├── scripts/            # Automation scripts
-│   │   └── release.sh
-│   └── utils/              # Python utilities
-│       └── version_matrix.py
-├── .github/
-│   └── workflows/          # CI/CD workflows (synced)
-├── Makefile                # Entry point
-├── pyproject.toml          # Project configuration
-├── ruff.toml               # Linting configuration (synced)
-├── pytest.ini              # Test configuration (synced)
-└── .pre-commit-config.yaml # Pre-commit hooks (synced)
-```
-
----
 
 ## Release Pipeline
 
-### Version Management
+```mermaid
+flowchart TD
+    tag[Push Tag v*] --> validate[Validate Tag]
+    validate --> build[Build Package]
+    build --> draft[Draft GitHub Release]
+    draft --> pypi[Publish to PyPI]
+    draft --> devcontainer[Publish Devcontainer]
+    pypi --> finalize[Finalize Release]
+    devcontainer --> finalize
 
-Single source of truth: `pyproject.toml`
+    subgraph Conditions
+        pypi_cond{Has dist/ &<br/>not Private?}
+        dev_cond{PUBLISH_DEVCONTAINER<br/>= true?}
+    end
+
+    draft --> pypi_cond
+    pypi_cond -->|yes| pypi
+    pypi_cond -->|no| finalize
+    draft --> dev_cond
+    dev_cond -->|yes| devcontainer
+    dev_cond -->|no| finalize
+```
+
+## Template Sync Flow
+
+```mermaid
+flowchart LR
+    upstream[Upstream Rhiza<br/>jebel-quant/rhiza] -->|template.yml| sync[make sync]
+    sync -->|updates| downstream[Downstream Project]
+
+    subgraph Synced["Synced Files"]
+        workflows[.github/workflows/]
+        rhiza[.rhiza/]
+        configs[Config Files]
+    end
+
+    subgraph Preserved["Preserved"]
+        localmk[local.mk]
+        src[src/]
+        tests[tests/]
+    end
+
+    sync --> Synced
+    downstream --> Preserved
+```
+
+## Directory Structure
 
 ```mermaid
 flowchart TD
-    A[make bump] --> B[pre-bump:: hook]
-    B --> C[uvx rhiza tools bump]
+    root[Project Root]
 
-    subgraph Bump["Interactive Bump"]
-        C --> D[Show current version]
-        D --> E[Prompt for bump type<br>major/minor/patch]
-        E --> F[Update pyproject.toml]
-        F --> G[Update uv.lock]
-    end
+    root --> rhiza[.rhiza/]
+    root --> github[.github/]
+    root --> src[src/]
+    root --> tests[tests/]
+    root --> docs[docs/]
+    root --> book[book/]
 
-    G --> H[post-bump:: hook]
+    rhiza --> rhizamk[rhiza.mk]
+    rhiza --> maked[make.d/]
+    rhiza --> scripts[scripts/]
+    rhiza --> utils[utils/]
+    rhiza --> template[template.yml]
 
-    style B fill:#e1f5fe
-    style H fill:#e1f5fe
+    github --> workflows[workflows/]
+    workflows --> ci[rhiza_ci.yml]
+    workflows --> release[rhiza_release.yml]
+    workflows --> security[rhiza_security.yml]
+    workflows --> more[... 11 more]
+
+    maked --> m00[00-19: Config]
+    maked --> m20[20-79: Tasks]
+    maked --> m80[80-99: Hooks]
 ```
 
-### Release Process
+## CI/CD Workflow Triggers
 
 ```mermaid
 flowchart TD
-    A[make release] --> B[pre-release:: hook]
-    B --> C[.rhiza/scripts/release.sh]
-
-    subgraph Script["Release Script"]
-        C --> D[Verify clean working tree]
-        D --> E[Check branch up-to-date]
-        E --> F[Read version from pyproject.toml]
-        F --> G[Prompt for confirmation]
-        G --> H[Create git tag]
-        H --> I[Push tag to origin]
+    subgraph Triggers
+        push[Push]
+        pr[Pull Request]
+        schedule[Schedule]
+        manual[Manual]
+        tag[Tag v*]
     end
 
-    I --> J[post-release:: hook]
-    J --> K[GitHub Actions Triggered]
-
-    subgraph Actions["rhiza_release.yml"]
-        K --> L[Validate tag format]
-        L --> M[Build package with hatch]
-        M --> N[Create draft release]
-        N --> O[Publish to PyPI<br>OIDC]
-        N --> P[Publish devcontainer<br>optional]
-        O --> Q[Finalize release]
-        P --> Q
+    subgraph Workflows
+        ci[CI]
+        security[Security]
+        codeql[CodeQL]
+        release[Release]
+        deptry[Deptry]
+        precommit[Pre-commit]
     end
 
-    style B fill:#e1f5fe
-    style J fill:#e1f5fe
-    style Actions fill:#f3e5f5
+    push --> ci
+    push --> security
+    push --> codeql
+    pr --> ci
+    pr --> deptry
+    pr --> precommit
+    schedule --> security
+    manual --> ci
+    tag --> release
 ```
 
----
+## Python Execution Model
 
-## Customization Strategies
+```mermaid
+flowchart LR
+    subgraph Commands
+        make[make test]
+        direct[Direct Python]
+    end
 
-### 1. Exclude from Sync
+    subgraph UV["uv Layer"]
+        uv_run[uv run]
+        uvx[uvx]
+    end
 
-Add paths to `template.yml` exclude section:
+    subgraph Tools
+        pytest[pytest]
+        ruff[ruff]
+        hatch[hatch]
+    end
 
-```yaml
-exclude: |
-  .rhiza/make.d/*           # All custom make extensions
-  .github/workflows/custom_*.yml  # Custom workflows
+    make --> uv_run
+    uv_run --> pytest
+    uv_run --> ruff
+    uvx --> hatch
+
+    direct -.->|Never| pytest
+
+    style direct stroke-dasharray: 5 5
 ```
-
-### 2. Use Hooks
-
-Implement pre/post hooks in `.rhiza/make.d/`:
-
-```makefile
-# .rhiza/make.d/90-hooks.mk
-post-install::
-	@pip install -e ./internal-package
-
-pre-release::
-	@./scripts/run-integration-tests.sh
-```
-
-### 3. Local Extensions
-
-Use `local.mk` for developer-specific shortcuts (not committed):
-
-```makefile
-# local.mk
-dev-deploy:
-	@./scripts/deploy-to-sandbox.sh
-```
-
-### 4. Fork the Template
-
-For organization-wide customization:
-
-1. Fork Jebel-Quant/rhiza to your organization
-2. Customize workflows, configs, scripts
-3. Point your projects to your fork:
-
-```yaml
-# .rhiza/template.yml
-repository: your-org/rhiza-template
-ref: main
-```
-
----
-
-## Security Considerations
-
-1. **Minimal Permissions**: Workflows default to `contents: read`
-2. **OIDC Publishing**: PyPI uses trusted publishing, no stored tokens
-3. **PAT for Workflows**: Sync requires `PAT_TOKEN` when modifying workflow files
-4. **Lock Files**: `uv.lock` ensures reproducible, auditable builds
-5. **CodeQL Scanning**: Automated security analysis for Python and Actions
