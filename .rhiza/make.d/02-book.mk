@@ -31,9 +31,13 @@ BOOK_SECTIONS := \
   "API|_pdoc/index.html|pdoc/index.html|_pdoc|pdoc" \
   "Coverage|_tests/html-coverage/index.html|tests/html-coverage/index.html|_tests/html-coverage|tests/html-coverage" \
   "Test Report|_tests/html-report/report.html|tests/html-report/report.html|_tests/html-report|tests/html-report" \
-  "Notebooks|_marimushka/index.html|marimushka/index.html|_marimushka|marimushka" \
-  "Rhiza|_tests/rhiza-html-coverage/index.html|rhiza/coverage/index.html|_tests/rhiza-html-coverage|rhiza/coverage" \
-  "Rhiza Tests|_tests/rhiza-html-report/report.html|rhiza/report/report.html|_tests/rhiza-html-report|rhiza/report"
+  "Notebooks|_marimushka/index.html|marimushka/index.html|_marimushka|marimushka"
+
+# Conditionally add Rhiza-specific section if enabled
+ifeq ($(INCLUDE_RHIZA_SECTION),true)
+BOOK_SECTIONS += \
+  "Rhiza|_book/rhiza/index.html|rhiza/index.html|_book/rhiza|rhiza"
+endif
 
 
 ##@ Documentation
@@ -109,6 +113,42 @@ json.dump(badge, open('_book/tests/coverage-badge.json', 'w'))"; \
 	  printf "\n"; \
 	else \
 	  printf "${YELLOW}[WARN] No coverage.json found, skipping badge generation${RESET}\n"; \
+	fi
+
+	@if [ "$(INCLUDE_RHIZA_SECTION)" = "true" ]; then \
+	  printf "${BLUE}[INFO] Creating Rhiza section index...${RESET}\n"; \
+	  mkdir -p _book/rhiza/coverage _book/rhiza/report; \
+	  if [ -d "_tests/rhiza-html-coverage" ]; then \
+	    cp -r _tests/rhiza-html-coverage/* _book/rhiza/coverage/; \
+	  fi; \
+	  if [ -d "_tests/rhiza-html-report" ]; then \
+	    cp -r _tests/rhiza-html-report/* _book/rhiza/report/; \
+	  fi; \
+	  printf '%s\n' \
+	    '<!DOCTYPE html>' \
+	    '<html lang="en">' \
+	    '<head>' \
+	    '  <meta charset="UTF-8">' \
+	    '  <meta name="viewport" content="width=device-width, initial-scale=1.0">' \
+	    '  <title>Rhiza Tests</title>' \
+	    '  <style>' \
+	    '    body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }' \
+	    '    h1 { color: #333; }' \
+	    '    ul { list-style: none; padding: 0; }' \
+	    '    li { margin: 1rem 0; }' \
+	    '    a { color: #0066cc; text-decoration: none; font-size: 1.1rem; }' \
+	    '    a:hover { text-decoration: underline; }' \
+	    '  </style>' \
+	    '</head>' \
+	    '<body>' \
+	    '  <h1>Rhiza Tests</h1>' \
+	    '  <ul>' \
+	    '    <li><a href="coverage/index.html">Coverage Report</a></li>' \
+	    '    <li><a href="report/report.html">Test Report</a></li>' \
+	    '  </ul>' \
+	    '</body>' \
+	    '</html>' \
+	    > _book/rhiza/index.html; \
 	fi
 
 	@printf "{\n" > _book/links.json
