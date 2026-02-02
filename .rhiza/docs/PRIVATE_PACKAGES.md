@@ -143,7 +143,7 @@ Since the default `GITHUB_TOKEN` only has access to the current repository, you 
 1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
 2. Click "Generate new token" → "Generate new token (classic)"
 3. Give it a descriptive name (e.g., "Private Package Access for [repo-name]")
-4. Set expiration (or choose "No expiration" for convenience, though periodic rotation is recommended)
+4. Set expiration (recommended: 90 days or less for better security; you can set up automatic token rotation)
 5. Select scopes:
    - ✅ `repo` (Full control of private repositories)
 6. Click "Generate token"
