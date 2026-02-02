@@ -405,6 +405,24 @@ Rhiza uses a modular Makefile system with extension points (hooks) for customisa
 
 For system dependencies and custom build steps, see [docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md).
 
+### Private GitHub Packages
+
+When your project depends on private GitHub repositories, you can use HTTPS + token authentication:
+
+**In `pyproject.toml`:**
+```toml
+[tool.uv.sources]
+my-package = { git = "https://github.com/jebel-quant/my-package.git", rev = "v1.0.0" }
+```
+
+**In CI workflows:**
+```yaml
+- name: Configure git auth
+  uses: ./.github/actions/configure-git-auth
+```
+
+The default `GITHUB_TOKEN` automatically provides read access to repositories in the same organization. For complete setup instructions, troubleshooting, and local development options, see [.rhiza/docs/PRIVATE_PACKAGES.md](.rhiza/docs/PRIVATE_PACKAGES.md).
+
 ### Release Management
 
 For information on versioning, tagging, and publishing releases, see [docs/RELEASING.md](docs/RELEASING.md).
