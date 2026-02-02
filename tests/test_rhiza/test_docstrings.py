@@ -14,6 +14,7 @@ import warnings
 from pathlib import Path
 
 import pytest
+from dotenv import dotenv_values
 
 # Read .rhiza/.env at collection time (no environment side-effects).
 RHIZA_ENV_PATH = Path(".rhiza/.env")
