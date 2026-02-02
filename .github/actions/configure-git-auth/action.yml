@@ -3,7 +3,7 @@ description: 'Configure git to use token authentication for private GitHub packa
 
 inputs:
   token:
-    description: 'GitHub token to use for authentication (use github.token)'
+    description: 'GitHub token with cross-repository access (use secrets.PRIVATE_REPO_TOKEN for private dependencies)'
     required: true
 
 runs:
@@ -17,7 +17,7 @@ runs:
         git config --global url."https://${{ inputs.token }}@github.com/".insteadOf "https://github.com/"
         
         echo "✓ Git configured to use token authentication for GitHub"
-        echo "  Private packages from the same organization will now be accessible"
+        echo "  Private packages with cross-repository access are now accessible"
 
 branding:
   icon: 'shield'

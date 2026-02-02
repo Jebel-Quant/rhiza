@@ -4,16 +4,20 @@ This document explains how to configure your project to use private GitHub packa
 
 ## Quick Start
 
-If you're using Rhiza's template workflows, git authentication for private packages is **already configured**! All Rhiza workflows automatically include the necessary git configuration to access private repositories in the same organization.
+If you're using Rhiza's template workflows, you need to configure a Personal Access Token (PAT) for cross-repository access. All Rhiza workflows use `secrets.PRIVATE_REPO_TOKEN` to access private repositories.
 
-Simply add your private package to `pyproject.toml`:
+**Setup Steps:**
+
+1. Create a Personal Access Token (PAT) with `repo` scope (see instructions below)
+2. Add it as a repository secret named `PRIVATE_REPO_TOKEN`
+3. Add your private package to `pyproject.toml`:
 
 ```toml
 [tool.uv.sources]
 my-package = { git = "https://github.com/jebel-quant/my-package.git", rev = "v1.0.0" }
 ```
 
-The workflows will handle authentication automatically using `GITHUB_TOKEN`.
+The workflows will handle authentication automatically using your `PRIVATE_REPO_TOKEN`.
 
 ## Detailed Guide
 
@@ -40,15 +44,23 @@ another-package = { git = "https://github.com/jebel-quant/another-package.git", 
 - Specify version using `rev`, `tag`, or `branch` parameter
 - No token is included in the URL itself (git config handles authentication)
 
-### 2. Git Authentication in CI (Already Configured!)
+### 2. Git Authentication in CI
 
-**If you're using Rhiza's template workflows, this is already set up for you.** All Rhiza workflows (CI, book, release, etc.) automatically include git authentication steps.
+**All Rhiza workflows require a Personal Access Token (PAT) for private package access.** 
 
-You can verify this by checking any Rhiza workflow file (e.g., `.github/workflows/rhiza_ci.yml`):
+You need to:
+
+1. **Create a PAT** with `repo` scope or fine-grained token with read access to your private repositories
+2. **Add it as a repository secret** named `PRIVATE_REPO_TOKEN` in your repository settings
+3. **Workflows will automatically use it** - all Rhiza workflows are configured to use `secrets.PRIVATE_REPO_TOKEN`
+
+You can verify the configuration in any Rhiza workflow file (e.g., `.github/workflows/rhiza_ci.yml`):
 
 ```yaml
 - name: Configure git auth for private packages
   uses: ./.github/actions/configure-git-auth
+  with:
+    token: ${{ secrets.PRIVATE_REPO_TOKEN }}
 ```
 
 Or for container-based workflows:
@@ -56,7 +68,7 @@ Or for container-based workflows:
 ```yaml
 - name: Configure git auth for private packages
   run: |
-    git config --global url."https://${{ github.token }}@github.com/".insteadOf "https://github.com/"
+    git config --global url."https://${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/".insteadOf "https://github.com/"
 ```
 
 **For custom workflows** (not synced from Rhiza), add the git authentication step yourself:
@@ -64,10 +76,10 @@ Or for container-based workflows:
 ```yaml
 - name: Configure git auth for private packages
   run: |
-    git config --global url."https://${{ github.token }}@github.com/".insteadOf "https://github.com/"
+    git config --global url."https://${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/".insteadOf "https://github.com/"
 ```
 
-This configuration tells git to automatically inject the `GITHUB_TOKEN` into all HTTPS GitHub URLs.
+This configuration tells git to automatically inject your PAT into all HTTPS GitHub URLs.
 
 ### 3. Using the Composite Action (Custom Workflows)
 
@@ -76,6 +88,8 @@ For custom workflows, you can use Rhiza's composite action instead of inline com
 ```yaml
 - name: Configure git auth for private packages
   uses: ./.github/actions/configure-git-auth
+  with:
+    token: ${{ secrets.PRIVATE_REPO_TOKEN }}
 ```
 
 This is cleaner and more maintainable than inline git config commands.
@@ -107,7 +121,7 @@ jobs:
 
       - name: Configure git auth for private packages
         run: |
-          git config --global url."https://${{ github.token }}@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://${{ secrets.PRIVATE_REPO_TOKEN }}@github.com/".insteadOf "https://github.com/"
 
       - name: Install dependencies
         run: |
@@ -120,29 +134,52 @@ jobs:
 
 ## Token Scopes
 
-### Same Organization (Recommended)
+### Creating a Personal Access Token (PAT)
 
-If your private packages are in the **same GitHub organization**, the default `GITHUB_TOKEN` automatically has access. No additional configuration needed!
+Since the default `GITHUB_TOKEN` only has access to the current repository, you need to create a Personal Access Token with cross-repository access:
 
-The default `GITHUB_TOKEN`:
-- ✅ Has read access to all repositories in the same organization
-- ✅ Is automatically provided by GitHub Actions
-- ✅ Is scoped to the workflow run (secure)
-- ✅ No manual token management required
+**Steps to create a PAT:**
 
-### Different Organization
+1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. Click "Generate new token" → "Generate new token (classic)"
+3. Give it a descriptive name (e.g., "Private Package Access for [repo-name]")
+4. Set expiration (or choose "No expiration" for convenience, though periodic rotation is recommended)
+5. Select scopes:
+   - ✅ `repo` (Full control of private repositories)
+6. Click "Generate token"
+7. Copy the token immediately (you won't be able to see it again)
 
-If your private packages are in a **different organization**, you need a Personal Access Token (PAT):
+**Add the token to your repository:**
 
-1. Create a PAT with `repo` scope (see [TOKEN_SETUP.md](TOKEN_SETUP.md) for instructions)
-2. Add it as a repository secret (e.g., `PRIVATE_PACKAGES_TOKEN`)
-3. Use it in the git config:
+1. Go to your repository → Settings → Secrets and variables → Actions
+2. Click "New repository secret"
+3. Name: `PRIVATE_REPO_TOKEN`
+4. Value: Paste your PAT
+5. Click "Add secret"
 
-```yaml
-- name: Configure git auth for private packages
-  run: |
-    git config --global url."https://${{ secrets.PRIVATE_PACKAGES_TOKEN }}@github.com/".insteadOf "https://github.com/"
-```
+### Alternative: Fine-grained Personal Access Token
+
+For better security, you can use a fine-grained token:
+
+1. Go to GitHub Settings → Developer settings → Personal access tokens → Fine-grained tokens
+2. Click "Generate new token"
+3. Fill in token details:
+   - Name: "Private Package Access for [repo-name]"
+   - Expiration: Your preference
+   - Resource owner: Select the organization
+   - Repository access: Choose "Only select repositories" and select the private packages you need
+4. Repository permissions:
+   - ✅ Contents: Read-only
+5. Generate token and add it to your repository secrets as `PRIVATE_REPO_TOKEN`
+
+### Why not use GITHUB_TOKEN?
+
+The automatic `GITHUB_TOKEN` provided by GitHub Actions:
+- ❌ Only has read access to the current repository
+- ❌ Cannot access other repositories, even in the same organization
+- ❌ Will fail when trying to clone private dependencies
+
+For private package dependencies, you **must** use a PAT with cross-repository access.
 
 ## Local Development
 

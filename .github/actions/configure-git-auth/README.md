@@ -10,12 +10,12 @@ Add this step before installing dependencies that include private GitHub package
 - name: Configure git auth
   uses: ./.github/actions/configure-git-auth
   with:
-    token: ${{ github.token }}
+    token: ${{ secrets.PRIVATE_REPO_TOKEN }}
 ```
 
 ### With Custom Token
 
-To use a different token (e.g., for cross-org dependencies):
+To use a different token:
 
 ```yaml
 - name: Configure git auth
@@ -45,8 +45,8 @@ private-package = { git = "https://github.com/your-org/private-package.git", rev
 
 ## Token Requirements
 
-- **Same organization**: The default `GITHUB_TOKEN` has read access automatically
-- **Different organization**: Use a Personal Access Token (PAT) with `repo` scope
+- **Cross-repository access**: Use a Personal Access Token (PAT) or GitHub App token with `repo` scope stored as `secrets.PRIVATE_REPO_TOKEN`
+- **Fine-grained tokens**: Alternatively, use a fine-grained personal access token with read access to the target repositories
 
 ## Example Workflow
 
@@ -67,7 +67,7 @@ jobs:
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
         with:
-          token: ${{ github.token }}
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
 
       - name: Install dependencies
         run: uv sync --frozen

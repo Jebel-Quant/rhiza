@@ -45,7 +45,7 @@ jobs:
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
         with:
-          token: ${{ github.token }}
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
 
       - name: Run benchmarks
         env:
