@@ -2,7 +2,22 @@
 
 This document explains how to configure your project to use private GitHub packages from the same organization as dependencies.
 
-## Problem
+## Quick Start
+
+If you're using Rhiza's template workflows, git authentication for private packages is **already configured**! All Rhiza workflows automatically include the necessary git configuration to access private repositories in the same organization.
+
+Simply add your private package to `pyproject.toml`:
+
+```toml
+[tool.uv.sources]
+my-package = { git = "https://github.com/jebel-quant/my-package.git", rev = "v1.0.0" }
+```
+
+The workflows will handle authentication automatically using `GITHUB_TOKEN`.
+
+## Detailed Guide
+
+### Problem
 
 When your project depends on private GitHub repositories, you need to authenticate to access them. SSH keys work locally but are complex to set up in CI/CD environments. HTTPS with tokens is simpler and more secure for automated workflows.
 
@@ -25,9 +40,26 @@ another-package = { git = "https://github.com/jebel-quant/another-package.git", 
 - Specify version using `rev`, `tag`, or `branch` parameter
 - No token is included in the URL itself (git config handles authentication)
 
-### 2. Configure Git Authentication in CI
+### 2. Git Authentication in CI (Already Configured!)
 
-Add a git authentication step before installing dependencies in your CI workflows:
+**If you're using Rhiza's template workflows, this is already set up for you.** All Rhiza workflows (CI, book, release, etc.) automatically include git authentication steps.
+
+You can verify this by checking any Rhiza workflow file (e.g., `.github/workflows/rhiza_ci.yml`):
+
+```yaml
+- name: Configure git auth for private packages
+  uses: ./.github/actions/configure-git-auth
+```
+
+Or for container-based workflows:
+
+```yaml
+- name: Configure git auth for private packages
+  run: |
+    git config --global url."https://${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "https://github.com/"
+```
+
+**For custom workflows** (not synced from Rhiza), add the git authentication step yourself:
 
 ```yaml
 - name: Configure git auth for private packages
@@ -37,7 +69,18 @@ Add a git authentication step before installing dependencies in your CI workflow
 
 This configuration tells git to automatically inject the `GITHUB_TOKEN` into all HTTPS GitHub URLs.
 
-### 3. Complete Workflow Example
+### 3. Using the Composite Action (Custom Workflows)
+
+For custom workflows, you can use Rhiza's composite action instead of inline commands:
+
+```yaml
+- name: Configure git auth for private packages
+  uses: ./.github/actions/configure-git-auth
+```
+
+This is cleaner and more maintainable than inline git config commands.
+
+### 4. Complete Workflow Example
 
 Here's a complete example of a GitHub Actions workflow that uses private packages:
 

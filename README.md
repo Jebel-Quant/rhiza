@@ -407,7 +407,7 @@ For system dependencies and custom build steps, see [docs/CUSTOMIZATION.md](docs
 
 ### Private GitHub Packages
 
-When your project depends on private GitHub repositories, you can use HTTPS + token authentication:
+Rhiza's template workflows automatically support private GitHub packages from the same organization. Simply add them to your `pyproject.toml`:
 
 **In `pyproject.toml`:**
 ```toml
@@ -415,13 +415,9 @@ When your project depends on private GitHub repositories, you can use HTTPS + to
 my-package = { git = "https://github.com/jebel-quant/my-package.git", rev = "v1.0.0" }
 ```
 
-**In CI workflows:**
-```yaml
-- name: Configure git auth
-  uses: ./.github/actions/configure-git-auth
-```
+**Git authentication is already configured** in all Rhiza workflows (CI, book, release, etc.) using the default `GITHUB_TOKEN`, which automatically provides read access to repositories in the same organization.
 
-The default `GITHUB_TOKEN` automatically provides read access to repositories in the same organization. For complete setup instructions, troubleshooting, and local development options, see [.rhiza/docs/PRIVATE_PACKAGES.md](.rhiza/docs/PRIVATE_PACKAGES.md).
+For custom workflows or local development setup, see [.rhiza/docs/PRIVATE_PACKAGES.md](.rhiza/docs/PRIVATE_PACKAGES.md).
 
 ### Release Management
 
