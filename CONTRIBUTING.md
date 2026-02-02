@@ -91,3 +91,99 @@ make test
 
 Please make sure that your change doesn't cause any
 of the unit tests to fail.
+
+## Repository Configuration
+
+### Required Secrets
+
+These secrets must be configured in your repository settings for full CI/CD functionality:
+
+| Secret | Required For | Description |
+|--------|--------------|-------------|
+| `PAT_TOKEN` | Template sync workflow | Personal Access Token with `workflow` scope. Required when template sync modifies workflow files. |
+| `PYPI_TOKEN` | Release (custom feeds only) | Token for custom PyPI feed authentication. Not needed for PyPI with OIDC trusted publishing. |
+
+### Repository Variables
+
+These variables control workflow behavior:
+
+| Variable | Used By | Description |
+|----------|---------|-------------|
+| `PUBLISH_COMPANION_BOOK` | Book workflow | Set to `false` to disable documentation deployment. Default: deploys to GitHub Pages. |
+| `PUBLISH_DEVCONTAINER` | Release workflow | Set to `true` to publish devcontainer images on release. |
+| `DEVCONTAINER_REGISTRY` | Release workflow | Container registry URL. Default: `ghcr.io` |
+| `DEVCONTAINER_IMAGE_NAME` | Release workflow | Custom image name component. Default: `{repo-name}/devcontainer` |
+| `PYPI_REPOSITORY_URL` | Release workflow | Custom PyPI feed URL for private registries. |
+
+### Setting Up Secrets
+
+1. Navigate to your repository on GitHub
+2. Go to **Settings** → **Secrets and variables** → **Actions**
+3. Click **New repository secret**
+4. Add each required secret with its value
+
+### Creating a PAT_TOKEN
+
+The `PAT_TOKEN` is needed for the sync workflow to update workflow files:
+
+1. Go to GitHub **Settings** → **Developer settings** → **Personal access tokens** → **Fine-grained tokens**
+2. Click **Generate new token**
+3. Set expiration and select the repository
+4. Under **Repository permissions**, grant:
+   - **Contents**: Read and write
+   - **Workflows**: Read and write
+5. Copy the token and add it as `PAT_TOKEN` secret
+
+### PyPI Trusted Publishing (Recommended)
+
+For PyPI releases, we recommend using OIDC trusted publishing instead of tokens:
+
+1. Go to [pypi.org](https://pypi.org) → Your project → **Publishing**
+2. Add a new trusted publisher with:
+   - Owner: `{your-github-org}`
+   - Repository: `{your-repo-name}`
+   - Workflow: `rhiza_release.yml`
+   - Environment: `release`
+
+This eliminates the need for stored PyPI credentials.
+
+### Branch Protection Rules
+
+We recommend configuring branch protection rules for the `main` branch to ensure code quality and prevent accidental changes.
+
+**To configure branch protection:**
+
+1. Navigate to your repository on GitHub
+2. Go to **Settings** → **Branches**
+3. Click **Add branch protection rule**
+4. Set **Branch name pattern** to `main`
+
+**Recommended settings:**
+
+| Setting | Recommended | Description |
+|---------|-------------|-------------|
+| **Require a pull request before merging** | ✅ Yes | Prevents direct pushes to main |
+| **Require approvals** | 1+ | Number of required review approvals |
+| **Dismiss stale pull request approvals** | ✅ Yes | Re-review required after new commits |
+| **Require status checks to pass** | ✅ Yes | CI must pass before merge |
+| **Require branches to be up to date** | ✅ Yes | Branch must be current with main |
+| **Require conversation resolution** | ✅ Yes | All review comments must be resolved |
+| **Require signed commits** | Optional | Enforce GPG-signed commits |
+| **Include administrators** | ✅ Yes | Rules apply to admins too |
+| **Allow force pushes** | ❌ No | Prevent history rewriting |
+| **Allow deletions** | ❌ No | Prevent branch deletion |
+
+**Required status checks:**
+
+Add these workflows as required status checks:
+
+- `(RHIZA) CI` - Tests must pass on all Python versions
+- `(RHIZA) PRE-COMMIT` - Code formatting and linting
+- `(RHIZA) DEPTRY` - Dependency hygiene
+
+**For organizations using GitHub Enterprise:**
+
+Consider also enabling:
+- **Require code owner reviews** - CODEOWNERS file determines reviewers
+- **Restrict who can push** - Limit to specific teams
+- **Require linear history** - Enforce squash or rebase merges
