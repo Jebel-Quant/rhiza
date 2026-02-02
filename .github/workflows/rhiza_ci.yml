@@ -28,6 +28,15 @@ jobs:
         with:
           lfs: true
 
+      - name: Configure git for private GitHub repos
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -n "$GH_PAT" ]; then
+            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
+            echo "✅ Git configured for private GitHub repositories"
+          fi
+
       - name: Install uv
         uses: astral-sh/setup-uv@v7.2.1
         with:
@@ -59,6 +68,15 @@ jobs:
         with:
           lfs: true
 
+      - name: Configure git for private GitHub repos
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -n "$GH_PAT" ]; then
+            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
+            echo "✅ Git configured for private GitHub repositories"
+          fi
+
       - name: Install uv
         uses: astral-sh/setup-uv@v7.2.1
         with:
@@ -77,6 +95,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
+
+      - name: Configure git for private GitHub repos
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -n "$GH_PAT" ]; then
+            git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
+            echo "✅ Git configured for private GitHub repositories"
+          fi
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7.2.1
