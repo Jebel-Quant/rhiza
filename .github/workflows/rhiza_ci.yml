@@ -33,6 +33,11 @@ jobs:
         with:
           version: "0.9.28"
 
+      - name: Configure git auth for private packages
+        uses: ./.github/actions/configure-git-auth
+        with:
+          token: ${{ secrets.GH_PAT }}
+          
       - id: versions
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
