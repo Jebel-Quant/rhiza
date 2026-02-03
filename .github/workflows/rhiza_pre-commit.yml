@@ -31,17 +31,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
 
-      - name: Configure git for private repos (if token present)
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          if [ -n "$GH_PAT" ]; then
-            git config --global url."https://x-access-token:${GH_PAT}@github.com/".insteadOf "https://github.com/"
-          fi
-
-      #- name: Configure git auth for private packages
-      #  run: |
-      #    git config --global url."https://${{ github.token }}@github.com/".insteadOf "https://github.com/"
+      - name: Configure git auth for private packages
+        uses: ./.github/actions/configure-git-auth
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       # Run pre-commit
       - name: Run pre-commit
