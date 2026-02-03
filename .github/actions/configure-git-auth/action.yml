@@ -5,6 +5,7 @@ inputs:
   token:
     description: 'GitHub token to use for authentication (use github.token)'
     required: true
+    default: ${{ github.token }}
 
 runs:
   using: composite
@@ -15,9 +16,8 @@ runs:
         # Configure git to use token authentication for GitHub URLs
         # This allows uv/pip to install private packages from GitHub
         git config --global url."https://${{ inputs.token }}@github.com/".insteadOf "https://github.com/"
-        
+
         echo "✓ Git configured to use token authentication for GitHub"
-        echo "  Private packages from the same organization will now be accessible"
 
 branding:
   icon: 'shield'
