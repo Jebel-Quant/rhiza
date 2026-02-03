@@ -68,7 +68,7 @@ jobs:
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
         with:
-          token: ${{ github.token }}
+          token: ${{ secrets.GH_PAT }}
 
       - name: Run tests
         env:
@@ -91,7 +91,7 @@ jobs:
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
         with:
-          token: ${{ github.token }}
+          token: ${{ secrets.GH_PAT }}
 
       - name: Check docs coverage
         env:

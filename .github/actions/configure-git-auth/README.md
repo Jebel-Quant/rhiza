@@ -7,22 +7,13 @@ This composite action configures git to use token authentication for private Git
 Add this step before installing dependencies that include private GitHub packages:
 
 ```yaml
-- name: Configure git auth
+- name: Configure git auth for private packages
   uses: ./.github/actions/configure-git-auth
   with:
-    token: ${{ github.token }}
+    token: ${{ secrets.GH_PAT }}
 ```
 
-### With Custom Token
-
-To use a different token (e.g., for cross-org dependencies):
-
-```yaml
-- name: Configure git auth
-  uses: ./.github/actions/configure-git-auth
-  with:
-    token: ${{ secrets.CUSTOM_TOKEN }}
-```
+The `GH_PAT` secret should be a Personal Access Token with `repo` scope.
 
 ## What It Does
 
@@ -45,8 +36,9 @@ private-package = { git = "https://github.com/your-org/private-package.git", rev
 
 ## Token Requirements
 
-- **Same organization**: The default `GITHUB_TOKEN` has read access automatically
-- **Different organization**: Use a Personal Access Token (PAT) with `repo` scope
+The default `GITHUB_TOKEN` does **not** have access to other private repositories, even within the same organization. You must use a Personal Access Token (PAT) with `repo` scope stored as `secrets.GH_PAT`.
+
+If `secrets.GH_PAT` is not defined, GitHub Actions passes an empty string. The action will still run successfully, but any subsequent step that tries to access private repositories will fail with an authentication error.
 
 ## Example Workflow
 
@@ -67,7 +59,7 @@ jobs:
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
         with:
-          token: ${{ github.token }}
+          token: ${{ secrets.GH_PAT }}
 
       - name: Install dependencies
         run: uv sync --frozen

@@ -32,8 +32,9 @@ jobs:
       - uses: actions/checkout@v6.0.2
 
       - name: Configure git auth for private packages
-        run: |
-          git config --global url."https://${{ github.token }}@github.com/".insteadOf "https://github.com/"
+        uses: ./.github/actions/configure-git-auth
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       # Run pre-commit
       - name: Run pre-commit

@@ -40,12 +40,11 @@ jobs:
         uses: astral-sh/setup-uv@v7.2.1
         with:
           version: "0.9.28"
-          python-version: "3.12"
 
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
         with:
-          token: ${{ github.token }}
+          token: ${{ secrets.GH_PAT }}
 
       - name: Run benchmarks
         env:
