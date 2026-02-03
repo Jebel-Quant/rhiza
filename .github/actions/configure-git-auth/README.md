@@ -38,6 +38,8 @@ private-package = { git = "https://github.com/your-org/private-package.git", rev
 
 The default `GITHUB_TOKEN` does **not** have access to other private repositories, even within the same organization. You must use a Personal Access Token (PAT) with `repo` scope stored as `secrets.GH_PAT`.
 
+If `secrets.GH_PAT` is not defined, GitHub Actions passes an empty string. The action will still run successfully, but any subsequent step that tries to access private repositories will fail with an authentication error.
+
 ## Example Workflow
 
 ```yaml
