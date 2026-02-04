@@ -211,17 +211,17 @@ class TestMakefile:
 
         proc = run_make(logger, ["mypy"])
         out = proc.stdout
-        
+
         # Get the Python version for the expected command
         python_version_file = root / ".python-version"
         if python_version_file.exists():
             python_version = python_version_file.read_text().strip()
             # Check for uvx command with Python version
-            assert f"uvx -p {python_version} mypy \"src\" --strict --config-file=pyproject.toml" in out
+            assert f'uvx -p {python_version} mypy "src" --strict --config-file=pyproject.toml' in out
         else:
             # Fallback check if .python-version doesn't exist
             assert "uvx -p" in out
-            assert "mypy \"src\" --strict --config-file=pyproject.toml" in out
+            assert 'mypy "src" --strict --config-file=pyproject.toml' in out
 
     def test_test_target_dry_run(self, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
