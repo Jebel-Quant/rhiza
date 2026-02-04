@@ -6,8 +6,6 @@ ensuring all bundle definitions are properly formatted and reference existing fi
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 import yaml
 
@@ -63,9 +61,7 @@ class TestTemplateBundleDefinitions:
         required_fields = {"description", "files"}
 
         for bundle_name, bundle_config in bundles.items():
-            assert isinstance(bundle_config, dict), (
-                f"Bundle {bundle_name} should be a dict"
-            )
+            assert isinstance(bundle_config, dict), f"Bundle {bundle_name} should be a dict"
             for field in required_fields:
                 assert field in bundle_config, f"Bundle {bundle_name} missing {field}"
 
@@ -73,15 +69,13 @@ class TestTemplateBundleDefinitions:
         """Bundle descriptions should be strings."""
         bundles = template_bundles.get("bundles", {})
         for bundle_name, bundle_config in bundles.items():
-            assert isinstance(bundle_config["description"], str), \
-                f"Bundle {bundle_name} description should be a string"
+            assert isinstance(bundle_config["description"], str), f"Bundle {bundle_name} description should be a string"
 
     def test_bundle_files_are_lists(self, template_bundles):
         """Bundle files should be lists."""
         bundles = template_bundles.get("bundles", {})
         for bundle_name, bundle_config in bundles.items():
-            assert isinstance(bundle_config["files"], list), \
-                f"Bundle {bundle_name} files should be a list"
+            assert isinstance(bundle_config["files"], list), f"Bundle {bundle_name} files should be a list"
 
     def test_core_bundle_is_marked_required(self, template_bundles):
         """Core bundle should be marked as required."""
@@ -106,14 +100,12 @@ class TestTemplateBundleDefinitions:
             # Check required dependencies
             if "requires" in bundle_config:
                 for dep in bundle_config["requires"]:
-                    assert dep in bundle_names, \
-                        f"Bundle {bundle_name} requires non-existent bundle {dep}"
+                    assert dep in bundle_names, f"Bundle {bundle_name} requires non-existent bundle {dep}"
 
             # Check recommended dependencies
             if "recommends" in bundle_config:
                 for dep in bundle_config["recommends"]:
-                    assert dep in bundle_names, \
-                        f"Bundle {bundle_name} recommends non-existent bundle {dep}"
+                    assert dep in bundle_names, f"Bundle {bundle_name} recommends non-existent bundle {dep}"
 
 
 class TestExpectedBundles:
@@ -136,8 +128,7 @@ class TestExpectedBundles:
         bundle_names = set(bundles.keys())
 
         for expected_bundle in self.EXPECTED_BUNDLES:
-            assert expected_bundle in bundle_names, \
-                f"Expected bundle {expected_bundle} not found"
+            assert expected_bundle in bundle_names, f"Expected bundle {expected_bundle} not found"
 
     def test_metadata_counts_match_bundles(self, template_bundles):
         """Metadata total_bundles should match actual bundle count."""
@@ -145,8 +136,7 @@ class TestExpectedBundles:
         metadata = template_bundles.get("metadata", {})
 
         if "total_bundles" in metadata:
-            assert metadata["total_bundles"] == len(bundles), \
-                "Metadata total_bundles doesn't match actual bundle count"
+            assert metadata["total_bundles"] == len(bundles), "Metadata total_bundles doesn't match actual bundle count"
 
 
 class TestExamplesSection:
@@ -169,6 +159,5 @@ class TestExamplesSection:
                     # core is auto-included, so we don't check it
                     if template != "core":
                         assert template in bundle_names, (
-                            f"Example {example_name} references "
-                            f"non-existent bundle {template}"
+                            f"Example {example_name} references non-existent bundle {template}"
                         )
