@@ -144,7 +144,7 @@ exclude: |
    ```python
    # Fetch bundle definitions from upstream
    bundles = fetch_from_github(
-       repo="jebel-quant/rhiza",
+       repo="Jebel-Quant/rhiza",
        ref="main",
        path=".rhiza/template-bundles.yml"
    )

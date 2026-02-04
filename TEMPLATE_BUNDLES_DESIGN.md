@@ -213,7 +213,25 @@ GitLab CI/CD pipeline configuration.
 
 ---
 
-#### 8. **github** (Implicit - always included with core)
+#### 8. **presentation**
+Presentation building using reveal.js and Marimo for creating project presentations, talk slides, and demos.
+
+**Files in `presentation`:**
+- `.rhiza/make.d/04-presentation.mk` - Make targets for building and serving presentations
+- `docs/PRESENTATION.md` - Project presentation and slide deck content
+
+**Dependencies:**
+- Recommends the `marimo` bundle for interactive notebooks and live demos
+- Standalone: Can be used independently, but works best with `marimo`
+
+**Characteristics:**
+- Standalone bundle (does not require other bundles)
+- Typically used alongside `marimo` for interactive content
+- Useful for projects that include presentations or demos
+
+---
+
+#### 9. **github** (Implicit - always included with core)
 GitHub Actions workflows and GitHub-specific configurations.
 
 **Note:** This is partially included in `core` and partially distributed across feature templates. We may not need this as a separate user-selectable template since:
@@ -352,6 +370,14 @@ bundles:
       - .gitlab/workflows/**
       - .gitlab/template/**
       - .gitlab/*.md
+
+  presentation:
+    description: "Presentation building using reveal.js and Marimo"
+    requires: []
+    recommends: ["marimo"]
+    files:
+      - .rhiza/make.d/04-presentation.mk
+      - docs/PRESENTATION.md
 ```
 
 ### 2.2 User Configuration
@@ -657,6 +683,7 @@ bundles:
   book: { description: "...", requires: ["tests"], files: [...] }
   devcontainer: { description: "...", files: [...] }
   gitlab: { description: "...", files: [...] }
+  presentation: { description: "...", recommends: ["marimo"], files: [...] }
 ```
 
 **File 2: Updated user template config (example)**
@@ -732,6 +759,7 @@ def materialize():
 | book          | ~5    | tests     | marimo     | Composite  |
 | devcontainer  | ~4    | -         | -          | Standalone |
 | gitlab        | ~15   | -         | -          | Standalone |
+| presentation  | ~2    | -         | marimo     | Standalone |
 
 **Total unique files in repository:** ~95 files
 
@@ -744,6 +772,7 @@ core (required)
   |
   ├── docker (standalone)
   ├── marimo (standalone)
+  ├── presentation (standalone, recommends marimo)
   ├── devcontainer (standalone)
   └── gitlab (standalone)
 ```
@@ -842,7 +871,7 @@ When implementing this feature, update:
 2. **Extend existing `.rhiza/template.yml`** with new `templates:` field
 3. **Maintain full backward compatibility** with path-based approach
 4. **Implement auto-dependency resolution** (e.g., book → tests)
-5. **Start with MVP**: 7 bundles (core, tests, docker, marimo, book, devcontainer, gitlab)
+5. **Start with MVP**: 8 bundles (core, tests, docker, marimo, book, devcontainer, gitlab, presentation)
 
 ### 📋 Implementation Checklist
 
