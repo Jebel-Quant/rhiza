@@ -96,12 +96,9 @@ bundles:
       - LICENSE
       
       # Community files
-      - README.md
       - CONTRIBUTING.md
       - CODE_OF_CONDUCT.md
 
-  # ============================================================================
-  # TESTS - Testing infrastructure with pytest, coverage, and benchmarks
   # ============================================================================
   # TESTS - Testing infrastructure with pytest, coverage, and type checking
   # ============================================================================
@@ -320,7 +317,7 @@ metadata:
   # Statistics
   file_counts:
     core: "~26 files"
-    legal: "~4 files"
+    legal: "~3 files"
     tests: "~25 files"
     benchmarks: "~4 files"
     docker: "~5 files"

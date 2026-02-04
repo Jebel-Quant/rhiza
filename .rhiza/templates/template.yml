@@ -8,7 +8,7 @@
 # Available Template Bundles:
 # ---------------------------
 # core         - Core Rhiza infrastructure (always included automatically)
-# legal        - LICENSE, README.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md
+# legal        - LICENSE, CONTRIBUTING.md, CODE_OF_CONDUCT.md
 # tests        - pytest, coverage, type checking, security scanning, CI workflows
 # benchmarks   - Performance benchmarking with pytest-benchmark (recommends: tests)
 # docker       - Docker containerization with Dockerfile and workflows

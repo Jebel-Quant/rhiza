@@ -47,7 +47,7 @@ repository: Jebel-Quant/rhiza
 ref: main
 
 templates:
-  - legal      # LICENSE, README, CONTRIBUTING, CODE_OF_CONDUCT
+  - legal      # LICENSE, CONTRIBUTING, CODE_OF_CONDUCT
   - tests      # Testing infrastructure (pytest, coverage, type checking)
   - docker     # Docker containerization support
   - marimo     # Interactive notebooks
@@ -55,7 +55,7 @@ templates:
 ```
 
 **Available templates:**
-- **`legal`** - LICENSE, README.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md
+- **`legal`** - LICENSE, CONTRIBUTING.md, CODE_OF_CONDUCT.md
 - **`tests`** - pytest, coverage reports, type checking, CI/CD for testing
 - **`benchmarks`** - Performance benchmarking with pytest-benchmark
 - **`docker`** - Dockerfile, build/run targets, Docker workflow
@@ -180,7 +180,6 @@ Rhiza provides **template bundles** - pre-configured sets of files grouped by fe
 #### 📄 **legal** - Legal and Community Files
 Legal and community documentation:
 - `LICENSE` - Project license
-- `README.md` - Project readme
 - `CONTRIBUTING.md` - Contribution guidelines
 - `CODE_OF_CONDUCT.md` - Code of conduct
 
