@@ -6,7 +6,7 @@
 DEPTRY_FOLDERS += src
 
 # Declare phony targets (they don't produce files)
-.PHONY: mypy docs docs-coverage security typecheck
+.PHONY: mypy docs docs-coverage security typecheck fmt
 
 # Logo file for pdoc (relative to project root).
 # 1. Defaults to the Rhiza logo if present.
@@ -15,6 +15,10 @@ DEPTRY_FOLDERS += src
 LOGO_FILE ?= assets/rhiza-logo.svg
 
 ##@ src
+
+# The 'fmt' target checks the pre-commit hooks and the linting.
+fmt: install-uv ## check the pre-commit hooks and the linting
+	@${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --all-files
 
 # The 'mypy' target runs static type analysis using pyproject.toml config.
 mypy: install ## run mypy type checking
