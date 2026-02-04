@@ -1,6 +1,12 @@
 ## Makefile.marimo - Marimo notebook targets
 # This file is included by the main Makefile
 
+# Add MARIMO_FOLDER to deptry configuration if it exists
+ifneq ($(wildcard $(MARIMO_FOLDER)),)
+DEPTRY_FOLDERS += $(MARIMO_FOLDER)
+DEPTRY_IGNORE += --ignore DEP004
+endif
+
 # Declare phony targets (they don't produce files)
 .PHONY: marimo-validate marimo marimushka
 
