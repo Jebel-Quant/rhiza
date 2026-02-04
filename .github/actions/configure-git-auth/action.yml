@@ -4,7 +4,7 @@ description: 'Configure git to use token authentication for private GitHub packa
 inputs:
   token:
     description: 'GitHub token to use for authentication (use github.token)'
-    required: true
+    required: false
     default: ${{ github.token }}
 
 runs:
@@ -18,7 +18,3 @@ runs:
         git config --global url."https://${{ inputs.token }}@github.com/".insteadOf "https://github.com/"
 
         echo "✓ Git configured to use token authentication for GitHub"
-
-branding:
-  icon: 'shield'
-  color: 'blue'
