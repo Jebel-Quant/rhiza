@@ -61,9 +61,11 @@ class TestTemplateBundleDefinitions:
         """Each bundle should have required fields."""
         bundles = template_bundles.get("bundles", {})
         required_fields = {"description", "files"}
-        
+
         for bundle_name, bundle_config in bundles.items():
-            assert isinstance(bundle_config, dict), f"Bundle {bundle_name} should be a dict"
+            assert isinstance(bundle_config, dict), (
+                f"Bundle {bundle_name} should be a dict"
+            )
             for field in required_fields:
                 assert field in bundle_config, f"Bundle {bundle_name} missing {field}"
 
@@ -99,14 +101,14 @@ class TestTemplateBundleDefinitions:
         """All bundles referenced in requires/recommends should exist."""
         bundles = template_bundles.get("bundles", {})
         bundle_names = set(bundles.keys())
-        
+
         for bundle_name, bundle_config in bundles.items():
             # Check required dependencies
             if "requires" in bundle_config:
                 for dep in bundle_config["requires"]:
                     assert dep in bundle_names, \
                         f"Bundle {bundle_name} requires non-existent bundle {dep}"
-            
+
             # Check recommended dependencies
             if "recommends" in bundle_config:
                 for dep in bundle_config["recommends"]:
@@ -132,7 +134,7 @@ class TestExpectedBundles:
         """All expected bundles should be defined."""
         bundles = template_bundles.get("bundles", {})
         bundle_names = set(bundles.keys())
-        
+
         for expected_bundle in self.EXPECTED_BUNDLES:
             assert expected_bundle in bundle_names, \
                 f"Expected bundle {expected_bundle} not found"
@@ -141,7 +143,7 @@ class TestExpectedBundles:
         """Metadata total_bundles should match actual bundle count."""
         bundles = template_bundles.get("bundles", {})
         metadata = template_bundles.get("metadata", {})
-        
+
         if "total_bundles" in metadata:
             assert metadata["total_bundles"] == len(bundles), \
                 "Metadata total_bundles doesn't match actual bundle count"
@@ -160,11 +162,13 @@ class TestExamplesSection:
         bundles = template_bundles.get("bundles", {})
         bundle_names = set(bundles.keys())
         examples = template_bundles.get("examples", {})
-        
+
         for example_name, example_config in examples.items():
             if "templates" in example_config:
                 for template in example_config["templates"]:
                     # core is auto-included, so we don't check it
                     if template != "core":
-                        assert template in bundle_names, \
-                            f"Example {example_name} references non-existent bundle {template}"
+                        assert template in bundle_names, (
+                            f"Example {example_name} references "
+                            f"non-existent bundle {template}"
+                        )
