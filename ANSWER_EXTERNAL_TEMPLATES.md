@@ -1,5 +1,7 @@
 # Answer: How Does Rhiza Parse Bundles from Other Repos?
 
+> **Note**: This document explains how the system is DESIGNED to work. The template definitions are complete in this repository. Implementation in rhiza-cli is pending. See [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) for details.
+
 ## Direct Answer
 
 **rhiza-cli uses a standard location convention**: `.rhiza/template-bundles.yml`

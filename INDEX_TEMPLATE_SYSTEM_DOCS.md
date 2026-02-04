@@ -2,6 +2,13 @@
 
 This document provides an organized index to all template system documentation.
 
+## ⚠️ Important: Repository Separation
+
+**This PR is for the rhiza repository (template definitions).** The actual CLI implementation will be in the separate rhiza-cli repository.
+
+- **[REPOSITORY_SEPARATION.md](REPOSITORY_SEPARATION.md)** - Explains what belongs in which repository ⭐ **NEW**
+- **[IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)** - Current status and what's pending ⭐ **NEW**
+
 ## Quick Start
 
 **New to template bundles?** Start here:
@@ -38,6 +45,18 @@ This document provides an organized index to all template system documentation.
 - **[tests/test_rhiza/test_template_bundles.py](tests/test_rhiza/test_template_bundles.py)** - Test examples
 
 ## Common Questions
+
+### Why isn't most of this PR in rhiza-cli?
+
+→ See **[REPOSITORY_SEPARATION.md](REPOSITORY_SEPARATION.md)** ⭐ **NEW**
+
+**TL;DR**: This PR correctly focuses on template definitions (rhiza repo). Implementation code will be in rhiza-cli repo.
+
+### What's the current implementation status?
+
+→ See **[IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md)** ⭐ **NEW**
+
+**TL;DR**: Template definitions ✅ complete. CLI implementation ⏳ pending in rhiza-cli repo.
 
 ### How does rhiza know how to parse bundles from other repos?
 

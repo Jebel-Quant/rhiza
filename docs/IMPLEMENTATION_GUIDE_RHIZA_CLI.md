@@ -1,5 +1,12 @@
 # Implementation Guide for rhiza-cli Team
 
+> **⚠️ NOTE FOR RHIZA-CLI DEVELOPERS**: This document is a SPECIFICATION for implementing template bundle support in rhiza-cli. It currently resides in the `Jebel-Quant/rhiza` repository as a design document. When implementation begins in rhiza-cli, consider copying/moving this document there.
+
+> **CURRENT STATUS**: 
+> - ✅ Template definitions complete (in rhiza repository - this repo)
+> - ⏳ CLI implementation pending (in rhiza-cli repository - separate repo)
+> - See [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md) for details
+
 This document provides guidance for the rhiza-cli team to implement template bundle support.
 
 ## Overview
