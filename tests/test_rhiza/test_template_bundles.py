@@ -114,6 +114,7 @@ class TestExpectedBundles:
     EXPECTED_BUNDLES = {
         "core",
         "tests",
+        "benchmarks",
         "docker",
         "marimo",
         "book",

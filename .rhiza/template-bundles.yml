@@ -91,8 +91,10 @@ bundles:
   # ============================================================================
   # TESTS - Testing infrastructure with pytest, coverage, and benchmarks
   # ============================================================================
+  # TESTS - Testing infrastructure with pytest, coverage, and type checking
+  # ============================================================================
   tests:
-    description: "Testing infrastructure with pytest, coverage, and benchmarks"
+    description: "Testing infrastructure with pytest, coverage, and type checking"
     standalone: true
     requires: []
     files:
@@ -101,18 +103,36 @@ bundles:
       - .rhiza/requirements/tests.txt
       - pytest.ini
       
-      # Test directory and all test files
+      # Test directory and all test files (excluding benchmarks)
       - tests/**
       
       # GitHub Actions workflows
       - .github/workflows/rhiza_ci.yml
-      - .github/workflows/rhiza_benchmarks.yml
       - .github/workflows/rhiza_mypy.yml
       - .github/workflows/rhiza_security.yml
       - .github/workflows/rhiza_codeql.yml
       
       # GitLab CI workflows
       - .gitlab/workflows/rhiza_ci.yml
+
+  # ============================================================================
+  # BENCHMARKS - Performance benchmarking with pytest-benchmark
+  # ============================================================================
+  benchmarks:
+    description: "Performance benchmarking infrastructure with pytest-benchmark"
+    standalone: true
+    requires: []
+    recommends:
+      - tests  # Benchmarks work best alongside tests
+    files:
+      # Benchmark make target (part of test.mk)
+      # Note: The benchmark target is in 01-test.mk
+      
+      # Benchmark directory
+      - tests/test_rhiza/benchmarks/**
+      
+      # GitHub Actions workflows
+      - .github/workflows/rhiza_benchmarks.yml
 
   # ============================================================================
   # DOCKER - Docker containerization support
@@ -257,15 +277,16 @@ bundles:
 # Bundle Metadata
 # ============================================================================
 metadata:
-  total_bundles: 8
+  total_bundles: 9
   required_bundles: 1  # core
-  standalone_bundles: 7
+  standalone_bundles: 8
   composite_bundles: 1  # book (requires tests)
   
   # Statistics
   file_counts:
     core: "~30 files"
     tests: "~30+ files"
+    benchmarks: "~4 files"
     docker: "~5 files"
     marimo: "~6 files"
     book: "~5 files"
@@ -299,10 +320,17 @@ examples:
     description: "Full-featured project with all capabilities"
     templates:
       - tests
+      - benchmarks
       - docker
       - marimo
       - book
       - devcontainer
+  
+  performance_focused:
+    description: "Performance-focused project with benchmarking"
+    templates:
+      - tests
+      - benchmarks
   
   gitlab_project:
     description: "GitLab-focused project"
@@ -319,6 +347,9 @@ changelog:
     date: "2025-02-04"
     changes:
       - "Initial template bundle system"
+      - "Defined 9 core bundles: core, tests, benchmarks, docker, marimo, book, devcontainer, gitlab, presentation"
+      - "Implemented dependency resolution (book requires tests)"
+      - "Added recommendation system (book recommends marimo, benchmarks recommends tests)"
       - "Defined 8 core bundles: core, tests, docker, marimo, book, devcontainer, gitlab, presentation"
       - "Implemented dependency resolution (book requires tests)"
       - "Added recommendation system (book recommends marimo)"

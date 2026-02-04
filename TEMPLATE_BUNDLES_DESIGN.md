@@ -71,21 +71,19 @@ Core infrastructure files that every Rhiza-based project needs.
 ---
 
 #### 2. **tests**
-Testing infrastructure with pytest, coverage reporting, and benchmarks.
+Testing infrastructure with pytest, coverage reporting, and type checking.
 
 **Files:**
-- `.rhiza/make.d/01-test.mk` - Test targets (test, coverage, benchmarks)
+- `.rhiza/make.d/01-test.mk` - Test targets (test, coverage, typecheck, security)
 - `.rhiza/requirements/tests.txt` - Test dependencies (pytest, coverage, etc.)
 - `pytest.ini` - Pytest configuration
-- `tests/**` - All test files and infrastructure
+- `tests/**` - All test files and infrastructure (excluding benchmarks)
   - `tests/test_rhiza/` - Test suite directory
   - `tests/test_rhiza/conftest.py` - Pytest fixtures
-  - `tests/test_rhiza/benchmarks/` - Benchmark infrastructure
   - `tests/test_rhiza/test_*.py` - All test files
 
 **GitHub Workflows:**
 - `.github/workflows/rhiza_ci.yml` - Main CI with tests
-- `.github/workflows/rhiza_benchmarks.yml` - Benchmark tests
 - `.github/workflows/rhiza_mypy.yml` - Type checking
 - `.github/workflows/rhiza_security.yml` - Security scanning
 - `.github/workflows/rhiza_codeql.yml` - CodeQL analysis
@@ -99,7 +97,25 @@ Testing infrastructure with pytest, coverage reporting, and benchmarks.
 
 ---
 
-#### 3. **docker**
+#### 3. **benchmarks**
+Performance benchmarking infrastructure with pytest-benchmark for detecting performance regressions.
+
+**Files:**
+- `tests/test_rhiza/benchmarks/` - Benchmark infrastructure
+  - `tests/test_rhiza/benchmarks/analyze_benchmarks.py` - Benchmark analysis
+  - `tests/test_rhiza/benchmarks/README.md` - Benchmark documentation
+- Benchmark target in `.rhiza/make.d/01-test.mk` (make benchmark)
+
+**GitHub Workflows:**
+- `.github/workflows/rhiza_benchmarks.yml` - Benchmark tests with regression detection
+
+**File Count:** ~4 files  
+**Dependencies:** None (but recommends tests)  
+**Standalone:** Yes
+
+---
+
+#### 4. **docker**
 Docker containerization support for building and running Docker images.
 
 **Files:**
@@ -117,7 +133,7 @@ Docker containerization support for building and running Docker images.
 
 ---
 
-#### 4. **marimo**
+#### 5. **marimo**
 Interactive Marimo notebooks for data exploration and documentation.
 
 **Files:**
@@ -139,7 +155,7 @@ Interactive Marimo notebooks for data exploration and documentation.
 
 ---
 
-#### 5. **book**
+#### 6. **book**
 Comprehensive documentation book generation combining API docs, test reports, coverage, and notebooks.
 
 **Files:**
@@ -169,7 +185,7 @@ Comprehensive documentation book generation combining API docs, test reports, co
 
 ---
 
-#### 6. **devcontainer**
+#### 7. **devcontainer**
 VS Code DevContainer configuration for consistent development environments.
 
 **Files:**
@@ -186,7 +202,7 @@ VS Code DevContainer configuration for consistent development environments.
 
 ---
 
-#### 7. **gitlab**
+#### 8. **gitlab**
 GitLab CI/CD pipeline configuration.
 
 **Files:**
@@ -213,7 +229,7 @@ GitLab CI/CD pipeline configuration.
 
 ---
 
-#### 8. **presentation**
+#### 9. **presentation**
 Presentation building using reveal.js and Marimo for creating project presentations, talk slides, and demos.
 
 **Files in `presentation`:**
@@ -231,7 +247,7 @@ Presentation building using reveal.js and Marimo for creating project presentati
 
 ---
 
-#### 9. **github** (Implicit - always included with core)
+#### 10. **github** (Implicit - always included with core)
 GitHub Actions workflows and GitHub-specific configurations.
 
 **Note:** This is partially included in `core` and partially distributed across feature templates. We may not need this as a separate user-selectable template since:
@@ -754,6 +770,7 @@ def materialize():
 |---------------|-------|-----------|------------|------------|
 | core          | ~30   | -         | -          | Required   |
 | tests         | ~30   | -         | -          | Standalone |
+| benchmarks    | ~4    | -         | tests      | Standalone |
 | docker        | ~5    | -         | -          | Standalone |
 | marimo        | ~6    | -         | -          | Standalone |
 | book          | ~5    | tests     | marimo     | Composite  |
@@ -768,6 +785,7 @@ def materialize():
 core (required)
   |
   ├── tests (standalone)
+  |     ├── benchmarks (standalone, recommends tests)
   |     └── book (requires tests, recommends marimo)
   |
   ├── docker (standalone)
@@ -871,7 +889,7 @@ When implementing this feature, update:
 2. **Extend existing `.rhiza/template.yml`** with new `templates:` field
 3. **Maintain full backward compatibility** with path-based approach
 4. **Implement auto-dependency resolution** (e.g., book → tests)
-5. **Start with MVP**: 8 bundles (core, tests, docker, marimo, book, devcontainer, gitlab, presentation)
+5. **Start with MVP**: 9 bundles (core, tests, benchmarks, docker, marimo, book, devcontainer, gitlab, presentation)
 
 ### 📋 Implementation Checklist
 

@@ -54,7 +54,8 @@ templates:
 ```
 
 **Available templates:**
-- **`tests`** - pytest, coverage reports, benchmarks, CI/CD for testing
+- **`tests`** - pytest, coverage reports, type checking, CI/CD for testing
+- **`benchmarks`** - Performance benchmarking with pytest-benchmark
 - **`docker`** - Dockerfile, build/run targets, Docker workflow
 - **`marimo`** - Interactive notebooks for data exploration
 - **`book`** - Documentation book with API docs, coverage, test reports
@@ -175,13 +176,19 @@ make install
 Rhiza provides **template bundles** - pre-configured sets of files grouped by feature. Simply select the bundles you need in `.rhiza/template.yml`:
 
 #### 🧪 **tests** - Testing Infrastructure
-Complete testing setup with pytest, coverage reports, and benchmarks:
-- `.rhiza/make.d/01-test.mk` - Test, benchmark, typecheck targets
+Complete testing setup with pytest, coverage reports, and type checking:
+- `.rhiza/make.d/01-test.mk` - Test, typecheck, security targets
 - `pytest.ini` - pytest configuration
 - `tests/` - Test directory structure
 - `.github/workflows/rhiza_ci.yml` - CI workflow
-- `.github/workflows/rhiza_benchmarks.yml` - Benchmark workflow
 - `.github/workflows/rhiza_mypy.yml` - Type checking workflow
+
+#### 📊 **benchmarks** - Performance Benchmarking
+Performance benchmarking infrastructure with pytest-benchmark:
+- `tests/test_rhiza/benchmarks/` - Benchmark directory
+- `.github/workflows/rhiza_benchmarks.yml` - Benchmark workflow
+- Benchmark targets in test.mk
+- **Note:** Works best with `tests` template (recommended)
 
 #### 🐳 **docker** - Containerization
 Docker support for building and running containers:
