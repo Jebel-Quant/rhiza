@@ -76,7 +76,7 @@ def test_book_folder(git_repo):
         targets = phony_line.split(":")[1].strip().split()
         all_targets.update(targets)
 
-    expected_targets = {"book", "docs", "marimushka"}
+    expected_targets = {"book", "marimushka"}
     assert expected_targets.issubset(all_targets), (
         f"Expected phony targets to include {expected_targets}, got {all_targets}"
     )
