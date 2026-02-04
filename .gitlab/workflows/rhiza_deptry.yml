@@ -13,7 +13,7 @@
 deptry:check:
   stage: test
   needs: []
-  image: ghcr.io/astral-sh/uv:0.9.28-bookworm
+  image: ghcr.io/astral-sh/uv:0.9.29-bookworm
   script:
     - make deptry
   rules:
