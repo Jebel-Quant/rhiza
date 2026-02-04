@@ -37,6 +37,8 @@ Rhiza uses a simple configuration file (`.rhiza/template.yml`) to control which 
 
 #### Template-Based Configuration (Recommended)
 
+> **Note**: Template bundle support is planned for rhiza-cli v0.9.0+. Currently in development.
+
 Select pre-configured feature bundles that automatically include all related files:
 
 ```yaml

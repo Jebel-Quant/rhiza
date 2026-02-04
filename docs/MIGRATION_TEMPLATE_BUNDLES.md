@@ -245,12 +245,14 @@ templates:
 
 ### "Template not found" error
 
-Make sure you're using the latest version of rhiza-cli:
+Make sure you're using a version of rhiza-cli that supports template bundles:
 
 ```bash
 uvx rhiza --version
-# Should be >= 0.8.0 for template bundle support
+# Template bundle support planned for rhiza-cli v0.9.0+
 ```
+
+**Note**: Template bundle support in rhiza-cli is currently in development. This migration guide assumes rhiza-cli has been updated to support the `templates:` field. Check the rhiza-cli release notes for availability.
 
 ### Missing files after migration
 
