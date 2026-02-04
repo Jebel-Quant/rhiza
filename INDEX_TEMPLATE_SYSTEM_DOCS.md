@@ -4,6 +4,10 @@ This document provides an organized index to all template system documentation.
 
 ## ⚠️ Important: Repository Separation
 
+**"Why isn't most of this PR in rhiza-cli?"** 
+
+→ **[WHY_NOT_IN_RHIZA_CLI.md](WHY_NOT_IN_RHIZA_CLI.md)** - Direct answer to this question ⭐ **NEW**
+
 **This PR is for the rhiza repository (template definitions).** The actual CLI implementation will be in the separate rhiza-cli repository.
 
 - **[REPOSITORY_SEPARATION.md](REPOSITORY_SEPARATION.md)** - Explains what belongs in which repository ⭐ **NEW**
