@@ -4,7 +4,7 @@
 # executing performance benchmarks.
 
 # Declare phony targets (they don't produce files)
-.PHONY: test benchmark typecheck security docs-coverage
+.PHONY: test benchmark typecheck mypy security docs-coverage
 
 # Default directory for tests
 TESTS_FOLDER := tests
@@ -53,6 +53,14 @@ typecheck: install ## run mypy type checking
 	  ${UV_BIN} run mypy ${SOURCE_FOLDER} --config-file pyproject.toml; \
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping typecheck${RESET}\n"; \
+	fi
+
+# The 'mypy' target runs static type analysis using mypy with strict mode.
+# 1. Checks if the source directory exists.
+# 2. Runs mypy on the source folder using strict mode and the configuration in pyproject.toml.
+mypy: install ## run mypy analysis
+	@if [ -d ${SOURCE_FOLDER} ]; then \
+		${UV_BIN} run mypy ${SOURCE_FOLDER} --strict --config-file=pyproject.toml; \
 	fi
 
 # The 'security' target performs security vulnerability scans.
