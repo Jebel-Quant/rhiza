@@ -61,11 +61,7 @@ bundles:
       - renovate.json
       - pyproject.toml
       
-      # Documentation files
-      - LICENSE
-      - README.md
-      - CONTRIBUTING.md
-      - CODE_OF_CONDUCT.md
+      # Documentation files (project-specific docs)
       - SECURITY.md
       - PRESENTATION.md
       - docs/ARCHITECTURE.md
@@ -89,6 +85,22 @@ bundles:
       - .github/agents/**
 
   # ============================================================================
+  # LEGAL - Legal and community files
+  # ============================================================================
+  legal:
+    description: "Legal and community documentation files"
+    standalone: true
+    requires: []
+    files:
+      # Legal files
+      - LICENSE
+      
+      # Community files
+      - README.md
+      - CONTRIBUTING.md
+      - CODE_OF_CONDUCT.md
+
+  # ============================================================================
   # TESTS - Testing infrastructure with pytest, coverage, and benchmarks
   # ============================================================================
   # TESTS - Testing infrastructure with pytest, coverage, and type checking
@@ -103,8 +115,24 @@ bundles:
       - .rhiza/requirements/tests.txt
       - pytest.ini
       
-      # Test directory and all test files (excluding benchmarks)
-      - tests/**
+      # Core test infrastructure
+      - tests/test_rhiza/__init__.py
+      - tests/test_rhiza/conftest.py
+      - tests/test_rhiza/README.md
+      
+      # Core/generic test files
+      - tests/test_rhiza/test_structure.py
+      - tests/test_rhiza/test_docstrings.py
+      - tests/test_rhiza/test_makefile.py
+      - tests/test_rhiza/test_makefile_api.py
+      - tests/test_rhiza/test_makefile_gh.py
+      - tests/test_rhiza/test_git_repo_fixture.py
+      - tests/test_rhiza/test_requirements_folder.py
+      - tests/test_rhiza/test_readme.py
+      - tests/test_rhiza/test_rhiza_workflows.py
+      - tests/test_rhiza/test_release_script.py
+      - tests/test_rhiza/test_version_matrix.py
+      - tests/test_rhiza/test_template_bundles.py
       
       # GitHub Actions workflows
       - .github/workflows/rhiza_ci.yml
@@ -170,6 +198,10 @@ bundles:
       # Marimo notebooks directory
       - book/marimo/**
       
+      # Marimo-specific tests
+      - tests/test_rhiza/test_marimushka_target.py
+      - tests/test_rhiza/test_notebooks.py
+      
       # Documentation
       - docs/MARIMO.md
       
@@ -198,6 +230,9 @@ bundles:
       # Book building configuration
       - .rhiza/make.d/02-book.mk
       - .rhiza/templates/minibook/**
+      
+      # Book-specific tests
+      - tests/test_rhiza/test_book.py
       
       # Documentation
       - docs/BOOK.md
@@ -277,19 +312,20 @@ bundles:
 # Bundle Metadata
 # ============================================================================
 metadata:
-  total_bundles: 9
+  total_bundles: 10
   required_bundles: 1  # core
-  standalone_bundles: 8
+  standalone_bundles: 9
   composite_bundles: 1  # book (requires tests)
   
   # Statistics
   file_counts:
-    core: "~30 files"
-    tests: "~30+ files"
+    core: "~26 files"
+    legal: "~4 files"
+    tests: "~25 files"
     benchmarks: "~4 files"
     docker: "~5 files"
-    marimo: "~6 files"
-    book: "~5 files"
+    marimo: "~8 files"
+    book: "~6 files"
     devcontainer: "~4 files"
     gitlab: "~15 files"
     presentation: "~2 files"
@@ -301,17 +337,27 @@ examples:
   minimal:
     description: "Minimal Python project with just testing"
     templates:
+      - legal
       - tests
+  
+  open_source:
+    description: "Open source project with community files"
+    templates:
+      - legal
+      - tests
+      - docker
     
   docker_service:
     description: "Docker-based microservice"
     templates:
+      - legal
       - tests
       - docker
   
   data_science:
     description: "Data science project with notebooks and documentation"
     templates:
+      - legal
       - tests
       - marimo
       - book
@@ -319,6 +365,7 @@ examples:
   full_featured:
     description: "Full-featured project with all capabilities"
     templates:
+      - legal
       - tests
       - benchmarks
       - docker
@@ -329,12 +376,14 @@ examples:
   performance_focused:
     description: "Performance-focused project with benchmarking"
     templates:
+      - legal
       - tests
       - benchmarks
   
   gitlab_project:
     description: "GitLab-focused project"
     templates:
+      - legal
       - tests
       - docker
       - gitlab
@@ -347,9 +396,11 @@ changelog:
     date: "2025-02-04"
     changes:
       - "Initial template bundle system"
-      - "Defined 9 core bundles: core, tests, benchmarks, docker, marimo, book, devcontainer, gitlab, presentation"
+      - "Defined 10 core bundles: core, legal, tests, benchmarks, docker, marimo, book, devcontainer, gitlab, presentation"
       - "Implemented dependency resolution (book requires tests)"
       - "Added recommendation system (book recommends marimo, benchmarks recommends tests)"
+      - "Separated legal/community files into dedicated bundle"
+      - "Assigned feature-specific test files to their respective bundles"
       - "Defined 8 core bundles: core, tests, docker, marimo, book, devcontainer, gitlab, presentation"
       - "Implemented dependency resolution (book requires tests)"
       - "Added recommendation system (book recommends marimo)"

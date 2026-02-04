@@ -1,0 +1,59 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Rhiza Template Configuration
+# ============================
+# This file controls which template bundles are synced to your project.
+# 
+# Available Template Bundles:
+# ---------------------------
+# core         - Core Rhiza infrastructure (always included automatically)
+# legal        - LICENSE, README.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md
+# tests        - pytest, coverage, type checking, security scanning, CI workflows
+# benchmarks   - Performance benchmarking with pytest-benchmark (recommends: tests)
+# docker       - Docker containerization with Dockerfile and workflows
+# marimo       - Interactive Marimo notebooks for data exploration
+# book         - Documentation generation with pdoc, coverage, and test reports (requires: tests)
+# devcontainer - VS Code DevContainer for consistent development environments
+# gitlab       - GitLab CI/CD pipelines (alternative to GitHub Actions)
+# presentation - Reveal.js presentation building (recommends: marimo)
+#
+# Usage:
+# ------
+# Option 1: Template-based (recommended)
+#   Select pre-configured bundles that automatically include all related files
+#
+# Option 2: Path-based (advanced)
+#   Specify individual file patterns for fine-grained control
+#
+# Option 3: Hybrid
+#   Combine both approaches - templates for common features, paths for customization
+
+# Repository to sync from
+repository: Jebel-Quant/rhiza
+ref: main
+
+# Template-based configuration (recommended)
+# Uncomment and add the bundles you want:
+templates:
+  - legal        # Legal and community files
+  - tests        # Testing infrastructure
+  # - benchmarks   # Performance benchmarking
+  # - docker       # Docker containerization
+  # - marimo       # Interactive notebooks
+  # - book         # Documentation generation (requires tests)
+  # - devcontainer # VS Code DevContainer
+  # - gitlab       # GitLab CI/CD
+  # - presentation # Presentations
+
+# Path-based configuration (optional)
+# Use glob patterns to include specific files:
+# include: |
+#   custom/special-file.yml
+#   src/custom/**
+
+# Exclude specific files (optional)
+# Use glob patterns to exclude files:
+# exclude: |
+#   tests/integration/**
+#   docker/dev.Dockerfile

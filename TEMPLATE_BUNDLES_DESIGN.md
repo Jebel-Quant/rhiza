@@ -77,10 +77,23 @@ Testing infrastructure with pytest, coverage reporting, and type checking.
 - `.rhiza/make.d/01-test.mk` - Test targets (test, coverage, typecheck, security)
 - `.rhiza/requirements/tests.txt` - Test dependencies (pytest, coverage, etc.)
 - `pytest.ini` - Pytest configuration
-- `tests/**` - All test files and infrastructure (excluding benchmarks)
-  - `tests/test_rhiza/` - Test suite directory
+- Core test infrastructure:
+  - `tests/test_rhiza/__init__.py` - Test package initialization
   - `tests/test_rhiza/conftest.py` - Pytest fixtures
-  - `tests/test_rhiza/test_*.py` - All test files
+  - `tests/test_rhiza/README.md` - Test documentation
+- Core test files:
+  - `tests/test_rhiza/test_structure.py` - Repository structure tests
+  - `tests/test_rhiza/test_docstrings.py` - Docstring tests
+  - `tests/test_rhiza/test_makefile*.py` - Makefile target tests
+  - `tests/test_rhiza/test_git_repo_fixture.py` - Git fixture tests
+  - `tests/test_rhiza/test_requirements_folder.py` - Requirements tests
+  - `tests/test_rhiza/test_readme.py` - README validation
+  - `tests/test_rhiza/test_rhiza_workflows.py` - Workflow tests
+  - `tests/test_rhiza/test_release_script.py` - Release script tests
+  - `tests/test_rhiza/test_version_matrix.py` - Version matrix tests
+  - `tests/test_rhiza/test_template_bundles.py` - Template bundle tests
+
+**Note:** Feature-specific test files (e.g., `test_book.py`, `test_notebooks.py`) are included in their respective feature bundles.
 
 **GitHub Workflows:**
 - `.github/workflows/rhiza_ci.yml` - Main CI with tests
@@ -91,7 +104,7 @@ Testing infrastructure with pytest, coverage reporting, and type checking.
 **GitLab Workflows:**
 - `.gitlab/workflows/rhiza_ci.yml` - GitLab CI
 
-**File Count:** ~30+ files  
+**File Count:** ~25 files  
 **Dependencies:** None  
 **Standalone:** Yes
 

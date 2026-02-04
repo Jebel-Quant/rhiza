@@ -113,6 +113,7 @@ class TestExpectedBundles:
 
     EXPECTED_BUNDLES = {
         "core",
+        "legal",
         "tests",
         "benchmarks",
         "docker",

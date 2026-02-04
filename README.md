@@ -47,13 +47,15 @@ repository: Jebel-Quant/rhiza
 ref: main
 
 templates:
-  - tests      # Testing infrastructure (pytest, coverage, benchmarks)
+  - legal      # LICENSE, README, CONTRIBUTING, CODE_OF_CONDUCT
+  - tests      # Testing infrastructure (pytest, coverage, type checking)
   - docker     # Docker containerization support
   - marimo     # Interactive notebooks
   - book       # Documentation generation (auto-includes tests)
 ```
 
 **Available templates:**
+- **`legal`** - LICENSE, README.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md
 - **`tests`** - pytest, coverage reports, type checking, CI/CD for testing
 - **`benchmarks`** - Performance benchmarking with pytest-benchmark
 - **`docker`** - Dockerfile, build/run targets, Docker workflow
@@ -175,13 +177,21 @@ make install
 
 Rhiza provides **template bundles** - pre-configured sets of files grouped by feature. Simply select the bundles you need in `.rhiza/template.yml`:
 
+#### 📄 **legal** - Legal and Community Files
+Legal and community documentation:
+- `LICENSE` - Project license
+- `README.md` - Project readme
+- `CONTRIBUTING.md` - Contribution guidelines
+- `CODE_OF_CONDUCT.md` - Code of conduct
+
 #### 🧪 **tests** - Testing Infrastructure
 Complete testing setup with pytest, coverage reports, and type checking:
 - `.rhiza/make.d/01-test.mk` - Test, typecheck, security targets
 - `pytest.ini` - pytest configuration
-- `tests/` - Test directory structure
+- `tests/` - Test directory structure (core test files)
 - `.github/workflows/rhiza_ci.yml` - CI workflow
 - `.github/workflows/rhiza_mypy.yml` - Type checking workflow
+- **Note:** Feature-specific test files included in their respective bundles
 
 #### 📊 **benchmarks** - Performance Benchmarking
 Performance benchmarking infrastructure with pytest-benchmark:
