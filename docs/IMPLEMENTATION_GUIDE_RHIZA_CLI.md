@@ -4,11 +4,42 @@ This document provides guidance for the rhiza-cli team to implement template bun
 
 ## Overview
 
-The rhiza template repository now includes template bundle definitions in `.rhiza/template-bundles.yml`. This document explains how rhiza-cli should consume and process these bundles.
+Template repositories (including `Jebel-Quant/rhiza` and any custom template repositories) can define template bundles in `.rhiza/template-bundles.yml`. This document explains how rhiza-cli should discover and process these bundles from ANY repository.
+
+## Template Bundle Discovery
+
+### How It Works
+
+rhiza-cli discovers template bundles using a standard location convention:
+
+1. **User specifies repository** in their `.rhiza/template.yml`:
+   ```yaml
+   repository: Jebel-Quant/rhiza  # OR any other repository
+   ref: main
+   templates:
+     - tests
+     - docker
+   ```
+
+2. **rhiza-cli fetches bundle definition** from that repository:
+   ```
+   https://raw.githubusercontent.com/{repository}/{ref}/.rhiza/template-bundles.yml
+   ```
+
+3. **Any repository can be a template source** if it has `.rhiza/template-bundles.yml`
+
+### Multi-Repository Support
+
+This design enables:
+- ✅ Official rhiza templates from `Jebel-Quant/rhiza`
+- ✅ Custom organizational templates from `your-org/your-templates`
+- ✅ Language-specific templates from `nodejs/nodejs-templates`
+- ✅ Framework templates from `django/django-templates`
+- ✅ Any public or private GitHub repository
 
 ## Template Bundle File Location
 
-**Source**: `.rhiza/template-bundles.yml` in the template repository (e.g., `Jebel-Quant/rhiza`)
+**Standard Location**: `.rhiza/template-bundles.yml` (in ANY template repository)
 
 **Format**: YAML with the following structure:
 
@@ -198,6 +229,221 @@ def materialize(project_path: Path):
     # 5. Download and apply files (existing logic)
     download_and_apply_files(
         repository=config['repository'],
+        ref=config['ref'],
+        includes=includes,
+        excludes=excludes
+    )
+```
+
+## Supporting Custom Template Repositories
+
+### Discovery Mechanism
+
+rhiza-cli MUST support ANY repository as a template source, not just `Jebel-Quant/rhiza`:
+
+```python
+def fetch_template_bundles(repository: str, ref: str) -> dict | None:
+    """Fetch template bundles from any repository.
+    
+    Args:
+        repository: GitHub repository (e.g., "your-org/your-templates")
+        ref: Git ref (branch, tag, or commit)
+    
+    Returns:
+        Dictionary with bundle definitions, or None if not found
+    """
+    url = f"https://raw.githubusercontent.com/{repository}/{ref}/.rhiza/template-bundles.yml"
+    
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return yaml.safe_load(response.text)
+    except requests.HTTPError as e:
+        if e.response.status_code == 404:
+            # Repository doesn't have template bundles - fall back to path-based
+            return None
+        raise
+```
+
+### Fallback Behavior
+
+If `.rhiza/template-bundles.yml` doesn't exist:
+
+1. **No templates specified**: Use existing path-based include/exclude logic
+2. **Templates specified but no bundle file**: Error with helpful message:
+   ```
+   Error: Repository 'your-org/your-repo' does not have template bundles defined.
+   
+   To use template bundles, the repository must have:
+     .rhiza/template-bundles.yml
+   
+   See documentation: docs/CREATING_TEMPLATE_REPOSITORY.md
+   
+   Alternatively, use path-based configuration:
+     include: |
+       path/to/files
+   ```
+
+### Example: Using Custom Template Repository
+
+User configuration for a Node.js template repository:
+
+```yaml
+# .rhiza/template.yml
+repository: nodejs-templates/express-starter
+ref: v2.0.0
+
+templates:
+  - typescript
+  - testing
+  - docker
+```
+
+rhiza-cli will:
+1. Fetch `https://raw.githubusercontent.com/nodejs-templates/express-starter/v2.0.0/.rhiza/template-bundles.yml`
+2. Resolve dependencies
+3. Download files from that repository
+
+### Private Repositories
+
+Support private repositories using GitHub authentication:
+
+```python
+def fetch_template_bundles(
+    repository: str, 
+    ref: str,
+    github_token: str | None = None
+) -> dict | None:
+    """Fetch template bundles with optional authentication."""
+    url = f"https://raw.githubusercontent.com/{repository}/{ref}/.rhiza/template-bundles.yml"
+    
+    headers = {}
+    if github_token:
+        headers['Authorization'] = f'token {github_token}'
+    
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    return yaml.safe_load(response.text)
+```
+
+Users can provide authentication:
+```bash
+# Via environment variable
+export GITHUB_TOKEN=ghp_xxxxx
+rhiza sync
+
+# Or via CLI flag
+rhiza sync --github-token ghp_xxxxx
+```
+
+## Validation and Error Handling
+
+### Bundle Validation
+
+Validate fetched bundle definitions before use:
+
+```python
+def validate_bundle_definition(bundles: dict) -> list[str]:
+    """Validate bundle definition structure.
+    
+    Returns list of validation errors (empty if valid).
+    """
+    errors = []
+    
+    # Check version
+    if 'version' not in bundles:
+        errors.append("Missing 'version' field")
+    
+    # Check bundles
+    if 'bundles' not in bundles:
+        errors.append("Missing 'bundles' field")
+        return errors
+    
+    # Validate each bundle
+    bundle_names = set(bundles['bundles'].keys())
+    for name, bundle in bundles['bundles'].items():
+        if 'description' not in bundle:
+            errors.append(f"Bundle '{name}' missing 'description'")
+        
+        if 'files' not in bundle:
+            errors.append(f"Bundle '{name}' missing 'files'")
+        
+        # Validate dependencies
+        for dep in bundle.get('requires', []):
+            if dep not in bundle_names:
+                errors.append(f"Bundle '{name}' requires non-existent bundle '{dep}'")
+        
+        for dep in bundle.get('recommends', []):
+            if dep not in bundle_names:
+                errors.append(f"Bundle '{name}' recommends non-existent bundle '{dep}'")
+    
+    return errors
+```
+
+### Error Messages
+
+Provide clear error messages:
+
+```python
+# Unknown template
+Error: Template 'unknown-bundle' not found in repository 'your-org/your-repo'
+
+Available templates:
+  - typescript
+  - testing
+  - docker
+
+# Circular dependency
+Error: Circular dependency detected: bundle-a → bundle-b → bundle-a
+
+# Invalid bundle definition
+Error: Invalid bundle definition in 'your-org/your-repo':
+  - Bundle 'testing' missing 'description'
+  - Bundle 'docker' requires non-existent bundle 'missing'
+```
+
+## Testing Template Resolution
+
+### Unit Tests
+
+```python
+def test_resolve_dependencies():
+    """Test dependency resolution."""
+    bundles = {
+        'bundles': {
+            'a': {'requires': []},
+            'b': {'requires': ['a']},
+            'c': {'requires': ['b']},
+        }
+    }
+    
+    # Should resolve c → b → a
+    result = resolve_dependencies(['c'], bundles)
+    assert set(result) == {'a', 'b', 'c'}
+
+def test_custom_repository():
+    """Test using custom template repository."""
+    config = {
+        'repository': 'custom-org/custom-templates',
+        'ref': 'v1.0.0',
+        'templates': ['feature-a', 'feature-b']
+    }
+    
+    # Mock fetch_template_bundles to return custom bundles
+    # ... test that custom repository bundles are used
+```
+
+## Documentation References
+
+For users creating custom template repositories:
+- See [docs/CREATING_TEMPLATE_REPOSITORY.md](CREATING_TEMPLATE_REPOSITORY.md)
+
+For bundle schema details:
+- See [.rhiza/template-bundles.yml](.rhiza/template-bundles.yml)
+
+For validation:
+- Use [.rhiza/scripts/validate_template_bundles.py](.rhiza/scripts/validate_template_bundles.py)
+
         ref=config['ref'],
         includes=includes,
         excludes=excludes,

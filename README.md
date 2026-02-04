@@ -241,6 +241,46 @@ Create reveal.js presentations:
 
 See [TEMPLATE_SYSTEM_SUMMARY.md](TEMPLATE_SYSTEM_SUMMARY.md) for complete details on template bundles, dependencies, and migration guides.
 
+## 📖 Using Other Repositories as Templates
+
+**Any GitHub repository can be a template source!**
+
+rhiza isn't limited to using `Jebel-Quant/rhiza` as a template. You can:
+- Create your own template repositories
+- Use community template repositories
+- Use organization-specific template repositories
+
+### Quick Example
+
+**Your custom template repository** (`your-org/your-templates`):
+```yaml
+# .rhiza/template-bundles.yml
+version: "1.0"
+bundles:
+  backend:
+    description: "Backend API setup"
+    files:
+      - src/api/**
+      - config/api.yml
+```
+
+**Users reference your repository**:
+```yaml
+# User's .rhiza/template.yml
+repository: your-org/your-templates
+ref: main
+templates:
+  - backend
+```
+
+rhiza-cli automatically discovers and uses your bundles! 🎉
+
+### Learn More
+
+- **Create Your Own Templates**: [docs/CREATING_TEMPLATE_REPOSITORY.md](docs/CREATING_TEMPLATE_REPOSITORY.md)
+- **How Discovery Works**: [docs/TEMPLATE_BUNDLE_DISCOVERY.md](docs/TEMPLATE_BUNDLE_DISCOVERY.md)
+- **Implementation Details**: [docs/IMPLEMENTATION_GUIDE_RHIZA_CLI.md](docs/IMPLEMENTATION_GUIDE_RHIZA_CLI.md)
+
 ## 🧩 Integration Guide
 
 Rhiza provides reusable configuration templates that you can integrate into your existing Python projects.
