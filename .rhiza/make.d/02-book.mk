@@ -4,7 +4,7 @@
 # and compiling a companion book (minibook).
 
 # Declare phony targets (they don't produce files)
-.PHONY: marimushka book
+.PHONY: marimushka docs book
 
 # Define a default no-op marimushka target that will be used
 # when book/marimo/marimo.mk doesn't exist or doesn't define marimushka
@@ -19,6 +19,17 @@ marimushka:: install-uv
 
 # Default output directory for Marimushka (HTML exports of notebooks)
 MARIMUSHKA_OUTPUT ?= _marimushka
+
+# Define a default no-op docs target that will be used
+# when source folder doesn't exist or docs generation is skipped
+docs:: install-uv
+	@if [ ! -d "${SOURCE_FOLDER}" ]; then \
+	  printf "${BLUE}[INFO] No source folder found, creating placeholder docs${RESET}\n"; \
+	  mkdir -p "_pdoc"; \
+	  printf '%s\n' '<html><head><title>API Documentation</title></head>' \
+	    '<body><h1>API Documentation</h1><p>No source code found.</p></body></html>' \
+	    > "_pdoc/index.html"; \
+	fi
 
 # ----------------------------
 # Book sections (declarative)
