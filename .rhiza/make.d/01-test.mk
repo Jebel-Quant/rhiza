@@ -20,7 +20,7 @@ COVERAGE_FAIL_UNDER ?= 90
 # 2. Creates directories for HTML coverage and test reports.
 # 3. Invokes pytest via the local virtual environment.
 # 4. Generates terminal output, HTML coverage, JSON coverage, and HTML test reports.
-test: install ## run all tests
+test:: install ## run all tests
 	@rm -rf _tests;
 
 	@if [ -d ${TESTS_FOLDER} ]; then \
