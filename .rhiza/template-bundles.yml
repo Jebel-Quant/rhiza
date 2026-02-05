@@ -26,10 +26,10 @@ version: "1.0"
 # Bundle Definitions
 bundles:
   # ============================================================================
-  # CORE - Required infrastructure (always included automatically)
+  # CORE - Required infrastructure
   # ============================================================================
   core:
-    description: "Core Rhiza infrastructure - always included automatically"
+    description: "Core Rhiza infrastructure"
     required: true
     standalone: true
     files:
@@ -40,15 +40,14 @@ bundles:
       - .rhiza/.gitignore
       - .rhiza/.rhiza-version
       - .rhiza/make.d/00-custom-env.mk
-      - .rhiza/make.d/05-github.mk
-      - .rhiza/make.d/06-agentic.mk
       - .rhiza/make.d/08-docs.mk
       - .rhiza/make.d/10-custom-task.mk
       - .rhiza/make.d/README.md
       - .rhiza/scripts
       - .rhiza/docs
       - .rhiza/assets
-      - .rhiza/requirements
+      - .rhiza/requirements/docs.txt
+      - .rhiza/requirements/tools.txt
 
       # Root configuration files
       - Makefile
@@ -70,6 +69,13 @@ bundles:
       - docs/ASSETS.md
       - docs/DEMO.md
 
+  github:
+    description: "GitHub Actions workflows for CI/CD"
+    standalone: true
+    requires: [core]
+    files:
+      - .rhiza/make.d/05-github.mk
+      - .rhiza/make.d/06-agentic.mk
       # Core GitHub Actions workflows
       - .github/workflows/rhiza_validate.yml
       - .github/workflows/rhiza_sync.yml
@@ -133,9 +139,6 @@ bundles:
       - .github/workflows/rhiza_mypy.yml
       - .github/workflows/rhiza_security.yml
       - .github/workflows/rhiza_codeql.yml
-
-      # GitLab CI workflows
-      # - .gitlab/workflows/rhiza_ci.yml
 
   # ============================================================================
   # BENCHMARKS - Performance benchmarking with pytest-benchmark
@@ -202,9 +205,6 @@ bundles:
       # GitHub Actions workflows
       - .github/workflows/rhiza_marimo.yml
 
-      # GitLab templates
-      - .gitlab/template/marimo_job_template.yml.jinja
-
   # ============================================================================
   # BOOK - Documentation book generation
   # ============================================================================
@@ -234,8 +234,6 @@ bundles:
       # GitHub Actions workflows
       - .github/workflows/rhiza_book.yml
 
-      # GitLab CI workflows
-      - .gitlab/workflows/rhiza_book.yml
 
   # ============================================================================
   # DEVCONTAINER - VS Code DevContainer configuration
@@ -261,7 +259,7 @@ bundles:
   gitlab:
     description: "GitLab CI/CD pipeline configuration and workflows"
     standalone: true
-    requires: []
+    requires: [core]
     notes: |
       GitLab workflows provide similar functionality to GitHub Actions.
       Some workflows (like book, ci) may benefit from having their
@@ -302,99 +300,4 @@ bundles:
       - .rhiza/make.d/04-presentation.mk
       - docs/PRESENTATION.md
 
-# ============================================================================
-# Bundle Metadata
-# ============================================================================
-metadata:
-  total_bundles: 10
-  required_bundles: 1  # core
-  standalone_bundles: 9
-  composite_bundles: 1  # book (requires tests)
 
-  # Statistics
-  file_counts:
-    core: "~26 files"
-    legal: "~3 files"
-    tests: "~25 files"
-    benchmarks: "~4 files"
-    docker: "~5 files"
-    marimo: "~8 files"
-    book: "~6 files"
-    devcontainer: "~4 files"
-    gitlab: "~15 files"
-    presentation: "~2 files"
-
-# ============================================================================
-# Example Configurations
-# ============================================================================
-examples:
-  minimal:
-    description: "Minimal Python project with just testing"
-    templates:
-      - legal
-      - tests
-
-  open_source:
-    description: "Open source project with community files"
-    templates:
-      - legal
-      - tests
-      - docker
-
-  docker_service:
-    description: "Docker-based microservice"
-    templates:
-      - legal
-      - tests
-      - docker
-
-  data_science:
-    description: "Data science project with notebooks and documentation"
-    templates:
-      - legal
-      - tests
-      - marimo
-      - book
-
-  full_featured:
-    description: "Full-featured project with all capabilities"
-    templates:
-      - legal
-      - tests
-      - benchmarks
-      - docker
-      - marimo
-      - book
-      - devcontainer
-
-  performance_focused:
-    description: "Performance-focused project with benchmarking"
-    templates:
-      - legal
-      - tests
-      - benchmarks
-
-  gitlab_project:
-    description: "GitLab-focused project"
-    templates:
-      - legal
-      - tests
-      - docker
-      - gitlab
-
-# ============================================================================
-# Version History
-# ============================================================================
-changelog:
-  "1.0":
-    date: "2025-02-04"
-    changes:
-      - "Initial template bundle system"
-      - "Defined 10 core bundles: core, legal, tests, benchmarks, docker, marimo, book, devcontainer, gitlab, presentation"
-      - "Implemented dependency resolution (book requires tests)"
-      - "Added recommendation system (book recommends marimo, benchmarks recommends tests)"
-      - "Separated legal/community files into dedicated bundle"
-      - "Assigned feature-specific test files to their respective bundles"
-      - "Defined 8 core bundles: core, tests, docker, marimo, book, devcontainer, gitlab, presentation"
-      - "Implemented dependency resolution (book requires tests)"
-      - "Added recommendation system (book recommends marimo)"
