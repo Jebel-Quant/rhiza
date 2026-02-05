@@ -4,7 +4,19 @@
 # and compiling a companion book (minibook).
 
 # Declare phony targets (they don't produce files)
-.PHONY: marimushka book
+.PHONY: test marimushka book
+
+# Define a default no-op test target that will be used
+# when tests/tests.mk doesn't exist or doesn't define test
+test:: install-uv
+	@printf "${BLUE}[INFO] No test target defined, skipping tests${RESET}\n"
+	@mkdir -p _tests/html-coverage _tests/html-report
+	@printf '%s\n' '<html><head><title>Test Coverage</title></head>' \
+	  '<body><h1>Test Coverage</h1><p>No tests configured.</p></body></html>' \
+	  > "_tests/html-coverage/index.html"
+	@printf '%s\n' '<html><head><title>Test Report</title></head>' \
+	  '<body><h1>Test Report</h1><p>No tests configured.</p></body></html>' \
+	  > "_tests/html-report/report.html"
 
 # Define a default no-op marimushka target that will be used
 # when book/marimo/marimo.mk doesn't exist or doesn't define marimushka
