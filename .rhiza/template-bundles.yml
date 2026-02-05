@@ -50,7 +50,7 @@ bundles:
       - .rhiza/docs/**
       - .rhiza/assets/**
       - .rhiza/requirements/uv.txt
-      
+
       # Root configuration files
       - Makefile
       - .pre-commit-config.yaml
@@ -60,10 +60,9 @@ bundles:
       - ruff.toml
       - renovate.json
       - pyproject.toml
-      
+
       # Documentation files (project-specific docs)
-      - SECURITY.md
-      - PRESENTATION.md
+      - docs/SECURITY.md
       - docs/ARCHITECTURE.md
       - docs/CUSTOMIZATION.md
       - docs/GLOSSARY.md
@@ -72,17 +71,17 @@ bundles:
       - docs/WORKFLOWS.md
       - docs/ASSETS.md
       - docs/DEMO.md
-      
+
       # Core GitHub Actions workflows
       - .github/workflows/rhiza_validate.yml
       - .github/workflows/rhiza_sync.yml
       - .github/workflows/rhiza_pre-commit.yml
       - .github/workflows/rhiza_deptry.yml
       - .github/workflows/rhiza_release.yml
-      - .github/actions/configure-git-auth/**
+      - .github/actions/configure-git-auth
       - .github/dependabot.yml
       - .github/copilot-instructions.md
-      - .github/agents/**
+      - .github/agents
 
   # ============================================================================
   # LEGAL - Legal and community files
@@ -94,7 +93,7 @@ bundles:
     files:
       # Legal files
       - LICENSE
-      
+
       # Community files
       - CONTRIBUTING.md
       - CODE_OF_CONDUCT.md
@@ -111,12 +110,12 @@ bundles:
       - .rhiza/make.d/01-test.mk
       - .rhiza/requirements/tests.txt
       - pytest.ini
-      
+
       # Core test infrastructure
       - tests/test_rhiza/__init__.py
       - tests/test_rhiza/conftest.py
       - tests/test_rhiza/README.md
-      
+
       # Core/generic test files
       - tests/test_rhiza/test_structure.py
       - tests/test_rhiza/test_docstrings.py
@@ -130,15 +129,15 @@ bundles:
       - tests/test_rhiza/test_release_script.py
       - tests/test_rhiza/test_version_matrix.py
       - tests/test_rhiza/test_template_bundles.py
-      
+
       # GitHub Actions workflows
       - .github/workflows/rhiza_ci.yml
       - .github/workflows/rhiza_mypy.yml
       - .github/workflows/rhiza_security.yml
       - .github/workflows/rhiza_codeql.yml
-      
+
       # GitLab CI workflows
-      - .gitlab/workflows/rhiza_ci.yml
+      # - .gitlab/workflows/rhiza_ci.yml
 
   # ============================================================================
   # BENCHMARKS - Performance benchmarking with pytest-benchmark
@@ -152,10 +151,10 @@ bundles:
     files:
       # Benchmark make target (part of test.mk)
       # Note: The benchmark target is in 01-test.mk
-      
+
       # Benchmark directory
       - tests/test_rhiza/benchmarks/**
-      
+
       # GitHub Actions workflows
       - .github/workflows/rhiza_benchmarks.yml
 
@@ -170,13 +169,13 @@ bundles:
       # Docker configuration and files
       - docker/Dockerfile
       - docker/Dockerfile.dockerignore
-      
+
       # Make targets
       - .rhiza/make.d/07-docker.mk
-      
+
       # Documentation
       - docs/DOCKER.md
-      
+
       # GitHub Actions workflows
       - .github/workflows/rhiza_docker.yml
 
@@ -191,20 +190,20 @@ bundles:
       # Marimo configuration
       - .rhiza/make.d/03-marimo.mk
       - .rhiza/requirements/marimo.txt
-      
+
       # Marimo notebooks directory
       - book/marimo/**
-      
+
       # Marimo-specific tests
       - tests/test_rhiza/test_marimushka_target.py
       - tests/test_rhiza/test_notebooks.py
-      
+
       # Documentation
       - docs/MARIMO.md
-      
+
       # GitHub Actions workflows
       - .github/workflows/rhiza_marimo.yml
-      
+
       # GitLab templates
       - .gitlab/template/marimo_job_template.yml.jinja
 
@@ -227,16 +226,16 @@ bundles:
       # Book building configuration
       - .rhiza/make.d/02-book.mk
       - .rhiza/templates/minibook/**
-      
+
       # Book-specific tests
       - tests/test_rhiza/test_book.py
-      
+
       # Documentation
       - docs/BOOK.md
-      
+
       # GitHub Actions workflows
       - .github/workflows/rhiza_book.yml
-      
+
       # GitLab CI workflows
       - .gitlab/workflows/rhiza_book.yml
 
@@ -251,10 +250,10 @@ bundles:
       # DevContainer configuration
       - .devcontainer/devcontainer.json
       - .devcontainer/bootstrap.sh
-      
+
       # Documentation
       - docs/DEVCONTAINER.md
-      
+
       # GitHub Actions workflows
       - .github/workflows/rhiza_devcontainer.yml
 
@@ -272,7 +271,7 @@ bundles:
     files:
       # Main GitLab CI configuration
       - .gitlab-ci.yml
-      
+
       # GitLab workflow files
       - .gitlab/workflows/rhiza_book.yml
       - .gitlab/workflows/rhiza_ci.yml
@@ -282,10 +281,10 @@ bundles:
       - .gitlab/workflows/rhiza_renovate.yml
       - .gitlab/workflows/rhiza_sync.yml
       - .gitlab/workflows/rhiza_validate.yml
-      
+
       # GitLab templates
       - .gitlab/template/**
-      
+
       # GitLab documentation
       - .gitlab/COMPARISON.md
       - .gitlab/README.md
@@ -313,7 +312,7 @@ metadata:
   required_bundles: 1  # core
   standalone_bundles: 9
   composite_bundles: 1  # book (requires tests)
-  
+
   # Statistics
   file_counts:
     core: "~26 files"
@@ -336,21 +335,21 @@ examples:
     templates:
       - legal
       - tests
-  
+
   open_source:
     description: "Open source project with community files"
     templates:
       - legal
       - tests
       - docker
-    
+
   docker_service:
     description: "Docker-based microservice"
     templates:
       - legal
       - tests
       - docker
-  
+
   data_science:
     description: "Data science project with notebooks and documentation"
     templates:
@@ -358,7 +357,7 @@ examples:
       - tests
       - marimo
       - book
-  
+
   full_featured:
     description: "Full-featured project with all capabilities"
     templates:
@@ -369,14 +368,14 @@ examples:
       - marimo
       - book
       - devcontainer
-  
+
   performance_focused:
     description: "Performance-focused project with benchmarking"
     templates:
       - legal
       - tests
       - benchmarks
-  
+
   gitlab_project:
     description: "GitLab-focused project"
     templates:
