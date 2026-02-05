@@ -95,7 +95,7 @@ class TestRhizaVersion:
         assert any(char.isdigit() for char in out)
 
     def test_rhiza_version_defaults_to_0_9_0_without_file(self, logger, tmp_path):
-        """RHIZA_VERSION should default to 0.9.0 if .rhiza-version doesn't exist."""
+        """RHIZA_VERSION should default to 0.10.2 if .rhiza-version doesn't exist."""
         # Remove the .rhiza-version file
         version_file = tmp_path / ".rhiza" / ".rhiza-version"
         if version_file.exists():
@@ -103,7 +103,7 @@ class TestRhizaVersion:
 
         proc = run_make(logger, ["print-RHIZA_VERSION"], dry_run=False)
         out = strip_ansi(proc.stdout)
-        assert "Value of RHIZA_VERSION:\n0.9.0" in out
+        assert "Value of RHIZA_VERSION:\n0.10.2" in out
 
     def test_rhiza_version_used_in_sync_target(self, logger):
         """Sync target should use RHIZA_VERSION from .rhiza-version."""

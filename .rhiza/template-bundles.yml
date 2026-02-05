@@ -299,4 +299,59 @@ bundles:
       - .rhiza/make.d/04-presentation.mk
       - docs/PRESENTATION.md
 
+# ============================================================================
+# METADATA - Information about this template bundle collection
+# ============================================================================
+metadata:
+  total_bundles: 11
+  repository_type: "python-templates"
+  maintained_by: "Jebel Quant Research"
+  min_rhiza_version: "0.10.2"
 
+# ============================================================================
+# EXAMPLES - Common bundle combinations for different project types
+# ============================================================================
+examples:
+  minimal:
+    description: "Minimal Python project with core infrastructure"
+    templates:
+      - core
+      - legal
+
+  standard:
+    description: "Standard Python project with testing and documentation"
+    templates:
+      - core
+      - legal
+      - tests
+      - book
+
+  full_github:
+    description: "Full-featured project with GitHub Actions CI/CD"
+    templates:
+      - core
+      - legal
+      - tests
+      - book
+      - docker
+      - github
+
+  full_gitlab:
+    description: "Full-featured project with GitLab CI/CD"
+    templates:
+      - core
+      - legal
+      - tests
+      - book
+      - docker
+      - gitlab
+
+  data_science:
+    description: "Data science project with notebooks and interactive exploration"
+    templates:
+      - core
+      - legal
+      - tests
+      - marimo
+      - book
+      - github
