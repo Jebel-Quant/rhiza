@@ -45,10 +45,9 @@ bundles:
       - .rhiza/make.d/08-docs.mk
       - .rhiza/make.d/10-custom-task.mk
       - .rhiza/make.d/README.md
-      - .rhiza/scripts/**
-      - .rhiza/utils/**
-      - .rhiza/docs/**
-      - .rhiza/assets/**
+      - .rhiza/scripts
+      - .rhiza/docs
+      - .rhiza/assets
       - .rhiza/requirements/uv.txt
 
       # Root configuration files
@@ -107,6 +106,7 @@ bundles:
     requires: []
     files:
       # Make targets and configuration
+      - .rhiza/utils/version_matrix.py
       - .rhiza/make.d/01-test.mk
       - .rhiza/requirements/tests.txt
       - pytest.ini
@@ -153,7 +153,7 @@ bundles:
       # Note: The benchmark target is in 01-test.mk
 
       # Benchmark directory
-      - tests/test_rhiza/benchmarks/**
+      - tests/test_rhiza/benchmarks
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_benchmarks.yml
@@ -192,7 +192,7 @@ bundles:
       - .rhiza/requirements/marimo.txt
 
       # Marimo notebooks directory
-      - book/marimo/**
+      - book/marimo
 
       # Marimo-specific tests
       - tests/test_rhiza/test_marimushka_target.py
@@ -225,7 +225,7 @@ bundles:
     files:
       # Book building configuration
       - .rhiza/make.d/02-book.mk
-      - .rhiza/templates/minibook/**
+      - .rhiza/templates/minibook
 
       # Book-specific tests
       - tests/test_rhiza/test_book.py
@@ -283,7 +283,7 @@ bundles:
       - .gitlab/workflows/rhiza_validate.yml
 
       # GitLab templates
-      - .gitlab/template/**
+      - .gitlab/template
 
       # GitLab documentation
       - .gitlab/COMPARISON.md
