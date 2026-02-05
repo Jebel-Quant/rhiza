@@ -128,7 +128,6 @@ bundles:
       - tests/test_rhiza/test_makefile_api.py
       - tests/test_rhiza/test_makefile_gh.py
       - tests/test_rhiza/test_git_repo_fixture.py
-      - tests/test_rhiza/test_requirements_folder.py
       - tests/test_rhiza/test_readme.py
       - tests/test_rhiza/test_rhiza_workflows.py
       - tests/test_rhiza/test_release_script.py
