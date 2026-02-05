@@ -127,7 +127,6 @@ bundles:
       - tests/test_rhiza/test_rhiza_workflows.py
       - tests/test_rhiza/test_release_script.py
       - tests/test_rhiza/test_version_matrix.py
-      - tests/test_rhiza/test_template_bundles.py
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_ci.yml
