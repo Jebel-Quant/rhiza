@@ -58,7 +58,6 @@ bundles:
       - .python-version
       - ruff.toml
       - renovate.json
-      - pyproject.toml
 
       # Documentation files (project-specific docs)
       - docs/SECURITY.md
