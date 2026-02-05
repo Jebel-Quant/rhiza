@@ -48,7 +48,7 @@ bundles:
       - .rhiza/scripts
       - .rhiza/docs
       - .rhiza/assets
-      - .rhiza/requirements/uv.txt
+      - .rhiza/requirements
 
       # Root configuration files
       - Makefile
