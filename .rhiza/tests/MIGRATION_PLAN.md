@@ -81,7 +81,23 @@ These do NOT block the migration but should be addressed in the final quality ph
 
 ---
 
-## ⚠️ NEXT AGENT: Start with Phase 2
+## Phase 2: Move Structure Tests → `structure/` ✅ COMPLETED
+
+**Goal:** Move static file/directory assertion tests into `.rhiza/tests/test_rhiza/structure/`.
+
+**Completion Summary:**
+- Moved `test_structure.py` → `structure/test_project_layout.py`
+- Moved `test_requirements_folder.py` → `structure/test_requirements.py`
+- Updated `test_root_resolves_correctly_from_nested_location` to check `.rhiza/tests/test_rhiza/conftest.py`
+- Converted `warnings.warn()` to proper assertions with `pytest.skip()` for optional items
+- Added `ClassVar` annotation for `EXPECTED_REQUIREMENTS_FILES`
+- Verified: 9 passed, 1 skipped (src/ directory is optional)
+
+**Committed:** `fee1d1e`
+
+---
+
+## ⚠️ NEXT AGENT: Start with Phase 3
 
 **Agent instructions:**
 
@@ -125,32 +141,6 @@ These do NOT block the migration but should be addressed in the final quality ph
 - All 6 subdirectories have `__init__.py`
 - `pytest.ini` has `testpaths`
 - Existing tests in `tests/test_rhiza/` unaffected
-
----
-
-## Phase 2: Move Structure Tests → `structure/`
-
-**Goal:** Move static file/directory assertion tests into `.rhiza/tests/test_rhiza/structure/`.
-
-**Agent instructions:**
-
-1. **Move `tests/test_rhiza/test_structure.py` → `.rhiza/tests/test_rhiza/structure/test_project_layout.py`**
-   - Use `git mv` to preserve history
-   - Update `test_root_resolves_correctly_from_nested_location` — change the path it checks from `tests/test_rhiza/conftest.py` to `.rhiza/tests/test_rhiza/conftest.py`
-   - **Improvement:** Convert `warnings.warn()` calls to proper assertions. If a directory/file is expected, `assert` it. If it's genuinely optional (like `src/` in rhiza itself), use `pytest.skip()` with a message.
-
-2. **Move `tests/test_rhiza/test_requirements_folder.py` → `.rhiza/tests/test_rhiza/structure/test_requirements.py`**
-   - Use `git mv`
-   - No changes needed to test logic
-
-3. **Verify:**
-   - `uv run pytest .rhiza/tests/test_rhiza/structure/ -v` — all pass
-   - `uv run pytest -q` — total count matches (moved, not duplicated)
-
-**Acceptance criteria:**
-- Two test files in `structure/`, both passing
-- Original files removed from `tests/test_rhiza/`
-- No `warnings.warn()` in structure tests
 
 ---
 
