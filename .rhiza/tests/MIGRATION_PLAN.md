@@ -240,37 +240,32 @@ These do NOT block the migration but should be addressed in the final quality ph
 
 ---
 
-## ⚠️ NEXT AGENT: Start with Phase 8
+## Phase 8: Clean Up Old Directory and Finalize ✅ COMPLETED
 
 **Goal:** Remove the old `tests/test_rhiza/` directory (except benchmarks), update docs, verify everything.
 
-**Agent instructions:**
+**Completion Summary:**
+- Removed `__pycache__/` from `tests/test_rhiza/` (only `benchmarks/` remains)
+- Updated `pytest.ini` to only discover tests in `.rhiza/tests` (benchmarks excluded from test discovery)
+- Created comprehensive `README.md` in `.rhiza/tests/test_rhiza/` documenting:
+  - Test organization by category
+  - Running tests (all, by category, specific files)
+  - Available fixtures (root-level and category-specific)
+  - Conventions and best practices
+  - Coverage goals
+- Full verification passed:
+  - `uv run pytest .rhiza/tests/test_rhiza/ -v --tb=short` — 135 passed, 2 skipped
+  - `make fmt` — clean
+  - `make test` — 135 passed, 2 skipped
+- Benchmarks remain in `tests/test_rhiza/benchmarks/` (run via `make benchmark`)
 
-1. **Verify `tests/test_rhiza/` is empty of test files**
-   - At this point only `__init__.py`, `conftest.py`, `README.md`, and `benchmarks/` should remain
-   - Remove `__init__.py`, `conftest.py`, `README.md` (they've been copied/moved to `.rhiza/tests/`)
-   - Keep `benchmarks/` in place (or move to `tests/benchmarks/` if it's not already there)
-
-2. **Update `pytest.ini` `testpaths`** — remove `tests` if it only contains benchmarks (and benchmarks are run via a separate `make benchmark` target, not `make test`). Or keep it if benchmarks should be discoverable.
-
-3. **Update `.rhiza/tests/test_rhiza/README.md`**
-   - Update the "Test Organization" section with the new folder layout
-   - Update example commands to reference `.rhiza/tests/`
-
-4. **Run full verification:**
-   ```bash
-   uv run pytest .rhiza/tests/test_rhiza/ -v --tb=short   # all pass
-   make fmt                                                  # formatting clean
-   make test                                                 # full project suite works
-   ```
-
-**Acceptance criteria:**
-- No `test_*.py` files in `tests/test_rhiza/` (only benchmarks remain under `tests/`)
-- Full suite passes from `.rhiza/tests/`
-- `make fmt` and `make test` pass
-- README updated
+**Committed:** `5bcd536`
 
 ---
+
+## ⚠️ NEXT AGENT: Start with Phase 9
+
+**Goal:** Quality review — remove low-value tests, strengthen weak ones.
 
 ## Phase 9: Quality Review — Remove Low-Value Tests, Strengthen Weak Ones
 
