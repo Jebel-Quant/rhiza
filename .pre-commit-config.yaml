@@ -54,7 +54,7 @@ repos:
       - id: uv-lock
   
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v0.1.4  # Use the latest release
+    rev: v0.1.6  # Use the latest release
     hooks:
       # Migrated from rhiza
       - id: check-rhiza-workflow-names
@@ -63,3 +63,5 @@ repos:
       - id: check-rhiza-config
       - id: check-makefile-targets
       - id: check-python-version-consistency
+      - id: check-template-bundles
+
