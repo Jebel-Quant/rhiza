@@ -160,3 +160,16 @@ bundles:
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_docker.yml
+
+  # ============================================================================
+  # PRESENTATION - Presentation building with reveal.js
+  # ============================================================================
+  presentation:
+    description: "Presentation building using reveal.js and Marimo"
+    standalone: true
+    requires: []
+    recommends:
+      - marimo  # Presentations often use Marimo for interactive slides
+    files:
+      - .rhiza/make.d/04-presentation.mk
+      - docs/PRESENTATION.md
