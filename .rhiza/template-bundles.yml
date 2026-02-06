@@ -173,3 +173,38 @@ bundles:
     files:
       - .rhiza/make.d/04-presentation.mk
       - docs/PRESENTATION.md
+
+  # ============================================================================
+  # GITLAB - GitLab CI/CD pipeline configuration
+  # ============================================================================
+  gitlab:
+    description: "GitLab CI/CD pipeline configuration and workflows"
+    standalone: true
+    requires: [core]
+    notes: |
+      GitLab workflows provide similar functionality to GitHub Actions.
+      Some workflows (like book, ci) may benefit from having their
+      corresponding feature templates (book, tests) also enabled.
+    files:
+      # Main GitLab CI configuration
+      - .gitlab-ci.yml
+
+      # GitLab workflow files
+      - .gitlab/workflows/rhiza_book.yml
+      - .gitlab/workflows/rhiza_ci.yml
+      - .gitlab/workflows/rhiza_deptry.yml
+      - .gitlab/workflows/rhiza_pre-commit.yml
+      - .gitlab/workflows/rhiza_release.yml
+      - .gitlab/workflows/rhiza_renovate.yml
+      - .gitlab/workflows/rhiza_sync.yml
+      - .gitlab/workflows/rhiza_validate.yml
+
+      # GitLab templates
+      - .gitlab/template
+
+      # GitLab documentation
+      - .gitlab/COMPARISON.md
+      - .gitlab/README.md
+      - .gitlab/SUMMARY.md
+      - .gitlab/TESTING.md
+  
