@@ -49,34 +49,34 @@ Dependency validation tests. These tests ensure that project dependencies are co
 
 ### Run all tests
 ```bash
-uv run pytest .rhiza/tests/test_rhiza/
+uv run pytest .rhiza/tests/
 # or
 make test
 ```
 
 ### Run tests from a specific category
 ```bash
-uv run pytest .rhiza/tests/test_rhiza/structure/
-uv run pytest .rhiza/tests/test_rhiza/api/
-uv run pytest .rhiza/tests/test_rhiza/integration/
-uv run pytest .rhiza/tests/test_rhiza/sync/
-uv run pytest .rhiza/tests/test_rhiza/utils/
-uv run pytest .rhiza/tests/test_rhiza/deps/
+uv run pytest .rhiza/tests/structure/
+uv run pytest .rhiza/tests/api/
+uv run pytest .rhiza/tests/integration/
+uv run pytest .rhiza/tests/sync/
+uv run pytest .rhiza/tests/utils/
+uv run pytest .rhiza/tests/deps/
 ```
 
 ### Run a specific test file
 ```bash
-uv run pytest .rhiza/tests/test_rhiza/structure/test_project_layout.py
+uv run pytest .rhiza/tests/structure/test_project_layout.py
 ```
 
 ### Run with verbose output
 ```bash
-uv run pytest .rhiza/tests/test_rhiza/ -v
+uv run pytest .rhiza/tests/ -v
 ```
 
 ### Run with coverage
 ```bash
-uv run pytest .rhiza/tests/test_rhiza/ --cov
+uv run pytest .rhiza/tests/ --cov
 ```
 
 ## Fixtures

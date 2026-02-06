@@ -15,8 +15,8 @@ class TestRootFixture:
     """Tests for the root fixture that provides repository root path."""
 
     def test_root_resolves_correctly_from_nested_location(self, root):
-        """Root should correctly resolve to repository root from .rhiza/tests/test_rhiza/."""
-        conftest_path = root / ".rhiza" / "tests" / "test_rhiza" / "conftest.py"
+        """Root should correctly resolve to repository root from .rhiza/tests/."""
+        conftest_path = root / ".rhiza" / "tests" / "conftest.py"
         assert conftest_path.exists()
 
     def test_root_contains_expected_directories(self, root):

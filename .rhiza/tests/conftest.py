@@ -171,7 +171,7 @@ def root():
 
     Used by tests to locate files and scripts relative to the project root.
     """
-    return pathlib.Path(__file__).parent.parent.parent.parent
+    return pathlib.Path(__file__).parent.parent.parent
 
 
 @pytest.fixture(scope="session")
