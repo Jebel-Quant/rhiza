@@ -104,6 +104,7 @@ class TestRhizaVersion:
         # Clear RHIZA_VERSION from environment to test the default value
         import os
         import subprocess
+
         env = os.environ.copy()
         env.pop("RHIZA_VERSION", None)
 
