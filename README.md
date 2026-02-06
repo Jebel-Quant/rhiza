@@ -33,7 +33,41 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 
 ### How It Works
 
-Rhiza uses a simple configuration file (`.rhiza/template.yml`) to control which templates sync to your project:
+Rhiza uses a simple configuration file (`.rhiza/template.yml`) to control which templates sync to your project. You can choose between **template-based** (recommended) or **path-based** configuration:
+
+#### Template-Based Configuration (Recommended)
+
+> **Note**: Template bundle support is planned for rhiza-cli v0.9.0+. Currently in development.
+
+Select pre-configured feature bundles that automatically include all related files:
+
+```yaml
+# .rhiza/template.yml
+repository: Jebel-Quant/rhiza
+ref: main
+
+templates:
+  - legal      # LICENSE, CONTRIBUTING, CODE_OF_CONDUCT
+  - tests      # Testing infrastructure (pytest, coverage, type checking)
+  - docker     # Docker containerization support
+  - marimo     # Interactive notebooks
+  - book       # Documentation generation (auto-includes tests)
+```
+
+**Available templates:**
+- **`legal`** - LICENSE, CONTRIBUTING.md, CODE_OF_CONDUCT.md
+- **`tests`** - pytest, coverage reports, type checking, CI/CD for testing
+- **`benchmarks`** - Performance benchmarking with pytest-benchmark
+- **`docker`** - Dockerfile, build/run targets, Docker workflow
+- **`marimo`** - Interactive notebooks for data exploration
+- **`book`** - Documentation book with API docs, coverage, test reports
+- **`devcontainer`** - VS Code DevContainer for consistent environments
+- **`gitlab`** - GitLab CI/CD pipelines (alternative to GitHub Actions)
+- **`presentation`** - Reveal.js presentations
+
+#### Path-Based Configuration (Advanced)
+
+Alternatively, specify individual file patterns for fine-grained control:
 
 ```yaml
 # .rhiza/template.yml
@@ -51,13 +85,16 @@ exclude: |
   .rhiza/scripts/customisations/*
 ```
 
-**What you're seeing:**
+**Configuration options:**
 - **`repository`** - The upstream template source (**can be any repository, not just Rhiza!**)
 - **`ref`** - Which branch/tag to sync from (usually `main`)
-- **`include`** - File patterns to pull from the template (CI workflows, linting configs, etc.)
+- **`templates`** - Feature bundles to include (template-based approach)
+- **`include`** - File patterns to pull from the template (path-based approach)
 - **`exclude`** - Paths to skip, protecting your customisations
 
-When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhiza fetches only the files matching your `include` patterns, skips anything in `exclude`, and creates a clean diff for you to review. You stay in control of what updates and when.
+When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhiza fetches the selected templates or file patterns, skips anything in `exclude`, and creates a clean diff for you to review. You stay in control of what updates and when.
+
+**📖 Migration Guide:** Already using path-based configuration? See [docs/MIGRATION_TEMPLATE_BUNDLES.md](docs/MIGRATION_TEMPLATE_BUNDLES.md) for a step-by-step migration guide.
 
 **💡 Pro Tip:** While you can use `Jebel-Quant/rhiza` directly, **we recommend creating your own template repository** using GitHub's "Use this template" button. This gives you a clean copy to customise for your organisation's specific needs and constraints—adjusting CI workflows, coding standards, or tooling choices—while still benefiting from Rhiza's sync mechanism. Your template repo becomes your team's source of truth, and you can selectively pull updates from upstream Rhiza when desired.
 
@@ -66,11 +103,13 @@ When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhi
 - [Why Rhiza?](#-why-rhiza)
 - [Quick Start](#-quick-start)
 - [What You Get](#-what-you-get)
+  - [Template Bundles](#template-bundles)
 - [Integration Guide](#-integration-guide)
 - [Available Tasks](#-available-tasks)
 - [Advanced Topics](#-advanced-topics)
 - [CI/CD Support](#-cicd-support)
 - [Contributing to Rhiza](#-contributing-to-rhiza)
+- [Template System Documentation](INDEX_TEMPLATE_SYSTEM_DOCS.md)
 
 ## 🚀 Quick Start
 
@@ -134,27 +173,113 @@ make install
 - 🎤 **Presentations** - Generate slides from Markdown using Marp
 - 🐳 **Containerization** - Docker and Dev Container configurations
 
-### Available Templates
+### Template Bundles
 
-This repository provides a curated set of reusable configuration templates:
+Rhiza provides **template bundles** - pre-configured sets of files grouped by feature. Simply select the bundles you need in `.rhiza/template.yml`:
 
-#### 🌱 Core Project Configuration
-- **.gitignore** - Sensible defaults for Python projects
-- **.editorconfig** - Editor configuration to enforce consistent coding standards
-- **ruff.toml** - Configuration for the Ruff linter and formatter
-- **pytest.ini** - Configuration for the `pytest` testing framework
-- **Makefile** - Task automation for common development workflows
-- **CODE_OF_CONDUCT.md** - Code of conduct for open-source projects
-- **CONTRIBUTING.md** - Contributing guidelines
+#### 📄 **legal** - Legal and Community Files
+Legal and community documentation:
+- `LICENSE` - Project license
+- `CONTRIBUTING.md` - Contribution guidelines
+- `CODE_OF_CONDUCT.md` - Code of conduct
 
-#### 🔧 Developer Experience
-- **.devcontainer/** - Development container setup (VS Code / Dev Containers)
-- **.pre-commit-config.yaml** - Pre-commit hooks for code quality
-- **docker/** - Example `Dockerfile` and `.dockerignore`
+#### 🧪 **tests** - Testing Infrastructure
+Complete testing setup with pytest, coverage reports, and type checking:
+- `.rhiza/make.d/01-test.mk` - Test, typecheck, security targets
+- `pytest.ini` - pytest configuration
+- `tests/` - Test directory structure (core test files)
+- `.github/workflows/rhiza_ci.yml` - CI workflow
+- `.github/workflows/rhiza_mypy.yml` - Type checking workflow
+- **Note:** Feature-specific test files included in their respective bundles
 
-#### 🚀 CI/CD & Automation
-- **.github/** - GitHub Actions workflows, scripts, and repository templates
-- **.gitlab/** - GitLab CI/CD workflows (see [.gitlab/README.md](.gitlab/README.md))
+#### 📊 **benchmarks** - Performance Benchmarking
+Performance benchmarking infrastructure with pytest-benchmark:
+- `tests/test_rhiza/benchmarks/` - Benchmark directory
+- `.github/workflows/rhiza_benchmarks.yml` - Benchmark workflow
+- Benchmark targets in test.mk
+- **Note:** Works best with `tests` template (recommended)
+
+#### 🐳 **docker** - Containerization
+Docker support for building and running containers:
+- `docker/Dockerfile` - Production-ready Dockerfile
+- `.rhiza/make.d/07-docker.mk` - Docker build/run targets
+- `.github/workflows/rhiza_docker.yml` - Docker build workflow
+- `docs/DOCKER.md` - Docker usage guide
+
+#### 📓 **marimo** - Interactive Notebooks
+Interactive Marimo notebooks for data exploration:
+- `.rhiza/make.d/03-marimo.mk` - Marimo server targets
+- `book/marimo/` - Notebook directory
+- `.github/workflows/rhiza_marimo.yml` - Marimo deployment
+- `docs/MARIMO.md` - Notebook usage guide
+
+#### 📚 **book** - Documentation Generation
+Comprehensive documentation with API docs, coverage, and reports:
+- `.rhiza/make.d/02-book.mk` - Book building targets
+- `.github/workflows/rhiza_book.yml` - Book deployment
+- `docs/BOOK.md` - Documentation guide
+- **Note:** Automatically includes `tests` template (required dependency)
+
+#### 💻 **devcontainer** - Dev Containers
+VS Code DevContainer for consistent development environments:
+- `.devcontainer/devcontainer.json` - Container configuration
+- `.devcontainer/bootstrap.sh` - Setup script
+- `.github/workflows/rhiza_devcontainer.yml` - Container testing
+- `docs/DEVCONTAINER.md` - DevContainer guide
+
+#### 🦊 **gitlab** - GitLab CI/CD
+GitLab CI/CD pipelines (alternative to GitHub Actions):
+- `.gitlab-ci.yml` - Main GitLab CI configuration
+- `.gitlab/workflows/` - GitLab workflow files
+- `.gitlab/template/` - Reusable job templates
+- `.gitlab/README.md` - GitLab setup guide
+
+#### 🎤 **presentation** - Presentations
+Create reveal.js presentations:
+- `.rhiza/make.d/04-presentation.mk` - Presentation build targets
+- `docs/PRESENTATION.md` - Presentation guide
+
+See [TEMPLATE_SYSTEM_SUMMARY.md](TEMPLATE_SYSTEM_SUMMARY.md) for complete details on template bundles, dependencies, and migration guides.
+
+## 📖 Using Other Repositories as Templates
+
+**Any GitHub repository can be a template source!**
+
+rhiza isn't limited to using `Jebel-Quant/rhiza` as a template. You can:
+- Create your own template repositories
+- Use community template repositories
+- Use organization-specific template repositories
+
+### Quick Example
+
+**Your custom template repository** (`your-org/your-templates`):
+```yaml
+# .rhiza/template-bundles.yml
+version: "1.0"
+bundles:
+  backend:
+    description: "Backend API setup"
+    files:
+      - src/api/**
+      - config/api.yml
+```
+
+**Users reference your repository**:
+```yaml
+# User's .rhiza/template.yml
+repository: your-org/your-templates
+ref: main
+templates:
+  - backend
+```
+
+rhiza-cli automatically discovers and uses your bundles! 🎉
+
+### Learn More
+
+- **Create Your Own Templates**: [docs/CREATING_TEMPLATE_REPOSITORY.md](docs/CREATING_TEMPLATE_REPOSITORY.md)
+- **How Discovery Works**: [docs/TEMPLATE_BUNDLE_DISCOVERY.md](docs/TEMPLATE_BUNDLE_DISCOVERY.md)
+- **Implementation Details**: [docs/IMPLEMENTATION_GUIDE_RHIZA_CLI.md](docs/IMPLEMENTATION_GUIDE_RHIZA_CLI.md)
 
 ## 🧩 Integration Guide
 

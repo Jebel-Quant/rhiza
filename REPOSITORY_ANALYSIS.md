@@ -400,3 +400,203 @@ This repository could serve as a **gold standard template** for other Python pro
 ---
 
 *This analysis was conducted by thoroughly reviewing the repository structure, code quality, documentation, CI/CD workflows, testing infrastructure, and developer experience. Recommendations are based on industry best practices and modern software engineering standards.*
+
+---
+
+## 2025-02-04 — Template-Centric System Analysis Entry
+
+### Summary
+
+This analysis examines the Rhiza repository structure in the context of implementing a template-centric include/exclude system. The goal is to enable users to select feature bundles (like `docker`, `book`, `tests`) instead of manually listing file paths. The repository contains approximately 95 files organized into 7-8 distinct functional bundles with clear separation of concerns.
+
+### Strengths
+
+**Clear Template Organization**
+- Files are logically grouped by feature (docker/, book/, tests/, .devcontainer/, .gitlab/)
+- Make targets are modularized in `.rhiza/make.d/` with numeric prefixes for ordering (01-test.mk, 02-book.mk, etc.)
+- GitHub workflows follow consistent naming (`rhiza_*.yml`) and are feature-specific
+- Each feature has dedicated documentation in `docs/` (DOCKER.md, BOOK.md, MARIMO.md, etc.)
+
+**Well-Defined Feature Boundaries**
+- **Docker**: 5 files (Dockerfile, make targets, workflow, docs) - completely standalone
+- **Marimo**: 6 files (notebooks, make targets, workflow, requirements) - standalone
+- **DevContainer**: 4 files (config, bootstrap, workflow, docs) - standalone
+- **Tests**: 30+ files (test suite, pytest config, coverage, benchmarks, multiple workflows) - standalone
+- **Book**: 5 files (minibook templates, make targets, workflows) - has clear dependencies on tests
+
+**Dependency Relationships Are Evident**
+- Book template requires test template (uses coverage and test reports)
+- Book template recommends marimo template (includes notebook exports)
+- Dependencies are reflected in `.rhiza/make.d/02-book.mk` which references test outputs
+- GitLab and GitHub workflows mirror this dependency structure
+
+**Minimal Overlap**
+- Each feature bundle has distinct files with minimal duplication
+- Core infrastructure (Makefile, ruff.toml, pre-commit, etc.) is clearly separable
+- GitHub Actions and GitLab CI are parallel implementations, not competing
+
+**Extensibility Built-In**
+- Hook system (pre-install::, post-install::) supports customization
+- `.rhiza/make.d/10-custom-task.mk` provides template for user additions
+- Exclude patterns already supported in template.yml
+
+### Weaknesses
+
+**No Formal Bundle Definitions**
+- Template bundles are implicit in directory structure, not explicitly defined
+- Users must manually discover which files belong together
+- No documentation mapping features to required files
+- No validation that a feature is completely specified
+
+**Include Pattern Fragility**
+- Current approach requires users to know all associated files
+- Example: Selecting "docker" requires knowing about:
+  - `docker/Dockerfile`
+  - `.rhiza/make.d/07-docker.mk`
+  - `.github/workflows/rhiza_docker.yml`
+  - `docs/DOCKER.md`
+- Missing one file breaks the feature silently
+
+**No Dependency Management**
+- If user selects `book` template, they must manually also select `tests`
+- No automated checking that required templates are included
+- No warnings about recommended templates (book + marimo work better together)
+
+**Bundle Discovery Gap**
+- No single source of truth listing available templates
+- No command like `uvx rhiza list-templates` to discover options
+- Documentation scattered across multiple .md files
+
+### Risks / Technical Debt
+
+**Template Drift Risk**
+- As repository evolves, file-to-feature mappings may drift
+- New files might be added without updating bundle definitions
+- No automated testing that bundle definitions are complete
+
+**Backward Compatibility Complexity**
+- Must maintain both path-based and template-based approaches indefinitely
+- Risk of confusing users about which approach to use
+- Documentation burden explaining both methods
+
+**Version Coupling**
+- Template bundle definitions in template repo
+- rhiza-cli must fetch definitions from upstream
+- Version mismatch between cli and template repo could cause issues
+- No schema version or compatibility checking proposed
+
+**Incomplete Feature Detection**
+- If user selects `docker` but their project doesn't have docker-specific code, workflow still runs
+- Workflows like `rhiza_docker.yml` have graceful degradation (check for Dockerfile existence) but this is defensive
+- Should bundles detect if they're actually applicable?
+
+**GitLab vs GitHub Ambiguity**
+- Both platforms have workflows in the repo
+- User selecting `gitlab` template gets GitLab CI
+- But GitHub workflows are in `core` - users can't easily exclude them if using only GitLab
+- Should there be a `github` vs `gitlab` mutual exclusion?
+
+**Test Files Size**
+- Tests directory contains 30+ files and would be fully synced
+- Large test directories might not be desired by all users
+- No granular control (e.g., "tests but not benchmarks")
+
+### Observations
+
+**Bundle Candidates Identified:**
+1. **core** (~30 files) - Required: Makefile, ruff, pre-commit, base workflows
+2. **tests** (~30 files) - Standalone: pytest, coverage, test suite, CI workflows
+3. **docker** (~5 files) - Standalone: Dockerfile, make targets, workflow
+4. **marimo** (~6 files) - Standalone: notebooks, make targets, workflow
+5. **book** (~5 files) - Composite: requires tests, recommends marimo
+6. **devcontainer** (~4 files) - Standalone: VS Code dev environment
+7. **gitlab** (~15 files) - Standalone: GitLab CI/CD pipelines
+8. **presentation** (~2 files) - Standalone: reveal.js presentations
+
+**Implementation Location:**
+- **Recommended:** Bundle definitions in template repository (`.rhiza/template-bundles.yml`)
+- **Rationale:** Single source of truth, evolves with template, supports forks
+- **Alternative:** Hardcoded in rhiza-cli (simpler but less flexible)
+
+**Backward Compatibility Strategy:**
+- Additive enhancement: Both `templates:` and `include:` work simultaneously
+- Resolution order: templates → include → exclude
+- No breaking changes to existing projects
+- Migration is opt-in
+
+### Design Artifacts Created
+
+**1. TEMPLATE_BUNDLES_DESIGN.md**
+- Comprehensive 400+ line design document
+- Complete file mappings for all 8 bundles
+- Dependency graph and relationships
+- Implementation recommendations
+- Backward compatibility strategy
+- Example configurations
+- MVP checklist
+
+**2. .rhiza/template-bundles.yml**
+- Concrete implementation of bundle definitions
+- YAML schema with version 1.0
+- 8 bundle definitions with file lists
+- Metadata including requires/recommends relationships
+- Example configurations
+- Changelog for versioning
+
+### Minimal Implementation Path
+
+**Phase 1: Define (This Repo)**
+1. Create `.rhiza/template-bundles.yml` ✅ (done)
+2. Document in `TEMPLATE_BUNDLES_DESIGN.md` ✅ (done)
+3. Add examples to README.md
+
+**Phase 2: Implement (rhiza-cli)**
+1. Add `templates:` field support to config parser
+2. Implement bundle resolution (fetch from upstream, expand to paths)
+3. Implement dependency resolution (auto-include `tests` when `book` selected)
+4. Merge with existing include/exclude logic
+5. Add `rhiza list-templates` command
+
+**Phase 3: Test**
+1. Test template-only config
+2. Test legacy path-only config
+3. Test hybrid config (both methods)
+4. Test dependency resolution
+5. Test with forked template repos
+
+**Phase 4: Document**
+1. Update README with template examples
+2. Update CUSTOMIZATION.md with bundle reference
+3. Add QUICK_REFERENCE table of bundles
+4. Update rhiza-cli docs
+
+### Score
+
+**Overall Repository Quality: 9/10** (unchanged from previous analysis)
+
+**Template Bundle Design Readiness: 8/10**
+
+Breakdown:
+- **Structure Clarity** (10/10): Files are extremely well organized, clear feature boundaries
+- **Dependency Management** (6/10): Dependencies exist but not formalized
+- **Documentation** (8/10): Individual features documented, but no bundle overview
+- **Backward Compatibility** (9/10): Clean path for both old and new approaches
+- **Extensibility** (8/10): Fork-friendly, supports custom bundles
+
+**Risks:**
+- Medium: Version coupling between template repo and rhiza-cli
+- Low: Template drift (mitigated by automated testing in rhiza-cli)
+- Low: User confusion (mitigated by good documentation and graceful degradation)
+
+**Recommendation:** The repository structure is **highly suitable** for template-centric system implementation. The clear organization, modular design, and existing hook system make this a natural evolution. The main work is in rhiza-cli implementation and documentation updates.
+
+**Next Steps:**
+1. Review and refine `.rhiza/template-bundles.yml`
+2. Implement bundle resolution in rhiza-cli
+3. Add comprehensive tests for template system
+4. Update documentation with template-based examples
+5. Release as opt-in feature in rhiza-cli v0.X.0
+
+---
+
+*Analysis conducted by examining full repository structure, identifying feature boundaries, mapping file dependencies, and designing template bundle system with backward compatibility.*
