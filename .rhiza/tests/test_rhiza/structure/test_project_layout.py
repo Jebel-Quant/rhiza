@@ -8,8 +8,9 @@ expected files/directories exist, enabling other tests to locate resources
 reliably.
 """
 
-import warnings
 from pathlib import Path
+
+import pytest
 
 
 class TestRootFixture:
@@ -24,35 +25,44 @@ class TestRootFixture:
         assert root.is_absolute()
 
     def test_root_resolves_correctly_from_nested_location(self, root):
-        """Root should correctly resolve to repository root from tests/test_config_templates/."""
-        conftest_path = root / "tests" / "test_rhiza" / "conftest.py"
+        """Root should correctly resolve to repository root from .rhiza/tests/test_rhiza/."""
+        conftest_path = root / ".rhiza" / "tests" / "test_rhiza" / "conftest.py"
         assert conftest_path.exists()
 
     def test_root_contains_expected_directories(self, root):
         """Root should contain all expected project directories."""
-        expected_dirs = [".rhiza", "src", "tests", "book"]
-        for dirname in expected_dirs:
+        required_dirs = [".rhiza", "tests", "book"]
+        optional_dirs = ["src"]  # src/ is optional (rhiza itself doesn't have one)
+
+        for dirname in required_dirs:
+            assert (root / dirname).exists(), f"Required directory {dirname} not found"
+
+        for dirname in optional_dirs:
             if not (root / dirname).exists():
-                warnings.warn(f"Expected directory {dirname} not found", stacklevel=2)
+                pytest.skip(f"Optional directory {dirname} not present in this project")
 
     def test_root_contains_expected_files(self, root):
         """Root should contain all expected configuration files."""
-        expected_files = [
+        required_files = [
             "pyproject.toml",
             "README.md",
             "Makefile",
+        ]
+        optional_files = [
             "ruff.toml",
             ".gitignore",
             ".editorconfig",
         ]
-        for filename in expected_files:
+
+        for filename in required_files:
+            assert (root / filename).exists(), f"Required file {filename} not found"
+
+        for filename in optional_files:
             if not (root / filename).exists():
-                warnings.warn(f"Expected file {filename} not found", stacklevel=2)
+                pytest.skip(f"Optional file {filename} not present in this project")
 
     def test_root_can_locate_github_scripts(self, root):
         """Root should allow locating GitHub scripts."""
         scripts_dir = root / ".rhiza" / "scripts"
-        if not scripts_dir.exists():
-            warnings.warn("GitHub scripts directory not found", stacklevel=2)
-        elif not (scripts_dir / "release.sh").exists():
-            warnings.warn("Expected script release.sh not found", stacklevel=2)
+        assert scripts_dir.exists(), ".rhiza/scripts directory should exist"
+        assert (scripts_dir / "release.sh").exists(), "release.sh script should exist"
