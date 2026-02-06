@@ -111,9 +111,7 @@ class TestTemplateBundleDefinitions:
             for file_path in files:
                 full_path = root / file_path
                 # Check if path exists (can be file or directory)
-                assert full_path.exists(), (
-                    f"Bundle {bundle_name} references non-existent path: {file_path}"
-                )
+                assert full_path.exists(), f"Bundle {bundle_name} references non-existent path: {file_path}"
 
 
 class TestExpectedBundles:
