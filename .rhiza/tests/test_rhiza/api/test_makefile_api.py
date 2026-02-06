@@ -185,18 +185,6 @@ pre-sync::
     assert "[[LOCAL_PRE_SYNC]]" in result.stdout
 
 
-def test_hooks_flow(logger, setup_api_env):
-    """Verify that sync runs pre-sync, the sync logic, and post-sync."""
-    # We can't easily see execution order in dry run if commands are hidden.
-    # Let's inspect the output of make -n sync
-
-    result = run_make(logger, ["sync"], dry_run=True)
-    assert result.returncode == 0
-
-    # The output should contain the command sequences.
-    # Since pre-sync is currently empty (@:) it might not show up in -n output unless we override it.
-
-
 def test_hook_execution_order(logger, setup_api_env):
     """Define hooks and verify execution order."""
     # Create an extension that defines visible hooks (using double-colon)

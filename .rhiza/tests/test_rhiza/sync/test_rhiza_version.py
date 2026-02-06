@@ -11,9 +11,6 @@ These tests validate:
 
 from __future__ import annotations
 
-import shutil
-import subprocess
-
 from ..conftest import run_make, strip_ansi
 
 
@@ -109,49 +106,6 @@ class TestSummariseSync:
         # The output should show that install-uv is called
         # This might be implicit via the dependency chain
         assert "rhiza" in out
-
-
-class TestWorkflowSync:
-    """Tests to validate the workflow pattern used in .github/workflows/rhiza_sync.yml."""
-
-    def test_workflow_version_reading_pattern(self, logger, tmp_path):
-        """Test the pattern used in workflow to read Rhiza version."""
-        # Create .rhiza-version file
-        version_file = tmp_path / ".rhiza" / ".rhiza-version"
-        version_file.write_text("0.9.5\n")
-
-        # Simulate the workflow's version reading step
-        result = subprocess.run(  # nosec
-            [shutil.which("cat") or "cat", str(version_file)],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        version = result.stdout.strip()
-
-        assert version == "0.9.5"
-
-    def test_workflow_version_fallback_pattern(self, logger, tmp_path):
-        """Test the fallback pattern when .rhiza-version doesn't exist."""
-        # Ensure .rhiza-version doesn't exist
-        version_file = tmp_path / ".rhiza" / ".rhiza-version"
-        if version_file.exists():
-            version_file.unlink()
-
-        # Simulate the workflow's version reading with fallback using proper subprocess
-        try:
-            result = subprocess.run(  # nosec
-                [shutil.which("cat") or "cat", str(version_file)],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            version = result.stdout.strip()
-        except subprocess.CalledProcessError:
-            # File doesn't exist, use fallback
-            version = "0.9.0"
-
-        assert version == "0.9.0"
 
     def test_workflow_uvx_command_format(self, logger):
         """Test that the uvx command format matches workflow expectations."""

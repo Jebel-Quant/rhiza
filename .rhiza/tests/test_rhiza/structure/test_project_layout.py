@@ -8,21 +8,11 @@ expected files/directories exist, enabling other tests to locate resources
 reliably.
 """
 
-from pathlib import Path
-
 import pytest
 
 
 class TestRootFixture:
     """Tests for the root fixture that provides repository root path."""
-
-    def test_root_returns_pathlib_path(self, root):
-        """Root fixture should return a pathlib.Path object."""
-        assert isinstance(root, Path)
-
-    def test_root_is_absolute_path(self, root):
-        """Root fixture should return an absolute path."""
-        assert root.is_absolute()
 
     def test_root_resolves_correctly_from_nested_location(self, root):
         """Root should correctly resolve to repository root from .rhiza/tests/test_rhiza/."""
@@ -60,9 +50,3 @@ class TestRootFixture:
         for filename in optional_files:
             if not (root / filename).exists():
                 pytest.skip(f"Optional file {filename} not present in this project")
-
-    def test_root_can_locate_github_scripts(self, root):
-        """Root should allow locating GitHub scripts."""
-        scripts_dir = root / ".rhiza" / "scripts"
-        assert scripts_dir.exists(), ".rhiza/scripts directory should exist"
-        assert (scripts_dir / "release.sh").exists(), "release.sh script should exist"

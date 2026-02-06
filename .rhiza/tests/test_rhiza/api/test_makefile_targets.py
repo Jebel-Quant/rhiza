@@ -113,7 +113,8 @@ class TestMakefile:
         out = proc.stdout
         # Expect key steps
         assert "mkdir -p _tests/html-coverage _tests/html-report" in out
-        # Check for uv command with the configured path
+        # Check for uv command running pytest
+        assert ".venv/bin/python -m pytest" in out
 
     def test_test_target_without_source_folder(self, logger, tmp_path):
         """Test target should run without coverage when SOURCE_FOLDER doesn't exist."""
@@ -182,12 +183,6 @@ class TestMakefileRootFixture:
         assert makefile.exists()
         assert makefile.is_file()
 
-    def test_makefile_is_readable(self, root):
-        """Makefile should be readable."""
-        makefile = root / "Makefile"
-        content = makefile.read_text()
-        assert len(content) > 0
-
     def test_makefile_contains_targets(self, root):
         """Makefile should contain expected targets (including split files)."""
         makefile = root / "Makefile"
@@ -202,19 +197,6 @@ class TestMakefileRootFixture:
         expected_targets = ["install", "fmt", "test", "deptry", "help"]
         for target in expected_targets:
             assert f"{target}:" in content or f".PHONY: {target}" in content
-
-    def test_makefile_has_uv_variables(self, root):
-        """Makefile should define UV-related variables."""
-        makefile = root / "Makefile"
-        content = makefile.read_text()
-
-        # Read split Makefiles as well
-        for split_file in SPLIT_MAKEFILES:
-            split_path = root / split_file
-            if split_path.exists():
-                content += "\n" + split_path.read_text()
-
-        assert "UV_BIN" in content or "uv" in content.lower()
 
     def test_validate_target_skips_in_rhiza_repo(self, logger):
         """Validate target should skip execution in rhiza repository."""

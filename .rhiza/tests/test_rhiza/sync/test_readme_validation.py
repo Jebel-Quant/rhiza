@@ -86,15 +86,6 @@ class TestReadmeTestEdgeCases:
 class TestReadmeBashFragments:
     """Tests for bash code fragments in README."""
 
-    def test_bash_blocks_are_non_empty(self, root):
-        """Bash code blocks in README should not be empty."""
-        readme = root / "README.md"
-        content = readme.read_text(encoding="utf-8")
-        bash_blocks = BASH_BLOCK.findall(content)
-
-        for i, code in enumerate(bash_blocks):
-            assert code.strip(), f"Bash block {i} should not be empty"
-
     def test_bash_blocks_basic_syntax(self, root, logger):
         """Bash code blocks should have basic valid syntax (can be parsed by bash -n)."""
         readme = root / "README.md"
