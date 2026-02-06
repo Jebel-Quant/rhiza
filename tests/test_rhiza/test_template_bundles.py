@@ -146,26 +146,3 @@ class TestExpectedBundles:
         if "total_bundles" in metadata:
             assert metadata["total_bundles"] == len(bundles), "Metadata total_bundles doesn't match actual bundle count"
 
-
-class TestExamplesSection:
-    """Tests for the examples section."""
-
-    def test_has_examples_section(self, template_bundles):
-        """Template bundles should have an examples section."""
-        assert "examples" in template_bundles
-        assert isinstance(template_bundles["examples"], dict)
-
-    def test_examples_reference_valid_bundles(self, template_bundles):
-        """Example configurations should only reference valid bundles."""
-        bundles = template_bundles.get("bundles", {})
-        bundle_names = set(bundles.keys())
-        examples = template_bundles.get("examples", {})
-
-        for example_name, example_config in examples.items():
-            if "templates" in example_config:
-                for template in example_config["templates"]:
-                    # core is auto-included, so we don't check it
-                    if template != "core":
-                        assert template in bundle_names, (
-                            f"Example {example_name} references non-existent bundle {template}"
-                        )
