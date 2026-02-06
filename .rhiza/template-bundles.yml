@@ -234,25 +234,6 @@ bundles:
       # GitHub Actions workflows
       - .github/workflows/rhiza_book.yml
 
-
-  # ============================================================================
-  # DEVCONTAINER - VS Code DevContainer configuration
-  # ============================================================================
-  devcontainer:
-    description: "VS Code DevContainer configuration for consistent development environments"
-    standalone: true
-    requires: []
-    files:
-      # DevContainer configuration
-      - .devcontainer/devcontainer.json
-      - .devcontainer/bootstrap.sh
-
-      # Documentation
-      - docs/DEVCONTAINER.md
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_devcontainer.yml
-
   # ============================================================================
   # GITLAB - GitLab CI/CD pipeline configuration
   # ============================================================================
@@ -286,16 +267,3 @@ bundles:
       - .gitlab/README.md
       - .gitlab/SUMMARY.md
       - .gitlab/TESTING.md
-
-  # ============================================================================
-  # PRESENTATION - Presentation building with reveal.js
-  # ============================================================================
-  presentation:
-    description: "Presentation building using reveal.js and Marimo"
-    standalone: true
-    requires: []
-    recommends:
-      - marimo  # Presentations often use Marimo for interactive slides
-    files:
-      - .rhiza/make.d/04-presentation.mk
-      - docs/PRESENTATION.md
