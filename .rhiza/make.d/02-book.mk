@@ -4,7 +4,7 @@
 # and compiling a companion book (minibook).
 
 # Declare phony targets (they don't produce files)
-.PHONY: marimushka docs book
+.PHONY: marimushka mkdocs-build docs book
 
 # Define a default no-op marimushka target that will be used
 # when book/marimo/marimo.mk doesn't exist or doesn't define marimushka
@@ -17,8 +17,12 @@ marimushka:: install-uv
 	    > "${MARIMUSHKA_OUTPUT}/index.html"; \
 	fi
 
-# Default output directory for Marimushka (HTML exports of notebooks)
-MARIMUSHKA_OUTPUT ?= _marimushka
+# Define a default no-op mkdocs-build target that will be used
+# when .rhiza/make.d/09-mkdocs.mk doesn't exist or doesn't define mkdocs-build
+mkdocs-build:: install-uv
+	@if [ ! -f "docs/mkdocs.yml" ]; then \
+	  printf "${BLUE}[INFO] No mkdocs.yml found, skipping MkDocs${RESET}\n"; \
+	fi
 
 # Define a default no-op docs target that will be used
 # when source folder doesn't exist or docs generation is skipped
@@ -31,6 +35,12 @@ docs:: install-uv
 	    > "_pdoc/index.html"; \
 	fi
 
+# Default output directory for Marimushka (HTML exports of notebooks)
+MARIMUSHKA_OUTPUT ?= _marimushka
+
+# Default output directory for MkDocs
+MKDOCS_OUTPUT ?= _mkdocs
+
 # ----------------------------
 # Book sections (declarative)
 # ----------------------------
@@ -41,15 +51,16 @@ BOOK_SECTIONS := \
   "API|_pdoc/index.html|pdoc/index.html|_pdoc|pdoc" \
   "Coverage|_tests/html-coverage/index.html|tests/html-coverage/index.html|_tests/html-coverage|tests/html-coverage" \
   "Test Report|_tests/html-report/report.html|tests/html-report/report.html|_tests/html-report|tests/html-report" \
-  "Notebooks|_marimushka/index.html|marimushka/index.html|_marimushka|marimushka"
+  "Notebooks|_marimushka/index.html|marimushka/index.html|_marimushka|marimushka" \
+  "Official Documentation|_mkdocs/index.html|docs/index.html|_mkdocs|docs"
 
 ##@ Book
 
 # The 'book' target assembles the final documentation book.
-# 1. Aggregates API docs, coverage, test reports, and notebooks into _book.
+# 1. Aggregates API docs, coverage, test reports, notebooks, and MkDocs site into _book.
 # 2. Generates links.json to define the book structure.
 # 3. Uses 'minibook' to compile the final HTML site.
-book:: test docs marimushka ## compile the companion book
+book:: test docs marimushka mkdocs-build ## compile the companion book
 	@printf "${BLUE}[INFO] Building combined documentation...${RESET}\n"
 	@rm -rf _book && mkdir -p _book
 
