@@ -103,4 +103,21 @@ bundles:
       - CONTRIBUTING.md
       - CODE_OF_CONDUCT.md
 
+  # ============================================================================
+  # DEVCONTAINER - VS Code DevContainer configuration
+  # ============================================================================
+  devcontainer:
+    description: "VS Code DevContainer configuration for consistent development environments"
+    standalone: true
+    requires: []
+    files:
+      # DevContainer configuration
+      - .devcontainer/devcontainer.json
+      - .devcontainer/bootstrap.sh
+
+      # Documentation
+      - docs/DEVCONTAINER.md
+
+      # GitHub Actions workflows
+      - .github/workflows/rhiza_devcontainer.yml
       
