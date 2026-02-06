@@ -121,3 +121,42 @@ bundles:
       # GitHub Actions workflows
       - .github/workflows/rhiza_devcontainer.yml
       
+  # ============================================================================
+  # BENCHMARKS - Performance benchmarking with pytest-benchmark
+  # ============================================================================
+  benchmarks:
+    description: "Performance benchmarking infrastructure with pytest-benchmark"
+    standalone: true
+    requires: []
+    recommends:
+      - tests  # Benchmarks work best alongside tests
+    files:
+      # Benchmark make target (part of test.mk)
+      # Note: The benchmark target is in 01-test.mk
+
+      # Benchmark directory
+      - tests/test_rhiza/benchmarks
+
+      # GitHub Actions workflows
+      - .github/workflows/rhiza_benchmarks.yml
+
+  # ============================================================================
+  # DOCKER - Docker containerization support
+  # ============================================================================
+  docker:
+    description: "Docker containerization support for building and running containers"
+    standalone: true
+    requires: []
+    files:
+      # Docker configuration and files
+      - docker/Dockerfile
+      - docker/Dockerfile.dockerignore
+
+      # Make targets
+      - .rhiza/make.d/07-docker.mk
+
+      # Documentation
+      - docs/DOCKER.md
+
+      # GitHub Actions workflows
+      - .github/workflows/rhiza_docker.yml
