@@ -132,7 +132,7 @@ class TestMakefile:
         # Should see warning about missing source folder
         assert "if [ -d nonexistent_src ]" in out
         # Should still run pytest but without coverage flags
-        assert "pytest tests" in out
+        assert ".venv/bin/python -m pytest" in out
         assert "--html=_tests/html-report/report.html" in out
 
     def test_python_version_defaults_to_3_13_if_missing(self, logger, tmp_path):
