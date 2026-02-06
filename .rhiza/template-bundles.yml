@@ -89,21 +89,6 @@ bundles:
       - .github/agents
 
   # ============================================================================
-  # LEGAL - Legal and community files
-  # ============================================================================
-  legal:
-    description: "Legal and community documentation files"
-    standalone: true
-    requires: []
-    files:
-      # Legal files
-      - LICENSE
-
-      # Community files
-      - CONTRIBUTING.md
-      - CODE_OF_CONDUCT.md
-
-  # ============================================================================
   # TESTS - Testing infrastructure with pytest, coverage, and type checking
   # ============================================================================
   tests:
@@ -139,46 +124,6 @@ bundles:
       - .github/workflows/rhiza_mypy.yml
       - .github/workflows/rhiza_security.yml
       - .github/workflows/rhiza_codeql.yml
-
-  # ============================================================================
-  # BENCHMARKS - Performance benchmarking with pytest-benchmark
-  # ============================================================================
-  benchmarks:
-    description: "Performance benchmarking infrastructure with pytest-benchmark"
-    standalone: true
-    requires: []
-    recommends:
-      - tests  # Benchmarks work best alongside tests
-    files:
-      # Benchmark make target (part of test.mk)
-      # Note: The benchmark target is in 01-test.mk
-
-      # Benchmark directory
-      - tests/test_rhiza/benchmarks
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_benchmarks.yml
-
-  # ============================================================================
-  # DOCKER - Docker containerization support
-  # ============================================================================
-  docker:
-    description: "Docker containerization support for building and running containers"
-    standalone: true
-    requires: []
-    files:
-      # Docker configuration and files
-      - docker/Dockerfile
-      - docker/Dockerfile.dockerignore
-
-      # Make targets
-      - .rhiza/make.d/07-docker.mk
-
-      # Documentation
-      - docs/DOCKER.md
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_docker.yml
 
   # ============================================================================
   # MARIMO - Interactive Marimo notebooks
