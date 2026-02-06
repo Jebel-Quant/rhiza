@@ -1,7 +1,7 @@
 """Tests for book-related Makefile targets and their resilience."""
 
 import shutil
-import subprocess
+import subprocess  # nosec
 
 import pytest
 
@@ -22,7 +22,7 @@ def test_no_book_folder(git_repo):
     # Targets are now always defined via .rhiza/make.d/
     # Use dry-run to verify they exist and can be parsed
     for target in ["book", "docs", "marimushka"]:
-        result = subprocess.run([MAKE, "-n", target], cwd=git_repo, capture_output=True, text=True)
+        result = subprocess.run([MAKE, "-n", target], cwd=git_repo, capture_output=True, text=True)  # nosec
         # Target should exist (not "no rule to make target")
         assert "no rule to make target" not in result.stderr.lower(), (
             f"Target {target} should be defined in .rhiza/make.d/"
@@ -49,7 +49,7 @@ def test_book_folder_but_no_mk(git_repo):
     # Targets are now always defined via .rhiza/make.d/
     # Use dry-run to verify they exist and can be parsed
     for target in ["book", "docs", "marimushka"]:
-        result = subprocess.run([MAKE, "-n", target], cwd=git_repo, capture_output=True, text=True)
+        result = subprocess.run([MAKE, "-n", target], cwd=git_repo, capture_output=True, text=True)  # nosec
         # Target should exist (not "no rule to make target")
         assert "no rule to make target" not in result.stderr.lower(), (
             f"Target {target} should be defined in .rhiza/make.d/"
@@ -107,7 +107,7 @@ def test_book_without_logo_file(git_repo):
     makefile.write_text("\n".join(new_lines))
 
     # Dry-run the book target - it should still be valid
-    result = subprocess.run([MAKE, "-n", "book"], cwd=git_repo, capture_output=True, text=True)
+    result = subprocess.run([MAKE, "-n", "book"], cwd=git_repo, capture_output=True, text=True)  # nosec
     assert "no rule to make target" not in result.stderr.lower(), "book target should work without LOGO_FILE"
     # Should not have errors about missing logo variable
     assert result.returncode == 0, f"Dry-run failed: {result.stderr}"
@@ -142,5 +142,5 @@ def test_book_with_missing_logo_file(git_repo):
     makefile.write_text("\n".join(new_lines))
 
     # Dry-run should still succeed
-    result = subprocess.run([MAKE, "-n", "book"], cwd=git_repo, capture_output=True, text=True)
+    result = subprocess.run([MAKE, "-n", "book"], cwd=git_repo, capture_output=True, text=True)  # nosec
     assert result.returncode == 0, f"Dry-run failed with missing logo: {result.stderr}"
