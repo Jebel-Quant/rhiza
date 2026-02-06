@@ -205,7 +205,25 @@ These do NOT block the migration but should be addressed in the final quality ph
 
 ---
 
-## ⚠️ NEXT AGENT: Start with Phase 6
+## Phase 6: Move Utility Tests → `utils/` ✅ COMPLETED
+
+**Goal:** Move tests for utilities and test infrastructure.
+
+**Completion Summary:**
+- Created `utils/conftest.py` with sys.path setup for version_matrix imports
+- Moved `test_git_repo_fixture.py` → `utils/test_git_repo_fixture.py` (no changes)
+- Moved `test_version_matrix.py` → `utils/test_version_matrix.py`
+  - Removed `sys.path.insert()` hack from test file (now in conftest.py)
+- Removed old `conftest.py`, `__init__.py`, `README.md` from `tests/test_rhiza/`
+- Updated `.rhiza/make.d/01-test.mk` to rely on `pytest.ini` `testpaths` instead of explicit folder
+- Fixed test assertion in `test_makefile_targets.py` to check for `.venv/bin/python -m pytest` instead of `pytest tests`
+- All 131 tests passing (2 skipped for optional src/ directory)
+
+**Committed:** `9451ab0`
+
+---
+
+## ⚠️ NEXT AGENT: Start with Phase 7
 
 **Goal:** Move tests for utilities and test infrastructure.
 
