@@ -144,9 +144,72 @@ These do NOT block the migration but should be addressed in the final quality ph
 
 ---
 
-## Phase 3: Move Makefile API Tests → `api/`
+## Phase 3: Move Makefile API Tests → `api/` ✅ COMPLETED
 
 **Goal:** Move Makefile dry-run and API tests, deduplicating helpers.
+
+**Completion Summary:**
+- Created `.rhiza/tests/test_rhiza/api/conftest.py` with shared fixtures:
+  - `setup_tmp_makefile` (autouse): Consolidates Makefile and split file setup
+  - `run_make`: Shared helper for executing make commands with dry-run support
+  - `setup_rhiza_git_repo`: Initialize git repo configured as rhiza origin
+  - `SPLIT_MAKEFILES`: Centralized list of split Makefile paths
+- Moved `test_makefile.py` → `api/test_makefile_targets.py` (removed duplicates)
+- Moved `test_makefile_api.py` → `api/test_makefile_api.py` (added logger params to all tests)
+- Moved `test_makefile_gh.py` → `api/test_github_targets.py` (removed duplicates)
+- Deduplication:
+  - Removed duplicate `run_make`, `strip_ansi`, `setup_rhiza_git_repo` helpers
+  - Removed duplicate `setup_gh_makefile` fixture (consolidated into `setup_tmp_makefile`)
+  - All test files now import shared helpers from conftest modules
+- All 33 API tests passing in new location
+- Code formatted and linted (make fmt passes)
+
+**Committed:** `8502870`
+
+---
+
+## ⚠️ NEXT AGENT: Start with Phase 4
+
+**Agent instructions:**
+
+1. **Move `tests/test_rhiza/test_release_script.py` → `.rhiza/tests/test_rhiza/integration/test_release.py`**
+   - Uses `git_repo` fixture from root conftest — no changes needed
+   - Use `git mv` to preserve history
+
+2. **Move `tests/test_rhiza/test_book.py` → `.rhiza/tests/test_rhiza/integration/test_book_targets.py`**
+   - Uses `git_repo` fixture — no changes needed
+   - Use `git mv` to preserve history
+
+3. **Move `tests/test_rhiza/test_marimushka_target.py` → `.rhiza/tests/test_rhiza/integration/test_marimushka.py`**
+   - Uses `git_repo` fixture — no changes needed
+   - Use `git mv` to preserve history
+
+4. **Move `tests/test_rhiza/test_notebooks.py` → `.rhiza/tests/test_rhiza/integration/test_notebook_execution.py`**
+   - **Improvement:** Add a standalone test function that fails or skips explicitly when no notebooks are discovered, so silent no-ops are surfaced:
+     ```python
+     def test_notebooks_discovered():
+         """At least one notebook should be discovered for parametrized tests to run."""
+         if not NOTEBOOK_PATHS:
+             pytest.skip("No Marimo notebooks found — check MARIMO_FOLDER in .rhiza/.env")
+     ```
+   - Use `git mv` to preserve history
+
+5. **Verify:**
+   - `uv run pytest .rhiza/tests/test_rhiza/integration/ -v` — all pass or skip
+   - `uv run pytest -q` — total count correct
+   - `make fmt` — clean
+
+**Acceptance criteria:**
+- All integration tests pass from new location
+- Originals removed from `tests/test_rhiza/`
+- Notebook discovery guard test added
+- Changes committed with descriptive message
+
+---
+
+## Phase 4: Move Integration Tests → `integration/`
+
+**Goal:** Move tests requiring sandboxed git repos or subprocess execution.
 
 **Agent instructions:**
 
