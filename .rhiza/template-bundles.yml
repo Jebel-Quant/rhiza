@@ -1,0 +1,89 @@
+# Rhiza Template Bundle Definitions
+#
+# This file defines template bundles - pre-configured sets of files that can be
+# included in downstream projects by selecting templates instead of listing
+# individual file paths.
+#
+# Usage in downstream projects (.rhiza/template.yml):
+#
+#   templates:
+#     - tests
+#     - docker
+#     - marimo
+#
+# Instead of manually listing:
+#
+#   include: |
+#     .rhiza/make.d/01-test.mk
+#     pytest.ini
+#     tests/**
+#     docker/Dockerfile
+#     ...
+
+# Bundle Definitions
+bundles:
+  # ============================================================================
+  # CORE - Required infrastructure
+  # ============================================================================
+  core:
+    description: "Core Rhiza infrastructure"
+    required: true
+    standalone: true
+    files:
+      # Core Rhiza files
+      - .rhiza/rhiza.mk
+      - .rhiza/.cfg.toml
+      - .rhiza/.env
+      - .rhiza/.gitignore
+      - .rhiza/.rhiza-version
+      - .rhiza/make.d/00-custom-env.mk
+      - .rhiza/make.d/01-test.mk
+      - .rhiza/make.d/08-docs.mk
+      - .rhiza/make.d/10-custom-task.mk
+      - .rhiza/make.d/README.md
+      - .rhiza/scripts
+      - .rhiza/docs
+      - .rhiza/assets
+      - .rhiza/tests
+      - .rhiza/requirements/README.md
+      - .rhiza/requirements/docs.txt
+      - .rhiza/requirements/tools.txt
+      - .rhiza/requirements/tests.txt
+
+      # Root configuration files
+      - Makefile
+      - .pre-commit-config.yaml
+      - .editorconfig
+      - .gitignore
+      - .python-version
+      - ruff.toml
+      - renovate.json
+
+      # Documentation files (project-specific docs)
+      - docs/SECURITY.md
+      - docs/ARCHITECTURE.md
+      - docs/CUSTOMIZATION.md
+      - docs/GLOSSARY.md
+      - docs/QUICK_REFERENCE.md
+      - docs/RELEASING.md
+      - docs/WORKFLOWS.md
+      - docs/ASSETS.md
+      - docs/DEMO.md
+
+  github:
+    description: "GitHub Actions workflows for CI/CD"
+    standalone: true
+    requires: [core]
+    files:
+      - .rhiza/make.d/05-github.mk
+      - .rhiza/make.d/06-agentic.mk
+      # Core GitHub Actions workflows
+      - .github/workflows/rhiza_validate.yml
+      - .github/workflows/rhiza_sync.yml
+      - .github/workflows/rhiza_pre-commit.yml
+      - .github/workflows/rhiza_deptry.yml
+      - .github/workflows/rhiza_release.yml
+      - .github/actions/configure-git-auth
+      - .github/dependabot.yml
+      - .github/copilot-instructions.md
+      - .github/agents
