@@ -1,148 +1,9 @@
-# Presentation Generation with Marp
-
-This directory contains the presentation generation system for Rhiza.
-The project uses [Marp](https://marp.app/) to convert Markdown files into beautiful presentation slides.
-
-## Overview
-
-The presentation system consists of:
-- **PRESENTATION.md** — The main presentation source file (located in the repository root)
-- **Makefile.presentation** — Make targets for generating and serving presentations (in this directory)
-- **Marp CLI** — The tool that converts Markdown to HTML/PDF slides
-
-## Prerequisites
-
-### Required Tools
-
-1. **Node.js and npm** — Required to install Marp CLI
-   - Download from: [https://nodejs.org/](https://nodejs.org/)
-   - Check installation: `node --version` and `npm --version`
-
-2. **Marp CLI** — The presentation generator
-   - The Makefile will automatically install it if not present
-   - Manual installation: `npm install -g @marp-team/marp-cli`
-   - Check installation: `marp --version`
-
-### Optional Tools
-
-For PDF generation, you may need additional dependencies:
-- **Google Chrome/Chromium** — Used by Marp for PDF rendering
-- On most systems, this is automatically detected if installed
-
-## Available Commands
-
-The presentation system provides three main commands via the Makefile:
-
-### 1. Generate HTML Presentation
-
-Run from the repository root:
-
-```bash
-make presentation
-```
-
-This command:
-- Checks if Marp CLI is installed (installs it automatically if needed)
-- Converts `PRESENTATION.md` to `presentation.html`
-- Creates an HTML file that can be opened in any web browser
-
-**Output**: `presentation.html` in the repository root
-
-### 2. Generate PDF Presentation
-
-Run from the repository root:
-
-```bash
-make presentation-pdf
-```
-
-This command:
-- Checks if Marp CLI is installed (installs it automatically if needed)
-- Converts `PRESENTATION.md` to `presentation.pdf`
-- Creates a PDF file suitable for distribution
-
-**Output**: `presentation.pdf` in the repository root
-
-**Note**: PDF generation requires a Chromium-based browser to be installed.
-
-### 3. Serve Presentation Interactively
-
-Run from the repository root:
-
-```bash
-make presentation-serve
-```
-
-This command:
-- Checks if Marp CLI is installed (installs it automatically if needed)
-- Starts a local web server with live reload
-- Opens your browser to view the presentation
-- Automatically refreshes when you edit `PRESENTATION.md`
-
-**Server**: Usually runs at `http://localhost:8080`
-
-**Stop server**: Press `Ctrl+C` in the terminal
-
-## Creating Your Presentation
-
-### Editing PRESENTATION.md
-
-The source file for your presentation is located at the repository root: `/PRESENTATION.md`
-
-To edit it:
-
-```bash
-# Open in your favorite editor
-vim PRESENTATION.md
-# or
-code PRESENTATION.md
-# or
-nano PRESENTATION.md
-```
-
-### Marp Markdown Syntax
-
-Marp extends standard Markdown with special directives for presentations.
-
-#### Basic Structure
-
-```markdown
 ---
 marp: true
 theme: default
 paginate: true
----
-
-<!-- _class: lead -->
-# My First Slide
-
-Content goes here
-
----
-
-## Second Slide
-
-- Bullet point 1
-- Bullet point 2
-
----
-
-## Third Slide
-
-More content
-```
-
-#### Key Directives
-
-- `---` — Creates a new slide
-- `<!-- _class: lead -->` — Centres content on the slide
-- Front matter (between `---` at the start) — Configures presentation settings
-
-#### Styling
-
-The current presentation uses custom CSS in the front matter:
-
-```yaml
+backgroundColor: #fff
+color: #2c3e50
 style: |
   section {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -150,176 +11,564 @@ style: |
   h1 {
     color: #2FA4A9;
   }
-```
+  h2 {
+    color: #2FA4A9;
+  }
+  code {
+    background: #f5f5f5;
+  }
+  .columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+---
 
-You can modify these styles to match your branding.
+<!-- _class: lead -->
+# 🌱 Rhiza
 
-## Common Workflows
+**Reusable Configuration Templates for Modern Python Projects**
 
-### Quick Preview While Editing
+![w:200](assets/rhiza-logo.svg)
 
-For the best editing experience:
+*ῥίζα (ree-ZAH) — Ancient Greek for "root"*
 
-1. Open two terminals
-2. In terminal 1: `make presentation-serve`
-3. In terminal 2: Edit `PRESENTATION.md`
-4. Changes appear instantly in your browser
+---
 
-### Generate Final Deliverables
+## 🤔 The Problem
 
-Before presenting or sharing:
+Setting up a new Python project is time-consuming:
+
+- ⚙️ Configuring CI/CD pipelines
+- 🧪 Setting up testing frameworks
+- 📝 Creating linting and formatting rules
+- 📚 Configuring documentation generation
+- 🔧 Establishing development workflows
+- 🐳 Setting up dev containers
+
+**Result**: Hours of configuration before writing actual code
+
+---
+
+## 💡 The Solution: Rhiza
+
+A curated collection of **battle-tested templates** that:
+
+✅ Save time on project setup
+✅ Enforce best practices
+✅ Maintain consistency across projects
+✅ Stay up-to-date automatically
+✅ Support multiple Python versions (3.11-3.14)
+
+---
+
+## ✨ Key Features
+
+<div class="columns">
+<div>
+
+### 🚀 Automation
+- GitHub Actions workflows
+- Pre-commit hooks
+- Automated releases
+- Version bumping
+
+### 🧪 Testing
+- pytest configuration
+- CI test matrix
+- Code coverage
+- Documentation tests
+
+</div>
+<div>
+
+### 📚 Documentation
+- API docs with pdoc
+- Companion book with minibook
+- Presentation slides with Marp
+- Interactive notebooks
+
+### 🔧 Developer Experience
+- Dev containers
+- VS Code integration
+- GitHub Codespaces ready
+- SSH agent forwarding
+
+</div>
+</div>
+
+---
+
+## 📁 Available Templates
+
+### 🌱 Core Project Configuration
+- `.gitignore` — Python project defaults
+- `.editorconfig` — Consistent coding standards
+- `ruff.toml` — Linting and formatting
+- `pytest.ini` — Testing framework
+- `Makefile` — Common development tasks
+- `CODE_OF_CONDUCT.md` & `CONTRIBUTING.md`
+
+---
+
+## 📁 Available Templates (cont.)
+
+### 🔧 Developer Experience
+- `.devcontainer/` — VS Code dev containers
+- `.pre-commit-config.yaml` — Pre-commit hooks
+- `docker/` — Dockerfile templates
+
+### 🚀 CI/CD & Automation
+- `.github/workflows/` — GitHub Actions
+- Automated testing & releases
+- Documentation generation
+- Template synchronization
+
+---
+
+## 🎯 Quick Start
+
+### 1. Automated Injection (Recommended)
 
 ```bash
-# Generate both HTML and PDF
-make presentation
-make presentation-pdf
+cd /path/to/your/project
+uvx rhiza .
 ```
 
-This creates:
-- `presentation.html` — For web viewing
-- `presentation.pdf` — For offline viewing or printing
+This creates `.github/template.yml` and syncs templates automatically.
 
-### Updating the Presentation
+### 2. Manual Integration
 
-1. Edit `PRESENTATION.md` with your changes
-2. Regenerate outputs:
-   ```bash
-   make presentation
-   make presentation-pdf
-   ```
-3. Test in a browser to ensure everything looks correct
-
-## Troubleshooting
-
-### Marp CLI Not Found
-
-**Problem**: `marp: command not found`
-
-**Solution**: The Makefile should install it automatically, but if it doesn't:
 ```bash
-npm install -g @marp-team/marp-cli
+# Clone Rhiza
+git clone https://github.com/jebel-quant/rhiza.git /tmp/rhiza
+
+# Copy sync mechanism
+cp /tmp/rhiza/.github/template.yml .github/
+cp /tmp/rhiza/.rhiza/scripts/sync.sh .rhiza/scripts/
+
+# Sync templates
+./.rhiza/scripts/sync.sh
 ```
 
-### npm Not Found
+---
 
-**Problem**: `npm: command not found`
+## 🔄 Template Synchronization
 
-**Solution**: Install Node.js from [https://nodejs.org/](https://nodejs.org/)
+Templates stay up-to-date with Rhiza's latest improvements:
 
-### PDF Generation Fails
+### Configuration: `.github/template.yml`
 
-**Problem**: `Error: Failed to launch browser`
+```yaml
+repository: Jebel-Quant/rhiza
+ref: main
 
-**Solution**: Install Google Chrome or Chromium:
-- **Ubuntu/Debian**: `sudo apt-get install chromium-browser`
-- **macOS**: `brew install chromium`
-- **Windows**: Download from [https://www.google.com/chrome/](https://www.google.com/chrome/)
+include: |
+  .github/workflows/*.yml
+  .pre-commit-config.yaml
+  ruff.toml
+  pytest.ini
 
-### Permission Errors During npm Install
-
-**Problem**: `EACCES: permission denied` when installing Marp
-
-**Solution**: Either:
-- Use `sudo` (not recommended): `sudo npm install -g @marp-team/marp-cli`
-- Configure npm to use a local directory (recommended):
-  ```bash
-  mkdir ~/.npm-global
-  npm config set prefix '~/.npm-global'
-  echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
-  source ~/.bashrc
-  npm install -g @marp-team/marp-cli
-  ```
-
-### Styles Not Applying
-
-**Problem**: Custom styles in front matter don't appear
-
-**Solution**:
-- Ensure `marp: true` is set in the front matter
-- Check that your CSS syntax is valid
-- Try clearing browser cache
-
-## Advanced Usage
-
-### Custom Themes
-
-Create a custom Marp theme:
-
-1. Create a CSS file with your theme (e.g., `custom-theme.css`)
-2. Reference it in the front matter of `PRESENTATION.md`:
-   ```yaml
-   ---
-   marp: true
-   theme: custom-theme
-   ---
-   ```
-3. Modify the Makefile targets to include your theme directory:
-   ```makefile
-   presentation: ## generate presentation slides with custom theme
-   	@marp PRESENTATION.md --theme-set custom-theme.css -o presentation.html
-   ```
-
-### Exporting to PowerPoint
-
-While Marp doesn't directly export to PowerPoint, you can:
-1. Generate PDF: `make presentation-pdf`
-2. Use a PDF-to-PPTX converter online or with Adobe Acrobat
-
-### Multiple Presentations
-
-To create additional presentations:
-1. Create a new Markdown file (e.g., `WORKSHOP.md`)
-2. Add new targets to `presentation/presentation.mk` following the existing pattern:
-   ```makefile
-   workshop: ## generate workshop slides from WORKSHOP.md using Marp
-   	@printf "${BLUE}[INFO] Checking for Marp CLI...${RESET}\n"
-   	@if ! command -v marp >/dev/null 2>&1; then \
-   	  if command -v npm >/dev/null 2>&1; then \
-   	    printf "${YELLOW}[WARN] Marp CLI not found. Installing with npm...${RESET}\n"; \
-   	    npm install -g @marp-team/marp-cli || { \
-   	      printf "${RED}[ERROR] Failed to install Marp CLI.${RESET}\n"; \
-   	      exit 1; \
-   	    }; \
-   	  else \
-   	    printf "${RED}[ERROR] npm not found.${RESET}\n"; \
-   	    exit 1; \
-   	  fi; \
-   	fi
-   	@printf "${BLUE}[INFO] Generating HTML workshop slides...${RESET}\n"
-   	@marp WORKSHOP.md -o workshop.html
-   	@printf "${GREEN}[SUCCESS] Workshop slides generated: workshop.html${RESET}\n"
-   ```
-3. Run: `make workshop`
-
-## Learn More
-
-- **Marp Documentation**: [https://marpit.marp.app/](https://marpit.marp.app/)
-- **Marp CLI Documentation**: [https://github.com/marp-team/marp-cli](https://github.com/marp-team/marp-cli)
-- **Marpit Markdown**: [https://marpit.marp.app/markdown](https://marpit.marp.app/markdown)
-- **Theme Customisation**: [https://marpit.marp.app/theme-css](https://marpit.marp.app/theme-css)
-
-## Integration with Rhiza
-
-This presentation system is part of the Rhiza template collection. When you integrate Rhiza into your project, you automatically get:
-
-- ✅ The Makefile targets for presentation generation
-- ✅ A sample `PRESENTATION.md` file
-- ✅ Automatic Marp CLI installation
-- ✅ GitHub Actions integration (optional)
-
-The presentation targets are included in the main Makefile through:
-```makefile
--include presentation/presentation.mk
+exclude: |
+  .rhiza/scripts/customisations/*
 ```
 
-## Contributing
+---
 
-If you improve the presentation system:
-1. Update `presentation.mk` for new features
-2. Update this README with documentation
-3. Update `PRESENTATION.md` with examples
-4. Test all three commands: `presentation`, `presentation-pdf`, `presentation-serve`
+## 🔄 Automated Sync Workflow
 
-## License
+The `sync.yml` workflow keeps your project current:
 
-This presentation system is part of Rhiza and is licensed under the MIT License.
+- 📅 Runs weekly (configurable)
+- 🔄 Fetches latest templates from Rhiza
+- 🔍 Applies only included files
+- 🎯 Respects exclude patterns
+- 📝 Creates pull request with changes
+- 🤖 Fully automated
+
+**Manual trigger**: GitHub Actions → "Sync Templates" → "Run workflow"
+
+---
+
+## 🛠️ Makefile: Your Command Center
+
+```bash
+make install      # Setup project with uv
+make test         # Run pytest test suite
+make fmt          # Run pre-commit hooks
+make docs         # Generate API documentation
+make book         # Build companion book
+make presentation # Generate slides from PRESENTATION.md
+make marimo       # Launch Marimo notebook server
+make bump         # Interactive version bump
+make release      # Tag and release
+```
+
+**Tip**: Run `make help` to see all available targets
+
+---
+
+## 📊 Marimo Integration
+
+[Marimo](https://marimo.io/) — Modern interactive Python notebooks
+
+```bash
+make marimo  # Start notebook server
+```
+
+### Features
+- 🔄 Reactive execution
+- 🐍 Pure Python (no JSON)
+- 📦 Self-contained dependencies
+- 🎨 Built-in visualizations
+- 💻 VS Code extension support
+
+Notebooks stored in `book/marimo/` with inline dependency management.
+
+---
+
+## 🚀 Release Workflow
+
+### Two-Step Process
+
+```bash
+# 1. Bump version
+make bump
+# → Interactive prompts for patch/minor/major
+# → Updates pyproject.toml
+# → Commits and pushes changes
+
+# 2. Create release
+make release
+# → Creates git tag
+# → Pushes tag to GitHub
+# → Triggers release workflow
+```
+
+### Release Automation
+✅ Builds Python package
+✅ Creates GitHub release
+✅ Publishes to PyPI (if public)
+✅ Publishes devcontainer image (optional)
+
+---
+
+## 🐳 Dev Container Features
+
+### What You Get
+
+- 🐍 Python 3.14 runtime
+- ⚡ UV package manager
+- 🔧 All project dependencies
+- 🧪 Pre-commit hooks
+- 📊 Marimo integration
+- 🔐 SSH agent forwarding
+- 🚀 Port 8080 forwarding
+
+### Usage
+
+**VS Code**: Reopen in Container
+**Codespaces**: Create codespace on GitHub
+
+---
+
+## 🔧 Customization
+
+### Build Extras
+
+Create `.rhiza/scripts/customisations/build-extras.sh`:
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+# Install system dependencies
+sudo apt-get update
+sudo apt-get install -y graphviz
+
+# Your custom setup here
+```
+
+Runs during: `make install`, `make test`, `make book`, `make docs`
+
+---
+
+## 🎨 Documentation Customization
+
+### API Documentation (pdoc)
+
+```bash
+mkdir -p book/pdoc-templates
+# Add custom Jinja2 templates
+```
+
+### Companion Book (minibook)
+
+```bash
+mkdir -p book/minibook-templates
+# Create custom.html.jinja2
+```
+
+### Presentations (Marp)
+
+Edit `PRESENTATION.md` and run:
+```bash
+make presentation      # Generate HTML
+make presentation-pdf  # Generate PDF
+make presentation-serve # Interactive preview
+```
+
+---
+
+## ⚙️ Configuration Variables
+
+Control Python versions via repository variables:
+
+### `PYTHON_MAX_VERSION`
+- Default: `'3.14'`
+- Tests on 3.11, 3.12, 3.13, 3.14
+- Set to `'3.13'` to exclude 3.14
+
+### `PYTHON_DEFAULT_VERSION`
+- Default: `'3.14'`
+- Used in release, pre-commit, book workflows
+- Set to `'3.12'` for compatibility
+
+**Set in**: Repository Settings → Secrets and variables → Actions → Variables
+
+---
+
+## 🔍 Code Quality Tools
+
+### Pre-commit Hooks
+- ✅ YAML validation
+- ✅ TOML validation
+- ✅ Markdown formatting
+- ✅ Trailing whitespace
+- ✅ End-of-file fixes
+- ✅ GitHub workflow validation
+
+### Ruff
+- Fast Python linter
+- Replaces flake8, isort, pydocstyle
+- Auto-fixing capabilities
+- Extensive rule selection
+
+---
+
+## 🧪 Testing Philosophy
+
+### What Gets Tested
+
+- 📝 README code blocks
+- 🔧 Shell scripts (bump, release)
+- 🎯 Makefile targets
+- 📁 Repository structure
+- 📊 Marimo notebooks
+
+### Test Command
+
+```bash
+make test
+```
+
+Runs `pytest` with coverage reporting and HTML output.
+
+---
+
+## 🌐 CI/CD Workflows
+
+### 10 Automated Workflows
+
+1. **CI** — Test matrix across Python versions
+2. **PRE-COMMIT** — Validate code quality
+3. **DEPTRY** — Check dependency usage
+4. **BOOK** — Build documentation
+5. **MARIMO** — Validate notebooks
+6. **DOCKER** — Build and publish images
+7. **DEVCONTAINER** — Validate dev environment
+8. **RELEASE** — Automated releases
+9. **SYNC** — Template synchronization
+10. **RHIZA** — Self-injection test
+
+---
+
+## 📦 Package Publishing
+
+### PyPI Publication
+
+Automatic if configured as **Trusted Publisher**:
+
+1. Register package on PyPI
+2. Add GitHub Actions as trusted publisher
+3. Release workflow publishes automatically
+
+### Private Packages
+
+Add to `pyproject.toml`:
+```toml
+classifiers = [
+    "Private :: Do Not Upload",
+]
+```
+
+---
+
+## 🎯 Real-World Usage
+
+### Perfect For:
+
+- 🆕 New Python projects
+- 🔄 Standardizing existing projects
+- 👥 Team templates
+- 📚 Educational projects
+- 🏢 Corporate standards
+
+### Not Ideal For:
+
+- ❌ Non-Python projects
+- ❌ Projects requiring exotic configurations
+- ❌ One-off scripts
+
+---
+
+## 🏗️ Architecture Decisions
+
+### Why Makefile?
+
+- ✅ Universal (no language-specific tools)
+- ✅ Self-documenting
+- ✅ Easy to extend
+- ✅ Works everywhere
+
+### Why UV?
+
+- ⚡ 10-100x faster than pip
+- 📦 Handles entire Python ecosystem
+- 🔒 Lock files for reproducibility
+- 🎯 Single tool for everything
+
+---
+
+## 🤝 Contributing
+
+### How to Contribute
+
+1. 🍴 Fork the repository
+2. 🌿 Create feature branch
+3. ✍️ Make your changes
+4. ✅ Run `make test` and `make fmt`
+5. 📤 Submit pull request
+
+### What to Contribute
+
+- 🆕 New templates
+- 🐛 Bug fixes
+- 📚 Documentation improvements
+- 💡 Feature suggestions
+
+---
+
+## 📈 Project Stats
+
+- 🐍 **Python Versions**: 3.11, 3.12, 3.13, 3.14
+- 📄 **License**: MIT
+- 🏷️ **Current Version**: 0.3.0
+- 🔧 **Templates**: 20+ configuration files
+- 🤖 **Workflows**: 10 GitHub Actions
+- ⭐ **Badge**: ![Created with Rhiza](https://img.shields.io/badge/synced%20with-rhiza-2FA4A9)
+
+---
+
+## 🔗 Useful Links
+
+- 📖 **Repository**: [github.com/jebel-quant/rhiza](https://github.com/jebel-quant/rhiza)
+- 📚 **Issues**: [github.com/jebel-quant/rhiza/issues](https://github.com/jebel-quant/rhiza/issues)
+- 🚀 **Codespaces**: [Open in GitHub Codespaces](https://codespaces.new/jebel-quant/rhiza)
+- 📝 **Documentation**: Auto-generated with `make docs`
+
+---
+
+## 🙏 Acknowledgments
+
+### Built With
+
+- **GitHub Actions** — CI/CD automation
+- **UV** — Fast Python package management
+- **Ruff** — Fast Python linting
+- **Pytest** — Testing framework
+- **Marimo** — Interactive notebooks
+- **Marp** — This presentation!
+- **pdoc** — API documentation
+- **minibook** — Companion book
+
+---
+
+## 💡 Getting Started Today
+
+### Three Simple Steps
+
+1. **Try it**: `uvx rhiza .` in your project
+2. **Review**: Check the generated `.github/template.yml`
+3. **Sync**: Run `./.rhiza/scripts/sync.sh`
+
+### Or Explore First
+
+```bash
+# Open in Codespaces
+# → Click "Create codespace on main"
+
+# Or clone locally
+git clone https://github.com/jebel-quant/rhiza.git
+cd rhiza
+make install
+make test
+```
+
+---
+
+<!-- _class: lead -->
+
+# 🎉 Thank You!
+
+## Questions?
+
+**Rhiza** — Your foundation for modern Python projects
+
+*From the Greek ῥίζα (root) — because every great project needs strong roots*
+
+---
+
+## 📋 Quick Reference Card
+
+```bash
+# Setup
+uvx rhiza .                    # Auto-inject Rhiza
+
+# Development
+make install                   # Install dependencies
+make test                      # Run tests
+make fmt                       # Format & lint
+
+# Documentation
+make docs                      # API documentation
+make book                      # Companion book
+make presentation              # Generate slides
+
+# Release
+make bump                      # Bump version
+make release                   # Create release
+
+# Notebooks
+make marimo                    # Interactive notebooks
+```
+
+---
+
+<!-- _class: lead -->
+
+# Ready to Root Your Project?
+
+**Get Started**: [github.com/jebel-quant/rhiza](https://github.com/jebel-quant/rhiza)
+
+![w:300](assets/rhiza-logo.svg)
