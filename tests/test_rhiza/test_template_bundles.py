@@ -102,6 +102,19 @@ class TestTemplateBundleDefinitions:
                 for dep in bundle_config["recommends"]:
                     assert dep in bundle_names, f"Bundle {bundle_name} recommends non-existent bundle {dep}"
 
+    def test_bundle_files_exist(self, root, template_bundles):
+        """All file paths listed in bundle definitions should exist in the repository."""
+        bundles = template_bundles.get("bundles", {})
+
+        for bundle_name, bundle_config in bundles.items():
+            files = bundle_config.get("files", [])
+            for file_path in files:
+                full_path = root / file_path
+                # Check if path exists (can be file or directory)
+                assert full_path.exists(), (
+                    f"Bundle {bundle_name} references non-existent path: {file_path}"
+                )
+
 
 class TestExpectedBundles:
     """Tests that expected bundles are defined."""
