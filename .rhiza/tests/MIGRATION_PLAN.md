@@ -267,11 +267,117 @@ These do NOT block the migration but should be addressed in the final quality ph
 
 **Goal:** Quality review — remove low-value tests, strengthen weak ones.
 
-## Phase 9: Quality Review — Remove Low-Value Tests, Strengthen Weak Ones
+## Phase 9: Quality Review — Remove Low-Value Tests, Strengthen Weak Ones ✅ COMPLETED
 
 **Goal:** Review all migrated tests for quality. Remove tests that exist "for the sake of testing". Strengthen weak assertions.
 
-**Agent instructions:**
+**Completion Summary:**
+- Removed trivially-true tests:
+  - `test_root_returns_pathlib_path` — type checking is not valuable
+  - `test_root_is_absolute_path` — path construction guarantees this
+  - `test_root_can_locate_github_scripts` — duplicates structure tests
+  - `test_makefile_is_readable` — if file exists, it's readable
+  - `test_makefile_has_uv_variables` — too vague, not specific enough
+  - `test_bash_blocks_are_non_empty` — bash blocks can be intentionally empty
+- Removed tests with missing/weak assertions:
+  - `test_hooks_flow` — had no meaningful assertions
+  - `test_workflow_version_reading_pattern` — tests `cat` command, not rhiza
+  - `test_workflow_version_fallback_pattern` — tests `cat` command, not rhiza
+- Strengthened weak tests:
+  - `test_test_target_dry_run` — added proper assertion for pytest command
+- Test count after cleanup: 126 passed (2 skipped for optional src/ directory)
+- Down from 135 tests — removed 9 low-value tests
+- Code formatted and linted with `make fmt`
+
+**Committed:** `be47c7a`
+
+---
+
+## Migration Complete! 🎉
+
+The test migration is now complete. All tests have been successfully migrated from `tests/test_rhiza/` to `.rhiza/tests/test_rhiza/` with improved organization and quality.
+
+### Final Statistics
+- **Total tests:** 126 passed, 2 skipped (for optional `src/` directory)
+- **Test categories:** 6 (structure, api, integration, sync, utils, deps)
+- **Old location:** `tests/test_rhiza/` (removed, except benchmarks)
+- **New location:** `.rhiza/tests/test_rhiza/`
+- **Code quality:** All tests passing, formatted, and linted
+
+### Directory Structure
+
+```
+.rhiza/tests/test_rhiza/
+├── __init__.py
+├── conftest.py              # Core fixtures: root, logger, git_repo
+├── README.md               # Comprehensive test documentation
+├── api/                    # 15 tests - Makefile dry-run validation
+│   ├── conftest.py
+│   ├── test_makefile_targets.py
+│   ├── test_makefile_api.py
+│   └── test_github_targets.py
+├── deps/                   # 4 tests - Dependency health checks
+│   └── test_dependency_health.py
+├── integration/            # 19 tests - Sandboxed execution
+│   ├── test_release.py
+│   ├── test_book_targets.py
+│   ├── test_marimushka.py
+│   └── test_notebook_execution.py
+├── structure/              # 5 tests (1 skipped) - Static assertions
+│   ├── test_project_layout.py
+│   └── test_requirements.py
+├── sync/                   # 16 tests (1 skipped) - Template/content validation
+│   ├── conftest.py
+│   ├── test_rhiza_version.py
+│   ├── test_readme_validation.py
+│   └── test_docstrings.py
+└── utils/                  # 67 tests - Test infrastructure
+    ├── conftest.py
+    ├── test_git_repo_fixture.py
+    └── test_version_matrix.py
+```
+
+### Next Steps (Optional Future Improvements)
+
+If additional test improvements are desired in the future:
+
+1. **Add missing coverage (optional):**
+   - Test that `make install` dry-run emits expected uv commands
+   - Test that `make clean` dry-run emits expected cleanup commands
+   - Test that `.rhiza/.env` variables are correctly loaded (e.g., `print-SOURCE_FOLDER`)
+   - Add tests for any new Makefile targets as they're added
+
+2. **Performance optimization (optional):**
+   - Consider parallelizing independent test execution
+   - Profile slow tests and optimize where possible
+
+3. **Documentation (optional):**
+   - Keep [.rhiza/tests/test_rhiza/README.md](.rhiza/tests/test_rhiza/README.md) updated as tests evolve
+   - Document any new test categories or patterns
+
+4. **Continuous improvement:**
+   - Review test quality quarterly
+   - Remove tests that become obsolete
+   - Add tests for new features
+
+---
+
+## Notes for Future Agents
+
+**The migration is complete.** These notes remain for reference:
+
+- **Test discovery:** `pytest.ini` configured with `testpaths = .rhiza/tests`
+- **Running tests:**
+  - All: `make test` or `uv run pytest .rhiza/tests/test_rhiza/`
+  - Category: `uv run pytest .rhiza/tests/test_rhiza/api/`
+  - Specific file: `uv run pytest .rhiza/tests/test_rhiza/api/test_makefile_targets.py`
+- **Fixture locations:**
+  - Root-level: `.rhiza/tests/test_rhiza/conftest.py` (root, logger, git_repo)
+  - API: `.rhiza/tests/test_rhiza/api/conftest.py` (run_make, setup_tmp_makefile)
+  - Sync: `.rhiza/tests/test_rhiza/sync/conftest.py` (setup_sync_env)
+  - Utils: `.rhiza/tests/test_rhiza/utils/conftest.py` (sys.path setup)
+- **Benchmarks:** Remain in `tests/test_rhiza/benchmarks/` (run via `make benchmark`)
+- **Code quality:** Always run `make fmt` before committing
 
 1. **Remove low-value tests:**
    - `test_root_returns_pathlib_path` — trivially true, remove
