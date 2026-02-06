@@ -87,3 +87,20 @@ bundles:
       - .github/dependabot.yml
       - .github/copilot-instructions.md
       - .github/agents
+
+  # ============================================================================
+  # LEGAL - Legal and community files
+  # ============================================================================
+  legal:
+    description: "Legal and community documentation files"
+    standalone: true
+    requires: []
+    files:
+      # Legal files
+      - LICENSE
+
+      # Community files
+      - CONTRIBUTING.md
+      - CODE_OF_CONDUCT.md
+
+      
