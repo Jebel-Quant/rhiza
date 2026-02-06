@@ -11,7 +11,7 @@ import os
 import pathlib
 import re
 import shutil
-import subprocess
+import subprocess  # nosec B404
 
 import pytest
 
@@ -44,7 +44,7 @@ def run_make(
     flags = "-sn" if dry_run else "-s"
     cmd.insert(1, flags)
     logger.info("Running command: %s", " ".join(cmd))
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
     logger.debug("make exited with code %d", result.returncode)
     if result.stdout:
         logger.debug("make stdout (truncated to 500 chars):\n%s", result.stdout[:500])
@@ -58,8 +58,8 @@ def run_make(
 
 def setup_rhiza_git_repo():
     """Initialize a git repository and set remote to rhiza."""
-    subprocess.run([GIT, "init"], check=True, capture_output=True)
-    subprocess.run(
+    subprocess.run([GIT, "init"], check=True, capture_output=True)  # nosec B603
+    subprocess.run(  # nosec B603
         [GIT, "remote", "add", "origin", "https://github.com/jebel-quant/rhiza"],
         check=True,
         capture_output=True,
@@ -192,18 +192,18 @@ def git_repo(root, tmp_path, monkeypatch):
 
     # 1. Create bare remote
     remote_dir.mkdir()
-    subprocess.run([GIT, "init", "--bare", str(remote_dir)], check=True)
+    subprocess.run([GIT, "init", "--bare", str(remote_dir)], check=True)  # nosec B603
     # Ensure the remote's default HEAD points to master for predictable behavior
-    subprocess.run([GIT, "symbolic-ref", "HEAD", "refs/heads/master"], cwd=remote_dir, check=True)
+    subprocess.run([GIT, "symbolic-ref", "HEAD", "refs/heads/master"], cwd=remote_dir, check=True)  # nosec B603
 
     # 2. Clone to local
-    subprocess.run([GIT, "clone", str(remote_dir), str(local_dir)], check=True)
+    subprocess.run([GIT, "clone", str(remote_dir), str(local_dir)], check=True)  # nosec B603
 
     # Use monkeypatch to safely change cwd for the duration of the test
     monkeypatch.chdir(local_dir)
 
     # Ensure local default branch is 'master' to match test expectations
-    subprocess.run([GIT, "checkout", "-b", "master"], check=True)
+    subprocess.run([GIT, "checkout", "-b", "master"], check=True)  # nosec B603
 
     # Create pyproject.toml
     with open("pyproject.toml", "w") as f:
@@ -252,10 +252,10 @@ def git_repo(root, tmp_path, monkeypatch):
     (script_dir / "release.sh").chmod(0o755)
 
     # Commit and push initial state
-    subprocess.run([GIT, "config", "user.email", "test@example.com"], check=True)
-    subprocess.run([GIT, "config", "user.name", "Test User"], check=True)
-    subprocess.run([GIT, "add", "."], check=True)
-    subprocess.run([GIT, "commit", "-m", "Initial commit"], check=True)
-    subprocess.run([GIT, "push", "origin", "master"], check=True)
+    subprocess.run([GIT, "config", "user.email", "test@example.com"], check=True)  # nosec B603
+    subprocess.run([GIT, "config", "user.name", "Test User"], check=True)  # nosec B603
+    subprocess.run([GIT, "add", "."], check=True)  # nosec B603
+    subprocess.run([GIT, "commit", "-m", "Initial commit"], check=True)  # nosec B603
+    subprocess.run([GIT, "push", "origin", "master"], check=True)  # nosec B603
 
     return local_dir

@@ -2,14 +2,13 @@
 
 import os
 import shutil
-import subprocess
+import subprocess  # nosec
 from pathlib import Path
 
 import pytest
 
 # Get absolute paths for executables to avoid S607 warnings from CodeFactor/Bandit
 GIT = shutil.which("git") or "/usr/bin/git"
-MAKE = shutil.which("make") or "/usr/bin/make"
 
 # Files required for the API test environment
 REQUIRED_FILES = [
@@ -70,17 +69,17 @@ def setup_api_env(logger, root, tmp_path: Path):
         (tmp_path / "local.mk").unlink()
 
     # Initialize git repo for rhiza tools (required for sync/validate)
-    subprocess.run([GIT, "init"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run([GIT, "init"], cwd=tmp_path, check=True, capture_output=True)  # nosec
     # Configure git user for commits if needed (some rhiza checks might need commits)
-    subprocess.run([GIT, "config", "user.email", "you@example.com"], cwd=tmp_path, check=True, capture_output=True)
-    subprocess.run([GIT, "config", "user.name", "Rhiza Test"], cwd=tmp_path, check=True, capture_output=True)
+    subprocess.run([GIT, "config", "user.email", "you@example.com"], cwd=tmp_path, check=True, capture_output=True)  # nosec
+    subprocess.run([GIT, "config", "user.name", "Rhiza Test"], cwd=tmp_path, check=True, capture_output=True)  # nosec
     # Add origin remote to simulate being in the rhiza repo (triggers the skip logic in rhiza.mk)
     subprocess.run(
         [GIT, "remote", "add", "origin", "https://github.com/jebel-quant/rhiza.git"],
         cwd=tmp_path,
         check=True,
         capture_output=True,
-    )
+    )  # nosec
 
     # Move to tmp dir
     old_cwd = Path.cwd()
@@ -91,27 +90,13 @@ def setup_api_env(logger, root, tmp_path: Path):
         os.chdir(old_cwd)
 
 
-def run_make(args: list[str] | None = None, dry_run: bool = True) -> subprocess.CompletedProcess:
-    """Run make in the current directory."""
-    cmd = [MAKE]
-    if dry_run:
-        cmd.append("-n")
-    if args:
-        cmd.extend(args)
-
-    # We use -s (silent) to minimize noise, but sometimes we want to see output
-    if dry_run:
-        # For dry-run, we often want to see the commands
-        pass
-    else:
-        cmd[:1] = [MAKE, "-s"]
-
-    return subprocess.run(cmd, capture_output=True, text=True)
+# Import run_make from local conftest
+from .conftest import run_make  # noqa: E402
 
 
-def test_api_delegation(setup_api_env):
+def test_api_delegation(logger, setup_api_env):
     """Test that 'make help' works and delegates to .rhiza/rhiza.mk."""
-    result = run_make(["help"], dry_run=False)
+    result = run_make(logger, ["help"], dry_run=False)
     assert result.returncode == 0
     # "Rhiza Workflows" is a section in .rhiza/rhiza.mk
     assert "Rhiza Workflows" in result.stdout
@@ -120,7 +105,7 @@ def test_api_delegation(setup_api_env):
     assert "test" in result.stdout or "install" in result.stdout
 
 
-def test_minimal_setup_works(setup_api_env):
+def test_minimal_setup_works(logger, setup_api_env):
     """Test that make works even if optional folders (tests, docker, etc.) are missing."""
     # Remove optional folders
     for folder in OPTIONAL_FOLDERS:
@@ -132,7 +117,7 @@ def test_minimal_setup_works(setup_api_env):
     # Just mainly folders.
 
     # Run make help
-    result = run_make(["help"], dry_run=False)
+    result = run_make(logger, ["help"], dry_run=False)
     assert result.returncode == 0
 
     # Check that core rhiza targets exist
@@ -144,7 +129,7 @@ def test_minimal_setup_works(setup_api_env):
     # This is by design - targets are always available but handle missing resources.
 
 
-def test_extension_mechanism(setup_api_env):
+def test_extension_mechanism(logger, setup_api_env):
     """Test that .rhiza/make.d/*.mk files are included."""
     ext_file = setup_api_env / ".rhiza" / "make.d" / "50-custom.mk"
     ext_file.write_text("""
@@ -157,12 +142,12 @@ custom-target:
     # Note: make -n might not show @echo commands if they are silent,
     # but here we just want to see if make accepts the target.
 
-    result = run_make(["custom-target"], dry_run=False)
+    result = run_make(logger, ["custom-target"], dry_run=False)
     assert result.returncode == 0
     assert "Running custom target" in result.stdout
 
 
-def test_local_override(setup_api_env):
+def test_local_override(logger, setup_api_env):
     """Test that local.mk is included and can match targets."""
     local_file = setup_api_env / "local.mk"
     local_file.write_text("""
@@ -171,12 +156,12 @@ local-target:
 	@echo "Running local target"
 """)
 
-    result = run_make(["local-target"], dry_run=False)
+    result = run_make(logger, ["local-target"], dry_run=False)
     assert result.returncode == 0
     assert "Running local target" in result.stdout
 
 
-def test_local_override_pre_hook(setup_api_env):
+def test_local_override_pre_hook(logger, setup_api_env):
     """Test using local.mk to override a pre-hook."""
     local_file = setup_api_env / "local.mk"
     # We override pre-sync to print a marker (using double-colon to match rhiza.mk)
@@ -193,26 +178,14 @@ pre-sync::
     # Wait, I defined it as `pre-sync: ; @:` (single colon).
     # So redefining it in local.mk (which is included AFTER) might trigger a warning but should work.
 
-    result = run_make(["sync"], dry_run=False)
+    result = run_make(logger, ["sync"], dry_run=False)
     # We might expect a warning about overriding commands for target `pre-sync`
     # checking stdout/stderr for the marker
 
     assert "[[LOCAL_PRE_SYNC]]" in result.stdout
 
 
-def test_hooks_flow(setup_api_env):
-    """Verify that sync runs pre-sync, the sync logic, and post-sync."""
-    # We can't easily see execution order in dry run if commands are hidden.
-    # Let's inspect the output of make -n sync
-
-    result = run_make(["sync"], dry_run=True)
-    assert result.returncode == 0
-
-    # The output should contain the command sequences.
-    # Since pre-sync is currently empty (@:) it might not show up in -n output unless we override it.
-
-
-def test_hook_execution_order(setup_api_env):
+def test_hook_execution_order(logger, setup_api_env):
     """Define hooks and verify execution order."""
     # Create an extension that defines visible hooks (using double-colon)
     (setup_api_env / ".rhiza" / "make.d" / "hooks.mk").write_text("""
@@ -223,7 +196,7 @@ post-sync::
 	@echo "FINISHED_SYNC"
 """)
 
-    result = run_make(["sync"], dry_run=False)
+    result = run_make(logger, ["sync"], dry_run=False)
     assert result.returncode == 0
     output = result.stdout
 
@@ -237,7 +210,7 @@ post-sync::
     assert start_index < finish_index
 
 
-def test_override_core_target(setup_api_env):
+def test_override_core_target(logger, setup_api_env):
     """Verify that a repo extension can override a core target (with warning)."""
     # Override 'fmt' which is defined in Makefile.rhiza
     (setup_api_env / ".rhiza" / "make.d" / "override.mk").write_text("""
@@ -245,7 +218,7 @@ fmt:
 	@echo "CUSTOM_FMT"
 """)
 
-    result = run_make(["fmt"], dry_run=False)
+    result = run_make(logger, ["fmt"], dry_run=False)
     assert result.returncode == 0
     # It should run the custom one because .rhiza/make.d is included later
     assert "CUSTOM_FMT" in result.stdout

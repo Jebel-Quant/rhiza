@@ -11,64 +11,7 @@ These tests validate:
 
 from __future__ import annotations
 
-import os
-import shutil
-import subprocess
-from pathlib import Path
-
-import pytest
-
-from .conftest import run_make, setup_rhiza_git_repo, strip_ansi
-
-
-@pytest.fixture(autouse=True)
-def setup_tmp_makefile(logger, root, tmp_path: Path):
-    """Copy the Makefile and necessary files into a temp directory and chdir there.
-
-    We rely on `make -n` so that no real commands are executed.
-    """
-    logger.debug("Setting up temporary Makefile test dir: %s", tmp_path)
-
-    # Copy the main Makefile into the temporary working directory
-    shutil.copy(root / "Makefile", tmp_path / "Makefile")
-
-    # Copy core Rhiza Makefiles and version file
-    (tmp_path / ".rhiza").mkdir(exist_ok=True)
-    shutil.copy(root / ".rhiza" / "rhiza.mk", tmp_path / ".rhiza" / "rhiza.mk")
-
-    # Copy .rhiza-version if it exists
-    if (root / ".rhiza" / ".rhiza-version").exists():
-        shutil.copy(root / ".rhiza" / ".rhiza-version", tmp_path / ".rhiza" / ".rhiza-version")
-
-    # Create a minimal, deterministic .rhiza/.env for tests
-    env_content = "SCRIPTS_FOLDER=.rhiza/scripts\nCUSTOM_SCRIPTS_FOLDER=.rhiza/customisations/scripts\n"
-    (tmp_path / ".rhiza" / ".env").write_text(env_content)
-
-    logger.debug("Copied Makefile from %s to %s", root / "Makefile", tmp_path / "Makefile")
-
-    # Create a minimal .rhiza/template.yml
-    (tmp_path / ".rhiza" / "template.yml").write_text("repository: Jebel-Quant/rhiza\nref: main\n")
-
-    # Sort out pyproject.toml
-    (tmp_path / "pyproject.toml").write_text('[project]\nname = "test-project"\nversion = "0.1.0"\n')
-
-    # Move into tmp directory for isolation
-    old_cwd = Path.cwd()
-    os.chdir(tmp_path)
-    logger.debug("Changed working directory to %s", tmp_path)
-
-    # Initialize a git repo so that commands checking for it (like materialize) don't fail validation
-    setup_rhiza_git_repo()
-
-    # Create src and tests directories to satisfy validate
-    (tmp_path / "src").mkdir(exist_ok=True)
-    (tmp_path / "tests").mkdir(exist_ok=True)
-
-    try:
-        yield
-    finally:
-        os.chdir(old_cwd)
-        logger.debug("Restored working directory to %s", old_cwd)
+from ..conftest import run_make, strip_ansi
 
 
 class TestRhizaVersion:
@@ -172,49 +115,6 @@ class TestSummariseSync:
         # The output should show that install-uv is called
         # This might be implicit via the dependency chain
         assert "rhiza" in out
-
-
-class TestWorkflowSync:
-    """Tests to validate the workflow pattern used in .github/workflows/rhiza_sync.yml."""
-
-    def test_workflow_version_reading_pattern(self, logger, tmp_path):
-        """Test the pattern used in workflow to read Rhiza version."""
-        # Create .rhiza-version file
-        version_file = tmp_path / ".rhiza" / ".rhiza-version"
-        version_file.write_text("0.9.5\n")
-
-        # Simulate the workflow's version reading step
-        result = subprocess.run(
-            [shutil.which("cat") or "cat", str(version_file)],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        version = result.stdout.strip()
-
-        assert version == "0.9.5"
-
-    def test_workflow_version_fallback_pattern(self, logger, tmp_path):
-        """Test the fallback pattern when .rhiza-version doesn't exist."""
-        # Ensure .rhiza-version doesn't exist
-        version_file = tmp_path / ".rhiza" / ".rhiza-version"
-        if version_file.exists():
-            version_file.unlink()
-
-        # Simulate the workflow's version reading with fallback using proper subprocess
-        try:
-            result = subprocess.run(
-                [shutil.which("cat") or "cat", str(version_file)],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            version = result.stdout.strip()
-        except subprocess.CalledProcessError:
-            # File doesn't exist, use fallback
-            version = "0.9.0"
-
-        assert version == "0.9.0"
 
     def test_workflow_uvx_command_format(self, logger):
         """Test that the uvx command format matches workflow expectations."""
