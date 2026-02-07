@@ -123,6 +123,7 @@ Or delete the workflow file:
 git rm .github/workflows/rhiza_codeql.yml
 git commit -m "Remove CodeQL workflow"
 ```
+
 ## ⚙️ Configuration Variables
 
 You can configure certain aspects of the Makefile by overriding variables. These can be set in your main `Makefile`, a `local.mk` file (for local developer overrides), or passed as environment variables / command-line arguments.
