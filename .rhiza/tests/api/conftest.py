@@ -18,7 +18,7 @@ import pytest
 
 # Import shared utilities (no __init__.py needed with new structure)
 # Note: we define our own run_make and setup_rhiza_git_repo here with enhanced functionality
-from test_utils import MAKE  # noqa: F401
+from test_utils import MAKE
 
 # Split Makefile paths that are included in the main Makefile
 # These are now located in .rhiza/make.d/ directory

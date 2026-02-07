@@ -17,7 +17,6 @@ import pytest
 # Import shared helpers from test_utils (no __init__.py needed)
 from test_utils import GIT, MAKE, run_make, setup_rhiza_git_repo, strip_ansi  # noqa: F401
 
-
 MOCK_MAKE_SCRIPT = """#!/usr/bin/env python3
 import sys
 

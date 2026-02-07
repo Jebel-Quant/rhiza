@@ -3,7 +3,7 @@
 Helper functions used across the test suite. Extracted from conftest.py to avoid
 relative imports and __init__.py requirements in test directories.
 
-This file and its associated utilities flow down via a SYNC action from the 
+This file and its associated utilities flow down via a SYNC action from the
 jebel-quant/rhiza repository (https://github.com/jebel-quant/rhiza).
 """
 
