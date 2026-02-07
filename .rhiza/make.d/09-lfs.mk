@@ -14,17 +14,29 @@ lfs-install: ## install git-lfs and configure it for this repository
 	if [ "$$UNAME_S" = "Darwin" ]; then \
 		printf "${BLUE}[INFO] macOS detected ($$UNAME_M)${RESET}\n"; \
 		mkdir -p .local/bin .local/tmp; \
-		GIT_LFS_VERSION=$$(curl -sI https://github.com/git-lfs/git-lfs/releases/latest | grep -i '^location:' | sed 's/.*tag\/v//;s/[[:space:]]*$$//'); \
+		GIT_LFS_VERSION=$$(curl -s https://api.github.com/repos/git-lfs/git-lfs/releases/latest | grep '"tag_name"' | sed 's/.*"v//;s/".*//'); \
+		if [ -z "$$GIT_LFS_VERSION" ]; then \
+			printf "${RED}[ERROR] Failed to detect git-lfs version${RESET}\n"; \
+			exit 1; \
+		fi; \
 		printf "${BLUE}[INFO] Installing git-lfs v$$GIT_LFS_VERSION${RESET}\n"; \
 		if [ "$$UNAME_M" = "arm64" ]; then \
-			curl -fL -o .local/tmp/git-lfs.zip \
-				"https://github.com/git-lfs/git-lfs/releases/download/v$$GIT_LFS_VERSION/git-lfs-darwin-arm64-v$$GIT_LFS_VERSION.zip"; \
+			ARCH_SUFFIX="darwin-arm64"; \
 		else \
-			curl -fL -o .local/tmp/git-lfs.zip \
-				"https://github.com/git-lfs/git-lfs/releases/download/v$$GIT_LFS_VERSION/git-lfs-darwin-amd64-v$$GIT_LFS_VERSION.zip"; \
+			ARCH_SUFFIX="darwin-amd64"; \
+		fi; \
+		DOWNLOAD_URL="https://github.com/git-lfs/git-lfs/releases/download/v$$GIT_LFS_VERSION/git-lfs-$$ARCH_SUFFIX-v$$GIT_LFS_VERSION.zip"; \
+		if ! curl -fL -o .local/tmp/git-lfs.zip "$$DOWNLOAD_URL"; then \
+			printf "${RED}[ERROR] Failed to download git-lfs v$$GIT_LFS_VERSION for $$ARCH_SUFFIX${RESET}\n"; \
+			exit 1; \
 		fi; \
 		unzip -o -q .local/tmp/git-lfs.zip -d .local/tmp; \
-		cp .local/tmp/git-lfs-*/git-lfs .local/bin/; \
+		LFS_BINARY=$$(find .local/tmp -type f -name "git-lfs" | head -n 1); \
+		if [ -z "$$LFS_BINARY" ]; then \
+			printf "${RED}[ERROR] Failed to extract git-lfs binary from archive${RESET}\n"; \
+			exit 1; \
+		fi; \
+		cp "$$LFS_BINARY" .local/bin/; \
 		chmod +x .local/bin/git-lfs; \
 		PATH=$$PWD/.local/bin:$$PATH git-lfs install; \
 		rm -rf .local/tmp; \
@@ -32,7 +44,13 @@ lfs-install: ## install git-lfs and configure it for this repository
 		printf "${BLUE}[INFO] Linux detected${RESET}\n"; \
 		if ! command -v git-lfs >/dev/null 2>&1; then \
 			printf "${BLUE}[INFO] Installing git-lfs via apt...${RESET}\n"; \
-			apt-get update && apt-get install -y git-lfs; \
+			if [ "$$(id -u)" -ne 0 ]; then \
+				printf "${YELLOW}[WARN] This requires sudo privileges. You may be prompted for your password.${RESET}\n"; \
+			fi; \
+			apt-get update && apt-get install -y git-lfs || { \
+				printf "${RED}[ERROR] Failed to install git-lfs. Try running with sudo: sudo make lfs-install${RESET}\n"; \
+				exit 1; \
+			}; \
 		fi; \
 		git lfs install; \
 	else \

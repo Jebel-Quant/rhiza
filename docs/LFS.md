@@ -126,18 +126,24 @@ data/*.csv filter=lfs diff=lfs merge=lfs -text
 
 ### Permission denied during installation (Linux)
 
-If you encounter permission errors on Linux, you may need to run with sudo:
-
-```bash
-sudo make lfs-install
-```
-
-Or install git-lfs manually:
+If you encounter permission errors on Linux during `make lfs-install`, the installation requires elevated privileges. The command will prompt for sudo access automatically. If it fails, you can run:
 
 ```bash
 sudo apt-get update && sudo apt-get install -y git-lfs
 git lfs install
 ```
+
+Alternatively, if you don't have sudo access, git-lfs can be installed manually by downloading the binary from the [releases page](https://github.com/git-lfs/git-lfs/releases).
+
+### Failed to detect git-lfs version (macOS)
+
+If the installation fails with "Failed to detect git-lfs version", ensure you have internet connectivity and can access the GitHub API:
+
+```bash
+curl -s https://api.github.com/repos/git-lfs/git-lfs/releases/latest
+```
+
+If the GitHub API is blocked, you can manually download and install git-lfs from [git-lfs.github.com](https://git-lfs.github.com/).
 
 ### LFS files not downloading
 
