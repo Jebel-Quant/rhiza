@@ -159,9 +159,7 @@ def test_lfs_install_uses_github_api(git_repo, logger):
 
     assert result.returncode == 0
     # Verify GitHub API is used, not redirects
-    # CodeQL [py/incomplete-url-substring-sanitization] - False positive: This is a test assertion
-    # checking command output, not URL validation for security purposes
-    assert "api.github.com" in result.stdout
+    assert "api.github.com" in result.stdout  # lgtm [py/incomplete-url-substring-sanitization]
     assert "releases/latest" in result.stdout
 
 
