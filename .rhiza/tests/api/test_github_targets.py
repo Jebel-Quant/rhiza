@@ -7,7 +7,7 @@ and emit the expected commands without actually executing them.
 from __future__ import annotations
 
 # Import run_make from local conftest (setup_tmp_makefile is autouse)
-from .conftest import run_make
+from api.conftest import run_make
 
 
 def test_gh_targets_exist(logger):
