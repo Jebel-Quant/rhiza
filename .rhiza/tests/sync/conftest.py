@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
-# Import from test_utils instead of relative import
-from test_utils import setup_rhiza_git_repo
+# Import from parent conftest
+from ..conftest import setup_rhiza_git_repo
 
 
 @pytest.fixture(autouse=True)
