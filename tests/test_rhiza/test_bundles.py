@@ -41,7 +41,7 @@ class TestTemplateBundlesStructure:
         """Template bundles should have a version field."""
         assert "version" in template_bundles
         assert isinstance(template_bundles["version"], str)
-        
+
     def test_has_bundles_section(self, template_bundles):
         """Template bundles should have a bundles section."""
         assert "bundles" in template_bundles
