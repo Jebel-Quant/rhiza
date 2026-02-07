@@ -20,6 +20,9 @@
 #     docker/Dockerfile
 #     ...
 
+# Schema version for this bundles file format
+version: "0.7.0"
+
 # Bundle Definitions
 bundles:
   # ============================================================================
