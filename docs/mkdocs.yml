@@ -3,7 +3,10 @@
 
 site_name: Rhiza Documentation
 site_description: Reusable configuration templates for modern Python projects
-site_url: ""
+site_url: https://jebel-quant.github.io/rhiza/docs/
+repo_url: https://github.com/jebel-quant/rhiza
+repo_name: jebel-quant/rhiza
+edit_uri: edit/main/docs/
 
 # Documentation source directory (relative to this config file location)
 # Note: site_dir is passed via command line (-d flag) to avoid path conflicts
@@ -13,57 +16,130 @@ docs_dir: .
 # https://squidfunk.github.io/mkdocs-material/
 theme:
   name: material
+  favicon: assets/rhiza-logo.svg
   palette:
     # Dark mode
     - scheme: slate
-      primary: indigo
-      accent: purple
+      primary: teal
+      accent: cyan
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
     # Light mode
     - scheme: default
-      primary: indigo
-      accent: purple
+      primary: teal
+      accent: cyan
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
   features:
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.tracking
     - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
+    - navigation.expand
+    - navigation.indexes
     - navigation.top
+    - toc.follow
+    - search.suggest
     - search.highlight
     - search.share
     - content.code.copy
     - content.code.annotate
+    - content.tabs.link
+    - content.action.edit
+  icon:
+    repo: fontawesome/brands/github
 
 # Markdown extensions
 markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
   # Code highlighting
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
   - pymdownx.snippets
   # Code fences
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   # Admonitions (note, warning, tip boxes)
-  - admonition
-  - pymdownx.details
-  # Tables
-  - tables
+  - pymdownx.tabbed:
+      alternate_style: true
   # Task lists
   - pymdownx.tasklist:
       custom_checkbox: true
+  - pymdownx.tilde
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
+
+# Extra configuration
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/jebel-quant/rhiza
+  generator: false
+
+# Custom CSS
+extra_css:
+  - stylesheets/extra.css
 
 # Navigation structure
 nav:
   - Home: index.md
-  - Architecture: ARCHITECTURE.md
-  - Quick Reference: QUICK_REFERENCE.md
-  - Customization: CUSTOMIZATION.md
-  - Demo: DEMO.md
-  - Glossary: GLOSSARY.md
-  - Releasing: RELEASING.md
+  - Getting Started:
+    - Quick Start: getting-started/quickstart.md
+    - Installation: getting-started/installation.md
+    - Your First Sync: getting-started/first-sync.md
+  - User Guide:
+    - Development Workflows: WORKFLOWS.md
+    - Customization: CUSTOMIZATION.md
+    - Releasing: RELEASING.md
+    - Testing: TESTS.md
+  - Reference:
+    - Quick Reference: QUICK_REFERENCE.md
+    - Architecture: ARCHITECTURE.md
+    - Glossary: GLOSSARY.md
+    - Benchmarks: BENCHMARK.md
+  - Features:
+    - Dev Containers: DEVCONTAINER.md
+    - Docker: DOCKER.md
+    - Marimo Notebooks: MARIMO.md
+    - Presentations: PRESENTATION.md
+    - Documentation Generation: BOOK.md
+  - Operations:
+    - Security: SECURITY.md
+    - Token Setup: token-setup.md
+    - Private Packages: private-packages.md
+  - Resources:
+    - Demo: DEMO.md
 
