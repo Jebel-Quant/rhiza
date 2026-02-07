@@ -26,7 +26,7 @@ test: install ## run all tests
 	@if [ -d ${TESTS_FOLDER} ]; then \
 	  mkdir -p _tests/html-coverage _tests/html-report; \
 	  if [ -d ${SOURCE_FOLDER} ]; then \
-	    ${VENV}/bin/python -m pytest ${TESTS_FOLDER} \
+	    ${VENV}/bin/python -m pytest \
 	    --ignore=${TESTS_FOLDER}/benchmarks \
 	    --cov=${SOURCE_FOLDER} \
 	    --cov-report=term \
@@ -36,7 +36,7 @@ test: install ## run all tests
 	    --html=_tests/html-report/report.html; \
 	  else \
 	    printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, running tests without coverage${RESET}\n"; \
-	    ${VENV}/bin/python -m pytest ${TESTS_FOLDER} \
+	    ${VENV}/bin/python -m pytest \
 	    --ignore=${TESTS_FOLDER}/benchmarks \
 	    --html=_tests/html-report/report.html; \
 	  fi \

@@ -66,6 +66,7 @@ def setup_rhiza_git_repo():
         capture_output=True,
     )
 
+
 MOCK_MAKE_SCRIPT = """#!/usr/bin/env python3
 import sys
 

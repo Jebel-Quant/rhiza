@@ -15,10 +15,7 @@ from __future__ import annotations
 import os
 
 import pytest
-from api.conftest import SPLIT_MAKEFILES, run_make, setup_rhiza_git_repo
-
-# Import shared helpers from parent conftest
-from ..conftest import strip_ansi
+from api.conftest import SPLIT_MAKEFILES, run_make, setup_rhiza_git_repo, strip_ansi
 
 
 class TestMakefile:
