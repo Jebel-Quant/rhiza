@@ -10,15 +10,22 @@ This conftest provides:
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess  # nosec
 from pathlib import Path
 
 import pytest
 
-# Import shared utilities (no __init__.py needed with new structure)
-# Note: we define our own run_make and setup_rhiza_git_repo here with enhanced functionality
-from test_utils import MAKE
+# Get absolute path for make executable to avoid S607 warnings
+MAKE = shutil.which("make") or "/usr/bin/make"
+
+
+def strip_ansi(text: str) -> str:
+    """Strip ANSI escape sequences from text."""
+    ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+    return ansi_escape.sub("", text)
+
 
 # Split Makefile paths that are included in the main Makefile
 # These are now located in .rhiza/make.d/ directory
