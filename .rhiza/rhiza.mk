@@ -26,10 +26,6 @@ RESET := \033[0m
 	help \
 	install \
 	install-uv \
-	lfs-install \
-	lfs-pull \
-	lfs-status \
-	lfs-track \
 	post-bump \
 	post-install \
 	post-release \
