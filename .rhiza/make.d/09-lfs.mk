@@ -31,7 +31,7 @@ lfs-install: ## install git-lfs and configure it for this repository
 			exit 1; \
 		fi; \
 		unzip -o -q .local/tmp/git-lfs.zip -d .local/tmp; \
-		LFS_BINARY=$$(find .local/tmp -type f -name "git-lfs" | head -n 1); \
+		LFS_BINARY=$$(find .local/tmp -maxdepth 2 -type f -name "git-lfs" -executable | head -n 1); \
 		if [ -z "$$LFS_BINARY" ]; then \
 			printf "${RED}[ERROR] Failed to extract git-lfs binary from archive${RESET}\n"; \
 			exit 1; \
@@ -46,11 +46,16 @@ lfs-install: ## install git-lfs and configure it for this repository
 			printf "${BLUE}[INFO] Installing git-lfs via apt...${RESET}\n"; \
 			if [ "$$(id -u)" -ne 0 ]; then \
 				printf "${YELLOW}[WARN] This requires sudo privileges. You may be prompted for your password.${RESET}\n"; \
+				sudo apt-get update && sudo apt-get install -y git-lfs || { \
+					printf "${RED}[ERROR] Failed to install git-lfs with sudo.${RESET}\n"; \
+					exit 1; \
+				}; \
+			else \
+				apt-get update && apt-get install -y git-lfs || { \
+					printf "${RED}[ERROR] Failed to install git-lfs.${RESET}\n"; \
+					exit 1; \
+				}; \
 			fi; \
-			apt-get update && apt-get install -y git-lfs || { \
-				printf "${RED}[ERROR] Failed to install git-lfs. Try running with sudo: sudo make lfs-install${RESET}\n"; \
-				exit 1; \
-			}; \
 		fi; \
 		git lfs install; \
 	else \
