@@ -4,7 +4,8 @@
 
 [![asciicast](https://asciinema.org/a/placeholder.svg)](https://asciinema.org/a/placeholder)
 
-> **Note**: Replace the placeholder link above with your actual asciinema recording.
+!!! note "TODO"
+    Replace the placeholder link above with your actual asciinema recording.
 
 ## Recording Instructions
 
