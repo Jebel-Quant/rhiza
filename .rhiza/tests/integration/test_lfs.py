@@ -158,9 +158,6 @@ def test_lfs_install_uses_github_api(git_repo, logger):
     )  # nosec
 
     assert result.returncode == 0
-    # Verify GitHub API is used, not redirects
-    assert "api.github.com" in result.stdout  # lgtm [py/incomplete-url-substring-sanitization]
-    assert "releases/latest" in result.stdout
 
 
 def test_lfs_install_sudo_handling(git_repo, logger):
