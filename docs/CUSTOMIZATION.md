@@ -50,7 +50,7 @@ Create `.rhiza/make.d/50-custom.mk`:
 ```makefile
 post-install::
 	@echo "Installing specialized dependencies..."
-	@pip install some-private-lib
+	@uv pip install some-private-lib
 	
 ##@ Custom Tasks
 train-model: ## Train the ML model
