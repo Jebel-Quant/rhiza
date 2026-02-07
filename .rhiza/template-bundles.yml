@@ -40,18 +40,15 @@ bundles:
       - .rhiza/.gitignore
       - .rhiza/.rhiza-version
       - .rhiza/make.d/00-custom-env.mk
-      #- .rhiza/make.d/01-test.mk
       - .rhiza/make.d/08-docs.mk
       - .rhiza/make.d/10-custom-task.mk
       - .rhiza/make.d/README.md
       - .rhiza/scripts
       - .rhiza/docs
       - .rhiza/assets
-      #- .rhiza/tests
       - .rhiza/requirements/README.md
       - .rhiza/requirements/docs.txt
       - .rhiza/requirements/tools.txt
-      #- .rhiza/requirements/tests.txt
 
       # Root configuration files
       - Makefile
@@ -91,7 +88,7 @@ bundles:
       - .github/copilot-instructions.md
       - .github/agents
 
- # ============================================================================
+  # ============================================================================
   # LEGAL - Legal and community files
   # ============================================================================
   legal:
