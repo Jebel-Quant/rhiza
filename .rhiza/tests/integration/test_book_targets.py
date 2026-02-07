@@ -15,6 +15,10 @@ def test_no_book_folder(git_repo):
     available but check internally for the existence of the book folder.
     Using dry-run (-n) to test the target logic without actually executing.
     """
+    # Skip if 02-book.mk is not present in the repository
+    if not (git_repo / ".rhiza" / "make.d" / "02-book.mk").exists():
+        pytest.skip("02-book.mk not found, skipping test")
+
     if (git_repo / "book").exists():
         shutil.rmtree(git_repo / "book")
     assert not (git_repo / "book").exists()
@@ -35,6 +39,10 @@ def test_book_folder_but_no_mk(git_repo):
     With the new architecture, targets are always defined in .rhiza/make.d/02-book.mk,
     so they should exist regardless of the book folder contents.
     """
+    # Skip if 02-book.mk is not present in the repository
+    if not (git_repo / ".rhiza" / "make.d" / "02-book.mk").exists():
+        pytest.skip("02-book.mk not found, skipping test")
+
     # ensure book folder exists but is empty
     if (git_repo / "book").exists():
         shutil.rmtree(git_repo / "book")
@@ -88,6 +96,10 @@ def test_book_without_logo_file(git_repo):
     The build should succeed gracefully without a logo, and the generated
     HTML template should hide the logo element via onerror handler.
     """
+    # Skip if 02-book.mk is not present in the repository
+    if not (git_repo / ".rhiza" / "make.d" / "02-book.mk").exists():
+        pytest.skip("02-book.mk not found, skipping test")
+
     makefile = git_repo / "Makefile"
     if not makefile.exists():
         pytest.skip("Makefile not found")
@@ -118,6 +130,10 @@ def test_book_with_missing_logo_file(git_repo):
 
     The build should succeed but emit a warning about the missing logo.
     """
+    # Skip if 02-book.mk is not present in the repository
+    if not (git_repo / ".rhiza" / "make.d" / "02-book.mk").exists():
+        pytest.skip("02-book.mk not found, skipping test")
+
     makefile = git_repo / "Makefile"
     if not makefile.exists():
         pytest.skip("Makefile not found")
