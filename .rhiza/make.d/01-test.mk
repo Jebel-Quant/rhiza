@@ -73,8 +73,7 @@ benchmark: install ## run performance benchmarks
 	@if [ -d "${TESTS_FOLDER}/benchmarks" ]; then \
 	  printf "${BLUE}[INFO] Running performance benchmarks...${RESET}\n"; \
 	  mkdir -p _benchmarks; \
-	  ${UV_BIN} run --with-requirements pytest-benchmark==5.2.3 pygal==3.1.0 \
-	  pytest "${TESTS_FOLDER}/benchmarks/" \
+	  ${UV_BIN} run pytest "${TESTS_FOLDER}/benchmarks/" \
 	  		--benchmark-only \
 			--benchmark-histogram=_benchmarks/benchmarks \
 			--benchmark-json=_benchmarks/benchmarks.json; \
@@ -89,7 +88,7 @@ benchmark: install ## run performance benchmarks
 docs-coverage: install ## check documentation coverage with interrogate
 	@if [ -d "${SOURCE_FOLDER}" ]; then \
 	  printf "${BLUE}[INFO] Checking documentation coverage in ${SOURCE_FOLDER}...${RESET}\n"; \
-	  ${VENV}/bin/python -m interrogate -vv ${SOURCE_FOLDER}; \
+	  ${UV_BIN} run  interrogate -vv ${SOURCE_FOLDER}; \
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping docs-coverage${RESET}\n"; \
 	fi
