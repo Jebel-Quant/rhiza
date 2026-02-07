@@ -7,8 +7,9 @@ ensuring all bundle definitions are properly formatted and reference existing fi
 # This test file should not(!) be copied into repositories further downstream
 from __future__ import annotations
 
+import tomllib
+
 import pytest
-import tomli
 import yaml
 
 
@@ -47,7 +48,7 @@ class TestTemplateBundlesStructure:
         """Template bundles version should match pyproject.toml version."""
         pyproject_path = root / "pyproject.toml"
         with open(pyproject_path, "rb") as f:
-            pyproject = tomli.load(f)
+            pyproject = tomllib.load(f)
 
         pyproject_version = pyproject["project"]["version"]
         bundles_version = template_bundles["version"]
