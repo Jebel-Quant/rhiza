@@ -34,7 +34,10 @@ A comprehensive plan for transforming the Rhiza documentation into a professiona
 ## Phase 1: Foundation & Structure ✅ COMPLETED
 
 **Status:** ✅ **COMPLETED** on February 7, 2026  
-**Commit:** `b0207b9` - "feat(docs): Phase 1 - Foundation & Structure"
+**Commits:** 
+- `b0207b9` - "feat(docs): Phase 1 - Foundation & Structure"
+- `b7baf7d` - "docs: Mark Phase 1 as complete in DOCUMENTATION_PLAN.md"
+- *(pending)* - "docs: Clarify uv auto-install, no system Python needed, WSL2 requirement"
 
 **Goal:** Establish proper information architecture and navigation
 
@@ -43,7 +46,7 @@ A comprehensive plan for transforming the Rhiza documentation into a professiona
 ✅ **1.1 Create a Compelling Landing Page** - Created `docs/index.md` with:
 - Hero section with logo, tagline, and call-to-action buttons
 - Feature grid showcasing 6 key features with icons
-- Quick overview section with code examples
+- Quick overview section with code examples (updated to reflect self-contained setup)
 - "What You Get" section highlighting deliverables
 - Key features explanation with icons
 - "Learn More" section with card grid
@@ -57,8 +60,8 @@ A comprehensive plan for transforming the Rhiza documentation into a professiona
 - Full markdown extensions including emojis, admonitions, tabs
 
 ✅ **1.3 Create Getting Started Section** - Created 3 new comprehensive guides:
-- `docs/getting-started/quickstart.md` - 5-minute quick start with tabbed examples
-- `docs/getting-started/installation.md` - Complete installation guide for all platforms
+- `docs/getting-started/quickstart.md` - 5-minute quick start (updated to emphasize make install)
+- `docs/getting-started/installation.md` - Complete installation guide (clarified auto-install, no system Python, WSL2)
 - `docs/getting-started/first-sync.md` - Template synchronization walkthrough with Mermaid diagrams
 
 ✅ **1.4 Consolidate Scattered Documentation** - Moved files from `.rhiza/docs/`:
@@ -71,6 +74,23 @@ A comprehensive plan for transforming the Rhiza documentation into a professiona
 - Feature grid cards
 - Code blocks
 - Admonitions
+
+### Key Clarifications Added
+
+✅ **Self-Contained Architecture**:
+- Emphasized that `uv` auto-installs to `./bin/` if not in PATH
+- Clarified no system Python installation needed - `uv` handles it
+- Highlighted everything stays within project directory (`./bin/` and `.venv/`)
+
+✅ **Platform Support**:
+- Explicitly documented Windows requires WSL2
+- Native Windows not supported due to POSIX shell scripts
+- Linux and macOS fully supported
+
+✅ **Installation Flow**:
+- `make install` is the recommended approach (fully automatic)
+- Optional `uvx` commands for global uv users
+- Removed references to manual pip/Python installation steps that aren't needed
 
 ---
 

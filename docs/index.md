@@ -80,10 +80,13 @@ Rhiza provides **reusable configuration templates** that you can sync into your 
 ### For New Projects
 
 ```bash
-cd /path/to/your/project
-uvx rhiza init
-uvx rhiza materialize
+git clone https://github.com/jebel-quant/rhiza.git my-project
+cd my-project
+make install  # Auto-installs uv, Python, and all dependencies
 ```
+
+!!! success "Self-Contained Setup"
+    No system Python or uv installation needed! `make install` handles everything automatically, installing to `./bin/` and `.venv/` locally.
 
 ### For Existing Projects
 
@@ -91,9 +94,8 @@ Rhiza integrates seamlessly with existing codebases:
 
 ```bash
 cd /path/to/existing/project
-uvx rhiza init
-# Edit .rhiza/template.yml to configure
-uvx rhiza materialize
+# Copy Rhiza's Makefile and .rhiza/ directory
+make install  # Auto-installs uv and dependencies
 ```
 
 ---

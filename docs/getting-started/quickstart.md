@@ -8,15 +8,17 @@ Get up and running with Rhiza in 5 minutes.
 
 Before you begin, ensure you have:
 
-- **Python 3.11+** installed
 - **Git** for version control
-- **uv** (recommended) or pip
+- **Linux, macOS, or WSL2** (Windows native not supported)
 
-!!! tip "Installing uv"
-    If you don't have `uv` installed:
-    ```bash
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    ```
+!!! success "No Python or uv Installation Needed"
+    Rhiza is **self-contained**. When you run `make install`, it automatically:
+    
+    - Installs `uv` to `./bin/` (if not in PATH)
+    - Downloads Python via uv (no system Python needed)
+    - Creates a project-local virtual environment
+    
+    Everything stays within your project directory.
 
 ---
 
@@ -24,30 +26,26 @@ Before you begin, ensure you have:
 
 Start a fresh Python project with Rhiza templates:
 
-=== "Using uvx"
+=== "Using make (Recommended)"
     ```bash
+    # Clone Rhiza
+    git clone https://github.com/jebel-quant/rhiza.git my-project
+    cd my-project
+    
+    # Auto-installs uv, Python, and all dependencies
+    make install
+    
+    # Run tests to verify setup
+    make test
+    ```
+
+=== "Using uvx (Global uv)"
+    ```bash
+    # If you have uv installed globally
     cd /path/to/your/project
     uvx rhiza init
-    # Edit .rhiza/template.yml if needed
     uvx rhiza materialize
-    ```
-
-=== "Using pip"
-    ```bash
-    cd /path/to/your/project
-    pip install rhiza
-    rhiza init
-    # Edit .rhiza/template.yml if needed
-    rhiza materialize
-    ```
-
-=== "From source"
-    ```bash
-    git clone https://github.com/jebel-quant/rhiza.git
-    cd rhiza
     make install
-    rhiza init
-    rhiza materialize
     ```
 
 ---
@@ -153,16 +151,25 @@ Once set up, use these commands in your daily workflow:
 
 ## Troubleshooting
 
-### Command not found: uvx
+### uv or Python not found
 
-Install `uv` first:
+Run `make install` to auto-install everything:
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
+make install
 ```
 
-### Permission denied
+This installs `uv` to `./bin/` and creates `.venv/` with the correct Python version.
 
-Ensure you have write permissions to the project directory.
+### Windows users
+
+Rhiza requires **WSL2** (Windows Subsystem for Linux):
+
+1. Install WSL2: [Microsoft's WSL installation guide](https://learn.microsoft.com/en-us/windows/wsl/install)
+2. Open WSL2 terminal
+3. Clone Rhiza and run `make install`
+
+!!! warning "Native Windows Not Supported"
+    Rhiza uses POSIX shell scripts (`sh`) that require a Unix-like environment.
 
 ### Conflicts with existing files
 

@@ -12,73 +12,32 @@ Rhiza works on:
 
 - **Linux** (Ubuntu, Debian, Fedora, etc.)
 - **macOS** (10.15+)
-- **Windows** (with WSL2 recommended)
+- **Windows** via **WSL2 only** (native Windows not supported)
+
+!!! warning "Windows Users"
+    Rhiza uses POSIX shell scripts and requires WSL2 (Windows Subsystem for Linux 2). Native Windows is not supported.
 
 ### Python Version
 
-!!! info "Python Version Support"
-    Rhiza requires **Python 3.11 or higher**. We test against:
+!!! info "No System Python Required"
+    While Rhiza creates projects targeting **Python 3.11+**, you **do not need Python pre-installed** on your system.
+    
+    The `uv` package manager handles Python installation automatically. Rhiza projects are tested against:
     
     - Python 3.11
     - Python 3.12
     - Python 3.13
     - Python 3.14
+    
+    `uv` will download and manage the appropriate Python version for your project.
 
 ---
 
 ## Installing Dependencies
 
-### 1. Install Python
+### 1. Install Git
 
-=== "Ubuntu/Debian"
-    ```bash
-    sudo apt update
-    sudo apt install python3.11 python3-pip python3-venv
-    ```
-
-=== "macOS"
-    ```bash
-    # Using Homebrew
-    brew install python@3.11
-    ```
-
-=== "Windows (WSL2)"
-    ```bash
-    sudo apt update
-    sudo apt install python3.11 python3-pip python3-venv
-    ```
-
-=== "From source"
-    ```bash
-    # Using pyenv
-    curl https://pyenv.run | bash
-    pyenv install 3.11
-    pyenv global 3.11
-    ```
-
-### 2. Install uv (Recommended)
-
-`uv` is a blazing-fast Python package installer and resolver, written in Rust.
-
-=== "Linux/macOS"
-    ```bash
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    ```
-
-=== "Windows (PowerShell)"
-    ```powershell
-    powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-    ```
-
-=== "Using pip"
-    ```bash
-    pip install uv
-    ```
-
-!!! tip "Why uv?"
-    `uv` is **10-100x faster** than pip and provides better dependency resolution. It's the recommended way to manage Python packages in 2026.
-
-### 3. Install Git
+Git is the only system prerequisite:
 
 === "Ubuntu/Debian"
     ```bash
@@ -90,44 +49,45 @@ Rhiza works on:
     brew install git
     ```
 
-=== "Windows"
-    Download from [git-scm.com](https://git-scm.com/download/win)
+=== "WSL2"
+    ```bash
+    sudo apt install git
+    ```
+
+### 2. uv (Auto-Installed)
+
+!!! success "No Manual Installation Needed"
+    You **do not need to install `uv` manually**. Rhiza automatically installs it to `./bin/` in your project when you run `make install`.
+
+However, if you want to use `uvx` commands directly, you can optionally install `uv` globally:
+
+=== "Linux/macOS/WSL2"
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
+=== "Using pip"
+    ```bash
+    pip install uv
+    ```
+
+!!! info "How uv Works"
+    `uv` is a blazing-fast Python package installer written in Rust. It:
+    
+    - **Installs Python automatically** - No system Python needed
+    - **10-100x faster** than pip
+    - **Better dependency resolution**
+    - **Self-contained** - Installs to project's `./bin/` directory
+    
+    Learn more: [uv documentation](https://docs.astral.sh/uv/)
 
 ---
 
 ## Installing Rhiza
 
-### Option 1: Using uvx (Recommended)
+### Option 1: Using make install (Recommended)
 
-Run Rhiza without installing it globally:
-
-```bash
-uvx rhiza --help
-```
-
-This downloads and runs Rhiza in an isolated environment.
-
-### Option 2: Using uv
-
-Install Rhiza into a virtual environment:
-
-```bash
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install rhiza
-```
-
-### Option 3: Using pip
-
-Traditional pip installation:
-
-```bash
-pip install rhiza
-```
-
-### Option 4: From Source
-
-For development or to use the latest features:
+The fully self-contained approach - **no prerequisites needed**:
 
 ```bash
 git clone https://github.com/jebel-quant/rhiza.git
@@ -135,33 +95,62 @@ cd rhiza
 make install
 ```
 
-This will:
-1. Install `uv` if not already installed
-2. Create a virtual environment in `.venv`
-3. Install all dependencies
-4. Install Rhiza in development mode
+This automatically:
+1. **Installs `uv`** to `./bin/` (if not in PATH)
+2. **Downloads Python** (via uv, if needed)
+3. **Creates virtual environment** in `.venv`
+4. **Installs all dependencies**
+5. **Installs Rhiza** in development mode
+
+!!! success "Self-Contained"
+    Everything is installed at the repository level in `./bin/` and `.venv/`. No system-wide changes.
+
+### Option 2: Using uvx (Quick Testing)
+
+Run Rhiza without cloning the repository:
+
+```bash
+uvx rhiza --help
+```
+
+This downloads and runs Rhiza in an isolated environment. Useful for trying out Rhiza before committing.
+
+### Option 3: Using uv (Manual)
+
+If you prefer manual control:
+
+```bash
+git clone https://github.com/jebel-quant/rhiza.git
+cd rhiza
+uv venv
+source .venv/bin/activate
+uv pip install -e .
+```
 
 ---
 
 ## Verifying Installation
 
-Check that everything is installed correctly:
+After running `make install`, verify the setup:
 
 ```bash
-# Check Python version
+# Check that uv was installed
+./bin/uv --version
+
+# Activate the virtual environment
+source .venv/bin/activate
+
+# Check Python version (managed by uv)
 python --version  # Should be 3.11+
 
-# Check uv
-uv --version
-
-# Check Rhiza
-uvx rhiza --version
+# Check Rhiza installation
+python -m rhiza --version
 ```
 
 Expected output:
 ```
-Python 3.11.x
 uv 0.x.x
+Python 3.11.x (or higher)
 rhiza 0.7.x
 ```
 
@@ -303,18 +292,20 @@ make install
 
 ## Troubleshooting
 
-### Python version too old
+### Python version issues
 
-If you get an error about Python version:
+If you encounter Python version errors:
 
 ```bash
-# Check current version
-python --version
+# Let uv install the correct Python version
+make install
 
-# Install newer version (using pyenv)
-pyenv install 3.11
-pyenv global 3.11
+# Or specify a version explicitly
+uv venv --python 3.12
 ```
+
+!!! tip "uv manages Python"
+    You don't need to install Python manually. `uv` will automatically download the required version.
 
 ### uv command not found
 
@@ -330,17 +321,21 @@ source ~/.bashrc  # or ~/.zshrc
 
 ### Permission errors
 
-On Linux/macOS, you might need to use `sudo` or install to user directory:
+Rhiza installs everything locally to `./bin/` and `.venv/` - no `sudo` needed:
 
 ```bash
-# Install to user directory
-pip install --user rhiza
+# Ensure you have write permissions in the project directory
+ls -la
 
-# Or use virtual environment (recommended)
-python -m venv .venv
-source .venv/bin/activate
-pip install rhiza
+# If needed, fix permissions
+chmod +w .
+
+# Then run install
+make install
 ```
+
+!!! success "No sudo Required"
+    Rhiza is designed to be self-contained. All installations happen in your project directory.
 
 ### SSL certificate errors
 
