@@ -89,3 +89,8 @@ docs-coverage: install ## check documentation coverage with interrogate
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping docs-coverage${RESET}\n"; \
 	fi
 
+# The 'network-check' target verifies connectivity to required external services.
+# Useful for diagnosing CI/CD issues or validating environment setup.
+network-check: install ## run network connectivity tests
+	@printf "${BLUE}[INFO] Running network connectivity tests...${RESET}\n"
+	@${VENV}/bin/python -m pytest .rhiza/tests/network/ -v --tb=short

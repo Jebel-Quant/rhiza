@@ -6,6 +6,9 @@ pytest-html>=4.0
 pytest-mock>=3.0
 PyYAML>=6.0
 
+# For network connectivity tests
+httpx>=0.27.0
+
 # For property-based testing
 hypothesis>=6.150.0
 

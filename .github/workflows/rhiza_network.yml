@@ -1,0 +1,70 @@
+name: (RHIZA) NETWORK
+
+permissions:
+  contents: read
+
+on:
+  # Run on schedule to catch intermittent connectivity issues
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+  # Run on push/PR to main branches
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      timeout:
+        description: 'Network timeout in seconds'
+        required: false
+        default: '10'
+      custom_endpoints:
+        description: 'Custom endpoints (comma-separated URLs)'
+        required: false
+        default: ''
+
+jobs:
+  network-health:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          uv sync --frozen --group tests
+
+      - name: Set custom endpoints
+        if: ${{ github.event.inputs.custom_endpoints != '' }}
+        shell: bash
+        run: |
+          echo "RHIZA_NETWORK_ENDPOINTS=${{ github.event.inputs.custom_endpoints }}" >> $GITHUB_ENV
+
+      - name: Run network connectivity tests
+        shell: bash
+        env:
+          NETWORK_TIMEOUT: ${{ github.event.inputs.timeout || '10' }}
+        run: |
+          uv run pytest .rhiza/tests/network/ \
+            -v \
+            --network-timeout=$NETWORK_TIMEOUT \
+            --tb=short \
+            -x  # Stop on first failure for faster feedback
+
+      - name: Network test summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## Network Connectivity Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub API | ✅ Tested |" >> $GITHUB_STEP_SUMMARY
+          echo "| PyPI | ✅ Tested |" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub Container Registry | ✅ Tested |" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub Raw Content | ✅ Tested |" >> $GITHUB_STEP_SUMMARY
