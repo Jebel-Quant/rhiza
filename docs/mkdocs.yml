@@ -123,6 +123,7 @@ nav:
     - Quick Start: getting-started/quickstart.md
     - Installation: getting-started/installation.md
     - Your First Sync: getting-started/first-sync.md
+    - Migration Guide: migration.md
   - User Guide:
     - Development Workflows: WORKFLOWS.md
     - Customization: CUSTOMIZATION.md
@@ -140,9 +141,10 @@ nav:
     - Presentations: PRESENTATION.md
     - Documentation Generation: BOOK.md
   - Operations:
+    - CI/CD Pipelines: ci-cd.md
     - Security: SECURITY.md
     - Token Setup: token-setup.md
     - Private Packages: private-packages.md
   - Resources:
     - Demo: DEMO.md
-
+    - FAQ: faq.md

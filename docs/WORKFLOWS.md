@@ -2,6 +2,36 @@
 
 This guide covers recommended day-to-day development workflows for Rhiza projects.
 
+---
+
+## Development Workflow Overview
+
+```mermaid
+flowchart TD
+    A[Start Feature] --> B[Create Branch]
+    B --> C[Write Code]
+    C --> D[Write Tests]
+    D --> E[Run Tests]
+    E --> F{Tests Pass?}
+    F -->|No| C
+    F -->|Yes| G[Format Code]
+    G --> H[Run Pre-commit]
+    H --> I{Checks Pass?}
+    I -->|No| C
+    I -->|Yes| J[Commit]
+    J --> K[Push Branch]
+    K --> L[Create PR]
+    L --> M{CI Passes?}
+    M -->|No| C
+    M -->|Yes| N[Review]
+    N --> O[Merge]
+    
+    style A fill:#2fa4a9
+    style O fill:#4ade80
+```
+
+---
+
 ## Dependency Management
 
 Rhiza uses [uv](https://docs.astral.sh/uv/) for fast, reliable Python dependency management.
@@ -205,6 +235,181 @@ make sync
 
 This updates shared configurations while preserving your customizations in `local.mk`.
 
+### Sync Workflow
+
+```mermaid
+flowchart LR
+    A[Weekly Schedule] --> B[Fetch Upstream]
+    B --> C[Apply Include Patterns]
+    C --> D[Skip Exclude Patterns]
+    D --> E{Changes?}
+    E -->|Yes| F[Create Branch]
+    E -->|No| G[Done]
+    F --> H[Create PR]
+    H --> I[Review Changes]
+    I --> J[Merge]
+    
+    style A fill:#2fa4a9
+    style J fill:#4ade80
+```
+
+---
+
+## Common Scenarios
+
+### Scenario 1: Bug Fix
+
+```bash
+# 1. Create fix branch
+git checkout -b fix/issue-123
+
+# 2. Write fix and test
+# ... make changes ...
+uv run pytest tests/test_fix.py -v
+
+# 3. Verify all tests pass
+make test
+
+# 4. Format and commit
+make fmt
+git commit -m "fix: resolve issue #123"
+
+# 5. Push and create PR
+git push origin fix/issue-123
+```
+
+---
+
+### Scenario 2: Adding a Feature
+
+```bash
+# 1. Create feature branch
+git checkout -b feature/new-widget
+
+# 2. Add dependencies if needed
+uv add new-library
+
+# 3. Write code and tests
+# ... implement feature ...
+
+# 4. Run tests continuously
+make test-watch  # If available, or use pytest-watch
+
+# 5. Ensure coverage
+make test
+# Check coverage in _tests/html-coverage/
+
+# 6. Format and commit
+make fmt
+git commit -m "feat: add widget component"
+
+# 7. Push and create PR
+git push origin feature/new-widget
+```
+
+---
+
+### Scenario 3: Dependency Update
+
+```bash
+# 1. Update specific package
+uv lock --upgrade-package requests
+make install
+
+# 2. Run tests to verify
+make test
+
+# 3. Commit lock file
+git commit -am "chore: upgrade requests to latest"
+```
+
+---
+
+### Scenario 4: Security Update
+
+```bash
+# 1. Check for vulnerabilities
+make security
+
+# 2. Upgrade vulnerable package
+uv lock --upgrade-package vulnerable-lib
+
+# 3. Verify fix
+make security
+
+# 4. Run full test suite
+make test
+
+# 5. Commit and release
+git commit -am "fix: security update for vulnerable-lib"
+make bump BUMP=patch
+make release
+```
+
+---
+
+## Documentation Workflow
+
+### Building Documentation
+
+```bash
+# Build all documentation
+make book
+
+# View locally
+open _book/index.html
+
+# Or serve with live reload
+make book-serve  # If configured
+```
+
+### Documentation Structure
+
+```mermaid
+flowchart TD
+    A[docs/] --> B[MkDocs Site]
+    A --> C[API Docs via pdoc]
+    A --> D[Marimo Notebooks]
+    
+    B --> E[_book/docs/]
+    C --> E
+    D --> F[_book/marimushka/]
+    
+    E --> G[GitHub Pages]
+    F --> G
+    
+    style A fill:#2fa4a9
+    style G fill:#4ade80
+```
+
+---
+
+## Performance Optimization
+
+### Profiling
+
+```bash
+# Profile a script
+uv run python -m cProfile scripts/slow_script.py
+
+# With line-level profiling
+uv run kernprof -l scripts/slow_script.py
+uv run python -m line_profiler scripts/slow_script.py.lprof
+```
+
+### Benchmarking
+
+```bash
+# Run benchmarks
+make benchmark
+
+# View results
+open _benchmarks/benchmarks.html
+
+# Compare against baseline
+make benchmark BENCHMARK_COMPARE=baseline.json
+```
+
 ## Troubleshooting
 
 ### Environment Out of Sync
@@ -238,3 +443,156 @@ uv add <missing-package>
 # Unused dependencies — remove them
 uv remove <unused-package>
 ```
+
+### Pre-commit Hook Failures
+
+```bash
+# Update all hooks to latest
+uv run pre-commit autoupdate
+
+# Run all hooks manually
+uv run pre-commit run --all-files
+
+# Skip hooks temporarily (emergency only)
+git commit --no-verify -m "..."
+```
+
+### CI Failures After Successful Local Tests
+
+**Common causes:**
+
+1. **Python version mismatch** — CI tests multiple versions
+   ```bash
+   # Test locally with specific version
+   uv run --python 3.11 pytest
+   uv run --python 3.12 pytest
+   ```
+
+2. **Platform differences** — Linux vs macOS/Windows
+   ```bash
+   # Run in Docker to match CI environment
+   docker run -v $(pwd):/app python:3.11 bash -c "cd /app && make test"
+   ```
+
+3. **Missing files in git** — Untracked files not in CI
+   ```bash
+   git status  # Check for untracked files
+   git add <missing-files>
+   ```
+
+---
+
+## Best Practices
+
+### Code Organization
+
+```
+src/
+├── mypackage/
+│   ├── __init__.py
+│   ├── core/           # Core functionality
+│   ├── utils/          # Utility functions
+│   ├── models/         # Data models
+│   └── api/            # Public API
+└── scripts/            # Standalone scripts
+```
+
+### Test Organization
+
+```
+tests/
+├── conftest.py         # Shared fixtures
+├── test_core/          # Unit tests
+│   └── test_*.py
+├── integration/        # Integration tests
+│   └── test_*.py
+└── benchmarks/         # Performance tests
+    └── test_*.py
+```
+
+### Commit Messages
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```bash
+# Good commit messages
+feat(auth): add JWT authentication
+fix(api): handle null responses correctly
+docs(readme): add installation instructions
+test(core): add tests for edge cases
+chore(deps): upgrade dependencies
+
+# Bad commit messages (avoid)
+"updated files"
+"fix bug"
+"wip"
+```
+
+### Branch Naming
+
+```bash
+# Feature branches
+feature/add-authentication
+feature/user-dashboard
+
+# Bug fix branches
+fix/issue-123
+fix/null-pointer-exception
+
+# Chore branches
+chore/update-dependencies
+chore/refactor-tests
+
+# Documentation branches
+docs/update-readme
+docs/api-reference
+```
+
+---
+
+## Related Documentation
+
+- [Quick Start](getting-started/quickstart.md) — Get up and running
+- [Testing](TESTS.md) — Testing guide
+- [Releasing](RELEASING.md) — Release process
+- [CI/CD](ci-cd.md) — Workflow automation
+- [Customization](CUSTOMIZATION.md) — Advanced customization
+
+---
+
+## Quick Reference
+
+### Daily Commands
+
+| Task | Command |
+|------|---------|
+| Install/update environment | `make install` |
+| Run tests | `make test` |
+| Format code | `make fmt` |
+| Check types | `make typecheck` |
+| Security scan | `make security` |
+| Run benchmarks | `make benchmark` |
+| Build documentation | `make book` |
+| Sync templates | `make sync` |
+
+### Git Workflow
+
+| Task | Command |
+|------|---------|
+| Create branch | `git checkout -b feature/name` |
+| Stage changes | `git add .` |
+| Commit | `git commit -m "type: message"` |
+| Push | `git push origin branch-name` |
+| Update branch | `git pull origin main` |
+| Squash commits | `git rebase -i HEAD~N` |
+
+### Dependency Management
+
+| Task | Command |
+|------|---------|
+| Add dependency | `uv add package` |
+| Add dev dependency | `uv add --dev package` |
+| Remove dependency | `uv remove package` |
+| Update all | `uv lock --upgrade` |
+| Update one | `uv lock --upgrade-package pkg` |
+| Sync environment | `uv sync` |
