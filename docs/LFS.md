@@ -101,7 +101,7 @@ For GitLab CI, install and pull LFS files in your before_script:
 
 ```yaml
 before_script:
-  - apt-get update && apt-get install -y git-lfs
+  - apt-get update && apt-get install -y git-lfs || exit 1
   - git lfs pull
 ```
 

@@ -31,7 +31,7 @@ lfs-install: ## install git-lfs and configure it for this repository
 			exit 1; \
 		fi; \
 		unzip -o -q .local/tmp/git-lfs.zip -d .local/tmp; \
-		LFS_BINARY=$$(find .local/tmp -maxdepth 2 -type f -name "git-lfs" -executable | head -n 1); \
+		LFS_BINARY=$$(find .local/tmp -maxdepth 2 -type f -name "git-lfs" -perm +111 2>/dev/null | head -n 1); \
 		if [ -z "$$LFS_BINARY" ]; then \
 			printf "${RED}[ERROR] Failed to extract git-lfs binary from archive${RESET}\n"; \
 			exit 1; \
