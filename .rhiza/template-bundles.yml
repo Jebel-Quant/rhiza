@@ -260,3 +260,32 @@ bundles:
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_marimo.yml
+
+  # ============================================================================
+  # BOOK - Documentation book generation
+  # ============================================================================
+  book:
+    description: |
+      Comprehensive documentation book generation combining:
+      - API documentation (pdoc)
+      - Test coverage reports
+      - Test results
+      - Interactive notebooks (if marimo is enabled)
+    standalone: false
+    requires:
+      - tests  # Required: book needs test coverage and reports
+    recommends:
+      - marimo  # Optional: book works better with notebook exports
+    files:
+      # Book building configuration
+      - .rhiza/make.d/02-book.mk
+      - .rhiza/templates/minibook
+
+      # Book-specific tests
+      #- tests/test_rhiza/test_book.py
+
+      # Documentation
+      - docs/BOOK.md
+
+      # GitHub Actions workflows
+      - .github/workflows/rhiza_book.yml
