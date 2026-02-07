@@ -8,6 +8,7 @@ ensuring all bundle definitions are properly formatted and reference existing fi
 from __future__ import annotations
 
 import pytest
+import tomli
 import yaml
 
 
@@ -41,6 +42,21 @@ class TestTemplateBundlesStructure:
         """Template bundles should have a version field."""
         assert "version" in template_bundles
         assert isinstance(template_bundles["version"], str)
+
+    def test_version_matches_pyproject(self, template_bundles, root):
+        """Template bundles version should match pyproject.toml version."""
+        pyproject_path = root / "pyproject.toml"
+        with open(pyproject_path, "rb") as f:
+            pyproject = tomli.load(f)
+
+        pyproject_version = pyproject["project"]["version"]
+        bundles_version = template_bundles["version"]
+
+        assert bundles_version == pyproject_version, (
+            f"Version mismatch: template-bundles.yml has '{bundles_version}' "
+            f"but pyproject.toml has '{pyproject_version}'. "
+            "Run 'make bump' to sync versions."
+        )
 
     def test_has_bundles_section(self, template_bundles):
         """Template bundles should have a bundles section."""
