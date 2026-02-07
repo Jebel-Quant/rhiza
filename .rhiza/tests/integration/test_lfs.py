@@ -37,7 +37,7 @@ def test_lfs_targets_exist(git_repo, logger):
 def test_lfs_install_dry_run(git_repo, logger):
     """Test lfs-install target in dry-run mode."""
     env = os.environ.copy()
-    
+
     result = subprocess.run(
         [MAKE, "-n", "lfs-install"],
         env=env,
@@ -55,7 +55,7 @@ def test_lfs_install_dry_run(git_repo, logger):
 def test_lfs_install_macos_logic(git_repo, logger, monkeypatch):
     """Test that lfs-install generates correct logic for macOS."""
     env = os.environ.copy()
-    
+
     result = subprocess.run(
         [MAKE, "-n", "lfs-install"],
         env=env,
@@ -77,7 +77,7 @@ def test_lfs_install_macos_logic(git_repo, logger, monkeypatch):
 def test_lfs_install_linux_logic(git_repo, logger):
     """Test that lfs-install generates correct logic for Linux."""
     env = os.environ.copy()
-    
+
     result = subprocess.run(
         [MAKE, "-n", "lfs-install"],
         env=env,
@@ -188,7 +188,7 @@ def test_lfs_actual_execution_status(git_repo, logger):
     """Test actual execution of lfs-status (requires git-lfs to be installed)."""
     # Initialize git-lfs in the test repo
     subprocess.run(["git", "lfs", "install"], cwd=git_repo, capture_output=True)  # nosec
-    
+
     result = subprocess.run(
         [MAKE, "lfs-status"],
         cwd=git_repo,
@@ -208,7 +208,7 @@ def test_lfs_actual_execution_track(git_repo, logger):
     """Test actual execution of lfs-track (requires git-lfs to be installed)."""
     # Initialize git-lfs in the test repo
     subprocess.run(["git", "lfs", "install"], cwd=git_repo, capture_output=True)  # nosec
-    
+
     result = subprocess.run(
         [MAKE, "lfs-track"],
         cwd=git_repo,

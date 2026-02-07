@@ -6,8 +6,6 @@ This file and its associated tests flow down via a SYNC action from the jebel-qu
 Verifies that LFS-related files and configurations are present.
 """
 
-import pytest
-
 
 class TestLFSTemplateStructure:
     """Tests for LFS template file structure."""
@@ -135,6 +133,7 @@ class TestLFSBundleDefinition:
         assert bundles_file.exists()
 
         import yaml
+
         with open(bundles_file) as f:
             bundles = yaml.safe_load(f)
 
@@ -146,6 +145,7 @@ class TestLFSBundleDefinition:
         bundles_file = root / ".rhiza" / "template-bundles.yml"
 
         import yaml
+
         with open(bundles_file) as f:
             bundles = yaml.safe_load(f)
 
@@ -160,6 +160,7 @@ class TestLFSBundleDefinition:
         bundles_file = root / ".rhiza" / "template-bundles.yml"
 
         import yaml
+
         with open(bundles_file) as f:
             bundles = yaml.safe_load(f)
 
@@ -173,6 +174,7 @@ class TestLFSBundleDefinition:
         bundles_file = root / ".rhiza" / "template-bundles.yml"
 
         import yaml
+
         with open(bundles_file) as f:
             bundles = yaml.safe_load(f)
 
@@ -186,6 +188,7 @@ class TestLFSBundleDefinition:
         bundles_file = root / ".rhiza" / "template-bundles.yml"
 
         import yaml
+
         with open(bundles_file) as f:
             bundles = yaml.safe_load(f)
 
@@ -199,6 +202,7 @@ class TestLFSBundleDefinition:
         bundles_file = root / ".rhiza" / "template-bundles.yml"
 
         import yaml
+
         with open(bundles_file) as f:
             bundles = yaml.safe_load(f)
 
