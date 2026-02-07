@@ -2,8 +2,8 @@
 
 This conftest provides:
 - setup_tmp_makefile: Copies Makefile and split files to temp dir for isolated testing
-- run_make: Helper to execute make commands with dry-run support
-- setup_rhiza_git_repo: Initialize a git repo configured as rhiza origin
+- run_make: Helper to execute make commands with dry-run support (imported from test_utils)
+- setup_rhiza_git_repo: Initialize a git repo configured as rhiza origin (imported from test_utils)
 - SPLIT_MAKEFILES: List of split Makefile paths
 """
 
@@ -16,8 +16,9 @@ from pathlib import Path
 
 import pytest
 
-# Get absolute paths for executables to avoid S607 warnings from CodeFactor/Bandit
-MAKE = shutil.which("make") or "/usr/bin/make"
+# Import shared utilities (no __init__.py needed with new structure)
+# Note: we define our own run_make and setup_rhiza_git_repo here with enhanced functionality
+from test_utils import MAKE
 
 # Split Makefile paths that are included in the main Makefile
 # These are now located in .rhiza/make.d/ directory
