@@ -53,7 +53,7 @@ uv run pytest -v -s
 
 ## Directory Structure
 
-```
+```text
 .rhiza/
 ├── rhiza.mk          # Core Makefile logic
 ├── make.d/           # Modular extensions (auto-loaded)
