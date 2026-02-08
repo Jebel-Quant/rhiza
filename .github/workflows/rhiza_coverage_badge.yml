@@ -56,7 +56,8 @@ jobs:
         run: |
           if [ -f "_tests/coverage.json" ]; then
             echo "Generating coverage badge JSON..."
-            uv run python .rhiza/utils/generate_coverage_badge.py _tests/coverage.json _badge/coverage-badge.json
+            mkdir -p _badge
+            uvx "rhiza-tools>=0.2.0" generate-coverage-badge --coverage-json _tests/coverage.json --output _badge/coverage-badge.json
           else
             echo "Error: No coverage.json found"
             exit 1
