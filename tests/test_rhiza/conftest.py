@@ -8,4 +8,4 @@ import pytest
 @pytest.fixture(scope="session")
 def root():
     """Fixture for the root directory of the project."""
-    return Path(__file__).parent.parent
+    return Path(__file__).parent.parent.parent
