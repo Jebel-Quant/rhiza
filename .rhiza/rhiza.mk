@@ -127,7 +127,7 @@ help: print-logo ## Display this help message
 	+@printf "\n"
 
 version-matrix: install-uv ## Emit the list of supported Python versions from pyproject.toml
-	@${UV_BIN} run .rhiza/utils/version_matrix.py
+	@${UVX_BIN} rhiza-tools@${RHIZA_VERSION} version-matrix
 
 print-% : ## print the value of a variable (usage: make print-VARIABLE)
 	@printf "${BLUE}[INFO] Printing value of variable '$*':${RESET}\n"
