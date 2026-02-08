@@ -64,16 +64,6 @@ jobs:
         run: |
           make book
 
-      # Generate coverage badge for the book (if coverage data exists)
-      - name: Generate coverage badge for book
-        run: |
-          if [ -f "_tests/coverage.json" ]; then
-            echo "Generating coverage badge JSON for book..."
-            uv run python .rhiza/utils/generate_coverage_badge.py _tests/coverage.json _book/tests/coverage-badge.json
-          else
-            echo "No coverage.json found, skipping badge generation"
-          fi
-
       # Step 5: Package all artifacts for GitHub Pages deployment
       # This prepares the combined outputs for deployment by creating a single artifact
       - name: Upload static files as artifact
