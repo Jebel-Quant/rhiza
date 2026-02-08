@@ -69,9 +69,7 @@ jobs:
         run: |
           if [ -f "_tests/coverage.json" ]; then
             echo "Generating coverage badge JSON for book..."
-            mkdir -p _book/tests
-            uv run python -c 'import json; data = json.load(open("_tests/coverage.json")); pct = int(data["totals"]["percent_covered"]); color = "brightgreen" if pct >= 90 else "green" if pct >= 80 else "yellow" if pct >= 70 else "orange" if pct >= 60 else "red"; badge = {"schemaVersion": 1, "label": "coverage", "message": f"{pct}%", "color": color}; json.dump(badge, open("_book/tests/coverage-badge.json", "w"))'
-            echo "Coverage badge included in book"
+            uv run python .rhiza/utils/generate_coverage_badge.py _tests/coverage.json _book/tests/coverage-badge.json
           else
             echo "No coverage.json found, skipping badge generation"
           fi
