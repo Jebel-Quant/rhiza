@@ -27,6 +27,10 @@ test: install ## run all tests
 	  printf "${YELLOW}[WARN] Tests folder ${TESTS_FOLDER} not found, skipping tests${RESET}\n"; \
 	  exit 0; \
 	fi; \
+	if [ -z "$$(find ${TESTS_FOLDER} -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ]; then \
+	  printf "${YELLOW}[WARN] No test files found in ${TESTS_FOLDER}, skipping tests${RESET}\n"; \
+	  exit 0; \
+	fi; \
 	mkdir -p _tests/html-coverage _tests/html-report; \
 	if [ -d ${SOURCE_FOLDER} ]; then \
 	  ${VENV}/bin/python -m pytest \
