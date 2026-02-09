@@ -24,8 +24,14 @@ test: install ## run all tests
 	@rm -rf _tests;
 
 	if [ -z "$$(find ${TESTS_FOLDER} -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ]; then \
-	  printf "${YELLOW}[WARN] No test files found in ${TESTS_FOLDER}, skipping tests${RESET}\n"; \
-	  exit 0; \
+	  REPO_URL=$$(git config --get remote.origin.url 2>/dev/null || echo ""); \
+	  if echo "$$REPO_URL" | grep -iq "jebel-quant/rhiza"; then \
+	    printf "${YELLOW}[WARN] No test files found in ${TESTS_FOLDER}, skipping tests (allowed in jebel-quant/rhiza)${RESET}\n"; \
+	    exit 0; \
+	  else \
+	    printf "${RED}[ERROR] No test files found in ${TESTS_FOLDER}. Tests are required in downstream projects.${RESET}\n"; \
+	    exit 1; \
+	  fi; \
 	fi; \
 	@mkdir -p _tests/html-coverage _tests/html-report; \
 	if [ -d ${SOURCE_FOLDER} ]; then \
