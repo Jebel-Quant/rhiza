@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Validate that all files and folders referenced in template-bundles.yml exist.
+"""Validate that all files and folders referenced in template-bundles.yml exist.
 
 This script:
 1. Parses .rhiza/template-bundles.yml
