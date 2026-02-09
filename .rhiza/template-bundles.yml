@@ -231,7 +231,6 @@ bundles:
     requires: []
     files:
       # Make targets and configuration
-      - .rhiza/utils/version_matrix.py
       - .rhiza/make.d/01-test.mk
       - .rhiza/requirements/tests.txt
       - pytest.ini
