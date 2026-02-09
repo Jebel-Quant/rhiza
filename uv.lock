@@ -846,6 +846,7 @@ dev = [
     { name = "numpy" },
     { name = "pandas" },
     { name = "plotly" },
+    { name = "pyyaml" },
 ]
 
 [package.metadata]
@@ -856,6 +857,7 @@ dev = [
     { name = "numpy", specifier = ">=2.4.0,<3.0" },
     { name = "pandas", specifier = ">=3,<3.1" },
     { name = "plotly", specifier = ">=6.5.0,<7.0" },
+    { name = "pyyaml", specifier = ">=6.0,<7.0" },
 ]
 
 [[package]]
