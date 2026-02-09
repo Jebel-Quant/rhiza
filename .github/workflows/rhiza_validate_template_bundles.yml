@@ -6,16 +6,16 @@ permissions:
 on:
   push:
     branches: [ main, master ]
-    paths:
-      - '.rhiza/template-bundles.yml'
-      - '.github/workflows/rhiza_validate_template_bundles.yml'
-      - '.github/scripts/validate_template_bundles.py'
+    #paths:
+    #  - '.rhiza/template-bundles.yml'
+    #  - '.github/workflows/rhiza_validate_template_bundles.yml'
+    #  - '.github/scripts/validate_template_bundles.py'
   pull_request:
     branches: [ main, master ]
-    paths:
-      - '.rhiza/template-bundles.yml'
-      - '.github/workflows/rhiza_validate_template_bundles.yml'
-      - '.github/scripts/validate_template_bundles.py'
+    #paths:
+    #  - '.rhiza/template-bundles.yml'
+    #  - '.github/workflows/rhiza_validate_template_bundles.yml'
+    #  - '.github/scripts/validate_template_bundles.py'
 
 jobs:
   validate-template-bundles:
@@ -27,12 +27,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
 
-      - name: Install PyYAML
-        shell: bash
-        run: |
-          uv pip install --system pyyaml
+      - name: Configure git auth for private packages
+        uses: ./.github/actions/configure-git-auth
+        with:
+          token: ${{ secrets.GH_PAT }}
 
       - name: Validate template-bundles.yml file paths
         shell: bash
         run: |
-          python3 .github/scripts/validate_template_bundles.py
+          uv run python3 .github/scripts/validate_template_bundles.py
