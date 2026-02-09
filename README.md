@@ -366,9 +366,9 @@ make presentation-serve  # Serve with live reload
 
 For detailed information about creating and customising presentations, see [presentation/README.md](presentation/README.md).
 
-### Testing Documentation
+### Documentation Examples
 
-README code blocks are automatically tested. See [tests/test_config_templates/test_readme.py](tests/test_config_templates/test_readme.py) for details.
+README code blocks can be tested when tests are configured.
 
 ```python
 # Example code block
