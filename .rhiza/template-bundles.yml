@@ -162,6 +162,20 @@ bundles:
       - .github/workflows/rhiza_docker.yml
 
   # ============================================================================
+  # LFS - Git Large File Storage support
+  # ============================================================================
+  lfs:
+    description: "Git LFS (Large File Storage) installation and management"
+    standalone: true
+    requires: []
+    files:
+      # Make targets for LFS
+      - .rhiza/make.d/09-lfs.mk
+
+      # Documentation
+      - docs/LFS.md
+
+  # ============================================================================
   # PRESENTATION - Presentation building with reveal.js
   # ============================================================================
   presentation:
