@@ -25,7 +25,7 @@ test: install ## run all tests
 
 	if [ -z "$$(find ${TESTS_FOLDER} -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ]; then \
 	  REPO_URL=$$(git config --get remote.origin.url 2>/dev/null || echo ""); \
-	  if echo "$$REPO_URL" | grep -q "jebel-quant/rhiza" || echo "$$REPO_URL" | grep -q "Jebel-Quant/rhiza"; then \
+	  if echo "$$REPO_URL" | grep -iq "jebel-quant/rhiza"; then \
 	    printf "${YELLOW}[WARN] No test files found in ${TESTS_FOLDER}, skipping tests (allowed in jebel-quant/rhiza)${RESET}\n"; \
 	    exit 0; \
 	  else \
