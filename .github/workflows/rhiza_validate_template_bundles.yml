@@ -1,0 +1,38 @@
+name: (RHIZA) VALIDATE TEMPLATE BUNDLES
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - '.rhiza/template-bundles.yml'
+      - '.github/workflows/rhiza_validate_template_bundles.yml'
+      - '.github/scripts/validate_template_bundles.py'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - '.rhiza/template-bundles.yml'
+      - '.github/workflows/rhiza_validate_template_bundles.yml'
+      - '.github/scripts/validate_template_bundles.py'
+
+jobs:
+  validate-template-bundles:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Install PyYAML
+        shell: bash
+        run: |
+          uv pip install --system pyyaml
+
+      - name: Validate template-bundles.yml file paths
+        shell: bash
+        run: |
+          python3 .github/scripts/validate_template_bundles.py
