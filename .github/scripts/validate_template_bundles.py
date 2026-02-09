@@ -18,7 +18,9 @@ import yaml
 def main():
     """Main validation logic."""
     # Path to the template bundles file
-    bundles_file = Path(".rhiza/template-bundles.yml")
+    root = Path(__file__).parent.parent.parent.resolve()
+    print(root)
+    bundles_file = Path(root / ".rhiza" / "template-bundles.yml")
 
     if not bundles_file.exists():
         print(f"❌ ERROR: {bundles_file} does not exist!")
@@ -49,7 +51,7 @@ def main():
 
         for file_path in files:
             total_files += 1
-            path = Path(file_path)
+            path = root / file_path
 
             if not path.exists():
                 missing_in_bundle.append(file_path)
