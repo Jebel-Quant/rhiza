@@ -27,7 +27,7 @@ test: install ## run all tests
 	  printf "${YELLOW}[WARN] No test files found in ${TESTS_FOLDER}, skipping tests${RESET}\n"; \
 	  exit 0; \
 	fi; \
-	mkdir -p _tests/html-coverage _tests/html-report; \
+	@mkdir -p _tests/html-coverage _tests/html-report; \
 	if [ -d ${SOURCE_FOLDER} ]; then \
 	  ${VENV}/bin/python -m pytest \
 	  --ignore=${TESTS_FOLDER}/benchmarks \
