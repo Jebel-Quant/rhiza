@@ -12,8 +12,8 @@ class TestLFSTemplateStructure:
 
     def test_lfs_makefile_exists(self, root):
         """LFS makefile should exist in make.d directory."""
-        lfs_makefile = root / ".rhiza" / "make.d" / "09-lfs.mk"
-        assert lfs_makefile.exists(), "09-lfs.mk not found"
+        lfs_makefile = root / ".rhiza" / "make.d" / "lfs.mk"
+        assert lfs_makefile.exists(), "lfs.mk not found"
 
     def test_lfs_documentation_exists(self, root):
         """LFS documentation should exist."""
@@ -22,7 +22,7 @@ class TestLFSTemplateStructure:
 
     def test_lfs_makefile_has_targets(self, root):
         """LFS makefile should define all expected targets."""
-        lfs_makefile = root / ".rhiza" / "make.d" / "09-lfs.mk"
+        lfs_makefile = root / ".rhiza" / "make.d" / "lfs.mk"
         content = lfs_makefile.read_text()
 
         required_targets = [
@@ -33,11 +33,11 @@ class TestLFSTemplateStructure:
         ]
 
         for target in required_targets:
-            assert target in content, f"Target {target} not found in 09-lfs.mk"
+            assert target in content, f"Target {target} not found in lfs.mk"
 
     def test_lfs_makefile_has_phony_declarations(self, root):
         """LFS makefile should declare targets as phony."""
-        lfs_makefile = root / ".rhiza" / "make.d" / "09-lfs.mk"
+        lfs_makefile = root / ".rhiza" / "make.d" / "lfs.mk"
         content = lfs_makefile.read_text()
 
         assert ".PHONY:" in content
@@ -48,7 +48,7 @@ class TestLFSTemplateStructure:
 
     def test_lfs_makefile_has_help_comments(self, root):
         """LFS makefile should have help comments for targets."""
-        lfs_makefile = root / ".rhiza" / "make.d" / "09-lfs.mk"
+        lfs_makefile = root / ".rhiza" / "make.d" / "lfs.mk"
         content = lfs_makefile.read_text()
 
         # Check for ##@ section header
@@ -91,7 +91,7 @@ class TestLFSTemplateStructure:
 
     def test_lfs_makefile_cross_platform_support(self, root):
         """LFS makefile should support multiple platforms."""
-        lfs_makefile = root / ".rhiza" / "make.d" / "09-lfs.mk"
+        lfs_makefile = root / ".rhiza" / "make.d" / "lfs.mk"
         content = lfs_makefile.read_text()
 
         # Check for OS detection
@@ -106,7 +106,7 @@ class TestLFSTemplateStructure:
 
     def test_lfs_makefile_error_handling(self, root):
         """LFS makefile should include error handling."""
-        lfs_makefile = root / ".rhiza" / "make.d" / "09-lfs.mk"
+        lfs_makefile = root / ".rhiza" / "make.d" / "lfs.mk"
         content = lfs_makefile.read_text()
 
         # Check for error messages
@@ -115,7 +115,7 @@ class TestLFSTemplateStructure:
 
     def test_lfs_makefile_uses_color_variables(self, root):
         """LFS makefile should use standard color variables."""
-        lfs_makefile = root / ".rhiza" / "make.d" / "09-lfs.mk"
+        lfs_makefile = root / ".rhiza" / "make.d" / "lfs.mk"
         content = lfs_makefile.read_text()
 
         # Check for color variable usage
