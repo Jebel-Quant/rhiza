@@ -23,7 +23,11 @@ COVERAGE_FAIL_UNDER ?= 90
 test: install ## run all tests
 	@rm -rf _tests;
 
-	@mkdir -p _tests/html-coverage _tests/html-report; \
+	@if [ ! -d ${TESTS_FOLDER} ]; then \
+	  printf "${YELLOW}[WARN] Tests folder ${TESTS_FOLDER} not found, skipping tests${RESET}\n"; \
+	  exit 0; \
+	fi; \
+	mkdir -p _tests/html-coverage _tests/html-report; \
 	if [ -d ${SOURCE_FOLDER} ]; then \
 	  ${VENV}/bin/python -m pytest \
 	  --ignore=${TESTS_FOLDER}/benchmarks \
