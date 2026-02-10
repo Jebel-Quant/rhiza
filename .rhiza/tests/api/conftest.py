@@ -20,6 +20,8 @@ tests_root = Path(__file__).resolve().parents[1]
 if str(tests_root) not in sys.path:
     sys.path.insert(0, str(tests_root))
 
+from test_utils import run_make, setup_rhiza_git_repo, strip_ansi  # noqa: E402
+
 
 # Split Makefile paths that are included in the main Makefile
 # These are now located in .rhiza/make.d/ directory
