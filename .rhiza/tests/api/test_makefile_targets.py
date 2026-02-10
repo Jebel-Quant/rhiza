@@ -15,10 +15,7 @@ from __future__ import annotations
 import os
 
 import pytest
-from api.conftest import SPLIT_MAKEFILES, run_make, setup_rhiza_git_repo
-
-# Import shared helpers from test_utils and local conftest
-from test_utils import strip_ansi
+from api.conftest import SPLIT_MAKEFILES, run_make, setup_rhiza_git_repo, strip_ansi
 
 
 class TestMakefile:
@@ -114,7 +111,7 @@ class TestMakefile:
         # Expect key steps
         assert "mkdir -p _tests/html-coverage _tests/html-report" in out
         # Check for uv command running pytest
-        assert ".venv/bin/python -m pytest" in out
+        assert "uv run pytest" in out
 
     def test_test_target_without_source_folder(self, logger, tmp_path):
         """Test target should run without coverage when SOURCE_FOLDER doesn't exist."""
@@ -133,7 +130,7 @@ class TestMakefile:
         # Should see warning about missing source folder
         assert "if [ -d nonexistent_src ]" in out
         # Should still run pytest but without coverage flags
-        assert ".venv/bin/python -m pytest" in out
+        assert "uv run pytest" in out
         assert "--html=_tests/html-report/report.html" in out
 
     def test_python_version_defaults_to_3_13_if_missing(self, logger, tmp_path):
