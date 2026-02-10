@@ -11,9 +11,15 @@ from __future__ import annotations
 
 import os
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
+
+tests_root = Path(__file__).resolve().parents[1]
+if str(tests_root) not in sys.path:
+    sys.path.insert(0, str(tests_root))
+
 
 # Split Makefile paths that are included in the main Makefile
 # These are now located in .rhiza/make.d/ directory
