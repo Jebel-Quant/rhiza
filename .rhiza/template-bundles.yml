@@ -137,7 +137,7 @@ bundles:
       # Note: The benchmark target is in test.mk
 
       # Benchmark directory
-      - tests/test_rhiza/benchmarks
+      - tests/benchmarks
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_benchmarks.yml
