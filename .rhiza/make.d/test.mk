@@ -23,25 +23,25 @@ COVERAGE_FAIL_UNDER ?= 90
 test: install ## run all tests
 	@rm -rf _tests;
 
-	@if [ -d ${TESTS_FOLDER} ]; then \
-	  mkdir -p _tests/html-coverage _tests/html-report; \
-	  if [ -d ${SOURCE_FOLDER} ]; then \
-	    ${UV_BIN} run pytest \
-	    --ignore=${TESTS_FOLDER}/benchmarks \
-	    --cov=${SOURCE_FOLDER} \
-	    --cov-report=term \
-	    --cov-report=html:_tests/html-coverage \
-	    --cov-fail-under=$(COVERAGE_FAIL_UNDER) \
-	    --cov-report=json:_tests/coverage.json \
-	    --html=_tests/html-report/report.html; \
-	  else \
-	    printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, running tests without coverage${RESET}\n"; \
-	    ${UV_BIN} run pytest \
-	    --ignore=${TESTS_FOLDER}/benchmarks \
-	    --html=_tests/html-report/report.html; \
-	  fi \
+	if [ -z "$$(find ${TESTS_FOLDER} -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ]; then \
+	  printf "${YELLOW}[WARN] No test files found in ${TESTS_FOLDER}, skipping tests.${RESET}\n"; \
+	  exit 0; \
+	fi; \
+	@mkdir -p _tests/html-coverage _tests/html-report; \
+	if [ -d ${SOURCE_FOLDER} ]; then \
+	  ${UV_BIN} run pytest \
+	  --ignore=${TESTS_FOLDER}/benchmarks \
+	  --cov=${SOURCE_FOLDER} \
+	  --cov-report=term \
+	  --cov-report=html:_tests/html-coverage \
+	  --cov-fail-under=$(COVERAGE_FAIL_UNDER) \
+	  --cov-report=json:_tests/coverage.json \
+	  --html=_tests/html-report/report.html; \
 	else \
-	  printf "${YELLOW}[WARN] Test folder ${TESTS_FOLDER} not found, skipping tests${RESET}\n"; \
+	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, running tests without coverage${RESET}\n"; \
+	  ${UV_BIN} run pytest \
+	  --ignore=${TESTS_FOLDER}/benchmarks \
+	  --html=_tests/html-report/report.html; \
 	fi
 
 # The 'typecheck' target runs static type analysis using mypy.
@@ -72,12 +72,13 @@ security: install ## run security scans (pip-audit and bandit)
 benchmark: install ## run performance benchmarks
 	@if [ -d "${TESTS_FOLDER}/benchmarks" ]; then \
 	  printf "${BLUE}[INFO] Running performance benchmarks...${RESET}\n"; \
-	  mkdir -p _benchmarks; \
+	  ${UV_BIN} pip install pytest-benchmark==5.2.3 pygal==3.1.0; \
+	  mkdir -p _tests/benchmarks; \
 	  ${UV_BIN} run pytest "${TESTS_FOLDER}/benchmarks/" \
 	  		--benchmark-only \
-			--benchmark-histogram=_benchmarks/benchmarks \
-			--benchmark-json=_benchmarks/benchmarks.json; \
-	  ${UV_BIN} run .rhiza/utils/analyze_benchmarks.py ; \
+			--benchmark-histogram=_tests/benchmarks/histogram \
+			--benchmark-json=_tests/benchmarks/results.json; \
+	  ${UVX_BIN} "rhiza-tools>=0.2.3" analyze-benchmarks --benchmarks-json _tests/benchmarks/results.json --output-html _tests/benchmarks/report.html; \
 	else \
 	  printf "${YELLOW}[WARN] Benchmarks folder not found, skipping benchmarks${RESET}\n"; \
 	fi
@@ -88,8 +89,7 @@ benchmark: install ## run performance benchmarks
 docs-coverage: install ## check documentation coverage with interrogate
 	@if [ -d "${SOURCE_FOLDER}" ]; then \
 	  printf "${BLUE}[INFO] Checking documentation coverage in ${SOURCE_FOLDER}...${RESET}\n"; \
-	  ${UV_BIN} run  interrogate -vv ${SOURCE_FOLDER}; \
+	  ${UV_BIN} run interrogate -vv ${SOURCE_FOLDER}; \
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping docs-coverage${RESET}\n"; \
 	fi
-
