@@ -17,7 +17,7 @@ tests_root = Path(__file__).resolve().parents[1]
 if str(tests_root) not in sys.path:
     sys.path.insert(0, str(tests_root))
 
-from test_utils import run_make, setup_rhiza_git_repo, strip_ansi  # noqa: E402
+from test_utils import setup_rhiza_git_repo  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
