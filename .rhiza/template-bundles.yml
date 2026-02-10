@@ -41,6 +41,9 @@ bundles:
       - .rhiza/make.d/custom-env.mk
       - .rhiza/make.d/docs.mk
       - .rhiza/make.d/custom-task.mk
+      - .rhiza/make.d/quality.mk
+      - .rhiza/make.d/bootstrap.mk
+      - .rhiza/make.d/releasing.mk
       - .rhiza/make.d/README.md
       - .rhiza/scripts
       - .rhiza/docs
