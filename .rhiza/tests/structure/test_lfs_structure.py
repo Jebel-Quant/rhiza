@@ -17,7 +17,7 @@ class TestLFSTemplateStructure:
         lfs_makefile = root / ".rhiza" / "make.d" / "lfs.mk"
         if not lfs_makefile.exists():
             pytest.skip("lfs.mk not found, skipping test")
-        assert lfs_makefile.exists(), "lfs.mk not found"
+        # If we reach here, the file exists (the test passes)
 
     def test_lfs_documentation_exists(self, root):
         """LFS documentation should exist."""
