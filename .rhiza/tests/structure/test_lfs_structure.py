@@ -167,7 +167,7 @@ class TestLFSBundleDefinition:
         lfs_bundle = bundles["bundles"]["lfs"]
         files = lfs_bundle["files"]
 
-        assert ".rhiza/make.d/09-lfs.mk" in files
+        assert ".rhiza/make.d/lfs.mk" in files
 
     def test_lfs_bundle_includes_documentation(self, root):
         """LFS bundle should include documentation."""
