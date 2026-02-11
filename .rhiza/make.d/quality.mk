@@ -2,7 +2,7 @@
 # This file provides targets for code quality checks, linting, and formatting.
 
 # Declare phony targets (they don't produce files)
-.PHONY: deptry fmt mypy
+.PHONY: deptry fmt fmt-rhiza fmt-src mypy
 
 ##@ Quality and Formatting
 deptry: install-uv ## Run deptry
@@ -20,6 +20,18 @@ deptry: install-uv ## Run deptry
 
 fmt: install-uv ## check the pre-commit hooks and the linting
 	@${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --all-files
+
+fmt-rhiza: install-uv ## run formatting checks on rhiza framework code only
+	@printf "${BLUE}[INFO] Running formatting checks on rhiza framework code (.rhiza/)...${RESET}\n"
+	@${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --files .rhiza/**/*
+
+fmt-src: install-uv ## run formatting checks on user source code only
+	@if [ -d ${SOURCE_FOLDER} ]; then \
+		printf "${BLUE}[INFO] Running formatting checks on user source code (${SOURCE_FOLDER}/)...${RESET}\n"; \
+		${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --files ${SOURCE_FOLDER}/**/*; \
+	else \
+		printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping fmt-src${RESET}\n"; \
+	fi
 
 mypy: install ## run mypy analysis
 	@if [ -d ${SOURCE_FOLDER} ]; then \
