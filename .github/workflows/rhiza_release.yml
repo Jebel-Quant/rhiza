@@ -172,7 +172,8 @@ jobs:
       - name: Generate SBOM (CycloneDX)
         if: hashFiles('pyproject.toml') != ''
         run: |
-          printf "[INFO] Installing cyclonedx-bom...\n"
+          printf "[INFO] Generating SBOM in CycloneDX format...\n"
+          # Note: uvx caches the tool environment, so the second call is fast
           uvx cyclonedx-bom@^7.0.0 environment --of JSON --o sbom.cdx.json
           uvx cyclonedx-bom@^7.0.0 environment --of XML --o sbom.cdx.xml
           printf "[INFO] SBOM generation complete\n"
