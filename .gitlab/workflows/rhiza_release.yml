@@ -63,7 +63,7 @@ release:build:
   needs:
     - job: .release_validate_tag
       optional: true
-  image: ghcr.io/astral-sh/uv:0.9.28-bookworm
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
   before_script:
     - git fetch --tags
   script:

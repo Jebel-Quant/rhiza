@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src="assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza 
+# <img src=".rhiza/assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza 
 ![GitHub Release](https://img.shields.io/github/v/release/jebel-quant/rhiza?sort=semver&color=2FA4A9&label=rhiza)
 ![Synced with Rhiza](https://img.shields.io/badge/synced%20with-rhiza-2FA4A9?color=2FA4A9)
 
@@ -366,9 +366,9 @@ make presentation-serve  # Serve with live reload
 
 For detailed information about creating and customising presentations, see [presentation/README.md](presentation/README.md).
 
-### Testing Documentation
+### Documentation Examples
 
-README code blocks are automatically tested. See [tests/test_config_templates/test_readme.py](tests/test_config_templates/test_readme.py) for details.
+README code blocks can be tested when tests are configured.
 
 ```python
 # Example code block
@@ -404,6 +404,20 @@ Rhiza uses a modular Makefile system with extension points (hooks) for customisa
 ### Custom Build Scripts
 
 For system dependencies and custom build steps, see [docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md).
+
+### Private GitHub Packages
+
+Rhiza's template workflows automatically support private GitHub packages from the same organization. Simply add them to your `pyproject.toml`:
+
+**In `pyproject.toml`:**
+```toml
+[tool.uv.sources]
+my-package = { git = "https://github.com/jebel-quant/my-package.git", rev = "v1.0.0" }
+```
+
+**Git authentication is already configured** in all Rhiza workflows (CI, book, release, etc.) using the default `GITHUB_TOKEN`, which automatically provides read access to repositories in the same organization.
+
+For custom workflows or local development setup, see [.rhiza/docs/PRIVATE_PACKAGES.md](.rhiza/docs/PRIVATE_PACKAGES.md).
 
 ### Release Management
 

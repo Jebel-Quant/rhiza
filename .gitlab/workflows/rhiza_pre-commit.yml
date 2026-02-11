@@ -17,7 +17,7 @@
 pre-commit:check:
   stage: test
   needs: []
-  image: ghcr.io/astral-sh/uv:0.9.28-bookworm
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
   script:
     - make fmt
   rules:

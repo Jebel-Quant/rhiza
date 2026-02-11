@@ -116,7 +116,7 @@ variables:
 
 # Job templates for reusable configuration
 .python_base:
-  image: ghcr.io/astral-sh/uv:0.9.28-bookworm
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
   before_script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
     - uv python install $(cat .python-version)

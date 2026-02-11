@@ -1,147 +1,142 @@
-# Quick Reference
+# Rhiza Quick Reference Card
 
-Essential commands for working with Rhiza projects.
+A concise reference for common Rhiza operations.
 
----
+## Essential Commands
 
-## Top 10 Commands
+| Command | Description |
+|---------|-------------|
+| `make install` | Install dependencies and set up environment |
+| `make test` | Run pytest with coverage |
+| `make fmt` | Format and lint code with ruff |
+| `make help` | Show all available targets |
 
-| # | Command | What it does |
-|---|---------|--------------|
-| 1 | `make install` | Set up environment (installs uv, creates .venv, installs deps) |
-| 2 | `make test` | Run test suite with pytest |
-| 3 | `make fmt` | Format code and run linting (ruff + pre-commit) |
-| 4 | `make help` | Show all available targets (40+) |
-| 5 | `make sync` | Pull updates from template repository |
-| 6 | `make bump` | Interactively bump version (major/minor/patch) |
-| 7 | `make release` | Create git tag and push to trigger release |
-| 8 | `make deptry` | Check for missing/unused dependencies |
-| 9 | `make clean` | Remove artifacts and prune stale branches |
-| 10 | `make validate` | Check if project matches template (dry-run sync) |
+## Version & Release
 
----
+| Command | Description |
+|---------|-------------|
+| `make bump` | Bump version (prompts for major/minor/patch) |
+| `make bump BUMP=patch` | Bump patch version directly |
+| `make bump BUMP=minor` | Bump minor version directly |
+| `make bump BUMP=major` | Bump major version directly |
+| `make release` | Create and push release tag |
 
-## Daily Workflow
+## Code Quality
 
-```bash
-# Start of day
-make install          # Ensure environment is up to date
+| Command | Description |
+|---------|-------------|
+| `make fmt` | Format + lint with auto-fix |
+| `make deptry` | Check for unused/missing dependencies |
+| `make pre-commit` | Run all pre-commit hooks |
 
-# Development cycle
-# ... edit code ...
-make test             # Verify changes work
-make fmt              # Format before commit
+## Template Sync
 
-# Before PR
-make deptry           # Check dependencies
-make validate         # Ensure template compliance
-```
-
----
+| Command | Description |
+|---------|-------------|
+| `make sync` | Sync templates from upstream Rhiza |
 
 ## Running Tests
 
 ```bash
-make test                                    # Run all tests
-uv run pytest tests/path/to/test.py         # Run specific file
-uv run pytest tests/path/to/test.py::func   # Run specific test
-uv run pytest -k "keyword"                  # Run tests matching keyword
-uv run pytest -x                            # Stop on first failure
-uv run pytest --lf                          # Run last failed tests
+# All tests
+make test
+
+# Specific file
+uv run pytest tests/path/to/test.py -v
+
+# Specific test function
+uv run pytest tests/path/to/test.py::test_name -v
+
+# With output
+uv run pytest -v -s
 ```
 
----
+## Directory Structure
 
-## Version & Release
-
-```bash
-make bump             # Bump version (interactive prompt)
-make release          # Create tag and push
-
-# Manual version check
-uv version --short    # Show current version
+```text
+.rhiza/
+├── rhiza.mk          # Core Makefile logic
+├── make.d/           # Modular extensions (auto-loaded)
+│   ├── 00-19*.mk     # Configuration
+│   ├── 20-79*.mk     # Task definitions
+│   └── 80-99*.mk     # Hook implementations
+├── scripts/          # Shell scripts (release.sh)
+├── utils/            # Python utilities
+└── template.yml      # Sync configuration
 ```
 
----
+## Hook Targets
 
-## Template Sync
+Extend these with `::` syntax in `local.mk` or `.rhiza/make.d/`:
 
-```bash
-make sync             # Pull updates from template
-make validate         # Check for drift (no changes)
-
-# Direct CLI
-uvx rhiza materialize .   # Apply template
-uvx rhiza validate .      # Validate only
-```
-
----
-
-## Documentation
-
-```bash
-make book             # Build documentation site
-make docs             # Generate API docs (pdoc)
-make marimo           # Start Marimo notebook server
-```
-
----
-
-## Docker
-
-```bash
-make docker-build     # Build Docker image
-make docker-run       # Run container
-make docker-clean     # Remove image
-```
-
----
-
-## Troubleshooting
-
-| Problem | Solution |
-|---------|----------|
-| Stale dependencies | `make clean && make install` |
-| Formatting failures | `make fmt` (auto-fixes most issues) |
-| Pre-commit hook fails | `uvx pre-commit run --all-files` |
-| Template out of sync | `make sync` |
-| Unknown Python version | Check `.python-version` file |
-
----
+| Hook | When it runs |
+|------|--------------|
+| `pre-install::` | Before dependency installation |
+| `post-install::` | After dependency installation |
+| `pre-sync::` | Before template sync |
+| `post-sync::` | After template sync |
+| `pre-validate::` | Before project validation |
+| `post-validate::` | After project validation |
+| `pre-release::` | Before release creation |
+| `post-release::` | After release creation |
+| `pre-bump::` | Before version bump |
+| `post-bump::` | After version bump |
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `Makefile` | Entry point for all commands |
-| `pyproject.toml` | Project config, dependencies, version |
-| `.python-version` | Default Python version |
+| `pyproject.toml` | Project metadata, dependencies, version |
 | `uv.lock` | Locked dependency versions |
-| `.rhiza/template.yml` | Template sync configuration |
-| `ruff.toml` | Linting and formatting rules |
+| `.python-version` | Default Python version |
+| `ruff.toml` | Linter/formatter configuration |
+| `local.mk` | Local Makefile customizations (not synced) |
 
----
+## Python Execution
 
-## Environment Variables
+Always use `uv` for Python operations:
 
 ```bash
-# Set Python version (overrides .python-version)
-PYTHON_VERSION=3.13 make install
-
-# Custom virtual environment path
-VENV=.venv-custom make install
-
-# Skip PATH modification
-UV_NO_MODIFY_PATH=1
+uv run python script.py    # Run Python script
+uv run pytest              # Run tests
+uvx hatch build            # Run external tool
 ```
 
----
+## Version Format
 
-## Getting Help
+- Source of truth: `version` field in `pyproject.toml`
+- Git tags: `v` prefix (e.g., `v1.2.3`)
+- Semantic versioning: `MAJOR.MINOR.PATCH`
+
+## CI Workflows
+
+| Workflow | Trigger |
+|----------|---------|
+| CI | Push, Pull Request |
+| Release | Tag `v*` |
+| Security | Schedule, Push |
+| Sync | Manual |
+
+## Common Patterns
+
+### Add a custom make target
+
+Create `.rhiza/make.d/50-custom.mk`:
+```makefile
+my-target:
+	@echo "Custom target"
+```
+
+### Extend a hook
+
+Add to `local.mk`:
+```makefile
+post-install::
+	@echo "Additional setup after install"
+```
+
+### Skip CI on commit
 
 ```bash
-make help             # List all targets
-cat .rhiza/make.d/README.md   # Makefile extension guide
-cat docs/architecture.md      # System architecture
-cat docs/glossary.md          # Term definitions
+git commit -m "docs: update readme [skip ci]"
 ```

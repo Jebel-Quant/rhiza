@@ -10,7 +10,7 @@
 validate:rhiza:
   stage: test
   needs: []
-  image: ghcr.io/astral-sh/uv:0.9.28-bookworm
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
   script:
     - |
       # Don't run this in rhiza itself. Rhiza has no template.yml file.
