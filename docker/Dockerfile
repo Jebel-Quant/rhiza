@@ -61,7 +61,7 @@ RUN apt-get update && \
 # Update setuptools to fix Python package vulnerabilities
 # CVE-2026-23949 (jaraco.context: path traversal)
 # CVE-2026-24049 (wheel: privilege escalation)
-RUN pip install --no-cache-dir --upgrade setuptools
+RUN pip install --no-cache-dir setuptools==82.0.0
 
 # Create non-root user
 RUN useradd -m app_user && chown app_user:app_user /app
