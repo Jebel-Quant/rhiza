@@ -165,7 +165,7 @@ prompt_yes_no() {
 # ============================================================================
 
 # Get the current version from pyproject.toml and format as a git tag
-# Returns: Sets CURRENT_VERSION and TAG global variables
+# Side effects: Sets CURRENT_VERSION and TAG global variables
 get_version_and_tag() {
   # Use uv to extract version from pyproject.toml
   CURRENT_VERSION=$("$UV_BIN" version --short 2>/dev/null)
@@ -187,7 +187,7 @@ get_version_and_tag() {
 
 # Validate that the current branch is appropriate for creating a release
 # Warns if not on the default branch but allows user to proceed
-# Returns: Sets CURRENT_BRANCH and DEFAULT_BRANCH global variables
+# Side effects: Sets CURRENT_BRANCH and DEFAULT_BRANCH global variables
 validate_branch() {
   # Get the name of the current branch
   CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -293,7 +293,7 @@ check_upstream_sync() {
 # ============================================================================
 
 # Check if the release tag already exists locally or remotely
-# Returns: Sets SKIP_TAG_CREATE variable if tag exists locally
+# Side effects: Sets SKIP_TAG_CREATE variable if tag exists locally
 check_tag_exists() {
   SKIP_TAG_CREATE=""
   
