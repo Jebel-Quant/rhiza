@@ -16,10 +16,9 @@
 # Strong roots
 Creating and maintaining technical harmony across repositories.
 
-A collection of reusable configuration templates
-for modern Python projects.
-Save time and maintain consistency across your projects
-with these pre-configured templates.
+**Rhiza** combines a powerful CLI tool with a rich collection of reusable configuration templates for modern Python projects. Save time and maintain consistency across your projects with living templates that stay in sync through automated workflows.
+
+Use `uvx rhiza` to integrate these templates into any Python project—no installation required!
 
 ![Last Updated](https://img.shields.io/github/last-commit/jebel-quant/rhiza/main?label=Last%20updated&color=blue)
 
@@ -58,6 +57,8 @@ exclude: |
 - **`exclude`** - Paths to skip, protecting your customisations
 
 When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhiza fetches only the files matching your `include` patterns, skips anything in `exclude`, and creates a clean diff for you to review. You stay in control of what updates and when.
+
+> **📦 About the Rhiza CLI:** The `rhiza` command-line tool is distributed as a Python package and can be run via `uvx rhiza` (or `uv tool install rhiza` for permanent installation). This repository (`Jebel-Quant/rhiza`) contains the template configurations, while the CLI tool handles the synchronization logic. You don't need to clone this repository to use Rhiza—just run `uvx rhiza init` in your project!
 
 **💡 Pro Tip:** While you can use `Jebel-Quant/rhiza` directly, **we recommend creating your own template repository** using GitHub's "Use this template" button. This gives you a clean copy to customise for your organisation's specific needs and constraints—adjusting CI workflows, coding standards, or tooling choices—while still benefiting from Rhiza's sync mechanism. Your template repo becomes your team's source of truth, and you can selectively pull updates from upstream Rhiza when desired.
 
