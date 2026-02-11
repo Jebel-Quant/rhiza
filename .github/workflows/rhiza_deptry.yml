@@ -37,9 +37,45 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
-      - name: Run deptry
-        run: make deptry
-        # NOTE: make deptry is good style because it encapsulates the folders to check
-        # (e.g. src and book/marimo) and keeps CI in sync with local development.
-        # Since we use a 'uv' container, the Makefile is optimised to use the
-        # pre-installed 'uv' and 'uvx' from the system PATH.
+      - name: Extract folder variables
+        id: folders
+        run: |
+          # Extract SOURCE_FOLDER from the project configuration (via Makefile)
+          # shellcheck disable=SC2016 # Single quotes intentional - Make syntax, not shell expansion
+          SOURCE_FOLDER=$(make -s -f Makefile -f - <<< 'print: ; @echo $(or $(SOURCE_FOLDER),src)' print)
+          echo "source=$SOURCE_FOLDER" >> "$GITHUB_OUTPUT"
+          
+          # Extract MARIMO_FOLDER from the project configuration (via Makefile)
+          # shellcheck disable=SC2016 # Single quotes intentional - Make syntax, not shell expansion
+          MARIMO_FOLDER=$(make -s -f Makefile -f - <<< 'print: ; @echo $(or $(MARIMO_FOLDER),marimo)' print)
+          echo "marimo=$MARIMO_FOLDER" >> "$GITHUB_OUTPUT"
+          
+          # Extract Python version
+          PYTHON_VERSION=$(cat .python-version 2>/dev/null || echo "3.13")
+          echo "python_version=$PYTHON_VERSION" >> "$GITHUB_OUTPUT"
+          
+          echo "Detected SOURCE_FOLDER: $SOURCE_FOLDER"
+          echo "Detected MARIMO_FOLDER: $MARIMO_FOLDER"
+          echo "Using Python version: $PYTHON_VERSION"
+
+      - name: Run deptry on source folder
+        if: steps.folders.outputs.source != ''
+        run: |
+          if [ -d "${{ steps.folders.outputs.source }}" ]; then
+            uvx -p "${{ steps.folders.outputs.python_version }}" deptry "${{ steps.folders.outputs.source }}"
+          else
+            echo "Source folder ${{ steps.folders.outputs.source }} does not exist, skipping"
+          fi
+
+      - name: Run deptry on marimo folder
+        if: steps.folders.outputs.marimo != ''
+        run: |
+          if [ -d "${{ steps.folders.outputs.marimo }}" ]; then
+            if [ -d "${{ steps.folders.outputs.source }}" ]; then
+              uvx -p "${{ steps.folders.outputs.python_version }}" deptry "${{ steps.folders.outputs.marimo }}" "${{ steps.folders.outputs.source }}" --ignore DEP004
+            else
+              uvx -p "${{ steps.folders.outputs.python_version }}" deptry "${{ steps.folders.outputs.marimo }}" --ignore DEP004
+            fi
+          else
+            echo "Marimo folder ${{ steps.folders.outputs.marimo }} does not exist, skipping"
+          fi
