@@ -180,6 +180,8 @@ jobs:
           ls -lh sbom.cdx.*
 
       - name: Attest SBOM
+        # Attest only the JSON format as it's the canonical machine-readable format.
+        # The XML format is provided for compatibility but doesn't need separate attestation.
         if: hashFiles('pyproject.toml') != '' && github.event.repository.private == false
         uses: actions/attest-sbom@v2
         with:
@@ -216,6 +218,7 @@ jobs:
 
     steps:
       - name: Download SBOM artifact
+        # Downloads sbom.cdx.json and sbom.cdx.xml into sbom/ directory
         uses: actions/download-artifact@v7.0.0
         with:
           name: sbom
