@@ -98,12 +98,16 @@ This workflow is designed for repositories that use rhiza as a template, not for
 
 **Expected behavior:**
 - Checks for missing/obsolete dependencies
-- Automatically detects source folder (`src/` or `.`)
+- Automatically extracts SOURCE_FOLDER and MARIMO_FOLDER from Makefile configuration
+- Runs deptry on detected folders if they exist
 - Reports unused dependencies
 
 **Manual test:**
 ```bash
-# Run deptry locally
+# Run deptry locally using make (recommended)
+make deptry
+
+# Or run deptry directly
 uvx deptry src/
 ```
 
