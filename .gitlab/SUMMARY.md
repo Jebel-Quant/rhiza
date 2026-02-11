@@ -39,7 +39,7 @@ GITLAB_CI.md                # Quick start guide (3.6 KB)
 | 4 | Pre-commit | ✅ Complete | 29 | All hooks, UV environment |
 | 5 | Book/Pages | ✅ Complete | 52 | GitLab Pages, docs building |
 | 6 | Sync | ✅ Complete | 82 | Template sync, branch creation |
-| 7 | Release | ✅ Complete | 287 | PyPI, devcontainer, GitLab releases |
+| 7 | Release | ✅ Complete | 287 | PyPI, GitLab releases |
 
 **Total:** 675 lines of CI/CD configuration
 
@@ -110,8 +110,6 @@ GITLAB_CI.md                # Quick start guide (3.6 KB)
 
 ### Optional Variables
 - `UV_EXTRA_INDEX_URL` - Package index
-- `DEVCONTAINER_REGISTRY` - Container registry
-- `PUBLISH_DEVCONTAINER` - Enable devcontainer publishing
 - `PYPI_REPOSITORY_URL` - Custom PyPI feed
 - `PUBLISH_COMPANION_BOOK` - Enable documentation
 
@@ -129,7 +127,6 @@ GITLAB_CI.md                # Quick start guide (3.6 KB)
 1. **Setup Repository**
    - Create GitLab repository (mirror/fork)
    - Enable GitLab Pages (if using book workflow)
-   - Enable GitLab Container Registry (if using devcontainer)
 
 2. **Configure Variables**
    - Set required secrets (PYPI_TOKEN, PAT_TOKEN)
@@ -138,7 +135,6 @@ GITLAB_CI.md                # Quick start guide (3.6 KB)
 
 3. **Test Workflows**
    - Push to test branch (triggers CI, marimo, etc.)
-   - Modify .devcontainer/ (triggers devcontainer)
    - Push to main (triggers book/pages)
    - Manual trigger (triggers sync)
    - Push version tag (triggers release)

@@ -78,8 +78,8 @@ Rhiza is a sophisticated, well-engineered collection of reusable configuration t
 #### Strengths:
 - **Comprehensive Test Suite**: 
   - 1,291 lines of test code across 10 test files
-  - Tests for scripts (bump, release, marimushka)
-  - Tests for Makefile targets
+  - Tests for scripts (bump, release)
+  - Tests for Makefile targets (including marimushka)
   - Tests for README code blocks
   - Structural validation tests
 - **Multi-Version CI Matrix**: 
@@ -400,32 +400,3 @@ This repository could serve as a **gold standard template** for other Python pro
 ---
 
 *This analysis was conducted by thoroughly reviewing the repository structure, code quality, documentation, CI/CD workflows, testing infrastructure, and developer experience. Recommendations are based on industry best practices and modern software engineering standards.*
-
-## 2026-01-04 — Analysis Entry
-
-### Summary
-Rhiza remains a highly professional, template-driven Python project framework with strong automation, documentation, and developer experience. The repository continues to demonstrate best practices, but the lack of visible evolution, limited template flexibility, and missing security/dependency automation are now more notable as the ecosystem matures.
-
-### Strengths
-- Extensive, well-structured test suite (see `tests/test_rhiza/`), including Makefile, script, and documentation validation.
-- Modern, multi-stage Dockerfile with non-root user and aggressive image minimization (`docker/Dockerfile`).
-- Makefile is modular, self-documenting, and integrates with split Makefiles for book, tests, and presentations.
-- Devcontainer and Marimo notebook support for reproducible environments and interactive docs.
-- Pre-commit hooks and CI workflows cover a wide range of checks, including linting, docs, and template sync.
-- Documentation and assets are clear, with companion book and visual branding (`assets/`, `book/`).
-
-### Weaknesses
-- No Python source files in `src/` (template-only), limiting direct code extensibility and API documentation.
-- No security scanning (CodeQL, Snyk) or automated dependency update tools (Renovate/Dependabot) present.
-- No CHANGELOG or ADRs; project history and rationale for decisions are opaque.
-- Windows support for shell scripts is undocumented and likely incomplete.
-- No template variants for different project types (e.g., CLI, web, minimal).
-
-### Risks / Technical Debt
-- Stagnant commit history (still only 2 commits) makes it difficult to assess project evolution or responsiveness.
-- Absence of security and dependency automation increases risk of unnoticed vulnerabilities or outdated dependencies.
-- Lack of changelog and ADRs may hinder future maintainability and onboarding.
-- One-size-fits-all template approach may not scale for diverse Python project needs.
-
-### Score
-**8/10** — Rhiza remains a robust, modern template repository, but the absence of visible evolution, security/dependency automation, and template flexibility now warrant a slight reduction in score. Addressing these areas would restore its status as a gold standard.
