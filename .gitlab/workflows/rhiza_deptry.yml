@@ -20,12 +20,15 @@ deptry:check:
     - |
       SOURCE_FOLDER=$(make -s -f Makefile -f - <<< 'print: ; @echo $(or $(SOURCE_FOLDER),src)' print)
       MARIMO_FOLDER=$(make -s -f Makefile -f - <<< 'print: ; @echo $(or $(MARIMO_FOLDER),marimo)' print)
+      PYTHON_VERSION=$(cat .python-version 2>/dev/null || echo "3.13")
+      
       echo "Detected SOURCE_FOLDER: $SOURCE_FOLDER"
       echo "Detected MARIMO_FOLDER: $MARIMO_FOLDER"
+      echo "Using Python version: $PYTHON_VERSION"
       
       # Run deptry on source folder if it exists
       if [ -n "$SOURCE_FOLDER" ] && [ -d "$SOURCE_FOLDER" ]; then
-        uvx -p $(cat .python-version 2>/dev/null || echo "3.13") deptry "$SOURCE_FOLDER"
+        uvx -p "$PYTHON_VERSION" deptry "$SOURCE_FOLDER"
       else
         echo "Source folder $SOURCE_FOLDER does not exist, skipping"
       fi
@@ -33,9 +36,9 @@ deptry:check:
       # Run deptry on marimo folder if it exists
       if [ -n "$MARIMO_FOLDER" ] && [ -d "$MARIMO_FOLDER" ]; then
         if [ -d "$SOURCE_FOLDER" ]; then
-          uvx -p $(cat .python-version 2>/dev/null || echo "3.13") deptry "$MARIMO_FOLDER" "$SOURCE_FOLDER" --ignore DEP004
+          uvx -p "$PYTHON_VERSION" deptry "$MARIMO_FOLDER" "$SOURCE_FOLDER" --ignore DEP004
         else
-          uvx -p $(cat .python-version 2>/dev/null || echo "3.13") deptry "$MARIMO_FOLDER" --ignore DEP004
+          uvx -p "$PYTHON_VERSION" deptry "$MARIMO_FOLDER" --ignore DEP004
         fi
       else
         echo "Marimo folder $MARIMO_FOLDER does not exist, skipping"

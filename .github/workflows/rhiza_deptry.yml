@@ -50,14 +50,19 @@ jobs:
           MARIMO_FOLDER=$(make -s -f Makefile -f - <<< 'print: ; @echo $(or $(MARIMO_FOLDER),marimo)' print)
           echo "marimo=$MARIMO_FOLDER" >> "$GITHUB_OUTPUT"
           
+          # Extract Python version
+          PYTHON_VERSION=$(cat .python-version 2>/dev/null || echo "3.13")
+          echo "python_version=$PYTHON_VERSION" >> "$GITHUB_OUTPUT"
+          
           echo "Detected SOURCE_FOLDER: $SOURCE_FOLDER"
           echo "Detected MARIMO_FOLDER: $MARIMO_FOLDER"
+          echo "Using Python version: $PYTHON_VERSION"
 
       - name: Run deptry on source folder
         if: steps.folders.outputs.source != ''
         run: |
           if [ -d "${{ steps.folders.outputs.source }}" ]; then
-            uvx -p $(cat .python-version 2>/dev/null || echo "3.13") deptry "${{ steps.folders.outputs.source }}"
+            uvx -p "${{ steps.folders.outputs.python_version }}" deptry "${{ steps.folders.outputs.source }}"
           else
             echo "Source folder ${{ steps.folders.outputs.source }} does not exist, skipping"
           fi
@@ -67,9 +72,9 @@ jobs:
         run: |
           if [ -d "${{ steps.folders.outputs.marimo }}" ]; then
             if [ -d "${{ steps.folders.outputs.source }}" ]; then
-              uvx -p $(cat .python-version 2>/dev/null || echo "3.13") deptry "${{ steps.folders.outputs.marimo }}" "${{ steps.folders.outputs.source }}" --ignore DEP004
+              uvx -p "${{ steps.folders.outputs.python_version }}" deptry "${{ steps.folders.outputs.marimo }}" "${{ steps.folders.outputs.source }}" --ignore DEP004
             else
-              uvx -p $(cat .python-version 2>/dev/null || echo "3.13") deptry "${{ steps.folders.outputs.marimo }}" --ignore DEP004
+              uvx -p "${{ steps.folders.outputs.python_version }}" deptry "${{ steps.folders.outputs.marimo }}" --ignore DEP004
             fi
           else
             echo "Marimo folder ${{ steps.folders.outputs.marimo }} does not exist, skipping"
