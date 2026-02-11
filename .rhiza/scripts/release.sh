@@ -293,7 +293,7 @@ check_upstream_sync() {
 # ============================================================================
 
 # Check if the release tag already exists locally or remotely
-# Side effects: Sets SKIP_TAG_CREATE variable if tag exists locally
+# Side effects: Sets SKIP_TAG_CREATE variable for use by create_release_tag()
 check_tag_exists() {
   SKIP_TAG_CREATE=""
   
