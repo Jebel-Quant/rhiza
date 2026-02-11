@@ -16,10 +16,9 @@
 # Strong roots
 Creating and maintaining technical harmony across repositories.
 
-A collection of reusable configuration templates
-for modern Python projects.
-Save time and maintain consistency across your projects
-with these pre-configured templates.
+**Rhiza** combines a powerful CLI tool with a rich collection of reusable configuration templates for modern Python projects. Save time and maintain consistency across your projects with living templates that stay in sync through automated workflows.
+
+Use `uvx rhiza` to integrate these templates into any Python project—no installation required!
 
 ![Last Updated](https://img.shields.io/github/last-commit/jebel-quant/rhiza/main?label=Last%20updated&color=blue)
 
@@ -58,6 +57,8 @@ exclude: |
 - **`exclude`** - Paths to skip, protecting your customisations
 
 When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhiza fetches only the files matching your `include` patterns, skips anything in `exclude`, and creates a clean diff for you to review. You stay in control of what updates and when.
+
+> **📦 About the Rhiza CLI:** The `rhiza` command-line tool is distributed as a Python package and can be run via `uvx rhiza` (or `uv tool install rhiza` for permanent installation). This repository (`Jebel-Quant/rhiza`) contains the template configurations, while the CLI tool handles the synchronization logic. You don't need to clone this repository to use Rhiza—just run `uvx rhiza init` in your project!
 
 **💡 Pro Tip:** While you can use `Jebel-Quant/rhiza` directly, **we recommend creating your own template repository** using GitHub's "Use this template" button. This gives you a clean copy to customise for your organisation's specific needs and constraints—adjusting CI workflows, coding standards, or tooling choices—while still benefiting from Rhiza's sync mechanism. Your template repo becomes your team's source of truth, and you can selectively pull updates from upstream Rhiza when desired.
 
@@ -126,6 +127,7 @@ make install
 ### Core Features
 
 - 🚀 **CI/CD Templates** - Ready-to-use GitHub Actions and GitLab CI workflows
+- 🔄 **Automated Sync** - Keep templates fresh with scheduled updates and dynamic status badges
 - 🧪 **Testing Framework** - Comprehensive test setup with pytest
 - 📚 **Documentation** - Automated documentation generation with pdoc and companion books
 - 🔍 **Code Quality** - Linting with ruff, formatting, and dependency checking with deptry
@@ -223,6 +225,26 @@ Keep your templates up-to-date with automated sync workflows:
 - Creates pull requests with template updates
 
 For GitHub Token configuration and details, see the [GitHub Actions documentation](.github/README.md).
+
+#### Display Sync Status Badge
+
+Show when your project was last synced with Rhiza by adding a dynamic badge to your README:
+
+```markdown
+![Rhiza Sync](https://img.shields.io/badge/dynamic/json?label=rhiza%20sync&query=%24.workflow_runs%5B0%5D.updated_at&url=https%3A%2F%2Fapi.github.com%2Frepos%2FYOUR_OWNER%2FYOUR_REPO%2Factions%2Fworkflows%2Frhiza_sync.yml%2Fruns%3Fbranch%3Dmain%26status%3Dcompleted%26per_page%3D1&color=2FA4A9)
+```
+
+**Replace `YOUR_OWNER` and `YOUR_REPO` with your GitHub username/organization and repository name.**
+
+For example, for the repository `jebel-quant/my-project`:
+
+```markdown
+![Rhiza Sync](https://img.shields.io/badge/dynamic/json?label=rhiza%20sync&query=%24.workflow_runs%5B0%5D.updated_at&url=https%3A%2F%2Fapi.github.com%2Frepos%2Fjebel-quant%2Fmy-project%2Factions%2Fworkflows%2Frhiza_sync.yml%2Fruns%3Fbranch%3Dmain%26status%3Dcompleted%26per_page%3D1&color=2FA4A9)
+```
+
+This badge displays the timestamp of your last successful Rhiza sync, helping you track template freshness at a glance.
+
+For more badge options and customization, see [.rhiza/docs/BADGES.md](.rhiza/docs/BADGES.md).
 
 ### What to Expect After Integration
 
