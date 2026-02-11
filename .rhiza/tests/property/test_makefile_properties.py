@@ -16,6 +16,14 @@ import pytest
 from api.conftest import run_make
 
 
+# Known Makefile targets to exclude from unknown target tests
+KNOWN_MAKEFILE_TARGETS = [
+    "help", "install", "test", "fmt", "deptry", "clean", "benchmark",
+    "mypy", "typecheck", "security", "sync", "validate", "readme",
+    "print", "version", "rhiza", "post", "pre"
+]
+
+
 class TestMakefileProperties:
     """Property-based tests for Makefile target validation."""
 
@@ -27,12 +35,7 @@ class TestMakefileProperties:
     def test_unknown_target_produces_error(self, logger, target_name):
         """Property: Unknown targets should produce a meaningful error message."""
         # Filter out known targets
-        known_targets = [
-            "help", "install", "test", "fmt", "deptry", "clean", "benchmark",
-            "mypy", "typecheck", "security", "sync", "validate", "readme",
-            "print", "version", "rhiza", "post", "pre"
-        ]
-        if target_name in known_targets or any(target_name.startswith(prefix) for prefix in known_targets):
+        if target_name in KNOWN_MAKEFILE_TARGETS or any(target_name.startswith(prefix) for prefix in KNOWN_MAKEFILE_TARGETS):
             return
 
         proc = run_make(logger, [target_name], check=False, dry_run=False)

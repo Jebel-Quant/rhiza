@@ -22,6 +22,11 @@ if str(tests_root) not in sys.path:
 from test_utils import MAKE  # noqa: E402
 
 
+# Test configuration constants
+STRESS_TEST_DEFAULT_ITERATIONS = 100
+MAKEFILE_VARIABLES = ["PYTHON_VERSION", "UV_BIN", "VENV", "RHIZA_VERSION", "INSTALL_DIR"]
+
+
 class TestMakefilePerformance:
     """Benchmark tests for Makefile target execution."""
 
@@ -176,7 +181,7 @@ class TestSubprocessOverhead:
 @pytest.fixture(scope="module")
 def stress_test_iterations():
     """Number of iterations for stress tests."""
-    return 100
+    return STRESS_TEST_DEFAULT_ITERATIONS
 
 
 class TestStressScenarios:
@@ -202,8 +207,6 @@ class TestStressScenarios:
     def test_concurrent_print_variable_stress(self, root):
         """Stress test: Multiple concurrent print-% invocations."""
         import concurrent.futures
-
-        variables = ["PYTHON_VERSION", "UV_BIN", "VENV", "RHIZA_VERSION", "INSTALL_DIR"]
         
         def print_variable(var):
             result = subprocess.run(
@@ -219,7 +222,7 @@ class TestStressScenarios:
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = []
             for _ in range(20):  # 20 iterations
-                for var in variables:
+                for var in MAKEFILE_VARIABLES:
                     futures.append(executor.submit(print_variable, var))
             
             results = [f.result() for f in concurrent.futures.as_completed(futures)]
