@@ -243,6 +243,8 @@ For example, for the repository `jebel-quant/my-project`:
 
 This badge displays the timestamp of your last successful Rhiza sync, helping you track template freshness at a glance.
 
+For more badge options and customization, see [.rhiza/docs/BADGES.md](.rhiza/docs/BADGES.md).
+
 ### What to Expect After Integration
 
 - **Automated CI/CD** - GitHub Actions workflows for testing, linting, and releases
