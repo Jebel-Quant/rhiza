@@ -24,7 +24,7 @@ fmt: install-uv ## check the pre-commit hooks and the linting
 fmt-rhiza: install-uv ## run formatting checks on rhiza framework code only
 	@printf "${BLUE}[INFO] Running formatting checks on rhiza framework code (.rhiza/)...${RESET}\n"
 	@if [ -d .rhiza ]; then \
-		files=$$(git ls-files .rhiza/); \
+		files=$$(git ls-files .rhiza/ | tr '\n' ' '); \
 		if [ -n "$$files" ]; then \
 			${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --files $$files; \
 		else \
@@ -37,7 +37,7 @@ fmt-rhiza: install-uv ## run formatting checks on rhiza framework code only
 fmt-src: install-uv ## run formatting checks on user source code only
 	@if [ -d ${SOURCE_FOLDER} ]; then \
 		printf "${BLUE}[INFO] Running formatting checks on user source code (${SOURCE_FOLDER}/)...${RESET}\n"; \
-		files=$$(git ls-files ${SOURCE_FOLDER}/); \
+		files=$$(git ls-files ${SOURCE_FOLDER}/ | tr '\n' ' '); \
 		if [ -n "$$files" ]; then \
 			${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --files $$files; \
 		else \
