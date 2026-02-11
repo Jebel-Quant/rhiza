@@ -176,7 +176,6 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Clean utility scripts with proper error handling
 - Standard library preference (tomllib, json, pathlib)
 - Custom exception hierarchy: `RhizaError`, `VersionSpecifierError`, `PyProjectError` (PR #349)
-- Comprehensive tests for version_matrix.py (35 tests, PR #349)
 - mypy strict mode with CI integration (PR #367, #368)
 
 **Weaknesses:**
@@ -200,7 +199,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - 90% coverage threshold enforced via `--cov-fail-under=90`
 - Coverage reports published to GitHub Pages via `make book` (rhiza_book.yml workflow)
 - Benchmark regression detection via `github-action-benchmark` (alerts at 150% threshold)
-- Test strategy appropriate for template repo: integration/structural tests for Makefiles and workflows, unit tests for Python scripts (`test_check_workflow_names.py`, `test_version_matrix.py`)
+- Test strategy appropriate for template repo: integration/structural tests for Makefiles and workflows, unit tests for Python scripts (`test_check_workflow_names.py`)
 
 **Weaknesses:**
 - None significant

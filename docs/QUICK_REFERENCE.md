@@ -53,7 +53,7 @@ uv run pytest -v -s
 
 ## Directory Structure
 
-```
+```text
 .rhiza/
 ├── rhiza.mk          # Core Makefile logic
 ├── make.d/           # Modular extensions (auto-loaded)
@@ -61,7 +61,7 @@ uv run pytest -v -s
 │   ├── 20-79*.mk     # Task definitions
 │   └── 80-99*.mk     # Hook implementations
 ├── scripts/          # Shell scripts (release.sh)
-├── utils/            # Python utilities (version_matrix.py)
+├── utils/            # Python utilities
 └── template.yml      # Sync configuration
 ```
 
