@@ -231,10 +231,10 @@ For GitHub Token configuration and details, see the [GitHub Actions documentatio
 Show when your project was last synced with Rhiza by adding a dynamic badge to your README:
 
 ```markdown
-![Rhiza Sync](https://img.shields.io/badge/dynamic/json?label=rhiza%20sync&query=%24.workflow_runs%5B0%5D.updated_at&url=https%3A%2F%2Fapi.github.com%2Frepos%2F{owner}%2F{repo}%2Factions%2Fworkflows%2Frhiza_sync.yml%2Fruns%3Fbranch%3Dmain%26status%3Dcompleted%26per_page%3D1&color=2FA4A9)
+![Rhiza Sync](https://img.shields.io/badge/dynamic/json?label=rhiza%20sync&query=%24.workflow_runs%5B0%5D.updated_at&url=https%3A%2F%2Fapi.github.com%2Frepos%2FYOUR_OWNER%2FYOUR_REPO%2Factions%2Fworkflows%2Frhiza_sync.yml%2Fruns%3Fbranch%3Dmain%26status%3Dcompleted%26per_page%3D1&color=2FA4A9)
 ```
 
-**Replace `{owner}` and `{repo}` with your GitHub username/organization and repository name.**
+**Replace `YOUR_OWNER` and `YOUR_REPO` with your GitHub username/organization and repository name.**
 
 For example, for the repository `jebel-quant/my-project`:
 
