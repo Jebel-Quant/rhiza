@@ -18,6 +18,17 @@ import pytest
 from api.conftest import SPLIT_MAKEFILES, run_make, setup_rhiza_git_repo, strip_ansi
 
 
+def assert_uvx_command_uses_version(output: str, tmp_path, command_fragment: str):
+    """Assert uvx command uses .python-version when present, else fallback checks."""
+    python_version_file = tmp_path / ".python-version"
+    if python_version_file.exists():
+        python_version = python_version_file.read_text().strip()
+        assert f"uvx -p {python_version} {command_fragment}" in output
+    else:
+        assert "uvx -p" in output
+        assert command_fragment in output
+
+
 class TestMakefile:
     """Smoke tests for Makefile help and common targets using make -n."""
 
@@ -47,16 +58,7 @@ class TestMakefile:
 
         proc = run_make(logger, ["fmt"], env=env)
         out = proc.stdout
-        # Check for uvx command with the Python version flag
-        # The PYTHON_VERSION should be read from .python-version file (e.g., "3.12")
-        python_version_file = tmp_path / ".python-version"
-        if python_version_file.exists():
-            python_version = python_version_file.read_text().strip()
-            assert f"uvx -p {python_version} pre-commit run --all-files" in out
-        else:
-            # Fallback check if .python-version doesn't exist
-            assert "uvx -p" in out
-            assert "pre-commit run --all-files" in out
+        assert_uvx_command_uses_version(out, tmp_path, "pre-commit run --all-files")
 
     def test_deptry_target_dry_run(self, logger, tmp_path):
         """Deptry target should invoke deptry via uvx with Python version in dry-run output."""
@@ -77,15 +79,7 @@ class TestMakefile:
         proc = run_make(logger, ["deptry"], env=env)
 
         out = proc.stdout
-        # Check for uvx command with the Python version flag
-        python_version_file = tmp_path / ".python-version"
-        if python_version_file.exists():
-            python_version = python_version_file.read_text().strip()
-            assert f"uvx -p {python_version} deptry src" in out
-        else:
-            # Fallback check if .python-version doesn't exist
-            assert "uvx -p" in out
-            assert "deptry src" in out
+        assert_uvx_command_uses_version(out, tmp_path, "deptry src")
 
     def test_mypy_target_dry_run(self, logger, tmp_path):
         """Mypy target should invoke mypy via uv run in dry-run output."""
