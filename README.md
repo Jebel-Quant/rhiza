@@ -126,6 +126,7 @@ make install
 ### Core Features
 
 - 🚀 **CI/CD Templates** - Ready-to-use GitHub Actions and GitLab CI workflows
+- 🔄 **Automated Sync** - Keep templates fresh with scheduled updates and dynamic status badges
 - 🧪 **Testing Framework** - Comprehensive test setup with pytest
 - 📚 **Documentation** - Automated documentation generation with pdoc and companion books
 - 🔍 **Code Quality** - Linting with ruff, formatting, and dependency checking with deptry
@@ -223,6 +224,24 @@ Keep your templates up-to-date with automated sync workflows:
 - Creates pull requests with template updates
 
 For GitHub Token configuration and details, see the [GitHub Actions documentation](.github/README.md).
+
+#### Display Sync Status Badge
+
+Show when your project was last synced with Rhiza by adding a dynamic badge to your README:
+
+```markdown
+![Rhiza Sync](https://img.shields.io/badge/dynamic/json?label=rhiza%20sync&query=%24.workflow_runs%5B0%5D.updated_at&url=https%3A%2F%2Fapi.github.com%2Frepos%2F{owner}%2F{repo}%2Factions%2Fworkflows%2Frhiza_sync.yml%2Fruns%3Fbranch%3Dmain%26status%3Dcompleted%26per_page%3D1&color=2FA4A9)
+```
+
+**Replace `{owner}` and `{repo}` with your GitHub username/organization and repository name.**
+
+For example, for the repository `jebel-quant/my-project`:
+
+```markdown
+![Rhiza Sync](https://img.shields.io/badge/dynamic/json?label=rhiza%20sync&query=%24.workflow_runs%5B0%5D.updated_at&url=https%3A%2F%2Fapi.github.com%2Frepos%2Fjebel-quant%2Fmy-project%2Factions%2Fworkflows%2Frhiza_sync.yml%2Fruns%3Fbranch%3Dmain%26status%3Dcompleted%26per_page%3D1&color=2FA4A9)
+```
+
+This badge displays the timestamp of your last successful Rhiza sync, helping you track template freshness at a glance.
 
 ### What to Expect After Integration
 
