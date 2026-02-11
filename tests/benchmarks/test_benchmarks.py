@@ -15,7 +15,7 @@ import pathlib
 import pytest
 
 # Add test utils to path
-tests_root = pathlib.Path(__file__).resolve().parent.parent.parent
+tests_root = pathlib.Path(__file__).resolve().parent.parent.parent / ".rhiza" / "tests"
 if str(tests_root) not in sys.path:
     sys.path.insert(0, str(tests_root))
 
