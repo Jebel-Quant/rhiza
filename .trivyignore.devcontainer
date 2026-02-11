@@ -1,0 +1,26 @@
+# Trivy ignore file for devcontainer image scanning
+#
+# These vulnerabilities are in Node.js packages installed by the devcontainer
+# node feature. They cannot be easily fixed without either:
+# 1. Not using the convenient node feature and managing Node.js installation manually
+# 2. Waiting for the upstream devcontainer node feature to update its dependencies
+#
+# Since the devcontainer is for development only (not production), and these
+# are transitive dependencies of npm (not directly exploitable in our use case),
+# we temporarily ignore them while monitoring for upstream fixes.
+
+# CVE-2026-25547: @isaacs/brace-expansion DoS via unbounded brace range expansion
+# Package: @isaacs/brace-expansion
+# Fixed in: 5.0.1
+# Severity: HIGH
+# Impact: Denial of Service only, requires attacker-controlled input to brace expansion
+# Status: Waiting for devcontainer node feature to update npm dependencies
+CVE-2026-25547
+
+# CVE-2026-24842: node-tar path traversal bypass in hardlink security check
+# Package: tar
+# Fixed in: 7.5.7
+# Severity: HIGH
+# Impact: Arbitrary file creation, requires extracting malicious TAR archives
+# Status: Waiting for devcontainer node feature to update npm dependencies
+CVE-2026-24842

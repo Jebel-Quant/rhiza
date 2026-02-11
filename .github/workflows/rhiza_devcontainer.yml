@@ -23,6 +23,7 @@
 #   - Uses Trivy to scan for OS and library vulnerabilities
 #   - Fails the build on CRITICAL or HIGH severity vulnerabilities
 #   - Ignores vulnerabilities without known fixes
+#   - Uses .trivyignore.devcontainer to temporarily ignore known issues from upstream dependencies
 #   - Uploads scan report as artifact if scanning fails
 #
 # Safeguards:
@@ -155,6 +156,7 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+          trivyignores: '.trivyignore.devcontainer'
 
       - name: Upload Trivy scan results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
