@@ -18,8 +18,8 @@ deptry: install-uv ## Run deptry
 		fi \
 	fi
 
-fmt: install-uv ## check the pre-commit hooks and the linting
-	@${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --all-files
+fmt: install-uv ## check the pre-commit hooks and the linting (excludes .rhiza framework code)
+	@${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --all-files --exclude '^\.rhiza/'
 
 fmt-rhiza: install-uv ## run formatting checks on rhiza framework code only
 	@printf "${BLUE}[INFO] Running formatting checks on rhiza framework code (.rhiza/)...${RESET}\n"
