@@ -4,7 +4,7 @@
 # executing performance benchmarks.
 
 # Declare phony targets (they don't produce files)
-.PHONY: test benchmark typecheck security security-rhiza security-src docs-coverage
+.PHONY: test benchmark typecheck security rhiza-security security-src docs-coverage
 
 # Default directory for tests
 TESTS_FOLDER := tests
@@ -64,7 +64,7 @@ security: install ## run security scans (pip-audit and bandit)
 	@printf "${BLUE}[INFO] Running bandit security scan...${RESET}\n"
 	@${UVX_BIN} bandit -r ${SOURCE_FOLDER} -ll -q -c pyproject.toml
 
-security-rhiza: install ## run security scans on rhiza framework code only
+rhiza-security: install ## run security scans on rhiza framework code only
 	@printf "${BLUE}[INFO] Running pip-audit for dependency vulnerabilities...${RESET}\n"
 	@${UVX_BIN} pip-audit
 	@printf "${BLUE}[INFO] Running bandit security scan on rhiza framework code (.rhiza/)...${RESET}\n"

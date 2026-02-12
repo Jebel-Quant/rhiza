@@ -2,7 +2,7 @@
 # This file provides targets for code quality checks, linting, and formatting.
 
 # Declare phony targets (they don't produce files)
-.PHONY: deptry fmt fmt-rhiza fmt-src mypy
+.PHONY: deptry fmt rhiza-fmt fmt-src mypy
 
 ##@ Quality and Formatting
 deptry: install-uv ## Run deptry
@@ -21,17 +21,17 @@ deptry: install-uv ## Run deptry
 fmt: install-uv ## check the pre-commit hooks and the linting (excludes .rhiza framework code)
 	@${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --all-files --exclude '^\.rhiza/'
 
-fmt-rhiza: install-uv ## run formatting checks on rhiza framework code only
+rhiza-fmt: install-uv ## run formatting checks on rhiza framework code only
 	@printf "${BLUE}[INFO] Running formatting checks on rhiza framework code (.rhiza/)...${RESET}\n"
 	@if [ -d .rhiza ]; then \
 		files=$$(git ls-files .rhiza/ | tr '\n' ' '); \
 		if [ -n "$$files" ]; then \
 			${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --files $$files; \
 		else \
-			printf "${YELLOW}[WARN] No files found in .rhiza/, skipping fmt-rhiza${RESET}\n"; \
+			printf "${YELLOW}[WARN] No files found in .rhiza/, skipping rhiza-fmt${RESET}\n"; \
 		fi \
 	else \
-		printf "${YELLOW}[WARN] .rhiza/ directory not found, skipping fmt-rhiza${RESET}\n"; \
+		printf "${YELLOW}[WARN] .rhiza/ directory not found, skipping rhiza-fmt${RESET}\n"; \
 	fi
 
 fmt-src: install-uv ## run formatting checks on user source code only
