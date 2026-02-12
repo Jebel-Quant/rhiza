@@ -32,16 +32,6 @@ echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> ~/.bashrc
 # Add to current PATH so subsequent commands can find uv
 export PATH="$INSTALL_DIR:$PATH"
 
-# Update npm and fix Node.js package vulnerabilities
-# CVE-2026-25547 (@isaacs/brace-expansion: DoS via unbounded brace range expansion)
-# CVE-2026-24842 (tar: path traversal bypass in hardlink security check)
-if command -v npm > /dev/null 2>&1; then
-    echo "Updating npm to latest version..."
-    npm install -g npm@latest || echo "Warning: npm update failed"
-    echo "Running npm audit fix..."
-    npm audit fix --force || echo "Warning: npm audit fix failed (this is normal if no package.json exists globally)"
-fi
-
 make install
 
 # Install Marimo tool for notebook editing

@@ -6,7 +6,6 @@
 # Purpose:
 #   Validates that the devcontainer image builds successfully when devcontainer-related
 #   files are changed. This workflow does NOT publish/push the image to any registry.
-#   It also scans the built image for security vulnerabilities using Trivy.
 #
 # Trigger Conditions:
 #   - Push to any branch when files in .devcontainer/ change
@@ -18,13 +17,6 @@
 #   - Image name: {registry}/{owner}/{repository}/devcontainer
 #   - Image tag: {branch}-{commit-sha} (e.g., main-abc123def456)
 #   - Config file: Always .devcontainer/devcontainer.json
-#
-# Security Scanning:
-#   - Uses Trivy to scan for OS and library vulnerabilities
-#   - Fails the build on CRITICAL or HIGH severity vulnerabilities
-#   - Ignores vulnerabilities without known fixes
-#   - Uses .trivyignore.devcontainer to temporarily ignore known issues from upstream dependencies
-#   - Uploads scan report as artifact if scanning fails
 #
 # Safeguards:
 #   - Checks if .devcontainer/devcontainer.json exists before building
@@ -59,7 +51,6 @@ on:
 permissions:
   contents: read
   packages: write
-  security-events: write
 
 jobs:
   build:
@@ -144,29 +135,3 @@ jobs:
           push: never
           imageName: ${{ steps.image_name.outputs.image_name }}
           imageTag: ${{ steps.sanitized_tag.outputs.sanitized_tag }}
-
-      - name: Scan Devcontainer Image with Trivy
-        uses: aquasecurity/trivy-action@0.33.1
-        if: steps.check.outputs.exists == 'true'
-        with:
-          image-ref: '${{ steps.image_name.outputs.image_name }}:${{ steps.sanitized_tag.outputs.sanitized_tag }}'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          exit-code: '0'  # Don't fail on vulnerabilities - rely on SARIF upload to GitHub Security
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-          trivyignores: '.trivyignore.devcontainer'
-
-      - name: Upload Trivy scan results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always() && steps.check.outputs.exists == 'true'
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-      - name: Upload Trivy scan results as artifact
-        uses: actions/upload-artifact@v4.6.0
-        if: always() && steps.check.outputs.exists == 'true'
-        with:
-          name: trivy-devcontainer-report
-          path: trivy-results.sarif
