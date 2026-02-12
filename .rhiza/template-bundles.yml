@@ -124,25 +124,6 @@ bundles:
       - .github/workflows/rhiza_devcontainer.yml
 
   # ============================================================================
-  # BENCHMARKS - Performance benchmarking with pytest-benchmark
-  # ============================================================================
-  benchmarks:
-    description: "Performance benchmarking infrastructure with pytest-benchmark"
-    standalone: true
-    requires: []
-    recommends:
-      - tests  # Benchmarks work best alongside tests
-    files:
-      # Benchmark make target (part of test.mk)
-      # Note: The benchmark target is in test.mk
-
-      # Benchmark directory
-      - tests/test_rhiza/benchmarks
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_benchmarks.yml
-
-  # ============================================================================
   # DOCKER - Docker containerization support
   # ============================================================================
   docker:
@@ -245,6 +226,7 @@ bundles:
       - .github/workflows/rhiza_mypy.yml
       - .github/workflows/rhiza_security.yml
       - .github/workflows/rhiza_codeql.yml
+      - .github/workflows/rhiza_benchmarks.yml
 
   # ============================================================================
   # MARIMO - Interactive Marimo notebooks
