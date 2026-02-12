@@ -19,7 +19,12 @@ deptry: install-uv ## Run deptry
 	fi
 
 fmt: install-uv ## check the pre-commit hooks and the linting (excludes .rhiza framework code)
-	@${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --all-files --exclude '^\.rhiza/'
+	@files=$$(git ls-files | grep -v '^\.rhiza/' | tr '\n' ' '); \
+	if [ -n "$$files" ]; then \
+		${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --files $$files; \
+	else \
+		printf "${YELLOW}[WARN] No files found outside .rhiza/, skipping fmt${RESET}\n"; \
+	fi
 
 rhiza-fmt: install-uv ## run formatting checks on rhiza framework code only
 	@printf "${BLUE}[INFO] Running formatting checks on rhiza framework code (.rhiza/)...${RESET}\n"
