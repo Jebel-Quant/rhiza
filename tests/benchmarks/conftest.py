@@ -4,6 +4,7 @@ Provides fixtures needed for benchmarking tests.
 """
 
 import pathlib
+
 import pytest
 
 

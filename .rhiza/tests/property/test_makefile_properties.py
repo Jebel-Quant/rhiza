@@ -10,32 +10,49 @@ from __future__ import annotations
 
 import re
 
-from hypothesis import given, strategies as st
-import pytest
-
 from api.conftest import run_make
-
+from hypothesis import given
+from hypothesis import strategies as st
 
 # Known Makefile targets to exclude from unknown target tests
 KNOWN_MAKEFILE_TARGETS = [
-    "help", "install", "test", "fmt", "deptry", "clean", "benchmark",
-    "mypy", "typecheck", "security", "sync", "validate", "readme",
-    "print", "version", "rhiza", "post", "pre"
+    "help",
+    "install",
+    "test",
+    "fmt",
+    "deptry",
+    "clean",
+    "benchmark",
+    "mypy",
+    "typecheck",
+    "security",
+    "sync",
+    "validate",
+    "readme",
+    "print",
+    "version",
+    "rhiza",
+    "post",
+    "pre",
 ]
 
 
 class TestMakefileProperties:
     """Property-based tests for Makefile target validation."""
 
-    @given(target_name=st.text(
-        alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd"), whitelist_characters="-_"),
-        min_size=1,
-        max_size=20
-    ))
+    @given(
+        target_name=st.text(
+            alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd"), whitelist_characters="-_"),
+            min_size=1,
+            max_size=20,
+        )
+    )
     def test_unknown_target_produces_error(self, logger, target_name):
         """Property: Unknown targets should produce a meaningful error message."""
         # Filter out known targets
-        if target_name in KNOWN_MAKEFILE_TARGETS or any(target_name.startswith(prefix) for prefix in KNOWN_MAKEFILE_TARGETS):
+        if target_name in KNOWN_MAKEFILE_TARGETS or any(
+            target_name.startswith(prefix) for prefix in KNOWN_MAKEFILE_TARGETS
+        ):
             return
 
         proc = run_make(logger, [target_name], check=False, dry_run=False)
@@ -44,11 +61,11 @@ class TestMakefileProperties:
             # Make typically says "No rule to make target" or similar
             assert "No rule" in proc.stderr or "No rule" in proc.stdout or proc.returncode != 0
 
-    @given(variable_name=st.text(
-        alphabet=st.characters(whitelist_categories=("Lu", "Nd"), whitelist_characters="_"),
-        min_size=1,
-        max_size=30
-    ))
+    @given(
+        variable_name=st.text(
+            alphabet=st.characters(whitelist_categories=("Lu", "Nd"), whitelist_characters="_"), min_size=1, max_size=30
+        )
+    )
     def test_print_variable_always_succeeds(self, logger, variable_name):
         """Property: print-VARIABLE target should always succeed even for undefined variables."""
         # The print-% target should work for any variable name
@@ -91,9 +108,11 @@ class TestMakefileProperties:
 class TestVersionStringProperties:
     """Property-based tests for version string handling."""
 
-    @given(major=st.integers(min_value=0, max_value=99),
-           minor=st.integers(min_value=0, max_value=99),
-           patch=st.integers(min_value=0, max_value=999))
+    @given(
+        major=st.integers(min_value=0, max_value=99),
+        minor=st.integers(min_value=0, max_value=99),
+        patch=st.integers(min_value=0, max_value=999),
+    )
     def test_version_string_format(self, major, minor, patch):
         """Property: Version strings should always follow semver format."""
         version = f"{major}.{minor}.{patch}"
@@ -116,11 +135,13 @@ class TestVersionStringProperties:
 class TestPathProperties:
     """Property-based tests for path handling in Makefile operations."""
 
-    @given(dirname=st.text(
-        alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd"), whitelist_characters="-_"),
-        min_size=1,
-        max_size=20
-    ))
+    @given(
+        dirname=st.text(
+            alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd"), whitelist_characters="-_"),
+            min_size=1,
+            max_size=20,
+        )
+    )
     def test_relative_path_handling(self, dirname):
         """Property: Directory names should not contain path traversal."""
         # Ensure paths don't contain dangerous patterns
@@ -128,11 +149,13 @@ class TestPathProperties:
         assert "/" not in dirname
         assert "\\" not in dirname
 
-    @given(filename=st.text(
-        alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd"), whitelist_characters="-_."),
-        min_size=1,
-        max_size=30
-    ).filter(lambda x: not x.startswith(".") and not x.endswith(".")))
+    @given(
+        filename=st.text(
+            alphabet=st.characters(whitelist_categories=("Ll", "Lu", "Nd"), whitelist_characters="-_."),
+            min_size=1,
+            max_size=30,
+        ).filter(lambda x: not x.startswith(".") and not x.endswith("."))
+    )
     def test_filename_safety(self, filename):
         """Property: Filenames should be safe for filesystem operations."""
         # Should not contain path separators or control characters

@@ -8,9 +8,9 @@ Uses pytest-benchmark to measure and compare execution times.
 
 from __future__ import annotations
 
+import pathlib
 import subprocess  # nosec B404
 import sys
-import pathlib
 
 import pytest
 
@@ -20,7 +20,6 @@ if str(tests_root) not in sys.path:
     sys.path.insert(0, str(tests_root))
 
 from test_utils import MAKE  # noqa: E402
-
 
 # Test configuration constants
 STRESS_TEST_DEFAULT_ITERATIONS = 100
@@ -32,14 +31,9 @@ class TestMakefilePerformance:
 
     def test_help_target_performance(self, benchmark, root):
         """Benchmark the help target execution time."""
+
         def run_help():
-            result = subprocess.run(
-                [MAKE, "help"],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                check=True
-            )  # nosec B603
+            result = subprocess.run([MAKE, "help"], cwd=root, capture_output=True, text=True, check=True)  # nosec B603
             return result
 
         result = benchmark(run_help)
@@ -48,13 +42,10 @@ class TestMakefilePerformance:
 
     def test_print_variable_performance(self, benchmark, root):
         """Benchmark the print-% target execution time."""
+
         def run_print():
             result = subprocess.run(
-                [MAKE, "print-PYTHON_VERSION"],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                check=True
+                [MAKE, "print-PYTHON_VERSION"], cwd=root, capture_output=True, text=True, check=True
             )  # nosec B603
             return result
 
@@ -63,14 +54,9 @@ class TestMakefilePerformance:
 
     def test_dry_run_install_performance(self, benchmark, root):
         """Benchmark dry-run of install target."""
+
         def run_install_dry():
-            result = subprocess.run(
-                [MAKE, "-n", "install"],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                check=True
-            )  # nosec B603
+            result = subprocess.run([MAKE, "-n", "install"], cwd=root, capture_output=True, text=True, check=True)  # nosec B603
             return result
 
         result = benchmark(run_install_dry)
@@ -78,15 +64,10 @@ class TestMakefilePerformance:
 
     def test_makefile_parsing_overhead(self, benchmark, root):
         """Benchmark Makefile parsing overhead with a no-op target."""
+
         def run_noop():
             # Running make with --version just parses the Makefile and exits
-            result = subprocess.run(
-                [MAKE, "--version"],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                check=True
-            )  # nosec B603
+            result = subprocess.run([MAKE, "--version"], cwd=root, capture_output=True, text=True, check=True)  # nosec B603
             return result
 
         result = benchmark(run_noop)
@@ -102,9 +83,9 @@ class TestFileSystemOperations:
 
         def traverse_directory():
             count = 0
-            for root_dir, dirs, files in os.walk(root):
+            for _root_dir, dirs, files in os.walk(root):
                 # Skip hidden directories and venv
-                dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['venv', '__pycache__']]
+                dirs[:] = [d for d in dirs if not d.startswith(".") and d not in ["venv", "__pycache__"]]
                 count += len(files)
             return count
 
@@ -116,7 +97,7 @@ class TestFileSystemOperations:
         pyproject = root / "pyproject.toml"
 
         def read_pyproject():
-            with open(pyproject, "r") as f:
+            with open(pyproject) as f:
                 content = f.read()
             return len(content)
 
@@ -132,7 +113,7 @@ class TestFileSystemOperations:
             ".rhiza/rhiza.mk",
             "pytest.ini",
             "ruff.toml",
-            ".gitignore"
+            ".gitignore",
         ]
 
         def check_files():
@@ -150,13 +131,9 @@ class TestSubprocessOverhead:
 
     def test_subprocess_creation_overhead(self, benchmark):
         """Benchmark the overhead of creating subprocesses."""
+
         def run_echo():
-            result = subprocess.run(
-                ["echo", "test"],
-                capture_output=True,
-                text=True,
-                check=True
-            )  # nosec B603
+            result = subprocess.run(["echo", "test"], capture_output=True, text=True, check=True)  # nosec B603
             return result
 
         result = benchmark(run_echo)
@@ -164,14 +141,9 @@ class TestSubprocessOverhead:
 
     def test_git_command_performance(self, benchmark, root):
         """Benchmark git status command performance."""
+
         def run_git_status():
-            result = subprocess.run(
-                ["git", "status", "--short"],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                check=True
-            )  # nosec B603
+            result = subprocess.run(["git", "status", "--short"], cwd=root, capture_output=True, text=True, check=True)  # nosec B603
             return result
 
         result = benchmark(run_git_status)
@@ -190,14 +162,8 @@ class TestStressScenarios:
     def test_repeated_help_invocations(self, root, stress_test_iterations):
         """Stress test: Repeatedly invoke help target."""
         failures = 0
-        for i in range(stress_test_iterations):
-            result = subprocess.run(
-                [MAKE, "help"],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                check=False
-            )  # nosec B603
+        for _i in range(stress_test_iterations):
+            result = subprocess.run([MAKE, "help"], cwd=root, capture_output=True, text=True, check=False)  # nosec B603
             if result.returncode != 0:
                 failures += 1
 
@@ -207,15 +173,9 @@ class TestStressScenarios:
     def test_concurrent_print_variable_stress(self, root):
         """Stress test: Multiple concurrent print-% invocations."""
         import concurrent.futures
-        
+
         def print_variable(var):
-            result = subprocess.run(
-                [MAKE, f"print-{var}"],
-                cwd=root,
-                capture_output=True,
-                text=True,
-                check=False
-            )  # nosec B603
+            result = subprocess.run([MAKE, f"print-{var}"], cwd=root, capture_output=True, text=True, check=False)  # nosec B603
             return result.returncode == 0
 
         # Run multiple variables concurrently multiple times
@@ -224,17 +184,15 @@ class TestStressScenarios:
             for _ in range(20):  # 20 iterations
                 for var in MAKEFILE_VARIABLES:
                     futures.append(executor.submit(print_variable, var))
-            
+
             results = [f.result() for f in concurrent.futures.as_completed(futures)]
-        
+
         # All should succeed
         success_rate = sum(results) / len(results)
         assert success_rate >= 0.95  # Allow 5% failure due to resource contention
 
     def test_file_system_stress(self, tmp_path, stress_test_iterations):
         """Stress test: Rapid file creation and deletion."""
-        import os
-
         test_dir = tmp_path / "stress_test"
         test_dir.mkdir()
 
@@ -244,11 +202,11 @@ class TestStressScenarios:
                 # Create a file
                 test_file = test_dir / f"test_{i}.txt"
                 test_file.write_text(f"Test content {i}")
-                
+
                 # Read it back
                 content = test_file.read_text()
                 assert f"Test content {i}" in content
-                
+
                 # Delete it
                 test_file.unlink()
             except Exception:
