@@ -83,6 +83,8 @@ uv run pytest .rhiza/tests/deps/
 ```bash
 make benchmark
 ```
+
+### Run a specific test file
 ```bash
 uv run pytest .rhiza/tests/structure/test_project_layout.py
 ```
