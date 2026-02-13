@@ -72,7 +72,7 @@
 - Glossary of terms (docs/GLOSSARY.md)
 - Quick reference card (docs/QUICK_REFERENCE.md)
 - Customization guide (docs/CUSTOMIZATION.md)
-- Release process guide (docs/RELEASING.md)
+- Release process guide (.rhiza/docs/RELEASING.md)
 - Security policy (SECURITY.md)
 - Contributing guidelines (CONTRIBUTING.md)
 - Code of conduct (CODE_OF_CONDUCT.md)
