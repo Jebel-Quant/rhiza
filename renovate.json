@@ -32,7 +32,7 @@
       {
         "fileMatch": ["(^|/)\\.rhiza/template\\.yml$"],
         "matchStrings": [
-          "repository:\\s*(?<depName>[^\\s]+)\\s+ref:\\s*(?<currentValue>v?[0-9]+\\.[0-9]+\\.[0-9]+)"
+          "repository:\\s*(?<depName>[^\\s]+)\\s+ref:\\s*(?<currentValue>v?[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-.]+)?)"
         ],
         "datasourceTemplate": "github-tags",
         "versioningTemplate": "semver"
