@@ -112,11 +112,4 @@ hypothesis-test: install ## run property-based tests with Hypothesis
 	  --hypothesis-seed=0 \
 	  -m "hypothesis or property" \
 	  --tb=short \
-	  --html=_tests/hypothesis/report.html || \
-	{ EXIT_CODE=$$?; \
-	  if [ $$EXIT_CODE -eq 5 ]; then \
-	    printf "${YELLOW}[WARN] No hypothesis tests found. Mark tests with @pytest.mark.hypothesis or @pytest.mark.property${RESET}\n"; \
-	    exit 0; \
-	  fi; \
-	  exit $$EXIT_CODE; \
-	}
+	  --html=_tests/hypothesis/report.html
