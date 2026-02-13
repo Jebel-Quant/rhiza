@@ -421,7 +421,7 @@ For custom workflows or local development setup, see [.rhiza/docs/PRIVATE_PACKAG
 
 ### Release Management
 
-For information on versioning, tagging, and publishing releases, see [docs/RELEASING.md](docs/RELEASING.md).
+For information on versioning, tagging, and publishing releases, see [.rhiza/docs/RELEASING.md](.rhiza/docs/RELEASING.md).
 
 ### Dev Container
 

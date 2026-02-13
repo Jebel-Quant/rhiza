@@ -49,10 +49,19 @@ FROM python:${PYTHON_VERSION}-slim AS runtime
 
 WORKDIR /app
 
-# Install small system tools (pin versions and avoid recommends for smaller image)
+# Install small system tools and update packages to fix security vulnerabilities
+# Fixes CVE-2025-38248, CVE-2025-40170, CVE-2025-68800, CVE-2025-68811, CVE-2025-71085
+# CVE-2025-71116, CVE-2026-22984, CVE-2026-22990, CVE-2026-23001, CVE-2026-23010
+# CVE-2026-23050, CVE-2026-23054, CVE-2026-23074, CVE-2026-23084, CVE-2026-23097
 RUN apt-get update && \
     apt-get install -y --no-install-recommends nano=8.* tree=2.* && \
+    apt-get upgrade -y linux-libc-dev && \
     rm -rf /var/lib/apt/lists/*
+
+# Update setuptools to fix Python package vulnerabilities
+# CVE-2026-23949 (jaraco.context: path traversal)
+# CVE-2026-24049 (wheel: privilege escalation)
+RUN pip install --no-cache-dir setuptools==82.0.0
 
 # Create non-root user
 RUN useradd -m app_user && chown app_user:app_user /app
