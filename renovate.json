@@ -30,6 +30,7 @@
     ],
     "regexManagers": [
       {
+        "description": "Track template.yml ref field for automatic version updates. Pattern matches semver: major.minor.patch[-prerelease][+buildmetadata]",
         "fileMatch": ["(^|/)\\.rhiza/template\\.yml$"],
         "matchStrings": [
           "repository:\\s*(?<depName>[^\\s]+)\\s+ref:\\s*(?<currentValue>v?[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-.]+)?)"
