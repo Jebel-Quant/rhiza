@@ -37,19 +37,12 @@ test: install ## run all tests
 	  --cov-fail-under=$(COVERAGE_FAIL_UNDER) \
 	  --cov-report=json:_tests/coverage.json \
 	  --html=_tests/html-report/report.html; \
-	  EXIT_CODE=$$?; \
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, running tests without coverage${RESET}\n"; \
 	  ${UV_BIN} run pytest \
 	  --ignore=${TESTS_FOLDER}/benchmarks \
 	  --html=_tests/html-report/report.html; \
-	  EXIT_CODE=$$?; \
-	fi; \
-	if [ $$EXIT_CODE -eq 5 ]; then \
-	  printf "${YELLOW}[WARN] No tests collected (only benchmarks found - use 'make benchmark' to run them).${RESET}\n"; \
-	  exit 0; \
-	fi; \
-	exit $$EXIT_CODE
+	fi
 
 # The 'typecheck' target runs static type analysis using mypy.
 # 1. Checks if the source directory exists.

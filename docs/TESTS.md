@@ -23,8 +23,8 @@ Property-based tests are located in `.rhiza/tests/property/`
 # Run all property-based tests
 pytest .rhiza/tests/property/ -v
 
-# Run with more examples (default is 100)
-pytest .rhiza/tests/property/ -v --hypothesis-seed=random
+# Run with more examples (increase coverage)
+pytest .rhiza/tests/property/ -v --hypothesis-max-examples=1000
 
 # Run with verbose hypothesis output
 pytest .rhiza/tests/property/ -v --hypothesis-verbosity=verbose
@@ -72,6 +72,12 @@ pytest tests/benchmarks/ --benchmark-json=_tests/benchmarks/results.json
 
 # Skip benchmarks (for CI)
 pytest tests/benchmarks/ --benchmark-skip
+
+# Run only stress tests
+pytest tests/benchmarks/ -m stress -v
+
+# Skip stress tests (run only performance benchmarks)
+pytest tests/benchmarks/ -m "not stress" -v
 ```
 
 ### Benchmark Test Categories
@@ -95,10 +101,12 @@ Tests that measure subprocess creation overhead:
 - `test_git_command_performance` - Measures git command execution time
 
 #### 4. Stress Scenarios
-Tests that verify stability under load:
+Tests that verify stability under load (marked with `@pytest.mark.stress`):
 - `test_repeated_help_invocations` - Stress tests repeated help invocations (100 iterations)
-- `test_concurrent_print_variable_stress` - Tests concurrent Makefile invocations
+- `test_concurrent_print_variable_stress` - Tests concurrent Makefile invocations (deterministic)
 - `test_file_system_stress` - Tests rapid file creation/deletion (100 iterations)
+
+**Note**: Stress tests can be slow and are marked with the `stress` marker. Use `-m "not stress"` to skip them during regular test runs.
 
 ### Understanding Benchmark Results
 

@@ -83,9 +83,22 @@ class TestFileSystemOperations:
 
         def traverse_directory():
             count = 0
+            # Exclude common artifact and virtual environment directories to keep
+            # the benchmark stable and representative of the source tree.
+            excluded_dirs = {
+                "venv",
+                ".venv",
+                "__pycache__",
+                "_tests",
+                ".pytest_cache",
+                ".mypy_cache",
+                ".tox",
+                "build",
+                "dist",
+            }
             for _root_dir, dirs, files in os.walk(root):
-                # Skip hidden directories and venv
-                dirs[:] = [d for d in dirs if not d.startswith(".") and d not in ["venv", "__pycache__"]]
+                # Skip hidden directories and known artifact directories
+                dirs[:] = [d for d in dirs if not d.startswith(".") and d not in excluded_dirs]
                 count += len(files)
             return count
 
@@ -97,7 +110,7 @@ class TestFileSystemOperations:
         pyproject = root / "pyproject.toml"
 
         def read_pyproject():
-            with open(pyproject) as f:
+            with open(pyproject, encoding="utf-8") as f:
                 content = f.read()
             return len(content)
 
@@ -139,6 +152,7 @@ class TestSubprocessOverhead:
         result = benchmark(run_echo)
         assert result.returncode == 0
 
+    @pytest.mark.skipif(not pathlib.Path(".git").exists(), reason="Git repository required")
     def test_git_command_performance(self, benchmark, root):
         """Benchmark git status command performance."""
 
@@ -159,6 +173,7 @@ def stress_test_iterations():
 class TestStressScenarios:
     """Stress tests to verify stability under repeated operations."""
 
+    @pytest.mark.stress
     def test_repeated_help_invocations(self, root, stress_test_iterations):
         """Stress test: Repeatedly invoke help target."""
         failures = 0
@@ -170,6 +185,7 @@ class TestStressScenarios:
         # Allow up to 1% failure rate
         assert failures < stress_test_iterations * 0.01
 
+    @pytest.mark.stress
     def test_concurrent_print_variable_stress(self, root):
         """Stress test: Multiple concurrent print-% invocations."""
         import concurrent.futures
@@ -178,25 +194,26 @@ class TestStressScenarios:
             result = subprocess.run([MAKE, f"print-{var}"], cwd=root, capture_output=True, text=True, check=False)  # nosec B603
             return result.returncode == 0
 
-        # Run multiple variables concurrently multiple times
+        # Run multiple variables concurrently with reduced iterations for deterministic results
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = []
-            for _ in range(20):  # 20 iterations
+            for _ in range(5):  # Reduced iterations to minimize flakiness
                 for var in MAKEFILE_VARIABLES:
                     futures.append(executor.submit(print_variable, var))
 
             results = [f.result() for f in concurrent.futures.as_completed(futures)]
 
-        # All should succeed
+        # All should succeed; this test should be deterministic
         success_rate = sum(results) / len(results)
-        assert success_rate >= 0.95  # Allow 5% failure due to resource contention
+        assert success_rate == 1.0, f"Expected 100% success but got {success_rate*100:.1f}%"
 
+    @pytest.mark.stress
     def test_file_system_stress(self, tmp_path, stress_test_iterations):
         """Stress test: Rapid file creation and deletion."""
         test_dir = tmp_path / "stress_test"
         test_dir.mkdir()
 
-        failures = 0
+        failures = []
         for i in range(stress_test_iterations):
             try:
                 # Create a file
@@ -209,8 +226,10 @@ class TestStressScenarios:
 
                 # Delete it
                 test_file.unlink()
-            except Exception:
-                failures += 1
+            except Exception as e:
+                failures.append((i, str(e)))
 
         # Should have very few failures
-        assert failures < stress_test_iterations * 0.01
+        if failures:
+            failure_details = "; ".join(f"iteration {i}: {msg}" for i, msg in failures[:5])
+            assert len(failures) < stress_test_iterations * 0.01, f"Too many failures ({len(failures)}): {failure_details}"

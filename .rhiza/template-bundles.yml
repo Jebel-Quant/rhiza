@@ -218,6 +218,10 @@ bundles:
       # Core/generic test files
       - .rhiza/tests
 
+      # Benchmark and stress test infrastructure
+      - tests/benchmarks
+      - docs/TESTS.md
+
       # GitHub Actions workflows
       - .github/workflows/rhiza_ci.yml
       - .github/workflows/rhiza_mypy.yml
