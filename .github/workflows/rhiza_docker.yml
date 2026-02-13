@@ -83,7 +83,7 @@ jobs:
           echo "image_name=${REPO_NAME}:ci" >> "$GITHUB_OUTPUT"
 
       - name: Scan Docker Image with Trivy
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.34.0
         if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
         with:
           image-ref: '${{ steps.docker_build.outputs.image_name }}'
@@ -95,13 +95,13 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Upload Trivy scan results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always() && steps.check_dockerfile.outputs.docker_present == 'true'
         with:
           sarif_file: 'trivy-results.sarif'
 
       - name: Upload Trivy scan results as artifact
-        uses: actions/upload-artifact@v4.6.0
+        uses: actions/upload-artifact@v6.0.0
         if: always() && steps.check_dockerfile.outputs.docker_present == 'true'
         with:
           name: trivy-docker-report
