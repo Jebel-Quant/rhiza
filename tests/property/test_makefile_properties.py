@@ -18,6 +18,7 @@ from hypothesis import strategies as st
 @pytest.mark.property
 @given(st.lists(st.integers() | st.floats(allow_nan=False, allow_infinity=False)))
 def test_sort_correctness_using_properties(lst):
+    """Verify that sorted() correctly orders lists and preserves all elements."""
     result = sorted(lst)
     assert set(lst) == set(result)
     assert all(a <= b for a, b in itertools.pairwise(result))
