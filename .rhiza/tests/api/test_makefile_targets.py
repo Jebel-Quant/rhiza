@@ -51,14 +51,41 @@ class TestMakefile:
         assert "Bootstrap" in out or "Meta" in out  # section headers
 
     def test_fmt_target_dry_run(self, logger, tmp_path):
-        """Fmt target should invoke pre-commit via uvx with Python version in dry-run output."""
+        """Fmt target should invoke pre-commit via uvx with Python version and filtered files in dry-run output."""
         # Create clean environment without PYTHON_VERSION so Makefile reads from .python-version
         env = os.environ.copy()
         env.pop("PYTHON_VERSION", None)
 
         proc = run_make(logger, ["fmt"], env=env)
         out = proc.stdout
-        assert_uvx_command_uses_version(out, tmp_path, "pre-commit run --all-files")
+        # The fmt target now uses --files with a filtered list (excludes .rhiza/)
+        assert_uvx_command_uses_version(out, tmp_path, "pre-commit run --files")
+        # Should use git ls-files to get the file list
+        assert "git ls-files" in out
+        assert r"grep -v '^\.rhiza/'" in out
+
+    def test_rhiza_fmt_target_dry_run(self, logger, tmp_path):
+        """Rhiza-fmt target should invoke pre-commit on .rhiza/ files only in dry-run output."""
+        # Create clean environment without PYTHON_VERSION so Makefile reads from .python-version
+        env = os.environ.copy()
+        env.pop("PYTHON_VERSION", None)
+
+        proc = run_make(logger, ["rhiza-fmt"], env=env)
+        out = proc.stdout
+        # Should use git ls-files .rhiza/
+        assert "git ls-files .rhiza/" in out
+        assert_uvx_command_uses_version(out, tmp_path, "pre-commit run --files")
+
+    def test_rhiza_security_target_dry_run(self, logger, tmp_path):
+        """Rhiza-security target should run pip-audit and bandit on .rhiza/ in dry-run output."""
+        proc = run_make(logger, ["rhiza-security"])
+        out = proc.stdout
+        # Should run pip-audit
+        assert "uvx pip-audit" in out
+        # Should run bandit on .rhiza/ excluding tests
+        assert "bandit -r .rhiza" in out
+        assert "--skip B101" in out
+        assert "--exclude .rhiza/tests" in out
 
     def test_deptry_target_dry_run(self, logger, tmp_path):
         """Deptry target should invoke deptry via uvx with Python version in dry-run output."""
@@ -185,7 +212,7 @@ class TestMakefileRootFixture:
             if split_path.exists():
                 content += "\n" + split_path.read_text()
 
-        expected_targets = ["install", "fmt", "test", "deptry", "help"]
+        expected_targets = ["install", "fmt", "rhiza-fmt", "rhiza-security", "test", "deptry", "help"]
         for target in expected_targets:
             assert f"{target}:" in content or f".PHONY: {target}" in content
 
