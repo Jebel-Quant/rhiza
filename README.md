@@ -38,7 +38,7 @@ Rhiza uses a simple configuration file (`.rhiza/template.yml`) to control which 
 ```yaml
 # .rhiza/template.yml
 repository: Jebel-Quant/rhiza
-ref: main
+ref: v0.7.1
 
 include: |
   .github/workflows/*.yml
@@ -53,7 +53,7 @@ exclude: |
 
 **What you're seeing:**
 - **`repository`** - The upstream template source (**can be any repository, not just Rhiza!**)
-- **`ref`** - Which branch/tag to sync from (usually `main`)
+- **`ref`** - Which version tag/branch to sync from (e.g., `v0.7.1` or `main`)
 - **`include`** - File patterns to pull from the template (CI workflows, linting configs, etc.)
 - **`exclude`** - Paths to skip, protecting your customisations
 
