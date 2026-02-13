@@ -4,7 +4,7 @@
 # executing performance benchmarks.
 
 # Declare phony targets (they don't produce files)
-.PHONY: test benchmark typecheck security docs-coverage
+.PHONY: test benchmark typecheck security docs-coverage hypothesis-test
 
 # Default directory for tests
 TESTS_FOLDER := tests
@@ -100,3 +100,30 @@ docs-coverage: install ## check documentation coverage with interrogate
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping docs-coverage${RESET}\n"; \
 	fi
+
+# The 'hypothesis-test' target runs property-based tests using Hypothesis.
+# 1. Checks if hypothesis tests exist in the tests directory.
+# 2. Runs pytest with hypothesis-specific settings and statistics.
+# 3. Generates detailed hypothesis examples and statistics.
+hypothesis-test: install ## run property-based tests with Hypothesis
+	@if [ -z "$$(find ${TESTS_FOLDER} -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ]; then \
+	  printf "${YELLOW}[WARN] No test files found in ${TESTS_FOLDER}, skipping hypothesis tests.${RESET}\n"; \
+	  exit 0; \
+	fi; \
+	printf "${BLUE}[INFO] Running Hypothesis property-based tests...${RESET}\n"; \
+	mkdir -p _tests/hypothesis; \
+	${UV_BIN} run pytest \
+	  --ignore=${TESTS_FOLDER}/benchmarks \
+	  -v \
+	  --hypothesis-show-statistics \
+	  --hypothesis-seed=0 \
+	  -m "hypothesis or property" \
+	  --tb=short \
+	  --html=_tests/hypothesis/report.html || \
+	{ EXIT_CODE=$$?; \
+	  if [ $$EXIT_CODE -eq 5 ]; then \
+	    printf "${YELLOW}[WARN] No hypothesis tests found. Mark tests with @pytest.mark.hypothesis or @pytest.mark.property${RESET}\n"; \
+	    exit 0; \
+	  fi; \
+	  exit $$EXIT_CODE; \
+	}
