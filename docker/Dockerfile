@@ -58,6 +58,10 @@ RUN apt-get update && \
     apt-get upgrade -y linux-libc-dev && \
     rm -rf /var/lib/apt/lists/*
 
+# Update pip to fix symbolic link extraction vulnerability
+# CVE-2025-8869 (pip: missing checks on symbolic link extraction)
+RUN pip install --no-cache-dir --upgrade pip==25.3
+
 # Update setuptools to fix Python package vulnerabilities
 # CVE-2026-23949 (jaraco.context: path traversal)
 # CVE-2026-24049 (wheel: privilege escalation)
