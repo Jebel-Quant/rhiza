@@ -57,7 +57,19 @@ exclude: |
 - **`include`** - File patterns to pull from the template (CI workflows, linting configs, etc.)
 - **`exclude`** - Paths to skip, protecting your customisations
 
-> **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention. To enable this in your project, copy the `regexManagers` configuration from this repository's `renovate.json` file into your own Renovate configuration.
+> **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention. 
+>
+> To enable this in your project, add the `regexManagers` configuration from this repository's [`renovate.json`](renovate.json#L31-L40) file to your own Renovate configuration. Example:
+> ```json
+> {
+>   "regexManagers": [{
+>     "fileMatch": ["(^|/)\\.rhiza/template\\.yml$"],
+>     "matchStrings": ["repository:\\s*(?<depName>[^\\s]+)\\s+ref:\\s*(?<currentValue>v?[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-.]+)?)"],
+>     "datasourceTemplate": "github-tags",
+>     "versioningTemplate": "semver"
+>   }]
+> }
+> ```
 
 When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhiza fetches only the files matching your `include` patterns, skips anything in `exclude`, and creates a clean diff for you to review. You stay in control of what updates and when.
 
