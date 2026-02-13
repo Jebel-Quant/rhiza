@@ -9,6 +9,7 @@ Uses pytest-benchmark to measure and compare execution times.
 from __future__ import annotations
 
 import pathlib
+import shutil
 import subprocess  # nosec B404
 import sys
 
@@ -152,7 +153,10 @@ class TestSubprocessOverhead:
         result = benchmark(run_echo)
         assert result.returncode == 0
 
-    @pytest.mark.skipif(not pathlib.Path(".git").exists(), reason="Git repository required")
+    @pytest.mark.skipif(
+        not pathlib.Path(".git").exists() or not shutil.which("git"),
+        reason="Git repository and git command required"
+    )
     def test_git_command_performance(self, benchmark, root):
         """Benchmark git status command performance."""
 
