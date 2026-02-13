@@ -61,15 +61,12 @@ bundles:
       - ruff.toml
       - renovate.json
 
-      # Documentation files (project-specific docs)
+      # Documentation files (user-facing docs)
       - docs/SECURITY.md
       - docs/ARCHITECTURE.md
       - docs/CUSTOMIZATION.md
       - docs/GLOSSARY.md
       - docs/QUICK_REFERENCE.md
-      - docs/RELEASING.md
-      - docs/WORKFLOWS.md
-      - docs/ASSETS.md
       - docs/DEMO.md
 
   github:
@@ -175,7 +172,7 @@ bundles:
       - .rhiza/make.d/lfs.mk
 
       # Documentation
-      - docs/LFS.md
+      - .rhiza/docs/LFS.md
 
   # ============================================================================
   # PRESENTATION - Presentation building with reveal.js
