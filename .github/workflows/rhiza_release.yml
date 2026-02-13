@@ -166,7 +166,7 @@ jobs:
       - name: Sync environment for SBOM generation
         if: hashFiles('pyproject.toml') != ''
         run: |
-          export UV_EXTRA_INDEX_URL="${{ secrets.uv_extra_index_url }}"
+          export UV_EXTRA_INDEX_URL="${{ secrets.UV_EXTRA_INDEX_URL }}"
           uv sync --all-extras --all-groups --frozen
 
       - name: Generate SBOM (CycloneDX)
