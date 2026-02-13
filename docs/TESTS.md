@@ -220,7 +220,7 @@ def test_concurrent_operations(root):
         results = [f.result() for f in concurrent.futures.as_completed(futures)]
     
     success_rate = sum(results) / len(results)
-    assert success_rate >= 0.95  # Allow 5% failure
+    assert success_rate == 1.0  # Rhiza template stress tests require 100% success
 ```
 
 ## Dependencies
