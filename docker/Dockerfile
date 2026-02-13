@@ -60,9 +60,10 @@ RUN apt-get update && \
 
 # Update pip and setuptools to fix security vulnerabilities
 # CVE-2025-8869 (pip: missing checks on symbolic link extraction)
+# CVE-2026-1703 (pip: information disclosure via path traversal)
 # CVE-2026-23949 (jaraco.context: path traversal)
 # CVE-2026-24049 (wheel: privilege escalation)
-RUN pip install --no-cache-dir --upgrade pip==25.3 && \
+RUN pip install --no-cache-dir --upgrade pip==26.0 && \
     pip install --no-cache-dir setuptools==82.0.0
 
 # Create non-root user
