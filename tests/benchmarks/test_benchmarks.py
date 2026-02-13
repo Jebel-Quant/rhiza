@@ -64,11 +64,11 @@ class TestMakefilePerformance:
         assert result.returncode == 0
 
     def test_makefile_parsing_overhead(self, benchmark, root):
-        """Benchmark Makefile parsing overhead with a no-op target."""
+        """Benchmark Makefile parsing overhead with a minimal dry-run target."""
 
         def run_noop():
-            # Running make with --version just parses the Makefile and exits
-            result = subprocess.run([MAKE, "--version"], cwd=root, capture_output=True, text=True, check=True)  # nosec B603
+            # Use a dry-run of the help target to force Makefile evaluation without executing commands
+            result = subprocess.run([MAKE, "-n", "help"], cwd=root, capture_output=True, text=True, check=True)  # nosec B603
             return result
 
         result = benchmark(run_noop)

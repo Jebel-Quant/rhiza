@@ -13,39 +13,42 @@ Rhiza now includes two additional types of testing:
 
 Property-based tests use the [Hypothesis](https://hypothesis.readthedocs.io/) library to automatically generate test cases that verify certain properties always hold true.
 
-### Location
+### Locations
 
-Property-based tests are located in `.rhiza/tests/property/`
+In a standard Rhiza project, there are two relevant locations for property-based tests:
+
+- **Project property-based tests** live in `tests/property/`. These are part of your normal test suite and are discovered by `pytest` via `pytest.ini:testpaths = tests`.
+- **Rhiza's own template/internal property-based tests** (if present) live in `.rhiza/tests/property/`. These are not part of your project's main test suite by default.
 
 ### Running Property-Based Tests
 
+In a typical setup, the Make targets map to these suites as follows:
+
+- `make test`: runs `pytest` over everything under `tests/` (including `tests/property/`).
+- `make rhiza-test`: runs Rhiza's internal tests under `.rhiza/tests/` (including `.rhiza/tests/property/` if any exist).
+
+You can also invoke the corresponding `pytest` commands directly:
+
 ```bash
-# Run all property-based tests
+# Run all project property-based tests (what make test covers)
+pytest tests/property/ -v
+
+# Run Rhiza's internal/template property-based tests (if you have any in .rhiza)
 pytest .rhiza/tests/property/ -v
 
-# Run with more examples (increase coverage)
-pytest .rhiza/tests/property/ -v --hypothesis-max-examples=1000
+# Run project property-based tests with more examples (increase coverage)
+pytest tests/property/ -v --hypothesis-max-examples=1000
 
-# Run with verbose hypothesis output
-pytest .rhiza/tests/property/ -v --hypothesis-verbosity=verbose
+# Run project property-based tests with verbose Hypothesis output
+pytest tests/property/ -v --hypothesis-verbosity=verbose
 ```
 
 ### Example Tests
 
-The following property-based tests are included:
+The following property-based tests are included as examples:
 
-#### Makefile Properties
-- **test_unknown_target_produces_error**: Verifies that unknown Makefile targets produce appropriate errors
-- **test_print_variable_always_succeeds**: Ensures the `print-VARIABLE` target always succeeds
-- **test_help_output_structure_is_consistent**: Validates help output structure consistency
-
-#### Version String Properties
-- **test_version_string_format**: Ensures version strings follow semver format
-- **test_version_parsing_never_raises**: Verifies version string parsing never fails
-
-#### Path Properties
-- **test_relative_path_handling**: Ensures paths don't contain dangerous patterns
-- **test_filename_safety**: Validates filename safety for filesystem operations
+#### Generic Property Tests
+- **test_sort_correctness_using_properties**: Verifies that sorted() correctly orders lists and preserves all elements including duplicates
 
 ## Load/Stress Testing
 
@@ -73,12 +76,14 @@ pytest tests/benchmarks/ --benchmark-json=_tests/benchmarks/results.json
 # Skip benchmarks (for CI)
 pytest tests/benchmarks/ --benchmark-skip
 
-# Run only stress tests
+# Run only stress tests (note: these don't run with make benchmark by default)
 pytest tests/benchmarks/ -m stress -v
 
 # Skip stress tests (run only performance benchmarks)
 pytest tests/benchmarks/ -m "not stress" -v
 ```
+
+**Note**: The `make benchmark` target runs with `--benchmark-only`, which means stress tests (that don't use the `benchmark` fixture) will be skipped. To run stress tests explicitly, use `pytest tests/benchmarks/ -m stress -v`.
 
 ### Benchmark Test Categories
 
@@ -106,7 +111,7 @@ Tests that verify stability under load (marked with `@pytest.mark.stress`):
 - `test_concurrent_print_variable_stress` - Tests concurrent Makefile invocations (deterministic)
 - `test_file_system_stress` - Tests rapid file creation/deletion (100 iterations)
 
-**Note**: Stress tests can be slow and are marked with the `stress` marker. Use `-m "not stress"` to skip them during regular test runs.
+**Note**: Stress tests can be slow and are marked with the `stress` marker. They don't use the `benchmark` fixture, so they won't run with `make benchmark` (which uses `--benchmark-only`). Use `pytest tests/benchmarks/ -m stress -v` to run them explicitly.
 
 ### Understanding Benchmark Results
 

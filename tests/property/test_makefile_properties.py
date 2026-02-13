@@ -1,9 +1,9 @@
-"""Property-based tests for Makefile targets and operations.
+"""Property-based tests using Hypothesis.
 
-This file and its associated tests flow down via a SYNC action from the jebel-quant/rhiza repository
-(https://github.com/jebel-quant/rhiza).
+This module currently exercises generic Python behavior (for example, list sorting)
+rather than any project Makefile targets or operations.
 
-Uses Hypothesis to generate test cases that verify Makefile behavior with various inputs.
+Uses Hypothesis to generate test cases that verify behavior across a wide range of inputs.
 """
 
 from __future__ import annotations
@@ -20,5 +20,7 @@ from hypothesis import strategies as st
 def test_sort_correctness_using_properties(lst):
     """Verify that sorted() correctly orders lists and preserves all elements."""
     result = sorted(lst)
-    assert set(lst) == set(result)
+    # Use Counter to ensure multiplicities (duplicates) are preserved
+    from collections import Counter
+    assert Counter(lst) == Counter(result)
     assert all(a <= b for a, b in itertools.pairwise(result))
