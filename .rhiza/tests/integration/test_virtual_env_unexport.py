@@ -33,6 +33,5 @@ test-env:
     # 5. Verify that VIRTUAL_ENV is empty in the shell (not exported)
     # The output should contain "VIRTUAL_ENV in shell: ''"
     assert "VIRTUAL_ENV in shell: ''" in result.stdout, (
-        "VIRTUAL_ENV should be empty in shell commands, "
-        f"but got: {result.stdout}"
+        f"VIRTUAL_ENV should be empty in shell commands, but got: {result.stdout}"
     )
