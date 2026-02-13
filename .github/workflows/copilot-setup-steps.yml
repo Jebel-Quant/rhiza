@@ -9,7 +9,7 @@
 #
 # Reference: https://docs.github.com/en/copilot/customizing-copilot/customizing-the-development-environment-for-copilot-coding-agent
 
-name: "Copilot Setup Steps"
+name: "(RHIZA) AGENT SETUP"
 
 on:
   workflow_dispatch:
