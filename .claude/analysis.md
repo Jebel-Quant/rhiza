@@ -65,7 +65,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Modular documentation:
   - `CONTRIBUTING.md` - contribution guidelines
   - `CODE_OF_CONDUCT.md` - community standards
-  - `docs/RELEASING.md` - release process guide
+  - `.rhiza/docs/RELEASING.md` - release process guide
   - `docs/CUSTOMIZATION.md` - Makefile hooks and patterns
   - `.rhiza/make.d/README.md` - Makefile cookbook
   - `docs/GLOSSARY.md` - comprehensive glossary of Rhiza terms (PR #356)

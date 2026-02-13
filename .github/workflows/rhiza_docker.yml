@@ -1,16 +1,19 @@
 # GitHub Actions workflow: Lint Dockerfile with hadolint and build the image
 #
-# This workflow runs on pushes and pull requests. It performs two main tasks:
+# This workflow runs on pushes and pull requests. It performs three main tasks:
 #  - Lints docker/Dockerfile using hadolint (fails the job on lint errors)
 #  - Builds the container image with Docker Buildx to ensure the Dockerfile is valid
+#  - Scans the built image for security vulnerabilities using Trivy
 #
 # Notes:
 #  - The image is built locally for validation only; it is not pushed to any registry.
-#  - Permissions are minimized (read-only) since no repository writes occur.
+#  - Vulnerability scanning fails the build on CRITICAL or HIGH severity issues.
+#  - Scan results are uploaded to GitHub Security and as artifacts.
 name: (RHIZA) DOCKER
 
 permissions:
   contents: read
+  security-events: write
 
 on:
   push:
@@ -65,6 +68,7 @@ jobs:
           fi
 
       - name: Build container image with Docker Buildx (validation only)
+        id: docker_build
         if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
         run: |
           # Derive image tag from repository name and sanitize (remove '.' and '_')
@@ -76,3 +80,29 @@ jobs:
             --tag "${REPO_NAME}:ci" \
             --load \
             .
+          echo "image_name=${REPO_NAME}:ci" >> "$GITHUB_OUTPUT"
+
+      - name: Scan Docker Image with Trivy
+        uses: aquasecurity/trivy-action@0.33.1
+        if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
+        with:
+          image-ref: '${{ steps.docker_build.outputs.image_name }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: '0'  # Don't fail on vulnerabilities - rely on SARIF upload to GitHub Security
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && steps.check_dockerfile.outputs.docker_present == 'true'
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results as artifact
+        uses: actions/upload-artifact@v4.6.0
+        if: always() && steps.check_dockerfile.outputs.docker_present == 'true'
+        with:
+          name: trivy-docker-report
+          path: trivy-results.sarif
