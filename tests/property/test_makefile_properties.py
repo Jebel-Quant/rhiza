@@ -9,6 +9,7 @@ Uses Hypothesis to generate test cases that verify behavior across a wide range 
 from __future__ import annotations
 
 import itertools
+from collections import Counter
 
 import pytest
 from hypothesis import given
@@ -21,7 +22,5 @@ def test_sort_correctness_using_properties(lst):
     """Verify that sorted() correctly orders lists and preserves all elements."""
     result = sorted(lst)
     # Use Counter to ensure multiplicities (duplicates) are preserved
-    from collections import Counter
-
     assert Counter(lst) == Counter(result)
     assert all(a <= b for a, b in itertools.pairwise(result))
