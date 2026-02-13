@@ -45,3 +45,6 @@ jobs:
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: make install
+
+      - name: Activate virtual environment
+        run: echo "${{ github.workspace }}/.venv/bin" >> "$GITHUB_PATH"
