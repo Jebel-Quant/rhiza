@@ -8,12 +8,16 @@ Uses Hypothesis to generate test cases that verify Makefile behavior with variou
 
 from __future__ import annotations
 
+import itertools
+
 import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
+
 
 @pytest.mark.property
 @given(st.lists(st.integers() | st.floats(allow_nan=False, allow_infinity=False)))
 def test_sort_correctness_using_properties(lst):
     result = sorted(lst)
     assert set(lst) == set(result)
-    assert all(a <= b for a, b in zip(result, result[1:]))
+    assert all(a <= b for a, b in itertools.pairwise(result))
