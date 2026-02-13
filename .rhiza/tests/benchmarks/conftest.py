@@ -11,4 +11,4 @@ import pytest
 @pytest.fixture(scope="session")
 def root():
     """Return the repository root directory as a pathlib.Path."""
-    return pathlib.Path(__file__).parent.parent.parent
+    return pathlib.Path(__file__).parent.parent.parent.parent

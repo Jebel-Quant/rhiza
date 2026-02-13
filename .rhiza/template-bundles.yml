@@ -218,8 +218,7 @@ bundles:
       # Core/generic test files
       - .rhiza/tests
 
-      # Benchmark and stress test infrastructure
-      - tests/benchmarks
+      # Documentation
       - docs/TESTS.md
 
       # GitHub Actions workflows

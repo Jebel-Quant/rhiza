@@ -30,7 +30,6 @@ test: install ## run all tests
 	mkdir -p _tests/html-coverage _tests/html-report; \
 	if [ -d ${SOURCE_FOLDER} ]; then \
 	  ${UV_BIN} run pytest \
-	  --ignore=${TESTS_FOLDER}/benchmarks \
 	  --cov=${SOURCE_FOLDER} \
 	  --cov-report=term \
 	  --cov-report=html:_tests/html-coverage \
@@ -40,7 +39,6 @@ test: install ## run all tests
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, running tests without coverage${RESET}\n"; \
 	  ${UV_BIN} run pytest \
-	  --ignore=${TESTS_FOLDER}/benchmarks \
 	  --html=_tests/html-report/report.html; \
 	fi
 
@@ -70,11 +68,11 @@ security: install ## run security scans (pip-audit and bandit)
 # 3. Generates histograms and JSON results.
 # 4. Runs a post-analysis script to process the results.
 benchmark: install ## run performance benchmarks
-	@if [ -d "${TESTS_FOLDER}/benchmarks" ]; then \
+	@if [ -d ".rhiza/tests/benchmarks" ]; then \
 	  printf "${BLUE}[INFO] Running performance benchmarks...${RESET}\n"; \
 	  ${UV_BIN} pip install pytest-benchmark==5.2.3 pygal==3.1.0; \
 	  mkdir -p _tests/benchmarks; \
-	  ${UV_BIN} run pytest "${TESTS_FOLDER}/benchmarks/" \
+	  ${UV_BIN} run pytest ".rhiza/tests/benchmarks/" \
 	  		--benchmark-only \
 			--benchmark-histogram=_tests/benchmarks/histogram \
 			--benchmark-json=_tests/benchmarks/results.json; \
@@ -99,14 +97,15 @@ docs-coverage: install ## check documentation coverage with interrogate
 # 2. Runs pytest with hypothesis-specific settings and statistics.
 # 3. Generates detailed hypothesis examples and statistics.
 hypothesis-test: install ## run property-based tests with Hypothesis
-	@if [ -z "$$(find ${TESTS_FOLDER} -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ]; then \
-	  printf "${YELLOW}[WARN] No test files found in ${TESTS_FOLDER}, skipping hypothesis tests.${RESET}\n"; \
+	@if [ -z "$$(find ${TESTS_FOLDER} -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ] && \
+	   [ -z "$$(find .rhiza/tests -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ]; then \
+	  printf "${YELLOW}[WARN] No test files found, skipping hypothesis tests.${RESET}\n"; \
 	  exit 0; \
 	fi; \
 	printf "${BLUE}[INFO] Running Hypothesis property-based tests...${RESET}\n"; \
 	mkdir -p _tests/hypothesis; \
 	${UV_BIN} run pytest \
-	  --ignore=${TESTS_FOLDER}/benchmarks \
+	  ${TESTS_FOLDER} .rhiza/tests \
 	  -v \
 	  --hypothesis-show-statistics \
 	  --hypothesis-seed=0 \

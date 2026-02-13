@@ -15,32 +15,33 @@ Property-based tests use the [Hypothesis](https://hypothesis.readthedocs.io/) li
 
 ### Locations
 
-In a standard Rhiza project, there are two relevant locations for property-based tests:
+In a standard Rhiza project, property-based tests for the **Rhiza template itself** are located in:
 
-- **Project property-based tests** live in `tests/property/`. These are part of your normal test suite and are discovered by `pytest` via `pytest.ini:testpaths = tests`.
-- **Rhiza's own template/internal property-based tests** (if present) live in `.rhiza/tests/property/`. These are not part of your project's main test suite by default.
+- **Rhiza's template/internal property-based tests** live in `.rhiza/tests/property/`. These are Rhiza framework tests and are not part of your project's main test suite.
+
+If you want to write property-based tests for **your own project**, you should create them in `tests/property/` (which you'll need to create yourself). These will be discovered by `pytest` via `pytest.ini:testpaths = tests`.
 
 ### Running Property-Based Tests
 
 In a typical setup, the Make targets map to these suites as follows:
 
-- `make test`: runs `pytest` over everything under `tests/` (including `tests/property/`).
-- `make rhiza-test`: runs Rhiza's internal tests under `.rhiza/tests/` (including `.rhiza/tests/property/` if any exist).
+- `make test`: runs `pytest` over everything under `tests/` (your project tests).
+- `make rhiza-test`: runs Rhiza's internal tests under `.rhiza/tests/` (including `.rhiza/tests/property/`).
 
 You can also invoke the corresponding `pytest` commands directly:
 
 ```bash
-# Run all project property-based tests (what make test covers)
-pytest tests/property/ -v
-
-# Run Rhiza's internal/template property-based tests (if you have any in .rhiza)
+# Run Rhiza's internal property-based tests
 pytest .rhiza/tests/property/ -v
 
-# Run project property-based tests with more examples (increase coverage)
-pytest tests/property/ -v --hypothesis-max-examples=1000
+# Run project property-based tests (if you created them in tests/property/)
+pytest tests/property/ -v
 
-# Run project property-based tests with verbose Hypothesis output
-pytest tests/property/ -v --hypothesis-verbosity=verbose
+# Run Rhiza's property-based tests with more examples (increase coverage)
+pytest .rhiza/tests/property/ -v --hypothesis-max-examples=1000
+
+# Run Rhiza's property-based tests with verbose Hypothesis output
+pytest .rhiza/tests/property/ -v --hypothesis-verbosity=verbose
 ```
 
 ### Example Tests
@@ -56,34 +57,36 @@ Load and stress tests use [pytest-benchmark](https://pytest-benchmark.readthedoc
 
 ### Location
 
-Benchmark and stress tests are located in `tests/benchmarks/`
+Benchmark and stress tests for the Rhiza template are located in `.rhiza/tests/benchmarks/`
+
+If you want to write your own benchmarks, create them in `tests/benchmarks/` (you'll need to create this directory yourself).
 
 ### Running Benchmark Tests
 
 ```bash
-# Run all benchmarks
+# Run all Rhiza benchmarks
 make benchmark
 
 # Or with pytest directly
-pytest tests/benchmarks/ -v
+pytest .rhiza/tests/benchmarks/ -v
 
 # Run benchmarks and generate histogram
-pytest tests/benchmarks/ --benchmark-histogram=_tests/benchmarks/histogram
+pytest .rhiza/tests/benchmarks/ --benchmark-histogram=_tests/benchmarks/histogram
 
 # Run benchmarks and save results
-pytest tests/benchmarks/ --benchmark-json=_tests/benchmarks/results.json
+pytest .rhiza/tests/benchmarks/ --benchmark-json=_tests/benchmarks/results.json
 
 # Skip benchmarks (for CI)
-pytest tests/benchmarks/ --benchmark-skip
+pytest .rhiza/tests/benchmarks/ --benchmark-skip
 
 # Run only stress tests (note: these don't run with make benchmark by default)
-pytest tests/benchmarks/ -m stress -v
+pytest .rhiza/tests/benchmarks/ -m stress -v
 
 # Skip stress tests (run only performance benchmarks)
-pytest tests/benchmarks/ -m "not stress" -v
+pytest .rhiza/tests/benchmarks/ -m "not stress" -v
 ```
 
-**Note**: The `make benchmark` target runs with `--benchmark-only`, which means stress tests (that don't use the `benchmark` fixture) will be skipped. To run stress tests explicitly, use `pytest tests/benchmarks/ -m stress -v`.
+**Note**: The `make benchmark` target runs with `--benchmark-only`, which means stress tests (that don't use the `benchmark` fixture) will be skipped. To run stress tests explicitly, use `pytest .rhiza/tests/benchmarks/ -m stress -v`.
 
 ### Benchmark Test Categories
 
@@ -111,7 +114,7 @@ Tests that verify stability under load (marked with `@pytest.mark.stress`):
 - `test_concurrent_print_variable_stress` - Tests concurrent Makefile invocations (deterministic)
 - `test_file_system_stress` - Tests rapid file creation/deletion (100 iterations)
 
-**Note**: Stress tests can be slow and are marked with the `stress` marker. They don't use the `benchmark` fixture, so they won't run with `make benchmark` (which uses `--benchmark-only`). Use `pytest tests/benchmarks/ -m stress -v` to run them explicitly.
+**Note**: Stress tests can be slow and are marked with the `stress` marker. They don't use the `benchmark` fixture, so they won't run with `make benchmark` (which uses `--benchmark-only`). Use `pytest .rhiza/tests/benchmarks/ -m stress -v` to run them explicitly.
 
 ### Understanding Benchmark Results
 

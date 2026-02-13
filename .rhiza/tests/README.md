@@ -39,12 +39,20 @@ Tests for utility code and test infrastructure. These tests validate the testing
 
 - `test_git_repo_fixture.py` — Validates the `git_repo` fixture
 
+### `benchmarks/`
+Performance benchmarks for Makefile operations. These tests measure the performance of key operations to detect regressions and ensure acceptable performance.
+
+- `test_benchmarks.py` — Performance benchmarks using pytest-benchmark
+
+### `property/`
+Property-based tests using Hypothesis. These tests verify behavior across a wide range of inputs.
+
+- `test_makefile_properties.py` — Property-based tests for Makefile operations
+
 ### `deps/`
 Dependency validation tests. These tests ensure that project dependencies are correctly specified and healthy.
 
 - `test_dependency_health.py` — Validates pyproject.toml and requirements files
-
-## Running Tests
 
 ### Run all tests
 ```bash
@@ -60,10 +68,21 @@ uv run pytest .rhiza/tests/api/
 uv run pytest .rhiza/tests/integration/
 uv run pytest .rhiza/tests/sync/
 uv run pytest .rhiza/tests/utils/
+uv run pytest .rhiza/tests/benchmarks/
+```
+
+### Run property-based tests
+```bash
+uv run pytest .rhiza/tests/property/
+```
+
 uv run pytest .rhiza/tests/deps/
 ```
 
-### Run a specific test file
+### Run benchmarks
+```bash
+make benchmark
+```
 ```bash
 uv run pytest .rhiza/tests/structure/test_project_layout.py
 ```
@@ -121,6 +140,7 @@ The test suite aims for high coverage across:
 
 ## Notes
 
-- Benchmarks are located in `tests/benchmarks/` and run via `make benchmark`
+- Benchmarks are located in `.rhiza/tests/benchmarks/` and run via `make benchmark`
+- Property-based tests are located in `.rhiza/tests/property/` and can be run via `make hypothesis-test`
 - Integration tests use sandboxed git repositories to avoid affecting the working tree
 - All Makefile tests use dry-run mode (`make -n`) to avoid side effects
