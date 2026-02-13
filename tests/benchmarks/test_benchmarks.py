@@ -154,8 +154,7 @@ class TestSubprocessOverhead:
         assert result.returncode == 0
 
     @pytest.mark.skipif(
-        not pathlib.Path(".git").exists() or not shutil.which("git"),
-        reason="Git repository and git command required"
+        not pathlib.Path(".git").exists() or not shutil.which("git"), reason="Git repository and git command required"
     )
     def test_git_command_performance(self, benchmark, root):
         """Benchmark git status command performance."""
@@ -209,7 +208,7 @@ class TestStressScenarios:
 
         # All should succeed; this test should be deterministic
         success_rate = sum(results) / len(results)
-        assert success_rate == 1.0, f"Expected 100% success but got {success_rate*100:.1f}%"
+        assert success_rate == 1.0, f"Expected 100% success but got {success_rate * 100:.1f}%"
 
     @pytest.mark.stress
     def test_file_system_stress(self, tmp_path, stress_test_iterations):
@@ -236,4 +235,6 @@ class TestStressScenarios:
         # Should have very few failures
         if failures:
             failure_details = "; ".join(f"iteration {i}: {msg}" for i, msg in failures[:5])
-            assert len(failures) < stress_test_iterations * 0.01, f"Too many failures ({len(failures)}): {failure_details}"
+            assert len(failures) < stress_test_iterations * 0.01, (
+                f"Too many failures ({len(failures)}): {failure_details}"
+            )

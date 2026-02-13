@@ -22,5 +22,6 @@ def test_sort_correctness_using_properties(lst):
     result = sorted(lst)
     # Use Counter to ensure multiplicities (duplicates) are preserved
     from collections import Counter
+
     assert Counter(lst) == Counter(result)
     assert all(a <= b for a, b in itertools.pairwise(result))
