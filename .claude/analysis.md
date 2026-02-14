@@ -176,7 +176,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Clean utility scripts with proper error handling
 - Standard library preference (tomllib, json, pathlib)
 - Custom exception hierarchy: `RhizaError`, `VersionSpecifierError`, `PyProjectError` (PR #349)
-- mypy strict mode with CI integration (PR #367, #368)
+- ty type checker with CI integration (PR #367, #368, updated to ty)
 
 **Weaknesses:**
 - None significant
@@ -322,7 +322,7 @@ Rhiza demonstrates professional-grade engineering with a focus on automation, re
 - 18 of 18 priority improvements completed via PRs #336, #348-365 and book workflow
 - 90% coverage threshold enforced in tests.mk
 - Coverage reports published to GitHub Pages via `make book`
-- mypy fully integrated with CI workflow (PR #367, #368)
+- ty type checker fully integrated with CI workflow (PR #367, #368, updated to ty)
 - Test coverage at 2,299 lines across 15 test files
 - Score improved from 8.8/10 to 10/10
 - All high priority items addressed

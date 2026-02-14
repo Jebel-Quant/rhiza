@@ -3,6 +3,7 @@
 .venv
 .ruff_cache
 .mypy_cache
+.ty_cache
 
 ### Don't expose API keys, etc.
 .env
