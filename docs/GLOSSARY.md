@@ -165,5 +165,7 @@ Workflow running security scans (pip-audit, bandit) on the codebase.
 | `make sync` | Sync templates from upstream |
 | `make bump` | Bump version number |
 | `make release` | Create and push release tag |
+| `make publish` | Bump version, create tag and push in one step |
+| `make release-status` | Show release workflow status and latest release |
 | `make deptry` | Check for unused/missing dependencies |
 | `make help` | Show all available targets |
