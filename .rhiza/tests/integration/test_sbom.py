@@ -8,7 +8,6 @@ the cyclonedx-bom tool works correctly with uvx.
 """
 
 import subprocess  # nosec B404
-from pathlib import Path
 
 
 def test_sbom_generation_json(git_repo, logger):
@@ -88,9 +87,9 @@ def test_sbom_generation_xml(git_repo, logger):
     assert sbom_file.stat().st_size > 0, "SBOM XML file is empty"
 
     # Verify it's valid XML with CycloneDX structure
-    import defusedxml.ElementTree as ET
+    import defusedxml.ElementTree
 
-    tree = ET.parse(sbom_file)
+    tree = defusedxml.ElementTree.parse(sbom_file)
     root = tree.getroot()
 
     # Check for CycloneDX namespace
