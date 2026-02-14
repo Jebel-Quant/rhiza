@@ -133,6 +133,20 @@ RHIZA_AUTO_ACTIVATE_VENV=false make install
 - Set to `false` in devcontainer/codespace bootstrap scripts that activate venv explicitly
 - Leave as default (true) for local development to remind developers to activate the environment
 
+**Auto-activation wrapper function:**
+
+Since Makefiles cannot activate the venv in the parent shell, we provide a shell function wrapper. To enable it:
+
+```bash
+# Add to your ~/.bashrc or ~/.zshrc
+source /path/to/your/project/.rhiza/shell-init.sh
+
+# Then use rhiza-install instead of make install for auto-activation
+rhiza-install
+```
+
+This runs `make install` and automatically activates the venv upon success.
+
 ### Global Configuration
 
 Add these to your root `Makefile` (before `include .rhiza/rhiza.mk`) or `local.mk`:
