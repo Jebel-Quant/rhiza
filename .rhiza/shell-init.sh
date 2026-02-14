@@ -2,8 +2,13 @@
 # Rhiza shell initialization
 # Source this file in your .bashrc or .zshrc to enable auto-activation features
 #
+# Note: This script is designed for bash and zsh. For other shells, you may need
+# to manually run `make install` and `source .venv/bin/activate`.
+#
 # Usage:
 #   echo 'source /path/to/rhiza/.rhiza/shell-init.sh' >> ~/.bashrc
+#   # or for zsh:
+#   echo 'source /path/to/rhiza/.rhiza/shell-init.sh' >> ~/.zshrc
 #
 # Then use 'rhiza-install' instead of 'make install' to get auto-activation
 
@@ -31,5 +36,7 @@ rhiza-install() {
     return $exit_code
 }
 
-# Export the function so it's available in the shell
-export -f rhiza-install 2>/dev/null || true
+# Export the function for bash (zsh doesn't need this)
+if [ -n "$BASH_VERSION" ]; then
+    export -f rhiza-install
+fi
