@@ -30,9 +30,6 @@ Directory for modular Makefile extensions. Files are auto-loaded in numeric orde
 - `20-79`: Task definitions
 - `80-99`: Hook implementations
 
-### `.rhiza/scripts/`
-Shell scripts for Rhiza operations (e.g., `release.sh`). POSIX-compliant for portability.
-
 ### `.rhiza/utils/`
 Python utility scripts for Rhiza operations.
 
