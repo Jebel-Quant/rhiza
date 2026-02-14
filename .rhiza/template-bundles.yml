@@ -226,7 +226,6 @@ bundles:
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_ci.yml
-      - .github/workflows/rhiza_ty.yml
       - .github/workflows/rhiza_security.yml
       - .github/workflows/rhiza_codeql.yml
       - .github/workflows/rhiza_benchmarks.yml
