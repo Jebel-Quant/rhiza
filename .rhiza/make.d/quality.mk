@@ -2,7 +2,7 @@
 # This file provides targets for code quality checks, linting, and formatting.
 
 # Declare phony targets (they don't produce files)
-.PHONY: all deptry fmt ty
+.PHONY: all deptry fmt
 
 ##@ Quality and Formatting
 all: fmt deptry test docs-coverage security typecheck rhiza-test ## run all CI targets locally
@@ -22,8 +22,3 @@ deptry: install-uv ## Run deptry
 
 fmt: install-uv ## check the pre-commit hooks and the linting
 	@${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --all-files
-
-ty: install ## run ty type checking
-	@if [ -d ${SOURCE_FOLDER} ]; then \
-		${UV_BIN} run ty check ${SOURCE_FOLDER}; \
-	fi
