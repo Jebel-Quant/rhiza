@@ -32,13 +32,7 @@ echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> ~/.bashrc
 # Add to current PATH so subsequent commands can find uv
 export PATH="$INSTALL_DIR:$PATH"
 
-# Disable auto-activation in devcontainer (we explicitly activate below)
-export RHIZA_AUTO_ACTIVATE_VENV=false
-
 make install
-
-# Explicitly activate the virtual environment
-source .venv/bin/activate
 
 # Install Marimo tool for notebook editing
 "$UV_BIN" tool install marimo 

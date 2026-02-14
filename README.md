@@ -123,20 +123,7 @@ cd rhiza
 
 # Install dependencies
 make install
-
-# Activate the virtual environment (or see below for auto-activation)
-source .venv/bin/activate
 ```
-
-**Optional: Auto-activation on install**
-
-For automatic venv activation after `make install`, add this to your `~/.bashrc` or `~/.zshrc`:
-
-```bash
-source /path/to/rhiza/.rhiza/shell-init.sh
-```
-
-Then use `rhiza-install` instead of `make install` to automatically activate the venv after installation.
 
 ## ✨ What You Get
 

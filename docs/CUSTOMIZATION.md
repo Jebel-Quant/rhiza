@@ -112,41 +112,6 @@ git commit -m "Remove CodeQL workflow"
 
 You can configure certain aspects of the Makefile by overriding variables. These can be set in your main `Makefile` (before the `include` line), a `local.mk` file (for local developer overrides), or passed as environment variables / command-line arguments.
 
-### Environment Variables
-
-#### `RHIZA_AUTO_ACTIVATE_VENV`
-
-Controls whether `make install` displays activation instructions after completing the installation.
-
-- **Default**: `true` (displays activation instructions)
-- **Override**: Set to `false` to suppress the message
-
-**Example usage:**
-
-```bash
-# Suppress activation instructions
-RHIZA_AUTO_ACTIVATE_VENV=false make install
-```
-
-**Use cases:**
-- Set to `false` in CI/CD environments where venv is activated differently (e.g., via `GITHUB_PATH`)
-- Set to `false` in devcontainer/codespace bootstrap scripts that activate venv explicitly
-- Leave as default (true) for local development to remind developers to activate the environment
-
-**Auto-activation wrapper function:**
-
-Since Makefiles cannot activate the venv in the parent shell, we provide a shell function wrapper. To enable it:
-
-```bash
-# Add to your ~/.bashrc or ~/.zshrc
-source /path/to/your/project/.rhiza/shell-init.sh
-
-# Then use rhiza-install instead of make install for auto-activation
-rhiza-install
-```
-
-This runs `make install` and automatically activates the venv upon success.
-
 ### Global Configuration
 
 Add these to your root `Makefile` (before `include .rhiza/rhiza.mk`) or `local.mk`:

@@ -71,12 +71,10 @@ install: pre-install install-uv ## install
 	fi
 	@$(MAKE) post-install
 	
-	# Auto-activate venv if RHIZA_AUTO_ACTIVATE_VENV is not set to false
-	@if [ "$${RHIZA_AUTO_ACTIVATE_VENV:-true}" = "true" ]; then \
-	  printf "\n${GREEN}[SUCCESS] Installation complete!${RESET}\n\n"; \
-	  printf "${BLUE}To activate the virtual environment, run:${RESET}\n"; \
-	  printf "${YELLOW}  source ${VENV}/bin/activate${RESET}\n\n"; \
-	fi
+	# Display success message with activation instructions
+	@printf "\n${GREEN}[SUCCESS] Installation complete!${RESET}\n\n"
+	@printf "${BLUE}To activate the virtual environment, run:${RESET}\n"
+	@printf "${YELLOW}  source ${VENV}/bin/activate${RESET}\n\n"
 
 clean: ## Clean project artifacts and stale local branches
 	@printf "%bCleaning project...%b\n" "$(BLUE)" "$(RESET)"
