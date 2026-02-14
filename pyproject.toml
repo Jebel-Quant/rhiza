@@ -29,6 +29,7 @@ dev = [
     "numpy>=2.4.0,<3.0",     # Numerical computing for notebook data analysis
     "plotly>=6.5.0,<7.0",    # Interactive visualization in notebooks
     "pandas>=3,<3.1",    # Data manipulation for notebook examples
+    "pyyaml>=6.0,<7.0",      # YAML parsing for validation scripts
 ]
 
 [project.urls]
@@ -41,3 +42,4 @@ marimo = "marimo"
 numpy = "numpy"
 plotly = "plotly"
 pandas = "pandas"
+pyyaml = "yaml"
