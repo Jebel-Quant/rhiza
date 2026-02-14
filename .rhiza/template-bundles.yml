@@ -77,6 +77,7 @@ bundles:
       - .rhiza/make.d/github.mk
       - .rhiza/make.d/agentic.mk
       # Core GitHub Actions workflows
+      - .github/workflows/copilot-setup-steps.yml
       - .github/workflows/rhiza_validate.yml
       - .github/workflows/rhiza_sync.yml
       - .github/workflows/rhiza_pre-commit.yml
@@ -86,6 +87,7 @@ bundles:
       - .github/dependabot.yml
       - .github/copilot-instructions.md
       - .github/agents
+      - .github/hooks
 
   # ============================================================================
   # LEGAL - Legal and community files
