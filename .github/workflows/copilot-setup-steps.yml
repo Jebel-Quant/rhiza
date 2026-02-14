@@ -44,6 +44,7 @@ jobs:
       - name: Install dependencies
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          RHIZA_AUTO_ACTIVATE_VENV: false
         run: make install
 
       - name: Activate virtual environment
