@@ -14,7 +14,7 @@ post-release:: ; @:
 bump: pre-bump ## bump version of the project
 	@if [ -f "pyproject.toml" ]; then \
 		$(MAKE) install; \
-		PATH="$(abspath ${VENV})/bin:$$PATH" ${UVX_BIN} "rhiza-tools>=0.3.0" bump; \
+		PATH="$(abspath ${VENV})/bin:$$PATH" ${UVX_BIN} "rhiza-tools>=0.3.1" bump; \
 		printf "${BLUE}[INFO] Checking uv.lock file...${RESET}\n"; \
 		${UV_BIN} lock; \
 	else \
@@ -23,11 +23,11 @@ bump: pre-bump ## bump version of the project
 	@$(MAKE) post-bump
 
 release: pre-release install-uv ## create tag and push to remote repository triggering release workflow
-	${UVX_BIN} "rhiza-tools>=0.3.0" release;
+	${UVX_BIN} "rhiza-tools>=0.3.1" release;
 	@$(MAKE) post-release
 
 publish: pre-release install-uv ## bump version, create tag and push in one step
-	${UVX_BIN} "rhiza-tools>=0.3.0" release --with-bump;
+	${UVX_BIN} "rhiza-tools>=0.3.1" release --with-bump;
 	@$(MAKE) post-release
 
 release-status: ## show release workflow status and latest release information
