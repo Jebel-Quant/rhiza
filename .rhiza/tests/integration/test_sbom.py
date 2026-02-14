@@ -88,7 +88,7 @@ def test_sbom_generation_xml(git_repo, logger):
     assert sbom_file.stat().st_size > 0, "SBOM XML file is empty"
 
     # Verify it's valid XML with CycloneDX structure
-    import xml.etree.ElementTree as ET
+    import defusedxml.ElementTree as ET
 
     tree = ET.parse(sbom_file)
     root = tree.getroot()
