@@ -70,6 +70,11 @@ install: pre-install install-uv ## install
 	  ${UV_BIN} pip install -r tests/requirements.txt || { printf "${RED}[ERROR] Failed to install test requirements${RESET}\n"; exit 1; }; \
 	fi
 	@$(MAKE) post-install
+	
+	# Display success message with activation instructions
+	@printf "\n${GREEN}[SUCCESS] Installation complete!${RESET}\n\n"
+	@printf "${BLUE}To activate the virtual environment, run:${RESET}\n"
+	@printf "${YELLOW}  source ${VENV}/bin/activate${RESET}\n\n"
 
 clean: ## Clean project artifacts and stale local branches
 	@printf "%bCleaning project...%b\n" "$(BLUE)" "$(RESET)"
