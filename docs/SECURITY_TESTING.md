@@ -63,22 +63,28 @@ uv run ruff check --select S book/
 
 ### Custom Security Test Suite
 
-Located in `.rhiza/tests/security/test_security_patterns.py`, this suite validates security best practices specific to our codebase.
+Located in `.rhiza/tests/security/test_security_patterns.py`, this suite validates that security tooling is properly configured. 
+
+**Important**: This test suite does NOT duplicate security checks already performed by pre-commit hooks (Bandit, Ruff). The actual security scanning happens automatically via pre-commit.
 
 **What it tests**:
-- Subprocess safety (no shell=True, list-based arguments)
-- File operations (no world-writable files)
-- Input validation (no eval/exec in production)
-- Security tooling configuration
-- Hardcoded secrets detection
+- **Configuration validation**: Verifies Ruff S-rules and Bandit are enabled in configs
+- **Documentation validation**: Ensures security exceptions (S101/S603/S607) are documented in test files
+- **Custom patterns**: File permission checks (world-writable files) not covered by Bandit
+
+**What Bandit/Ruff already handle** (not duplicated in tests):
+- Subprocess safety (shell=True detection, command injection)
+- Input validation (eval/exec usage)
+- Hardcoded secrets (passwords, API keys)
+- And many other security patterns
 
 **Running Security Tests**:
 ```bash
-# Run all security tests
+# Run all 4 security configuration tests
 uv run pytest .rhiza/tests/security/
 
 # Run specific test class
-uv run pytest .rhiza/tests/security/test_security_patterns.py::TestSubprocessSafety
+uv run pytest .rhiza/tests/security/test_security_patterns.py::TestSecurityConfiguration
 
 # Run with verbose output
 uv run pytest .rhiza/tests/security/ -v
@@ -301,12 +307,12 @@ subprocess.run(["git", "status"], check=True)  # nosec B603, B607
 
 Before merging any PR with code changes:
 
-- [ ] All security tests pass (`pytest .rhiza/tests/security/`)
-- [ ] No new security findings in Ruff (`make fmt`)
-- [ ] Bandit reports no issues in production code
+- [ ] All security configuration tests pass (`pytest .rhiza/tests/security/`)
+- [ ] Pre-commit hooks pass (includes Bandit and Ruff security checks)
+- [ ] No new security findings from Bandit in pre-commit
+- [ ] No new security findings from Ruff (`make fmt`)
 - [ ] Any `# nosec` comments are documented and justified
 - [ ] No hardcoded secrets in the code
-- [ ] Subprocess calls use list-based arguments
 - [ ] SAST baseline is updated if production code changed
 
 ## Additional Resources
