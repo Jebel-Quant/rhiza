@@ -1,8 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Bump Version (Minor)" type="MAKEFILE_TARGET_RUN_CONFIGURATION" factoryName="Makefile">
-    <makefile filename="$PROJECT_DIR$/Makefile" target="bump" workingDirectory="" arguments="BUMP=minor">
-      <envs />
-    </makefile>
-    <method v="2" />
-  </configuration>
-</component>
