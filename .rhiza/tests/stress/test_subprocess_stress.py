@@ -103,7 +103,8 @@ def test_concurrent_python_version_checks(concurrent_workers: int):
             capture_output=True,
             text=True,
         )
-        return result.returncode == 0 and "Python" in result.stdout
+        # Python version may output to stdout or stderr depending on version
+        return result.returncode == 0 and ("Python" in result.stdout or "Python" in result.stderr)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrent_workers) as executor:
         futures = [executor.submit(check_python_version) for _ in range(concurrent_workers * 3)]

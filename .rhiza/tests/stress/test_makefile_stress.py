@@ -120,7 +120,7 @@ def test_concurrent_variable_printing(root: Path, concurrent_workers: int):
     """Test concurrent Makefile variable printing.
 
     Verifies that multiple variable print operations can run concurrently
-    without corruption or conflicts.
+    without corruption or conflicts. Uses only guaranteed-to-exist variables.
     """
 
     def print_variable(var_name: str):
@@ -133,13 +133,13 @@ def test_concurrent_variable_printing(root: Path, concurrent_workers: int):
         )
         return result.returncode == 0
 
-    # Test multiple variable prints concurrently
-    variables = ["PYTHON", "UV", "VENV"] * (concurrent_workers // 3 + 1)
+    # Test only variables that are guaranteed to exist in the Makefile
+    # Repeat the variables to create enough work for concurrent execution
+    variables = ["SHELL"] * concurrent_workers
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrent_workers) as executor:
-        futures = [executor.submit(print_variable, var) for var in variables[: concurrent_workers * 2]]
+        futures = [executor.submit(print_variable, var) for var in variables]
         results = [f.result(timeout=30) for f in concurrent.futures.as_completed(futures)]
 
     success_rate = sum(results) / len(results)
-    # Allow some tolerance for variable printing as not all variables may exist
-    assert success_rate >= 0.5, f"Expected at least 50% success rate, got {success_rate * 100:.1f}%"
+    assert success_rate == 1.0, f"Expected 100% success rate, got {success_rate * 100:.1f}%"
