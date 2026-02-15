@@ -89,7 +89,8 @@ class TestDataProcessingStress:
         # Joined string should be significantly longer than a simple concatenation
         expected_min_length = subset_size * 10  # Conservative estimate
         assert len(joined) > expected_min_length
-        # Splitting by "-" should give us back the original strings (n separators -> n+1 parts, but n strings with n-1 separators)
+        # Splitting by "-" should give us back the original strings
+        # (n separators -> n+1 parts, but n strings with n-1 separators)
         assert len(split) == subset_size
 
     def test_sorting_large_lists(self):
