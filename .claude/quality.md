@@ -83,7 +83,7 @@
 - **Automated documentation publishing** on every push to main
 
 **Weaknesses**:
-- Some shell scripts have minimal inline comments for complex logic
+- None significant
 
 ---
 

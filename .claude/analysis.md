@@ -84,7 +84,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Interactive Marimo notebooks
 
 **Weaknesses:**
-- Some shell scripts have minimal inline comments for complex logic
+- None significant (shell scripts are appropriately commented)
 
 ---
 
