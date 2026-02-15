@@ -3,7 +3,7 @@
 **Repository**: Rhiza
 **Assessment Date**: 2026-02-15
 **Version Analyzed**: 0.7.5
-**Overall Score**: 9.4/10
+**Overall Score**: 9.6/10
 
 ---
 
@@ -13,15 +13,15 @@
 |----------|-------|--------|----------|
 | Code Quality | 9/10 | 10% | 0.90 |
 | Testing | 10/10 | 15% | 1.50 |
-| Documentation | 9/10 | 10% | 0.90 |
+| Documentation | 10/10 | 10% | 1.00 |
 | CI/CD | 10/10 | 15% | 1.50 |
-| Security | 9/10 | 10% | 0.90 |
+| Security | 10/10 | 10% | 1.00 |
 | Architecture | 9/10 | 10% | 0.90 |
 | Dependency Management | 10/10 | 10% | 1.00 |
 | Developer Experience | 9/10 | 10% | 0.90 |
 | Maintainability | 9/10 | 5% | 0.45 |
 | Shell Scripts | 9/10 | 5% | 0.45 |
-| **Overall** | **9.4/10** | 100% | **9.40** |
+| **Overall** | **9.6/10** | 100% | **9.60** |
 
 **Quality Tier**: Enterprise-Grade / Production-Ready
 
@@ -59,8 +59,12 @@
 - Coverage tracking with enforcement threshold
 - Benchmark regression detection via pytest-benchmark
 
+**Strengths (continued)**:
+- Property-based testing with Hypothesis via `make hypothesis-test`
+- Tests in `tests/property/` directory with active `.hypothesis` cache
+- Hypothesis strategies for testing across wide range of inputs
+
 **Weaknesses**:
-- No property-based testing (hypothesis)
 - No load/stress testing
 
 ---
@@ -80,9 +84,14 @@
 - Auto-generated API docs via pdoc
 - Interactive Marimo notebooks
 
+**Strengths (continued)**:
+- External documentation hosted on GitHub Pages with MkDocs
+- Combined documentation site includes API docs (pdoc), coverage reports, test results, and notebooks
+- Material for MkDocs theme with dark/light mode toggle
+- Automated deployment via rhiza_book.yml workflow
+
 **Weaknesses**:
 - Some scripts have minimal inline comments
-- No external documentation hosting (ReadTheDocs/Sphinx)
 
 ---
 
@@ -110,8 +119,13 @@
 - Minimal permissions model
 - fail-fast: false for complete test coverage
 
+**Strengths (continued)**:
+- Manual approval gates via GitHub environments (`environment: release`)
+- Requires explicit approval before PyPI publishing
+- Protection against accidental releases
+
 **Weaknesses**:
-- No manual approval gates for publishing
+- None significant
 
 ---
 
@@ -130,10 +144,17 @@
 - Locked dependencies via uv.lock (1013 lines)
 - Renovate for automated security updates
 
+**Strengths (continued)**:
+- SBOM generation in both JSON and XML formats using CycloneDX
+- SBOM attestation via GitHub's attest-sbom action
+- SBOM artifacts uploaded to GitHub releases
+- Comprehensive SBOM test suite in `.rhiza/tests/integration/test_sbom.py`
+- Container image scanning with Trivy for CRITICAL and HIGH vulnerabilities
+- Trivy results uploaded to GitHub Security (SARIF format) and as artifacts
+- Vulnerability scanning integrated into rhiza_docker.yml workflow
+
 **Weaknesses**:
-- No SBOM generation in release workflow
-- No container image scanning for devcontainer
-- Some bandit rules disabled in tests (S101, S603)
+- Some bandit rules disabled in tests (S101 for asserts, S603 for subprocess - both acceptable in test context)
 
 ---
 
@@ -241,26 +262,26 @@
 
 ## Improvement Recommendations
 
-### High Priority
+### Completed Improvements ✅
 
-| Improvement | Impact | Effort |
-|-------------|--------|--------|
-| Add SBOM generation to release workflow | Supply chain transparency | Medium |
-| Container image scanning for devcontainer | Security completeness | Low |
-| Manual approval gate for PyPI publishing | Release safety | Low |
+The following previously recommended improvements have been **fully implemented**:
 
-### Medium Priority
+| Improvement | Status | Implementation Details |
+|-------------|--------|----------------------|
+| SBOM generation in release workflow | ✅ Complete | CycloneDX JSON/XML with GitHub attestation |
+| Container image scanning | ✅ Complete | Trivy scanning in rhiza_docker.yml with SARIF upload |
+| Manual approval gate for PyPI publishing | ✅ Complete | GitHub environments with release approval gate |
+| Property-based testing with Hypothesis | ✅ Complete | `make hypothesis-test` with tests/property/ directory |
+| External documentation hosting | ✅ Complete | GitHub Pages with MkDocs and Material theme |
 
-| Improvement | Impact | Effort |
-|-------------|--------|--------|
-| Property-based testing with hypothesis | Test coverage depth | Medium |
-| More inline comments in shell scripts | Maintainability | Low |
-| External documentation hosting | Discoverability | Medium |
+### Remaining Opportunities
 
 ### Low Priority
 
 | Improvement | Impact | Effort |
 |-------------|--------|--------|
+| Load/stress testing | Performance validation | Medium |
+| More inline comments in shell scripts | Maintainability | Low |
 | VSCode extension documentation | DX improvement | Low |
 | More frequent Renovate schedule | Freshness | Low |
 | Document dependency version rationale | Clarity | Low |
@@ -272,12 +293,19 @@
 Rhiza demonstrates **enterprise-grade engineering** with particular excellence in:
 
 1. **Automation**: 15 CI/CD workflows, 50+ make targets, 17 pre-commit hooks
-2. **Testing**: Comprehensive suite with innovative techniques (README testing, mock git repos)
-3. **Security**: Multi-layer protection with OIDC, CodeQL, bandit, pip-audit
+2. **Testing**: Comprehensive suite with innovative techniques (README testing, mock git repos, property-based testing with Hypothesis)
+3. **Security**: Multi-layer protection with OIDC, CodeQL, bandit, pip-audit, SBOM generation with attestation, Trivy container scanning
 4. **Dependency Management**: Zero runtime deps, locked builds, automated updates
 5. **Developer Experience**: Unified Makefile interface, sensible defaults, Codespaces support, agentic workflows
 6. **Type Safety**: ty type checker integration replacing mypy for modern Python type checking
+7. **Documentation**: Comprehensive docs hosted on GitHub Pages with MkDocs, API docs, coverage reports
+
+**Recent Improvements**:
+- All 5 high/medium priority recommendations from previous assessment have been completed
+- Security score improved from 9/10 to 10/10 (SBOM + Trivy)
+- Documentation score improved from 9/10 to 10/10 (GitHub Pages + MkDocs)
+- Overall score improved from 9.4/10 to 9.6/10
 
 The repository serves as an exemplary template for Python projects, demonstrating how to balance standardization with extensibility through its living template architecture.
 
-**Verdict**: Production-ready, suitable for enterprise adoption as a project template foundation.
+**Verdict**: Production-ready, suitable for enterprise adoption as a project template foundation. Continuously improving with excellent security posture.
