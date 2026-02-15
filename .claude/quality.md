@@ -15,7 +15,7 @@
 | Testing | 10/10 | 15% | 1.50 |
 | Documentation | 10/10 | 10% | 1.00 |
 | CI/CD | 10/10 | 15% | 1.50 |
-| Security | 10/10 | 10% | 1.00 |
+| Security | 9.5/10 | 10% | 0.95 |
 | Architecture | 9/10 | 10% | 0.90 |
 | Dependency Management | 10/10 | 10% | 1.00 |
 | Developer Experience | 9/10 | 10% | 0.90 |
