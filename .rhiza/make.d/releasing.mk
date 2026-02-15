@@ -18,7 +18,7 @@ _VERSION=0.3.3
 bump: pre-bump ## bump version of the project (supports DRY_RUN=1)
 	@if [ -f "pyproject.toml" ]; then \
 		$(MAKE) install; \
-		PATH="$(abspath ${VENV})/bin:$$PATH" ${UVX_BIN} "rhiza-tools>=$( _VERSION)" bump $(_DRY_RUN_FLAG); \
+		PATH="$(abspath ${VENV})/bin:$$PATH" ${UVX_BIN} "rhiza-tools>=$(_VERSION)" bump $(_DRY_RUN_FLAG); \
 		if [ -z "$(DRY_RUN)" ]; then \
 			printf "${BLUE}[INFO] Checking uv.lock file...${RESET}\n"; \
 			${UV_BIN} lock; \
@@ -29,11 +29,11 @@ bump: pre-bump ## bump version of the project (supports DRY_RUN=1)
 	@$(MAKE) post-bump
 
 release: pre-release install-uv ## create tag and push to remote repository triggering release workflow (supports DRY_RUN=1)
-	${UVX_BIN} "rhiza-tools>=$( _VERSION)" release $(_DRY_RUN_FLAG);
+	${UVX_BIN} "rhiza-tools>=$(_VERSION)" release $(_DRY_RUN_FLAG);
 	@$(MAKE) post-release
 
 publish: pre-release install-uv ## bump version, create tag and push in one step (supports DRY_RUN=1)
-	${UVX_BIN} "rhiza-tools>=$( _VERSION)" release --with-bump $(_DRY_RUN_FLAG);
+	${UVX_BIN} "rhiza-tools>=$(_VERSION)" release --with-bump $(_DRY_RUN_FLAG);
 	@$(MAKE) post-release
 
 release-status: ## show release workflow status and latest release information
