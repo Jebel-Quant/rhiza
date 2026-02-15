@@ -37,7 +37,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ## Detailed Assessment by Category
 
-### 1. Architecture: 10/10
+### 1. Architecture: 9/10
 
 **Strengths:**
 - Novel "living templates" approach via `.rhiza/template.yml` enabling continuous sync
@@ -56,7 +56,8 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - All Python execution through `uv run` / `uvx`
 
 **Weaknesses:**
-- None significant
+- Mixed paradigms (Bash, Python, Make, YAML) may increase onboarding complexity
+- Deep directory nesting in some areas (`.rhiza/make.d/`, `.rhiza/utils/`)
 
 ---
 
@@ -118,37 +119,31 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ---
 
-### 4. Configuration: 10/10
+### 4. Maintainability: 9/10
 
 **Strengths:**
-- Comprehensive `ruff.toml` (125 lines):
-  - 15+ rule sets (D, E, F, I, N, W, UP, B, C4, PT, RUF, TRY, ICN)
-  - Per-file exemptions for tests and special modules
-  - Google-style docstrings enforced
-  - 120-character line length
-- `.editorconfig` (42 lines):
-  - LF line endings, UTF-8 charset
-  - 4 spaces for Python, 2 for YAML/JSON, tabs for Makefiles
-  - Trailing whitespace trimming
-- `.pre-commit-config.yaml` (67 lines):
-  - Ruff formatting + linting
-  - Bandit security scanning
-  - YAML/TOML/JSON Schema validation
-  - Actionlint for workflows
-  - Custom hooks for README and workflow names
-- `pytest.ini` - Live console logging, DEBUG+ level
-- `renovate.json` - Automated dependency updates
+- Descriptive naming conventions (version_matrix.py, check_workflow_names.py)
+- Custom exception classes (RhizaError, VersionSpecifierError, PyProjectError)
+- Consistent Google-style docstrings with Args, Returns, Raises sections
+- Active maintenance (recent commits within days)
+- Semantic commit messages with PR references
+- Configuration-driven behavior via template.yml and pyproject.toml
+- POSIX-compliant shell scripts validated with shellcheck
+- Clear separation of concerns in directory structure
+- Modular Makefile system with extension points
+- Configuration as code (pyproject.toml, ruff.toml, pytest.ini)
 
 **Weaknesses:**
-- None significant
+- Few TODO comments for roadmap visibility
+- Mixed paradigms (Bash, Python, Make, YAML) require multiple skill sets
 
 ---
 
-### 5. Developer Experience: 10/10
+### 5. Developer Experience: 9/10
 
 **Strengths:**
 - Single entry point: `make install` and `make help`
-- 40+ documented make targets organized by category:
+- 52 Makefile targets with auto-generated help organized by category:
   - Rhiza Workflows: sync, validate, readme
   - Bootstrap: install-uv, install, clean
   - Quality: deptry, fmt
@@ -158,13 +153,18 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
   - Docker: docker-build, docker-run
   - GitHub: view-prs, view-issues, failed-workflows
 - Fast setup with `uv` (seconds, not minutes)
-- `.devcontainer` for VS Code/Codespaces
-- Color-coded output in scripts
+- `.editorconfig` for cross-IDE consistency
+- 17 pre-commit hooks for local validation
+- GitHub Codespaces support with `.devcontainer`
+- Color-coded output in scripts (BLUE, RED, YELLOW)
 - Customization via `local.mk` without modifying core
-- Quick reference card for common operations (PR #358)
+- Quick reference card for common operations
+- UV auto-installation via `make install-uv`
 
 **Weaknesses:**
-- No `make setup-hooks` target for local Git hooks
+- Learning curve for `.rhiza/make.d/` extension system
+- Multiple tools to understand (uv, make, git)
+- No VSCode extension or IntelliJ plugin documentation
 
 ---
 
