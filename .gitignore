@@ -1,7 +1,5 @@
 ### Python template
 .idea
-# But allow shared run configurations
-!.idea/runConfigurations/
 .venv
 .ruff_cache
 .ty_cache
