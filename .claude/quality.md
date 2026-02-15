@@ -3,7 +3,7 @@
 **Repository**: Rhiza
 **Assessment Date**: 2026-02-15
 **Version Analyzed**: 0.7.5
-**Overall Score**: 9.6/10
+**Overall Score**: 9.7/10
 
 ---
 
@@ -13,7 +13,7 @@
 |----------|-------|--------|----------|
 | Code Quality | 10/10 | 10% | 1.00 |
 | Testing | 10/10 | 15% | 1.50 |
-| Documentation | 9.5/10 | 10% | 0.95 |
+| Documentation | 10/10 | 10% | 1.00 |
 | CI/CD | 10/10 | 15% | 1.50 |
 | Security | 9.5/10 | 10% | 0.95 |
 | Architecture | 9/10 | 10% | 0.90 |
@@ -21,7 +21,7 @@
 | Developer Experience | 9/10 | 10% | 0.90 |
 | Maintainability | 9/10 | 5% | 0.45 |
 | Shell Scripts | 9.5/10 | 5% | 0.475 |
-| **Overall** | **9.6/10** | 100% | **9.625** |
+| **Overall** | **9.7/10** | 100% | **9.675** |
 
 **Quality Tier**: Enterprise-Grade / Production-Ready
 
@@ -65,7 +65,7 @@
 
 ---
 
-### 3. Documentation: 9.5/10
+### 3. Documentation: 10/10
 
 **Strengths**:
 - Comprehensive README.md (18KB) with quick start, features, integration guide
@@ -79,11 +79,16 @@
 - Code of conduct (CODE_OF_CONDUCT.md)
 - Auto-generated API docs via pdoc
 - Interactive Marimo notebooks
+- Testing documentation (docs/TESTS.md)
+- Docker documentation (docs/DOCKER.md)
+- Devcontainer documentation (docs/DEVCONTAINER.md)
+- Marimo notebooks documentation (docs/MARIMO.md)
+- Presentation materials (docs/PRESENTATION.md)
 - **GitHub Pages deployment configured** (rhiza_book.yml) with MkDocs Material theme
 - **Automated documentation publishing** on every push to main
 
 **Weaknesses**:
-- None significant
+- None
 
 ---
 
