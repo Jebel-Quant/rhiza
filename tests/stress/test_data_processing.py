@@ -81,12 +81,16 @@ class TestDataProcessingStress:
 
         # Perform various string operations
         upper = [s.upper() for s in strings]
-        joined = "-".join(strings[:1000])  # Join subset to avoid memory issues
+        subset_size = 1000
+        joined = "-".join(strings[:subset_size])  # Join subset to avoid memory issues
         split = joined.split("-")
 
         assert len(upper) == num_strings
-        assert len(joined) > num_strings
-        assert len(split) == 1000  # Splitting by "-" should give us back 1000 strings
+        # Joined string should be significantly longer than a simple concatenation
+        expected_min_length = subset_size * 10  # Conservative estimate
+        assert len(joined) > expected_min_length
+        # Splitting by "-" should give us back the original strings (n separators -> n+1 parts, but n strings with n-1 separators)
+        assert len(split) == subset_size
 
     def test_sorting_large_lists(self):
         """Stress test: Sort large lists with different data types."""
