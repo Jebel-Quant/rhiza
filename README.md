@@ -431,6 +431,8 @@ For information on versioning, tagging, and publishing releases, see [.rhiza/doc
 
 This repository includes a template Dev Container configuration for seamless development in VS Code and GitHub Codespaces. See [.devcontainer/README.md](.devcontainer/README.md) for setup, configuration, and troubleshooting.
 
+For details about the VS Code extensions configured in the Dev Container, see [docs/VSCODE_EXTENSIONS.md](docs/VSCODE_EXTENSIONS.md).
+
 ## 🔄 CI/CD Support
 
 ### GitHub Actions
