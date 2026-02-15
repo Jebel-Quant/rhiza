@@ -295,7 +295,7 @@
 
 | Improvement | Impact | Effort | Status |
 |-------------|--------|--------|--------|
-| VSCode extension documentation | DX improvement | Low | ⏳ Pending |
+| ~~VSCode extension documentation~~ | DX improvement | Low | ✅ Done (11 extensions in devcontainer.json + docs/DEVCONTAINER.md) |
 | ~~More frequent Renovate schedule~~ | Freshness | Low | ✅ Done (daily "every night") |
 | ~~Document dependency version rationale~~ | Clarity | Low | ✅ Done (rationale documented) |
 
