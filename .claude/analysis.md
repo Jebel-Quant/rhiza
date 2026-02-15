@@ -260,9 +260,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
   - Tag existence checking
   - GPG signing detection
 - Detailed comments explaining complex logic
-- `--dry-run` flag for release script (PR #350)
 - Shellcheck-validated (PR #350)
-- Well-organized with helper functions (release.sh is 276 lines but logically structured)
 
 **Weaknesses:**
 - None significant
@@ -284,7 +282,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 | Issue | Impact | Effort | Status |
 |-------|--------|--------|--------|
-| ~~Add --dry-run to release.sh~~ | Risk of accidental releases | Medium | ✅ Done (PR #350) |
+| ~~Add --dry-run to release~~ | Risk of accidental releases | Medium | ✅ Done (PR #350) |
 | ~~Custom exception classes~~ | Code quality | Low | ✅ Done (PR #349) |
 | ~~Add set -u to shell scripts~~ | Script reliability | Low | ✅ Done (PR #350) |
 | ~~Document dev dependencies~~ | Clarity | Low | ✅ Done (PR #357) |
