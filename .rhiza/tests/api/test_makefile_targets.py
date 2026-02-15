@@ -81,9 +81,9 @@ class TestMakefile:
         out = proc.stdout
         assert_uvx_command_uses_version(out, tmp_path, "deptry src")
 
-    def test_mypy_target_dry_run(self, logger, tmp_path):
-        """Mypy target should invoke mypy via uv run in dry-run output."""
-        # Create a mock SOURCE_FOLDER directory so the mypy command runs
+    def test_typecheck_target_dry_run(self, logger, tmp_path):
+        """Typecheck target should invoke ty via uv run in dry-run output."""
+        # Create a mock SOURCE_FOLDER directory so the typecheck command runs
         source_folder = tmp_path / "src"
         source_folder.mkdir(exist_ok=True)
 
@@ -93,10 +93,10 @@ class TestMakefile:
         env_content += "\nSOURCE_FOLDER=src\n"
         env_file.write_text(env_content)
 
-        proc = run_make(logger, ["mypy"])
+        proc = run_make(logger, ["typecheck"])
         out = proc.stdout
-        # Check for uv run command instead of uvx
-        assert "uv run mypy src --strict --config-file=pyproject.toml" in out
+        # Check for uv run command
+        assert "uv run ty check src" in out
 
     def test_test_target_dry_run(self, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
