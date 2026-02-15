@@ -14,7 +14,6 @@ Tests are organized into categories:
 import pathlib
 import re
 import subprocess
-from typing import Callable
 
 import pytest
 
@@ -245,11 +244,14 @@ class TestSecretsDetection:
             if ".venv" not in str(py_file):
                 content = py_file.read_text()
                 for pattern in password_patterns:
-                    if pattern.search(content):
-                        # Exclude test files and mock data
-                        if "test" not in str(py_file).lower() and "example" not in content.lower():
-                            violations.append(str(py_file))
-                            break
+                    # Exclude test files and mock data
+                    if (
+                        pattern.search(content)
+                        and "test" not in str(py_file).lower()
+                        and "example" not in content.lower()
+                    ):
+                        violations.append(str(py_file))
+                        break
 
         assert not violations, (
             f"Found potential hardcoded passwords:\n"
@@ -275,15 +277,15 @@ class TestSecretsDetection:
             if ".venv" not in str(py_file):
                 content = py_file.read_text()
                 for pattern in api_key_patterns:
-                    if pattern.search(content):
-                        # Exclude test files, examples, and documentation
-                        if (
-                            "test" not in str(py_file).lower()
-                            and "example" not in content.lower()
-                            and "mock" not in content.lower()
-                        ):
-                            violations.append(str(py_file))
-                            break
+                    # Exclude test files, examples, and documentation
+                    if (
+                        pattern.search(content)
+                        and "test" not in str(py_file).lower()
+                        and "example" not in content.lower()
+                        and "mock" not in content.lower()
+                    ):
+                        violations.append(str(py_file))
+                        break
 
         assert not violations, (
             f"Found potential hardcoded API keys/tokens:\n"
@@ -333,7 +335,10 @@ class TestSecurityTooling:
 
         # This should pass (or at least not error) on production code
         # We allow non-zero exit if there are no Python files to check
-        if result.returncode != 0 and "No Python files found" not in result.stdout:
-            # Only fail if there are actual security issues
-            if "S1" in result.stdout or "S2" in result.stdout or "S3" in result.stdout:
-                pytest.fail(f"Ruff security checks found issues in production code:\n{result.stdout}")
+        # Only fail if there are actual security issues
+        if (
+            result.returncode != 0
+            and "No Python files found" not in result.stdout
+            and ("S1" in result.stdout or "S2" in result.stdout or "S3" in result.stdout)
+        ):
+            pytest.fail(f"Ruff security checks found issues in production code:\n{result.stdout}")
