@@ -1,0 +1,35 @@
+name: "(RHIZA) VALIDATE AGENTIC WORKFLOWS"
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/*.md"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/*.md"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install gh CLI
+        uses: cli/cli-action@v1
+
+      - name: Install gh-aw extension
+        run: gh extension install github/gh-aw
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate lock files are up-to-date
+        run: |
+          gh aw compile
+          if ! git diff --quiet .github/workflows/*.lock.yml; then
+            echo "::error::Agentic workflow lock files are out of date. Run 'gh aw compile' and commit the changes."
+            git diff .github/workflows/*.lock.yml
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

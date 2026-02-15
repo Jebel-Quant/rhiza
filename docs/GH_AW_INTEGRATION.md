@@ -1,6 +1,6 @@
 # GitHub Agentic Workflows (gh-aw) Integration Plan
 
-> **Status**: In Progress (Phase 3 Complete)  
+> **Status**: In Progress (Phase 4 Complete)  
 > **Date Started**: 2026-02-15  
 > **Last Updated**: 2026-02-15  
 > **Scope**: Integrating [GitHub Agentic Workflows](https://github.com/github/gh-aw) (gh-aw) into the Rhiza template framework
@@ -10,8 +10,8 @@
 - ✅ **Phase 1**: CLI install + Makefile targets (`gh-aw.mk`) — [4137a71](https://github.com/Jebel-Quant/rhiza/commit/4137a71)
 - ✅ **Phase 2**: Template bundle definition — [8eba2e7](https://github.com/Jebel-Quant/rhiza/commit/8eba2e7)
 - ✅ **Phase 3**: Starter workflow templates — [957c31b](https://github.com/Jebel-Quant/rhiza/commit/957c31b)
-- ⏳ **Phase 4**: CI validation workflow — Next
-- ⏳ **Phase 5**: Secrets setup + engine config
+- ✅ **Phase 4**: CI validation workflow — [CURRENT_COMMIT]
+- ⏳ **Phase 5**: Secrets setup + engine config — Next
 - ⏳ **Phase 6**: Documentation
 
 ---
@@ -561,10 +561,10 @@ git push
 | **Phase 1** | CLI install + Makefile targets (`gh-aw.mk`) | 1–2 hours | ✅ **COMPLETE** | [4137a71](https://github.com/Jebel-Quant/rhiza/commit/4137a71) |
 | **Phase 2** | Template bundle definition | 30 min | ✅ **COMPLETE** | [8eba2e7](https://github.com/Jebel-Quant/rhiza/commit/8eba2e7) |
 | **Phase 3** | Starter workflow templates (3 workflows) | 2–3 hours | ✅ **COMPLETE** | [957c31b](https://github.com/Jebel-Quant/rhiza/commit/957c31b) |
-| **Phase 4** | CI validation workflow | 30 min | ⏳ Pending | — |
+| **Phase 4** | CI validation workflow | 30 min | ✅ **COMPLETE** | [CURRENT_COMMIT] |
 | **Phase 5** | Secrets setup + engine config | 1 hour | ⏳ Pending | — |
 | **Phase 6** | Documentation (GH_AW.md, copilot-instructions, quick ref) | 1–2 hours | ⏳ Pending | — |
-| **Total** | | **~6–9 hours** | **Phase 1-3 complete** | — |
+| **Total** | | **~6–9 hours** | **Phase 1-4 complete** | — |
 
 ---
 
