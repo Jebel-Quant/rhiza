@@ -24,7 +24,7 @@ class TestSubprocessSafety:
     @pytest.fixture
     def python_files(self) -> list[pathlib.Path]:
         """Get all Python files in the repository, excluding virtual environment."""
-        repo_root = pathlib.Path(__file__).parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
         return [
             p
             for p in repo_root.rglob("*.py")
@@ -106,7 +106,7 @@ class TestFileOperations:
         World-writable files are a security risk as any user can modify them.
         This test only checks production code, not test files.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
         violations = []
         # Look for chmod calls with overly permissive modes (world-writable: 0o7[7]x)
         # We're specifically looking for 0o777, 0o776, 0o775, etc. (world-writable)
@@ -135,7 +135,7 @@ class TestInputValidation:
         Using eval() with any user input is extremely dangerous as it can
         execute arbitrary code. There are almost always safer alternatives.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
         violations = []
         eval_pattern = re.compile(r"\beval\s*\(")
 
@@ -158,7 +158,7 @@ class TestInputValidation:
         Similar to eval(), exec() can execute arbitrary code and should be
         avoided unless absolutely necessary with strong input validation.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
         violations = []
         exec_pattern = re.compile(r"\bexec\s*\(")
 
@@ -181,7 +181,7 @@ class TestSecurityConfiguration:
 
     def test_ruff_security_checks_enabled(self) -> None:
         """Verify that Ruff's security checks (S) are enabled."""
-        repo_root = pathlib.Path(__file__).parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
         ruff_config = repo_root / "ruff.toml"
 
         assert ruff_config.exists(), "ruff.toml not found"
@@ -192,7 +192,7 @@ class TestSecurityConfiguration:
 
     def test_bandit_configured_in_precommit(self) -> None:
         """Verify that Bandit is configured in pre-commit hooks."""
-        repo_root = pathlib.Path(__file__).parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
         precommit_config = repo_root / ".pre-commit-config.yaml"
 
         assert precommit_config.exists(), ".pre-commit-config.yaml not found"
@@ -206,7 +206,7 @@ class TestSecurityConfiguration:
         Test files should have docstrings or comments explaining why security
         exceptions (like S101, S603, S607) are safe in the test context.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
         conftest_files = list(repo_root.rglob("conftest.py"))
 
         # For each conftest, verify it has security documentation
@@ -232,7 +232,7 @@ class TestSecretsDetection:
         This is a basic check for common password patterns. More sophisticated
         secret scanning should be done by dedicated tools like GitGuardian.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
         violations = []
         # Look for common password patterns
         password_patterns = [
@@ -264,7 +264,7 @@ class TestSecretsDetection:
 
         API keys should be loaded from environment variables or secure vaults.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
         violations = []
         # Look for patterns that might indicate API keys
         api_key_patterns = [
@@ -303,7 +303,7 @@ class TestSecurityTooling:
 
         This doesn't validate findings, just that the tool is properly configured.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
 
         # Try to run bandit
         result = subprocess.run(
@@ -323,7 +323,7 @@ class TestSecurityTooling:
         This runs Ruff with only security rules enabled to validate that
         production code passes all security checks.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
 
         # Run ruff with only security checks on non-test files
         result = subprocess.run(

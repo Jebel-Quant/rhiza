@@ -63,7 +63,7 @@ uv run ruff check --select S book/
 
 ### Custom Security Test Suite
 
-Located in `tests/security/test_security_patterns.py`, this suite validates security best practices specific to our codebase.
+Located in `.rhiza/tests/security/test_security_patterns.py`, this suite validates security best practices specific to our codebase.
 
 **What it tests**:
 - Subprocess safety (no shell=True, list-based arguments)
@@ -75,13 +75,13 @@ Located in `tests/security/test_security_patterns.py`, this suite validates secu
 **Running Security Tests**:
 ```bash
 # Run all security tests
-uv run pytest tests/security/
+uv run pytest .rhiza/tests/security/
 
 # Run specific test class
-uv run pytest tests/security/test_security_patterns.py::TestSubprocessSafety
+uv run pytest .rhiza/tests/security/test_security_patterns.py::TestSubprocessSafety
 
 # Run with verbose output
-uv run pytest tests/security/ -v
+uv run pytest .rhiza/tests/security/ -v
 ```
 
 ## Security Exceptions in Test Code
@@ -179,7 +179,7 @@ git commit -m "Update SAST baseline"
    make test
 
    # Run only security tests
-   uv run pytest tests/security/
+   uv run pytest .rhiza/tests/security/
    ```
 
 ### During Code Review
@@ -301,7 +301,7 @@ subprocess.run(["git", "status"], check=True)  # nosec B603, B607
 
 Before merging any PR with code changes:
 
-- [ ] All security tests pass (`pytest tests/security/`)
+- [ ] All security tests pass (`pytest .rhiza/tests/security/`)
 - [ ] No new security findings in Ruff (`make fmt`)
 - [ ] Bandit reports no issues in production code
 - [ ] Any `# nosec` comments are documented and justified
