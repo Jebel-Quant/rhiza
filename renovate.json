@@ -19,7 +19,7 @@
   ],
   "timezone": "Asia/Dubai",
   "schedule": [
-    "every night"
+    "before 3am"
   ],
   "packageRules": [
     {
