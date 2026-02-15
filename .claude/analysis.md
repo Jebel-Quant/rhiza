@@ -1,15 +1,17 @@
 # Repository Quality Analysis
 
 **Repository**: Rhiza
-**Analysis Date**: 2026-01-18
+**Analysis Date**: 2026-02-15
 **Last Updated**: 2026-02-15
-**Overall Score**: 10/10
+**Overall Score**: 9.6/10
 
 ---
 
 ## Executive Summary
 
 Rhiza is a well-architected, professionally-maintained repository implementing an innovative "living templates" pattern that solves the real problem of configuration drift in Python projects. The execution across CI/CD, testing, documentation, and architecture is excellent. The modular Makefile system with hooks is particularly well-designed.
+
+**Recent improvements** (February 2026) have significantly enhanced code quality, security posture, and documentation infrastructure through the addition of security linting rules (PR #678), SBOM generation, Trivy container scanning, property-based testing, and GitHub Pages deployment.
 
 **Quality Tier**: Enterprise-Grade / Production-Ready
 
@@ -19,17 +21,17 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 | Category | Score | Weight | Weighted |
 |----------|-------|--------|----------|
-| Architecture | 10/10 | 15% | 1.50 |
-| Documentation | 10/10 | 10% | 1.00 |
+| Architecture | 9/10 | 10% | 0.90 |
+| Documentation | 9.5/10 | 10% | 0.95 |
 | CI/CD | 10/10 | 15% | 1.50 |
-| Configuration | 10/10 | 10% | 1.00 |
-| Developer Experience | 10/10 | 10% | 1.00 |
 | Code Quality | 10/10 | 10% | 1.00 |
-| Test Coverage | 10/10 | 10% | 1.00 |
-| Security | 10/10 | 10% | 1.00 |
-| Dependency Management | 10/10 | 5% | 0.50 |
-| Shell Scripts | 10/10 | 5% | 0.50 |
-| **Overall** | **10/10** | 100% | **10.00** |
+| Developer Experience | 9/10 | 10% | 0.90 |
+| Test Coverage | 10/10 | 15% | 1.50 |
+| Security | 9.5/10 | 10% | 0.95 |
+| Dependency Management | 10/10 | 10% | 1.00 |
+| Shell Scripts | 9.5/10 | 5% | 0.475 |
+| Maintainability | 9/10 | 5% | 0.45 |
+| **Overall** | **9.6/10** | 100% | **9.625** |
 
 ---
 
@@ -58,28 +60,31 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 ---
 
-### 2. Documentation: 10/10
+### 2. Documentation: 9.5/10
 
 **Strengths:**
-- Comprehensive README.md (471 lines) with quick start, features, integration guide
+- Comprehensive README.md (18KB) with quick start, features, integration guide
 - Modular documentation:
   - `CONTRIBUTING.md` - contribution guidelines
   - `CODE_OF_CONDUCT.md` - community standards
   - `.rhiza/docs/RELEASING.md` - release process guide
   - `docs/CUSTOMIZATION.md` - Makefile hooks and patterns
   - `.rhiza/make.d/README.md` - Makefile cookbook
-  - `docs/GLOSSARY.md` - comprehensive glossary of Rhiza terms (PR #356)
-  - `docs/QUICK_REFERENCE.md` - quick reference card (PR #358)
+  - `docs/GLOSSARY.md` - comprehensive glossary of Rhiza terms
+  - `docs/QUICK_REFERENCE.md` - quick reference card
+  - `docs/ARCHITECTURE.md` - 8 mermaid diagrams
+  - `docs/DEMO.md` - Recording instructions and scripts
+  - `SECURITY.md` - vulnerability reporting process
+- **GitHub Pages deployment configured** (rhiza_book.yml) with MkDocs Material theme
+- **Automated documentation publishing** on every push to main
 - README code examples are tested via `test_readme.py`
 - Google-style docstrings enforced via ruff
-- Clear `make help` output with 40+ documented targets
+- Clear `make help` output with 52 documented targets
+- Auto-generated API docs via pdoc
+- Interactive Marimo notebooks
 
 **Weaknesses:**
-- None significant
-
-**Recent additions:**
-- `docs/ARCHITECTURE.md` - 8 mermaid diagrams (PR #359)
-- `docs/DEMO.md` - Recording instructions and scripts (PR #360)
+- None significant (shell scripts are appropriately commented)
 
 ---
 
@@ -169,13 +174,19 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 ### 6. Code Quality: 10/10
 
 **Strengths:**
-- Comprehensive ruff configuration enforcing:
-  - Type hints (UP rules for modern Python)
-  - Docstrings (D rules, Google convention)
-  - Import sorting (I rules)
-  - Naming conventions (N rules)
-  - Bug detection (B, C4, PT rules)
-- Per-file exemptions allow pragmatic exceptions
+- Comprehensive ruff configuration with 15 actively enforced rule sets:
+  - D (pydocstyle), E/W (pycodestyle), F (pyflakes)
+  - I (isort), N (pep8-naming), UP (pyupgrade)
+  - B (flake8-bugbear), C4 (flake8-comprehensions), PT (pytest-style)
+  - **SIM (flake8-simplify)** - newly enabled (PR #678)
+  - **S (flake8-bandit)** - security rules now enforced (PR #678)
+  - RUF (ruff-specific), TRY (tryceratops), ICN (import-conventions)
+  - D105, D107 (magic method docstrings)
+- **Per-file exceptions refactored to be targeted and justified** (PR #678)
+- Google-style docstrings enforced with explicit magic method coverage
+- Strong type annotations with `from __future__ import annotations` pattern
+- 120-character line length with consistent formatting
+- Modern Python syntax enforced (Python 3.11+) via pyupgrade
 - Clean utility scripts with proper error handling
 - Standard library preference (tomllib, json, pathlib)
 - Custom exception hierarchy: `RhizaError`, `VersionSpecifierError`, `PyProjectError` (PR #349)
@@ -189,124 +200,166 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 ### 7. Test Coverage: 10/10
 
 **Strengths:**
-- 2,299 lines of test code across 15 test files
+- 18 dedicated test files with 121 test functions and methods
+- Multiple test types: unit, integration, doctest, README code execution, benchmarks, **property-based tests**
+- **Property-based testing with Hypothesis** (tests/property/test_makefile_properties.py)
 - Creative testing strategies:
   - README code block execution (`test_readme.py`)
   - Makefile target validation via dry-run (`test_makefile.py`)
   - Git repository sandbox fixtures (`conftest.py`)
+  - Release script tested with mock git environments
   - Doctest discovery
 - Sophisticated `git_repo` fixture with mocked `uv` and `make`
 - Edge case coverage (uncommitted changes, tag conflicts, branch divergence)
-- Tests for shell scripts (`test_release_script.py`)
-- Comprehensive --dry-run flag coverage (PR #363)
+- Comprehensive --dry-run flag coverage
 - 90% coverage threshold enforced via `--cov-fail-under=90`
-- Coverage reports published to GitHub Pages via `make book` (rhiza_book.yml workflow)
-- Benchmark regression detection via `github-action-benchmark` (alerts at 150% threshold)
-- Test strategy appropriate for template repo: integration/structural tests for Makefiles and workflows, unit tests for Python scripts (`test_check_workflow_names.py`)
+- Coverage reports published to GitHub Pages via `make book`
+- Benchmark regression detection via pytest-benchmark (alerts at 150% threshold)
+- Multi-Python version testing (3.11, 3.12, 3.13, 3.14)
+- Test strategy appropriate for template repo: integration/structural tests for Makefiles and workflows, unit tests for Python scripts
 
 **Weaknesses:**
-- None significant
+- No load/stress testing for performance under heavy use
 
 ---
 
-### 8. Security: 10/10
+### 8. Security: 9.5/10
 
 **Strengths:**
-- CodeQL analysis for Python and GitHub Actions
-- Bandit security scanning in pre-commit and CI
-- pip-audit for dependency vulnerabilities
+- Comprehensive SECURITY.md with vulnerability reporting process
+- Response SLAs defined (48h acknowledgment, 7d assessment, 30d resolution)
+- Multiple security scanners:
+  - CodeQL for semantic analysis (Python and GitHub Actions)
+  - Bandit for Python security patterns (S rules now enforced via ruff)
+  - pip-audit for dependency vulnerabilities
+  - **Trivy container vulnerability scanning** for Docker images (rhiza_docker.yml)
+  - actionlint with shellcheck for workflow/script validation
+- **SBOM generation in release workflow** (CycloneDX JSON + XML formats)
+- **SBOM attestations** for supply chain transparency (public repos)
 - OIDC for PyPI trusted publishing (no stored credentials)
-- Minimal workflow permissions by default
-- uv.lock ensures reproducible builds
+- SLSA provenance attestations for release artifacts
+- Locked dependencies via uv.lock (1013 lines) ensuring reproducible builds
+- Renovate for automated security updates
+- Minimal workflow permissions model (least privilege)
+- **Environment-based deployment protection** (release environment for PyPI publishing)
 - Dockerfile with non-root user
-- SLSA provenance attestations for release artifacts (PR #353)
-- SECURITY.md with vulnerability reporting process (PR #354)
-- SBOM test suite validates generation capability (PR #336)
-- Full shellcheck validation in actionlint (PR #361)
 
 **Weaknesses:**
-- None significant
+- Container image scanning for devcontainer not yet merged (branch exists, was reverted per maintainer feedback)
+- Some bandit rules necessarily disabled in tests (S101 for assert, S603 for subprocess)
 
 ---
 
 ### 9. Dependency Management: 10/10
 
 **Strengths:**
-- `uv.lock` (131KB) ensures fully reproducible builds
+- `uv.lock` file (1013 lines) ensuring reproducible builds
+- Modern uv package manager for fast, reliable installation
+- Zero production dependencies (template system only)
+- Isolated dev dependencies with strict version bounds:
+  - marimo>=0.18.0,<1.0
+  - numpy>=2.4.0,<3.0
+  - plotly>=6.5.0,<7.0
+  - pandas>=3,<3.1
 - PEP 735 dependency groups (dev separate from runtime)
-- Zero runtime dependencies (template repo)
 - Deptry integration catches unused/missing dependencies
-- Renovate configured for automated updates
-- Dependencies use upper bounds for stability (PR #355)
-- Each dev dependency documented with inline comments (PR #357)
+- Renovate automation for updates (pep621, pre-commit, github-actions, dockerfile)
+- Lock file committed for reproducibility
+- Python version specified in .python-version and pyproject.toml
+- Each dev dependency documented with inline comments
 - Renovate PRs trigger full CI pipeline, effectively testing updates before merge
 
 **Weaknesses:**
-- None significant
+- Renovate only checks weekly (Tuesdays) - could be more frequent for security patches
+- Limited documentation of version choice rationale in pyproject.toml
 
 ---
 
-### 10. Shell Scripts: 10/10
+### 10. Shell Scripts: 9.5/10
 
 **Strengths:**
-- POSIX-compliant (`#!/bin/sh`)
-- `set -eu` for fail-on-error and undefined variable catching (PR #350)
-- Color-coded output (ANSI escape codes)
-- Interactive prompts with validation
-- Comprehensive safety checks:
-  - Branch status verification
-  - Uncommitted changes detection
-  - Remote sync validation
-  - Tag existence checking
-  - GPG signing detection
-- Detailed comments explaining complex logic
-- Shellcheck-validated (PR #350)
+- Minimal and focused: Only 3 shell scripts (92 total lines)
+  - `.devcontainer/bootstrap.sh` (44 lines) - environment setup
+  - `.github/hooks/session-start.sh` (27 lines) - validation hook
+  - `.github/hooks/session-end.sh` (21 lines) - quality gates hook
+- Strict error handling with `set -euo pipefail` (fail on error, undefined variables, pipe failures)
+- Proper error handling with meaningful messages
+- Well-commented for their complexity level with clear explanations
+- Shellcheck validation via actionlint workflow
+- Clear, focused responsibilities per script
+- Environment variable management with sensible defaults
+- Proper PATH handling and binary detection
+- Integration with project tooling (uv, make, pre-commit)
 
 **Weaknesses:**
-- None significant
+- Errors cause immediate exit vs. offering recovery options (by design for automation)
 
 ---
 
 ## Priority Improvements
 
-### High Priority
+### Remaining High Priority
 
-| Issue | Impact | Effort | Status |
-|-------|--------|--------|--------|
-| ~~Add SBOM generation to release workflow~~ | Supply chain security | Medium | ✅ Done (PR #336) |
-| ~~Create SECURITY.md~~ | Security posture | Low | ✅ Done (PR #354) |
-| ~~Add coverage thresholds~~ | Quality regression risk | Low | ✅ Done (90% threshold in tests.mk) |
-| ~~Add shellcheck to CI~~ | Script reliability | Low | ✅ Done (PR #350) |
+| Improvement | Impact | Effort | Status |
+|-------------|--------|--------|--------|
+| Container image scanning for devcontainer | Security completeness | Low | ⏳ Branch exists, needs merge |
 
-### Medium Priority
+### Remaining Medium Priority
 
-| Issue | Impact | Effort | Status |
-|-------|--------|--------|--------|
-| ~~Add --dry-run to release~~ | Risk of accidental releases | Medium | ✅ Done (PR #350) |
-| ~~Custom exception classes~~ | Code quality | Low | ✅ Done (PR #349) |
-| ~~Add set -u to shell scripts~~ | Script reliability | Low | ✅ Done (PR #350) |
-| ~~Document dev dependencies~~ | Clarity | Low | ✅ Done (PR #357) |
+| Improvement | Impact | Effort | Status |
+|-------------|--------|--------|--------|
+| ~~More inline comments in shell scripts~~ | Maintainability | Low | ✅ Not needed (3 scripts, 92 lines, well-commented) |
+| Load/stress testing | Performance validation | Medium | ⏳ Pending |
 
-### Low Priority
+### Remaining Low Priority
 
-| Issue | Impact | Effort | Status |
-|-------|--------|--------|--------|
-| ~~Architecture diagrams~~ | Documentation completeness | Medium | ✅ Done (PR #359) |
-| ~~Quick reference card~~ | Minor DX improvement | Low | ✅ Done (PR #358) |
-| ~~Coverage report uploads~~ | Visibility | Low | ✅ Done (GitHub Pages via book workflow) |
-| ~~Re-add mypy~~ | Type safety | Medium | ✅ Done (PR #367, #368) |
-| ~~Glossary of Rhiza terms~~ | Documentation | Low | ✅ Done (PR #356) |
-| ~~Tighten dependency versions~~ | Stability | Low | ✅ Done (PR #355) |
-| ~~Pin GitHub Actions to SemVer~~ | Reproducibility | Low | ✅ Done (PR #348) |
-| ~~SLSA provenance~~ | Supply chain security | Medium | ✅ Done (PR #353) |
-| ~~Demo recording instructions~~ | Onboarding | Low | ✅ Done (PR #360) |
-| ~~Enable full shellcheck in actionlint~~ | CI reliability | Low | ✅ Done (PR #361) |
+| Improvement | Impact | Effort | Status |
+|-------------|--------|--------|--------|
+| VSCode extension documentation | DX improvement | Low | ⏳ Pending |
+| More frequent Renovate schedule | Freshness | Low | ⏳ Pending |
+| Document dependency version rationale | Clarity | Low | ⏳ Pending |
+
+### Recently Completed (2026-02-15)
+
+| Improvement | Impact | Status |
+|-------------|--------|--------|
+| **Enable Security (S) linting rules** | Code security | ✅ Done (PR #678) |
+| **Enable Simplicity (SIM) linting rules** | Code quality | ✅ Done (PR #678) |
+| **Refactor per-file exceptions** | Maintainability | ✅ Done (PR #678) |
+| **Add Trivy Docker scanning** | Container security | ✅ Done (rhiza_docker.yml) |
+| **SBOM generation with attestations** | Supply chain | ✅ Done (rhiza_release.yml) |
+| **Property-based testing framework** | Test depth | ✅ Done (tests/property/) |
+| **GitHub Pages documentation** | Accessibility | ✅ Done (rhiza_book.yml) |
+| **Environment-based release protection** | Deploy safety | ✅ Done (release environment) |
+
+### Previously Completed
+
+| Issue | Status |
+|-------|--------|
+| Add SBOM test suite | ✅ Done (PR #336) |
+| Create SECURITY.md | ✅ Done (PR #354) |
+| Add coverage thresholds | ✅ Done (90% threshold) |
+| Add shellcheck to CI | ✅ Done (PR #350) |
+| Add --dry-run to release | ✅ Done (PR #350) |
+| Custom exception classes | ✅ Done (PR #349) |
+| Add set -u to shell scripts | ✅ Done (PR #350) |
+| Document dev dependencies | ✅ Done (PR #357) |
+| Architecture diagrams | ✅ Done (PR #359) |
+| Quick reference card | ✅ Done (PR #358) |
+| Coverage report uploads | ✅ Done (GitHub Pages) |
+| Re-add mypy | ✅ Done (PR #367, #368) |
+| Glossary of Rhiza terms | ✅ Done (PR #356) |
+| Tighten dependency versions | ✅ Done (PR #355) |
+| Pin GitHub Actions to SemVer | ✅ Done (PR #348) |
+| SLSA provenance | ✅ Done (PR #353) |
+| Demo recording instructions | ✅ Done (PR #360) |
+| Enable full shellcheck | ✅ Done (PR #361) |
 
 ---
 
 ## Conclusion
 
-Rhiza demonstrates professional-grade engineering with a focus on automation, reproducibility, and developer experience. The "living templates" concept is innovative and well-executed. The modular Makefile system with hooks is particularly elegant.
+Rhiza demonstrates **enterprise-grade engineering** with particular excellence in:
 
 **Key Strengths:**
 1. Architecture excellence (living templates, modular Makefile, mermaid diagrams)
@@ -317,8 +370,29 @@ Rhiza demonstrates professional-grade engineering with a focus on automation, re
 6. Shell script hardening (shellcheck, dry-run, set -eu)
 7. Modern type checking with ty replacing mypy
 
-**Remaining Areas for Investment:**
-- None significant - all priority items completed
+**Key Strengths:**
+- Novel "living templates" approach enabling continuous configuration sync
+- Hierarchical Makefile system with extension hooks (pre/post-install, sync, validate, release, bump)
+- Comprehensive documentation with mermaid diagrams, glossary, quick reference
+- Multi-Python version testing (3.11-3.14) with dynamic matrix
+- SLSA provenance attestations and SECURITY.md with response SLAs
+- 90% coverage threshold with GitHub Pages reporting
+- Strict type checking with mypy
+- Full shellcheck validation with POSIX compliance
+
+**Recent Improvements (2026-02-15)**:
+- ✅ Security (S) and simplicity (SIM) linting rules enabled (PR #678)
+- ✅ Per-file exceptions refactored for better maintainability (PR #678)
+- ✅ SBOM generation with CycloneDX and attestations
+- ✅ Trivy container vulnerability scanning for Docker images
+- ✅ Property-based testing with Hypothesis framework
+- ✅ GitHub Pages documentation deployment with MkDocs
+- ✅ Environment-based deployment protection for releases
+
+**Remaining Opportunities for Enhancement:**
+1. **High Priority**: Container image scanning for devcontainer (branch exists)
+2. **Medium Priority**: More inline comments in scripts, load/stress testing
+3. **Low Priority**: VSCode extension docs, more frequent Renovate schedule, dependency rationale docs
 
 **Progress Summary:**
 - 18 of 18 priority improvements completed via PRs #336, #348-365 and book workflow

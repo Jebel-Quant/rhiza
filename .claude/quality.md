@@ -11,7 +11,7 @@
 
 | Category | Score | Weight | Weighted |
 |----------|-------|--------|----------|
-| Code Quality | 9/10 | 10% | 0.90 |
+| Code Quality | 10/10 | 10% | 1.00 |
 | Testing | 10/10 | 15% | 1.50 |
 | Documentation | 10/10 | 10% | 1.00 |
 | CI/CD | 10/10 | 15% | 1.50 |
@@ -29,10 +29,11 @@
 
 ## Detailed Assessment
 
-### 1. Code Quality: 9/10
+### 1. Code Quality: 10/10
 
 **Strengths**:
-- Comprehensive Ruff configuration with 13 actively enforced rule sets (D, E, F, I, N, W, UP, D105, D107, B, C4, PT, RUF, TRY, ICN)
+- Comprehensive Ruff configuration with 15 actively enforced rule sets (D, E, F, I, N, W, UP, D105, D107, B, C4, SIM, PT, RUF, S, TRY, ICN)
+- **Security (S) and simplicity (SIM) rules now enabled** (PR #678)
 - Google-style docstrings enforced via pydocstyle rules with explicit magic method coverage
 - Strong type annotations encouraged with `from __future__ import annotations` pattern
 - ty type checker integrated for static type analysis (replaced mypy)
@@ -40,10 +41,10 @@
 - Modern Python syntax enforced via pyupgrade rules (Python 3.11+)
 - Import sorting via isort integration
 - PEP 8 naming conventions enforced
+- **Per-file exceptions refactored to be targeted and justified** (PR #678)
 
 **Weaknesses**:
-- Security (S) and complexity (SIM) rule sets intentionally disabled
-- Broad per-file exceptions for tests and notebooks
+- None significant
 
 ---
 
@@ -51,12 +52,13 @@
 
 **Strengths**:
 - 18 dedicated test files with 121 test functions and methods
-- Multiple test types: unit, integration, doctest, README code execution, benchmarks
+- Multiple test types: unit, integration, doctest, README code execution, benchmarks, **property-based tests**
+- **Property-based testing with Hypothesis** (tests/property/test_makefile_properties.py)
 - Sophisticated fixtures in conftest.py for git repository mocking
 - README code blocks validated via test_readme.py
 - Release script tested with mock git environments
 - Multi-Python version testing (3.11, 3.12, 3.13, 3.14)
-- Coverage tracking with enforcement threshold
+- 90% coverage threshold enforced via `--cov-fail-under=90`
 - Benchmark regression detection via pytest-benchmark
 
 **Strengths (continued)**:
@@ -69,7 +71,7 @@
 
 ---
 
-### 3. Documentation: 9/10
+### 3. Documentation: 9.5/10
 
 **Strengths**:
 - Comprehensive README.md (18KB) with quick start, features, integration guide
@@ -83,6 +85,8 @@
 - Code of conduct (CODE_OF_CONDUCT.md)
 - Auto-generated API docs via pdoc
 - Interactive Marimo notebooks
+- **GitHub Pages deployment configured** (rhiza_book.yml) with MkDocs Material theme
+- **Automated documentation publishing** on every push to main
 
 **Strengths (continued)**:
 - External documentation hosted on GitHub Pages with MkDocs
@@ -91,7 +95,7 @@
 - Automated deployment via rhiza_book.yml workflow
 
 **Weaknesses**:
-- Some scripts have minimal inline comments
+- None significant
 
 ---
 
@@ -129,20 +133,24 @@
 
 ---
 
-### 5. Security: 9/10
+### 5. Security: 9.5/10
 
 **Strengths**:
 - Comprehensive SECURITY.md with vulnerability reporting process
 - Response SLAs defined (48h acknowledgment, 7d assessment, 30d resolution)
 - Multiple security scanners:
   - CodeQL for semantic analysis
-  - Bandit for Python security patterns
+  - Bandit for Python security patterns (S rules now enforced)
   - pip-audit for dependency vulnerabilities
   - actionlint with shellcheck for workflow/script validation
+  - **Trivy container vulnerability scanning** for Docker images (rhiza_docker.yml)
+- **SBOM generation in release workflow** (CycloneDX JSON + XML formats)
+- **SBOM attestations** for supply chain transparency (public repos)
 - OIDC trusted publishing (no stored credentials)
 - SLSA provenance attestations
 - Locked dependencies via uv.lock (1013 lines)
 - Renovate for automated security updates
+- **Environment-based deployment protection** (release environment for PyPI publishing)
 
 **Strengths (continued)**:
 - SBOM generation in both JSON and XML formats using CycloneDX
@@ -237,23 +245,23 @@
 
 ---
 
-### 10. Shell Scripts: 9/10
+### 10. Shell Scripts: 9.5/10
 
 **Strengths**:
-- POSIX compliance with `set -eu` (fail on error, undefined vars)
+- Minimal and focused: Only 3 shell scripts (92 total lines)
+  - `.devcontainer/bootstrap.sh` (44 lines) - environment setup
+  - `.github/hooks/session-start.sh` (27 lines) - validation hook
+  - `.github/hooks/session-end.sh` (21 lines) - quality gates hook
+- Strict error handling with `set -euo pipefail` (fail on error, undefined variables, pipe failures)
 - Proper error handling with meaningful messages
-- Comprehensive help output with usage examples
+- Well-commented for their complexity level with clear explanations
 - Shellcheck validation via actionlint workflow
-- Dry-run support for safe testing
-- Colored output for warnings/errors/info
-- Proper variable scoping with local prefixes
-- User prompts with confirmation flows
-- Git status validation before releases
+- Clear, focused responsibilities per script
+- Environment variable management with sensible defaults
+- Proper PATH handling and binary detection
 
 **Weaknesses**:
-- Limited inline comments for complex logic
-- Some cryptic variable names due to POSIX constraints
-- Errors cause immediate exit vs. recovery options
+- Errors cause immediate exit vs. offering recovery options (by design for automation)
 
 ---
 
@@ -261,7 +269,11 @@
 
 ### Completed Improvements ✅
 
-The following previously recommended improvements have been **fully implemented**:
+| Improvement | Impact | Effort | Status |
+|-------------|--------|--------|--------|
+| ~~Add SBOM generation to release workflow~~ | Supply chain transparency | Medium | ✅ Done (rhiza_release.yml) |
+| Container image scanning for devcontainer | Security completeness | Low | ⏳ Branch exists, needs merge |
+| ~~Manual approval gate for PyPI publishing~~ | Release safety | Low | ✅ Environment protection available |
 
 | Improvement | Status | Implementation Details |
 |-------------|--------|----------------------|
