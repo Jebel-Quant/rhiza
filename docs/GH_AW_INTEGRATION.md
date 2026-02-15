@@ -8,7 +8,7 @@
 ## Progress Summary
 
 - ✅ **Phase 1**: CLI install + Makefile targets (`gh-aw.mk`) — [4137a71](https://github.com/Jebel-Quant/rhiza/commit/4137a71)
-- ✅ **Phase 2**: Template bundle definition — [TBD](https://github.com/Jebel-Quant/rhiza/commit/TBD)
+- ✅ **Phase 2**: Template bundle definition — [8eba2e7](https://github.com/Jebel-Quant/rhiza/commit/8eba2e7)
 - ⏳ **Phase 3**: Starter workflow templates — Next
 - ⏳ **Phase 4**: CI validation workflow
 - ⏳ **Phase 5**: Secrets setup + engine config
@@ -559,7 +559,7 @@ git push
 | Phase | Scope | Effort | Status | Commit |
 |-------|-------|--------|--------|--------|
 | **Phase 1** | CLI install + Makefile targets (`gh-aw.mk`) | 1–2 hours | ✅ **COMPLETE** | [4137a71](https://github.com/Jebel-Quant/rhiza/commit/4137a71) |
-| **Phase 2** | Template bundle definition | 30 min | ✅ **COMPLETE** | [TBD](https://github.com/Jebel-Quant/rhiza/commit/TBD) |
+| **Phase 2** | Template bundle definition | 30 min | ✅ **COMPLETE** | [8eba2e7](https://github.com/Jebel-Quant/rhiza/commit/8eba2e7) |
 | **Phase 3** | Starter workflow templates (3 workflows) | 2–3 hours | ⏳ Pending | — |
 | **Phase 4** | CI validation workflow | 30 min | ⏳ Pending | — |
 | **Phase 5** | Secrets setup + engine config | 1 hour | ⏳ Pending | — |
