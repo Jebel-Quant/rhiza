@@ -2,7 +2,7 @@
 
 **Repository**: Rhiza
 **Analysis Date**: 2026-01-18
-**Last Updated**: 2026-01-18
+**Last Updated**: 2026-02-15
 **Overall Score**: 10/10
 
 ---
@@ -86,8 +86,8 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 ### 3. CI/CD: 10/10
 
 **Strengths:**
-- 14 comprehensive workflows covering all development phases:
-  - `rhiza_ci.yml` - Multi-Python version testing (3.11-3.14)
+- 15 comprehensive workflows covering all development phases:
+  - `rhiza_ci.yml` - Multi-Python version testing (3.11-3.14) with ty type checking
   - `rhiza_security.yml` - pip-audit + bandit
   - `rhiza_codeql.yml` - CodeQL analysis (configurable)
   - `rhiza_release.yml` - Multi-phase release pipeline with OIDC publishing
@@ -100,7 +100,8 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
   - `rhiza_marimo.yml` - Notebook validation
   - `rhiza_docker.yml` - Docker image building
   - `rhiza_devcontainer.yml` - Dev container validation
-  - `rhiza_mypy.yml` - Static type checking (PR #368)
+  - `copilot-setup-steps.yml` - Copilot/agentic workflow setup
+  - `renovate_rhiza_sync.yml` - Automated renovate sync
 - Dynamic Python version matrix from `pyproject.toml`
 - OIDC authentication for PyPI (trusted publishing)
 - Minimal permissions model (least privilege)
@@ -121,6 +122,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
   - Per-file exemptions for tests and special modules
   - Google-style docstrings enforced
   - 120-character line length
+- ty type checker for static type analysis (replaced mypy)
 - `.editorconfig` (42 lines):
   - LF line endings, UTF-8 charset
   - 4 spaces for Python, 2 for YAML/JSON, tabs for Makefiles
@@ -143,15 +145,16 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 **Strengths:**
 - Single entry point: `make install` and `make help`
-- 40+ documented make targets organized by category:
+- 50+ documented make targets organized by category:
   - Rhiza Workflows: sync, validate, readme
   - Bootstrap: install-uv, install, clean
-  - Quality: deptry, fmt
+  - Quality: deptry, fmt, typecheck
   - Releasing: bump, release
-  - Testing: test, benchmark
+  - Testing: test, benchmark, typecheck
   - Documentation: docs, book
   - Docker: docker-build, docker-run
   - GitHub: view-prs, view-issues, failed-workflows
+  - Agentic Workflows: copilot, claude, analyse-repo, summarise-changes
 - Fast setup with `uv` (seconds, not minutes)
 - `.devcontainer` for VS Code/Codespaces
 - Color-coded output in scripts
@@ -176,7 +179,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Clean utility scripts with proper error handling
 - Standard library preference (tomllib, json, pathlib)
 - Custom exception hierarchy: `RhizaError`, `VersionSpecifierError`, `PyProjectError` (PR #349)
-- ty type checker with CI integration (PR #367, #368, updated to ty)
+- ty type checker fully integrated replacing mypy (consolidated to 'make typecheck')
 
 **Weaknesses:**
 - None significant
@@ -309,11 +312,12 @@ Rhiza demonstrates professional-grade engineering with a focus on automation, re
 
 **Key Strengths:**
 1. Architecture excellence (living templates, modular Makefile, mermaid diagrams)
-2. Comprehensive CI/CD (14 workflows including mypy, full shellcheck validation)
+2. Comprehensive CI/CD (15 workflows including ty type checking, full shellcheck validation)
 3. Excellent documentation (glossary, quick reference, architecture diagrams, demo instructions)
 4. Strong security posture (SLSA, SECURITY.md, SBOM tests, actionlint)
-5. Great developer experience
+5. Great developer experience with agentic workflow support
 6. Shell script hardening (shellcheck, dry-run, set -eu)
+7. Modern type checking with ty replacing mypy
 
 **Remaining Areas for Investment:**
 - None significant - all priority items completed
@@ -322,11 +326,13 @@ Rhiza demonstrates professional-grade engineering with a focus on automation, re
 - 18 of 18 priority improvements completed via PRs #336, #348-365 and book workflow
 - 90% coverage threshold enforced in tests.mk
 - Coverage reports published to GitHub Pages via `make book`
-- ty type checker fully integrated with CI workflow (PR #367, #368, updated to ty)
+- ty type checker fully integrated replacing mypy (consolidated to 'make typecheck' only)
 - Test coverage at 2,299 lines across 15 test files
 - Score improved from 8.8/10 to 10/10
 - All high priority items addressed
 - Security at 10/10 with full shellcheck validation
 - PR #365 added hello module example demonstrating type hints, docstrings, and doctests
+- Agentic workflow support added with copilot-setup-steps.yml
+- Current version: 0.7.5
 
 This repository now achieves enterprise-grade quality suitable for adoption as a template for Python projects.

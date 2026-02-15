@@ -1,8 +1,8 @@
 # Repository Quality Scoring
 
 **Repository**: Rhiza
-**Assessment Date**: 2026-02-11
-**Version Analyzed**: 0.7.1
+**Assessment Date**: 2026-02-15
+**Version Analyzed**: 0.7.5
 **Overall Score**: 9.4/10
 
 ---
@@ -35,6 +35,7 @@
 - Comprehensive Ruff configuration with 13 actively enforced rule sets (D, E, F, I, N, W, UP, D105, D107, B, C4, PT, RUF, TRY, ICN)
 - Google-style docstrings enforced via pydocstyle rules with explicit magic method coverage
 - Strong type annotations encouraged with `from __future__ import annotations` pattern
+- ty type checker integrated for static type analysis (replaced mypy)
 - 120-character line length with consistent formatting
 - Modern Python syntax enforced via pyupgrade rules (Python 3.11+)
 - Import sorting via isort integration
@@ -88,9 +89,8 @@
 ### 4. CI/CD: 10/10
 
 **Strengths**:
-- 14 GitHub Actions workflows covering all development phases:
-  - `rhiza_ci.yml` - Multi-Python testing with dynamic matrix
-  - `rhiza_mypy.yml` - Strict static type checking
+- 15 GitHub Actions workflows covering all development phases:
+  - `rhiza_ci.yml` - Multi-Python testing with dynamic matrix (includes ty type checking)
   - `rhiza_codeql.yml` - CodeQL security scanning
   - `rhiza_security.yml` - pip-audit + bandit
   - `rhiza_deptry.yml` - Dependency hygiene
@@ -103,6 +103,8 @@
   - `rhiza_marimo.yml` - Notebook validation
   - `rhiza_sync.yml` - Template synchronization
   - `rhiza_validate.yml` - Structure validation
+  - `copilot-setup-steps.yml` - Copilot/agentic workflow setup
+  - `renovate_rhiza_sync.yml` - Automated renovate sync
 - OIDC trusted publishing (no stored PyPI credentials)
 - Dynamic Python version matrix from pyproject.toml
 - Minimal permissions model
@@ -148,6 +150,7 @@
 - Configuration as code (pyproject.toml, ruff.toml, pytest.ini)
 - Minimal root Makefile (12 lines) delegating to .rhiza/rhiza.mk
 - Reusable Python utilities in .rhiza/utils/ with proper exception handling
+- Agentic workflow support with copilot and claude targets
 
 **Weaknesses**:
 - Mixed paradigms (Bash, Python, Make, YAML)
@@ -180,7 +183,7 @@
 ### 8. Developer Experience: 9/10
 
 **Strengths**:
-- 52 Makefile targets with auto-generated help
+- 50+ Makefile targets with auto-generated help
 - Single entry point: `make install` and `make help`
 - .editorconfig for cross-IDE consistency
 - 17 pre-commit hooks for local validation
@@ -189,6 +192,7 @@
 - Dry-run support in release.sh
 - Quick start guide in README
 - UV auto-installation via `make install-uv`
+- Agentic workflow integration (make copilot, make claude)
 
 **Weaknesses**:
 - Learning curve for .rhiza/make.d/ extension system
@@ -267,11 +271,12 @@
 
 Rhiza demonstrates **enterprise-grade engineering** with particular excellence in:
 
-1. **Automation**: 14 CI/CD workflows, 52 make targets, 17 pre-commit hooks
+1. **Automation**: 15 CI/CD workflows, 50+ make targets, 17 pre-commit hooks
 2. **Testing**: Comprehensive suite with innovative techniques (README testing, mock git repos)
 3. **Security**: Multi-layer protection with OIDC, CodeQL, bandit, pip-audit
 4. **Dependency Management**: Zero runtime deps, locked builds, automated updates
-5. **Developer Experience**: Unified Makefile interface, sensible defaults, Codespaces support
+5. **Developer Experience**: Unified Makefile interface, sensible defaults, Codespaces support, agentic workflows
+6. **Type Safety**: ty type checker integration replacing mypy for modern Python type checking
 
 The repository serves as an exemplary template for Python projects, demonstrating how to balance standardization with extensibility through its living template architecture.
 
