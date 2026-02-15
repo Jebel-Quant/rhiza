@@ -50,7 +50,7 @@ Quick reference to all utilities, makefiles, and resources in the `.rhiza/` dire
 | `tests.txt` | Testing dependencies (pytest, coverage) |
 | `tools.txt` | Development tools (pre-commit, python-dotenv) |
 
-See [requirements/README.md](.rhiza/requirements/README.md) for details.
+See [requirements/README.md](requirements/README.md) for details.
 
 ## 🧪 Test Suite (`.rhiza/tests/`)
 
@@ -65,7 +65,7 @@ See [requirements/README.md](.rhiza/requirements/README.md) for details.
 
 **Total**: 23 Python test files
 
-See [tests/README.md](.rhiza/tests/README.md) for details.
+See [tests/README.md](tests/README.md) for details.
 
 ## 📚 Documentation (`.rhiza/docs/`)
 
@@ -147,12 +147,8 @@ Defined in `template-bundles.yml`:
 
 ## 🔗 Related Documentation
 
-- [Architecture Diagrams](../docs/ARCHITECTURE.md) - Visual architecture overview
+- [Architecture Diagrams & Naming Conventions](../docs/ARCHITECTURE.md) - Visual architecture overview and detailed naming conventions
 - [Makefile Cookbook](make.d/README.md) - Common patterns and recipes
 - [Test Suite Guide](tests/README.md) - Testing conventions
 - [Customization Guide](../docs/CUSTOMIZATION.md) - How to customize Rhiza
 - [Quick Reference](../docs/QUICK_REFERENCE.md) - Common commands
-
-## 🎨 Naming Conventions
-
-See [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) for detailed naming conventions and organizational patterns.
