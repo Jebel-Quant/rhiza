@@ -44,6 +44,16 @@ Dependency validation tests. These tests ensure that project dependencies are co
 
 - `test_dependency_health.py` — Validates pyproject.toml and requirements files
 
+### `stress/`
+Stress tests that verify system stability under heavy load. These tests execute operations under concurrent load and repeated execution to detect race conditions, resource leaks, and performance degradation.
+
+- `test_makefile_stress.py` — Makefile operations under concurrent/repeated load
+- `test_filesystem_stress.py` — File system operations under stress
+- `test_git_stress.py` — Git operations under concurrent load
+- `test_subprocess_stress.py` — Subprocess handling under stress
+
+See [stress/README.md](stress/README.md) for detailed documentation.
+
 ## Running Tests
 
 ### Run all tests
@@ -61,6 +71,19 @@ uv run pytest .rhiza/tests/integration/
 uv run pytest .rhiza/tests/sync/
 uv run pytest .rhiza/tests/utils/
 uv run pytest .rhiza/tests/deps/
+uv run pytest .rhiza/tests/stress/
+```
+
+### Run stress tests with custom parameters
+```bash
+# Run all stress tests (default: 100 iterations, 10 workers)
+uv run pytest .rhiza/tests/stress/ -v
+
+# Run with fewer iterations (faster)
+uv run pytest .rhiza/tests/stress/ -v --iterations=10
+
+# Skip stress tests when running full test suite
+uv run pytest .rhiza/tests/ -v -m "not stress"
 ```
 
 ### Run a specific test file
