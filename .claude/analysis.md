@@ -268,9 +268,9 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Python version specified in .python-version and pyproject.toml
 - Each dev dependency documented with inline comments
 - Renovate PRs trigger full CI pipeline, effectively testing updates before merge
+- Weekly schedule (Tuesdays) balances freshness with stability for template repository
 
 **Weaknesses:**
-- Renovate only checks weekly (Tuesdays) - could be more frequent for security patches
 - Limited documentation of version choice rationale in pyproject.toml
 
 ---
@@ -316,7 +316,7 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 | Improvement | Impact | Effort | Status |
 |-------------|--------|--------|--------|
 | VSCode extension documentation | DX improvement | Low | ⏳ Pending |
-| More frequent Renovate schedule | Freshness | Low | ⏳ Pending |
+| ~~More frequent Renovate schedule~~ | Freshness | Low | ✅ Weekly appropriate for template stability |
 | Document dependency version rationale | Clarity | Low | ⏳ Pending |
 
 ### Recently Completed (2026-02-15)

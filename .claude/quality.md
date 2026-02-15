@@ -180,10 +180,10 @@
 - Renovate automation for updates (pep621, pre-commit, github-actions, dockerfile)
 - Lock file committed for reproducibility
 - Python version specified in .python-version and pyproject.toml
+- Weekly Renovate schedule (Tuesdays) balances freshness with stability
 
 **Weaknesses**:
-- Renovate only checks weekly (Tuesdays)
-- Limited documentation of version choice rationale
+- Limited documentation of version choice rationale in pyproject.toml
 
 ---
 
@@ -266,7 +266,7 @@
 | Improvement | Impact | Effort | Status |
 |-------------|--------|--------|--------|
 | VSCode extension documentation | DX improvement | Low | ⏳ Pending |
-| More frequent Renovate schedule | Freshness | Low | ⏳ Pending |
+| ~~More frequent Renovate schedule~~ | Freshness | Low | ✅ Weekly appropriate for template stability |
 | Document dependency version rationale | Clarity | Low | ⏳ Pending |
 
 ### Recently Completed (PR #678 and related)
