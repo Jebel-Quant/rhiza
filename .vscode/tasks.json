@@ -1,0 +1,508 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Rhiza: Install",
+      "type": "shell",
+      "command": "make install",
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "package",
+        "color": "terminal.ansiBlue"
+      }
+    },
+    {
+      "label": "Rhiza: Test All",
+      "type": "shell",
+      "command": "make test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [
+        "$pytest"
+      ],
+      "icon": {
+        "id": "beaker",
+        "color": "terminal.ansiGreen"
+      }
+    },
+    {
+      "label": "Rhiza: Format Code",
+      "type": "shell",
+      "command": "make fmt",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "paintcan",
+        "color": "terminal.ansiYellow"
+      }
+    },
+    {
+      "label": "Rhiza: Run All CI Checks",
+      "type": "shell",
+      "command": "make all",
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "check-all",
+        "color": "terminal.ansiGreen"
+      }
+    },
+    {
+      "label": "Rhiza: Check Dependencies",
+      "type": "shell",
+      "command": "make deptry",
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "library",
+        "color": "terminal.ansiCyan"
+      }
+    },
+    {
+      "label": "Rhiza: Generate Docs",
+      "type": "shell",
+      "command": "make docs",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "book",
+        "color": "terminal.ansiMagenta"
+      }
+    },
+    {
+      "label": "Rhiza: Build Book",
+      "type": "shell",
+      "command": "make book",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "book",
+        "color": "terminal.ansiMagenta"
+      }
+    },
+    {
+      "label": "Rhiza: Serve MkDocs",
+      "type": "shell",
+      "command": "make mkdocs-serve",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^Serving on (.*)$",
+          "line": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^Building documentation",
+          "endsPattern": "^Serving on"
+        }
+      },
+      "icon": {
+        "id": "globe",
+        "color": "terminal.ansiBlue"
+      }
+    },
+    {
+      "label": "Rhiza: Clean",
+      "type": "shell",
+      "command": "make clean",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "trash",
+        "color": "terminal.ansiRed"
+      }
+    },
+    {
+      "label": "Rhiza: Bump Version (Patch)",
+      "type": "shell",
+      "command": "make bump BUMP=patch",
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "tag",
+        "color": "terminal.ansiYellow"
+      }
+    },
+    {
+      "label": "Rhiza: Bump Version (Minor)",
+      "type": "shell",
+      "command": "make bump BUMP=minor",
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "tag",
+        "color": "terminal.ansiYellow"
+      }
+    },
+    {
+      "label": "Rhiza: Bump Version (Major)",
+      "type": "shell",
+      "command": "make bump BUMP=major",
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "tag",
+        "color": "terminal.ansiYellow"
+      }
+    },
+    {
+      "label": "Rhiza: Publish (Bump + Release)",
+      "type": "shell",
+      "command": "make publish",
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "rocket",
+        "color": "terminal.ansiGreen"
+      }
+    },
+    {
+      "label": "Rhiza: Release Status",
+      "type": "shell",
+      "command": "make release-status",
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "info",
+        "color": "terminal.ansiCyan"
+      }
+    },
+    {
+      "label": "Rhiza: Sync Template",
+      "type": "shell",
+      "command": "make sync",
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "sync",
+        "color": "terminal.ansiBlue"
+      }
+    },
+    {
+      "label": "Rhiza: Validate Project",
+      "type": "shell",
+      "command": "make validate",
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "shield",
+        "color": "terminal.ansiGreen"
+      }
+    },
+    {
+      "label": "Rhiza: Type Check",
+      "type": "shell",
+      "command": "make typecheck",
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "symbol-type-parameter",
+        "color": "terminal.ansiBlue"
+      }
+    },
+    {
+      "label": "Rhiza: Security Scan",
+      "type": "shell",
+      "command": "make security",
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "shield-check",
+        "color": "terminal.ansiRed"
+      }
+    },
+    {
+      "label": "Rhiza: Marimo Server",
+      "type": "shell",
+      "command": "make marimo",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(.*)$",
+          "line": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^Starting",
+          "endsPattern": "^Running"
+        }
+      },
+      "icon": {
+        "id": "notebook",
+        "color": "terminal.ansiMagenta"
+      }
+    },
+    {
+      "label": "Rhiza: Docker Build",
+      "type": "shell",
+      "command": "make docker-build",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "package",
+        "color": "terminal.ansiBlue"
+      }
+    },
+    {
+      "label": "Rhiza: Docker Run",
+      "type": "shell",
+      "command": "make docker-run",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "run",
+        "color": "terminal.ansiGreen"
+      }
+    },
+    {
+      "label": "Rhiza: Presentation",
+      "type": "shell",
+      "command": "make presentation",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "preview",
+        "color": "terminal.ansiMagenta"
+      }
+    },
+    {
+      "label": "Rhiza: Presentation Serve",
+      "type": "shell",
+      "command": "make presentation-serve",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "device-desktop",
+        "color": "terminal.ansiMagenta"
+      }
+    },
+    {
+      "label": "Rhiza: Tutorial",
+      "type": "shell",
+      "command": "make tutorial",
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "mortar-board",
+        "color": "terminal.ansiCyan"
+      }
+    },
+    {
+      "label": "Rhiza: Help",
+      "type": "shell",
+      "command": "make help",
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": [],
+      "icon": {
+        "id": "question",
+        "color": "terminal.ansiYellow"
+      }
+    }
+  ]
+}
