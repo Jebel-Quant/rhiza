@@ -63,6 +63,7 @@ nav:
   - Architecture: ARCHITECTURE.md
   - Quick Reference: QUICK_REFERENCE.md
   - Customization: CUSTOMIZATION.md
+  - Dependencies: DEPENDENCIES.md
   - Demo: DEMO.md
   - Glossary: GLOSSARY.md
   - Releasing: RELEASING.md
