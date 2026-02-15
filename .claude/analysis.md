@@ -54,9 +54,9 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 - Clean separation between core (`.rhiza/`) and user extensions (`local.mk`)
 - Single source of truth for Python version (`.python-version`)
 - All Python execution through `uv run` / `uvx`
+- Unified interface: everything steered through `make` and `uv` commands
 
 **Weaknesses:**
-- Mixed paradigms (Bash, Python, Make, YAML) may increase onboarding complexity
 - Deep directory nesting in some areas (`.rhiza/make.d/`, `.rhiza/utils/`)
 
 ---
@@ -135,7 +135,6 @@ Rhiza is a well-architected, professionally-maintained repository implementing a
 
 **Weaknesses:**
 - Few TODO comments for roadmap visibility
-- Mixed paradigms (Bash, Python, Make, YAML) require multiple skill sets
 
 ---
 

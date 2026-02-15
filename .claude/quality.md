@@ -153,10 +153,10 @@
 - Configuration as code (pyproject.toml, ruff.toml, pytest.ini)
 - Minimal root Makefile (12 lines) delegating to .rhiza/rhiza.mk
 - Reusable Python utilities in .rhiza/utils/ with proper exception handling
+- Unified interface: everything steered through `make` and `uv` commands
 
 **Weaknesses**:
-- Mixed paradigms (Bash, Python, Make, YAML)
-- Deep directory nesting in some areas
+- Deep directory nesting in some areas (`.rhiza/make.d/`, `.rhiza/utils/`)
 
 ---
 
