@@ -186,7 +186,6 @@
 - 17 pre-commit hooks for local validation
 - GitHub Codespaces support with .devcontainer
 - Colored output in scripts (BLUE, RED, YELLOW)
-- Dry-run support in release.sh
 - Quick start guide in README
 - UV auto-installation via `make install-uv`
 
@@ -203,7 +202,6 @@
 - Descriptive naming (version_matrix.py, check_workflow_names.py)
 - Custom exception classes (RhizaError, VersionSpecifierError, PyProjectError)
 - Consistent Google-style docstrings with Args, Returns, Raises
-- Well-structured release.sh with helper functions
 - Active maintenance (recent commits within days)
 - Semantic commit messages with PR references
 - Configuration-driven behavior via template.yml and pyproject.toml
@@ -211,7 +209,6 @@
 
 **Weaknesses**:
 - Few TODO comments for roadmap visibility
-- release.sh has complex bash logic
 
 ---
 
