@@ -288,14 +288,18 @@ bundles:
     notes: |
       Provides infrastructure for gh-aw (GitHub Agentic Workflows):
       - Makefile targets for compile/run/status
-      - Starter workflow templates (to be added in Phase 3)
+      - Starter workflow templates
       - CI validation for lock file freshness (to be added in Phase 4)
       - Documentation (to be added in Phase 6)
     files:
       # Makefile extensions
       - .rhiza/make.d/gh-aw.mk
 
+      # Starter agentic workflows (Phase 3)
+      - .github/workflows/daily-repo-status.md
+      - .github/workflows/ci-doctor.md
+      - .github/workflows/issue-triage.md
+
       # Note: Additional files will be added in subsequent phases:
-      # Phase 3: Starter agentic workflows (.github/workflows/*.md)
       # Phase 4: CI validation workflow (rhiza_gh-aw-validate.yml)
       # Phase 6: Documentation (docs/GH_AW.md)
