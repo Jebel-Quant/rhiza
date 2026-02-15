@@ -94,6 +94,7 @@ flowchart LR
         install[make install]
         sync[make sync]
         release[make release]
+        publish[make publish]
         bump[make bump]
     end
 
