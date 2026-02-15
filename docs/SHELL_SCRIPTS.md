@@ -209,11 +209,11 @@ Called automatically by `.github/hooks/hooks.json` at session end:
 
 ## Testing
 
-### Test Suite: `tests/shell/test_scripts.sh`
+### Test Suite: `.rhiza/tests/shell/test_scripts.sh`
 
 **Purpose**: Validates shell script correctness and error handling.
 
-**Location**: `tests/shell/test_scripts.sh` (265 lines)
+**Location**: `.rhiza/tests/shell/test_scripts.sh` (265 lines)
 
 **What it tests**:
 - ✅ Dry-run mode functionality
@@ -228,10 +228,10 @@ Called automatically by `.github/hooks/hooks.json` at session end:
 
 ```bash
 # Normal mode (summary only)
-bash tests/shell/test_scripts.sh
+bash .rhiza/tests/shell/test_scripts.sh
 
 # Verbose mode (show each test)
-bash tests/shell/test_scripts.sh --verbose
+bash .rhiza/tests/shell/test_scripts.sh --verbose
 ```
 
 **Example Output**:
@@ -327,7 +327,7 @@ No external dependencies required (no bats-core needed).
 
 4. **Run tests after modifications**:
    ```bash
-   bash tests/shell/test_scripts.sh --verbose
+   bash .rhiza/tests/shell/test_scripts.sh --verbose
    ```
 
 ## Troubleshooting
@@ -467,7 +467,7 @@ fi
 
 ### Extending Test Suite
 
-To add new tests to `tests/shell/test_scripts.sh`:
+To add new tests to `.rhiza/tests/shell/test_scripts.sh`:
 
 ```bash
 # Test N: Description
