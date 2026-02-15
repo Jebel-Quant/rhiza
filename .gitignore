@@ -103,3 +103,5 @@ cython_debug/
 # Makefile
 local.mk
 
+.bandit-baseline.json
+
