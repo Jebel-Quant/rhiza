@@ -19,12 +19,15 @@ jobs:
         id: install-gh-aw
         continue-on-error: true
         run: |
-          if gh extension install github/gh-aw 2>&1 | grep -q "HTTP 403\|not found"; then
+          if output=$(gh extension install github/gh-aw 2>&1); then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          elif echo "$output" | grep -q "HTTP 403\|not found"; then
             echo "gh-aw extension not available (expected for public repos)"
             echo "available=false" >> "$GITHUB_OUTPUT"
-            exit 0
+          else
+            echo "Failed to install gh-aw: $output"
+            echo "available=false" >> "$GITHUB_OUTPUT"
           fi
-          echo "available=true" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
