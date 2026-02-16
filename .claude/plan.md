@@ -44,9 +44,10 @@ While the disabled rules are contextually appropriate for tests, we can demonstr
 | Document security exceptions | Add inline comments in conftest.py and test files explaining why S101/S603/S607 are safe in test context | 2h | High |
 | Add security test suite | Create `tests/security/test_security_patterns.py` to validate no real security issues exist | 4h | High |
 | Security testing guide | Add `docs/SECURITY_TESTING.md` documenting our security testing approach | 2h | Medium |
-| SAST baseline | Generate and commit a bandit baseline file showing zero findings in production code | 1h | Medium |
+| SAST baseline automation | Add `make security-baseline` target to generate `.bandit-baseline.json` (git-ignored, regenerate as needed) | 1h | Low |
 
 **Total Effort**: 9 hours
+**Note**: `.bandit-baseline.json` is git-ignored as it's a generated file with minimal value when baseline is clean (zero findings)
 **Success Criteria**: Security score reaches 10/10 by demonstrating comprehensive security testing approach
 
 ---

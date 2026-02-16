@@ -18,4 +18,10 @@ make test || {
     exit 1
 }
 
+echo "[copilot-hook] Running All Checks..."
+make all || {
+    echo "[copilot-hook] WARNING: Some checks failed."
+    exit 1
+}
+
 echo "[copilot-hook] All quality gates passed."
