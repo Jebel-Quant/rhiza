@@ -59,7 +59,6 @@ bundles:
       - .gitignore
       - .python-version
       - ruff.toml
-      - renovate.json
 
       # Documentation files (user-facing docs)
       - docs/SECURITY.md
@@ -88,6 +87,17 @@ bundles:
       - .github/copilot-instructions.md
       - .github/agents
       - .github/hooks
+
+  # ============================================================================
+  # RENOVATE - Automated dependency updates
+  # ============================================================================
+  renovate:
+    description: "Renovate bot configuration for automated dependency updates"
+    standalone: true
+    requires: []
+    files:
+      # Renovate configuration
+      - renovate.json
 
   # ============================================================================
   # LEGAL - Legal and community files
@@ -226,7 +236,6 @@ bundles:
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_ci.yml
-      - .github/workflows/rhiza_mypy.yml
       - .github/workflows/rhiza_security.yml
       - .github/workflows/rhiza_codeql.yml
       - .github/workflows/rhiza_benchmarks.yml

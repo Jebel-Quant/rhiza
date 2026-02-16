@@ -2,7 +2,7 @@
 .idea
 .venv
 .ruff_cache
-.mypy_cache
+.ty_cache
 
 ### Don't expose API keys, etc.
 .env
@@ -99,4 +99,6 @@ cython_debug/
 
 # Makefile
 local.mk
+
+.bandit-baseline.json
 
