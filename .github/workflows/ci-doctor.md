@@ -24,7 +24,6 @@ tools:
 
 safe-outputs:
   create-issue:
-    title: "CI Doctor: {{ workflow_name }} failure diagnosis"
     labels: ["ci", "automated", "needs-attention"]
 
 network:
