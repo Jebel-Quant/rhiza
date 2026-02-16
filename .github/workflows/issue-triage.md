@@ -18,7 +18,7 @@ tools:
 safe-outputs:
   add-comment:
   add-labels:
-    labels: ["bug", "enhancement", "question", "documentation", "good first issue"]
+    allowed: ["bug", "enhancement", "question", "documentation", "good first issue"]
 
 network:
   allowed:
