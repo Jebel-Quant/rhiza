@@ -12,7 +12,7 @@
 - ✅ **Phase 3**: Starter workflow templates — [957c31b](https://github.com/Jebel-Quant/rhiza/commit/957c31b)
 - ✅ **Phase 4**: CI validation workflow — [dbeccd4](https://github.com/Jebel-Quant/rhiza/commit/dbeccd4)
 - ✅ **Phase 5**: Secrets setup + engine config — [774c873](https://github.com/Jebel-Quant/rhiza/commit/774c873)
-- ✅ **Phase 6**: Documentation — (This commit)
+- ✅ **Phase 6**: Documentation — [318265c](https://github.com/Jebel-Quant/rhiza/commit/318265c)
 
 ---
 
@@ -563,7 +563,7 @@ git push
 | **Phase 3** | Starter workflow templates (3 workflows) | 2–3 hours | ✅ **COMPLETE** | [957c31b](https://github.com/Jebel-Quant/rhiza/commit/957c31b) |
 | **Phase 4** | CI validation workflow | 30 min | ✅ **COMPLETE** | [dbeccd4](https://github.com/Jebel-Quant/rhiza/commit/dbeccd4) |
 | **Phase 5** | Secrets setup + engine config | 1 hour | ✅ **COMPLETE** | [774c873](https://github.com/Jebel-Quant/rhiza/commit/774c873) |
-| **Phase 6** | Documentation (GH_AW.md, copilot-instructions, quick ref) | 1–2 hours | ✅ **COMPLETE** | (This commit) |
+| **Phase 6** | Documentation (GH_AW.md, copilot-instructions, quick ref) | 1–2 hours | ✅ **COMPLETE** | [318265c](https://github.com/Jebel-Quant/rhiza/commit/318265c) |
 | **Total** | | **~6–9 hours** | **All phases complete** | — |
 
 ---
