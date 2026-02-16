@@ -19,7 +19,6 @@ tools:
 
 safe-outputs:
   create-issue:
-    title: "Daily Status Report — {{ date }}"
     labels: ["report", "automated"]
 
 network:

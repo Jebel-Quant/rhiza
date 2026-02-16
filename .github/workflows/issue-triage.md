@@ -16,9 +16,9 @@ tools:
     toolsets: [issues, repos]
 
 safe-outputs:
-  add-issue-comment:
-  add-issue-labels:
-    labels: ["bug", "enhancement", "question", "documentation", "good first issue"]
+  add-comment:
+  add-labels:
+    allowed: ["bug", "enhancement", "question", "documentation", "good first issue"]
 
 network:
   allowed:
