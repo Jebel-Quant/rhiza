@@ -1,6 +1,12 @@
 """Pytest configuration for stress tests.
 
 Provides fixtures and utilities specific to stress testing scenarios.
+
+Security Note:
+- S101 (assert usage): Safe in test code - asserts are expected in pytest tests
+- S603/S607 (subprocess usage): Not used in this file, but documented for completeness
+  Any subprocess calls in stress tests are for testing make/git commands in isolated
+  temporary environments with controlled inputs
 """
 
 from __future__ import annotations
