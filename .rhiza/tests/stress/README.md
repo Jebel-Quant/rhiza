@@ -9,35 +9,23 @@ Stress tests differ from regular integration tests and benchmarks:
 - **Benchmarks** measure performance of individual operations
 - **Stress tests** verify system stability under concurrent load and repeated operations
 
+These tests focus specifically on Rhiza's core operations: Makefile execution and Git operations used by release and sync workflows.
+
 ## Test Categories
 
 ### 1. Makefile Stress Tests (`test_makefile_stress.py`)
 
-Tests Makefile operations under stress:
-- Concurrent invocations of targets
+Tests Rhiza's Makefile operations under stress:
+- Concurrent invocations of targets (help, dry-run)
 - Repeated executions to detect resource leaks
-- Parallel variable printing and help generation
+- Parallel variable printing and Makefile parsing
 
-### 2. File System Stress Tests (`test_filesystem_stress.py`)
+### 2. Git Operations Stress Tests (`test_git_stress.py`)
 
-Tests file operations under heavy load:
-- Rapid file creation/deletion cycles
-- Directory traversal with large file counts
-- Template file materialization at scale
-
-### 3. Git Operations Stress Tests (`test_git_stress.py`)
-
-Tests git operations under concurrent load:
-- Parallel git status/diff commands
-- Concurrent tag operations
-- Rapid branch operations
-
-### 4. Subprocess Stress Tests (`test_subprocess_stress.py`)
-
-Tests subprocess handling under stress:
-- Concurrent subprocess spawning
-- Rapid subprocess creation/termination
-- Resource cleanup verification
+Tests Git operations used by Rhiza (release scripts, sync) under concurrent load:
+- Concurrent git status/log/diff/show commands
+- Repeated git operations (status, log, branch, rev-parse)
+- Rapid git rev-parse (used in release script)
 
 ## Running Stress Tests
 
@@ -49,9 +37,7 @@ uv run pytest .rhiza/tests/stress/ -v
 ### Run specific stress test category
 ```bash
 uv run pytest .rhiza/tests/stress/test_makefile_stress.py -v
-uv run pytest .rhiza/tests/stress/test_filesystem_stress.py -v
 uv run pytest .rhiza/tests/stress/test_git_stress.py -v
-uv run pytest .rhiza/tests/stress/test_subprocess_stress.py -v
 ```
 
 ### Run with custom iteration count

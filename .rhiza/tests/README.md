@@ -45,12 +45,10 @@ Dependency validation tests. These tests ensure that project dependencies are co
 - `test_dependency_health.py` — Validates pyproject.toml and requirements files
 
 ### `stress/`
-Stress tests that verify system stability under heavy load. These tests execute operations under concurrent load and repeated execution to detect race conditions, resource leaks, and performance degradation.
+Stress tests that verify Rhiza's stability under heavy load. These tests execute Rhiza-specific operations under concurrent load and repeated execution to detect race conditions, resource leaks, and performance degradation.
 
 - `test_makefile_stress.py` — Makefile operations under concurrent/repeated load
-- `test_filesystem_stress.py` — File system operations under stress
 - `test_git_stress.py` — Git operations under concurrent load
-- `test_subprocess_stress.py` — Subprocess handling under stress
 
 See [stress/README.md](stress/README.md) for detailed documentation.
 
