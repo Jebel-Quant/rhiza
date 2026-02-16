@@ -74,6 +74,7 @@ When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhi
 - [Available Tasks](#-available-tasks)
 - [Advanced Topics](#-advanced-topics)
 - [CI/CD Support](#-cicd-support)
+- [Project Maintainability](#-project-maintainability)
 - [Contributing to Rhiza](#-contributing-to-rhiza)
 
 ## 🚀 Quick Start
@@ -253,6 +254,7 @@ The project uses a [Makefile](Makefile) as the primary entry point for all tasks
 make install         # Install dependencies and setup environment
 make test            # Run test suite with coverage
 make fmt             # Format and lint code
+make todos           # Scan for TODO/FIXME/HACK comments
 make sync            # Sync with template repository
 make release         # Create and publish a new release
 make marimo          # Start Marimo notebook server
@@ -457,6 +459,27 @@ cp .gitlab-ci.yml /path/to/your/project/
 ```
 
 For complete GitLab setup instructions, configuration variables, and troubleshooting, see **[.gitlab/README.md](.gitlab/README.md)**.
+
+## 📋 Project Maintainability
+
+Rhiza includes comprehensive maintainability features to help track project health and evolution:
+
+### Roadmap & Planning
+
+- **[ROADMAP.md](ROADMAP.md)** - Detailed project roadmap with planned features, release timeline, and long-term vision
+- **[docs/PROJECT_BOARD.md](docs/PROJECT_BOARD.md)** - Guide for setting up GitHub Project Boards to track enhancements and roadmap items
+
+### Technical Debt Tracking
+
+- **[docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md)** - Comprehensive tracking of known limitations, debt items, and future improvements
+- **`make todos`** - Automated scanning for TODO, FIXME, and HACK comments across the codebase
+
+### Changelog Management
+
+- **[docs/CHANGELOG_GUIDE.md](docs/CHANGELOG_GUIDE.md)** - Guide for enhanced changelog generation with PR categorization
+- **[.github/release.yml](.github/release.yml)** - Automated PR categorization for release notes
+
+Run `make todos` to scan for technical debt markers in your codebase, or explore the roadmap and technical debt documents to understand project evolution and planned improvements.
 
 ## 🛠️ Contributing to Rhiza
 
