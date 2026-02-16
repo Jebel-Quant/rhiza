@@ -1,5 +1,8 @@
 name: "(RHIZA) VALIDATE AGENTIC WORKFLOWS"
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     paths:
