@@ -59,7 +59,6 @@ bundles:
       - .gitignore
       - .python-version
       - ruff.toml
-      - renovate.json
 
       # Documentation files (user-facing docs)
       - docs/SECURITY.md
@@ -88,6 +87,17 @@ bundles:
       - .github/copilot-instructions.md
       - .github/agents
       - .github/hooks
+
+  # ============================================================================
+  # RENOVATE - Automated dependency updates
+  # ============================================================================
+  renovate:
+    description: "Renovate bot configuration for automated dependency updates"
+    standalone: true
+    requires: []
+    files:
+      # Renovate configuration
+      - renovate.json
 
   # ============================================================================
   # LEGAL - Legal and community files
