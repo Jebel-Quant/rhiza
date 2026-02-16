@@ -286,3 +286,32 @@ bundles:
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_book.yml
+
+  # ============================================================================
+  # GH-AW - GitHub Agentic Workflows
+  # ============================================================================
+  gh-aw:
+    description: "GitHub Agentic Workflows for AI-driven repository automation"
+    standalone: true
+    requires: [github]
+    recommends: [tests]
+    notes: |
+      Provides infrastructure for gh-aw (GitHub Agentic Workflows):
+      - Makefile targets for compile/run/status
+      - Starter workflow templates
+      - CI validation for lock file freshness
+      - Documentation
+    files:
+      # Makefile extensions
+      - .rhiza/make.d/gh-aw.mk
+
+      # Starter agentic workflows
+      - .github/workflows/daily-repo-status.md
+      - .github/workflows/ci-doctor.md
+      - .github/workflows/issue-triage.md
+
+      # CI validation workflow
+      - .github/workflows/rhiza_gh-aw-validate.yml
+
+      # Documentation
+      - docs/GH_AW.md
