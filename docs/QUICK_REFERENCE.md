@@ -44,8 +44,8 @@ A concise reference for common Rhiza operations.
 | `make install-gh-aw` | Install the gh-aw CLI extension |
 | `make gh-aw-init` | Initialize repository for gh-aw |
 | `make gh-aw-setup` | Guided setup for secrets and engine configuration |
-| `make gh-aw-compile` | Compile all agentic workflow `.md` files to `.lock.yml` |
-| `make gh-aw-validate` | Validate that lock files are up-to-date |
+| `make gh-aw-compile` | Compile workflow `.md` files into `.lock.yml` GitHub Actions |
+| `make gh-aw-validate` | Validate that `.lock.yml` files are up-to-date |
 | `make gh-aw-status` | Show status of all agentic workflows |
 | `make gh-aw-run WORKFLOW=<name>` | Run a specific agentic workflow locally |
 | `make gh-aw-logs` | Show logs for recent agentic workflow runs |
