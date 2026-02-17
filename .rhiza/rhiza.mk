@@ -103,6 +103,7 @@ sync: pre-sync ## sync with template repository as defined in .rhiza/template.ym
 	@$(MAKE) post-sync
 
 sync-experimental: pre-sync ## sync with template repository using cruft-based merge (experimental, requires rhiza-cli >= 0.11.1-beta.1)
+	@printf "${YELLOW}[WARN] sync-experimental uses a beta version of rhiza-cli (>= 0.11.1-beta.1) and is not yet stable${RESET}\n"
 	@if git remote get-url origin 2>/dev/null | grep -iqE 'jebel-quant/rhiza(\.git)?$$'; then \
 		printf "${BLUE}[INFO] Skipping sync-experimental in rhiza repository (no template.yml by design)${RESET}\n"; \
 	else \

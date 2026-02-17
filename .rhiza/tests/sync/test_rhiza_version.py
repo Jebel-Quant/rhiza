@@ -172,3 +172,9 @@ class TestSyncExperimental:
         out = proc.stdout
         # The format should be: uvx "rhiza>=0.11.1b1" sync .
         assert 'uvx "rhiza>=0.11.1b1" sync .' in out
+
+    def test_sync_experimental_shows_beta_warning(self, logger):
+        """Sync-experimental target should display a beta warning."""
+        proc = run_make(logger, ["sync-experimental"], dry_run=True)
+        out = proc.stdout
+        assert "sync-experimental uses a beta version of rhiza-cli" in out
