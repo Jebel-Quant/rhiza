@@ -207,6 +207,13 @@ class TestMakefileRootFixture:
         # assert "[INFO] Skipping sync in rhiza repository" in out
         assert proc.returncode == 0
 
+    def test_sync_experimental_target_skips_in_rhiza_repo(self, logger):
+        """Sync-experimental target should skip execution in rhiza repository."""
+        setup_rhiza_git_repo()
+
+        proc = run_make(logger, ["sync-experimental"], dry_run=False)
+        assert proc.returncode == 0
+
 
 class TestMakeBump:
     """Tests for the 'make bump' target."""
