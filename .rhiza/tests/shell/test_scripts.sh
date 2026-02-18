@@ -98,21 +98,11 @@ echo ""
 # ============================================================================
 echo -e "${YELLOW}Testing: session-start.sh${NC}"
 
-# Test 1: Dry-run mode produces expected output
-output=$(bash "$REPO_ROOT/.github/hooks/session-start.sh" --dry-run 2>&1) || true
-assert_contains "$output" "DRY RUN MODE" "session-start.sh dry-run mode message"
-assert_contains "$output" "Would check" "session-start.sh dry-run includes check descriptions"
-
-# Test 2: Dry-run mode exits successfully
-bash "$REPO_ROOT/.github/hooks/session-start.sh" --dry-run >/dev/null 2>&1
-exit_code=$?
-assert_exit_code 0 $exit_code "session-start.sh dry-run exits successfully"
-
-# Test 3: Script has proper shebang
+# Test 1: Script has proper shebang
 first_line=$(head -n 1 "$REPO_ROOT/.github/hooks/session-start.sh")
 assert_equal "#!/bin/bash" "$first_line" "session-start.sh has bash shebang"
 
-# Test 4: Script uses strict mode
+# Test 2: Script uses strict mode
 if grep -q "set -euo pipefail" "$REPO_ROOT/.github/hooks/session-start.sh"; then
     TESTS_RUN=$((TESTS_RUN + 1))
     TESTS_PASSED=$((TESTS_PASSED + 1))
@@ -125,7 +115,7 @@ else
     echo -e "${RED}✗${NC} FAIL: session-start.sh missing 'set -euo pipefail'"
 fi
 
-# Test 5: Normal mode with valid environment
+# Test 3: Normal mode with valid environment
 if [ -d "$REPO_ROOT/.venv" ] && command -v uv >/dev/null 2>&1; then
     output=$(bash "$REPO_ROOT/.github/hooks/session-start.sh" 2>&1) || true
     assert_contains "$output" "Validating environment" "session-start.sh normal mode runs validation"
@@ -136,21 +126,11 @@ fi
 # ============================================================================
 echo -e "${YELLOW}Testing: session-end.sh${NC}"
 
-# Test 6: Dry-run mode produces expected output
-output=$(bash "$REPO_ROOT/.github/hooks/session-end.sh" --dry-run 2>&1) || true
-assert_contains "$output" "DRY RUN MODE" "session-end.sh dry-run mode message"
-assert_contains "$output" "Would run" "session-end.sh dry-run includes command descriptions"
-
-# Test 7: Dry-run mode exits successfully
-bash "$REPO_ROOT/.github/hooks/session-end.sh" --dry-run >/dev/null 2>&1
-exit_code=$?
-assert_exit_code 0 $exit_code "session-end.sh dry-run exits successfully"
-
-# Test 8: Script has proper shebang
+# Test 4: Script has proper shebang
 first_line=$(head -n 1 "$REPO_ROOT/.github/hooks/session-end.sh")
 assert_equal "#!/bin/bash" "$first_line" "session-end.sh has bash shebang"
 
-# Test 9: Script uses strict mode
+# Test 5: Script uses strict mode
 if grep -q "set -euo pipefail" "$REPO_ROOT/.github/hooks/session-end.sh"; then
     TESTS_RUN=$((TESTS_RUN + 1))
     TESTS_PASSED=$((TESTS_PASSED + 1))
@@ -168,11 +148,11 @@ fi
 # ============================================================================
 echo -e "${YELLOW}Testing: bootstrap.sh${NC}"
 
-# Test 10: Script has proper shebang
+# Test 6: Script has proper shebang
 first_line=$(head -n 1 "$REPO_ROOT/.devcontainer/bootstrap.sh")
 assert_equal "#!/bin/bash" "$first_line" "bootstrap.sh has bash shebang"
 
-# Test 11: Script uses strict mode
+# Test 7: Script uses strict mode
 if grep -q "set -euo pipefail" "$REPO_ROOT/.devcontainer/bootstrap.sh"; then
     TESTS_RUN=$((TESTS_RUN + 1))
     TESTS_PASSED=$((TESTS_PASSED + 1))
@@ -185,7 +165,7 @@ else
     echo -e "${RED}✗${NC} FAIL: bootstrap.sh missing 'set -euo pipefail'"
 fi
 
-# Test 12: Script has error handler function
+# Test 8: Script has error handler function
 if grep -q "error_with_recovery" "$REPO_ROOT/.devcontainer/bootstrap.sh"; then
     TESTS_RUN=$((TESTS_RUN + 1))
     TESTS_PASSED=$((TESTS_PASSED + 1))
@@ -198,7 +178,7 @@ else
     echo -e "${RED}✗${NC} FAIL: bootstrap.sh missing error_with_recovery function"
 fi
 
-# Test 13: Script includes remediation messages
+# Test 9: Script includes remediation messages
 if grep -q "Remediation\|Suggested fix" "$REPO_ROOT/.devcontainer/bootstrap.sh"; then
     TESTS_RUN=$((TESTS_RUN + 1))
     TESTS_PASSED=$((TESTS_PASSED + 1))
@@ -211,7 +191,7 @@ else
     echo -e "${RED}✗${NC} FAIL: bootstrap.sh missing remediation messages"
 fi
 
-# Test 14: Script handles .python-version file
+# Test 10: Script handles .python-version file
 if grep -q ".python-version" "$REPO_ROOT/.devcontainer/bootstrap.sh"; then
     TESTS_RUN=$((TESTS_RUN + 1))
     TESTS_PASSED=$((TESTS_PASSED + 1))
@@ -229,7 +209,7 @@ fi
 # ============================================================================
 echo -e "${YELLOW}Testing: Syntax validation${NC}"
 
-# Test 15-17: Validate syntax of all shell scripts
+# Test 11-13: Validate syntax of all shell scripts
 for script in \
     "$REPO_ROOT/.devcontainer/bootstrap.sh" \
     "$REPO_ROOT/.github/hooks/session-start.sh" \

@@ -9,7 +9,6 @@ Rhiza uses minimal, focused shell scripts (3 scripts, ~150 total lines) for crit
 - ✅ **Strict error handling**: `set -euo pipefail` (fail on error, undefined variables, pipe failures)
 - ✅ **Descriptive error messages**: Clear error descriptions with remediation steps
 - ✅ **Recovery options**: Fallback strategies for non-critical failures
-- ✅ **Dry-run mode**: Testing support without side effects
 - ✅ **Comprehensive testing**: Automated test suite validates functionality
 
 ## Shell Scripts
@@ -80,29 +79,12 @@ PYTHON_VERSION                       # Read from .python-version file
 
 **Purpose**: Validates the development environment before GitHub Copilot agent sessions begin.
 
-**Location**: `.github/hooks/session-start.sh` (59 lines)
+**Location**: `.github/hooks/session-start.sh` (37 lines)
 
 **What it does**:
 1. Verifies UV package manager is available
 2. Confirms virtual environment (`.venv`) exists
 3. Checks that virtual environment is activated
-
-**Dry-Run Mode**:
-
-```bash
-.github/hooks/session-start.sh --dry-run
-```
-
-Shows what would be validated without actually checking:
-
-```
-[copilot-hook] 🔍 DRY RUN MODE - No actual validation will be performed
-[copilot-hook] Validating environment...
-[copilot-hook] [DRY-RUN] Would check: uv command availability
-[copilot-hook] [DRY-RUN] Would check: .venv directory existence
-[copilot-hook] [DRY-RUN] Would check: Python is from .venv
-[copilot-hook] 🔍 DRY RUN COMPLETE - No changes made
-```
 
 **Error Handling**:
 
@@ -144,30 +126,12 @@ Called automatically by `.github/hooks/hooks.json` at session start:
 
 **Purpose**: Runs quality gates after GitHub Copilot agent sessions complete.
 
-**Location**: `.github/hooks/session-end.sh` (53 lines)
+**Location**: `.github/hooks/session-end.sh` (35 lines)
 
 **What it does**:
 1. Formats code using `make fmt`
 2. Runs tests using `make test`
 3. Reports success or failure with detailed guidance
-
-**Dry-Run Mode**:
-
-```bash
-.github/hooks/session-end.sh --dry-run
-```
-
-Shows what quality gates would run without executing them:
-
-```
-[copilot-hook] 🔍 DRY RUN MODE - No quality gates will be executed
-[copilot-hook] Running post-work quality gates...
-[copilot-hook] Formatting code...
-[copilot-hook] [DRY-RUN] Would run: make fmt
-[copilot-hook] Running tests...
-[copilot-hook] [DRY-RUN] Would run: make test
-[copilot-hook] 🔍 DRY RUN COMPLETE - No changes made
-```
 
 **Error Handling**:
 
@@ -216,7 +180,6 @@ Called automatically by `.github/hooks/hooks.json` at session end:
 **Location**: `.rhiza/tests/shell/test_scripts.sh` (265 lines)
 
 **What it tests**:
-- ✅ Dry-run mode functionality
 - ✅ Proper shebang (`#!/bin/bash`)
 - ✅ Strict error handling (`set -euo pipefail`)
 - ✅ Error recovery functions
@@ -241,19 +204,25 @@ bash .rhiza/tests/shell/test_scripts.sh --verbose
 Repository: /home/runner/work/rhiza/rhiza
 
 Testing: session-start.sh
-✓ PASS: session-start.sh dry-run mode message
-✓ PASS: session-start.sh dry-run includes check descriptions
-✓ PASS: session-start.sh dry-run exits successfully
+```bash
+=== Shell Script Test Suite ===
+Repository: /home/runner/work/rhiza/rhiza
+
+Testing: session-start.sh
 ✓ PASS: session-start.sh has bash shebang
 ✓ PASS: session-start.sh uses strict error handling
 ✓ PASS: session-start.sh normal mode runs validation
 
 Testing: session-end.sh
+✓ PASS: session-end.sh has bash shebang
+✓ PASS: session-end.sh uses strict error handling
+
+Testing: bootstrap.sh
 [... more tests ...]
 
 === Test Summary ===
-Tests run: 19
-Tests passed: 19
+Tests run: 13
+Tests passed: 13
 All tests passed!
 ```
 
@@ -288,21 +257,7 @@ No external dependencies required (no bats-core needed).
    - `1` - Fatal error
    - For warnings, print message but don't exit
 
-4. **Support dry-run mode** (for scripts with side effects):
-   ```bash
-   DRY_RUN=false
-   if [ "${1:-}" = "--dry-run" ]; then
-       DRY_RUN=true
-   fi
-   
-   if [ "$DRY_RUN" = true ]; then
-       echo "Would do something"
-   else
-       # Actually do something
-   fi
-   ```
-
-5. **Validate syntax**:
+4. **Validate syntax**:
    ```bash
    bash -n script.sh  # Syntax check
    shellcheck script.sh  # Linting (if available)
@@ -310,22 +265,17 @@ No external dependencies required (no bats-core needed).
 
 ### For Script Users
 
-1. **Use dry-run mode first** (when available):
-   ```bash
-   .github/hooks/session-end.sh --dry-run
-   ```
-
-2. **Read error messages carefully**:
+1. **Read error messages carefully**:
    - Look for ❌ ERROR lines
    - Follow 💡 Remediation steps in order
 
-3. **Check environment variables**:
+2. **Check environment variables**:
    ```bash
    echo $INSTALL_DIR
    echo $UV_BIN
    ```
 
-4. **Run tests after modifications**:
+3. **Run tests after modifications**:
    ```bash
    bash .rhiza/tests/shell/test_scripts.sh --verbose
    ```
@@ -495,7 +445,10 @@ Shell scripts integrate with GitHub Actions:
 
 - **v0.7.5** - Initial shell script documentation
   - Added recovery options to bootstrap.sh
-  - Added dry-run mode to session hooks
   - Improved error messaging with remediation steps
   - Created comprehensive test suite
   - Added this documentation
+- **v0.8.0** - Simplified shell scripts
+  - Removed dry-run mode functionality
+  - Reduced test count from 19 to 13 tests
+  - Updated documentation to reflect changes
