@@ -59,17 +59,13 @@ bundles:
       - .gitignore
       - .python-version
       - ruff.toml
-      - renovate.json
 
-      # Documentation files (project-specific docs)
+      # Documentation files (user-facing docs)
       - docs/SECURITY.md
       - docs/ARCHITECTURE.md
       - docs/CUSTOMIZATION.md
       - docs/GLOSSARY.md
       - docs/QUICK_REFERENCE.md
-      - docs/RELEASING.md
-      - docs/WORKFLOWS.md
-      - docs/ASSETS.md
       - docs/DEMO.md
 
   github:
@@ -80,15 +76,29 @@ bundles:
       - .rhiza/make.d/github.mk
       - .rhiza/make.d/agentic.mk
       # Core GitHub Actions workflows
+      - .github/workflows/copilot-setup-steps.yml
       - .github/workflows/rhiza_validate.yml
       - .github/workflows/rhiza_sync.yml
       - .github/workflows/rhiza_pre-commit.yml
       - .github/workflows/rhiza_deptry.yml
       - .github/workflows/rhiza_release.yml
+      - .github/workflows/renovate_rhiza_sync.yml
       - .github/actions/configure-git-auth
       - .github/dependabot.yml
       - .github/copilot-instructions.md
       - .github/agents
+      - .github/hooks
+
+  # ============================================================================
+  # RENOVATE - Automated dependency updates
+  # ============================================================================
+  renovate:
+    description: "Renovate bot configuration for automated dependency updates"
+    standalone: true
+    requires: []
+    files:
+      # Renovate configuration
+      - renovate.json
 
   # ============================================================================
   # LEGAL - Legal and community files
@@ -124,25 +134,6 @@ bundles:
       - .github/workflows/rhiza_devcontainer.yml
 
   # ============================================================================
-  # BENCHMARKS - Performance benchmarking with pytest-benchmark
-  # ============================================================================
-  benchmarks:
-    description: "Performance benchmarking infrastructure with pytest-benchmark"
-    standalone: true
-    requires: []
-    recommends:
-      - tests  # Benchmarks work best alongside tests
-    files:
-      # Benchmark make target (part of test.mk)
-      # Note: The benchmark target is in test.mk
-
-      # Benchmark directory
-      - tests/test_rhiza/benchmarks
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_benchmarks.yml
-
-  # ============================================================================
   # DOCKER - Docker containerization support
   # ============================================================================
   docker:
@@ -175,7 +166,7 @@ bundles:
       - .rhiza/make.d/lfs.mk
 
       # Documentation
-      - docs/LFS.md
+      - .rhiza/docs/LFS.md
 
   # ============================================================================
   # PRESENTATION - Presentation building with reveal.js
@@ -240,11 +231,15 @@ bundles:
       # Core/generic test files
       - .rhiza/tests
 
+      # Benchmark and stress test infrastructure
+      - tests/benchmarks
+      - docs/TESTS.md
+
       # GitHub Actions workflows
       - .github/workflows/rhiza_ci.yml
-      - .github/workflows/rhiza_mypy.yml
       - .github/workflows/rhiza_security.yml
       - .github/workflows/rhiza_codeql.yml
+      - .github/workflows/rhiza_benchmarks.yml
 
   # ============================================================================
   # MARIMO - Interactive Marimo notebooks
@@ -292,3 +287,32 @@ bundles:
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_book.yml
+
+  # ============================================================================
+  # GH-AW - GitHub Agentic Workflows
+  # ============================================================================
+  gh-aw:
+    description: "GitHub Agentic Workflows for AI-driven repository automation"
+    standalone: true
+    requires: [github]
+    recommends: [tests]
+    notes: |
+      Provides infrastructure for gh-aw (GitHub Agentic Workflows):
+      - Makefile targets for compile/run/status
+      - Starter workflow templates
+      - CI validation for lock file freshness
+      - Documentation
+    files:
+      # Makefile extensions
+      - .rhiza/make.d/gh-aw.mk
+
+      # Starter agentic workflows
+      - .github/workflows/daily-repo-status.md
+      - .github/workflows/ci-doctor.md
+      - .github/workflows/issue-triage.md
+
+      # CI validation workflow
+      - .github/workflows/rhiza_gh-aw-validate.yml
+
+      # Documentation
+      - docs/GH_AW.md

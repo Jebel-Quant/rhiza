@@ -1,6 +1,6 @@
 [project]
 name = "rhiza"
-version = "0.7.1"
+version = "0.8.1-rc.2"
 description = "Reusable configuration templates for modern Python projects"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,10 +25,12 @@ dependencies = []
 
 [dependency-groups]
 dev = [
-    "marimo>=0.18.0,<1.0",   # Reactive notebook runtime for book/ examples
-    "numpy>=2.4.0,<3.0",     # Numerical computing for notebook data analysis
-    "plotly>=6.5.0,<7.0",    # Interactive visualization in notebooks
-    "pandas>=3,<3.1",    # Data manipulation for notebook examples
+    "marimo>=0.18.0,<1.0",   # Reactive notebook runtime for book/ examples (v0.18+ for streaming, <1.0 for API stability)
+    "numpy>=2.4.0,<3.0",     # Numerical computing for notebook data analysis (v2.4+ includes 2.0 improvements, <3.0 avoids breaking changes)
+    "plotly>=6.5.0,<7.0",    # Interactive visualization in notebooks (v6.5+ mature features, <7.0 for API stability)
+    "pandas>=3,<3.1",        # Data manipulation for notebook examples (v3+ for modern APIs, <3.1 conservative after major release)
+    "pyyaml>=6.0,<7.0",      # YAML parsing for validation scripts (v6+ for security fixes, <7.0 for API stability)
+    # See docs/DEPENDENCIES.md for detailed version rationale
 ]
 
 [project.urls]
@@ -41,3 +43,4 @@ marimo = "marimo"
 numpy = "numpy"
 plotly = "plotly"
 pandas = "pandas"
+pyyaml = "yaml"

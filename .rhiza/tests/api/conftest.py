@@ -5,6 +5,10 @@ This conftest provides:
 - run_make: Helper to execute make commands with dry-run support (imported from test_utils)
 - setup_rhiza_git_repo: Initialize a git repo configured as rhiza origin (imported from test_utils)
 - SPLIT_MAKEFILES: List of split Makefile paths
+
+Security Notes:
+- S101 (assert usage): Asserts are used in pytest tests to validate conditions
+- Test code operates in a controlled environment with trusted inputs
 """
 
 from __future__ import annotations
@@ -35,6 +39,7 @@ SPLIT_MAKEFILES = [
     ".rhiza/make.d/presentation.mk",
     ".rhiza/make.d/github.mk",
     ".rhiza/make.d/agentic.mk",
+    ".rhiza/make.d/gh-aw.mk",
     ".rhiza/make.d/docker.mk",
     ".rhiza/make.d/docs.mk",
 ]

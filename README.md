@@ -38,7 +38,7 @@ Rhiza uses a simple configuration file (`.rhiza/template.yml`) to control which 
 ```yaml
 # .rhiza/template.yml
 repository: Jebel-Quant/rhiza
-ref: main
+ref: v0.7.1
 
 include: |
   .github/workflows/*.yml
@@ -53,9 +53,13 @@ exclude: |
 
 **What you're seeing:**
 - **`repository`** - The upstream template source (**can be any repository, not just Rhiza!**)
-- **`ref`** - Which branch/tag to sync from (usually `main`)
+- **`ref`** - Which version tag/branch to sync from (e.g., `v0.7.1` or `main`)
 - **`include`** - File patterns to pull from the template (CI workflows, linting configs, etc.)
 - **`exclude`** - Paths to skip, protecting your customisations
+
+> **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention. 
+>
+> To enable this in your project, copy the [`regexManagers` configuration](renovate.json#L31-L40) from this repository's `renovate.json` file into your own Renovate configuration. See the linked configuration for the complete setup.
 
 When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhiza fetches only the files matching your `include` patterns, skips anything in `exclude`, and creates a clean diff for you to review. You stay in control of what updates and when.
 
@@ -70,6 +74,7 @@ When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhi
 - [Available Tasks](#-available-tasks)
 - [Advanced Topics](#-advanced-topics)
 - [CI/CD Support](#-cicd-support)
+- [Project Maintainability](#-project-maintainability)
 - [Contributing to Rhiza](#-contributing-to-rhiza)
 
 ## 🚀 Quick Start
@@ -249,6 +254,7 @@ The project uses a [Makefile](Makefile) as the primary entry point for all tasks
 make install         # Install dependencies and setup environment
 make test            # Run test suite with coverage
 make fmt             # Format and lint code
+make todos           # Scan for TODO/FIXME/HACK comments
 make sync            # Sync with template repository
 make release         # Create and publish a new release
 make marimo          # Start Marimo notebook server
@@ -421,11 +427,13 @@ For custom workflows or local development setup, see [.rhiza/docs/PRIVATE_PACKAG
 
 ### Release Management
 
-For information on versioning, tagging, and publishing releases, see [docs/RELEASING.md](docs/RELEASING.md).
+For information on versioning, tagging, and publishing releases, see [.rhiza/docs/RELEASING.md](.rhiza/docs/RELEASING.md).
 
 ### Dev Container
 
 This repository includes a template Dev Container configuration for seamless development in VS Code and GitHub Codespaces. See [.devcontainer/README.md](.devcontainer/README.md) for setup, configuration, and troubleshooting.
+
+For details about the VS Code extensions configured in the Dev Container, see [docs/VSCODE_EXTENSIONS.md](docs/VSCODE_EXTENSIONS.md).
 
 ## 🔄 CI/CD Support
 
@@ -451,6 +459,27 @@ cp .gitlab-ci.yml /path/to/your/project/
 ```
 
 For complete GitLab setup instructions, configuration variables, and troubleshooting, see **[.gitlab/README.md](.gitlab/README.md)**.
+
+## 📋 Project Maintainability
+
+Rhiza includes comprehensive maintainability features to help track project health and evolution:
+
+### Roadmap & Planning
+
+- **[ROADMAP.md](ROADMAP.md)** - Detailed project roadmap with planned features, release timeline, and long-term vision
+- **[docs/PROJECT_BOARD.md](docs/PROJECT_BOARD.md)** - Guide for setting up GitHub Project Boards to track enhancements and roadmap items
+
+### Technical Debt Tracking
+
+- **[docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md)** - Comprehensive tracking of known limitations, debt items, and future improvements
+- **`make todos`** - Automated scanning for TODO, FIXME, and HACK comments across the codebase
+
+### Changelog Management
+
+- **[docs/CHANGELOG_GUIDE.md](docs/CHANGELOG_GUIDE.md)** - Guide for enhanced changelog generation with PR categorization
+- **[.github/release.yml](.github/release.yml)** - Automated PR categorization for release notes
+
+Run `make todos` to scan for technical debt markers in your codebase, or explore the roadmap and technical debt documents to understand project evolution and planned improvements.
 
 ## 🛠️ Contributing to Rhiza
 
