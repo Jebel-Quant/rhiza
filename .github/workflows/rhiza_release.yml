@@ -179,8 +179,8 @@ jobs:
         run: |
           printf "[INFO] Generating SBOM in CycloneDX format...\n"
           # Note: uvx caches the tool environment, so the second call is fast
-          uvx --from 'cyclonedx-bom>=7.0.0' cyclonedx-py environment --of JSON -o sbom.cdx.json
-          uvx --from 'cyclonedx-bom>=7.0.0' cyclonedx-py environment --of XML -o sbom.cdx.xml
+          uvx --from 'cyclonedx-bom>=7.0.0' cyclonedx-py environment --pyproject pyproject.toml --of JSON -o sbom.cdx.json
+          uvx --from 'cyclonedx-bom>=7.0.0' cyclonedx-py environment --pyproject pyproject.toml --of XML -o sbom.cdx.xml
           printf "[INFO] SBOM generation complete\n"
           printf "Generated files:\n"
           ls -lh sbom.cdx.*
