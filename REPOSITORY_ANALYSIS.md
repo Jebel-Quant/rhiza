@@ -400,3 +400,163 @@ This repository could serve as a **gold standard template** for other Python pro
 ---
 
 *This analysis was conducted by thoroughly reviewing the repository structure, code quality, documentation, CI/CD workflows, testing infrastructure, and developer experience. Recommendations are based on industry best practices and modern software engineering standards.*
+
+---
+
+## 2026-02-20 — Analysis Entry
+
+### Summary
+The Rhiza repository maintains its strong foundation with a well-architected build system centered on Make, comprehensive testing infrastructure, and a sophisticated book-building pipeline. The project demonstrates maturity in its separation of concerns (core Makefile delegating to `.rhiza/make.d/*.mk` modules) and thoughtful developer workflows. However, there's a **critical mismatch** between the benchmark workflow expectations and the actual benchmark target output paths that would cause CI failures.
+
+### Strengths
+
+**1. Modular Makefile Architecture**
+- Core `Makefile` is minimal (14 lines), delegating to `.rhiza/rhiza.mk` which includes modular `.mk` files from `.rhiza/make.d/`
+- 18 separate `.mk` modules covering distinct concerns: `test.mk`, `book.mk`, `bootstrap.mk`, `docs.mk`, `marimo.mk`, etc.
+- Clean hook system (`pre-install::`, `post-install::`) using double-colon rules for extensibility
+- Evidence: `.rhiza/make.d/` contains 18 well-organized makefiles with clear separation of duties
+
+**2. Comprehensive Testing Infrastructure**
+- Benchmark tests exist at `tests/benchmarks/test_benchmarks.py` with 4 example benchmarks
+- Uses `pytest-benchmark==5.2.3` with histogram generation and JSON output
+- Post-analysis via `rhiza-tools>=0.2.3 analyze-benchmarks` to generate HTML reports
+- Test target properly excludes benchmarks (`--ignore=${TESTS_FOLDER}/benchmarks`) to keep them separate
+- Evidence: `test.mk` lines 72-84 show sophisticated benchmark orchestration
+
+**3. Book-Building System**
+- Multi-stage book assembly combining: API docs (pdoc), test coverage, test reports, Marimo notebooks, and MkDocs
+- Declarative `BOOK_SECTIONS` variable in `book.mk` makes it easy to add/remove sections
+- Uses `minibook` for final compilation with custom templates
+- Automatic coverage badge generation from `_tests/coverage.json`
+- Evidence: `book.mk` lines 39-118 show complete book pipeline with proper fallbacks
+
+**4. Marimo Notebook Integration**
+- Single demonstration notebook at `book/marimo/notebooks/rhiza.py` (467 lines)
+- Uses `marimushka>=0.3.3` to export notebooks to static HTML
+- Proper directory structure with placeholder generation if no notebooks exist
+- Evidence: `marimo.mk` lines 45-67 handle export gracefully with fallbacks
+
+**5. Environment Configuration**
+- Centralized configuration in `.rhiza/.env` defining key variables:
+  - `SOURCE_FOLDER=src`
+  - `MARIMO_FOLDER=book/marimo/notebooks`
+  - `BOOK_TITLE`, `BOOK_SUBTITLE`, `BOOK_TEMPLATE`
+- Makes configuration discoverable and overridable
+- Evidence: `.rhiza/.env` lines 1-9
+
+**6. GitHub Actions Integration**
+- Dedicated benchmark workflow (`.github/workflows/rhiza_benchmarks.yml`)
+- Regression detection using `benchmark-action/github-action-benchmark@v1`
+- Stores benchmark history in `gh-pages` branch under `/benchmarks`
+- Configurable alerting (150% threshold) with PR comments
+- Evidence: workflow lines 68-87 show sophisticated regression detection
+
+### Weaknesses
+
+**1. Critical Path Mismatch in Benchmark Output**
+- **Location**: `.rhiza/make.d/test.mk` lines 76-81 vs `.github/workflows/rhiza_benchmarks.yml` lines 60-63
+- **Issue**: The `make benchmark` target outputs to `_tests/benchmarks/` but the GitHub workflow expects `_benchmarks/`:
+  - Make target creates: `_tests/benchmarks/histogram.svg`, `_tests/benchmarks/results.json`, `_tests/benchmarks/report.html`
+  - Workflow expects: `_benchmarks/benchmarks.json`, `_benchmarks/benchmarks.svg`, `_benchmarks/benchmarks.html`
+- **Impact**: Workflow will fail to upload artifacts and regression detection won't work
+- **Evidence**: 
+  ```makefile
+  # test.mk line 76-80
+  mkdir -p _tests/benchmarks;
+  ${UV_BIN} run pytest "${TESTS_FOLDER}/benchmarks/" \
+      --benchmark-histogram=_tests/benchmarks/histogram \
+      --benchmark-json=_tests/benchmarks/results.json;
+  ```
+  vs
+  ```yaml
+  # rhiza_benchmarks.yml line 60-63
+  path: |
+    _benchmarks/benchmarks.json
+    _benchmarks/benchmarks.svg
+    _benchmarks/benchmarks.html
+  ```
+
+**2. No Source Directory**
+- The repository sets `SOURCE_FOLDER=src` in `.rhiza/.env` but `/home/runner/work/rhiza/rhiza/src/` doesn't exist
+- This causes several targets to skip execution: `docs`, `typecheck`, `security`
+- While appropriate for a template repository with minimal code, this inconsistency is confusing
+- Evidence: `ls -la /home/runner/work/rhiza/rhiza/src/` returns "No src directory"
+
+**3. Benchmark Test Quality**
+- The example benchmarks in `tests/benchmarks/test_benchmarks.py` are pedagogical placeholders (string concatenation, list comprehension)
+- No actual Rhiza functionality is being benchmarked
+- Comment at line 5-6 acknowledges: "These are placeholder tests that you should replace with your own meaningful benchmarks"
+- For a template repository, this is acceptable but should be clearly documented
+
+**4. Book Structure Complexity**
+- The `book.mk` target has complex bash scripting (lines 73-94) for iterating `BOOK_SECTIONS`
+- Pipe-delimited format (`name|src_index|book_index|src_dir|book_dir`) is fragile and hard to extend
+- Error handling is present but cryptic (e.g., `$$first` tracking for JSON commas)
+- Evidence: `book.mk` lines 73-94 show nested bash conditionals
+
+**5. Missing Directory Validation**
+- The `book/` directory only contains `book/marimo/` - no space for other book-related assets
+- No `book/pdoc-templates/` despite `PDOC_TEMPLATE_DIR=book/pdoc-templates` in `docs.mk` line 16
+- The book structure isn't fully utilized in this repository
+- Evidence: `ls -la /home/runner/work/rhiza/rhiza/book/` shows only `marimo/`
+
+### Risks / Technical Debt
+
+**1. Workflow Failure Risk (HIGH)**
+- Current benchmark setup will fail in CI on every run
+- The regression detection feature cannot work with mismatched paths
+- This breaks the entire benchmarking value proposition
+- Mitigation: Either align paths or add a copy/symlink step
+
+**2. Template vs. Implementation Confusion (MEDIUM)**
+- It's unclear if this repository is:
+  - A template (no real benchmarks needed)
+  - A live project (should have meaningful benchmarks)
+- The presence of a benchmark workflow suggests the latter, but implementation suggests the former
+- Recommendation: Add documentation clarifying which parts are examples vs. production
+
+**3. Makefile Module Dependency Graph (MEDIUM)**
+- The 18 `.mk` files are included via wildcards (`-include .rhiza/make.d/*.mk`) with no explicit ordering
+- Dependencies between modules are implicit (e.g., `book.mk` depends on `test.mk`, `docs.mk`, `marimo.mk`)
+- Risk of circular dependencies or execution order issues as complexity grows
+- Evidence: `.rhiza/rhiza.mk` line 164 includes all `.mk` files without sequence control
+
+**4. Hard-Coded Tool Versions (LOW)**
+- `pytest-benchmark==5.2.3` and `pygal==3.1.0` are hard-coded in `test.mk` line 75
+- Not in `pyproject.toml` dependency groups, making version management scattered
+- If these tools need updating, it requires editing Makefile logic
+- Evidence: `test.mk` line 75 shows pip install with exact versions
+
+**5. Single Point of Failure in Book Building (LOW)**
+- The `book` target chains: `test`, `docs`, `marimushka`, `mkdocs-build`
+- If any upstream target fails, the entire book build fails
+- No partial book building capability
+- Evidence: `book.mk` line 52
+
+### Score
+
+**7/10**
+
+**Rationale:**
+- **+3**: Excellent modular architecture, clean separation of concerns, comprehensive workflow coverage
+- **+2**: Strong book-building system with multiple integration points and proper fallbacks
+- **+1**: Good testing infrastructure with benchmark support and Marimo integration
+- **+1**: Well-documented Makefile targets with color-coded output and help system
+- **-1**: Critical path mismatch in benchmark output will cause workflow failures
+- **-1**: Confusion between template example and production implementation
+- **-2**: No actual source code to test/benchmark, making several features non-functional
+
+The repository demonstrates solid engineering practices and would score higher if either:
+1. The benchmark paths were aligned (making it production-ready), OR
+2. The repository was clearly positioned as a pure template (removing production workflow expectations)
+
+The current state falls between these two chairs, creating a functional disconnect.
+
+---
+
+**Action Items:**
+1. **CRITICAL**: Align benchmark output paths between `test.mk` and `rhiza_benchmarks.yml`
+2. **HIGH**: Add README section clarifying which features are examples vs. production-ready
+3. **MEDIUM**: Consider extracting hard-coded tool versions to `pyproject.toml` dev dependencies
+4. **LOW**: Add `.mk` file dependency documentation or explicit include ordering
+
