@@ -71,7 +71,7 @@ def setup_tmp_makefile(logger, root, tmp_path: Path):
     else:
         # Create a minimal, deterministic .rhiza/.env for tests so they don't
         # depend on the developer's local configuration which may vary.
-        env_content = "SCRIPTS_FOLDER=.rhiza/scripts\nCUSTOM_SCRIPTS_FOLDER=.rhiza/customisations/scripts\n"
+        env_content = "CUSTOM_SCRIPTS_FOLDER=.rhiza/customisations/scripts\n"
         (tmp_path / ".rhiza" / ".env").write_text(env_content)
 
     logger.debug("Copied Makefile from %s to %s", root / "Makefile", tmp_path / "Makefile")

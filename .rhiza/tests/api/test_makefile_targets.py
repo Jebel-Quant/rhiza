@@ -148,12 +148,6 @@ class TestMakefile:
         out = strip_ansi(proc.stdout)
         assert "Value of UV_NO_MODIFY_PATH:\n1" in out
 
-    def test_script_folder_is_github_scripts(self, logger):
-        """`SCRIPTS_FOLDER` should point to `.rhiza/scripts`."""
-        proc = run_make(logger, ["print-SCRIPTS_FOLDER"], dry_run=False)
-        out = strip_ansi(proc.stdout)
-        assert "Value of SCRIPTS_FOLDER:\n.rhiza/scripts" in out
-
     def test_that_target_coverage_is_configurable(self, logger):
         """Test target should respond to COVERAGE_FAIL_UNDER variable."""
         # Default case: ensure the flag is present

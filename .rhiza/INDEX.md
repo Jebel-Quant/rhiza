@@ -13,7 +13,6 @@ Quick reference to all utilities, makefiles, and resources in the `.rhiza/` dire
 ├── template-bundles.yml  # Template bundle definitions
 ├── make.d/               # Makefile extensions (auto-loaded)
 ├── requirements/         # Python dependencies
-├── scripts/              # Shell scripts and utilities
 ├── templates/            # Project templates
 ├── tests/                # Test suite
 ├── docs/                 # Internal documentation
