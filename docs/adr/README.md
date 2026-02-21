@@ -25,7 +25,27 @@ Each ADR follows a consistent format defined in [0000-adr-template.md](0000-adr-
 
 ## Creating a New ADR
 
-1. Copy the template: `cp docs/adr/0000-adr-template.md docs/adr/0002-your-title.md`
+### Option 1: Using AI Assistance (Recommended)
+
+The easiest way to create a new ADR is using the automated workflow:
+
+```bash
+make adr
+```
+
+This will:
+1. Prompt you for the ADR title and optional context
+2. Trigger an AI-powered workflow that generates a comprehensive ADR
+3. Automatically determine the next ADR number
+4. Create the ADR file with well-researched content
+5. Update the index table
+6. Open a pull request for review
+
+### Option 2: Manual Creation
+
+If you prefer to create an ADR manually:
+
+1. Copy the template: `cp docs/adr/0000-adr-template.md docs/adr/0002-example-decision.md`
 2. Use the next available 4-digit number (e.g., 0002, 0003, 0004)
 3. Fill in all sections with relevant information
 4. Update this README to add your ADR to the index
