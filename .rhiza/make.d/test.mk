@@ -114,7 +114,8 @@ hypothesis-test: install ## run property-based tests with Hypothesis
 	  --hypothesis-seed=0 \
 	  -m "hypothesis or property" \
 	  --tb=short \
-	  --html=_tests/hypothesis/report.html
+	  --html=_tests/hypothesis/report.html \
+	  --html-title="Hypothesis tests"
 
 # The 'coverage-badge' target generates an SVG coverage badge from the JSON coverage report.
 # 1. Checks if the coverage JSON file exists.
