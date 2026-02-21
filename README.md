@@ -137,6 +137,14 @@ ADRs help preserve the reasoning behind key decisions, making it easier for curr
 
 **Key decisions documented:**
 - [ADR-0001: Use Architecture Decision Records](docs/adr/0001-use-architecture-decision-records.md)
+- [ADR-0002: Use uv for Python Package and Environment Management](docs/adr/0002-use-uv-for-python-package-management.md)
+- [ADR-0003: Use Ruff for Linting and Formatting](docs/adr/0003-use-ruff-for-linting-and-formatting.md)
+- [ADR-0004: Adopt a Modular Makefile Architecture](docs/adr/0004-adopt-modular-makefile-architecture.md)
+- [ADR-0005: Separate rhiza Template Repository from rhiza-cli](docs/adr/0005-separate-rhiza-template-from-cli.md)
+- [ADR-0006: Organise Templates into Bundles](docs/adr/0006-organise-templates-into-bundles.md)
+- [ADR-0007: Support Dual CI/CD with GitHub Actions and GitLab CI](docs/adr/0007-support-dual-cicd-github-and-gitlab.md)
+- [ADR-0008: Use Marimo for Interactive Notebooks](docs/adr/0008-use-marimo-for-interactive-notebooks.md)
+- [ADR-0009: Use Pre-commit Hooks for Automated Code Quality Enforcement](docs/adr/0009-use-pre-commit-hooks-for-code-quality.md)
 
 **Create a new ADR**: Use `make adr` to create a new ADR with AI assistance. The workflow will generate a comprehensive ADR document, update the index, and create a pull request for review.
 
