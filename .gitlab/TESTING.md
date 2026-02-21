@@ -196,7 +196,6 @@ ls -la _book/
 - Builds Python package
 - Creates GitLab release
 - Publishes to PyPI (if configured)
-- Publishes devcontainer (if configured)
 - Finalizes release with links
 
 **Manual test:**
@@ -211,11 +210,9 @@ git push origin v0.0.1-test
 - Package builds successfully
 - GitLab release created
 - PyPI upload succeeds (if PYPI_TOKEN set)
-- Devcontainer publishes (if PUBLISH_DEVCONTAINER=true)
 
 **Configuration needed:**
 - Set `PYPI_TOKEN` for PyPI publishing
-- Set `PUBLISH_DEVCONTAINER=true` for devcontainer
 - Optionally set `PYPI_REPOSITORY_URL` for custom feed
 
 ---
@@ -257,8 +254,6 @@ Set these in GitLab project settings (Settings > CI/CD > Variables):
 2. **Merge Request Creation:** The Sync workflow doesn't automatically create merge requests via the API (would require additional setup with GitLab CLI or API calls).
 
 3. **OIDC Publishing:** GitLab CI doesn't support OIDC-based PyPI publishing like GitHub Actions. Token-based authentication is used instead.
-
-4. **Devcontainer CLI:** Requires Node.js and devcontainer CLI installation in the job, which adds overhead.
 
 ## Troubleshooting
 

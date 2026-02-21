@@ -1,29 +1,20 @@
 <div align="center">
 
-# <img src="assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza 
+# <img src=".rhiza/assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza 
 ![GitHub Release](https://img.shields.io/github/v/release/jebel-quant/rhiza?sort=semver&color=2FA4A9&label=rhiza)
 ![Synced with Rhiza](https://img.shields.io/badge/synced%20with-rhiza-2FA4A9?color=2FA4A9)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python versions](https://img.shields.io/badge/Python-3.11%20•%203.12%20•%203.13%20•%203.14-blue?logo=python)](https://www.python.org/)
+[![CI](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_ci.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_ci.yml)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg?logo=ruff)](https://github.com/astral-sh/ruff)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
-[![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg)](https://github.com/pypa/hatch)
 [![CodeFactor](https://www.codefactor.io/repository/github/jebel-quant/rhiza/badge)](https://www.codefactor.io/repository/github/jebel-quant/rhiza)
 
-![Gitlab](https://img.shields.io/badge/GitLab-FC6D26?style=flat&logo=gitlab&logoColor=white)
-![Github](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github)
-![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat&logo=linux&logoColor=white)
-![MAC OS](https://img.shields.io/badge/macOS-000000?style=flat&logo=apple&logoColor=white)
-
-[![CI](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_ci.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_ci.yml)
-[![PRE-COMMIT](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_pre-commit.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_pre-commit.yml)
-[![DEPTRY](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_deptry.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_deptry.yml)
-[![MARIMO](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_marimo.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_marimo.yml)
-[![DOCKER](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_docker.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_docker.yml)
-[![DEVCONTAINER](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_devcontainer.yml/badge.svg?event=push)](https://github.com/Jebel-Quant/rhiza/actions/workflows/rhiza_devcontainer.yml)
-
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/jebel-quant/rhiza)
+
+# Strong roots
+Creating and maintaining technical harmony across repositories.
 
 A collection of reusable configuration templates
 for modern Python projects.
@@ -32,189 +23,110 @@ with these pre-configured templates.
 
 ![Last Updated](https://img.shields.io/github/last-commit/jebel-quant/rhiza/main?label=Last%20updated&color=blue)
 
-
 In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the literal meaning **root**.
 
 </div>
 
-## ✨ Features
+## 🌟 Why Rhiza?
 
-- 🚀 **CI/CD Templates** - Ready-to-use GitHub Actions and GitLab CI workflows
-- 🧪 **Testing Framework** - Comprehensive test setup with pytest
-- 📚 **Documentation** - Automated documentation generation
-- 🔍 **Code Quality** - Linting, formatting, and dependency checking
-- 📝 **Editor Configuration** - Cross-platform .editorconfig for consistent coding style
-- 📊 **Marimo Integration** - Interactive notebook support
+**Unlike traditional project templates** (like cookiecutter or copier) that generate a one-time snapshot of configuration files, **Rhiza provides living templates** that evolve with your project. Classic templates help you start a project, but once generated, your configuration drifts away from the template as best practices change. Rhiza takes a different approach: it enables **continuous synchronization**, allowing you to selectively pull template updates into your project over time through automated workflows. This means you can benefit from improvements to CI/CD workflows, linting rules, and development tooling without manually tracking upstream changes. Think of it as keeping your project's foundation fresh and aligned with modern practices, while maintaining full control over what gets updated.
 
-## 🚀 Getting Started
+### How It Works
 
-Start by cloning the repository:
+Rhiza uses a simple configuration file (`.rhiza/template.yml`) to control which templates sync to your project:
+
+```yaml
+# .rhiza/template.yml
+repository: Jebel-Quant/rhiza
+ref: v0.7.1
+
+include: |
+  .github/workflows/*.yml
+  .pre-commit-config.yaml
+  ruff.toml
+  pytest.ini
+  Makefile
+
+exclude: |
+  .rhiza/scripts/customisations/*
+```
+
+**What you're seeing:**
+- **`repository`** - The upstream template source (**can be any repository, not just Rhiza!**)
+- **`ref`** - Which version tag/branch to sync from (e.g., `v0.7.1` or `main`)
+- **`include`** - File patterns to pull from the template (CI workflows, linting configs, etc.)
+- **`exclude`** - Paths to skip, protecting your customisations
+
+> **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention. 
+>
+> To enable this in your project, copy the [`regexManagers` configuration](renovate.json#L31-L40) from this repository's `renovate.json` file into your own Renovate configuration. See the linked configuration for the complete setup.
+
+When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhiza fetches only the files matching your `include` patterns, skips anything in `exclude`, and creates a clean diff for you to review. You stay in control of what updates and when.
+
+**💡 Pro Tip:** While you can use `Jebel-Quant/rhiza` directly, **we recommend creating your own template repository** using GitHub's "Use this template" button. This gives you a clean copy to customise for your organisation's specific needs and constraints—adjusting CI workflows, coding standards, or tooling choices—while still benefiting from Rhiza's sync mechanism. Your template repo becomes your team's source of truth, and you can selectively pull updates from upstream Rhiza when desired.
+
+## 📚 Table of Contents
+
+- [Why Rhiza?](#-why-rhiza)
+- [Quick Start](#-quick-start)
+- [What You Get](#-what-you-get)
+- [Integration Guide](#-integration-guide)
+- [Available Tasks](#-available-tasks)
+- [Advanced Topics](#-advanced-topics)
+- [CI/CD Support](#-cicd-support)
+- [Project Maintainability](#-project-maintainability)
+- [Contributing to Rhiza](#-contributing-to-rhiza)
+
+## 🚀 Quick Start
+
+### For New Projects
+
+Create a new project with Rhiza templates:
+
+```bash
+# Navigate to your project directory
+cd /path/to/your/project
+
+# Initialise Rhiza configuration
+uvx rhiza init
+
+# Edit .rhiza/template.yml to select desired templates
+# Then materialize the templates
+uvx rhiza materialize
+```
+
+### For Existing Projects
+
+Integrate Rhiza into an existing Python project:
+
+```bash
+# Navigate to your repository
+cd /path/to/your/project
+
+# Initialise and configure
+uvx rhiza init
+
+# Review and edit .rhiza/template.yml
+# Then apply templates
+uvx rhiza materialize
+```
+
+See the [Integration Guide](#-integration-guide) for detailed instructions and options.
+
+### For Contributing to Rhiza
+
+If you want to develop Rhiza itself:
 
 ```bash
 # Clone the repository
 git clone https://github.com/jebel-quant/rhiza.git
 cd rhiza
-```
 
-The project uses a [Makefile](Makefile) as the primary entry point for all tasks.
-It relies on [uv and uvx](https://github.com/astral-sh/uv) for fast Python package management.
-
-Install all dependencies using:
-
-```bash
+# Install dependencies
 make install
 ```
 
-This will:
-- Install `uv` and `uvx` into the `bin/` directory
-- Create a Python virtual environment in `.venv/`
-- Install all project dependencies from `pyproject.toml`
-
-Both the `.venv` and `bin` directories are listed in `.gitignore`.
-
-## 📋 Available Tasks
-
-Run `make help` to see all available targets:
-
-```makefile
-Usage:
-  make <target>
-
-Targets:
-
-Bootstrap
-  install-uv            ensure uv/uvx is installed
-  install-extras        run custom build script (if exists)
-  install               install
-  sync                  sync with template repository as defined in .github/template.yml
-  validate              validate project structure against template repository as defined in .github/template.yml
-  clean                 Clean project artifacts and stale local branches
-
-Tools
-  marimo                fire up Marimo server
-
-Quality and Formatting
-  deptry                Run deptry
-  fmt                   check the pre-commit hooks and the linting
-
-Releasing and Versioning
-  bump                  bump version
-  release               create tag and push to remote with prompts
-  post-release          perform post-release tasks
-
-Meta
-  help                  Display this help message
-  customisations        list available customisation scripts
-  update-readme         update README.md with current Makefile help output
-  version-matrix        Emit the list of supported Python versions from pyproject.toml
-
-Development and Testing
-  test                  run all tests
-  benchmark             run performance benchmarks
-
-Documentation
-  docs                  create documentation with pdoc
-  marimushka            export Marimo notebooks to HTML
-  book                  compile the companion book
-
-Presentation
-  presentation          generate presentation slides from PRESENTATION.md using Marp
-  presentation-pdf      generate PDF presentation from PRESENTATION.md using Marp
-  presentation-serve    serve presentation interactively with Marp
-
-```
-
-The [Makefile](Makefile) provides organized targets for bootstrapping, development, testing, and documentation tasks.
-
-> **Note:** The help output above is automatically generated from the Makefile.
-> When you modify Makefile targets or descriptions, run `make update-readme` to update this section,
-> or the pre-commit hook will update it automatically when you commit changes to the Makefile.
-
-## 📊 Marimo Notebooks
-
-This project supports [Marimo](https://marimo.io/) notebooks. You can run the Marimo server using:
-
-```bash
-make marimo
-```
-
-### Configuration
-
-To ensure Marimo can import the local package (`src/config`), the following configuration is added to `pyproject.toml`:
-
-```toml
-[tool.marimo.runtime]
-pythonpath = ["src"]
-```
-
-### Dependency Management
-
-Marimo notebooks can define their own dependencies using inline script metadata. This allows notebooks to be self-contained and reproducible.
-
-To use the current package (`rhiza`) within a notebook, you can define it as a dependency and point `uv` to the local path. Add the following block at the top of your `.py` notebook file:
-
-```python
-# /// script
-# requires-python = ">=3.11"
-# dependencies = [
-#     "marimo",
-#     "pandas",
-#     "rhiza",
-# ]
-#
-# [tool.uv.sources]
-# rhiza = { path = "../.." }
-# ///
-```
-
-Adjust the `path` in `[tool.uv.sources]` relative to the notebook's location.
-
-## Testing your documentation
-
-Any README.md file will be scanned for Python code blocks.
-If any are found, they will be tested in [test_readme.py](tests/test_config_templates/test_readme.py).
-
-```python
-# Some generic Python code block
-import math
-print("Hello, World!")
-print(1 + 1)
-print(round(math.pi, 2))
-print(round(math.cos(math.pi/4.0), 2))
-```
-
-For each code block, we define a block of expected output.
-If the output matches the expected output, a [test](tests/test_config_templates/test_readme.py) passes,
-Otherwise, it fails.
-
-```result
-Hello, World!
-2
-3.14
-0.71
-```
-
-## 🎨 Documentation Customization
-
-You can customize the look and feel of your documentation by providing your own templates.
-
-### API Documentation (pdoc)
-
-The `make docs` command checks for a directory at `book/pdoc-templates`. If found, it uses the templates within that directory to generate the API documentation.
-
-To customize the API docs:
-1. Create the directory: `mkdir -p book/pdoc-templates`
-2. Add your Jinja2 templates (e.g., `module.html.jinja2`) to this directory.
-
-See the [pdoc documentation](https://pdoc.dev/docs/pdoc.html#templates) for more details on templating.
-
-### Companion Book (minibook)
-
-The `make book` command checks for a template at `book/minibook-templates/custom.html.jinja2`. If found, it uses this template for the minibook generation.
-
-To customize the book:
-1. Create the directory: `mkdir -p book/minibook-templates`
-2. Create your custom template at `book/minibook-templates/custom.html.jinja2`.
+## ✨ What You Get
 
 ## 📝 Architecture Decision Records
 
@@ -231,486 +143,384 @@ For more information about the ADR format and how to create new records, see the
 
 ## 📁 Available Templates
 
-This repository provides a curated set of reusable configuration templates, organised by purpose.
+- 🚀 **CI/CD Templates** - Ready-to-use GitHub Actions and GitLab CI workflows
+- 🧪 **Testing Framework** - Comprehensive test setup with pytest
+- 📚 **Documentation** - Automated documentation generation with pdoc and companion books
+- 🔍 **Code Quality** - Linting with ruff, formatting, and dependency checking with deptry
+- 📝 **Editor Configuration** - Cross-platform .editorconfig for consistent coding style
+- 📊 **Marimo Integration** - Interactive notebook support for documentation and exploration
+- 🎤 **Presentations** - Generate slides from Markdown using Marp
+- 🐳 **Containerization** - Docker and Dev Container configurations
 
-### 🌱 Core Project Configuration
-Foundational files that define project structure, standards, and contribution practices.
+### Available Templates
 
-- **.gitignore** — Sensible defaults for Python projects
-- **.editorconfig** — Editor configuration to enforce consistent coding standards
-- **ruff.toml** — Configuration for the Ruff linter and formatter
-- **pytest.ini** — Configuration for the `pytest` testing framework
-- **Makefile** — Simple make targets for common development tasks
-- **CODE_OF_CONDUCT.md** — Generic code of conduct for open-source projects
-- **CONTRIBUTING.md** — Generic contributing guidelines for open-source projects
+This repository provides a curated set of reusable configuration templates:
 
-### 🔧 Developer Experience
-Tooling that improves local development, onboarding, and reproducibility.
+#### 🌱 Core Project Configuration
+- **.gitignore** - Sensible defaults for Python projects
+- **.editorconfig** - Editor configuration to enforce consistent coding standards
+- **ruff.toml** - Configuration for the Ruff linter and formatter
+- **pytest.ini** - Configuration for the `pytest` testing framework
+- **Makefile** - Task automation for common development workflows
+- **CODE_OF_CONDUCT.md** - Code of conduct for open-source projects
+- **CONTRIBUTING.md** - Contributing guidelines
 
-- **.devcontainer/** — Development container setup (VS Code / Dev Containers)
-- **.pre-commit-config.yaml** — Common and useful pre-commit hooks
-- **docker/** — Example `Dockerfile` and `.dockerignore`
+#### 🔧 Developer Experience
+- **.devcontainer/** - Development container setup (VS Code / Dev Containers)
+- **.pre-commit-config.yaml** - Pre-commit hooks for code quality
+- **docker/** - Example `Dockerfile` and `.dockerignore`
 
-### 🚀 CI / CD & Automation
-Templates related to continuous integration, delivery, and repository automation.
+#### 🚀 CI/CD & Automation
+- **.github/** - GitHub Actions workflows, scripts, and repository templates
+- **.gitlab/** - GitLab CI/CD workflows (see [.gitlab/README.md](.gitlab/README.md))
 
-- **.github/** — GitHub Actions workflows, scripts, and repository templates
-- **.gitlab/** — GitLab CI/CD workflows (equivalent to GitHub Actions)
-  - See [GITLAB_CI.md](GITLAB_CI.md) for GitLab CI/CD setup and usage
-
-## ⚙️ Workflow Configuration
-
-The GitHub Actions workflows can be customized using repository variables:
-
-### Python Version Control
-
-Control which Python versions are used in your workflows:
-
-- **`PYTHON_MAX_VERSION`** - Maximum Python version for CI testing matrix
-  - Default: `'3.14'` (tests on 3.11, 3.12, 3.13, 3.14)
-  - Set to `'3.13'` to test on 3.11, 3.12, 3.13 only
-  - Set to `'3.12'` to test on 3.11, 3.12 only
-  - Set to `'3.11'` to test on 3.11 only
-
-- **`PYTHON_DEFAULT_VERSION`** - Default Python version for release, pre-commit, book, and marimo workflows
-  - Default: `'3.14'`
-  - Set to `'3.12'` or `'3.13'` if dependencies are not compatible with newer versions
-
-**To set these variables:**
-
-1. Go to your repository Settings → Secrets and variables → Actions → Variables tab
-2. Click "New repository variable"
-3. Add `PYTHON_MAX_VERSION` and/or `PYTHON_DEFAULT_VERSION` with your desired values
-
-## 🧩 Bringing Rhiza into an Existing Project
+## 🧩 Integration Guide
 
 Rhiza provides reusable configuration templates that you can integrate into your existing Python projects.
-You can choose to adopt all templates or selectively pick the ones that fit your needs.
 
 ### Prerequisites
-
-Before integrating Rhiza into your existing project:
 
 - **Python 3.11+** - Ensure your project supports Python 3.11 or newer
 - **Git** - Your project should be a Git repository
 - **Backup** - Consider committing any uncommitted changes before integration
-- **Review** - Review the [Available Templates](#-available-templates) section to understand what could be added
 
-### Quick Start: Automated Injection
+### Automated Integration (Recommended)
 
-The fastest way to integrate Rhiza is using the provided `inject_rhiza.sh` script:
+The fastest way to integrate Rhiza:
 
 ```bash
 # Navigate to your repository
 cd /path/to/your/project
 
-# Run the injection script
-uvx rhiza .
-```
+# Initialise configuration templates
+uvx rhiza init
 
-This will:
-- ✅ Create a default template configuration (`.github/template.yml`)
-- ✅ Perform an initial sync of a basic set of templates
-- ✅ Provide clear next steps for review and customization
+# Edit .rhiza/template.yml to select desired templates
+# Then materialize the templates
+uvx rhiza materialize
+```
 
 **Options:**
 - `--branch <branch>` - Use a specific rhiza branch (default: main)
 - `--help` - Show detailed usage information
 
-**Example with branch option:**
-```bash
-# Use a development branch
-uvx --branch develop .
-```
+### Manual Integration (Selective Adoption)
 
-### Method 1: Manual Integration (Selective Adoption)
+For cherry-picking specific templates or customising before integration:
 
-This approach is ideal if you want to cherry-pick specific templates or customize them before integration.
+1. **Clone Rhiza** to a temporary location:
+   ```bash
+   cd /tmp
+   git clone https://github.com/jebel-quant/rhiza.git
+   ```
 
-#### Step 1: Clone Rhiza
+2. **Copy desired templates** to your project:
+   ```bash
+   cd /path/to/your/project
+   git checkout -b rhiza
+   mkdir -p .github/workflows .rhiza/scripts
+   cp /tmp/rhiza/.rhiza/template.yml .rhiza/template.yml
+   cp /tmp/rhiza/.rhiza/scripts/sync.sh .rhiza/scripts
+   ```
 
-First, clone the Rhiza repository to a temporary location:
+3. **Run the sync script**:
+   ```bash
+   ./.rhiza/scripts/sync.sh
+   git status
+   git diff  # Review changes
+   ```
 
-```bash
-# Clone to a temporary directory
-cd /tmp
-git clone https://github.com/jebel-quant/rhiza.git
-```
+4. **Commit and push** if satisfied with the changes
 
-#### Step 2: Copy Desired Templates
+### Automated Sync (Continuous Updates)
 
-Navigate to your project and copy the configuration files you need:
+Keep your templates up-to-date with automated sync workflows:
 
-```bash
-# Navigate to your project
-cd /path/to/your/project
+- Configure `.rhiza/template.yml` to define which templates to include/exclude
+- The `.github/workflows/sync.yml` workflow runs on schedule or manually
+- Creates pull requests with template updates
 
-# We recommend working on a fresh branch
-git checkout -b rhiza
-
-# Ensure required directories exist
-mkdir -p .github/workflows
-mkdir -p .rhiza/scripts
-
-# Copy the template configuration
-cp /tmp/rhiza/.github/template.yml .github/template.yml
-
-# Copy the sync helper script
-cp /tmp/rhiza/.rhiza/scripts/sync.sh .rhiza/scripts
-```
-
-At this stage:
-
-  - ❌ No templates are copied yet
-  - ❌ No existing files are modified
-  - ✅ Only the sync mechanism is installed
-  - ⚠️ **Do not merge this branch yet.**
-
-#### Step 3: Perform the first sync
-
-Run the sync script to apply the templates defined in '.github/template.yml'
-
-```bash
-./.rhiza/scripts/sync.sh
-```
-
-This will:
-
-  - Fetch the selected templates from the Rhiza repository
-  - Apply them locally according to your include/exclude rules
-  - Stage or commit the resulting changes on the current branch
-
-Review the changes carefully:
-
-```bash
-git status
-git diff
-```
-
-If happy with the suggested changes push them
-
-```bash
-git add .
-git commit -m "Integrate Rhiza templates"
-git push -u origin rhiza
-```
-
-### Method 2: Automated Sync (Continuous Updates)
-
-This approach keeps your project’s configuration in sync with Rhiza’s latest templates while giving you control over which files are applied.
-
-Prerequisites:
-
-  - A .github/template.yml file exists, defining **which templates to include or exclude**.
-  - The first manual sync (./.rhiza/scripts/sync.sh) has been performed.
-  - The .github/workflows/sync.yml workflow is present in your repository.
-
-The workflow can run:
-
-  **On a schedule** — e.g., weekly updates
-  **Manually** — via the GitHub Actions “Run workflow” button
-
-⚠️ .github/template.yml remains the **source of truth**. All automated updates are driven by its include/exclude rules.
-
-#### Step 1: Configure GitHub Token
-
-If you want the sync workflow to trigger other workflows (e.g. to create pull requests), create a Personal Access Token (PAT):
-
-1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
-2. Generate a new token with `repo` and `workflow` scopes
-3. Add it as a repository secret named `PAT_TOKEN`
-4. Update the workflow to use `token: ${{ secrets.PAT_TOKEN }}`
-
-#### Step 2: Run Initial Sync (again)
-
-You can trigger the sync workflow manually:
-
-1. Go to your repository's "Actions" tab
-2. Select the "Sync Templates" workflow
-3. Click "Run workflow"
-4. Review and merge the resulting pull request
-
-The workflow will:
-- Download the latest templates from Rhiza
-- Copy them to your project based on your `template.yml` configuration
-- Create a pull request with the changes (if any)
-- Automatically run weekly to keep your templates up to date
+For GitHub Token configuration and details, see the [GitHub Actions documentation](.github/README.md).
 
 ### What to Expect After Integration
 
-After integrating Rhiza, your project will have:
-
 - **Automated CI/CD** - GitHub Actions workflows for testing, linting, and releases
 - **Code Quality Tools** - Pre-commit hooks, ruff formatting, and pytest configuration
-- **Task Automation** - Makefile with common development tasks (`make test`, `make fmt`, etc.)
-- **Dev Container** - Optional VS Code/Codespaces development environment
-- **Documentation** - Templates for automated documentation generation
+- **Task Automation** - Makefile with common development tasks
+- **Dev Container** - Optional VS Code/Codespaces environment
+- **Documentation** - Automated documentation generation
 
-### Next Steps
+### Troubleshooting Integration
 
-1. **Test the integration** - Run `make test` to ensure tests pass
-2. **Run pre-commit** - Execute `make fmt` to verify code quality checks
-3. **Review workflows** - Check GitHub Actions tabs to see workflows in action
-4. **Customize** - Adjust templates to match your project's specific needs
-5. **Update documentation** - Add project-specific instructions to your README
+- **Makefile conflicts**: Merge targets with existing build scripts
+- **Pre-commit failures**: Run `make fmt` to fix formatting issues
+- **Workflow failures**: Check Python version in `.python-version` and `pyproject.toml`
+- **Dev container issues**: See [.devcontainer/README.md](.devcontainer/README.md)
 
-### Troubleshooting
+## 📋 Available Tasks
 
-**Issue: Makefile targets conflict with existing scripts**
-- Solution: Review the Makefile and merge targets with your existing build scripts, or rename conflicting targets
+The project uses a [Makefile](Makefile) as the primary entry point for all tasks, powered by [uv](https://github.com/astral-sh/uv) for fast Python package management.
 
-**Issue: Pre-commit hooks fail on existing code**
-- Solution: Run `make fmt` to fix formatting issues, or temporarily exclude certain files in `.pre-commit-config.yaml`
-
-**Issue: GitHub Actions workflows fail**
-- Solution: Check Python version compatibility and adjust `PYTHON_MAX_VERSION` repository variable if needed
-
-**Issue: Dev container fails to build**
-- Solution: Review `.devcontainer/devcontainer.json` and ensure all dependencies are available for your project
-
-## 🖥️ Dev Container Compatibility
-
-This repository includes a
-template **Dev Container** configuration
-for seamless development experience in
-both **VS Code** and **GitHub Codespaces**.
-
-### What's Configured
-
-The `.devcontainer` setup provides:
-
-- 🐍 **Python 3.14** runtime environment
-- 🔧 **UV Package Manager** - Fast Python package installer and resolver
-- ⚡ **Makefile** - For running project workflows
-- 🧪 **Pre-commit Hooks** - Automated code quality checks
-- 📊 **Marimo Integration** - Interactive notebook support with VS Code extension
-- 🔍 **Python Development Tools** - Pylance, Python extension, and optimized settings
-- 🚀 **Port Forwarding** - Port 8080 for development servers
-- 🔐 **SSH Agent Forwarding** - Full Git functionality with your host SSH keys
-
-### Usage
-
-#### In VS Code
-
-1. Install the "Dev Containers" extension
-2. Open the repository in VS Code
-3. Click "Reopen in Container" when prompted
-4. The environment will automatically set up with all dependencies
-
-#### In GitHub Codespaces
-
-1. Navigate to the repository on GitHub
-2. Click the green "Code" button
-3. Select "Codespaces" tab
-4. Click "Create codespace on main" (or your branch)
-5. Your development environment will be ready in minutes
-
-The dev container automatically runs the initialization script that:
-
-- Installs UV package manager
-- Configures the Python virtual environment
-- Installs project dependencies
-- Sets up pre-commit hooks
-
-### Publishing Devcontainer Images
-
-The repository includes workflows for building and publishing devcontainer images:
-
-#### CI Validation
-
-The **DEVCONTAINER** workflow automatically validates that your devcontainer builds successfully:
-- Triggers on changes to `.devcontainer/**` files or the workflow itself
-- Builds the image without publishing (`push: never`)
-- Works on pushes to any branch and pull requests
-- Gracefully skips if no `.devcontainer/devcontainer.json` exists
-
-### VS Code Dev Container SSH Agent Forwarding
-
-Dev containers launched locally via VS code
-are configured with SSH agent forwarding
-to enable seamless Git operations:
-
-- **Mounts your SSH directory** - Your `~/.ssh` folder is mounted into the container
-- **Forwards SSH agent** - Your host's SSH agent is available inside the container
-- **Enables Git operations** - Push, pull, and clone using your existing SSH keys
-- **Works transparently** - No additional setup required in VS Code dev containers
-
-### Troubleshooting
-
-Common issues and solutions when using this configuration template.
-
----
-
-#### SSH authentication fails on macOS when using devcontainer
-
-**Symptom**: When building or using the devcontainer on macOS, Git operations (pull, push, clone) fail with SSH authentication errors, even though your SSH keys work fine on the host.
-
-**Cause**: macOS SSH config often includes `UseKeychain yes`, which is a macOS-specific directive. When the devcontainer mounts your `~/.ssh` directory, other platforms (Linux containers) don't recognize this directive and fail to parse the SSH config.
-
-**Solution**: Add `IgnoreUnknown UseKeychain` to the top of your `~/.ssh/config` file on your Mac:
-
-```ssh-config
-# At the top of ~/.ssh/config
-IgnoreUnknown UseKeychain
-
-Host *
-  AddKeysToAgent yes
-  UseKeychain yes
-  IdentityFile ~/.ssh/id_rsa
-```
-
-This tells SSH clients on non-macOS platforms to ignore the `UseKeychain` directive instead of failing.
-
-**Reference**: [Stack Overflow solution](https://stackoverflow.com/questions/75613632/trying-to-ssh-to-my-server-from-the-terminal-ends-with-error-line-x-bad-configu/75616369#75616369)
-
-
-## 🔧 Custom Build Extras
-
-The project includes a hook for installing additional system dependencies and custom build steps needed across all build phases.
-
-### Using build-extras.sh
-
-Create a file `.rhiza/scripts/customisations/build-extras.sh` in your repository to install system packages or dependencies (this repository uses a dedicated `customisations` folder for repo-specific scripts):
-```bash
-#!/bin/bash
-set -euo pipefail
-
-# Example: Install graphviz for diagram generation
-sudo apt-get update
-sudo apt-get install -y graphviz
-
-# Add other custom installation commands here
-```
-
-### When it Runs
-
-The `build-extras.sh` script (from `.rhiza/scripts/customisations`) is automatically invoked during:
-- `make install` - Initial project setup
-- `make test` - Before running tests
-- `make book` - Before building documentation
-- `make docs` - Before generating API documentation
-
-This ensures custom dependencies are available whenever needed throughout the build lifecycle. The `Makefile` intentionally only checks the `.rhiza/scripts/customisations` folder for repository-specific hooks such as `build-extras.sh` and `post-release.sh`.
-
-### Important: Exclude from Template Updates
-
-If you customize this file, add it to the exclude list in your `action.yml` configuration to prevent it from being overwritten during template updates. Use the `customisations` path to avoid clobbering:
-```yaml
-exclude: |
-  .rhiza/scripts/customisations/build-extras.sh
-```
-
-
-### Common Use Cases
-
-- Installing graphviz for diagram rendering
-- Adding LaTeX for mathematical notation
-- Installing system libraries for specialized tools
-- Setting up additional build dependencies
-- Downloading external resources or tools
-
-### Post-release scripts
-
-If you need repository-specific post-release tasks, place a `post-release.sh` script in `.rhiza/scripts/customisations/post-release.sh`. The `Makefile` will only look in the `customisations` folder for that hook.
-
-
-## 🚀 Releasing
-
-This template includes a robust release workflow that handles version bumping, tagging, and publishing.
-
-### The Release Process
-
-The release process consists of two interactive steps: **Bump** and **Release**.
-
-#### 1. Bump Version
-
-First, update the version in `pyproject.toml`:
+### Key Commands
 
 ```bash
-make bump
+make install         # Install dependencies and setup environment
+make test            # Run test suite with coverage
+make fmt             # Format and lint code
+make todos           # Scan for TODO/FIXME/HACK comments
+make sync            # Sync with template repository
+make release         # Create and publish a new release
+make marimo          # Start Marimo notebook server
+make book            # Build documentation
 ```
 
-This command will interactively guide you through:
-1. Selecting a bump type (patch, minor, major) or entering a specific version
-2. Warning you if you're not on the default branch
-3. Showing the current and new version
-4. Prompting whether to commit the changes
-5. Prompting whether to push the changes
+Run `make help` for a complete list of 40+ available targets.
 
-The script ensures safety by:
-- Checking for uncommitted changes before bumping
-- Validating that the tag doesn't already exist
-- Verifying the version format
+<details>
+<summary>Show all available targets</summary>
 
-#### 2. Release
+```makefile
+  ____  _     _
+ |  _ \| |__ (_)______ _
+ | |_) | '_ \| |_  / _\`|
+ |  _ <| | | | |/ / (_| |
+ |_| \_\_| |_|_/___\__,_|
 
-Once the version is bumped and committed, run the release command:
+Usage:
+  make <target>
+
+Targets:
+
+Rhiza Workflows
+  sync                  sync with template repository as defined in .rhiza/template.yml
+  validate              validate project structure against template repository as defined in .rhiza/template.yml
+  readme                update README.md with current Makefile help output
+
+Bootstrap
+  install-uv            ensure uv/uvx is installed
+  install               install
+  clean                 Clean project artifacts and stale local branches
+
+Quality and Formatting
+  deptry                Run deptry
+  fmt                   check the pre-commit hooks and the linting
+
+Releasing and Versioning
+  bump                  bump version
+  release               create tag and push to remote with prompts
+
+Meta
+  help                  Display this help message
+  version-matrix        Emit the list of supported Python versions from pyproject.toml
+
+Development and Testing
+  test                  run all tests
+  benchmark             run performance benchmarks
+
+Documentation
+  docs                  create documentation with pdoc
+  book                  compile the companion book
+
+Marimo Notebooks
+  marimo-validate       validate all Marimo notebooks can run
+  marimo                fire up Marimo server
+  marimushka            export Marimo notebooks to HTML
+
+Presentation
+  presentation          generate presentation slides from PRESENTATION.md using Marp
+  presentation-pdf      generate PDF presentation from PRESENTATION.md using Marp
+  presentation-serve    serve presentation interactively with Marp
+
+Docker
+  docker-build          build Docker image 
+  docker-run            run the Docker container
+  docker-clean          remove Docker image
+
+Agentic Workflows
+  copilot               open interactive prompt for copilot
+  analyse-repo          run the analyser agent to update REPOSITORY_ANALYSIS.md
+  summarise-changes     summarise changes since the most recent release/tag
+  install-copilot       checks for copilot and prompts to install
+
+GitHub Helpers
+  gh-install            check for gh cli existence and install extensions
+  view-prs              list open pull requests
+  view-issues           list open issues
+  failed-workflows      list recent failing workflow runs
+  whoami                check github auth status
+
+Custom Tasks
+  hello-rhiza           a custom greeting task
+  post-install          run custom logic after core install
+
+```
+
+</details>
+
+> **Note:** The help output is automatically generated from the Makefile.
+> When you modify Makefile targets, run `make readme` to update this section,
+> or the pre-commit hook will update it automatically.
+
+## 🎯 Advanced Topics
+
+### Marimo Notebooks
+
+This project supports [Marimo](https://marimo.io/) notebooks for interactive documentation and exploration.
 
 ```bash
-make release
+make marimo  # Start Marimo server
 ```
 
-This command will interactively guide you through:
-1. Checking if your branch is up-to-date with the remote
-2. If your local branch is ahead, showing the unpushed commits and prompting you to push them
-3. Creating a git tag (e.g., `v1.2.4`)
-4. Pushing the tag to the remote, which triggers the GitHub Actions release workflow
+For configuration details including dependency management and pythonpath setup, see the [Marimo documentation](https://marimo.io/).
 
-The script provides safety checks by:
-- Warning if you're not on the default branch
-- Verifying no uncommitted changes exist
-- Checking if the tag already exists locally or on remote
-- Showing the number of commits since the last tag
+### Presentations
 
-### What Happens After Release
+Generate presentation slides using [Marp](https://marp.app/):
 
-The release workflow (`.github/workflows/release.yml`) triggers on the tag push and:
+```bash
+make presentation        # Generate HTML slides
+make presentation-pdf    # Generate PDF slides
+make presentation-serve  # Serve with live reload
+```
 
-1.  **Validates** - Checks the tag format and ensures no duplicate releases
-2.  **Builds** - Builds the Python package (if `pyproject.toml` exists)
-3.  **Drafts** - Creates a draft GitHub release with artifacts
-4.  **PyPI** - Publishes to PyPI (if not marked private)
-5.  **Devcontainer** - Publishes devcontainer image (if `PUBLISH_DEVCONTAINER=true`)
-6.  **Finalizes** - Publishes the GitHub release with links to PyPI and container images
+For detailed information about creating and customising presentations, see [presentation/README.md](presentation/README.md).
 
-### Configuration Options
+### Documentation Examples
 
-**Python Version Configuration:**
-- Set repository variable `PYTHON_MAX_VERSION` to control maximum Python version in CI tests
-  - Options: `'3.11'`, `'3.12'`, `'3.13'`, or `'3.14'` (default)
-  - Example: Set to `'3.13'` to test on Python 3.11, 3.12, and 3.13 only
-- Set repository variable `PYTHON_DEFAULT_VERSION` to control default Python version in workflows
-  - Options: `'3.11'`, `'3.12'`, `'3.13'`, or `'3.14'` (default)
-  - Example: Set to `'3.12'` if dependencies are not compatible with Python 3.14
-  - Used in release, pre-commit, book, and marimo workflows
+README code blocks can be tested when tests are configured.
 
-**PyPI Publishing:**
-- Automatic if package is registered as a Trusted Publisher
-- Use `PYPI_REPOSITORY_URL` and `PYPI_TOKEN` for custom feeds
-- Mark as private with `Private :: Do Not Upload` in `pyproject.toml`
+```python
+# Example code block
+import math
+print("Hello, World!")
+print(1 + 1)
+print(round(math.pi, 2))
+print(round(math.cos(math.pi/4.0), 2))
+```
 
-**Devcontainer Publishing:**
-- Set repository variable `PUBLISH_DEVCONTAINER=true` to enable
-- Override registry with `DEVCONTAINER_REGISTRY` variable (defaults to ghcr.io)
-- Requires `.devcontainer/devcontainer.json` to exist
-- Image published as `{registry}/{owner}/{repository}/devcontainer:vX.Y.Z`
+```result
+Hello, World!
+2
+3.14
+0.71
+```
 
-## 🤝 Contributing
+### Documentation Customisation
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+For information on customising the look and feel of your documentation, see [book/README.md](book/README.md).
+
+### Python Version Management
+
+The `.python-version` file specifies the default Python version for local development. Tools like `uv` and `pyenv` automatically use this version. Simply update this file to change your local Python version.
+
+### Makefile Customisation
+
+Rhiza uses a modular Makefile system with extension points (hooks) for customisation. See [.rhiza/make.d/README.md](.rhiza/make.d/README.md) for the complete guide including:
+- Extension points and hooks
+- Custom target creation
+- Module ordering conventions
+
+### Custom Build Scripts
+
+For system dependencies and custom build steps, see [docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md).
+
+### Private GitHub Packages
+
+Rhiza's template workflows automatically support private GitHub packages from the same organization. Simply add them to your `pyproject.toml`:
+
+**In `pyproject.toml`:**
+```toml
+[tool.uv.sources]
+my-package = { git = "https://github.com/jebel-quant/my-package.git", rev = "v1.0.0" }
+```
+
+**Git authentication is already configured** in all Rhiza workflows (CI, book, release, etc.) using the default `GITHUB_TOKEN`, which automatically provides read access to repositories in the same organization.
+
+For custom workflows or local development setup, see [.rhiza/docs/PRIVATE_PACKAGES.md](.rhiza/docs/PRIVATE_PACKAGES.md).
+
+### Release Management
+
+For information on versioning, tagging, and publishing releases, see [.rhiza/docs/RELEASING.md](.rhiza/docs/RELEASING.md).
+
+### Dev Container
+
+This repository includes a template Dev Container configuration for seamless development in VS Code and GitHub Codespaces. See [.devcontainer/README.md](.devcontainer/README.md) for setup, configuration, and troubleshooting.
+
+For details about the VS Code extensions configured in the Dev Container, see [docs/VSCODE_EXTENSIONS.md](docs/VSCODE_EXTENSIONS.md).
+
+## 🔄 CI/CD Support
+
+### GitHub Actions
+
+The `.github/` directory contains comprehensive GitHub Actions workflows for:
+- CI testing across multiple Python versions
+- Pre-commit checks and code quality
+- Dependency checking with deptry
+- Documentation building
+- Docker and devcontainer validation
+- Release automation
+- Template synchronization
+
+### GitLab CI/CD
+
+Rhiza provides GitLab CI/CD workflow configurations with feature parity to GitHub Actions. The `.gitlab/` directory includes workflows for CI, validation, dependency checking, documentation, sync, and releases.
+
+**Quick setup:**
+```bash
+cp -r .gitlab/ /path/to/your/project/
+cp .gitlab-ci.yml /path/to/your/project/
+```
+
+For complete GitLab setup instructions, configuration variables, and troubleshooting, see **[.gitlab/README.md](.gitlab/README.md)**.
+
+## 📋 Project Maintainability
+
+Rhiza includes comprehensive maintainability features to help track project health and evolution:
+
+### Roadmap & Planning
+
+- **[ROADMAP.md](ROADMAP.md)** - Detailed project roadmap with planned features, release timeline, and long-term vision
+- **[docs/PROJECT_BOARD.md](docs/PROJECT_BOARD.md)** - Guide for setting up GitHub Project Boards to track enhancements and roadmap items
+
+### Technical Debt Tracking
+
+- **[docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md)** - Comprehensive tracking of known limitations, debt items, and future improvements
+- **`make todos`** - Automated scanning for TODO, FIXME, and HACK comments across the codebase
+
+### Changelog Management
+
+- **[docs/CHANGELOG_GUIDE.md](docs/CHANGELOG_GUIDE.md)** - Guide for enhanced changelog generation with PR categorization
+- **[.github/release.yml](.github/release.yml)** - Automated PR categorization for release notes
+
+Run `make todos` to scan for technical debt markers in your codebase, or explore the roadmap and technical debt documents to understand project evolution and planned improvements.
+
+## 🛠️ Contributing to Rhiza
+
+Contributions are welcome! To contribute to Rhiza itself (not using Rhiza in your project):
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Clone and setup:
+   ```bash
+   git clone https://github.com/your-username/rhiza.git
+   cd rhiza
+   make install
+   ```
+3. Create your feature branch (`git checkout -b feature/amazing-feature`)
+4. Make your changes and test (`make test && make fmt`)
+5. Commit your changes (`git commit -m 'Add some amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
 - [GitHub Actions](https://github.com/features/actions) - For CI/CD capabilities
 - [Marimo](https://marimo.io/) - For interactive notebooks
 - [UV](https://github.com/astral-sh/uv) - For fast Python package operations
+- [Ruff](https://github.com/astral-sh/ruff) - For Python linting and formatting
+- [Marp](https://marp.app/) - For presentation generation

@@ -136,17 +136,7 @@ script:
 | Git LFS | ✅ Yes | ✅ Yes |
 | UV integration | ✅ Yes | ✅ Yes |
 
-### 2. Devcontainer
-
-| Feature | GitHub Actions | GitLab CI |
-|---------|----------------|-----------|
-| Build validation | ✅ Yes | ✅ Yes |
-| Registry login | ✅ GITHUB_TOKEN | ✅ CI_JOB_TOKEN |
-| Image naming | ✅ ghcr.io | ✅ registry.gitlab.com |
-| Push on PR/MR | ❌ No | ❌ No |
-| Push on release | ✅ Yes | ✅ Yes |
-
-### 3. Documentation (Book)
+### 2. Documentation (Book)
 
 | Feature | GitHub Actions | GitLab CI |
 |---------|----------------|-----------|
@@ -155,17 +145,16 @@ script:
 | Deployment | GitHub Pages | GitLab Pages |
 | Deploy action | `actions/deploy-pages@v4` | Job named `pages` |
 
-### 4. Release
+### 3. Release
 
 | Feature | GitHub Actions | GitLab CI |
 |---------|----------------|-----------|
 | PyPI auth | ✅ OIDC Trusted Publishing | ⚠️ Token-based |
 | Release creation | `softprops/action-gh-release` | GitLab Releases API |
-| Devcontainer publish | ✅ Yes | ✅ Yes |
 | Version validation | ✅ Yes | ✅ Yes |
 | Draft releases | ✅ Yes | ✅ Yes (via API) |
 
-### 5. Sync
+### 4. Sync
 
 | Feature | GitHub Actions | GitLab CI |
 |---------|----------------|-----------|

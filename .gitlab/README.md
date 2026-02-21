@@ -122,7 +122,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 ---
 
 ### 7. Release (`rhiza_release.yml`)
-**Purpose:** Create releases and publish packages to PyPI and container registries.
+**Purpose:** Create releases and publish packages to PyPI.
 
 **Trigger:**
 - On version tags (e.g., `v1.2.3`)
@@ -131,7 +131,6 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 - Version validation
 - Python package building with Hatch
 - PyPI publishing with twine
-- Devcontainer image publishing (conditional)
 - GitLab release creation
 
 **Equivalent GitHub Action:** `.github/workflows/rhiza_release.yml`
@@ -139,7 +138,6 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 **GitLab-specific:**
 - Uses GitLab Releases API instead of GitHub Releases
 - Uses PYPI_TOKEN instead of OIDC Trusted Publishing
-- Container registry is GitLab Container Registry by default
 
 ---
 

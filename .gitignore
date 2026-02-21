@@ -2,6 +2,7 @@
 .idea
 .venv
 .ruff_cache
+.ty_cache
 
 ### Don't expose API keys, etc.
 .env
@@ -12,11 +13,14 @@ _tests
 _book
 _pdoc
 _marimushka
+_mkdocs
+_benchmarks
+_jupyter
 
 # temp file used by Junie
 .output.txt
 
-# folder used for task
+# folder used for programs, e.g. uv, uvx, task, etc.
 bin
 
 # Byte-compiled / optimized / DLL files
@@ -72,8 +76,12 @@ coverage.json
 *.cover
 *.py,cover
 .hypothesis/
+.benchmarks/
 .pytest_cache/
 cover/
+
+# Security scanning baselines (regenerate as needed)
+.bandit-baseline.json
 
 # Translations
 *.mo
@@ -92,4 +100,8 @@ instance/
 # Cython debug symbols
 cython_debug/
 
+# Makefile
+local.mk
+
+.bandit-baseline.json
 
