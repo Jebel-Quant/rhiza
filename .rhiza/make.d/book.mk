@@ -86,6 +86,22 @@ book:: test benchmark stress hypothesis-test docs marimushka mkdocs-build ## com
 	    printf "${YELLOW}[WARN] Missing $$name, skipping${RESET}\n"; \
 	  fi; \
 	done; \
+	if [ -n "$$GITHUB_REPOSITORY" ]; then \
+	  CF_REPO="$$GITHUB_REPOSITORY"; \
+	else \
+	  CF_REPO=$$(git remote get-url origin 2>/dev/null | sed 's|.*github\.com[:/]||' | sed 's|\.git$$||'); \
+	fi; \
+	if [ -n "$$CF_REPO" ]; then \
+	  CF_URL="https://www.codefactor.io/repository/github/$$CF_REPO"; \
+	  HTTP_CODE=$$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "$$CF_URL" 2>/dev/null || echo "000"); \
+	  if [ "$$HTTP_CODE" = "200" ]; then \
+	    if [ $$first -eq 0 ]; then printf ",\n" >> _book/links.json; fi; \
+	    printf "  \"CodeFactor\": \"$$CF_URL\"" >> _book/links.json; \
+	    printf "${BLUE}[INFO] Adding CodeFactor...${RESET}\n"; \
+	  else \
+	    printf "${YELLOW}[WARN] CodeFactor page not accessible (HTTP $$HTTP_CODE), skipping${RESET}\n"; \
+	  fi; \
+	fi; \
 	printf "\n}\n" >> _book/links.json
 
 	@printf "${BLUE}[INFO] Generated links.json:${RESET}\n"
