@@ -4,7 +4,16 @@
 # and compiling a companion book (minibook).
 
 # Declare phony targets (they don't produce files)
-.PHONY: marimushka mkdocs-build book
+.PHONY: marimushka mkdocs-build book test benchmark stress hypothesis-test docs
+
+# Define default no-op targets for test-related book dependencies.
+# These are used when test.mk is not available or tests are not installed,
+# ensuring 'make book' succeeds even without a test environment.
+test:: ; @:
+benchmark:: ; @:
+stress:: ; @:
+hypothesis-test:: ; @:
+docs:: ; @:
 
 # Define a default no-op marimushka target that will be used
 # when book/marimo/marimo.mk doesn't exist or doesn't define marimushka
