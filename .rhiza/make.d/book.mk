@@ -40,6 +40,7 @@ BOOK_SECTIONS := \
   "API|_pdoc/index.html|pdoc/index.html|_pdoc|pdoc" \
   "Coverage|_tests/html-coverage/index.html|tests/html-coverage/index.html|_tests/html-coverage|tests/html-coverage" \
   "Test Report|_tests/html-report/report.html|tests/html-report/report.html|_tests/html-report|tests/html-report" \
+  "Benchmarks|_tests/benchmarks/report.html|tests/benchmarks/report.html|_tests/benchmarks|tests/benchmarks" \
   "Notebooks|_marimushka/index.html|marimushka/index.html|_marimushka|marimushka" \
   "Official Documentation|_mkdocs/index.html|docs/index.html|_mkdocs|docs"
 
@@ -49,7 +50,7 @@ BOOK_SECTIONS := \
 # 1. Aggregates API docs, coverage, test reports, notebooks, and MkDocs site into _book.
 # 2. Generates links.json to define the book structure.
 # 3. Uses 'minibook' to compile the final HTML site.
-book:: test docs marimushka mkdocs-build ## compile the companion book
+book:: test benchmark docs marimushka mkdocs-build ## compile the companion book
 	@printf "${BLUE}[INFO] Building combined documentation...${RESET}\n"
 	@rm -rf _book && mkdir -p _book
 

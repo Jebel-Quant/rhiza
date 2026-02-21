@@ -34,6 +34,30 @@ Template sync, workflows, versioning, and content validation tests. These tests 
 - `test_readme_validation.py` — README code block execution and validation
 - `test_docstrings.py` — Doctest validation across source modules
 
+#### Skipping README code blocks with `+RHIZA_SKIP`
+
+By default, every `python` and `bash` code block in `README.md` is executed or
+syntax-checked by `test_readme_validation.py`. To mark a block as intentionally
+non-runnable (e.g. illustrative snippets or environment-specific commands), add
+`+RHIZA_SKIP` to the opening fence line:
+
+~~~markdown
+```python +RHIZA_SKIP
+# This block will NOT be executed or syntax-checked
+from my_env import some_function
+some_function()
+```
+
+```bash +RHIZA_SKIP
+# This bash block will NOT be syntax-checked
+run-something --only-on-ci
+```
+~~~
+
+Markdown renderers (including GitHub) ignore everything after the first word on
+a fence line, so the block still renders as a normal highlighted code block.
+Blocks without `+RHIZA_SKIP` continue to be validated as before.
+
 ### `utils/`
 Tests for utility code and test infrastructure. These tests validate the testing framework itself and utility scripts.
 
