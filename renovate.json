@@ -8,6 +8,7 @@
     ":semanticCommits",
     ":pinDevDependencies"
   ],
+  "rebaseWhen": "behind-base-branch",
   "enabledManagers": [
     "pep621",
     "pre-commit",
@@ -19,7 +20,7 @@
   ],
   "timezone": "Asia/Dubai",
   "schedule": [
-    "before 10am on tuesday"
+    "before 3am"
   ],
   "packageRules": [
     {

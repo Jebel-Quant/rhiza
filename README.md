@@ -33,29 +33,36 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 
 ### How It Works
 
-Rhiza uses a simple configuration file (`.rhiza/template.yml`) to control which templates sync to your project:
+Rhiza uses a simple configuration file (`.rhiza/template.yml`) to control which templates sync to your project. The recommended approach is to select **template bundles** by name — pre-configured sets of related files grouped by feature:
 
 ```yaml
 # .rhiza/template.yml
 repository: Jebel-Quant/rhiza
 ref: v0.7.1
 
-include: |
-  .github/workflows/*.yml
-  .pre-commit-config.yaml
-  ruff.toml
-  pytest.ini
-  Makefile
-
-exclude: |
-  .rhiza/scripts/customisations/*
+templates:
+  - core
+  - tests
+  - github
+  - docker
 ```
 
 **What you're seeing:**
 - **`repository`** - The upstream template source (**can be any repository, not just Rhiza!**)
 - **`ref`** - Which version tag/branch to sync from (e.g., `v0.7.1` or `main`)
-- **`include`** - File patterns to pull from the template (CI workflows, linting configs, etc.)
-- **`exclude`** - Paths to skip, protecting your customisations
+- **`templates`** - Template bundles to include by name (see [Available Template Bundles](#-available-template-bundles) below)
+
+For advanced use cases you can still use explicit `include`/`exclude` file patterns alongside or instead of bundles:
+
+```yaml
+# Advanced: file-pattern based selection
+include: |
+  .github/workflows/*.yml
+  ruff.toml
+
+exclude: |
+  .rhiza/scripts/customisations/*
+```
 
 > **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention. 
 >
@@ -70,10 +77,12 @@ When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhi
 - [Why Rhiza?](#-why-rhiza)
 - [Quick Start](#-quick-start)
 - [What You Get](#-what-you-get)
+- [Available Template Bundles](#-available-template-bundles)
 - [Integration Guide](#-integration-guide)
 - [Available Tasks](#-available-tasks)
 - [Advanced Topics](#-advanced-topics)
 - [CI/CD Support](#-cicd-support)
+- [Project Maintainability](#-project-maintainability)
 - [Contributing to Rhiza](#-contributing-to-rhiza)
 
 ## 🚀 Quick Start
@@ -138,27 +147,29 @@ make install
 - 🎤 **Presentations** - Generate slides from Markdown using Marp
 - 🐳 **Containerization** - Docker and Dev Container configurations
 
-### Available Templates
+### Available Template Bundles
 
-This repository provides a curated set of reusable configuration templates:
+Rhiza organises its templates into **bundles** — pre-configured sets of related files grouped by feature. Select the bundles you need in `.rhiza/template.yml`:
 
-#### 🌱 Core Project Configuration
-- **.gitignore** - Sensible defaults for Python projects
-- **.editorconfig** - Editor configuration to enforce consistent coding standards
-- **ruff.toml** - Configuration for the Ruff linter and formatter
-- **pytest.ini** - Configuration for the `pytest` testing framework
-- **Makefile** - Task automation for common development workflows
-- **CODE_OF_CONDUCT.md** - Code of conduct for open-source projects
-- **CONTRIBUTING.md** - Contributing guidelines
+| Bundle | Description | Requires | Standalone |
+|--------|-------------|----------|------------|
+| `core` | Core Rhiza infrastructure (Makefile, linting, docs) | — | ✅ |
+| `github` | GitHub Actions workflows for CI/CD | `core` | ✅ |
+| `tests` | Testing infrastructure with pytest, coverage, and type checking | — | ✅ |
+| `marimo` | Interactive Marimo notebooks for data exploration and documentation | — | ✅ |
+| `book` | Comprehensive documentation book (API docs, coverage, notebooks) | `tests` | ❌ |
+| `docker` | Docker containerization support | — | ✅ |
+| `devcontainer` | VS Code DevContainer configuration | — | ✅ |
+| `gitlab` | GitLab CI/CD pipeline configuration | `core` | ✅ |
+| `presentation` | Presentation building using Marp | — | ✅ |
+| `lfs` | Git LFS (Large File Storage) support | — | ✅ |
+| `legal` | Legal and community files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT) | — | ✅ |
+| `renovate` | Renovate bot configuration for automated dependency updates | — | ✅ |
+| `gh-aw` | GitHub Agentic Workflows for AI-driven repository automation | `github` | ✅ |
 
-#### 🔧 Developer Experience
-- **.devcontainer/** - Development container setup (VS Code / Dev Containers)
-- **.pre-commit-config.yaml** - Pre-commit hooks for code quality
-- **docker/** - Example `Dockerfile` and `.dockerignore`
+**Tip:** Bundles marked **Standalone: ❌** cannot be used alone and must be combined with the bundles listed in the *Requires* column.
 
-#### 🚀 CI/CD & Automation
-- **.github/** - GitHub Actions workflows, scripts, and repository templates
-- **.gitlab/** - GitLab CI/CD workflows (see [.gitlab/README.md](.gitlab/README.md))
+For a complete reference of every file included in each bundle, see [`.rhiza/template-bundles.yml`](.rhiza/template-bundles.yml).
 
 ## 🧩 Integration Guide
 
@@ -253,6 +264,7 @@ The project uses a [Makefile](Makefile) as the primary entry point for all tasks
 make install         # Install dependencies and setup environment
 make test            # Run test suite with coverage
 make fmt             # Format and lint code
+make todos           # Scan for TODO/FIXME/HACK comments
 make sync            # Sync with template repository
 make release         # Create and publish a new release
 make marimo          # Start Marimo notebook server
@@ -431,6 +443,8 @@ For information on versioning, tagging, and publishing releases, see [.rhiza/doc
 
 This repository includes a template Dev Container configuration for seamless development in VS Code and GitHub Codespaces. See [.devcontainer/README.md](.devcontainer/README.md) for setup, configuration, and troubleshooting.
 
+For details about the VS Code extensions configured in the Dev Container, see [docs/VSCODE_EXTENSIONS.md](docs/VSCODE_EXTENSIONS.md).
+
 ## 🔄 CI/CD Support
 
 ### GitHub Actions
@@ -455,6 +469,27 @@ cp .gitlab-ci.yml /path/to/your/project/
 ```
 
 For complete GitLab setup instructions, configuration variables, and troubleshooting, see **[.gitlab/README.md](.gitlab/README.md)**.
+
+## 📋 Project Maintainability
+
+Rhiza includes comprehensive maintainability features to help track project health and evolution:
+
+### Roadmap & Planning
+
+- **[ROADMAP.md](ROADMAP.md)** - Detailed project roadmap with planned features, release timeline, and long-term vision
+- **[docs/PROJECT_BOARD.md](docs/PROJECT_BOARD.md)** - Guide for setting up GitHub Project Boards to track enhancements and roadmap items
+
+### Technical Debt Tracking
+
+- **[docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md)** - Comprehensive tracking of known limitations, debt items, and future improvements
+- **`make todos`** - Automated scanning for TODO, FIXME, and HACK comments across the codebase
+
+### Changelog Management
+
+- **[docs/CHANGELOG_GUIDE.md](docs/CHANGELOG_GUIDE.md)** - Guide for enhanced changelog generation with PR categorization
+- **[.github/release.yml](.github/release.yml)** - Automated PR categorization for release notes
+
+Run `make todos` to scan for technical debt markers in your codebase, or explore the roadmap and technical debt documents to understand project evolution and planned improvements.
 
 ## 🛠️ Contributing to Rhiza
 

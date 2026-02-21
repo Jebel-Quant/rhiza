@@ -13,6 +13,8 @@ docs_dir: .
 # https://squidfunk.github.io/mkdocs-material/
 theme:
   name: material
+  logo: ../.rhiza/assets/rhiza-logo.svg
+  favicon: ../.rhiza/assets/rhiza-logo.svg
   palette:
     # Dark mode
     - scheme: slate
@@ -46,8 +48,12 @@ markdown_extensions:
       pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  # Code fences
-  - pymdownx.superfences
+  # Code fences with Mermaid diagram support
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   # Admonitions (note, warning, tip boxes)
   - admonition
   - pymdownx.details
@@ -63,7 +69,14 @@ nav:
   - Architecture: ARCHITECTURE.md
   - Quick Reference: QUICK_REFERENCE.md
   - Customization: CUSTOMIZATION.md
+  - Dependencies: DEPENDENCIES.md
   - Demo: DEMO.md
   - Glossary: GLOSSARY.md
   - Releasing: RELEASING.md
+  - VSCode Extensions: VSCODE_EXTENSIONS.md
+
+# Mermaid diagram support
+# https://squidfunk.github.io/mkdocs-material/reference/diagrams/
+extra_javascript:
+  - https://unpkg.com/mermaid@11.4.0/dist/mermaid.esm.min.mjs
 

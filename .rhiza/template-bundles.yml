@@ -59,7 +59,6 @@ bundles:
       - .gitignore
       - .python-version
       - ruff.toml
-      - renovate.json
 
       # Documentation files (user-facing docs)
       - docs/SECURITY.md
@@ -83,11 +82,23 @@ bundles:
       - .github/workflows/rhiza_pre-commit.yml
       - .github/workflows/rhiza_deptry.yml
       - .github/workflows/rhiza_release.yml
+      - .github/workflows/renovate_rhiza_sync.yml
       - .github/actions/configure-git-auth
       - .github/dependabot.yml
       - .github/copilot-instructions.md
       - .github/agents
       - .github/hooks
+
+  # ============================================================================
+  # RENOVATE - Automated dependency updates
+  # ============================================================================
+  renovate:
+    description: "Renovate bot configuration for automated dependency updates"
+    standalone: true
+    requires: []
+    files:
+      # Renovate configuration
+      - renovate.json
 
   # ============================================================================
   # LEGAL - Legal and community files
@@ -226,7 +237,6 @@ bundles:
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_ci.yml
-      - .github/workflows/rhiza_mypy.yml
       - .github/workflows/rhiza_security.yml
       - .github/workflows/rhiza_codeql.yml
       - .github/workflows/rhiza_benchmarks.yml
@@ -277,3 +287,32 @@ bundles:
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_book.yml
+
+  # ============================================================================
+  # GH-AW - GitHub Agentic Workflows
+  # ============================================================================
+  gh-aw:
+    description: "GitHub Agentic Workflows for AI-driven repository automation"
+    standalone: true
+    requires: [github]
+    recommends: [tests]
+    notes: |
+      Provides infrastructure for gh-aw (GitHub Agentic Workflows):
+      - Makefile targets for compile/run/status
+      - Starter workflow templates
+      - CI validation for lock file freshness
+      - Documentation
+    files:
+      # Makefile extensions
+      - .rhiza/make.d/gh-aw.mk
+
+      # Starter agentic workflows
+      - .github/workflows/daily-repo-status.md
+      - .github/workflows/ci-doctor.md
+      - .github/workflows/issue-triage.md
+
+      # CI validation workflow
+      - .github/workflows/rhiza_gh-aw-validate.yml
+
+      # Documentation
+      - docs/GH_AW.md

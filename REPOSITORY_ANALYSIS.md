@@ -400,3 +400,444 @@ This repository could serve as a **gold standard template** for other Python pro
 ---
 
 *This analysis was conducted by thoroughly reviewing the repository structure, code quality, documentation, CI/CD workflows, testing infrastructure, and developer experience. Recommendations are based on industry best practices and modern software engineering standards.*
+
+---
+
+## 2026-02-20 — Analysis Entry
+
+### Summary
+The Rhiza repository maintains its strong foundation with a well-architected build system centered on Make, comprehensive testing infrastructure, and a sophisticated book-building pipeline. The project demonstrates maturity in its separation of concerns (core Makefile delegating to `.rhiza/make.d/*.mk` modules) and thoughtful developer workflows. However, there's a **critical mismatch** between the benchmark workflow expectations and the actual benchmark target output paths that would cause CI failures.
+
+### Strengths
+
+**1. Modular Makefile Architecture**
+- Core `Makefile` is minimal (14 lines), delegating to `.rhiza/rhiza.mk` which includes modular `.mk` files from `.rhiza/make.d/`
+- 18 separate `.mk` modules covering distinct concerns: `test.mk`, `book.mk`, `bootstrap.mk`, `docs.mk`, `marimo.mk`, etc.
+- Clean hook system (`pre-install::`, `post-install::`) using double-colon rules for extensibility
+- Evidence: `.rhiza/make.d/` contains 18 well-organized makefiles with clear separation of duties
+
+**2. Comprehensive Testing Infrastructure**
+- Benchmark tests exist at `tests/benchmarks/test_benchmarks.py` with 4 example benchmarks
+- Uses `pytest-benchmark==5.2.3` with histogram generation and JSON output
+- Post-analysis via `rhiza-tools>=0.2.3 analyze-benchmarks` to generate HTML reports
+- Test target properly excludes benchmarks (`--ignore=${TESTS_FOLDER}/benchmarks`) to keep them separate
+- Evidence: `test.mk` lines 72-84 show sophisticated benchmark orchestration
+
+**3. Book-Building System**
+- Multi-stage book assembly combining: API docs (pdoc), test coverage, test reports, Marimo notebooks, and MkDocs
+- Declarative `BOOK_SECTIONS` variable in `book.mk` makes it easy to add/remove sections
+- Uses `minibook` for final compilation with custom templates
+- Automatic coverage badge generation from `_tests/coverage.json`
+- Evidence: `book.mk` lines 39-118 show complete book pipeline with proper fallbacks
+
+**4. Marimo Notebook Integration**
+- Single demonstration notebook at `book/marimo/notebooks/rhiza.py` (467 lines)
+- Uses `marimushka>=0.3.3` to export notebooks to static HTML
+- Proper directory structure with placeholder generation if no notebooks exist
+- Evidence: `marimo.mk` lines 45-67 handle export gracefully with fallbacks
+
+**5. Environment Configuration**
+- Centralized configuration in `.rhiza/.env` defining key variables:
+  - `SOURCE_FOLDER=src`
+  - `MARIMO_FOLDER=book/marimo/notebooks`
+  - `BOOK_TITLE`, `BOOK_SUBTITLE`, `BOOK_TEMPLATE`
+- Makes configuration discoverable and overridable
+- Evidence: `.rhiza/.env` lines 1-9
+
+**6. GitHub Actions Integration**
+- Dedicated benchmark workflow (`.github/workflows/rhiza_benchmarks.yml`)
+- Regression detection using `benchmark-action/github-action-benchmark@v1`
+- Stores benchmark history in `gh-pages` branch under `/benchmarks`
+- Configurable alerting (150% threshold) with PR comments
+- Evidence: workflow lines 68-87 show sophisticated regression detection
+
+### Weaknesses
+
+**1. Critical Path Mismatch in Benchmark Output**
+- **Location**: `.rhiza/make.d/test.mk` lines 76-81 vs `.github/workflows/rhiza_benchmarks.yml` lines 60-63
+- **Issue**: The `make benchmark` target outputs to `_tests/benchmarks/` but the GitHub workflow expects `_benchmarks/`:
+  - Make target creates: `_tests/benchmarks/histogram.svg`, `_tests/benchmarks/results.json`, `_tests/benchmarks/report.html`
+  - Workflow expects: `_benchmarks/benchmarks.json`, `_benchmarks/benchmarks.svg`, `_benchmarks/benchmarks.html`
+- **Impact**: Workflow will fail to upload artifacts and regression detection won't work
+- **Evidence**: 
+  ```makefile
+  # test.mk line 76-80
+  mkdir -p _tests/benchmarks;
+  ${UV_BIN} run pytest "${TESTS_FOLDER}/benchmarks/" \
+      --benchmark-histogram=_tests/benchmarks/histogram \
+      --benchmark-json=_tests/benchmarks/results.json;
+  ```
+  vs
+  ```yaml
+  # rhiza_benchmarks.yml line 60-63
+  path: |
+    _benchmarks/benchmarks.json
+    _benchmarks/benchmarks.svg
+    _benchmarks/benchmarks.html
+  ```
+
+**2. No Source Directory**
+- The repository sets `SOURCE_FOLDER=src` in `.rhiza/.env` but `/home/runner/work/rhiza/rhiza/src/` doesn't exist
+- This causes several targets to skip execution: `docs`, `typecheck`, `security`
+- While appropriate for a template repository with minimal code, this inconsistency is confusing
+- Evidence: `ls -la /home/runner/work/rhiza/rhiza/src/` returns "No src directory"
+
+**3. Benchmark Test Quality**
+- The example benchmarks in `tests/benchmarks/test_benchmarks.py` are pedagogical placeholders (string concatenation, list comprehension)
+- No actual Rhiza functionality is being benchmarked
+- Comment at line 5-6 acknowledges: "These are placeholder tests that you should replace with your own meaningful benchmarks"
+- For a template repository, this is acceptable but should be clearly documented
+
+**4. Book Structure Complexity**
+- The `book.mk` target has complex bash scripting (lines 73-94) for iterating `BOOK_SECTIONS`
+- Pipe-delimited format (`name|src_index|book_index|src_dir|book_dir`) is fragile and hard to extend
+- Error handling is present but cryptic (e.g., `$$first` tracking for JSON commas)
+- Evidence: `book.mk` lines 73-94 show nested bash conditionals
+
+**5. Missing Directory Validation**
+- The `book/` directory only contains `book/marimo/` - no space for other book-related assets
+- No `book/pdoc-templates/` despite `PDOC_TEMPLATE_DIR=book/pdoc-templates` in `docs.mk` line 16
+- The book structure isn't fully utilized in this repository
+- Evidence: `ls -la /home/runner/work/rhiza/rhiza/book/` shows only `marimo/`
+
+### Risks / Technical Debt
+
+**1. Workflow Failure Risk (HIGH)**
+- Current benchmark setup will fail in CI on every run
+- The regression detection feature cannot work with mismatched paths
+- This breaks the entire benchmarking value proposition
+- Mitigation: Either align paths or add a copy/symlink step
+
+**2. Template vs. Implementation Confusion (MEDIUM)**
+- It's unclear if this repository is:
+  - A template (no real benchmarks needed)
+  - A live project (should have meaningful benchmarks)
+- The presence of a benchmark workflow suggests the latter, but implementation suggests the former
+- Recommendation: Add documentation clarifying which parts are examples vs. production
+
+**3. Makefile Module Dependency Graph (MEDIUM)**
+- The 18 `.mk` files are included via wildcards (`-include .rhiza/make.d/*.mk`) with no explicit ordering
+- Dependencies between modules are implicit (e.g., `book.mk` depends on `test.mk`, `docs.mk`, `marimo.mk`)
+- Risk of circular dependencies or execution order issues as complexity grows
+- Evidence: `.rhiza/rhiza.mk` line 164 includes all `.mk` files without sequence control
+
+**4. Hard-Coded Tool Versions (LOW)**
+- `pytest-benchmark==5.2.3` and `pygal==3.1.0` are hard-coded in `test.mk` line 75
+- Not in `pyproject.toml` dependency groups, making version management scattered
+- If these tools need updating, it requires editing Makefile logic
+- Evidence: `test.mk` line 75 shows pip install with exact versions
+
+**5. Single Point of Failure in Book Building (LOW)**
+- The `book` target chains: `test`, `docs`, `marimushka`, `mkdocs-build`
+- If any upstream target fails, the entire book build fails
+- No partial book building capability
+- Evidence: `book.mk` line 52
+
+### Score
+
+**7/10**
+
+**Rationale:**
+- **+3**: Excellent modular architecture, clean separation of concerns, comprehensive workflow coverage
+- **+2**: Strong book-building system with multiple integration points and proper fallbacks
+- **+1**: Good testing infrastructure with benchmark support and Marimo integration
+- **+1**: Well-documented Makefile targets with color-coded output and help system
+- **-1**: Critical path mismatch in benchmark output will cause workflow failures
+- **-1**: Confusion between template example and production implementation
+- **-2**: No actual source code to test/benchmark, making several features non-functional
+
+The repository demonstrates solid engineering practices and would score higher if either:
+1. The benchmark paths were aligned (making it production-ready), OR
+2. The repository was clearly positioned as a pure template (removing production workflow expectations)
+
+The current state falls between these two chairs, creating a functional disconnect.
+
+---
+
+**Action Items:**
+1. **CRITICAL**: Align benchmark output paths between `test.mk` and `rhiza_benchmarks.yml`
+2. **HIGH**: Add README section clarifying which features are examples vs. production-ready
+3. **MEDIUM**: Consider extracting hard-coded tool versions to `pyproject.toml` dev dependencies
+4. **LOW**: Add `.mk` file dependency documentation or explicit include ordering
+
+
+---
+
+## 2025-02-20 (Second Analysis) — Test Infrastructure Deep Dive
+
+### Summary
+The Rhiza repository features a mature, well-organized test infrastructure with 30 Python test files across 10 categories. The "readme test" system is a lightweight documentation validation approach that extracts and executes code blocks from README.md, verifying output matches expected results. While the testing infrastructure demonstrates excellent practices (proper isolation, comprehensive fixtures, stress testing), the README test implementation has limitations: merged execution of all code blocks (no isolation), minimal coverage (only 1 example), and bash blocks validated for syntax only without execution verification.
+
+### Strengths
+
+**1. Excellent Test Organization** — 10 well-defined test categories with dedicated README documentation:
+- `structure/` — Static file/directory presence checks (4 files)
+- `api/` — Makefile target validation via dry-runs (5 files)  
+- `integration/` — End-to-end workflows with sandboxed git repos (7 files)
+- `sync/` — Template sync, version, README, docstring validation (4 files)
+- `stress/` — Concurrent load and repeated execution tests (4 files)
+- `deps/`, `security/`, `shell/`, `utils/` — Supporting validation tests
+- Each category has clear purpose and separation of concerns
+
+**2. Comprehensive Fixture System** — `.rhiza/tests/conftest.py` (217 lines):
+- **Session-scoped**: `root` (repo path), `logger` (configured logger)
+- **Function-scoped**: `git_repo` — Creates complete isolated git environment:
+  - Remote bare repository + local clone
+  - Mock `uv` executable (126-line Python script handling version commands)
+  - Mock `make` executable
+  - Copies Makefiles, pyproject.toml, uv.lock
+  - Initial commit and push to remote
+  - Uses `monkeypatch` for PATH/cwd modification with proper cleanup
+- Category-specific fixtures in `api/conftest.py` and `sync/conftest.py`
+
+**3. Proper Test Isolation** — Multiple isolation strategies:
+- Temporary directories for all tests modifying filesystem
+- Sandboxed git repositories for integration tests
+- Makefile tests use `-n` (dry-run) to avoid execution
+- Environment variable control via fixtures
+- Monkeypatching with automatic cleanup
+
+**4. Stress Testing Infrastructure** — `.rhiza/tests/stress/` (4 files with dedicated README):
+- Custom pytest options: `--iterations` (default: 100), `--workers` (default: 10)
+- Tests: concurrent Makefile operations, git operations under load
+- Purpose: detect race conditions, resource leaks, performance degradation
+- Marker: `@pytest.mark.stress` for selective execution
+- Can skip with `-m "not stress"` when running full suite
+
+**5. Security Consciousness** — Extensive security documentation:
+- All subprocess usage documented with `# nosec` and justifications
+- Security notes explain S101, S603, S607 warnings
+- Uses `shutil.which()` to locate executables safely
+- All subprocess calls use list arguments (no shell=True)
+- Trust boundaries explicitly documented
+
+**6. Parametrized Test Discovery** — Dynamic test generation:
+- `test_notebook_execution.py`: Discovers Marimo notebooks from `MARIMO_FOLDER`
+- `test_docstrings.py`: Discovers and runs doctests for all source modules
+- Uses `pytest.mark.parametrize` with stable ordering (sorted lists)
+- Example: `@pytest.mark.parametrize("notebook_path", NOTEBOOK_PATHS, ids=lambda p: p.name)`
+
+**7. Documentation Testing Integration**:
+- README code blocks tested via `test_readme_validation.py`
+- Docstring testing via `doctest.testmod()` in `test_docstrings.py`
+- Bash syntax validation using `bash -n` (no execution)
+- Python syntax validation via `compile()` built-in
+
+### Weaknesses
+
+**1. Limited README Test Coverage**:
+- Only **1 Python code block** and **1 result block** in README.md (513 lines)
+- Example is pedagogical (Hello World, math operations) rather than Rhiza workflows
+- No examples of `uvx rhiza materialize`, template sync, or key features
+- README is primarily documentation, not executable tutorial
+- Consider adding more `python`/`result` pairs for critical workflows
+
+**2. Merged Code Execution Approach** — `.rhiza/tests/sync/test_readme_validation.py`:
+- All Python blocks concatenated into single string: `code = "".join(code_blocks)`
+- All result blocks concatenated: `expected = "".join(result_blocks)`
+- Executed as one unit: `subprocess.run([sys.executable, "-c", code])`
+- **Issues**:
+  - Single failure breaks entire test (no isolation)
+  - Cannot identify which specific block failed
+  - Later blocks can depend on earlier blocks (stateful coupling)
+  - No way to test error cases (all blocks must succeed)
+  - Debugging is difficult with merged output
+
+**3. No Result Block Pairing Validation**:
+- Test assumes 1:1 correspondence between Python and result blocks
+- No validation that pairs are correctly matched
+- No handling of mismatched counts (more Python blocks than results)
+- No support for expected failures or skip markers
+- No metadata system for controlling block behavior
+
+**4. Bash Blocks Not Executed**:
+- `test_bash_blocks_basic_syntax()` only runs `bash -n` (syntax check)
+- No verification that bash examples produce correct output
+- May have working syntax but incorrect logic
+- Skips directory trees and comment-only blocks appropriately
+- Currently no bash blocks in README to execute
+
+**5. Mock UV Script Complexity** — 126 lines in conftest.py:
+- Complex version bumping logic: major/minor/patch
+- Pattern matching for multiple command variations
+- Reads/writes `pyproject.toml` directly
+- Maintenance burden if real `uv version` behavior changes
+- Consider: Simpler mocks or documented limitations
+
+**6. README Test Brittleness**:
+- Regex-based extraction: `re.compile(r"```python\n(.*?)```", re.DOTALL)`
+- Vulnerable to formatting changes (extra whitespace, different fence markers)
+- No support for block metadata (skip markers, expected exit codes)
+- No way to exclude specific blocks from testing
+- Hard-coded language identifiers
+
+**7. Autouse Fixtures** — Potential side effects:
+- `setup_tmp_makefile` (api/conftest.py) — `autouse=True`
+- `setup_sync_env` (sync/conftest.py) — `autouse=True`
+- Automatically applied to all tests in category
+- Trade-off: Convenience vs. explicitness
+- Can make debugging harder (implicit setup)
+
+**8. Stress Test Documentation** — Well documented but lacks enforcement:
+- README says "100% success rate" but no mechanism to enforce
+- No performance benchmarks or timeout specifications
+- No clear failure criteria beyond test assertions
+- Could benefit from acceptance criteria validation
+
+### Risks / Technical Debt
+
+**1. README Test Coupling** (MEDIUM):
+- Changes to README structure break tests
+- Risk: Documentation improvements become test failures
+- Mitigation: More flexible extraction (support comments, metadata)
+- Example: Adding section headers between blocks could break regex
+
+**2. Mock Drift** (MEDIUM):
+- Mock `uv` script may diverge from real `uv version` behavior
+- Risk: Tests pass but real workflows fail
+- Mitigation: Document mock limitations, integration tests with real `uv`
+- Current: No version validation tests against real `uv`
+
+**3. Test Execution Time** (LOW):
+- Stress tests with default 100 iterations could slow CI
+- Currently: Can skip with `-m "not stress"`
+- Consider: Separate stress test job in CI, shorter defaults for CI
+- No current evidence of CI slowdown
+
+**4. Security Notes Proliferation** (LOW):
+- Many `# nosec` markers throughout test code
+- Risk: Bandit warnings suppressed broadly
+- Current: Each usage is justified with comments
+- Consider: Centralizing subprocess utilities to reduce repetition
+
+**5. Git Repository Fixture Complexity** (MEDIUM):
+- 217-line conftest with git operations, mocks, file copying
+- Risk: Flaky tests if git behavior varies by environment
+- Mitigation: Document git version requirements
+- Consider: Test on multiple git versions in CI
+
+**6. No README Test Isolation** (HIGH):
+- Single test executes all code blocks sequentially
+- Risk: Later blocks depend on earlier blocks (stateful)
+- Example: If first block imports library, second block uses it
+- Impact: Makes blocks interdependent and harder to maintain
+- Recommendation: Execute blocks individually with fresh state
+
+**7. Docstring Test Discovery** (LOW):
+- Complex module iteration logic in `test_docstrings.py`
+- Supports namespace packages but could be clearer
+- Risk: May miss modules in complex package structures
+- Current: Works for `src/<package>` structure
+
+**8. Test Path Configuration** (LOW):
+- `pytest.ini` sets `testpaths = tests` (not `.rhiza/tests`)
+- This means `.rhiza/tests/` must be explicitly specified
+- Potential confusion: Two test directories with different discovery
+- Documented in `.rhiza/tests/README.md`
+
+### Test Execution Patterns
+
+**README Test Flow:**
+1. Read `README.md` from repository root
+2. Extract all ````python` blocks via regex
+3. Extract all ````result` blocks via regex  
+4. Concatenate code blocks into single string
+5. Concatenate result blocks into expected output
+6. Execute: `subprocess.run([sys.executable, "-c", merged_code], capture_output=True)`
+7. Compare stdout (stripped) to expected (stripped)
+8. Assert exit code == 0
+
+**Current README Test Content:**
+```python
+# Example code block
+import math
+print("Hello, World!")
+print(1 + 1)
+print(round(math.pi, 2))
+print(round(math.cos(math.pi/4.0), 2))
+```
+
+**Expected Output:**
+```
+Hello, World!
+2
+3.14
+0.71
+```
+
+### Pytest Configuration
+
+**Markers (pytest.ini):**
+- `stress` — Stress tests (deselect with `-m "not stress"`)
+- `property` — Property-based tests
+
+**Options:**
+- `testpaths = tests` — Discovery starts from `tests/` directory
+- `log_cli = true` — Live logs on console
+- `log_cli_level = DEBUG` — Show DEBUG+ messages
+- `addopts = -ra` — Extra summary info for skipped/failed tests
+
+### Test Utility Functions
+
+**`.rhiza/tests/test_utils.py` (70 lines):**
+```python
+GIT = shutil.which("git") or "/usr/bin/git"
+MAKE = shutil.which("make") or "/usr/bin/make"
+
+def strip_ansi(text: str) -> str
+def run_make(logger, args=None, check=True, dry_run=True, env=None)
+def setup_rhiza_git_repo()
+```
+
+### Score
+
+**7/10** — Solid, well-structured test suite with good practices
+
+**Rationale:**
+- **+3**: Clear organization, proper isolation, comprehensive fixtures
+- **+2**: Stress testing, security awareness, parametrized discovery
+- **+1**: Documentation testing integration, proper mocking
+- **+1**: Well-documented test categories and execution patterns
+- **-1**: Limited README test coverage (only 1 example)
+- **-1**: Merged execution approach (no block isolation)
+- **-2**: Bash blocks not executed, complex mocks, autouse fixtures
+
+**Would be 8-9 if:**
+- README tests executed blocks individually with better error reporting
+- More executable examples in README (current: only 1 pedagogical block)
+- Simpler mocks or documented limitations
+- Bash examples executed and validated (not just syntax-checked)
+- Block-level metadata support (skip, expect-fail, tags)
+- Result block pairing validation
+
+**Current state is appropriate for:** A development tooling/template project with strong testing fundamentals that would benefit from incremental improvements to the README test system. The overall test infrastructure is production-quality; the README testing is functional but has room for sophistication.
+
+---
+
+**Recommendations:**
+
+1. **README Test Enhancement (HIGH)**:
+   - Execute code blocks individually in separate processes
+   - Add error reporting showing which block failed
+   - Support block metadata (tags, skip markers)
+   - Validate Python/result block pairing
+
+2. **Expand README Examples (MEDIUM)**:
+   - Add executable examples of key workflows (`uvx rhiza materialize`, etc.)
+   - Include examples with expected output
+   - Consider tutorial-style progression
+
+3. **Bash Execution (MEDIUM)**:
+   - Add execution tests for bash blocks (not just syntax)
+   - Support expected output validation
+   - Skip appropriately (environment-dependent commands)
+
+4. **Mock Simplification (LOW)**:
+   - Document mock UV script limitations
+   - Consider integration tests with real `uv` for critical paths
+   - Or simplify mock to minimal command set
+
+5. **Test Documentation (LOW)**:
+   - Document autouse fixtures and their impact
+   - Add architecture diagram showing fixture dependencies
+   - Clarify stress test acceptance criteria

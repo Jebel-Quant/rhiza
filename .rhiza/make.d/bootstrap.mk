@@ -69,6 +69,13 @@ install: pre-install install-uv ## install
 	  printf "${BLUE}[INFO] Installing requirements from tests/requirements.txt${RESET}\n"; \
 	  ${UV_BIN} pip install -r tests/requirements.txt || { printf "${RED}[ERROR] Failed to install test requirements${RESET}\n"; exit 1; }; \
 	fi
+
+	# Install pre-commit hooks
+	@if [ -f ".pre-commit-config.yaml" ]; then \
+	  printf "${BLUE}[INFO] Installing pre-commit hooks...${RESET}\n"; \
+	  ${UVX_BIN} -p ${PYTHON_VERSION} pre-commit install || { printf "${YELLOW}[WARN] Failed to install pre-commit hooks${RESET}\n"; }; \
+	fi
+
 	@$(MAKE) post-install
 	
 	# Display success message with activation instructions

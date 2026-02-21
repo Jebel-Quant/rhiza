@@ -2,7 +2,7 @@
 .idea
 .venv
 .ruff_cache
-.mypy_cache
+.ty_cache
 
 ### Don't expose API keys, etc.
 .env
@@ -80,6 +80,9 @@ coverage.json
 .pytest_cache/
 cover/
 
+# Security scanning baselines (regenerate as needed)
+.bandit-baseline.json
+
 # Translations
 *.mo
 *.pot
@@ -99,4 +102,6 @@ cython_debug/
 
 # Makefile
 local.mk
+
+.bandit-baseline.json
 
