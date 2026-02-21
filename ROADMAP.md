@@ -2,7 +2,7 @@
 
 This document outlines the planned features, improvements, and long-term vision for the Rhiza project.
 
-## Current Version: 0.7.5
+## Current Version: 0.8.1-rc.2
 
 ## Vision
 
@@ -18,29 +18,37 @@ Rhiza aims to be the definitive solution for maintaining consistency and best pr
 - Core template synchronization
 - CI/CD workflow automation
 - Development container support
-
-#### In Progress 🚧
 - TODO/FIXME/HACK comment tracking (`make todos`)
-- Technical debt documentation system
-- Enhanced changelog automation with PR categorization
-- GitHub project board integration
-
-#### Planned Features
-- Automated code quality metrics dashboard
-- Template customization validator
-- Pre-commit hook improvements
-- Documentation coverage reporting
+- Technical debt documentation (`docs/TECHNICAL_DEBT.md`)
+- Enhanced changelog automation with PR categorization (`.github/release.yml`)
+- GitHub project board integration guide (`docs/PROJECT_BOARD.md`)
+- Automated code quality metrics dashboard (`make all` aggregates fmt, deptry, test, docs-coverage, security, typecheck)
+- Template customization validator (`make validate`)
+- Pre-commit hook improvements (`.pre-commit-config.yaml`, ADR-0009)
+- Documentation coverage reporting (`make docs-coverage` via interrogate)
+- Performance benchmarking suite (`make benchmark`)
+- Property-based testing with Hypothesis (`make hypothesis-test`)
+- Type checking via `ty` (`make typecheck`)
+- Security scanning via pip-audit + bandit (`make security`)
+- GitLab CI/CD full feature parity with GitHub Actions (`.gitlab-ci.yml`, 8 workflows)
+- Marimo interactive notebooks (`make marimo`, `make marimushka`)
+- Git LFS support (`make lfs-install`, `make lfs-pull`, `make lfs-track`, `make lfs-status`)
+- MkDocs documentation site (`make mkdocs-build`, `make mkdocs-serve`)
+- Marp presentation generation (`make presentation`, `make presentation-pdf`, `make presentation-serve`)
+- Template bundles system — 13 bundles: `core`, `github`, `gitlab`, `tests`, `marimo`, `book`, `docker`, `devcontainer`, `presentation`, `lfs`, `legal`, `renovate`, `gh-aw`
+- GitHub Agentic Workflows (`make gh-aw-*`, 10+ targets, 3 starter workflows, `docs/GH_AW.md`)
 
 ### v0.9.0 - Enhanced Template Management (Q2 2026)
 **Theme: Flexibility & Extensibility**
 
-#### Template Features
-- Multi-repository template support
+#### Completed ✅
+- Multi-repository template support (documented in README)
+- Template bundles with dependency validation (13 bundles in `.rhiza/template-bundles.yml`)
+- Custom template validation rules (`make validate`, bundle dependency system)
+
+#### Planned Features
 - Conditional template inclusion based on project type
 - Template versioning and rollback capabilities
-- Custom template validation rules
-
-#### Developer Tools
 - Interactive template configuration wizard
 - Conflict resolution assistant for sync operations
 - Template diff visualization
@@ -55,29 +63,24 @@ Rhiza aims to be the definitive solution for maintaining consistency and best pr
 ### v1.0.0 - Production Ready (Q3 2026)
 **Theme: Stability & Enterprise Features**
 
-#### Core Improvements
+#### Completed ✅
+- GitLab CI/CD support (full implementation with 8 workflows)
+- Security audit and hardening (`make security` via pip-audit + bandit)
+- Performance benchmarking suite (`make benchmark`, `make stress`)
+
+#### Planned Features
 - Performance optimization for large repositories
 - Advanced caching mechanisms
 - Parallel sync operations
 - Improved error handling and recovery
-
-#### Enterprise Features
 - Private template repository support
 - Organization-wide policy enforcement
 - Audit logging and compliance reporting
 - Role-based access controls for template management
-
-#### Integration
 - GitHub App for seamless integration
-- GitLab support
 - Bitbucket support
 - CI/CD plugin ecosystem
-
-#### Quality Assurance
 - Comprehensive test coverage (>95%)
-- Performance benchmarking suite
-- Security audit and hardening
-- Stability testing across diverse projects
 
 ## Future Vision (v1.1+)
 
@@ -140,7 +143,7 @@ Your feedback shapes our roadmap! Please:
 
 ---
 
-**Last Updated**: February 2026  
+**Last Updated**: February 2026 (v0.8.1-rc.2)  
 **Next Review**: May 2026
 
 For technical debt and known limitations, see [docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md).
