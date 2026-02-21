@@ -83,43 +83,23 @@ When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhi
 - [Advanced Topics](#-advanced-topics)
 - [CI/CD Support](#-cicd-support)
 - [Project Maintainability](#-project-maintainability)
+- [Learning Resources](#-learning-resources)
 - [Contributing to Rhiza](#-contributing-to-rhiza)
 
 ## 🚀 Quick Start
-
-### For New Projects
-
-Create a new project with Rhiza templates:
 
 ```bash
 # Navigate to your project directory
 cd /path/to/your/project
 
-# Initialise Rhiza configuration
+# Initialise Rhiza configuration and pick your bundles
 uvx rhiza init
 
-# Edit .rhiza/template.yml to select desired templates
-# Then materialize the templates
+# Edit .rhiza/template.yml to review the bundle selection, then apply
 uvx rhiza materialize
 ```
 
-### For Existing Projects
-
-Integrate Rhiza into an existing Python project:
-
-```bash
-# Navigate to your repository
-cd /path/to/your/project
-
-# Initialise and configure
-uvx rhiza init
-
-# Review and edit .rhiza/template.yml
-# Then apply templates
-uvx rhiza materialize
-```
-
-See the [Integration Guide](#-integration-guide) for detailed instructions and options.
+See the [Integration Guide](#-integration-guide) for more options, or follow the [step-by-step tutorial](https://github.com/Jebel-Quant/rhiza-education) in rhiza-education (Lessons 6–8).
 
 ### For Contributing to Rhiza
 
@@ -201,33 +181,7 @@ uvx rhiza materialize
 - `--branch <branch>` - Use a specific rhiza branch (default: main)
 - `--help` - Show detailed usage information
 
-### Manual Integration (Selective Adoption)
-
-For cherry-picking specific templates or customising before integration:
-
-1. **Clone Rhiza** to a temporary location:
-   ```bash
-   cd /tmp
-   git clone https://github.com/jebel-quant/rhiza.git
-   ```
-
-2. **Copy desired templates** to your project:
-   ```bash
-   cd /path/to/your/project
-   git checkout -b rhiza
-   mkdir -p .github/workflows .rhiza/scripts
-   cp /tmp/rhiza/.rhiza/template.yml .rhiza/template.yml
-   cp /tmp/rhiza/.rhiza/scripts/sync.sh .rhiza/scripts
-   ```
-
-3. **Run the sync script**:
-   ```bash
-   ./.rhiza/scripts/sync.sh
-   git status
-   git diff  # Review changes
-   ```
-
-4. **Commit and push** if satisfied with the changes
+For a full step-by-step tutorial covering init, bundle selection, first materialise, and the sync lifecycle, see **[rhiza-education Lessons 6–8](https://github.com/Jebel-Quant/rhiza-education)**.
 
 ### Automated Sync (Continuous Updates)
 
@@ -490,6 +444,14 @@ Rhiza includes comprehensive maintainability features to help track project heal
 - **[.github/release.yml](.github/release.yml)** - Automated PR categorization for release notes
 
 Run `make todos` to scan for technical debt markers in your codebase, or explore the roadmap and technical debt documents to understand project evolution and planned improvements.
+
+## 📖 Learning Resources
+
+For a structured, tutorial-style introduction to Rhiza — covering CI/CD concepts, `uv`, Python project conventions, the sync lifecycle, and the full Rhiza ecosystem — see the companion education repository:
+
+**[jebel-quant/rhiza-education](https://github.com/Jebel-Quant/rhiza-education)** · [Rendered site](https://jebel-quant.github.io/rhiza-education/)
+
+The curriculum walks you through twelve lessons in order, from the motivation for living templates all the way to running your first materialize, configuring Renovate, and customising safely.
 
 ## 🛠️ Contributing to Rhiza
 
