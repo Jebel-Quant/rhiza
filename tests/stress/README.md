@@ -35,7 +35,7 @@ Tests that exercise data processing and manipulation:
 
 ### Run all stress tests:
 ```bash
-pytest -m stress
+make stress
 ```
 
 ### Run stress tests with verbose output:
@@ -48,14 +48,9 @@ pytest -m stress -v
 pytest tests/stress/test_file_operations.py -v
 ```
 
-### Skip stress tests (run only regular tests):
+### Run regular tests (stress tests excluded):
 ```bash
-pytest -m "not stress"
-```
-
-### Run regular tests by default:
-```bash
-make test  # This ignores benchmarks but may include stress tests depending on config
+make test  # Stress tests are always excluded from this target
 ```
 
 ## Test Characteristics
