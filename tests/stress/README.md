@@ -1,6 +1,10 @@
-# Stress Tests
+# Blueprint Stress Tests
 
-This directory contains stress tests for the Rhiza project, exercising the system under load to verify correctness and performance.
+> **⚠️ These are blueprint/example stress tests for downstream repositories, not the Rhiza project's own stress tests.**
+> The real Rhiza stress tests live in [`.rhiza/tests/stress/`](../../.rhiza/tests/stress/).
+
+This directory contains example stress tests that are synced into downstream projects via Rhiza.
+Replace these with stress tests that exercise your own system under load.
 
 ## Tests (`test_stress.py`)
 
