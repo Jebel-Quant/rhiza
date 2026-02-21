@@ -49,8 +49,8 @@ Rhiza aims to be the definitive solution for maintaining consistency and best pr
 #### Documentation
 - Template authoring guide
 - Best practices documentation
-- Video tutorials for common workflows
-- Migration guides from other template systems
+- Video tutorials for common workflows → see [rhiza-education](https://github.com/Jebel-Quant/rhiza-education)
+- Migration guides from other template systems → see [rhiza-education](https://github.com/Jebel-Quant/rhiza-education)
 
 ### v1.0.0 - Production Ready (Q3 2026)
 **Theme: Stability & Enterprise Features**

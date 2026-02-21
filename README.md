@@ -75,6 +75,7 @@ When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhi
 - [Advanced Topics](#-advanced-topics)
 - [CI/CD Support](#-cicd-support)
 - [Project Maintainability](#-project-maintainability)
+- [Learning Resources](#-learning-resources)
 - [Contributing to Rhiza](#-contributing-to-rhiza)
 
 ## 🚀 Quick Start
@@ -480,6 +481,14 @@ Rhiza includes comprehensive maintainability features to help track project heal
 - **[.github/release.yml](.github/release.yml)** - Automated PR categorization for release notes
 
 Run `make todos` to scan for technical debt markers in your codebase, or explore the roadmap and technical debt documents to understand project evolution and planned improvements.
+
+## 📖 Learning Resources
+
+For a structured, tutorial-style introduction to Rhiza — covering CI/CD concepts, `uv`, Python project conventions, the sync lifecycle, and the full Rhiza ecosystem — see the companion education repository:
+
+**[jebel-quant/rhiza-education](https://github.com/Jebel-Quant/rhiza-education)** · [Rendered site](https://jebel-quant.github.io/rhiza-education/)
+
+The curriculum walks you through twelve lessons in order, from the motivation for living templates all the way to running your first materialize, configuring Renovate, and customising safely.
 
 ## 🛠️ Contributing to Rhiza
 
