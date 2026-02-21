@@ -80,6 +80,58 @@ class TestSecurityConfiguration:
         content = precommit_config.read_text()
         assert "bandit" in content.lower(), "Bandit should be configured in pre-commit hooks"
 
+    def test_security_policy_exists(self) -> None:
+        """Verify that a SECURITY.md file exists at the repository root.
+
+        GitHub displays a security policy link when SECURITY.md is present in
+        the root, .github/, or docs/ directory. Root-level placement ensures
+        maximum visibility in the GitHub UI.
+        """
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        root_security = repo_root / "SECURITY.md"
+        github_security = repo_root / ".github" / "SECURITY.md"
+        docs_security = repo_root / "docs" / "SECURITY.md"
+
+        assert root_security.exists() or github_security.exists() or docs_security.exists(), (
+            "No SECURITY.md found. Create SECURITY.md in the repository root, "
+            ".github/, or docs/ to publish a responsible disclosure policy."
+        )
+
+    def test_secret_scanning_config_exists(self) -> None:
+        """Verify that a secret scanning configuration file exists.
+
+        The .github/secret_scanning.yml file configures GitHub secret scanning
+        for the repository. Secret scanning must also be enabled in repository
+        Settings > Security > Code security and analysis.
+        """
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        secret_scanning_config = repo_root / ".github" / "secret_scanning.yml"
+
+        assert secret_scanning_config.exists(), (
+            ".github/secret_scanning.yml not found. "
+            "Create this file to configure GitHub secret scanning. "
+            "Remember to also enable secret scanning in repository settings."
+        )
+
+    def test_dependabot_configured(self) -> None:
+        """Verify that Dependabot is configured for dependency updates.
+
+        The .github/dependabot.yml file configures Dependabot version and
+        security updates. Dependabot security updates must also be enabled in
+        repository Settings > Security > Code security and analysis.
+        """
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        dependabot_config = repo_root / ".github" / "dependabot.yml"
+
+        assert dependabot_config.exists(), (
+            ".github/dependabot.yml not found. Create this file to configure Dependabot version and security updates."
+        )
+
+        content = dependabot_config.read_text()
+        assert "package-ecosystem" in content, (
+            ".github/dependabot.yml should define at least one package-ecosystem entry"
+        )
+
     def test_test_security_exceptions_documented(self) -> None:
         """Verify that security exceptions in test code are documented.
 

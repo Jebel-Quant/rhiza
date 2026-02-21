@@ -88,6 +88,7 @@ bundles:
       - .github/copilot-instructions.md
       - .github/agents
       - .github/hooks
+      - .github/secret_scanning.yml
 
   # ============================================================================
   # RENOVATE - Automated dependency updates
@@ -114,6 +115,9 @@ bundles:
       # Community files
       - CONTRIBUTING.md
       - CODE_OF_CONDUCT.md
+
+      # Security policy (root-level for GitHub visibility)
+      - SECURITY.md
 
   # ============================================================================
   # DEVCONTAINER - VS Code DevContainer configuration
