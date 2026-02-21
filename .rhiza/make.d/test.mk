@@ -4,7 +4,7 @@
 # executing performance benchmarks.
 
 # Declare phony targets (they don't produce files)
-.PHONY: test benchmark typecheck security docs-coverage hypothesis-test
+.PHONY: test benchmark typecheck security docs-coverage hypothesis-test stress
 
 # Default directory for tests
 TESTS_FOLDER := tests
@@ -113,3 +113,20 @@ hypothesis-test: install ## run property-based tests with Hypothesis
 	  -m "hypothesis or property" \
 	  --tb=short \
 	  --html=_tests/hypothesis/report.html
+
+# The 'stress' target runs stress/load tests.
+# 1. Checks if stress tests exist in the tests/stress directory.
+# 2. Runs pytest with the stress marker to execute only stress tests.
+# 3. Generates an HTML report of stress test results.
+stress: install ## run stress/load tests
+	@if [ ! -d "${TESTS_FOLDER}/stress" ]; then \
+	  printf "${YELLOW}[WARN] Stress tests folder not found, skipping stress tests.${RESET}\n"; \
+	  exit 0; \
+	fi; \
+	printf "${BLUE}[INFO] Running stress/load tests...${RESET}\n"; \
+	mkdir -p _tests/stress; \
+	${UV_BIN} run pytest \
+	  -v \
+	  -m stress \
+	  --tb=short \
+	  --html=_tests/stress/report.html
