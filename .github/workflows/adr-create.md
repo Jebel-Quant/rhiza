@@ -21,7 +21,7 @@ permissions:
 
 tools:
   github:
-    toolsets: [repos, contents, pull_requests]
+    toolsets: [repos, pull_requests]
 
 network:
   allowed:
