@@ -13,7 +13,7 @@ import sys
 
 import pytest
 
-# Regex for Python code blocks — captures optional flags (e.g. "+Skip") and the code body.
+# Regex for Python code blocks — captures optional flags (e.g. "+RHIZA_SKIP") and the code body.
 CODE_BLOCK = re.compile(r"```python([^\n]*)\n(.*?)```", re.DOTALL)
 
 RESULT = re.compile(r"```result\n(.*?)```", re.DOTALL)
@@ -26,12 +26,12 @@ BASH = "bash"
 
 # Flag that marks a code block as intentionally excluded from readme tests.
 # Usage: add the flag after the language identifier on the opening fence line,
-# e.g. ```python +Skip  or  ```bash +Skip
-SKIP_FLAG = "+Skip"
+# e.g. ```python +RHIZA_SKIP  or  ```bash +RHIZA_SKIP
+SKIP_FLAG = "+RHIZA_SKIP"
 
 
 def _should_skip(flags: str) -> bool:
-    """Return True if the fence flags string contains the +Skip marker."""
+    """Return True if the fence flags string contains the +RHIZA_SKIP marker."""
     return SKIP_FLAG in flags
 
 
@@ -152,25 +152,25 @@ class TestReadmeBashFragments:
 
 
 class TestSkipFlag:
-    """Tests for the +Skip flag that allows individual README code blocks to be excluded."""
+    """Tests for the +RHIZA_SKIP flag that allows individual README code blocks to be excluded."""
 
     def test_should_skip_returns_true_for_skip_flag(self):
-        """+Skip in flags string should cause _should_skip to return True."""
-        assert _should_skip(" +Skip") is True
-        assert _should_skip("+Skip") is True
-        assert _should_skip(" +Skip other-flag") is True
+        """+RHIZA_SKIP in flags string should cause _should_skip to return True."""
+        assert _should_skip(" +RHIZA_SKIP") is True
+        assert _should_skip("+RHIZA_SKIP") is True
+        assert _should_skip(" +RHIZA_SKIP other-flag") is True
 
     def test_should_skip_returns_false_without_flag(self):
-        """Absence of +Skip should cause _should_skip to return False."""
+        """Absence of +RHIZA_SKIP should cause _should_skip to return False."""
         assert _should_skip("") is False
         assert _should_skip(" ") is False
         assert _should_skip("other-flag") is False
 
     def test_python_block_with_skip_flag_is_excluded(self, tmp_path):
-        """A ```python +Skip block should not appear in the list of blocks to execute."""
+        """A ```python +RHIZA_SKIP block should not appear in the list of blocks to execute."""
         readme = tmp_path / "README.md"
         readme.write_text(
-            '```python +Skip\nraise RuntimeError("should not run")\n```\n'
+            '```python +RHIZA_SKIP\nraise RuntimeError("should not run")\n```\n'
             "```python\nprint('hello')\n```\n"
             "```result\nhello\n```\n",
             encoding="utf-8",
@@ -183,10 +183,10 @@ class TestSkipFlag:
         assert "raise RuntimeError" not in executed[0]
 
     def test_bash_block_with_skip_flag_is_excluded(self, tmp_path):
-        """A ```bash +Skip block should not be syntax-checked."""
+        """A ```bash +RHIZA_SKIP block should not be syntax-checked."""
         readme = tmp_path / "README.md"
         readme.write_text(
-            "```bash +Skip\nnot-valid-bash @@@@\n```\n```bash\necho hello\n```\n",
+            "```bash +RHIZA_SKIP\nnot-valid-bash @@@@\n```\n```bash\necho hello\n```\n",
             encoding="utf-8",
         )
         content = readme.read_text(encoding="utf-8")
