@@ -66,14 +66,33 @@ markdown_extensions:
 # Navigation structure
 nav:
   - Home: index.md
-  - Architecture: ARCHITECTURE.md
-  - Quick Reference: QUICK_REFERENCE.md
-  - Customization: CUSTOMIZATION.md
-  - Dependencies: DEPENDENCIES.md
-  - Demo: DEMO.md
-  - Glossary: GLOSSARY.md
-  - Releasing: RELEASING.md
-  - VSCode Extensions: VSCODE_EXTENSIONS.md
+  - Getting Started:
+    - Quick Reference: QUICK_REFERENCE.md
+    - Demo: DEMO.md
+    - Customization: CUSTOMIZATION.md
+    - Extending Rhiza: EXTENDING_RHIZA.md
+  - Reference:
+    - Architecture: ARCHITECTURE.md
+    - Dependencies: DEPENDENCIES.md
+    - Tools Reference: TOOLS_REFERENCE.md
+    - Shell Scripts: SHELL_SCRIPTS.md
+    - Glossary: GLOSSARY.md
+  - Development:
+    - Tests: TESTS.md
+    - Docker: DOCKER.md
+    - Dev Container: DEVCONTAINER.md
+    - VSCode Extensions: VSCODE_EXTENSIONS.md
+    - Marimo: MARIMO.md
+    - Book: BOOK.md
+    - Presentation: PRESENTATION.md
+    - GitHub Agentic Workflows: GH_AW.md
+  - Operations:
+    - Changelog Guide: CHANGELOG_GUIDE.md
+    - Project Board: PROJECT_BOARD.md
+    - Technical Debt: TECHNICAL_DEBT.md
+  - Security:
+    - Security Policy: SECURITY.md
+    - Security Testing: SECURITY_TESTING.md
   - Architecture Decision Records:
     - Overview: adr/README.md
     - ADR-0001 Use Architecture Decision Records: adr/0001-use-architecture-decision-records.md
