@@ -909,6 +909,7 @@ endif
 - [Tools Reference](TOOLS_REFERENCE.md) - Comprehensive tool documentation
 - [Customization Guide](CUSTOMIZATION.md) - Basic customization
 - [Makefile Cookbook](.rhiza/make.d/README.md) - Make recipes
+- [rhiza-education Lesson 10: Customising Safely](https://github.com/Jebel-Quant/rhiza-education/blob/main/lessons/10-customizing-safely.md) - Tutorial overview of extension mechanisms and the template-managed file rule
 
 ---
 
