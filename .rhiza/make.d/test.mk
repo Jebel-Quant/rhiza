@@ -31,6 +31,7 @@ test: install ## run all tests
 	if [ -d ${SOURCE_FOLDER} ]; then \
 	  ${UV_BIN} run pytest \
 	  --ignore=${TESTS_FOLDER}/benchmarks \
+	  --ignore=${TESTS_FOLDER}/stress \
 	  --cov=${SOURCE_FOLDER} \
 	  --cov-report=term \
 	  --cov-report=html:_tests/html-coverage \
@@ -41,6 +42,7 @@ test: install ## run all tests
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, running tests without coverage${RESET}\n"; \
 	  ${UV_BIN} run pytest \
 	  --ignore=${TESTS_FOLDER}/benchmarks \
+	  --ignore=${TESTS_FOLDER}/stress \
 	  --html=_tests/html-report/report.html; \
 	fi
 
