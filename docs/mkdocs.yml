@@ -13,8 +13,8 @@ docs_dir: .
 # https://squidfunk.github.io/mkdocs-material/
 theme:
   name: material
-  logo: ../.rhiza/assets/rhiza-logo.svg
-  favicon: ../.rhiza/assets/rhiza-logo.svg
+  logo: assets/rhiza-logo.svg
+  favicon: assets/rhiza-logo.svg
   palette:
     # Dark mode
     - scheme: slate
