@@ -31,16 +31,16 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 
 **Unlike traditional project templates** (like cookiecutter or copier) that generate a one-time snapshot of configuration files, **Rhiza provides living templates** that evolve with your project. Classic templates help you start a project, but once generated, your configuration drifts away from the template as best practices change. Rhiza takes a different approach: it enables **continuous synchronization**, allowing you to selectively pull template updates into your project over time through automated workflows. This means you can benefit from improvements to CI/CD workflows, linting rules, and development tooling without manually tracking upstream changes. Think of it as keeping your project's foundation fresh and aligned with modern practices, while maintaining full control over what gets updated.
 
-### Rhiza and rhiza-tools
+### Rhiza and rhiza-cli
 
 Rhiza has two distinct components:
 
 - **[rhiza](https://github.com/jebel-quant/rhiza)** (this repository) — the *template content*: the curated set of configuration files, Makefile modules, CI/CD workflows, and tooling files that downstream projects sync from.
-- **[rhiza-tools](https://pypi.org/project/rhiza-tools/)** — the *CLI engine*: a separate Python package (installed on-the-fly via `uvx`) that provides the `rhiza` command and implements operations such as `init`, `materialize`, `bump`, and `release`.
+- **[rhiza-cli](https://pypi.org/project/rhiza-cli/)** — the *CLI engine*: a separate Python package (installed on-the-fly via `uvx`) that provides the `rhiza` command and implements operations such as `init`, `materialize`, `bump`, and `release`.
 
-In short: **rhiza** is the *what* (the template files you receive); **rhiza-tools** is the *how* (the tool that fetches and applies them).
+In short: **rhiza** is the *what* (the template files you receive); **rhiza-cli** is the *how* (the tool that fetches and applies them).
 
-When you run `uvx rhiza init` or `uvx rhiza materialize`, you are invoking the `rhiza-tools` package — it reads your `.rhiza/template.yml` and syncs the matching files from this repository (or your own fork) into your project. The two components are versioned independently, so templates and the CLI can be updated separately.
+When you run `uvx rhiza init` or `uvx rhiza materialize`, you are invoking the `rhiza-cli` package — it reads your `.rhiza/template.yml` and syncs the matching files from this repository (or your own fork) into your project. The two components are versioned independently, so templates and the CLI can be updated separately.
 
 ### How It Works
 
