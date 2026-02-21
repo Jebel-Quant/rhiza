@@ -41,6 +41,7 @@ BOOK_SECTIONS := \
   "Coverage|_tests/html-coverage/index.html|tests/html-coverage/index.html|_tests/html-coverage|tests/html-coverage" \
   "Test Report|_tests/html-report/report.html|tests/html-report/report.html|_tests/html-report|tests/html-report" \
   "Benchmarks|_tests/benchmarks/report.html|tests/benchmarks/report.html|_tests/benchmarks|tests/benchmarks" \
+  "Stress Tests|_tests/stress/report.html|tests/stress/report.html|_tests/stress|tests/stress" \
   "Notebooks|_marimushka/index.html|marimushka/index.html|_marimushka|marimushka" \
   "Official Documentation|_mkdocs/index.html|docs/index.html|_mkdocs|docs"
 
@@ -50,26 +51,9 @@ BOOK_SECTIONS := \
 # 1. Aggregates API docs, coverage, test reports, notebooks, and MkDocs site into _book.
 # 2. Generates links.json to define the book structure.
 # 3. Uses 'minibook' to compile the final HTML site.
-book:: test benchmark docs marimushka mkdocs-build ## compile the companion book
+book:: test benchmark stress docs marimushka mkdocs-build ## compile the companion book
 	@printf "${BLUE}[INFO] Building combined documentation...${RESET}\n"
 	@rm -rf _book && mkdir -p _book
-
-	@if [ -f "_tests/coverage.json" ]; then \
-	  printf "${BLUE}[INFO] Generating coverage badge JSON...${RESET}\n"; \
-	  mkdir -p _book/tests; \
-	  ${UV_BIN} run python -c "\
-import json; \
-data = json.load(open('_tests/coverage.json')); \
-pct = int(data['totals']['percent_covered']); \
-color = 'brightgreen' if pct >= 90 else 'green' if pct >= 80 else 'yellow' if pct >= 70 else 'orange' if pct >= 60 else 'red'; \
-badge = {'schemaVersion': 1, 'label': 'coverage', 'message': f'{pct}%', 'color': color}; \
-json.dump(badge, open('_book/tests/coverage-badge.json', 'w'))"; \
-	  printf "${BLUE}[INFO] Coverage badge JSON:${RESET}\n"; \
-	  cat _book/tests/coverage-badge.json; \
-	  printf "\n"; \
-	else \
-	  printf "${YELLOW}[WARN] No coverage.json found, skipping badge generation${RESET}\n"; \
-	fi
 
 	@printf "{\n" > _book/links.json
 	@first=1; \

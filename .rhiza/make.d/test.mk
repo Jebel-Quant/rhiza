@@ -4,7 +4,7 @@
 # executing performance benchmarks.
 
 # Declare phony targets (they don't produce files)
-.PHONY: test benchmark typecheck security docs-coverage hypothesis-test
+.PHONY: test benchmark typecheck security docs-coverage hypothesis-test coverage-badge stress
 
 # Default directory for tests
 TESTS_FOLDER := tests
@@ -31,6 +31,7 @@ test: install ## run all tests
 	if [ -d ${SOURCE_FOLDER} ]; then \
 	  ${UV_BIN} run pytest \
 	  --ignore=${TESTS_FOLDER}/benchmarks \
+	  --ignore=${TESTS_FOLDER}/stress \
 	  --cov=${SOURCE_FOLDER} \
 	  --cov-report=term \
 	  --cov-report=html:_tests/html-coverage \
@@ -41,6 +42,7 @@ test: install ## run all tests
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, running tests without coverage${RESET}\n"; \
 	  ${UV_BIN} run pytest \
 	  --ignore=${TESTS_FOLDER}/benchmarks \
+	  --ignore=${TESTS_FOLDER}/stress \
 	  --html=_tests/html-report/report.html; \
 	fi
 
@@ -113,3 +115,34 @@ hypothesis-test: install ## run property-based tests with Hypothesis
 	  -m "hypothesis or property" \
 	  --tb=short \
 	  --html=_tests/hypothesis/report.html
+
+# The 'coverage-badge' target generates an SVG coverage badge from the JSON coverage report.
+# 1. Checks if the coverage JSON file exists.
+# 2. Creates the assets/ directory if needed.
+# 3. Runs genbadge via uvx to produce the SVG badge.
+coverage-badge: test ## generate coverage badge from _tests/coverage.json
+	@if [ ! -f _tests/coverage.json ]; then \
+	  printf "${RED}[ERROR] Coverage report not found at _tests/coverage.json, run 'make test' first.${RESET}\n"; \
+	  exit 1; \
+	fi; \
+	mkdir -p assets; \
+	printf "${BLUE}[INFO] Generating coverage badge...${RESET}\n"; \
+	${UVX_BIN} genbadge coverage -i _tests/coverage.json -o assets/coverage-badge.svg; \
+	printf "${GREEN}[SUCCESS] Coverage badge saved to assets/coverage-badge.svg${RESET}\n"
+
+# The 'stress' target runs stress/load tests.
+# 1. Checks if stress tests exist in the tests/stress directory.
+# 2. Runs pytest with the stress marker to execute only stress tests.
+# 3. Generates an HTML report of stress test results.
+stress: install ## run stress/load tests
+	@if [ ! -d "${TESTS_FOLDER}/stress" ]; then \
+	  printf "${YELLOW}[WARN] Stress tests folder not found, skipping stress tests.${RESET}\n"; \
+	  exit 0; \
+	fi; \
+	printf "${BLUE}[INFO] Running stress/load tests...${RESET}\n"; \
+	mkdir -p _tests/stress; \
+	${UV_BIN} run pytest \
+	  -v \
+	  -m stress \
+	  --tb=short \
+	  --html=_tests/stress/report.html
