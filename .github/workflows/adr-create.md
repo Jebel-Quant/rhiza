@@ -16,12 +16,14 @@ description: "Create a new Architecture Decision Record (ADR) with AI assistance
 engine: copilot
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 tools:
   github:
     toolsets: [repos, pull_requests]
+
+safe-outputs:
+  create-pull-request:
 
 network:
   allowed:
