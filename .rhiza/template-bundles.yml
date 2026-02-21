@@ -20,7 +20,7 @@
 #     ...
 
 # Schema version for this bundles file format
-version: "0.7.1"
+version: "0.8.1-rc.2"
 
 # Bundle Definitions
 bundles:
