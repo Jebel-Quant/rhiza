@@ -74,6 +74,17 @@ nav:
   - Glossary: GLOSSARY.md
   - Releasing: RELEASING.md
   - VSCode Extensions: VSCODE_EXTENSIONS.md
+  - Architecture Decision Records:
+    - Overview: adr/README.md
+    - ADR-0001 Use Architecture Decision Records: adr/0001-use-architecture-decision-records.md
+    - ADR-0002 Use uv for Python Package Management: adr/0002-use-uv-for-python-package-management.md
+    - ADR-0003 Use Ruff for Linting and Formatting: adr/0003-use-ruff-for-linting-and-formatting.md
+    - ADR-0004 Adopt Modular Makefile Architecture: adr/0004-adopt-modular-makefile-architecture.md
+    - ADR-0005 Separate Rhiza Template from CLI: adr/0005-separate-rhiza-template-from-cli.md
+    - ADR-0006 Organise Templates into Bundles: adr/0006-organise-templates-into-bundles.md
+    - ADR-0007 Support Dual CI/CD (GitHub & GitLab): adr/0007-support-dual-cicd-github-and-gitlab.md
+    - ADR-0008 Use Marimo for Interactive Notebooks: adr/0008-use-marimo-for-interactive-notebooks.md
+    - ADR-0009 Use Pre-commit Hooks for Code Quality: adr/0009-use-pre-commit-hooks-for-code-quality.md
 
 # Mermaid diagram support
 # https://squidfunk.github.io/mkdocs-material/reference/diagrams/
