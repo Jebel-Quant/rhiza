@@ -1,9 +1,14 @@
-"""Property-based tests using Hypothesis.
+"""Blueprint property-based tests for downstream repositories.
 
-This module currently exercises generic Python behavior (for example, list sorting)
-rather than any project Makefile targets or operations.
+This module contains example property-based tests using Hypothesis.
+It intentionally exercises generic Python behaviour (e.g. list sorting)
+rather than any Rhiza-specific logic, and serves as a **starting-point
+blueprint** for downstream projects.
 
-Uses Hypothesis to generate test cases that verify behavior across a wide range of inputs.
+The Rhiza project's own tests live in ``.rhiza/tests/``.
+
+Uses Hypothesis to generate test cases that verify behaviour across a
+wide range of inputs.
 """
 
 from __future__ import annotations

@@ -1,6 +1,10 @@
-"""Stress tests for rhiza.
+"""Blueprint stress tests for downstream repositories.
 
-Examples covering concurrent operations, data processing, and file I/O under load.
+This module contains example stress tests covering concurrent operations,
+data processing, and file I/O under load. These are **placeholder tests
+you should replace** with stress tests for your own system.
+
+The Rhiza project's own stress tests live in ``.rhiza/tests/stress/``.
 """
 
 from __future__ import annotations
