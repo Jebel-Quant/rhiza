@@ -23,12 +23,6 @@ tools:
   github:
     toolsets: [repos, contents, pull_requests]
 
-safe-outputs:
-  create-pr:
-    title: "ADR: {{ title }}"
-    branch: "adr/{{ adr_number }}-{{ slug }}"
-    labels: ["documentation", "adr"]
-
 network:
   allowed:
     - defaults
