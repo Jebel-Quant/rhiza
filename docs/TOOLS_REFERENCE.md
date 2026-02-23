@@ -50,7 +50,7 @@ These are the commands you'll use most frequently:
 |---------|-------------|
 | `make deptry` | Check for unused/missing dependencies |
 | `make pre-commit` | Run all pre-commit hooks |
-| `make typecheck` | Run type checking with pyright |
+| `make typecheck` | Run type checking with ty |
 | `make security` | Run security scans (pip-audit and bandit) |
 | `make docs-coverage` | Check documentation coverage |
 
@@ -349,7 +349,7 @@ uv run ruff format --check .
 make typecheck
 
 # Type check specific file
-uv run pyright path/to/file.py
+uv run ty check path/to/file.py
 ```
 
 ### Security Scanning
