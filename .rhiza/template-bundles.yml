@@ -19,9 +19,6 @@
 #     docker/Dockerfile
 #     ...
 
-# Schema version for this bundles file format
-version: 0.8.2
-
 # Bundle Definitions
 bundles:
   # ============================================================================
