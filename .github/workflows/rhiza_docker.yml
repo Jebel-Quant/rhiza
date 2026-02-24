@@ -83,7 +83,7 @@ jobs:
           echo "image_name=${REPO_NAME}:ci" >> "$GITHUB_OUTPUT"
 
       - name: Scan Docker Image with Trivy
-        uses: aquasecurity/trivy-action@0.34.0
+        uses: aquasecurity/trivy-action@0.34.1
         if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
         with:
           image-ref: '${{ steps.docker_build.outputs.image_name }}'
