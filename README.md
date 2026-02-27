@@ -36,11 +36,11 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 Rhiza has two distinct components:
 
 - **[rhiza](https://github.com/jebel-quant/rhiza)** (this repository) — the *template content*: the curated set of configuration files, Makefile modules, CI/CD workflows, and tooling files that downstream projects sync from.
-- **[rhiza-cli](https://pypi.org/project/rhiza-cli/)** — the *CLI engine*: a separate Python package (installed on-the-fly via `uvx`) that provides the `rhiza` command and implements operations such as `init`, `materialize`, `bump`, and `release`.
+- **[rhiza-cli](https://pypi.org/project/rhiza-cli/)** — the *CLI engine*: a separate Python package (installed on-the-fly via `uvx`) that provides the `rhiza` command and implements operations such as `init`, `sync`, `bump`, and `release`.
 
 In short: **rhiza** is the *what* (the template files you receive); **rhiza-cli** is the *how* (the tool that fetches and applies them).
 
-When you run `uvx rhiza init` or `uvx rhiza materialize`, you are invoking the `rhiza-cli` package — it reads your `.rhiza/template.yml` and syncs the matching files from this repository (or your own fork) into your project. The two components are versioned independently, so templates and the CLI can be updated separately.
+When you run `uvx rhiza init` or `uvx rhiza sync`, you are invoking the `rhiza-cli` package — it reads your `.rhiza/template.yml` and syncs the matching files from this repository (or your own fork) into your project. The two components are versioned independently, so templates and the CLI can be updated separately.
 
 ### How It Works
 
@@ -79,7 +79,7 @@ exclude: |
 >
 > To enable this in your project, copy the [`regexManagers` configuration](renovate.json#L31-L40) from this repository's `renovate.json` file into your own Renovate configuration. See the linked configuration for the complete setup.
 
-When you run `uvx rhiza materialize` or trigger the automated sync workflow, Rhiza fetches only the files matching your `include` patterns, skips anything in `exclude`, and creates a clean diff for you to review. You stay in control of what updates and when.
+When you run `uvx rhiza sync` or trigger the automated sync workflow, Rhiza fetches only the files matching your `include` patterns, skips anything in `exclude`, and creates a clean diff for you to review. You stay in control of what updates and when.
 
 **💡 Pro Tip:** While you can use `Jebel-Quant/rhiza` directly, **we recommend creating your own template repository** using GitHub's "Use this template" button. This gives you a clean copy to customise for your organisation's specific needs and constraints—adjusting CI workflows, coding standards, or tooling choices—while still benefiting from Rhiza's sync mechanism. Your template repo becomes your team's source of truth, and you can selectively pull updates from upstream Rhiza when desired.
 
@@ -107,7 +107,7 @@ cd /path/to/your/project
 uvx rhiza init
 
 # Edit .rhiza/template.yml to review the bundle selection, then apply
-uvx rhiza materialize
+uvx rhiza sync
 ```
 
 See the [Integration Guide](#-integration-guide) for more options, or follow the [step-by-step tutorial](https://github.com/Jebel-Quant/rhiza-education) in rhiza-education (Lessons 6–8).
@@ -207,8 +207,8 @@ cd /path/to/your/project
 uvx rhiza init
 
 # Edit .rhiza/template.yml to select desired templates
-# Then materialize the templates
-uvx rhiza materialize
+# Then sync the templates
+uvx rhiza sync
 ```
 
 **Options:**
@@ -485,7 +485,7 @@ For a structured, tutorial-style introduction to Rhiza — covering CI/CD concep
 
 **[jebel-quant/rhiza-education](https://github.com/Jebel-Quant/rhiza-education)** · [Rendered site](https://jebel-quant.github.io/rhiza-education/)
 
-The curriculum walks you through twelve lessons in order, from the motivation for living templates all the way to running your first materialize, configuring Renovate, and customising safely.
+The curriculum walks you through twelve lessons in order, from the motivation for living templates all the way to running your first sync, configuring Renovate, and customising safely.
 
 ## 🛠️ Contributing to Rhiza
 

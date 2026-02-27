@@ -47,7 +47,7 @@ sync:template:
       git checkout -b "$BRANCH_NAME"
 
       # Sync template
-      uvx rhiza materialize --force .
+      uvx rhiza sync .
 
       # Check if there are changes
       git add -A
