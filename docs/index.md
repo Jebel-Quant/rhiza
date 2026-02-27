@@ -12,7 +12,7 @@ Unlike traditional one-shot project templates (like cookiecutter or copier), Rhi
 Rhiza has two components:
 
 - **[rhiza](https://github.com/jebel-quant/rhiza)** — the *template content*: curated configuration files, Makefile modules, CI/CD workflows, and tooling.
-- **[rhiza-cli](https://pypi.org/project/rhiza-cli/)** — the *CLI engine*: a separate package (run via `uvx`) providing `init`, `materialize`, `bump`, and `release` commands.
+- **[rhiza-cli](https://pypi.org/project/rhiza-cli/)** — the *CLI engine*: a separate package (run via `uvx`) providing `init`, `sync`, `bump`, and `release` commands.
 
 ## Quick Start
 
@@ -24,7 +24,7 @@ cd /path/to/your/project
 uvx rhiza init
 
 # Review .rhiza/template.yml, then apply the templates
-uvx rhiza materialize
+uvx rhiza sync
 ```
 
 See the [Quick Reference](QUICK_REFERENCE.md) for a concise command overview, or the [Demo](DEMO.md) for a hands-on walkthrough.

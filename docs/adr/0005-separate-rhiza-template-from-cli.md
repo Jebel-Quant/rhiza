@@ -38,13 +38,13 @@ We will maintain two distinct components:
    `v0.7.1`).
 2. **[rhiza-cli](https://pypi.org/project/rhiza-cli/)** — the *CLI engine*: a separate
    Python package published to PyPI, invoked ephemerally via `uvx rhiza`. Implements
-   the `init`, `materialize`, `bump`, and `release` operations.
+   the `init`, `sync`, `bump`, and `release` operations.
 
 **Interaction model:**
 
 - Downstream projects specify the template source and version in `.rhiza/template.yml`
   (`repository: Jebel-Quant/rhiza`, `ref: v0.7.1`).
-- When `uvx rhiza materialize` is run, `rhiza-cli` reads this file, fetches the matching
+- When `uvx rhiza sync` is run, `rhiza-cli` reads this file, fetches the matching
   files from the specified repository at the given ref, and applies them to the project.
 - The CLI version and the template version are independent; either can be updated without
   forcing an update of the other.

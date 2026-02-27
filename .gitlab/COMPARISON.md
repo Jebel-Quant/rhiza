@@ -158,7 +158,7 @@ script:
 
 | Feature | GitHub Actions | GitLab CI |
 |---------|----------------|-----------|
-| Template sync | ✅ `rhiza materialize` | ✅ `rhiza materialize` |
+| Template sync | ✅ `rhiza sync` | ✅ `rhiza sync` |
 | PR/MR creation | ✅ Automatic | ⚠️ Manual (API call needed) |
 | Token requirement | PAT_TOKEN | PAT_TOKEN |
 | Scheduling | ✅ Cron syntax | ✅ Pipeline schedules |
