@@ -87,7 +87,7 @@ release:build:
       # Detect buildable Python package
       if [ -f "pyproject.toml" ] && grep -q '^\[build-system\]' pyproject.toml; then
         echo "📦 Building package..."
-        uvx hatch build
+        uv build
       else
         echo "⏭️ No buildable package detected, skipping build"
         mkdir -p dist  # Create empty dist directory

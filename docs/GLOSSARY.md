@@ -104,7 +104,7 @@ A fast Python package installer and resolver from Astral. Rhiza uses `uv` for al
 A fast Python linter and formatter from Astral. Replaces flake8, isort, black, and many other tools. Configured in `ruff.toml`.
 
 ### Hatch
-A Python build backend used to create distribution packages (wheels and sdists). Invoked via `uvx hatch build`.
+A Python build backend used to create distribution packages (wheels and sdists). Invoked via `uv build`.
 
 ### Deptry
 A tool that checks for unused and missing dependencies in Python projects. Integrated in CI via `make deptry`.
