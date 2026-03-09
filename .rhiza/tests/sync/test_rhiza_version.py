@@ -135,4 +135,3 @@ class TestSummariseSync:
         # The format should be: uvx "rhiza>=VERSION" summarise .
         assert 'uvx "rhiza>=' in out
         assert "summarise" in out
-
