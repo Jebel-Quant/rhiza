@@ -1,18 +1,3 @@
-"""Marimo Showcase Notebook - Demonstrating Key Features.
-
-This notebook showcases the most useful features of Marimo, including:
-- Interactive UI elements (sliders, dropdowns, text inputs)
-- Reactive programming (automatic cell updates)
-- Data visualisation with popular libraries
-- Markdown and LaTeX support
-- Layout components (columns, tabs, accordions)
-- Forms and user input handling
-- Dynamic content generation
-
-Run this notebook with: marimo edit rhiza.py
-Or in the rhiza project: make marimo
-"""
-
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [

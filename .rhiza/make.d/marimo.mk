@@ -38,7 +38,7 @@ marimo: install ## fire up Marimo server
 	@if [ ! -d "${MARIMO_FOLDER}" ]; then \
 	  printf " ${YELLOW}[WARN] Marimo folder '${MARIMO_FOLDER}' not found, skipping start${RESET}\n"; \
 	else \
-	  ${UV_BIN} run --with marimo marimo edit --no-token --headless "${MARIMO_FOLDER}"; \
+	  ${UV_BIN} run --no-project --with marimo --directory "${MARIMO_FOLDER}" marimo edit --no-token --headless; \
 	fi
 
 # The 'marimushka' target exports Marimo notebooks (.py files) to static HTML.
