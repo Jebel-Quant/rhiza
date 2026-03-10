@@ -89,27 +89,27 @@ PYTHON_VERSION                       # Read from .python-version file
 **Error Handling**:
 
 Each validation includes:
-- ❌ Clear error message
-- 💡 Specific remediation steps
-- 💡 Alternative solutions
+- `[ERROR]` Clear error message
+- `[INFO]` Specific remediation steps
+- `[INFO]` Alternative solutions
 
 **Example Errors**:
 
 ```bash
 # UV not found
-[copilot-hook] ❌ ERROR: uv not found
-[copilot-hook] 💡 Remediation: Run 'make install' to set up the environment
-[copilot-hook] 💡 Alternative: Ensure uv is in PATH or ./bin/uv exists
+[copilot-hook] [ERROR] uv not found
+[copilot-hook] [INFO] Remediation: Run 'make install' to set up the environment
+[copilot-hook] [INFO] Alternative: Ensure uv is in PATH or ./bin/uv exists
 
 # Virtual environment missing
-[copilot-hook] ❌ ERROR: .venv not found
-[copilot-hook] 💡 Remediation: Run 'make install' to create the virtual environment
-[copilot-hook] 💡 Details: The .venv directory should contain Python dependencies
+[copilot-hook] [ERROR] .venv not found
+[copilot-hook] [INFO] Remediation: Run 'make install' to create the virtual environment
+[copilot-hook] [INFO] Details: The .venv directory should contain Python dependencies
 
 # Virtual environment not activated (warning only)
-[copilot-hook] ⚠️  WARNING: .venv/bin is not on PATH
-[copilot-hook] 💡 Note: The agent may not use the correct Python version
-[copilot-hook] 💡 Remediation: Ensure .venv/bin is added to PATH before running the agent
+[copilot-hook] [WARN] .venv/bin is not on PATH
+[copilot-hook] [INFO] Note: The agent may not use the correct Python version
+[copilot-hook] [INFO] Remediation: Ensure .venv/bin is added to PATH before running the agent
 ```
 
 **Usage**:
@@ -136,25 +136,25 @@ Called automatically by `.github/hooks/hooks.json` at session start:
 **Error Handling**:
 
 Each quality gate provides:
-- ❌ Clear failure message
-- 💡 Detailed remediation steps
-- 💡 Common solutions
+- `[ERROR]` Clear failure message
+- `[INFO]` Detailed remediation steps
+- `[INFO]` Common solutions
 
 **Example Errors**:
 
 ```bash
 # Formatting failure
-[copilot-hook] ❌ ERROR: Formatting check failed
-[copilot-hook] 💡 Remediation: Review the formatting errors above
-[copilot-hook] 💡 Common fixes:
+[copilot-hook] [ERROR] Formatting check failed
+[copilot-hook] [INFO] Remediation: Review the formatting errors above
+[copilot-hook] [INFO] Common fixes:
 [copilot-hook]    - Run 'make fmt' locally to see detailed errors
 [copilot-hook]    - Check for syntax errors in modified files
 [copilot-hook]    - Ensure all files follow project style guidelines
 
 # Test failure
-[copilot-hook] ❌ ERROR: Tests failed
-[copilot-hook] 💡 Remediation: Review the test failures above
-[copilot-hook] 💡 Common fixes:
+[copilot-hook] [ERROR] Tests failed
+[copilot-hook] [INFO] Remediation: Review the test failures above
+[copilot-hook] [INFO] Common fixes:
 [copilot-hook]    - Run 'make test' locally to see detailed output
 [copilot-hook]    - Check if new code broke existing functionality
 [copilot-hook]    - Verify test assertions match expected behavior
@@ -247,9 +247,9 @@ No external dependencies required (no bats-core needed).
 
 2. **Provide descriptive errors with remediation**:
    ```bash
-   echo "[script] ❌ ERROR: Something failed"
-   echo "[script] 💡 Remediation: Try this solution"
-   echo "[script] 💡 Alternative: Or try this"
+   echo "[script] [ERROR] Something failed"
+   echo "[script] [INFO] Remediation: Try this solution"
+   echo "[script] [INFO] Alternative: Or try this"
    ```
 
 3. **Use clear exit codes**:
@@ -266,8 +266,8 @@ No external dependencies required (no bats-core needed).
 ### For Script Users
 
 1. **Read error messages carefully**:
-   - Look for ❌ ERROR lines
-   - Follow 💡 Remediation steps in order
+   - Look for `[ERROR]` lines
+   - Follow `[INFO]` Remediation steps in order
 
 2. **Check environment variables**:
    ```bash
@@ -288,7 +288,7 @@ No external dependencies required (no bats-core needed).
 
 **Symptoms**:
 ```
-❌ ERROR: Dependency installation failed
+[ERROR] Dependency installation failed
 ```
 
 **Solutions**:
@@ -302,7 +302,7 @@ No external dependencies required (no bats-core needed).
 
 **Symptoms**:
 ```
-⚠️ WARNING: Marimo installation failed (non-critical)
+[WARN] Marimo installation failed (non-critical)
 ```
 
 **Solutions**:
@@ -314,7 +314,7 @@ No external dependencies required (no bats-core needed).
 
 **Symptoms**:
 ```
-⚠️ WARNING: Pre-commit hook installation failed (non-critical)
+[WARN] Pre-commit hook installation failed (non-critical)
 ```
 
 **Solutions**:
@@ -328,7 +328,7 @@ No external dependencies required (no bats-core needed).
 
 **Symptoms**:
 ```
-[copilot-hook] ❌ ERROR: uv not found
+[copilot-hook] [ERROR] uv not found
 ```
 
 **Solutions**:
@@ -341,7 +341,7 @@ No external dependencies required (no bats-core needed).
 
 **Symptoms**:
 ```
-[copilot-hook] ❌ ERROR: .venv not found
+[copilot-hook] [ERROR] .venv not found
 ```
 
 **Solutions**:
@@ -353,7 +353,7 @@ No external dependencies required (no bats-core needed).
 
 **Symptoms**:
 ```
-[copilot-hook] ⚠️ WARNING: .venv/bin is not on PATH
+[copilot-hook] [WARN] .venv/bin is not on PATH
 ```
 
 **Solutions**:
@@ -366,7 +366,7 @@ No external dependencies required (no bats-core needed).
 
 **Symptoms**:
 ```
-[copilot-hook] ❌ ERROR: Formatting check failed
+[copilot-hook] [ERROR] Formatting check failed
 ```
 
 **Solutions**:
@@ -379,7 +379,7 @@ No external dependencies required (no bats-core needed).
 
 **Symptoms**:
 ```
-[copilot-hook] ❌ ERROR: Tests failed
+[copilot-hook] [ERROR] Tests failed
 ```
 
 **Solutions**:
@@ -400,9 +400,9 @@ error_with_recovery() {
     local error_msg="$2"
     local remediation="$3"
     
-    echo "❌ ERROR: $step failed"
+    echo "[ERROR] $step failed"
     echo "   Details: $error_msg"
-    echo "   💡 Suggested fix: $remediation"
+    echo "   [INFO] Suggested fix: $remediation"
     return 1
 }
 
