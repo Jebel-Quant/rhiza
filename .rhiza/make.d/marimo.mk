@@ -14,8 +14,11 @@ marimo-validate: install ## validate all Marimo notebooks can run
 	  for notebook in ${MARIMO_FOLDER}/*.py; do \
 	    if [ -f "$$notebook" ]; then \
 	      notebook_name=$$(basename "$$notebook"); \
-	      printf "${BLUE}[INFO] Validating $$notebook_name...${RESET}\n"; \
-	      if ${UV_BIN} run "$$notebook" > /dev/null 2>&1; then \
+	      notebook_stem=$$(basename "$$notebook" .py); \
+	      artefact_folder="results/$$notebook_stem"; \
+	      mkdir -p "$$artefact_folder"; \
+	      printf "${BLUE}[INFO] Validating $$notebook_name (artefacts → $$artefact_folder)...${RESET}\n"; \
+	      if NOTEBOOK_OUTPUT_FOLDER="$$artefact_folder" ${UV_BIN} run "$$notebook" > /dev/null 2>&1; then \
 	        printf "${GREEN}[SUCCESS] $$notebook_name is valid${RESET}\n"; \
 	      else \
 	        printf "${RED}[ERROR] $$notebook_name failed validation${RESET}\n"; \
