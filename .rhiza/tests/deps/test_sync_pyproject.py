@@ -83,6 +83,34 @@ _TEMPLATE_WITH_BOTH = textwrap.dedent("""\
         - "Programming Language :: Python :: 3.12"
 """)
 
+_TEMPLATE_WITH_LICENSE_STRING = textwrap.dedent("""\
+    repository: Jebel-Quant/rhiza
+    ref: v0.9.0
+    templates:
+      - core
+    pyproject:
+      license: "MIT"
+""")
+
+_TEMPLATE_WITH_LICENSE_TABLE = textwrap.dedent("""\
+    repository: Jebel-Quant/rhiza
+    ref: v0.9.0
+    templates:
+      - core
+    pyproject:
+      license:
+        text: "MIT"
+""")
+
+_TEMPLATE_WITH_README = textwrap.dedent("""\
+    repository: Jebel-Quant/rhiza
+    ref: v0.9.0
+    templates:
+      - core
+    pyproject:
+      readme: "README.md"
+""")
+
 
 def _make_project(tmp_path: Path, pyproject_content: str, template_content: str) -> Path:
     """Create a minimal fake project directory for testing."""
@@ -375,4 +403,103 @@ class TestBothFields:
         assert result["project"]["name"] == "my-project"
         assert result["project"]["version"] == "1.2.3"
         assert result["project"]["description"] == "A test project"
+        assert result["project"]["dependencies"] == ["requests>=2.0"]
+
+
+class TestLicense:
+    """Tests for patching [project].license."""
+
+    def test_patches_license_string(self, tmp_path):
+        """License as a plain string should be written as a string."""
+        _make_project(tmp_path, _MINIMAL_PYPROJECT, _TEMPLATE_WITH_LICENSE_STRING)
+
+        rc = _run_sync(tmp_path)
+
+        assert rc == 0
+        with (tmp_path / "pyproject.toml").open("rb") as f:
+            result = tomllib.load(f)
+        assert result["project"]["license"] == "MIT"
+
+    def test_patches_license_table(self, tmp_path):
+        """License as a mapping should be written as an inline table."""
+        _make_project(tmp_path, _MINIMAL_PYPROJECT, _TEMPLATE_WITH_LICENSE_TABLE)
+
+        rc = _run_sync(tmp_path)
+
+        assert rc == 0
+        with (tmp_path / "pyproject.toml").open("rb") as f:
+            result = tomllib.load(f)
+        assert result["project"]["license"] == {"text": "MIT"}
+
+    def test_license_noop_when_already_matching_string(self, tmp_path):
+        """License should not change if it already matches the template value."""
+        pyproject = textwrap.dedent("""\
+            [project]
+            name = "my-project"
+            version = "1.0.0"
+            license = "MIT"
+            dependencies = []
+        """)
+        _make_project(tmp_path, pyproject, _TEMPLATE_WITH_LICENSE_STRING)
+        original = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+
+        rc = _run_sync(tmp_path)
+
+        assert rc == 0
+        assert (tmp_path / "pyproject.toml").read_text(encoding="utf-8") == original
+
+    def test_license_preserves_other_fields(self, tmp_path):
+        """Patching license must not touch name/version/dependencies."""
+        _make_project(tmp_path, _MINIMAL_PYPROJECT, _TEMPLATE_WITH_LICENSE_STRING)
+
+        _run_sync(tmp_path)
+
+        with (tmp_path / "pyproject.toml").open("rb") as f:
+            result = tomllib.load(f)
+        assert result["project"]["name"] == "my-project"
+        assert result["project"]["version"] == "1.2.3"
+        assert result["project"]["dependencies"] == ["requests>=2.0"]
+
+
+class TestReadme:
+    """Tests for patching [project].readme."""
+
+    def test_patches_readme(self, tmp_path):
+        """Readme should be updated to the template value."""
+        _make_project(tmp_path, _MINIMAL_PYPROJECT, _TEMPLATE_WITH_README)
+
+        rc = _run_sync(tmp_path)
+
+        assert rc == 0
+        with (tmp_path / "pyproject.toml").open("rb") as f:
+            result = tomllib.load(f)
+        assert result["project"]["readme"] == "README.md"
+
+    def test_readme_noop_when_already_matching(self, tmp_path):
+        """Readme should not change if it already matches the template value."""
+        pyproject = textwrap.dedent("""\
+            [project]
+            name = "my-project"
+            version = "1.0.0"
+            readme = "README.md"
+            dependencies = []
+        """)
+        _make_project(tmp_path, pyproject, _TEMPLATE_WITH_README)
+        original = (tmp_path / "pyproject.toml").read_text(encoding="utf-8")
+
+        rc = _run_sync(tmp_path)
+
+        assert rc == 0
+        assert (tmp_path / "pyproject.toml").read_text(encoding="utf-8") == original
+
+    def test_readme_preserves_other_fields(self, tmp_path):
+        """Patching readme must not touch name/version/dependencies."""
+        _make_project(tmp_path, _MINIMAL_PYPROJECT, _TEMPLATE_WITH_README)
+
+        _run_sync(tmp_path)
+
+        with (tmp_path / "pyproject.toml").open("rb") as f:
+            result = tomllib.load(f)
+        assert result["project"]["name"] == "my-project"
+        assert result["project"]["version"] == "1.2.3"
         assert result["project"]["dependencies"] == ["requests>=2.0"]

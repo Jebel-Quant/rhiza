@@ -34,6 +34,17 @@ pyproject:
   # Set [project].requires-python
   requires-python: ">=3.11"
 
+  # Set [project].license — accepts a plain string (PEP 639) ...
+  license: "MIT"
+  # ... or an inline table (PEP 517):
+  # license:
+  #   text: "MIT"
+  # license:
+  #   file: "LICENSE"
+
+  # Set [project].readme (file path string)
+  readme: "README.md"
+
   # Replace [project].classifiers entirely.
   # Rhiza owns this list — it mirrors the requires-python / .python-version
   # support matrix.
@@ -61,6 +72,8 @@ pyproject:
 |-----|-------------------|-----------|
 | `requires-python` | `[project].requires-python` | Sets the value; no-op if already matching |
 | `classifiers` | `[project].classifiers` | Replaces the list entirely |
+| `license` | `[project].license` | Accepts a plain string (`"MIT"`) or a mapping (`{text: "MIT"}`) |
+| `readme` | `[project].readme` | Sets the readme file path string |
 | `tool-sections` | `[tool.<...>]` (dotted path) | Syncs the subtree from rhiza's own `pyproject.toml` |
 
 ---

@@ -15,6 +15,12 @@ requires-python
     Sets ``[project].requires-python``.
 classifiers
     Replaces ``[project].classifiers`` entirely (rhiza owns this list).
+license
+    Sets ``[project].license``.  Accepts either a plain string (PEP 639,
+    e.g. ``"MIT"``) or a mapping (PEP 517, e.g. ``{text: "MIT"}`` or
+    ``{file: "LICENSE"}``).
+readme
+    Sets ``[project].readme`` (a string file path, e.g. ``"README.md"``).
 tool-sections
     A list of dotted TOML paths (e.g. ``tool.deptry.package_module_name_map``)
     that are synced wholesale from rhiza's own ``pyproject.toml`` into the
@@ -161,6 +167,31 @@ def _apply_pyproject_section(
                 arr.append(c)
             project["classifiers"] = arr
             changes.append("  classifiers: replaced list")
+
+    # --- license ---
+    if "license" in pyproject_section:
+        new_license = pyproject_section["license"]
+        old_license = project.get("license")
+        # Normalise for comparison: tomlkit inline tables compare as dicts
+        old_license_cmp = dict(old_license) if hasattr(old_license, "items") else old_license
+        new_license_cmp = dict(new_license) if isinstance(new_license, dict) else new_license
+        if old_license_cmp != new_license_cmp:
+            if isinstance(new_license, dict):
+                tbl = tomlkit.inline_table()
+                for k, v in new_license.items():
+                    tbl.append(k, v)
+                project["license"] = tbl
+            else:
+                project["license"] = str(new_license)
+            changes.append(f"  license: {old_license!r} → {new_license!r}")
+
+    # --- readme ---
+    if "readme" in pyproject_section:
+        new_readme: str = str(pyproject_section["readme"])
+        old_readme = project.get("readme")
+        if old_readme != new_readme:
+            project["readme"] = new_readme
+            changes.append(f"  readme: {old_readme!r} → {new_readme!r}")
 
     # --- tool-sections ---
     if "tool-sections" in pyproject_section:
