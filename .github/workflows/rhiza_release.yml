@@ -444,21 +444,38 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Publish Release
+        uses: actions/github-script@v8
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.tag.outputs.tag }}
           DEVCONTAINER_MSG: ${{ steps.devcontainer_link.outputs.message }}
           PYPI_MSG: ${{ steps.pypi_link.outputs.message }}
-        run: |
-          # Get existing auto-generated release notes (gracefully handle missing release)
-          EXISTING=$(gh release view "$TAG" --json body --jq '.body // ""' 2>/dev/null || echo "")
+        with:
+          script: |
+            const tag = process.env.TAG;
+            const devcontainerMsg = (process.env.DEVCONTAINER_MSG || "").trim();
+            const pypiMsg = (process.env.PYPI_MSG || "").trim();
 
-          # Append links to release body
-          {
-            printf '%s' "$EXISTING"
-            [ -n "$DEVCONTAINER_MSG" ] && printf '\n\n%s' "$DEVCONTAINER_MSG"
-            [ -n "$PYPI_MSG" ] && printf '\n\n%s' "$PYPI_MSG"
-          } > /tmp/notes.md
+            let release;
+            try {
+              ({ data: release } = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag,
+              }));
+            } catch (err) {
+              core.setFailed(`Could not find release for tag '${tag}': ${err.message}`);
+              return;
+            }
 
-          gh release edit "$TAG" --draft=false --notes-file /tmp/notes.md
+            let body = release.body || "";
+            if (devcontainerMsg) body += "\n\n" + devcontainerMsg;
+            if (pypiMsg) body += "\n\n" + pypiMsg;
+
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.id,
+              draft: false,
+              body,
+            });
 
