@@ -69,6 +69,16 @@ include:
       - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       - if: $CI_COMMIT_BRANCH
 
+  # Marimo Notebooks - Run and publish notebook artefacts
+  - local: '.gitlab/workflows/rhiza_marimo.yml'
+    rules:
+      - if: $CI_COMMIT_TAG
+        when: never
+      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      - if: $CI_COMMIT_BRANCH == "main"
+      - if: $CI_COMMIT_BRANCH == "master"
+
 # Deployment Workflows
   # Book - Build and deploy documentation to GitLab Pages
   - local: '.gitlab/workflows/rhiza_book.yml'

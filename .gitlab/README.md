@@ -11,6 +11,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 │   ├── rhiza_validate.yml     # Rhiza configuration validation
 │   ├── rhiza_deptry.yml       # Dependency checking
 │   ├── rhiza_pre-commit.yml   # Pre-commit hooks
+│   ├── rhiza_marimo.yml       # Marimo notebook execution and artefact publishing
 │   ├── rhiza_book.yml         # Documentation building (GitLab Pages)
 │   ├── rhiza_sync.yml         # Template synchronization
 │   └── rhiza_release.yml      # Release workflow
@@ -85,7 +86,25 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 5. Book (`rhiza_book.yml`)
+### 5. Marimo (`rhiza_marimo.yml`)
+**Purpose:** Discover and execute all Marimo notebooks in the repository, publishing results as artefacts.
+
+**Trigger:**
+- On push to main/master branch
+- On merge requests to main/master
+
+**Key Features:**
+- Discovers notebooks dynamically from `MARIMO_FOLDER` (default: `marimo`)
+- Runs each notebook sequentially with `uvx uv run`
+- `fail-fast: false` equivalent — all notebooks are attempted even if one fails
+- Publishes `results/` as GitLab CI artefacts (retained for 1 week)
+- Git LFS support
+
+**Equivalent GitHub Action:** `.github/workflows/rhiza_marimo.yml`
+
+---
+
+### 6. Book (`rhiza_book.yml`)
 **Purpose:** Build and deploy documentation to GitLab Pages.
 
 **Trigger:**
@@ -102,7 +121,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 6. Sync (`rhiza_sync.yml`)
+### 7. Sync (`rhiza_sync.yml`)
 **Purpose:** Synchronize repository with its template.
 
 **Trigger:**
@@ -121,7 +140,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 7. Release (`rhiza_release.yml`)
+### 8. Release (`rhiza_release.yml`)
 **Purpose:** Create releases and publish packages to PyPI.
 
 **Trigger:**
