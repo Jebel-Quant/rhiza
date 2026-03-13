@@ -48,6 +48,7 @@ bundles:
       - .rhiza/requirements/README.md
       - .rhiza/requirements/docs.txt
       - .rhiza/requirements/tools.txt
+      - .rhiza/utils/sync_pyproject.py
 
       # Root configuration files
       - Makefile

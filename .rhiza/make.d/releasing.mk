@@ -2,7 +2,7 @@
 # This file provides targets for version bumping and release management.
 
 # Declare phony targets (they don't produce files)
-.PHONY: bump release publish release-status pre-bump post-bump pre-release post-release
+.PHONY: bump release publish release-status sync-pyproject pre-bump post-bump pre-release post-release
 
 # Hook targets (double-colon rules allow multiple definitions)
 pre-bump:: ; @:
@@ -45,6 +45,17 @@ else ifeq ($(FORGE_TYPE),gitlab)
 else
 	@printf "${RED}[ERROR] Could not detect forge type (.github/workflows/ or .gitlab-ci.yml not found)${RESET}\n"
 endif
+
+sync-pyproject: ## sync pyproject.toml fields from .rhiza/template.yml (supports DRY_RUN=1, CHECK=1)
+	@if [ -f "pyproject.toml" ] && [ -f ".rhiza/template.yml" ]; then \
+		$(MAKE) install; \
+		_FLAGS=""; \
+		if [ -n "$(DRY_RUN)" ]; then _FLAGS="$$_FLAGS --dry-run"; fi; \
+		if [ -n "$(CHECK)" ]; then _FLAGS="$$_FLAGS --check"; fi; \
+		${UV_BIN} run python .rhiza/utils/sync_pyproject.py $$_FLAGS; \
+	else \
+		printf "${YELLOW}[WARN] pyproject.toml or .rhiza/template.yml not found, skipping sync-pyproject${RESET}\n"; \
+	fi
 
 
 
