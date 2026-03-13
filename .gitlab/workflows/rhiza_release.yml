@@ -126,8 +126,8 @@ release:pypi:
     - job: release:build
       artifacts: true
     - job: release:draft
-  image: ghrc.io/astral-uv/uv:0.9.28-bookworm
-  before_scri:
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  before_script:
     - uv python install $(cat .python-version)
     - uv pip install twine
   script:
