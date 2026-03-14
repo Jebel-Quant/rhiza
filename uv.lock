@@ -575,6 +575,7 @@ dev = [
     { name = "pandas" },
     { name = "plotly" },
     { name = "pyyaml" },
+    { name = "tomlkit" },
 ]
 
 [package.metadata]
@@ -586,6 +587,7 @@ dev = [
     { name = "pandas", specifier = ">=3,<3.1" },
     { name = "plotly", specifier = ">=6.5.0,<7.0" },
     { name = "pyyaml", specifier = ">=6.0,<7.0" },
+    { name = "tomlkit", specifier = ">=0.13,<1.0" },
 ]
 
 [[package]]

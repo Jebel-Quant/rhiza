@@ -213,6 +213,33 @@ make sync
 
 This updates shared configurations while preserving your customizations in `local.mk`.
 
+## `pyproject.toml` Field Synchronization
+
+Rhiza can non-destructively patch selected fields in your `pyproject.toml`
+via the optional `pyproject:` section in `.rhiza/template.yml`.
+
+Fields rhiza can control (all opt-in):
+- `requires-python` — keeps the Python version constraint in sync
+- `classifiers` — mirrors the supported Python version matrix
+- `tool-sections` — syncs `[tool.*]` subtrees from rhiza's own `pyproject.toml`
+
+Everything else (`name`, `version`, `description`, `authors`, `dependencies`,
+`[dependency-groups]`, `[project.urls]`) is **never touched**.
+
+```bash
+# Apply changes defined in .rhiza/template.yml [pyproject:] section
+make sync-pyproject
+
+# Preview without writing
+make sync-pyproject DRY_RUN=1
+
+# CI check — exits non-zero if changes are pending
+make sync-pyproject CHECK=1
+```
+
+See `.rhiza/docs/TEMPLATE_YML_EXAMPLE.md` for a fully-annotated example
+of the `pyproject:` section.
+
 ## Troubleshooting
 
 ### Environment Out of Sync
