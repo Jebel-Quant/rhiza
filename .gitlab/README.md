@@ -64,7 +64,8 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 - On merge requests to main/master
 
 **Key Features:**
-- Automatic source folder detection
+- Extracts SOURCE_FOLDER and MARIMO_FOLDER from Makefile configuration
+- Automatically detects and checks all configured source folders
 - Identifies unused dependencies
 
 **Equivalent GitHub Action:** `.github/workflows/rhiza_deptry.yml`
