@@ -229,8 +229,8 @@ bundles:
   # ============================================================================
   marimo:
     description: "Interactive Marimo notebooks for data exploration and documentation"
-    standalone: true
-    requires: []
+    standalone: false
+    requires: [book]
     files:
       # Marimo configuration
       - .rhiza/make.d/marimo.mk
