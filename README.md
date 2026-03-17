@@ -170,7 +170,8 @@ Rhiza organises its templates into **bundles** — pre-configured sets of relate
 | `github` | GitHub Actions workflows for CI/CD | `core` | ✅ |
 | `tests` | Testing infrastructure with pytest, coverage, and type checking | — | ✅ |
 | `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book` | ❌ |
-| `book` | Comprehensive documentation book (API docs, coverage, notebooks) | `tests` | ❌ |
+| `benchmarks` | Performance benchmarking with pytest-benchmark and reporting | `tests` | ❌ |
+| `book` | Comprehensive documentation book (API docs, coverage, notebooks) | - | ✅ |
 | `docker` | Docker containerization support | — | ✅ |
 | `devcontainer` | VS Code DevContainer configuration | — | ✅ |
 | `gitlab` | GitLab CI/CD pipeline configuration | `core` | ✅ |
