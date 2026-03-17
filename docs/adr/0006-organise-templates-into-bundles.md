@@ -48,8 +48,7 @@ templates:
 3. **Dependency metadata**: Each bundle declares hard dependencies (`requires`) and
    soft suggestions (`recommends`), enabling the CLI to validate configurations and
    warn about missing dependencies.
-4. **Standalone flag**: Bundles marked `standalone: false` cannot be used alone (e.g.,
-   `book` requires `tests`). The CLI enforces this.
+4. **Standalone flag**: Bundles marked `standalone: false` cannot be used alone. The CLI enforces this.
 5. **Backward compatibility**: Explicit `include`/`exclude` file patterns continue to
    work alongside bundle selection for advanced use cases.
 6. **Bundle versioning**: The `template-bundles.yml` file carries a `version` field
