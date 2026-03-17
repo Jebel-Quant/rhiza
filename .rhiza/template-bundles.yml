@@ -252,13 +252,12 @@ bundles:
     description: |
       Comprehensive documentation book generation combining:
       - API documentation (pdoc)
-      - Test coverage reports
-      - Test results
       - Interactive notebooks (if marimo is enabled)
-    standalone: false
-    requires:
-      - tests  # Required: book needs test coverage and reports
+      - Test coverage reports and results (if tests bundle is also enabled)
+    standalone: true
+    requires: []
     recommends:
+      - tests   # Optional: book includes coverage and test reports when tests are enabled
       - marimo  # Optional: book works better with notebook exports
     files:
       # Book building configuration
