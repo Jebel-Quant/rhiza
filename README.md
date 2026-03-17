@@ -169,6 +169,7 @@ Rhiza organises its templates into **bundles** — pre-configured sets of relate
 | `core` | Core Rhiza infrastructure (Makefile, linting, docs) | — | ✅ |
 | `github` | GitHub Actions workflows for CI/CD | `core` | ✅ |
 | `tests` | Testing infrastructure with pytest, coverage, and type checking | — | ✅ |
+| `benchmark` | Performance benchmarking with pytest-benchmark and reporting | `tests` | ❌ |
 | `marimo` | Interactive Marimo notebooks for data exploration and documentation | — | ✅ |
 | `book` | Comprehensive documentation book (API docs, coverage, notebooks) | `tests` | ❌ |
 | `docker` | Docker containerization support | — | ✅ |

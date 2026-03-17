@@ -213,15 +213,26 @@ bundles:
 
       # Core/generic test files
       - .rhiza/tests
-
-      # Benchmark and stress test infrastructure
-      - tests/benchmarks
       - docs/TESTS.md
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_ci.yml
       - .github/workflows/rhiza_security.yml
       - .github/workflows/rhiza_codeql.yml
+
+  # ============================================================================
+  # BENCHMARK - Performance benchmarking with pytest-benchmark
+  # ============================================================================
+  benchmark:
+    description: "Performance benchmarking infrastructure with pytest-benchmark and reporting"
+    standalone: false
+    requires:
+      - tests  # Required: benchmarks depend on the test infrastructure
+    files:
+      # Benchmark test infrastructure
+      - tests/benchmarks
+
+      # GitHub Actions workflows
       - .github/workflows/rhiza_benchmarks.yml
 
   # ============================================================================
