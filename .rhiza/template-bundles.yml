@@ -221,9 +221,9 @@ bundles:
       - .github/workflows/rhiza_codeql.yml
 
   # ============================================================================
-  # BENCHMARK - Performance benchmarking with pytest-benchmark
+  # BENCHMARKS - Performance benchmarking with pytest-benchmark
   # ============================================================================
-  benchmark:
+  benchmarks:
     description: "Performance benchmarking infrastructure with pytest-benchmark and reporting"
     standalone: false
     requires:
