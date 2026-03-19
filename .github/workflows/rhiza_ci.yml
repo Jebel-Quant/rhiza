@@ -90,6 +90,22 @@ jobs:
           path: _tests/coverage.xml
           if-no-files-found: ignore
 
+      - name: Upload HTML test report
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v7
+        with:
+          name: html-report
+          path: _tests/html-report/
+          if-no-files-found: ignore
+
+      - name: Upload HTML coverage report
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v7
+        with:
+          name: html-coverage
+          path: _tests/html-coverage/
+          if-no-files-found: ignore
+
 
   docs-coverage:
     runs-on: ubuntu-latest
@@ -136,6 +152,20 @@ jobs:
           name: coverage-report
           path: _tests/
 
+      - name: Download HTML test report
+        uses: actions/download-artifact@v8
+        with:
+          name: html-report
+          path: /tmp/html-report/
+        continue-on-error: true
+
+      - name: Download HTML coverage report
+        uses: actions/download-artifact@v8
+        with:
+          name: html-coverage
+          path: /tmp/html-coverage/
+        continue-on-error: true
+
       - name: Generate coverage badge
         run: |
           uvx "genbadge[coverage]" coverage -i _tests/coverage.xml -o /tmp/coverage-badge.svg
@@ -155,9 +185,21 @@ jobs:
           cp /tmp/coverage-badge.svg coverage-badge.svg
           git add coverage-badge.svg
 
+          if [ -d /tmp/html-report ]; then
+            rm -rf html-report
+            cp -r /tmp/html-report html-report
+            git add html-report/
+          fi
+
+          if [ -d /tmp/html-coverage ]; then
+            rm -rf html-coverage
+            cp -r /tmp/html-coverage html-coverage
+            git add html-coverage/
+          fi
+
           if ! git diff --staged --quiet; then
-            git commit -m "chore: update coverage badge [skip ci]"
+            git commit -m "chore: update coverage badge and HTML reports [skip ci]"
             git push origin gh-pages
           else
-            echo "Coverage badge unchanged, skipping push"
+            echo "Coverage badge and HTML reports unchanged, skipping push"
           fi
