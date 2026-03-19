@@ -122,12 +122,13 @@ hypothesis-test:: install ## run property-based tests with Hypothesis
 	fi; \
 	exit $$exit_code
 
-# The 'coverage-badge' target generates an SVG coverage badge from the JSON coverage report.
+# The 'coverage-badge' target generates an SVG coverage badge and pushes it to gh-pages.
 # 1. Checks if SOURCE_FOLDER exists; skips if not (no source means no coverage).
 # 2. Checks if the coverage JSON file exists.
-# 3. Creates the assets/ directory if needed.
-# 4. Runs genbadge via uvx to produce the SVG badge.
-coverage-badge: test ## generate coverage badge from _tests/coverage.json
+# 3. Runs genbadge via uvx to produce the SVG badge in /tmp.
+# 4. Checks out (or creates) the gh-pages branch and commits the badge there.
+# 5. Returns to the original branch.
+coverage-badge: test ## generate coverage badge and push to gh-pages branch
 	@if [ ! -d "${SOURCE_FOLDER}" ]; then \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping coverage-badge${RESET}\n"; \
 	  exit 0; \
@@ -136,10 +137,30 @@ coverage-badge: test ## generate coverage badge from _tests/coverage.json
 	  printf "${RED}[ERROR] Coverage report not found at _tests/coverage.json, run 'make test' first.${RESET}\n"; \
 	  exit 1; \
 	fi; \
-	mkdir -p assets; \
 	printf "${BLUE}[INFO] Generating coverage badge...${RESET}\n"; \
-	${UVX_BIN} genbadge coverage -i _tests/coverage.json -o assets/coverage-badge.svg; \
-	printf "${GREEN}[SUCCESS] Coverage badge saved to assets/coverage-badge.svg${RESET}\n"
+	${UVX_BIN} genbadge coverage -i _tests/coverage.json -o /tmp/coverage-badge.svg; \
+	if [ ! -f /tmp/coverage-badge.svg ]; then \
+	  printf "${RED}[ERROR] Badge generation failed.${RESET}\n"; \
+	  exit 1; \
+	fi; \
+	ORIGINAL_BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
+	printf "${BLUE}[INFO] Pushing coverage badge to gh-pages...${RESET}\n"; \
+	if git fetch origin gh-pages 2>/dev/null; then \
+	  git checkout gh-pages; \
+	else \
+	  git checkout --orphan gh-pages; \
+	  git rm -rf .; \
+	fi; \
+	cp /tmp/coverage-badge.svg coverage-badge.svg; \
+	git add coverage-badge.svg; \
+	if ! git diff --staged --quiet; then \
+	  git commit -m "chore: update coverage badge [skip ci]"; \
+	  git push origin gh-pages; \
+	else \
+	  printf "${YELLOW}[INFO] Coverage badge unchanged, skipping push${RESET}\n"; \
+	fi; \
+	git checkout "$$ORIGINAL_BRANCH"; \
+	printf "${GREEN}[SUCCESS] Coverage badge pushed to gh-pages${RESET}\n"
 
 # The 'stress' target runs stress/load tests.
 # 1. Checks if stress tests exist in the tests/stress directory.
