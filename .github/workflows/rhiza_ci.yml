@@ -84,7 +84,7 @@ jobs:
 
       - name: Upload coverage report
         if: matrix.python-version == '3.12'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v8
         with:
           name: coverage-report
           path: _tests/coverage.xml
@@ -131,16 +131,20 @@ jobs:
           version: "0.10.11"
 
       - name: Download coverage report
+        id: download-coverage
+        continue-on-error: true
         uses: actions/download-artifact@v8
         with:
           name: coverage-report
           path: _tests/
 
       - name: Generate coverage badge
+        if: steps.download-coverage.outcome == 'success'
         run: |
           uvx "genbadge[coverage]" coverage -i _tests/coverage.xml -o /tmp/coverage-badge.svg
 
       - name: Push badge to gh-pages
+        if: steps.download-coverage.outcome == 'success'
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
