@@ -17,7 +17,7 @@
 
 marimo:notebooks:
   stage: test
-  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  image: ghcr.io/astral-sh/uv:bookworm
   variables:
     GIT_LFS_SKIP_SMUDGE: "0"
   before_script:
