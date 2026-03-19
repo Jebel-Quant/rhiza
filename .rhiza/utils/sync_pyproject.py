@@ -127,6 +127,98 @@ def _tomlkit_from_raw(value) -> object:
 
 
 # ---------------------------------------------------------------------------
+# Per-field patchers
+# ---------------------------------------------------------------------------
+
+
+def _patch_requires_python(project: tomlkit.container.Container, section: dict) -> list[str]:
+    """Patch ``[project].requires-python`` if declared in *section*."""
+    if "requires-python" not in section:
+        return []
+    new_val = str(section["requires-python"])
+    old_val = project.get("requires-python")
+    if old_val == new_val:
+        return []
+    project["requires-python"] = new_val
+    return [f"  requires-python: {old_val!r} → {new_val!r}"]
+
+
+def _patch_classifiers(project: tomlkit.container.Container, section: dict) -> list[str]:
+    """Patch ``[project].classifiers`` if declared in *section*."""
+    if "classifiers" not in section:
+        return []
+    new_classifiers = list(section["classifiers"])
+    old_classifiers = list(project.get("classifiers") or [])
+    if old_classifiers == new_classifiers:
+        return []
+    arr = tomlkit.array()
+    arr.multiline(True)
+    for c in new_classifiers:
+        arr.append(c)
+    project["classifiers"] = arr
+    return ["  classifiers: replaced list"]
+
+
+def _patch_license(project: tomlkit.container.Container, section: dict) -> list[str]:
+    """Patch ``[project].license`` if declared in *section*.
+
+    Accepts a plain string (PEP 639) or a mapping (PEP 517 inline table).
+    """
+    if "license" not in section:
+        return []
+    new_license = section["license"]
+    old_license = project.get("license")
+    # Normalise for comparison: tomlkit inline tables compare as dicts
+    old_cmp = dict(old_license) if hasattr(old_license, "items") else old_license
+    new_cmp = dict(new_license) if isinstance(new_license, dict) else new_license
+    if old_cmp == new_cmp:
+        return []
+    if isinstance(new_license, dict):
+        tbl = tomlkit.inline_table()
+        for k, v in new_license.items():
+            tbl.append(k, v)
+        project["license"] = tbl
+    else:
+        project["license"] = str(new_license)
+    return [f"  license: {old_license!r} → {new_license!r}"]
+
+
+def _patch_readme(project: tomlkit.container.Container, section: dict) -> list[str]:
+    """Patch ``[project].readme`` if declared in *section*."""
+    if "readme" not in section:
+        return []
+    new_readme = str(section["readme"])
+    old_readme = project.get("readme")
+    if old_readme == new_readme:
+        return []
+    project["readme"] = new_readme
+    return [f"  readme: {old_readme!r} → {new_readme!r}"]
+
+
+def _patch_tool_sections(
+    pyproject_doc: tomlkit.TOMLDocument,
+    section: dict,
+    rhiza_pyproject: dict | None,
+) -> list[str]:
+    """Sync ``[tool.*]`` subtrees listed under *section[tool-sections]*."""
+    if "tool-sections" not in section:
+        return []
+    if rhiza_pyproject is None:
+        print("[WARN] tool-sections specified but rhiza pyproject.toml not found — skipping.")
+        return []
+    changes: list[str] = []
+    for dotted_path in section["tool-sections"]:
+        rhiza_val = _get_nested(rhiza_pyproject, dotted_path)
+        if rhiza_val is None:
+            print(f"[WARN] tool-section '{dotted_path}' not found in rhiza pyproject.toml — skipping.")
+            continue
+        if _get_nested(dict(pyproject_doc), dotted_path) != rhiza_val:
+            _set_nested(pyproject_doc, dotted_path, _tomlkit_from_raw(rhiza_val))
+            changes.append(f"  tool-section '{dotted_path}': updated")
+    return changes
+
+
+# ---------------------------------------------------------------------------
 # Core patching logic
 # ---------------------------------------------------------------------------
 
@@ -140,75 +232,18 @@ def _apply_pyproject_section(
 
     Returns a list of human-readable change descriptions.
     """
-    changes: list[str] = []
-
-    # Ensure [project] table exists
     if "project" not in pyproject_doc:
         pyproject_doc.add("project", tomlkit.table())
 
     project = pyproject_doc["project"]
 
-    # --- requires-python ---
-    if "requires-python" in pyproject_section:
-        new_val: str = str(pyproject_section["requires-python"])
-        old_val = project.get("requires-python")
-        if old_val != new_val:
-            project["requires-python"] = new_val
-            changes.append(f"  requires-python: {old_val!r} → {new_val!r}")
-
-    # --- classifiers ---
-    if "classifiers" in pyproject_section:
-        new_classifiers: list[str] = list(pyproject_section["classifiers"])
-        old_classifiers = list(project.get("classifiers") or [])
-        if old_classifiers != new_classifiers:
-            arr = tomlkit.array()
-            arr.multiline(True)
-            for c in new_classifiers:
-                arr.append(c)
-            project["classifiers"] = arr
-            changes.append("  classifiers: replaced list")
-
-    # --- license ---
-    if "license" in pyproject_section:
-        new_license = pyproject_section["license"]
-        old_license = project.get("license")
-        # Normalise for comparison: tomlkit inline tables compare as dicts
-        old_license_cmp = dict(old_license) if hasattr(old_license, "items") else old_license
-        new_license_cmp = dict(new_license) if isinstance(new_license, dict) else new_license
-        if old_license_cmp != new_license_cmp:
-            if isinstance(new_license, dict):
-                tbl = tomlkit.inline_table()
-                for k, v in new_license.items():
-                    tbl.append(k, v)
-                project["license"] = tbl
-            else:
-                project["license"] = str(new_license)
-            changes.append(f"  license: {old_license!r} → {new_license!r}")
-
-    # --- readme ---
-    if "readme" in pyproject_section:
-        new_readme: str = str(pyproject_section["readme"])
-        old_readme = project.get("readme")
-        if old_readme != new_readme:
-            project["readme"] = new_readme
-            changes.append(f"  readme: {old_readme!r} → {new_readme!r}")
-
-    # --- tool-sections ---
-    if "tool-sections" in pyproject_section:
-        if rhiza_pyproject is None:
-            print("[WARN] tool-sections specified but rhiza pyproject.toml not found — skipping.")
-        else:
-            for dotted_path in pyproject_section["tool-sections"]:
-                rhiza_val = _get_nested(rhiza_pyproject, dotted_path)
-                if rhiza_val is None:
-                    print(f"[WARN] tool-section '{dotted_path}' not found in rhiza pyproject.toml — skipping.")
-                    continue
-                current_val = _get_nested(dict(pyproject_doc), dotted_path)
-                if current_val != rhiza_val:
-                    _set_nested(pyproject_doc, dotted_path, _tomlkit_from_raw(rhiza_val))
-                    changes.append(f"  tool-section '{dotted_path}': updated")
-
-    return changes
+    return [
+        *_patch_requires_python(project, pyproject_section),
+        *_patch_classifiers(project, pyproject_section),
+        *_patch_license(project, pyproject_section),
+        *_patch_readme(project, pyproject_section),
+        *_patch_tool_sections(pyproject_doc, pyproject_section, rhiza_pyproject),
+    ]
 
 
 # ---------------------------------------------------------------------------
