@@ -106,6 +106,8 @@ class TestMakefile:
         assert "mkdir -p _tests/html-coverage _tests/html-report" in out
         # Check for uv command running pytest
         assert "uv run pytest" in out
+        # Check for XML coverage report
+        assert "--cov-report=xml:_tests/coverage.xml" in out
 
     def test_test_target_without_source_folder(self, logger, tmp_path):
         """Test target should run without coverage when SOURCE_FOLDER doesn't exist."""

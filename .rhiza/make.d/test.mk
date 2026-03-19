@@ -37,6 +37,7 @@ test:: install ## run all tests
 	  --cov-report=html:_tests/html-coverage \
 	  --cov-fail-under=$(COVERAGE_FAIL_UNDER) \
 	  --cov-report=json:_tests/coverage.json \
+	  --cov-report=xml:_tests/coverage.xml \
 	  --html=_tests/html-report/report.html; \
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, running tests without coverage${RESET}\n"; \
