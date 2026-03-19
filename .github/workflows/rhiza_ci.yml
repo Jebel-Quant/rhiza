@@ -152,20 +152,6 @@ jobs:
           name: coverage-report
           path: _tests/
 
-      - name: Download HTML test report
-        uses: actions/download-artifact@v8
-        with:
-          name: html-report
-          path: /tmp/html-report/
-        continue-on-error: true
-
-      - name: Download HTML coverage report
-        uses: actions/download-artifact@v8
-        with:
-          name: html-coverage
-          path: /tmp/html-coverage/
-        continue-on-error: true
-
       - name: Generate coverage badge
         run: |
           uvx "genbadge[coverage]" coverage -i _tests/coverage.xml -o /tmp/coverage-badge.svg
@@ -185,6 +171,51 @@ jobs:
           cp /tmp/coverage-badge.svg coverage-badge.svg
           git add coverage-badge.svg
 
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: update coverage badge [skip ci]"
+            git push origin gh-pages
+          else
+            echo "Coverage badge unchanged, skipping push"
+          fi
+
+  upload-reports:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+        with:
+          token: ${{ secrets.GH_PAT || github.token }}
+
+      - name: Download HTML test report
+        uses: actions/download-artifact@v8
+        with:
+          name: html-report
+          path: /tmp/html-report/
+        continue-on-error: true
+
+      - name: Download HTML coverage report
+        uses: actions/download-artifact@v8
+        with:
+          name: html-coverage
+          path: /tmp/html-coverage/
+        continue-on-error: true
+
+      - name: Push HTML reports to gh-pages
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          if git fetch origin gh-pages 2>/dev/null; then
+            git checkout gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf .
+          fi
+
           if [ -d /tmp/html-report ]; then
             rm -rf html-report
             cp -r /tmp/html-report html-report
@@ -198,8 +229,8 @@ jobs:
           fi
 
           if ! git diff --staged --quiet; then
-            git commit -m "chore: update coverage badge and HTML reports [skip ci]"
+            git commit -m "chore: update HTML test reports [skip ci]"
             git push origin gh-pages
           else
-            echo "Coverage badge and HTML reports unchanged, skipping push"
+            echo "HTML reports unchanged, skipping push"
           fi
