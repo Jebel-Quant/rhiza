@@ -171,6 +171,21 @@ class TestMakefile:
         assert "_tests/coverage.json" in out
         assert "assets/coverage-badge.svg" in out
 
+    def test_coverage_badge_skips_without_source_folder(self, logger, tmp_path):
+        """Coverage-badge target should include a guard check for SOURCE_FOLDER in dry-run output."""
+        # Update .env to set SOURCE_FOLDER to a non-existent directory
+        env_file = tmp_path / ".rhiza" / ".env"
+        env_content = env_file.read_text()
+        env_content += "\nSOURCE_FOLDER=nonexistent_src\n"
+        env_file.write_text(env_content)
+
+        proc = run_make(logger, ["coverage-badge"])
+        out = proc.stdout
+        # Should contain the guard check for missing source folder
+        assert "if [ ! -d" in out
+        assert "nonexistent_src" in out
+        assert "skipping coverage-badge" in out
+
 
 class TestMakefileRootFixture:
     """Tests for root fixture usage in Makefile tests."""

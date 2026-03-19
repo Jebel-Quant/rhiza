@@ -123,11 +123,16 @@ hypothesis-test:: install ## run property-based tests with Hypothesis
 	exit $$exit_code
 
 # The 'coverage-badge' target generates an SVG coverage badge from the JSON coverage report.
-# 1. Checks if the coverage JSON file exists.
-# 2. Creates the assets/ directory if needed.
-# 3. Runs genbadge via uvx to produce the SVG badge.
+# 1. Checks if SOURCE_FOLDER exists; skips if not (no source means no coverage).
+# 2. Checks if the coverage JSON file exists.
+# 3. Creates the assets/ directory if needed.
+# 4. Runs genbadge via uvx to produce the SVG badge.
 coverage-badge: test ## generate coverage badge from _tests/coverage.json
-	@if [ ! -f _tests/coverage.json ]; then \
+	@if [ ! -d "${SOURCE_FOLDER}" ]; then \
+	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping coverage-badge${RESET}\n"; \
+	  exit 0; \
+	fi; \
+	if [ ! -f _tests/coverage.json ]; then \
 	  printf "${RED}[ERROR] Coverage report not found at _tests/coverage.json, run 'make test' first.${RESET}\n"; \
 	  exit 1; \
 	fi; \
