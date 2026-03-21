@@ -44,3 +44,6 @@ numpy = "numpy"
 plotly = "plotly"
 pandas = "pandas"
 pyyaml = "yaml"
+
+[tool.ty.environment]
+python-version = "3.13"
