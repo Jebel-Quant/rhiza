@@ -65,6 +65,9 @@ bundles:
       - docs/QUICK_REFERENCE.md
       - docs/DEMO.md
 
+      # GitHub Actions workflows
+      - .github/workflows/rhiza_typecheck.yml
+
   github:
     description: "GitHub Actions workflows for CI/CD"
     standalone: true
