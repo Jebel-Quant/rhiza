@@ -80,15 +80,16 @@ git push origin test-gitlab-ci
 **Test trigger:** Push to any branch or create merge request
 
 **Expected behavior:**
-- Skips in the rhiza repository itself
-- Runs `rhiza validate .` in downstream projects
+- Runs `make validate`, which fires the full hook chain
+- Skips in the rhiza repository itself (handled internally by `make validate`)
+- Runs `post-validate::` hooks defined in the project's `Makefile`
 
 **Manual test:**
 This workflow is designed for repositories that use rhiza as a template, not for rhiza itself.
 
 **Success criteria:**
-- Job skips in rhiza repository
-- Would run and validate in downstream projects
+- Job skips validation in rhiza repository (but still runs hooks)
+- Would run full `make validate` chain in downstream projects
 
 ---
 
