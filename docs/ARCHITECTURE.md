@@ -109,18 +109,24 @@ flowchart TD
     validate --> build[Build Package]
     build --> draft[Draft GitHub Release]
     draft --> pypi[Publish to PyPI]
+    draft --> codeartifact[Publish to CodeArtifact]
     draft --> devcontainer[Publish Devcontainer]
     pypi --> finalize[Finalize Release]
+    codeartifact --> finalize
     devcontainer --> finalize
 
     subgraph Conditions
         pypi_cond{Has dist/ &<br/>not Private?}
+        ca_cond{Has dist/ &<br/>AWS_CODEARTIFACT_DOMAIN?}
         dev_cond{PUBLISH_DEVCONTAINER<br/>= true?}
     end
 
     draft --> pypi_cond
     pypi_cond -->|yes| pypi
     pypi_cond -->|no| finalize
+    draft --> ca_cond
+    ca_cond -->|yes| codeartifact
+    ca_cond -->|no| finalize
     draft --> dev_cond
     dev_cond -->|yes| devcontainer
     dev_cond -->|no| finalize

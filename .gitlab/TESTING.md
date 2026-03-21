@@ -197,6 +197,7 @@ ls -la _book/
 - Builds Python package
 - Creates GitLab release
 - Publishes to PyPI (if configured)
+- Publishes to AWS CodeArtifact (if configured)
 - Finalizes release with links
 
 **Manual test:**
@@ -211,10 +212,12 @@ git push origin v0.0.1-test
 - Package builds successfully
 - GitLab release created
 - PyPI upload succeeds (if PYPI_TOKEN set)
+- CodeArtifact upload succeeds (if AWS_CODEARTIFACT_DOMAIN set)
 
 **Configuration needed:**
 - Set `PYPI_TOKEN` for PyPI publishing
 - Optionally set `PYPI_REPOSITORY_URL` for custom feed
+- Set `AWS_CODEARTIFACT_DOMAIN`, `AWS_CODEARTIFACT_REPOSITORY`, and AWS credentials for CodeArtifact
 
 ---
 
@@ -225,9 +228,15 @@ Set these in GitLab project settings (Settings > CI/CD > Variables):
 ### Secrets (Protected & Masked)
 - `PYPI_TOKEN` - PyPI authentication token (for releases)
 - `PAT_TOKEN` - Project/Group Access Token (for sync workflow)
+- `AWS_ACCESS_KEY_ID` - AWS access key (for CodeArtifact, if not using OIDC)
+- `AWS_SECRET_ACCESS_KEY` - AWS secret key (for CodeArtifact, if not using OIDC)
 
 ### Configuration Variables
 - `UV_EXTRA_INDEX_URL` - Extra index URL for UV (optional)
+- `AWS_CODEARTIFACT_DOMAIN` - CodeArtifact domain name (optional)
+- `AWS_CODEARTIFACT_REPOSITORY` - CodeArtifact repository name (optional)
+- `AWS_REGION` - AWS region for CodeArtifact (optional, defaults to us-east-1)
+- `AWS_CODEARTIFACT_OWNER` - Domain owner account ID for cross-account access (optional)
 - `PYPI_REPOSITORY_URL` - Custom PyPI URL (optional)
 - `PUBLISH_COMPANION_BOOK` - Publish documentation (default: true)
 - `CREATE_MR` - Auto-create merge requests (default: true)

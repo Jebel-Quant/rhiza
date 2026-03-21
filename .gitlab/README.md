@@ -141,7 +141,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 ---
 
 ### 8. Release (`rhiza_release.yml`)
-**Purpose:** Create releases and publish packages to PyPI.
+**Purpose:** Create releases and publish packages to PyPI and/or AWS CodeArtifact.
 
 **Trigger:**
 - On version tags (e.g., `v1.2.3`)
@@ -150,6 +150,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 - Version validation
 - Python package building with Hatch
 - PyPI publishing with twine
+- AWS CodeArtifact publishing (if configured)
 - GitLab release creation
 
 **Equivalent GitHub Action:** `.github/workflows/rhiza_release.yml`
@@ -157,6 +158,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 **GitLab-specific:**
 - Uses GitLab Releases API instead of GitHub Releases
 - Uses PYPI_TOKEN instead of OIDC Trusted Publishing
+- Uses AWS CI/CD variables for CodeArtifact (instead of GitHub OIDC role assumption)
 
 ---
 

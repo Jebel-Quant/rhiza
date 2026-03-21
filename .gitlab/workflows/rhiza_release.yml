@@ -10,7 +10,8 @@
 #   2. 🏗️ Build - Build Python package with Hatch (if [build-system] is defined in pyproject.toml
 #   3. 📝 Draft Release - Create draft GitLab release with build artifacts
 #   4. 🚀 Publish to PyPI - Publish package using token or custom feed
-#   5. ✅ Finalize Release - Publish the GitLab release with links
+#   5. 🏭 Publish to AWS CodeArtifact - Publish package to CodeArtifact (conditional)
+#   6. ✅ Finalize Release - Publish the GitLab release with links
 #
 # 🚀 PyPI Publishing:
 #   - Skipped if no dist/ artifacts exist
@@ -18,9 +19,18 @@
 #   - Uses PYPI_TOKEN for authentication
 #   - For custom feeds, use PYPI_REPOSITORY_URL and PYPI_TOKEN variables
 #
+# 🏭 AWS CodeArtifact Publishing:
+#   - Skipped if AWS_CODEARTIFACT_DOMAIN variable is not set
+#   - Skipped if no dist/ artifacts exist
+#   - Uses AWS credentials from CI/CD variables (or OIDC via AWS_ROLE_ARN)
+#   - Dynamically obtains a CodeArtifact authorization token
+#   - Publishes with twine using the CodeArtifact repository endpoint
+#
 # 📄 Requirements:
 #   - pyproject.toml with top-level version field (for Python packages)
 #   - PYPI_TOKEN variable for PyPI publishing
+#   - AWS_CODEARTIFACT_DOMAIN, AWS_CODEARTIFACT_REPOSITORY, and AWS credentials
+#     (for CodeArtifact publishing)
 #
 # ✅ To Trigger:
 #   Create and push a version tag:
@@ -161,11 +171,75 @@ release:pypi:
       when: on_success
   allow_failure: false
 
+release:codeartifact:
+  stage: deploy
+  needs:
+    - job: release:build
+      artifacts: true
+    - job: release:draft
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq awscli > /dev/null 2>&1
+    - uv python install $(cat .python-version)
+    - uv pip install twine
+  script:
+    - |
+      # Check if CodeArtifact is configured
+      if [ -z "$AWS_CODEARTIFACT_DOMAIN" ]; then
+        echo "⏭️ Skipping: AWS_CODEARTIFACT_DOMAIN not configured"
+        exit 0
+      fi
+
+      # Check if dist contains artifacts
+      if [ ! -d "dist" ] || [ -z "$(ls -A dist)" ]; then
+        echo "⚠️ No dist/ artifacts found. Skipping CodeArtifact publish."
+        exit 0
+      fi
+
+      REGION="${AWS_REGION:-us-east-1}"
+
+      OWNER_ARGS=""
+      if [ -n "$AWS_CODEARTIFACT_OWNER" ]; then
+        OWNER_ARGS="--domain-owner $AWS_CODEARTIFACT_OWNER"
+      fi
+
+      # Get CodeArtifact authorization token
+      TOKEN=$(aws codeartifact get-authorization-token \
+        --domain "$AWS_CODEARTIFACT_DOMAIN" \
+        --region "$REGION" \
+        $OWNER_ARGS \
+        --query authorizationToken --output text)
+
+      # Get CodeArtifact repository endpoint
+      REPO_URL=$(aws codeartifact get-repository-endpoint \
+        --domain "$AWS_CODEARTIFACT_DOMAIN" \
+        --repository "$AWS_CODEARTIFACT_REPOSITORY" \
+        --format pypi \
+        --region "$REGION" \
+        $OWNER_ARGS \
+        --query repositoryEndpoint --output text)
+
+      echo "📦 Publishing to CodeArtifact: $AWS_CODEARTIFACT_DOMAIN/$AWS_CODEARTIFACT_REPOSITORY"
+      twine upload \
+        --repository-url "$REPO_URL" \
+        --username aws \
+        --password "$TOKEN" \
+        --skip-existing \
+        dist/*
+
+      echo "✅ Published to CodeArtifact"
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v.*/
+      when: on_success
+  allow_failure: false
+
 release:finalize:
   stage: .post
   needs:
     - job: release:build
     - job: release:pypi
+      optional: true
+    - job: release:codeartifact
       optional: true
   image: alpine:latest
   before_script:
@@ -184,6 +258,13 @@ release:finalize:
             RELEASE_BODY="${RELEASE_BODY}\n\n### PyPI Package\n\n[$PACKAGE_NAME](https://pypi.org/project/$PACKAGE_NAME/$VERSION/)"
           else
             RELEASE_BODY="${RELEASE_BODY}\n\n### Custom Feed Package\n\n[$PACKAGE_NAME]($PYPI_REPOSITORY_URL)"
+          fi
+
+          # Add CodeArtifact link if published
+          if [ -n "$AWS_CODEARTIFACT_DOMAIN" ] && [ -n "$AWS_CODEARTIFACT_REPOSITORY" ]; then
+            REGION="${AWS_REGION:-us-east-1}"
+            CONSOLE_URL="https://${REGION}.console.aws.amazon.com/codesuite/codeartifact/d/${AWS_CODEARTIFACT_DOMAIN}/r/${AWS_CODEARTIFACT_REPOSITORY}/p/pypi/p/${PACKAGE_NAME}/versions?region=${REGION}"
+            RELEASE_BODY="${RELEASE_BODY}\n\n### AWS CodeArtifact Package\n\n[$PACKAGE_NAME@$VERSION]($CONSOLE_URL) (\`${AWS_CODEARTIFACT_DOMAIN}/${AWS_CODEARTIFACT_REPOSITORY}\`)"
           fi
         fi
       fi
