@@ -49,8 +49,8 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 - On merge requests to main/master
 
 **Key Features:**
-- Skips validation in the rhiza repository itself
-- Uses uvx for ephemeral environment
+- Runs `make validate`, which fires the full hook chain (`pre-validate`, `rhiza-test`, `uvx rhiza validate .`, `post-validate`)
+- Skips validation in the rhiza repository itself (handled internally by `make validate`)
 
 **Equivalent GitHub Action:** `.github/workflows/rhiza_validate.yml`
 
