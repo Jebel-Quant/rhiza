@@ -94,7 +94,7 @@ bundles:
       # Issue templates (config.yml excluded — contains repo-specific URLs)
       - .github/ISSUE_TEMPLATE/bug_report.yml
       - .github/ISSUE_TEMPLATE/feature_request.yml
-      - .github/DISCUSSION_TEMPLATE/q-and-q.yml
+      - .github/DISCUSSION_TEMPLATE/q-and-a.yml
 
   # ============================================================================
   # RENOVATE - Automated dependency updates
