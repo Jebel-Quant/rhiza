@@ -229,6 +229,7 @@ bundles:
       - .github/workflows/rhiza_ci.yml
       - .github/workflows/rhiza_security.yml
       - .github/workflows/rhiza_codeql.yml
+      - .github/workflows/rhiza_dep_compat_test.yml
 
   # ============================================================================
   # BENCHMARKS - Performance benchmarking with pytest-benchmark
