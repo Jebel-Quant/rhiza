@@ -65,9 +65,6 @@ bundles:
       - docs/QUICK_REFERENCE.md
       - docs/DEMO.md
 
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_typecheck.yml
-
   github:
     description: "GitHub Actions workflows for CI/CD"
     standalone: true
@@ -84,6 +81,7 @@ bundles:
       - .github/workflows/rhiza_release.yml
       - .github/workflows/renovate_rhiza_sync.yml
       - .github/workflows/rhiza_pip_audit.yml
+      - .github/workflows/rhiza_typecheck.yml
       - .github/actions/configure-git-auth
       - .github/dependabot.yml
       - .github/copilot-instructions.md
