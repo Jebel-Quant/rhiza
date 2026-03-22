@@ -92,6 +92,9 @@ bundles:
       - .github/workflows/rhiza_license.yml
       - .semgrep.yml
       - .github/workflows/rhiza_semgrep.yml
+      # Issue templates (config.yml excluded — contains repo-specific URLs)
+      - .github/ISSUE_TEMPLATE/bug_report.yml
+      - .github/ISSUE_TEMPLATE/feature_request.yml
 
   # ============================================================================
   # RENOVATE - Automated dependency updates
