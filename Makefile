@@ -18,6 +18,13 @@ post-validate::
 
 ## Custom targets
 
+##@ Quality
+
+.PHONY: license
+license: install ## run license compliance scan (fail on GPL, LGPL, AGPL)
+	@printf "${BLUE}[INFO] Running license compliance scan...${RESET}\n"
+	@${UV_BIN} run --with pip-licenses pip-licenses --fail-on="GPL;LGPL;AGPL"
+
 .PHONY: adr
 adr: install-gh-aw ## Create a new Architecture Decision Record (ADR) using AI assistance
 	@echo "Creating a new ADR..."
