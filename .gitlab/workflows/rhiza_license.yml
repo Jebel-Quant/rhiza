@@ -1,0 +1,20 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: License compliance (GitLab CI)
+#
+# Purpose: This workflow checks that no copyleft-licensed dependencies
+#          (GPL, LGPL, AGPL) have been introduced via transitive updates.
+#
+# Trigger: This workflow runs on every push and on merge requests to main/master
+#          branches (including from forks)
+
+license:check:
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - make license
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
