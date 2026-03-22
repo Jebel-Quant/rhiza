@@ -18,6 +18,13 @@ post-validate::
 
 ## Custom targets
 
+##@ Quality
+
+.PHONY: semgrep
+semgrep: install ## run Semgrep static analysis (numpy rules)
+	@printf "${BLUE}[INFO] Running Semgrep (numpy rules)...${RESET}\n"
+	@${UVX_BIN} semgrep --config .semgrep.yml ${SOURCE_FOLDER}
+
 .PHONY: adr
 adr: install-gh-aw ## Create a new Architecture Decision Record (ADR) using AI assistance
 	@echo "Creating a new ADR..."
