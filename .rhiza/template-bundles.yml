@@ -90,6 +90,8 @@ bundles:
       - .github/hooks
       - .github/secret_scanning.yml
       - .github/workflows/rhiza_license.yml
+      - .semgrep.yml
+      - .github/workflows/rhiza_semgrep.yml
 
   # ============================================================================
   # RENOVATE - Automated dependency updates
