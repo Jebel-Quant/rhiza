@@ -221,21 +221,6 @@ def main() -> int:
     print()
 
     # -----------------------------------------------------------------------
-    # Histogram by type
-    # -----------------------------------------------------------------------
-    print(f"{_BOLD}Histogram (by suppression type):{_RESET}")
-    kind_counter: Counter[str] = Counter(sup.kind for sup in all_suppressions)
-    if kind_counter:
-        max_count = max(kind_counter.values())
-        total_count = sum(kind_counter.values())
-        for kind, count in kind_counter.most_common():
-            pct = count / total_count * 100
-            print(f"  {kind:<16} {_BLUE}{_bar(count, max_count)}{_RESET}  {count:>3}  ({pct:.0f}%)")
-    else:
-        print("  (none)")
-    print()
-
-    # -----------------------------------------------------------------------
     # Histogram by code
     # -----------------------------------------------------------------------
     print(f"{_BOLD}Histogram (by suppression code):{_RESET}")
