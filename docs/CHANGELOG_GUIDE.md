@@ -19,10 +19,9 @@ The release workflow:
 1. Validates the tag format
 2. Builds distribution artifacts
 3. Creates a draft GitHub release with `generate_release_notes: true`
-4. Publishes to PyPI (if applicable)
-5. Publishes to AWS CodeArtifact (if configured)
-6. Publishes devcontainer (if configured)
-7. Finalizes the release
+4. Publishes to PyPI or custom feed such as CodeArtifact (if applicable)
+5. Publishes devcontainer (if configured)
+6. Finalizes the release
 
 GitHub automatically generates release notes by:
 - Listing all PRs merged since the last release

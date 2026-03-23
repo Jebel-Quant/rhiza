@@ -422,10 +422,10 @@ Automatic if configured as **Trusted Publisher**:
 
 ### AWS CodeArtifact Publication
 
-Automatic if repository variables are configured:
+Automatic if repository secrets and variables are configured:
 
-1. Set `AWS_CODEARTIFACT_DOMAIN` and `AWS_CODEARTIFACT_REPOSITORY`
-2. Configure OIDC role (`AWS_ROLE_ARN`) for credential-free auth
+1. Set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as secrets
+2. Set `PYPI_REPOSITORY_URL` to the CodeArtifact endpoint
 3. Release workflow publishes automatically via `twine`
 
 ### Private Packages
