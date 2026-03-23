@@ -323,7 +323,10 @@ jobs:
               --domain "$DOMAIN" \
               --region "$REGION" \
               "${OWNER_ARGS[@]}" \
-              --query authorizationToken --output text)
+              --query authorizationToken --output text) || {
+              echo "::error::Failed to get CodeArtifact token. Check AWS credentials and permissions."
+              exit 1
+            }
             echo "::add-mask::$TOKEN"
             echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
             echo "username=aws" >> "$GITHUB_OUTPUT"

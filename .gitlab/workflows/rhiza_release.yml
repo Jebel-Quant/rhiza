@@ -152,7 +152,7 @@ release:pypi:
       PASSWORD="$PYPI_TOKEN"
 
       # Auto-detect CodeArtifact URL and get token if AWS credentials are available
-      if [ -n "$AWS_ACCESS_KEY_ID" ] && echo "$PYPI_REPOSITORY_URL" | grep -q '\.codeartifact\.'; then
+      if [ -n "$AWS_ACCESS_KEY_ID" ] && case "$PYPI_REPOSITORY_URL" in *.codeartifact.*) true;; *) false;; esac; then
         apt-get update -qq && apt-get install -y -qq awscli > /dev/null 2>&1
         HOSTNAME=$(echo "$PYPI_REPOSITORY_URL" | sed 's|https://||; s|/.*||')
         REGION=$(echo "$HOSTNAME" | sed -n 's/.*\.d\.codeartifact\.\(.*\)\.amazonaws\.com/\1/p')
@@ -169,11 +169,15 @@ release:pypi:
           OWNER_ARGS="--domain-owner $OWNER"
         fi
 
+        # OWNER_ARGS is intentionally unquoted to allow word splitting into separate arguments
         PASSWORD=$(aws codeartifact get-authorization-token \
           --domain "$DOMAIN" \
           --region "$REGION" \
           $OWNER_ARGS \
-          --query authorizationToken --output text)
+          --query authorizationToken --output text) || {
+          echo "❌ Failed to get CodeArtifact token. Check AWS credentials and permissions."
+          exit 1
+        }
         USERNAME="aws"
       fi
 
