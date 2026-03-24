@@ -50,7 +50,7 @@ SUPPRESSION_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 ]
 
 # Directories to skip during the scan
-_SKIP_DIRS = {".venv", ".git", "node_modules", ".tox", "build", "dist", "__pycache__"}
+_SKIP_DIRS = {".venv", ".git", "node_modules", ".tox", "build", "dist", "__pycache__", "tests"}
 
 
 # ---------------------------------------------------------------------------
@@ -77,6 +77,22 @@ class Suppression:
 def _should_skip(path: Path) -> bool:
     """Return True if any path component is in the skip-list."""
     return bool(_SKIP_DIRS.intersection(path.parts))
+
+
+def _is_rhiza_repo(root: Path) -> bool:
+    """Return True if *root* is the rhiza framework repo itself.
+
+    Detected by reading ``pyproject.toml`` and checking for ``name = "rhiza"``.
+    In consumer repos the ``.rhiza/`` directory contains framework internals and
+    should not be scanned.
+    """
+    pyproject = root / "pyproject.toml"
+    if not pyproject.exists():
+        return False
+    try:
+        return 'name = "rhiza"' in pyproject.read_text(encoding="utf-8")
+    except OSError:
+        return False
 
 
 def scan_file(path: Path) -> list[Suppression]:
@@ -190,7 +206,15 @@ def main() -> int:
     """Run the suppression audit and print a structured report."""
     root = Path(".")
 
-    py_files = sorted(p for p in root.rglob("*.py") if not _should_skip(p))
+    in_rhiza_repo = _is_rhiza_repo(root)
+
+    def _include(p: Path) -> bool:
+        if _should_skip(p):
+            return False
+        # In consumer repos, skip the .rhiza/ framework directory entirely
+        return not (not in_rhiza_repo and ".rhiza" in p.parts)
+
+    py_files = sorted(p for p in root.rglob("*.py") if _include(p))
 
     all_suppressions: list[Suppression] = []
     total_lines = 0
