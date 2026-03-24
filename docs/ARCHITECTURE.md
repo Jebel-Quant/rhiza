@@ -463,6 +463,7 @@ Documentation files use SCREAMING_SNAKE_CASE:
 GitHub Actions workflows use the pattern `rhiza_<feature>.yml`:
 
 - `rhiza_ci.yml` - Continuous integration
+- `rhiza_docs.yml` - Documentation coverage and versioned deployment
 - `rhiza_release.yml` - Release automation
 - `rhiza_security.yml` - Security scanning
 - `rhiza_sync.yml` - Template synchronization
