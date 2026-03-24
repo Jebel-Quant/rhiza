@@ -82,17 +82,11 @@ def _should_skip(path: Path) -> bool:
 def _is_rhiza_repo(root: Path) -> bool:
     """Return True if *root* is the rhiza framework repo itself.
 
-    Detected by reading ``pyproject.toml`` and checking for ``name = "rhiza"``.
-    In consumer repos the ``.rhiza/`` directory contains framework internals and
-    should not be scanned.
+    Consumer repos have a ``.rhiza/template.yml`` file that records the upstream
+    rhiza repository reference. The rhiza repo itself never has this file — its
+    absence is the reliable signal that we are running inside the framework repo.
     """
-    pyproject = root / "pyproject.toml"
-    if not pyproject.exists():
-        return False
-    try:
-        return 'name = "rhiza"' in pyproject.read_text(encoding="utf-8")
-    except OSError:
-        return False
+    return not (root / ".rhiza" / "template.yml").exists()
 
 
 def scan_file(path: Path) -> list[Suppression]:
