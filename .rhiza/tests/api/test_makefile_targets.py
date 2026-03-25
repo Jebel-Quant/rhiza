@@ -189,6 +189,13 @@ class TestMakefile:
         assert "nonexistent_src" in out
         assert "skipping coverage-badge" in out
 
+    def test_suppression_audit_target_dry_run(self, logger):
+        """Suppression-audit target should invoke the Python audit script via uv run in dry-run output."""
+        proc = run_make(logger, ["suppression-audit"])
+        out = proc.stdout
+        assert "uv run python" in out
+        assert "suppression_audit.py" in out
+
 
 class TestMakefileRootFixture:
     """Tests for root fixture usage in Makefile tests."""

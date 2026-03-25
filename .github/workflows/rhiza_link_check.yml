@@ -1,0 +1,45 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Link Check
+#
+# Purpose: This workflow checks that all hyperlinks in README.md are valid
+#          and not returning errors. It uses the lychee link checker.
+#
+# Trigger: This workflow runs on push/PR when README.md changes and on a
+#          weekly schedule every Monday at 08:00 UTC.
+
+name: "(RHIZA) LINK CHECK"
+
+# Permissions: Only read access to repository contents is needed
+permissions:
+    contents: read
+
+on:
+  push:
+    branches: [main]
+    paths: [README.md]
+  pull_request:
+    paths: [README.md]
+  schedule:
+    - cron: "0 8 * * 1"  # Every Monday at 08:00 UTC
+  workflow_dispatch:
+
+jobs:
+  link-check:
+    name: Check links in README.md
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Check links in README.md
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --verbose
+            --no-progress
+            --accept 200,206,429
+            --exclude-mail
+            README.md
+          fail: true
