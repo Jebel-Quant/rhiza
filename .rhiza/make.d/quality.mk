@@ -2,7 +2,7 @@
 # This file provides targets for code quality checks, linting, and formatting.
 
 # Declare phony targets (they don't produce files)
-.PHONY: all deptry fmt todos
+.PHONY: all deptry fmt todos suppression-audit
 
 ##@ Quality and Formatting
 all: fmt deptry test docs-coverage security typecheck rhiza-test ## run all CI targets locally
@@ -38,3 +38,7 @@ todos: ## search and report all TODO/FIXME/HACK comments in the codebase
 		awk -F: '{ printf "${YELLOW}%s${RESET}:${GREEN}%s${RESET}: %s\n", $$1, $$2, substr($$0, index($$0,$$3)) }' || \
 		printf "${GREEN}[SUCCESS] No TODO/FIXME/HACK comments found!${RESET}\n"
 	@printf "\n${BLUE}[INFO] Search complete.${RESET}\n"
+
+suppression-audit: ## scan codebase for inline suppressions and report (grade, detail, histogram)
+	@printf "${BLUE}[INFO] Running suppression audit...${RESET}\n"
+	@${UV_BIN} run python .rhiza/utils/suppression_audit.py
