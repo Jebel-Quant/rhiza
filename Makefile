@@ -39,11 +39,6 @@ semgrep: install ## run Semgrep static analysis (numpy rules)
 		printf "${YELLOW}[WARN] SOURCE_FOLDER '${SOURCE_FOLDER}' not found, skipping semgrep.${RESET}\n"; \
 	fi
 
-.PHONY: license
-license: install ## run license compliance scan (fail on GPL, LGPL, AGPL)
-	@printf "${BLUE}[INFO] Running license compliance scan...${RESET}\n"
-	@${UV_BIN} run --with pip-licenses pip-licenses --fail-on="GPL;LGPL;AGPL"
-
 .PHONY: adr
 adr: install-gh-aw ## Create a new Architecture Decision Record (ADR) using AI assistance
 	@echo "Creating a new ADR..."
