@@ -196,6 +196,20 @@ class TestMakefile:
         assert "uv run python" in out
         assert "suppression_audit.py" in out
 
+    def test_license_target_dry_run(self, logger):
+        """License target should invoke pip-licenses via uv run --with in dry-run output."""
+        proc = run_make(logger, ["license"])
+        out = proc.stdout
+        assert "uv run --with pip-licenses pip-licenses" in out
+        assert "--fail-on=" in out
+        assert "GPL" in out
+
+    def test_license_fail_on_is_configurable(self, logger):
+        """License target should use the LICENSE_FAIL_ON variable for the fail-on list."""
+        proc = run_make(logger, ["license", "LICENSE_FAIL_ON=MIT;Apache"])
+        out = proc.stdout
+        assert '--fail-on="MIT;Apache"' in out
+
 
 class TestMakefileRootFixture:
     """Tests for root fixture usage in Makefile tests."""
