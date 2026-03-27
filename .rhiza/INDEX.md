@@ -82,10 +82,6 @@ See [tests/README.md](tests/README.md) for details.
 
 - `rhiza-logo.svg` - Rhiza logo graphic
 
-## 📋 Templates (`.rhiza/templates/`)
-
-- `minibook/` - Minimal documentation book template
-
 ## 🔌 Template Bundles
 
 Defined in `template-bundles.yml`:
