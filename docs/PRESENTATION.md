@@ -265,6 +265,7 @@ make release-status
 ✅ Builds Python package
 ✅ Creates GitHub release
 ✅ Publishes to PyPI (if public)
+✅ Publishes to AWS CodeArtifact (if configured)
 ✅ Publishes devcontainer image (optional)
 
 ---
@@ -419,6 +420,14 @@ Automatic if configured as **Trusted Publisher**:
 2. Add GitHub Actions as trusted publisher
 3. Release workflow publishes automatically
 
+### AWS CodeArtifact Publication
+
+Automatic if repository secrets and variables are configured:
+
+1. Set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as secrets
+2. Set `PYPI_REPOSITORY_URL` to the CodeArtifact endpoint
+3. Release workflow publishes automatically via `twine`
+
 ### Private Packages
 
 Add to `pyproject.toml`:
@@ -427,6 +436,8 @@ classifiers = [
     "Private :: Do Not Upload",
 ]
 ```
+
+> Private packages skip PyPI but still publish to CodeArtifact (if configured).
 
 ---
 

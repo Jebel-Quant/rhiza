@@ -32,14 +32,17 @@
 #
 # 🚀 PyPI Publishing:
 #   - Skipped if no dist/ artifacts exist
-#   - Skipped if pyproject.toml contains "Private :: Do Not Upload"
+#   - Skipped if pyproject.toml contains "Private :: Do Not Upload" (unless custom feed)
 #   - Uses Trusted Publishing (OIDC) for PyPI (no stored credentials)
-#   - For custom feeds, use PYPI_REPOSITORY_URL and PYPI_TOKEN secrets
+#   - For custom feeds, use PYPI_REPOSITORY_URL variable and PYPI_TOKEN secret
+#   - For AWS CodeArtifact, set PYPI_REPOSITORY_URL to the CodeArtifact endpoint
+#     and provide AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY secrets
 #   - Adds PyPI/custom feed link to GitHub release notes
 #
 # 🔐 Security:
 #   - No PyPI credentials stored; relies on Trusted Publishing via GitHub OIDC
 #   - For custom feeds, PYPI_TOKEN secret is used with default username __token__
+#   - For AWS CodeArtifact, uses AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY secrets
 #   - Container registry uses GITHUB_TOKEN for authentication
 #   - SLSA provenance attestations generated for build artifacts (public repos only)
 #   - SBOM attestations generated for supply chain transparency (public repos only)
@@ -47,6 +50,8 @@
 # 📄 Requirements:
 #   - pyproject.toml with top-level version field (for Python packages)
 #   - Package registered on PyPI as Trusted Publisher (for PyPI publishing)
+#   - PYPI_REPOSITORY_URL variable + AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY secrets
+#     (for CodeArtifact publishing)
 #   - PUBLISH_DEVCONTAINER variable set to "true" (for devcontainer publishing)
 #   - .devcontainer/devcontainer.json file (for devcontainer publishing)
 #
@@ -61,6 +66,11 @@
 # 🎯 For repos without devcontainers:
 #   The workflow gracefully skips devcontainer steps if PUBLISH_DEVCONTAINER is not
 #   set to "true" or .devcontainer directory doesn't exist.
+#
+# 🎯 For repos with AWS CodeArtifact:
+#   Set PYPI_REPOSITORY_URL to the CodeArtifact endpoint and provide
+#   AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY secrets. The workflow
+#   automatically detects CodeArtifact URLs and handles token exchange.
 
 
 name: (RHIZA) RELEASE
@@ -277,20 +287,61 @@ jobs:
 
       - name: Check if dist contains artifacts and not marked as private
         id: check_dist
+        env:
+          PYPI_REPOSITORY_URL: ${{ vars.PYPI_REPOSITORY_URL }}
         run: |
           if [[ ! -d dist ]]; then
             echo "::warning::No folder dist/. Skipping PyPI publish."
             echo "should_publish=false" >> "$GITHUB_OUTPUT"
+          elif [[ -z "$PYPI_REPOSITORY_URL" ]] && grep -q "Private :: Do Not Upload" pyproject.toml; then
+            echo "::notice::Package marked as private. Skipping PyPI publish."
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
           else
-            if grep -R "Private :: Do Not Upload" pyproject.toml; then
-              echo "should_publish=false" >> "$GITHUB_OUTPUT"
-            else
-              echo "should_publish=true" >> "$GITHUB_OUTPUT"
-            fi
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
           fi
           cat "$GITHUB_OUTPUT"
 
-      # this should not take place, as "Private :: Do Not Upload" set in pyproject.toml
+      - name: Get AWS CodeArtifact token
+        if: ${{ steps.check_dist.outputs.should_publish == 'true' }}
+        id: aws_token
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          PYPI_REPOSITORY_URL: ${{ vars.PYPI_REPOSITORY_URL }}
+        run: |
+          if [[ -n "$AWS_ACCESS_KEY_ID" && "$PYPI_REPOSITORY_URL" == *".codeartifact."* ]]; then
+            # Parse domain and region from CodeArtifact URL
+            # Format: https://{domain}-{owner}.d.codeartifact.{region}.amazonaws.com/pypi/{repo}/
+            STRIPPED="${PYPI_REPOSITORY_URL#https://}"
+            HOSTNAME="${STRIPPED%%/*}"
+            REGION="${HOSTNAME#*.d.codeartifact.}"
+            REGION="${REGION%.amazonaws.com}"
+            DOMAIN_OWNER="${HOSTNAME%%.d.codeartifact.*}"
+            OWNER=$(echo "$DOMAIN_OWNER" | grep -oE '[0-9]{12}$' || true)
+            if [ -n "$OWNER" ]; then
+              DOMAIN="${DOMAIN_OWNER%-"$OWNER"}"
+            else
+              DOMAIN="$DOMAIN_OWNER"
+            fi
+
+            OWNER_ARGS=()
+            if [ -n "$OWNER" ]; then
+              OWNER_ARGS+=(--domain-owner "$OWNER")
+            fi
+
+            TOKEN=$(aws codeartifact get-authorization-token \
+              --domain "$DOMAIN" \
+              --region "$REGION" \
+              "${OWNER_ARGS[@]}" \
+              --query authorizationToken --output text) || {
+              echo "::error::Failed to get CodeArtifact token. Check AWS credentials and permissions."
+              exit 1
+            }
+            echo "::add-mask::$TOKEN"
+            echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+            echo "username=aws" >> "$GITHUB_OUTPUT"
+          fi
+
       # repository-url and password only used for custom feeds, not for PyPI with OIDC
       - name: Publish to PyPI
         if: ${{ steps.check_dist.outputs.should_publish == 'true' }}
@@ -299,7 +350,8 @@ jobs:
           packages-dir: dist/
           skip-existing: true
           repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
-          password: ${{ secrets.PYPI_TOKEN }}
+          user: ${{ steps.aws_token.outputs.username || '__token__' }}
+          password: ${{ steps.aws_token.outputs.token || secrets.PYPI_TOKEN }}
 
   devcontainer:
     name: Publish Devcontainer Image

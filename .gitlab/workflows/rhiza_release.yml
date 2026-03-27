@@ -14,13 +14,17 @@
 #
 # 🚀 PyPI Publishing:
 #   - Skipped if no dist/ artifacts exist
-#   - Skipped if pyproject.toml contains "Private :: Do Not Upload"
+#   - Skipped if pyproject.toml contains "Private :: Do Not Upload" (unless custom feed)
 #   - Uses PYPI_TOKEN for authentication
 #   - For custom feeds, use PYPI_REPOSITORY_URL and PYPI_TOKEN variables
+#   - For AWS CodeArtifact, set PYPI_REPOSITORY_URL to the CodeArtifact endpoint
+#     and provide AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY variables
 #
 # 📄 Requirements:
 #   - pyproject.toml with top-level version field (for Python packages)
 #   - PYPI_TOKEN variable for PyPI publishing
+#   - PYPI_REPOSITORY_URL + AWS_ACCESS_KEY_ID + AWS_SECRET_ACCESS_KEY
+#     (for CodeArtifact publishing)
 #
 # ✅ To Trigger:
 #   Create and push a version tag:
@@ -132,30 +136,64 @@ release:pypi:
     - uv pip install twine
   script:
     - |
-      # Check if dist contains artifacts and not marked as private
+      # Check if dist contains artifacts
       if [ ! -d "dist" ] || [ -z "$(ls -A dist)" ]; then
         echo "⚠️ No dist/ artifacts found. Skipping PyPI publish."
         exit 0
       fi
 
-      if grep -R "Private :: Do Not Upload" pyproject.toml; then
+      # Private classifier only blocks publishing to default PyPI
+      if [ -z "$PYPI_REPOSITORY_URL" ] && grep -q "Private :: Do Not Upload" pyproject.toml; then
         echo "⏭️ Package marked as private. Skipping PyPI publish."
         exit 0
       fi
 
-      # Publish to PyPI
+      USERNAME="__token__"
+      PASSWORD="$PYPI_TOKEN"
+
+      # Auto-detect CodeArtifact URL and get token if AWS credentials are available
+      if [ -n "$AWS_ACCESS_KEY_ID" ] && case "$PYPI_REPOSITORY_URL" in *.codeartifact.*) true;; *) false;; esac; then
+        apt-get update -qq && apt-get install -y -qq awscli > /dev/null 2>&1
+        HOSTNAME=$(echo "$PYPI_REPOSITORY_URL" | sed 's|https://||; s|/.*||')
+        REGION=$(echo "$HOSTNAME" | sed -n 's/.*\.d\.codeartifact\.\(.*\)\.amazonaws\.com/\1/p')
+        DOMAIN_OWNER=$(echo "$HOSTNAME" | sed 's/\.d\.codeartifact\..*//')
+        OWNER=$(echo "$DOMAIN_OWNER" | grep -oE '[0-9]{12}$' || true)
+        if [ -n "$OWNER" ]; then
+          DOMAIN=$(echo "$DOMAIN_OWNER" | sed "s/-${OWNER}$//")
+        else
+          DOMAIN="$DOMAIN_OWNER"
+        fi
+
+        OWNER_ARGS=""
+        if [ -n "$OWNER" ]; then
+          OWNER_ARGS="--domain-owner $OWNER"
+        fi
+
+        # OWNER_ARGS is intentionally unquoted to allow word splitting into separate arguments
+        PASSWORD=$(aws codeartifact get-authorization-token \
+          --domain "$DOMAIN" \
+          --region "$REGION" \
+          $OWNER_ARGS \
+          --query authorizationToken --output text) || {
+          echo "❌ Failed to get CodeArtifact token. Check AWS credentials and permissions."
+          exit 1
+        }
+        USERNAME="aws"
+      fi
+
+      # Publish
       if [ -n "$PYPI_REPOSITORY_URL" ]; then
-        echo "📦 Publishing to custom repository: $PYPI_REPOSITORY_URL"
+        echo "📦 Publishing to: $PYPI_REPOSITORY_URL"
         twine upload --repository-url "$PYPI_REPOSITORY_URL" \
-          --username __token__ --password "$PYPI_TOKEN" \
+          --username "$USERNAME" --password "$PASSWORD" \
           --skip-existing dist/*
       else
         echo "📦 Publishing to PyPI"
-        twine upload --username __token__ --password "$PYPI_TOKEN" \
+        twine upload --username "$USERNAME" --password "$PASSWORD" \
           --skip-existing dist/*
       fi
 
-      echo "✅ Published to PyPI"
+      echo "✅ Published successfully"
   rules:
     - if: $CI_COMMIT_TAG =~ /^v.*/
       when: on_success

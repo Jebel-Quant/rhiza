@@ -79,7 +79,7 @@ The release workflow (`.github/workflows/rhiza_release.yml`) triggers on the tag
 1. **Validates** - Checks the tag format and ensures no duplicate releases
 2. **Builds** - Builds the Python package (if `pyproject.toml` exists)
 3. **Drafts** - Creates a draft GitHub release with artifacts
-4. **PyPI** - Publishes to PyPI (if not marked private)
+4. **PyPI** - Publishes to PyPI or custom feed such as CodeArtifact (if not marked private)
 5. **Devcontainer** - Publishes devcontainer image (if `PUBLISH_DEVCONTAINER=true`)
 6. **Finalizes** - Publishes the GitHub release with links to PyPI and container images
 
@@ -90,6 +90,80 @@ The release workflow (`.github/workflows/rhiza_release.yml`) triggers on the tag
 - Automatic if package is registered as a Trusted Publisher
 - Use `PYPI_REPOSITORY_URL` and `PYPI_TOKEN` for custom feeds
 - Mark as private with `Private :: Do Not Upload` in `pyproject.toml`
+
+### AWS CodeArtifact Publishing
+
+Publish Python packages to an AWS CodeArtifact repository. This is useful for private packages
+or organisations that use CodeArtifact as their internal package registry.
+
+CodeArtifact publishing is handled through the same `pypi` job by setting `PYPI_REPOSITORY_URL`
+to the CodeArtifact endpoint and providing AWS credentials. The workflow automatically detects
+CodeArtifact URLs and handles token exchange.
+
+> **Note:** The `Private :: Do Not Upload` classifier only blocks publishing to the default
+> PyPI. When `PYPI_REPOSITORY_URL` is set (e.g. to a CodeArtifact endpoint), private packages
+> will still be published.
+
+#### Setup Instructions
+
+1. **Get your CodeArtifact repository endpoint** (the `PYPI_REPOSITORY_URL`):
+   ```bash
+   aws codeartifact get-repository-endpoint \
+     --domain my-domain \
+     --repository my-repo \
+     --format pypi \
+     --query repositoryEndpoint --output text
+   ```
+   This returns a URL like:
+   `https://my-domain-123456789012.d.codeartifact.us-east-1.amazonaws.com/pypi/my-repo/`
+
+2. **Create an IAM user** (or use an existing one) with the following permissions:
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Action": [
+           "codeartifact:GetAuthorizationToken",
+           "codeartifact:GetRepositoryEndpoint",
+           "codeartifact:PublishPackageVersion",
+           "codeartifact:PutPackageMetadata"
+         ],
+         "Resource": "*"
+       },
+       {
+         "Effect": "Allow",
+         "Action": "sts:GetServiceBearerToken",
+         "Resource": "*",
+         "Condition": {
+           "StringEquals": { "sts:AWSServiceName": "codeartifact.amazonaws.com" }
+         }
+       }
+     ]
+   }
+   ```
+
+3. **Set repository secrets and variables:**
+
+   **GitHub** (Settings → Secrets and variables → Actions):
+   | Type | Name | Value |
+   |---|---|---|
+   | Secret | `AWS_ACCESS_KEY_ID` | IAM user access key |
+   | Secret | `AWS_SECRET_ACCESS_KEY` | IAM user secret key |
+   | Variable | `PYPI_REPOSITORY_URL` | CodeArtifact endpoint URL from step 1 |
+
+   **GitLab** (Settings → CI/CD → Variables):
+   | Name | Value | Protected | Masked |
+   |---|---|---|---|
+   | `AWS_ACCESS_KEY_ID` | IAM user access key | ✅ | ✅ |
+   | `AWS_SECRET_ACCESS_KEY` | IAM user secret key | ✅ | ✅ |
+   | `PYPI_REPOSITORY_URL` | CodeArtifact endpoint URL from step 1 | ✅ | ❌ |
+
+That's it — no additional configuration needed. The release workflow automatically:
+- Detects the CodeArtifact URL from `PYPI_REPOSITORY_URL`
+- Uses `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` to obtain a temporary auth token
+- Publishes the package with `twine`
 
 ### Devcontainer Publishing
 

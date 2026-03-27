@@ -108,7 +108,7 @@ flowchart TD
     tag[Push Tag v*] --> validate[Validate Tag]
     validate --> build[Build Package]
     build --> draft[Draft GitHub Release]
-    draft --> pypi[Publish to PyPI]
+    draft --> pypi[Publish to PyPI / Custom Feed]
     draft --> devcontainer[Publish Devcontainer]
     pypi --> finalize[Finalize Release]
     devcontainer --> finalize
