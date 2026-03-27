@@ -283,10 +283,6 @@ bundles:
     files:
       # Book building configuration
       - .rhiza/make.d/book.mk
-      - .rhiza/templates/minibook
-
-      # Documentation
-      - docs/BOOK.md
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_book.yml
