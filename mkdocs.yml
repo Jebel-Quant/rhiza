@@ -1,0 +1,82 @@
+site_name: rhiza
+site_description: Reusable configuration templates for modern Python projects.
+site_url: https://jebel-quant.github.io/rhiza/
+repo_url: https://github.com/Jebel-Quant/rhiza
+repo_name: Jebel-Quant/rhiza
+
+docs_dir: docs
+site_dir: _mkdocs
+
+theme:
+  name: material
+  logo: assets/rhiza-logo.svg
+  favicon: assets/rhiza-logo.svg
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+
+plugins:
+  - search
+
+markdown_extensions:
+  - md_in_html
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.snippets:
+      base_path: ["."]
+  - admonition
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+extra_javascript:
+  - https://unpkg.com/mermaid@11.4.0/dist/mermaid.esm.min.mjs
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Reference: QUICK_REFERENCE.md
+    - Demo: DEMO.md
+    - Customization: CUSTOMIZATION.md
+    - Extending Rhiza: EXTENDING_RHIZA.md
+  - Reference:
+    - Architecture: ARCHITECTURE.md
+    - Dependencies: DEPENDENCIES.md
+    - Tools Reference: TOOLS_REFERENCE.md
+    - Shell Scripts: SHELL_SCRIPTS.md
+    - Glossary: GLOSSARY.md
+  - Development:
+    - Tests: TESTS.md
+    - Docker: DOCKER.md
+    - Dev Container: DEVCONTAINER.md
+    - VSCode Extensions: VSCODE_EXTENSIONS.md
+    - Marimo: MARIMO.md
+    - Presentation: PRESENTATION.md
+    - GitHub Agentic Workflows: GH_AW.md
+  - Operations:
+    - Changelog Guide: CHANGELOG_GUIDE.md
+    - Project Board: PROJECT_BOARD.md
+    - Technical Debt: TECHNICAL_DEBT.md
+  - Security:
+    - Security Policy: SECURITY.md
+    - Security Testing: SECURITY_TESTING.md
+  - Architecture Decision Records:
+    - Overview: adr/README.md
+    - ADR-0001 Use Architecture Decision Records: adr/0001-use-architecture-decision-records.md
+    - ADR-0002 Use uv for Python Package Management: adr/0002-use-uv-for-python-package-management.md
+    - ADR-0003 Use Ruff for Linting and Formatting: adr/0003-use-ruff-for-linting-and-formatting.md
+    - ADR-0004 Adopt Modular Makefile Architecture: adr/0004-adopt-modular-makefile-architecture.md
+    - ADR-0005 Separate Rhiza Template from CLI: adr/0005-separate-rhiza-template-from-cli.md
+    - ADR-0006 Organise Templates into Bundles: adr/0006-organise-templates-into-bundles.md
+    - ADR-0007 Support Dual CI/CD (GitHub & GitLab): adr/0007-support-dual-cicd-github-and-gitlab.md
+    - ADR-0008 Use Marimo for Interactive Notebooks: adr/0008-use-marimo-for-interactive-notebooks.md
+    - ADR-0009 Use Pre-commit Hooks for Code Quality: adr/0009-use-pre-commit-hooks-for-code-quality.md
+  - Notebooks: notebooks.md
+  - Reports: reports.md
