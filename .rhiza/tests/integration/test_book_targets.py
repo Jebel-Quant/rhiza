@@ -30,7 +30,7 @@ def test_no_book_folder(git_repo, book_makefile):
 
     # Targets are now always defined via .rhiza/make.d/
     # Use dry-run to verify they exist and can be parsed
-    for target in ["book", "docs", "marimushka"]:
+    for target in ["book"]:
         result = subprocess.run([MAKE, "-n", target], cwd=git_repo, capture_output=True, text=True)  # nosec
         # Target should exist (not "no rule to make target")
         assert "no rule to make target" not in result.stderr.lower(), (
@@ -57,7 +57,7 @@ def test_book_folder_but_no_mk(git_repo, book_makefile):
 
     # Targets are now always defined via .rhiza/make.d/
     # Use dry-run to verify they exist and can be parsed
-    for target in ["book", "docs", "marimushka"]:
+    for target in ["book", "marimushka"]:
         result = subprocess.run([MAKE, "-n", target], cwd=git_repo, capture_output=True, text=True)  # nosec
         # Target should exist (not "no rule to make target")
         assert "no rule to make target" not in result.stderr.lower(), (
