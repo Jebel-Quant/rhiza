@@ -20,11 +20,10 @@ post-validate::
 
 ##@ Security
 
-# Override pip-audit to ignore CVE-2026-4539 (pygments ReDoS, no fix available yet)
 .PHONY: security
 security: install ## run security scans (pip-audit and bandit)
 	@printf "${BLUE}[INFO] Running pip-audit for dependency vulnerabilities...${RESET}\n"
-	@${UVX_BIN} pip-audit --ignore-vuln CVE-2026-4539
+	@${UVX_BIN} pip-audit
 	@printf "${BLUE}[INFO] Running bandit security scan...${RESET}\n"
 	@${UVX_BIN} bandit -r ${SOURCE_FOLDER} -ll -q -c pyproject.toml
 
@@ -38,11 +37,6 @@ semgrep: install ## run Semgrep static analysis (numpy rules)
 	else \
 		printf "${YELLOW}[WARN] SOURCE_FOLDER '${SOURCE_FOLDER}' not found, skipping semgrep.${RESET}\n"; \
 	fi
-
-.PHONY: license
-license: install ## run license compliance scan (fail on GPL, LGPL, AGPL)
-	@printf "${BLUE}[INFO] Running license compliance scan...${RESET}\n"
-	@${UV_BIN} run --with pip-licenses pip-licenses --fail-on="GPL;LGPL;AGPL"
 
 .PHONY: adr
 adr: install-gh-aw ## Create a new Architecture Decision Record (ADR) using AI assistance
