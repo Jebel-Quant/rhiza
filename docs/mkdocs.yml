@@ -83,7 +83,6 @@ nav:
     - Dev Container: DEVCONTAINER.md
     - VSCode Extensions: VSCODE_EXTENSIONS.md
     - Marimo: MARIMO.md
-    - Book: BOOK.md
     - Presentation: PRESENTATION.md
     - GitHub Agentic Workflows: GH_AW.md
   - Operations:
