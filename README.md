@@ -366,7 +366,7 @@ make presentation-pdf    # Generate PDF slides
 make presentation-serve  # Serve with live reload
 ```
 
-For detailed information about creating and customising presentations, see [presentation/README.md](presentation/README.md).
+For detailed information about creating and customising presentations, see [docs/presentations/README.md](docs/presentations/README.md).
 
 ### Documentation Examples
 
