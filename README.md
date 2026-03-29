@@ -390,7 +390,7 @@ Hello, World!
 
 ### Documentation Customisation
 
-For information on customising the look and feel of your documentation, see [book/README.md](book/README.md).
+For information on customising the look and feel of your documentation, see [docs/BOOK.md](docs/BOOK.md).
 
 ### Python Version Management
 
