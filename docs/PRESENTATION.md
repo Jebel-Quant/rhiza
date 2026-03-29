@@ -223,7 +223,7 @@ make marimo  # Start notebook server
 - 🎨 Built-in visualizations
 - 💻 VS Code extension support
 
-Notebooks stored in `book/marimo/` with inline dependency management.
+Notebooks stored in `docs/notebooks/` with inline dependency management.
 
 ---
 

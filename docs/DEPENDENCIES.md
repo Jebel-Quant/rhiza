@@ -43,7 +43,7 @@ Our dependency management follows these principles:
   - Breaking API changes
   - Changes to notebook execution model
   - Incompatible feature modifications
-- **Use Case**: Reactive notebooks in `book/marimo/` for documentation and examples
+- **Use Case**: Reactive notebooks in `docs/notebooks/` for documentation and examples
 - **Update Strategy**: Renovate will auto-merge minor/patch updates within the 0.x series
 
 ### numpy
