@@ -4,7 +4,7 @@
 # Workflow: Semgrep
 #
 # Purpose: This workflow runs static analysis using Semgrep with local numpy
-#          rules (.semgrep.yml) to detect common NumPy-related bugs and
+#          rules (.rhiza/semgrep.yml) to detect common NumPy-related bugs and
 #          security issues in Python code.
 #          Note: the retired p/numpy registry ruleset is replaced by a local
 #          rules file that covers the same concerns.
