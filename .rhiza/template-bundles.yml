@@ -89,7 +89,7 @@ bundles:
       - .github/hooks
       - .github/secret_scanning.yml
       - .github/workflows/rhiza_license.yml
-      - .semgrep.yml
+      - .github/semgrep.yml
       - .github/workflows/rhiza_semgrep.yml
       # Issue templates (config.yml excluded — contains repo-specific URLs)
       - .github/ISSUE_TEMPLATE/bug_report.yml
@@ -119,11 +119,11 @@ bundles:
       - LICENSE
 
       # Community files
-      - CONTRIBUTING.md
-      - CODE_OF_CONDUCT.md
+      - .github/CONTRIBUTING.md
+      - .github/CODE_OF_CONDUCT.md
 
-      # Security policy (root-level for GitHub visibility)
-      - SECURITY.md
+      # Security policy
+      - .github/SECURITY.md
 
   # ============================================================================
   # DEVCONTAINER - VS Code DevContainer configuration
