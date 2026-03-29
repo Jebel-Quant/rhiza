@@ -75,22 +75,17 @@ bundles:
       # Core GitHub Actions workflows
       - .github/workflows/copilot-setup-steps.yml
       - .github/workflows/rhiza_validate.yml
+      - .github/workflows/rhiza_quality.yml
       - .github/workflows/rhiza_sync.yml
-      - .github/workflows/rhiza_pre-commit.yml
-      - .github/workflows/rhiza_deptry.yml
       - .github/workflows/rhiza_release.yml
       - .github/workflows/renovate_rhiza_sync.yml
-      - .github/workflows/rhiza_pip_audit.yml
-      - .github/workflows/rhiza_typecheck.yml
       - .github/actions/configure-git-auth
       - .github/dependabot.yml
       - .github/copilot-instructions.md
       - .github/agents
       - .github/hooks
       - .github/secret_scanning.yml
-      - .github/workflows/rhiza_license.yml
-      - .rhiza/semgrep.yml
-      - .github/workflows/rhiza_semgrep.yml
+      - .semgrep.yml
       # Issue templates (config.yml excluded — contains repo-specific URLs)
       - .github/ISSUE_TEMPLATE/bug_report.yml
       - .github/ISSUE_TEMPLATE/feature_request.yml
@@ -119,11 +114,11 @@ bundles:
       - LICENSE
 
       # Community files
-      - .rhiza/CONTRIBUTING.md
-      - .rhiza/CODE_OF_CONDUCT.md
+      - CONTRIBUTING.md
+      - CODE_OF_CONDUCT.md
 
-      # Security policy
-      - .rhiza/SECURITY.md
+      # Security policy (root-level for GitHub visibility)
+      - SECURITY.md
 
   # ============================================================================
   # DEVCONTAINER - VS Code DevContainer configuration
@@ -226,7 +221,6 @@ bundles:
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_ci.yml
-      - .github/workflows/rhiza_security.yml
       - .github/workflows/rhiza_codeql.yml
       - .github/workflows/rhiza_dep_compat_test.yml
 
