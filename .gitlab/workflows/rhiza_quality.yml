@@ -1,0 +1,54 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Quality (GitLab CI)
+#
+# Purpose: Run quality checks including dependency validation, pre-commit hooks,
+#          documentation coverage, and link checking.
+#
+# Trigger: This workflow runs on every push and on merge requests to main/master
+#          branches (including from forks)
+#
+# Equivalent GitHub Action: .github/workflows/rhiza_quality.yml
+
+quality:deptry:
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - make deptry
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+quality:pre-commit:
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - make fmt
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+quality:docs-coverage:
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  variables:
+    UV_EXTRA_INDEX_URL: "${UV_EXTRA_INDEX_URL}"
+  script:
+    - make docs-coverage
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+quality:link-check:
+  stage: test
+  needs: []
+  image: ghcr.io/lycheeverse/lychee:latest
+  script:
+    - lychee --verbose --no-progress --accept 200,206,429 README.md
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
