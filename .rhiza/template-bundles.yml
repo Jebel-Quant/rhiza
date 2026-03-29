@@ -244,15 +244,15 @@ bundles:
   # ============================================================================
   marimo:
     description: "Interactive Marimo notebooks for data exploration and documentation"
-    standalone: false
-    requires: [book]
+    standalone: true
+    requires: []
     files:
       # Marimo configuration
       - .rhiza/make.d/marimo.mk
       - .rhiza/requirements/marimo.txt
 
       # Marimo notebooks directory
-      - book/marimo
+      - docs/notebooks
 
       # Documentation
       - docs/MARIMO.md
