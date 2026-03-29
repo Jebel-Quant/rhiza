@@ -4,7 +4,7 @@
 # Workflow: Semgrep (GitLab CI)
 #
 # Purpose: This workflow runs static analysis using Semgrep with local numpy
-#          rules (.github/semgrep.yml) to detect common NumPy-related bugs and
+#          rules (.rhiza/semgrep.yml) to detect common NumPy-related bugs and
 #          security issues in Python code.
 #
 # Trigger: This workflow runs on every push and on merge requests to main/master
