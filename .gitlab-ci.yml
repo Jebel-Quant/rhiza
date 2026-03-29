@@ -52,6 +52,22 @@ include:
       - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       - if: $CI_COMMIT_BRANCH
 
+  # Semgrep - Static analysis with numpy rules
+  - local: '.gitlab/workflows/rhiza_semgrep.yml'
+    rules:
+      - if: $CI_COMMIT_TAG
+        when: never
+      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      - if: $CI_COMMIT_BRANCH
+
+  # License compliance - Check for copyleft dependencies
+  - local: '.gitlab/workflows/rhiza_license.yml'
+    rules:
+      - if: $CI_COMMIT_TAG
+        when: never
+      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      - if: $CI_COMMIT_BRANCH
+
   # Quality - Dependency checks, pre-commit hooks, docs coverage, link checking
   - local: '.gitlab/workflows/rhiza_quality.yml'
     rules:
