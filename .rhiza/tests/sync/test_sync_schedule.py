@@ -56,11 +56,11 @@ class TestApplySyncSchedule:
 
     def test_apply_sync_schedule_skips_when_default(self, logger, tmp_path: Path):
         """_apply-sync-schedule should not modify files when using default schedule."""
-        # Create a mock workflow file
+        # Create a mock workflow file matching the actual rhiza_sync.yml format
         workflow_dir = tmp_path / ".github" / "workflows"
         workflow_dir.mkdir(parents=True)
         workflow_file = workflow_dir / "rhiza_sync.yml"
-        original_content = "schedule:\n    - cron: '0 0 * * 1'  # Weekly on Monday\n"
+        original_content = "on:\n  schedule:\n    - cron: '0 0 * * 1'  # Weekly on Monday\n"
         workflow_file.write_text(original_content)
 
         proc = run_make(logger, ["_apply-sync-schedule"], dry_run=False)
@@ -71,11 +71,11 @@ class TestApplySyncSchedule:
 
     def test_apply_sync_schedule_patches_workflow(self, logger, tmp_path: Path):
         """_apply-sync-schedule should patch workflow when schedule is overridden."""
-        # Create a mock workflow file
+        # Create a mock workflow file matching the actual rhiza_sync.yml format
         workflow_dir = tmp_path / ".github" / "workflows"
         workflow_dir.mkdir(parents=True)
         workflow_file = workflow_dir / "rhiza_sync.yml"
-        workflow_file.write_text("schedule:\n    - cron: '0 0 * * 1'  # Weekly on Monday\n")
+        workflow_file.write_text("on:\n  schedule:\n    - cron: '0 0 * * 1'  # Weekly on Monday\n")
 
         # Override the schedule via Makefile
         makefile = tmp_path / "Makefile"
@@ -104,11 +104,11 @@ class TestApplySyncSchedule:
 
     def test_apply_sync_schedule_prints_info(self, logger, tmp_path: Path):
         """_apply-sync-schedule should print info message when patching."""
-        # Create a mock workflow file
+        # Create a mock workflow file matching the actual rhiza_sync.yml format
         workflow_dir = tmp_path / ".github" / "workflows"
         workflow_dir.mkdir(parents=True)
         workflow_file = workflow_dir / "rhiza_sync.yml"
-        workflow_file.write_text("schedule:\n    - cron: '0 0 * * 1'\n")
+        workflow_file.write_text("on:\n  schedule:\n    - cron: '0 0 * * 1'\n")
 
         # Override the schedule
         makefile = tmp_path / "Makefile"

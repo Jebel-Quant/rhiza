@@ -109,7 +109,7 @@ sync: pre-sync ## sync with template repository as defined in .rhiza/template.ym
 
 _apply-sync-schedule: ## (internal) apply RHIZA_SYNC_SCHEDULE override to GitHub Actions sync workflow
 	@if [ "$(RHIZA_SYNC_SCHEDULE)" != "0 0 * * 1" ] && [ -f .github/workflows/rhiza_sync.yml ]; then \
-		sed -i "s|cron: '[^']*'|cron: '$(RHIZA_SYNC_SCHEDULE)'|" .github/workflows/rhiza_sync.yml; \
+		sed -i.bak "s|cron: '[^']*'|cron: '$(RHIZA_SYNC_SCHEDULE)'|" .github/workflows/rhiza_sync.yml && rm -f .github/workflows/rhiza_sync.yml.bak; \
 		printf "${BLUE}[INFO] Applied custom sync schedule: $(RHIZA_SYNC_SCHEDULE)${RESET}\n"; \
 	fi
 
