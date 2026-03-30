@@ -123,9 +123,43 @@ PYTHON_VERSION = 3.12
 # Override test coverage threshold (default: 90)
 COVERAGE_FAIL_UNDER = 80
 
+# Override the sync schedule (default: weekly on Monday at midnight UTC)
+# Uses cron syntax: minute hour day-of-month month day-of-week
+RHIZA_SYNC_SCHEDULE = 0 9 * * 1-5  # Weekdays at 9 AM UTC
+
 # Include the Rhiza API (template-managed)
 include .rhiza/rhiza.mk
 ```
+
+### Sync Schedule Override
+
+The `RHIZA_SYNC_SCHEDULE` variable controls the cron schedule for the GitHub Actions sync workflow (`.github/workflows/rhiza_sync.yml`). Since this file is template-managed and overwritten during sync, the schedule is automatically patched after each `make sync` to preserve your custom value.
+
+**Default:** `0 0 * * 1` (weekly on Monday at midnight UTC)
+
+**Examples:**
+
+```makefile
+# Daily at 6 AM UTC
+RHIZA_SYNC_SCHEDULE = 0 6 * * *
+
+# Weekdays at 9 AM UTC
+RHIZA_SYNC_SCHEDULE = 0 9 * * 1-5
+
+# First day of each month at midnight UTC
+RHIZA_SYNC_SCHEDULE = 0 0 1 * *
+
+# Every 6 hours
+RHIZA_SYNC_SCHEDULE = 0 */6 * * *
+```
+
+Set this in your root `Makefile` (before the `include` line) and it will be applied automatically every time `make sync` runs. The override is also visible in the sync output:
+
+```
+[INFO] Applied custom sync schedule: 0 9 * * 1-5
+```
+
+> **Note:** For GitLab CI, the sync schedule is configured via the GitLab UI (Settings → CI/CD → Pipeline schedules), so this variable only affects GitHub Actions.
 
 ### On-Demand Configuration
 
