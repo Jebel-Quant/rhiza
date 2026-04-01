@@ -83,7 +83,6 @@ jobs:
   pip-audit:
     name: Dependency vulnerability scan
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -99,7 +98,6 @@ jobs:
   typecheck:
     name: Type checking
     runs-on: ubuntu-latest
-    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
 
     steps:
       - uses: actions/checkout@v6.0.2
@@ -124,7 +122,6 @@ jobs:
   license:
     name: License compliance scan
     runs-on: ubuntu-latest
-    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
 
     steps:
       - uses: actions/checkout@v6.0.2
