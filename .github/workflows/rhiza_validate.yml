@@ -5,9 +5,6 @@ permissions:
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
   schedule:
     - cron: "0 9 * * 1"  # Every Monday at 09:00 UTC (for pip-audit)
   workflow_dispatch:
