@@ -79,7 +79,6 @@ bundles:
       - .github/workflows/rhiza_quality.yml
       - .github/workflows/rhiza_release.yml
       - .github/workflows/renovate_rhiza_sync.yml
-      - .github/workflows/rhiza_pip_audit.yml
       - .github/actions/configure-git-auth
       - .github/dependabot.yml
       - .github/copilot-instructions.md
