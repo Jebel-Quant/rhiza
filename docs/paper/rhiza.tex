@@ -6,6 +6,7 @@
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{hyperref}
 \usepackage{microtype}
+\emergencystretch=2em
 \usepackage{booktabs}
 \usepackage{listings}
 \usepackage{xcolor}
@@ -207,7 +208,7 @@ Rhiza integrates a layered quality stack that operates at multiple stages of the
 
 \paragraph{CI pipelines.} The \texttt{github} and \texttt{gitlab} bundles provide workflows that run on every pull request: unit tests across Python 3.11--3.14, type checking with \texttt{ty}, dependency validation with \texttt{deptry}, security scanning with \texttt{pip-audit} and \texttt{bandit}, and static analysis with \texttt{semgrep}.
 
-\paragraph{Automated dependency updates.} A Renovate configuration file, included in the \texttt{core} bundle, opens pull requests whenever a pinned dependency or the \texttt{ref} in \texttt{.rhiza/template.yml} is updated upstream. This closes the loop: Rhiza itself is treated as a dependency that can be automatically proposed for upgrade.
+\paragraph{Automated dependency updates.} A Renovate configuration file, included in the \texttt{core} bundle, opens pull requests whenever a pinned dependency or the template \texttt{ref} is updated upstream. This closes the loop: Rhiza itself is treated as a dependency that can be automatically proposed for upgrade.
 
 \subsection{Agentic Workflow Integration}
 
@@ -237,7 +238,7 @@ The most common source of friction in living-template systems is merge conflicts
 \begin{enumerate}[leftmargin=*]
   \item \textbf{Bundle granularity.} By grouping files into coarse bundles, Rhiza reduces the frequency with which any given downstream file is touched by an upstream update.
   \item \textbf{Makefile hooks.} Downstream projects that need to extend a Makefile target can do so by adding a \texttt{::} target in \texttt{local.mk} rather than modifying the managed file. The managed file can therefore be updated freely.
-  \item \textbf{Configuration delegation.} Where possible, tool configuration is placed in \texttt{pyproject.toml} (owned by the downstream project) rather than in separate managed files. The template provides a commented scaffold section; the downstream project fills it in.
+  \item \textbf{Configuration delegation.} Where possible, tool configuration resides in \texttt{pyproject.toml} (owned by the downstream project) rather than in separate managed files. The template provides a commented scaffold section; the downstream project fills it in.
 \end{enumerate}
 
 \subsection{Architecture Decision Records}
@@ -297,41 +298,41 @@ Rhiza is open source under the MIT licence. The template repository is available
 \bibliographystyle{plain}
 \begin{thebibliography}{99}
 
-\bibitem{humble2010continuous}
-J.~Humble and D.~Farley, \textit{Continuous Delivery: Reliable Software Releases through Build, Test, and Deployment Automation}. Addison-Wesley, 2010.
-
-\bibitem{fowler2016infrastructure}
-K.~Morris, \textit{Infrastructure as Code: Managing Servers in the Cloud}. O'Reilly Media, 2016.
-
-\bibitem{cunningham1992wycash}
-W.~Cunningham, ``The WyCash portfolio management system,'' in \textit{Proc. ACM OOPSLA}, 1992.
-
-\bibitem{cookiecutter}
-A.~Roy, D.~Greenfeld, et al., ``Cookiecutter,'' \url{https://cookiecutter.readthedocs.io}, 2013--.
-
-\bibitem{copier}
-J.~M.~Macías et al., ``Copier,'' \url{https://copier.readthedocs.io}, 2019--.
-
-\bibitem{cruft}
-S.~Kothari et al., ``cruft,'' \url{https://cruft.github.io/cruft}, 2019--.
+\bibitem{claudecode}
+Anthropic, Claude Code: Agentic coding in the terminal. \url{https://claude.ai/code}, 2025--.
 
 \bibitem{uv}
-Astral, ``uv: An extremely fast Python package and project manager,'' \url{https://docs.astral.sh/uv}, 2024--.
+Astral, uv: An extremely fast Python package and project manager. \url{https://docs.astral.sh/uv}, 2024--.
 
-\bibitem{claudecode}
-Anthropic, ``Claude Code: Agentic coding in the terminal,'' \url{https://claude.ai/code}, 2025--.
-
-\bibitem{nygard2011adr}
-M.~T.~Nygard, ``Documenting architecture decisions,'' \url{https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions}, 2011.
-
-\bibitem{rails}
-D.~H.~Hansson, ``Ruby on Rails,'' \url{https://rubyonrails.org}, 2004--.
+\bibitem{cunningham1992wycash}
+Cunningham, W., The WyCash portfolio management system. In \textit{Proc. ACM OOPSLA}, 1992.
 
 \bibitem{dolstra2004nix}
-E.~Dolstra, M.~de Jonge, and E.~Visser, ``Nix: A safe and policy-free system for software deployment,'' in \textit{Proc. LISA}, 2004.
+Dolstra, E., de~Jonge, M., and Visser, E., Nix: A safe and policy-free system for software deployment. In \textit{Proc. LISA}, 2004.
+
+\bibitem{rails}
+Hansson, D.~H., Ruby on Rails. \url{https://rubyonrails.org}, 2004--.
+
+\bibitem{humble2010continuous}
+Humble, J. and Farley, D., \textit{Continuous Delivery: Reliable Software Releases through Build, Test, and Deployment Automation}. Addison-Wesley, 2010.
+
+\bibitem{cruft}
+Kothari, S. et al., cruft. \url{https://cruft.github.io/cruft}, 2019--.
+
+\bibitem{copier}
+Macías, J.~M. et al., Copier. \url{https://copier.readthedocs.io}, 2019--.
+
+\bibitem{fowler2016infrastructure}
+Morris, K., \textit{Infrastructure as Code: Managing Servers in the Cloud}. O'Reilly Media, 2016.
+
+\bibitem{nygard2011adr}
+Nygard, M.~T., Documenting architecture decisions. \url{https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions}, 2011.
 
 \bibitem{potvin2016google}
-R.~Potvin and J.~Levenberg, ``Why Google stores billions of lines of code in a single repository,'' \textit{Communications of the ACM}, vol.~59, no.~7, pp.~78--87, 2016.
+Potvin, R. and Levenberg, J., Why Google stores billions of lines of code in a single repository. \textit{Communications of the ACM}, vol.~59, no.~7, pp.~78--87, 2016.
+
+\bibitem{cookiecutter}
+Roy, A., Greenfeld, D. et al., Cookiecutter. \url{https://cookiecutter.readthedocs.io}, 2013--.
 
 \end{thebibliography}
 

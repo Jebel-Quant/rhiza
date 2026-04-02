@@ -23,7 +23,7 @@ paper:: ## compile LaTeX documents in docs/paper to PDF using latexmk
 	  tex_file=$$(find $(PAPER_DIR) -maxdepth 1 -name "*.tex" | head -1 | xargs basename); \
 	fi; \
 	printf "${BLUE}[INFO] Compiling $$tex_file...${RESET}\n"; \
-	cd $(PAPER_DIR) && latexmk -pdf -interaction=nonstopmode "$$tex_file" || exit 1; \
+	cd $(PAPER_DIR) && latexmk -pdf -bibtex -interaction=nonstopmode "$$tex_file" || exit 1; \
 	pdf_file="$${tex_file%.tex}.pdf"; \
 	printf "${GREEN}[SUCCESS] $(PAPER_DIR)/$$pdf_file${RESET}\n"
 
