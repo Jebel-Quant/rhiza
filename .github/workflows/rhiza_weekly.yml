@@ -8,7 +8,7 @@ name: "(RHIZA) WEEKLY"
 #                      them up. Runs on schedule/dispatch only.
 #
 #   link-check       — Verifies that all hyperlinks in README.md are reachable.
-#                      Also runs on push/PR when README.md changes.
+#                      Runs on schedule/dispatch only.
 
 permissions:
   contents: read
