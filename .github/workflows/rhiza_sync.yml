@@ -29,7 +29,7 @@ on:
 jobs:
   sync-direct:
     name: Sync and commit (Renovate)
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.repository != 'jebel-quant/rhiza'
     runs-on: ubuntu-latest
 
     steps:
