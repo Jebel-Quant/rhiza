@@ -1,0 +1,55 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Weekly (GitLab CI)
+#
+# Purpose: Slower checks deferred to a weekly schedule:
+#
+#   weekly:semgrep    — Semgrep static analysis (numpy rules).
+#   weekly:pip-audit  — Dependency vulnerability scan.
+#   weekly:link-check — Verifies hyperlinks in README.md are reachable.
+#                       Also runs on push/MR when README.md changes.
+#
+# Trigger: Scheduled pipeline (configure weekly in GitLab CI/CD Schedules),
+#          or manually via the web UI.
+
+weekly:semgrep:
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
+    - uv venv
+    - make semgrep
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+
+weekly:pip-audit:
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - uvx pip-audit
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+
+weekly:link-check:
+  stage: test
+  needs: []
+  image: lycheeverse/lychee:latest
+  script:
+    - lychee --verbose --no-progress --accept 200,206,429 README.md
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - README.md
+    - if: $CI_COMMIT_BRANCH
+      changes:
+        - README.md
+    - if: $CI_PIPELINE_SOURCE == "schedule"

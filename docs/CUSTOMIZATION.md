@@ -53,7 +53,7 @@ Add to your root `Makefile`:
 post-install::
 	@echo "Installing specialized dependencies..."
 	@uv pip install some-private-lib
-	
+
 ##@ Custom Tasks
 train-model: ## Train the ML model
 	@uv run python scripts/train.py

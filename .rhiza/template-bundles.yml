@@ -74,11 +74,9 @@ bundles:
       - .rhiza/make.d/agentic.mk
       # Core GitHub Actions workflows
       - .github/workflows/copilot-setup-steps.yml
-      - .github/workflows/rhiza_validate.yml
-      - .github/workflows/rhiza_quality.yml
       - .github/workflows/rhiza_sync.yml
       - .github/workflows/rhiza_release.yml
-      - .github/workflows/renovate_rhiza_sync.yml
+      - .github/workflows/rhiza_weekly.yml
       - .github/actions/configure-git-auth
       - .github/dependabot.yml
       - .github/copilot-instructions.md
@@ -117,8 +115,8 @@ bundles:
       - .rhiza/CONTRIBUTING.md
       - .rhiza/CODE_OF_CONDUCT.md
 
-      # Security policy
-      - .rhiza/SECURITY.md
+      # Security policy (root-level for GitHub visibility)
+      - SECURITY.md
 
   # ============================================================================
   # DEVCONTAINER - VS Code DevContainer configuration
@@ -222,7 +220,7 @@ bundles:
       # GitHub Actions workflows
       - .github/workflows/rhiza_ci.yml
       - .github/workflows/rhiza_codeql.yml
-      - .github/workflows/rhiza_dep_compat_test.yml
+      - .github/workflows/rhiza_weekly.yml
 
   # ============================================================================
   # BENCHMARKS - Performance benchmarking with pytest-benchmark
@@ -252,7 +250,7 @@ bundles:
       - .rhiza/requirements/marimo.txt
 
       # Marimo notebooks directory
-      - docs/notebooks
+      - book/marimo/notebooks
 
       # Documentation
       - docs/MARIMO.md

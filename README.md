@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src=".rhiza/assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza
+# <img src=".rhiza/assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza 
 ![GitHub Release](https://img.shields.io/github/v/release/jebel-quant/rhiza?sort=semver&color=2FA4A9&label=rhiza)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -74,7 +74,7 @@ exclude: |
   .rhiza/scripts/customisations/*
 ```
 
-> **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention.
+> **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention. 
 >
 > To enable this in your project, copy the [`regexManagers` configuration](renovate.json#L31-L40) from this repository's `renovate.json` file into your own Renovate configuration. See the linked configuration for the complete setup.
 
@@ -225,6 +225,8 @@ Keep your templates up-to-date with automated sync workflows:
 - The `.github/workflows/sync.yml` workflow runs on schedule or manually
 - Creates pull requests with template updates
 
+For GitHub Token configuration and details, see the [GitHub Actions documentation](.rhiza/docs/TOKEN_SETUP.md).
+
 ### What to Expect After Integration
 
 - **Automated CI/CD** - GitHub Actions workflows for testing, linting, and releases
@@ -366,7 +368,7 @@ make presentation-pdf    # Generate PDF slides
 make presentation-serve  # Serve with live reload
 ```
 
-For detailed information about creating and customising presentations, see [docs/presentations/README.md](docs/presentations/README.md).
+For detailed information about creating and customising presentations, see [presentation/README.md](docs/presentations/README.md).
 
 ### Documentation Examples
 
@@ -390,7 +392,7 @@ Hello, World!
 
 ### Documentation Customisation
 
-For information on customising the look and feel of your documentation, see [docs/BOOK.md](docs/BOOK.md).
+For information on customising the look and feel of your documentation, see [book/README.md](docs/BOOK.md).
 
 ### Python Version Management
 
@@ -462,7 +464,6 @@ Rhiza includes comprehensive maintainability features to help track project heal
 
 ### Roadmap & Planning
 
-- **[ROADMAP.md](.rhiza/ROADMAP.md)** - Detailed project roadmap with planned features, release timeline, and long-term vision
 - **[docs/PROJECT_BOARD.md](docs/PROJECT_BOARD.md)** - Guide for setting up GitHub Project Boards to track enhancements and roadmap items
 
 ### Technical Debt Tracking
@@ -502,7 +503,6 @@ Contributions are welcome! To contribute to Rhiza itself (not using Rhiza in you
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
 
-See [CONTRIBUTING.md](.rhiza/CONTRIBUTING.md) for detailed guidelines.
 
 ## 📄 License
 

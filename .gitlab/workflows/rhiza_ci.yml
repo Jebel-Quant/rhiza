@@ -3,9 +3,11 @@
 #
 # Workflow: Continuous Integration (GitLab CI)
 #
-# Purpose: Run tests on multiple Python versions to ensure compatibility.
+# Purpose: Run tests on multiple Python versions, check dependencies, run
+#          pre-commit hooks, verify documentation coverage, validate the
+#          project, run security scans, and check license compliance.
 #
-# Trigger: On push and merge requests to main/master branches.
+# Trigger: On push and merge requests.
 
 ci:test:
   stage: test
@@ -36,6 +38,72 @@ ci:docs-coverage:
     - uv venv
     - make -f .rhiza/rhiza.mk docs-coverage
 
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ci:typecheck:
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
+    - uv venv
+    - make typecheck
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ci:deptry:
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - make deptry
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ci:pre-commit:
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - make fmt
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ci:validate:
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - make validate
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ci:security:
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
+    - uv venv
+    - make security
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ci:license:
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
+    - uv venv
+    - make license
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
