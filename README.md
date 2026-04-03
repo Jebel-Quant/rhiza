@@ -317,7 +317,7 @@ Presentation
   presentation-serve    serve presentation interactively with Marp
 
 Docker
-  docker-build          build Docker image 
+  docker-build          build Docker image
   docker-run            run the Docker container
   docker-clean          remove Docker image
 
