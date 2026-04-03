@@ -9,8 +9,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 ├── workflows/
 │   ├── rhiza_ci.yml           # Continuous Integration - Python matrix testing
 │   ├── rhiza_validate.yml     # Rhiza configuration validation
-│   ├── rhiza_deptry.yml       # Dependency checking
-│   ├── rhiza_pre-commit.yml   # Pre-commit hooks
+│   ├── rhiza_quality.yml      # Quality checks (deptry, pre-commit, docs coverage, link check)
 │   ├── rhiza_marimo.yml       # Marimo notebook execution and artefact publishing
 │   ├── rhiza_book.yml         # Documentation building (GitLab Pages)
 │   ├── rhiza_sync.yml         # Template synchronization
@@ -56,37 +55,24 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 3. Deptry (`rhiza_deptry.yml`)
-**Purpose:** Check for missing and obsolete dependencies.
+### 3. Quality (`rhiza_quality.yml`)
+**Purpose:** Run quality checks including dependency validation, pre-commit hooks, documentation coverage, and link checking.
 
 **Trigger:**
 - On push to any branch
 - On merge requests to main/master
 
 **Key Features:**
-- Automatic source folder detection
-- Identifies unused dependencies
+- Dependency checking with deptry (`make deptry`)
+- Pre-commit hooks for code formatting and linting (`make fmt`)
+- Documentation coverage validation (`make docs-coverage`)
+- Link checking on README.md with lychee
 
-**Equivalent GitHub Action:** `.github/workflows/rhiza_deptry.yml`
-
----
-
-### 4. Pre-commit (`rhiza_pre-commit.yml`)
-**Purpose:** Run pre-commit checks for code quality.
-
-**Trigger:**
-- On push to any branch
-- On merge requests to main/master
-
-**Key Features:**
-- Runs all pre-commit hooks
-- UV environment setup
-
-**Equivalent GitHub Action:** `.github/workflows/rhiza_pre-commit.yml`
+**Equivalent GitHub Action:** `.github/workflows/rhiza_quality.yml`
 
 ---
 
-### 5. Marimo (`rhiza_marimo.yml`)
+### 4. Marimo (`rhiza_marimo.yml`)
 **Purpose:** Discover and execute all Marimo notebooks in the repository, publishing results as artefacts.
 
 **Trigger:**
@@ -104,7 +90,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 6. Book (`rhiza_book.yml`)
+### 5. Book (`rhiza_book.yml`)
 **Purpose:** Build and deploy documentation to GitLab Pages.
 
 **Trigger:**
@@ -121,7 +107,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 7. Sync (`rhiza_sync.yml`)
+### 6. Sync (`rhiza_sync.yml`)
 **Purpose:** Synchronize repository with its template.
 
 **Trigger:**
@@ -140,7 +126,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 8. Release (`rhiza_release.yml`)
+### 7. Release (`rhiza_release.yml`)
 **Purpose:** Create releases and publish packages to PyPI.
 
 **Trigger:**

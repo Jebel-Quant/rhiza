@@ -1,0 +1,338 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{cite}
+\usepackage{titlesec}
+\usepackage{abstract}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=green!50!black,
+  urlcolor=blue!70!black,
+}
+
+\lstdefinestyle{yaml}{
+  language=,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{orange!80!black},
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{gray!40},
+  backgroundcolor=\color{gray!5},
+  captionpos=b,
+}
+
+\lstdefinestyle{bash}{
+  language=bash,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{gray!40},
+  backgroundcolor=\color{gray!5},
+  captionpos=b,
+}
+
+\title{\textbf{Rhiza: A Living-Template System for Sustainable Python Project Infrastructure}}
+
+\author{
+  Thomas Schmelzer\\
+  \texttt{tschmelzer@jqr.io}
+  \and
+  Harry Campion
+  \and
+  Mark Richardson
+}
+
+\date{March 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Software projects accumulate infrastructure debt: continuous-integration pipelines age out of date, linting rules diverge from community standards, and hard-won configuration improvements never propagate from the project that discovered them to its siblings. Ad-hoc fixes compound this drift without a systematic remedy. We present \textbf{Rhiza}---from the Greek \textit{rhiza}, ``root''---a living-template system for Python projects that decouples the \emph{content} of best-practice infrastructure from the \emph{mechanism} that applies it. Unlike one-time project generators such as Cookiecutter or Copier, Rhiza provides templates that continue to evolve and that downstream projects can pull in selectively at any time. The system is structured around three key abstractions: (i)~a versioned template repository that acts as the authoritative source of curated infrastructure files; (ii)~a lightweight CLI that fetches and merges those files; and (iii)~a modular bundle system that lets teams opt into exactly the features they need. We describe the design rationale, the architectural decisions that guide the implementation, and the operational experience accumulated across more than twenty downstream projects.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Introduction}
+\label{sec:intro}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Every serious Python project carries with it a hidden second project: the infrastructure that makes the first one possible. Continuous-integration pipelines, linting and formatting rules, reproducible environment specifications, pre-commit hooks, security scanners, documentation generators, and Makefile-based development workflows are not incidental---they are the scaffolding on which reliable, maintainable software is built. Yet this scaffolding is almost universally treated as an afterthought.
+
+The typical lifecycle of project infrastructure proceeds as follows. At project creation, a developer copies configuration files from a previous project, consults a blog post, or runs a scaffold tool. The resulting configuration is reasonable for that moment in time. Over months and years, however, the ecosystem moves on: the linter gains new rules, the CI service deprecates old syntax, the recommended Python version changes, a new security vulnerability scanner emerges. The infrastructure falls behind. Keeping it current requires manual effort that no one formally owns, so it rarely happens. The result is configuration drift: each project in an organization diverges from the others and from current best practice, with the gap widening over time.
+
+\textbf{Rhiza} is a response to this problem. Its core thesis is that project infrastructure should be treated as a versioned, updatable artifact---a dependency to be upgraded, not a one-off scaffold to be generated and forgotten. This is not a novel observation; the DevOps and infrastructure-as-code communities have long advocated for treating infrastructure with the same discipline applied to application code~\cite{humble2010continuous,fowler2016infrastructure}. What Rhiza contributes is a concrete, opinionated, Python-centric implementation of this philosophy that is lightweight enough for individual developers and teams to adopt without changing their existing workflows.
+
+The name reflects the ambition: just as a root system sustains a plant by continuously supplying water and nutrients, Rhiza aims to continuously supply modern, well-maintained infrastructure to the projects built on top of it.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Background and Motivation}
+\label{sec:motivation}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{The Configuration-Drift Problem}
+
+Configuration drift in software projects is an instance of the broader problem of \emph{technical debt}~\cite{cunningham1992wycash}. Unlike functional technical debt---code that works but is hard to change---infrastructure debt is often invisible: the tests still pass, the CI pipeline still runs, and no immediate failure signals a problem. The harm materialises gradually: security vulnerabilities go undetected, formatting inconsistencies slow code review, and onboarding new contributors takes longer because each project has idiosyncratic conventions.
+
+Organisations that maintain many Python projects---research groups, consultancies, open-source umbrella projects---feel this cost acutely. A configuration improvement discovered in one project must be manually propagated to each other project. If there are ten projects, the propagation cost is multiplied by ten; if there are fifty, the improvement often simply does not propagate at all.
+
+\subsection{Existing Approaches and Their Limitations}
+
+Several tools exist to help with project scaffolding:
+
+\paragraph{Cookiecutter~\cite{cookiecutter}.} Cookiecutter generates a project directory from a Jinja2 template. It solves the \emph{initialisation} problem well but provides no mechanism for synchronising improvements after the initial generation. Once a project is created, it is on its own.
+
+\paragraph{Copier~\cite{copier}.} Copier addresses the synchronisation gap with an \texttt{update} command that re-applies a template to an existing project. This is a significant advance. However, Copier's update model applies the entire template wholesale, relying on three-way merges to preserve local customisations. This works well for simple files but can produce conflicts for complex, structured files such as CI workflow YAML or modular Makefiles. Additionally, Copier requires projects to opt into its update mechanism from the start, and the learning curve for resolving update conflicts can be steep.
+
+\paragraph{cruft~\cite{cruft}.} cruft adds a Cookiecutter-update workflow via a stored diff approach. It shares Cookiecutter's all-or-nothing update semantics and inherits its limitations.
+
+\paragraph{Template repositories on GitHub.} Many organisations maintain ``template'' repositories that new projects are forked from. This solves initialisation but creates a permanently diverging fork: there is no built-in mechanism to pull upstream changes into child repositories.
+
+\paragraph{Internal tooling.} Large engineering organisations sometimes build bespoke internal tools that enforce a standard project layout. These tools solve the problem well within one organisation but are expensive to build, not shared across the community, and often not maintained long-term.
+
+\subsection{The Need for Living Templates}
+
+The common limitation of the above approaches is that they treat project infrastructure as a \emph{point-in-time} artefact rather than a \emph{continuous} one. Rhiza takes the opposite position: infrastructure files should be versioned, tagged, and upgraded in much the same way that library dependencies are. A project's \texttt{.rhiza/template.yml} file specifies which version of the Rhiza template to use, analogously to how \texttt{pyproject.toml} specifies which version of a library to install. Upgrading is a deliberate act, but it is easy, reversible, and incremental.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{System Design}
+\label{sec:design}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Architectural Overview}
+
+Rhiza is deliberately split into two independent components (ADR-0005):
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{The template repository} (\texttt{jebel-quant/rhiza} on GitHub) is the authoritative source of curated infrastructure files. It is versioned with Git tags and contains the actual content that downstream projects consume.
+
+  \item \textbf{The CLI} (\texttt{rhiza} on PyPI) is the engine that fetches files from the template repository and applies them to a downstream project. It is a separate Python package with its own independent release cadence.
+\end{enumerate}
+
+Separating these concerns means that the CLI can be improved---bug fixes, new commands, better conflict resolution---without forcing downstream projects to adopt new template content, and vice versa. It also means that organisations can fork the template repository and maintain their own curated variant while continuing to use the standard CLI.
+
+\subsection{Template Bundles}
+\label{sec:bundles}
+
+A naive template system maps every file in the template repository to a file in the downstream project. This all-or-nothing approach quickly breaks down: a project that does not use Docker should not receive Docker configuration; a project that is not hosted on GitHub should not receive GitHub Actions workflows.
+
+Rhiza addresses this with \emph{template bundles} (ADR-0006): named, coarse-grained groups of related files. The bundles defined in \texttt{.rhiza/template-bundles.yml} include:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lp{9cm}}
+\toprule
+\textbf{Bundle} & \textbf{Contents} \\
+\midrule
+\texttt{core}   & Makefile infrastructure, \texttt{pyproject.toml} skeleton, \texttt{.python-version}, \texttt{uv.lock} patterns \\
+\texttt{tests}  & pytest configuration, coverage settings, property-based testing scaffold \\
+\texttt{github} & GitHub Actions workflows (CI, lint, security, release, sync, docs) \\
+\texttt{gitlab} & GitLab CI equivalent with feature parity \\
+\texttt{docker} & Dockerfile templates, \texttt{.dockerignore}, container Makefile module \\
+\texttt{book}   & MkDocs configuration, documentation structure, coverage badges \\
+\texttt{marimo} & Marimo notebook scaffold, interactive documentation setup \\
+\texttt{pre-commit} & \texttt{.pre-commit-config.yaml} wired to ruff, black, and isort \\
+\bottomrule
+\end{tabular}
+\caption{Selected Rhiza template bundles.}
+\label{tab:bundles}
+\end{table}
+
+Dependencies between bundles are declared explicitly. For example, the \texttt{book} bundle requires \texttt{tests} because the documentation site includes auto-generated coverage reports. The CLI enforces these constraints at initialisation and sync time, preventing invalid combinations.
+
+A downstream project declares the bundles it uses in \texttt{.rhiza/template.yml}:
+
+\begin{lstlisting}[style=yaml, caption={Example \texttt{.rhiza/template.yml}.}]
+repository: jebel-quant/rhiza
+ref: v0.8.16
+templates:
+  - core
+  - tests
+  - github
+  - docker
+\end{lstlisting}
+
+\subsection{Modular Makefile Architecture}
+\label{sec:makefile}
+
+A single monolithic Makefile is a maintenance burden: it is hard to read, harder to extend without conflicts, and impossible to selectively update. Rhiza adopts a three-layer architecture (ADR-0004):
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Root \texttt{Makefile}} (nine lines): owned by the downstream project, this file simply includes the Rhiza core.
+  \item \textbf{\texttt{.rhiza/rhiza.mk}}: the template-managed core. It auto-includes all files matching \texttt{.rhiza/make.d/*.mk} using a glob pattern.
+  \item \textbf{\texttt{.rhiza/make.d/*.mk}}: one file per feature area, named with numeric prefixes to control load order. Prefixes \texttt{00}--\texttt{19} define configuration variables; \texttt{20}--\texttt{79} define task targets; \texttt{80}--\texttt{99} define hooks.
+\end{enumerate}
+
+Feature modules include \texttt{bootstrap.mk} (environment setup), \texttt{quality.mk} (linting, formatting), \texttt{test.mk} (pytest), \texttt{docs.mk} (MkDocs), \texttt{github.mk} (GitHub CLI helpers), \texttt{docker.mk} (container builds), and \texttt{marimo.mk} (notebook server). Targets use GNU Make's double-colon syntax (\texttt{::}) where appropriate, which allows pre-hook and post-hook targets in separate files to extend a task without modifying the file that defines it. Developers who need project-local shortcuts that should not be committed can place them in \texttt{local.mk}, which is listed in \texttt{.gitignore} by default.
+
+This architecture provides more than forty documented \texttt{make} targets, all discoverable via \texttt{make help}.
+
+\subsection{Reproducible Environments with \texttt{uv}}
+
+A template system that mandates outdated or slow tooling will not be adopted. Rhiza standardises on \texttt{uv}~\cite{uv}---Astral's unified Python version and package manager---for all environment management (ADR-0002). The decision was driven by three considerations:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Single binary}: \texttt{uv} is distributed as a self-contained binary. Installing it does not require Python to be present, which simplifies bootstrapping on CI runners and developer machines alike.
+  \item \textbf{Speed}: \texttt{uv} resolves and installs packages 10--100$\times$ faster than \texttt{pip}, which meaningfully reduces CI wait times on projects with large dependency trees.
+  \item \textbf{Lock file}: \texttt{uv.lock} pins the entire transitive dependency graph, ensuring that every environment---local, CI, production---is identical.
+\end{enumerate}
+
+The \texttt{.python-version} file, automatically read by \texttt{uv}, pins the Python interpreter version. Together these two files are the minimal, complete specification of a reproducible Python environment.
+
+\subsection{Continuous Quality Enforcement}
+
+Rhiza integrates a layered quality stack that operates at multiple stages of the development cycle:
+
+\paragraph{Pre-commit hooks.} The \texttt{pre-commit} bundle installs hooks that run \texttt{ruff} for linting and formatting, catching issues before they enter the repository.
+
+\paragraph{CI pipelines.} The \texttt{github} and \texttt{gitlab} bundles provide workflows that run on every pull request: unit tests across Python 3.11--3.14, type checking with \texttt{ty}, dependency validation with \texttt{deptry}, security scanning with \texttt{pip-audit} and \texttt{bandit}, and static analysis with \texttt{semgrep}.
+
+\paragraph{Automated dependency updates.} A Renovate configuration file, included in the \texttt{core} bundle, opens pull requests whenever a pinned dependency or the \texttt{ref} in \texttt{.rhiza/template.yml} is updated upstream. This closes the loop: Rhiza itself is treated as a dependency that can be automatically proposed for upgrade.
+
+\subsection{Agentic Workflow Integration}
+
+A distinguishing feature of recent Rhiza releases is first-class integration with AI coding assistants. The \texttt{github} bundle includes GitHub Actions workflow files that invoke Claude Code~\cite{claudecode} (or optionally GitHub Copilot) for tasks such as:
+
+\begin{itemize}
+  \item \textbf{\texttt{analyse-repo}}: produces a structured report of recent changes, open issues, and technical debt.
+  \item \textbf{\texttt{copilot}}: runs an AI agent on a specified task file, committing the result back to the branch.
+  \item \textbf{\texttt{summarise-changes}}: generates human-readable release notes from the git log.
+\end{itemize}
+
+These workflows treat AI agents as first-class CI participants: they are triggered by GitHub Actions events, receive a clean environment, and produce reviewable pull-request diffs. This integration reflects the view that AI-assisted development is increasingly part of the standard software engineering toolkit and should be configured consistently across projects.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Operational Experience}
+\label{sec:experience}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Downstream Adoption}
+
+Rhiza has been applied to more than twenty Python projects spanning quantitative finance libraries, data-pipeline tools, and developer-tooling packages. Across these projects, the mean time to adopt a new infrastructure improvement---for example, upgrading to a new Python version or enabling a new \texttt{ruff} lint rule---has fallen from several weeks to typically one or two days: the time needed for Renovate to open a PR against the Rhiza template repository and for each downstream project to rebase against the new tag.
+
+\subsection{Conflict Resolution in Practice}
+
+The most common source of friction in living-template systems is merge conflicts when a project has customised a file that the template also manages. Rhiza mitigates this in several ways:
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Bundle granularity.} By grouping files into coarse bundles, Rhiza reduces the frequency with which any given downstream file is touched by an upstream update.
+  \item \textbf{Makefile hooks.} Downstream projects that need to extend a Makefile target can do so by adding a \texttt{::} target in \texttt{local.mk} rather than modifying the managed file. The managed file can therefore be updated freely.
+  \item \textbf{Configuration delegation.} Where possible, tool configuration is placed in \texttt{pyproject.toml} (owned by the downstream project) rather than in separate managed files. The template provides a commented scaffold section; the downstream project fills it in.
+\end{enumerate}
+
+\subsection{Architecture Decision Records}
+
+All non-trivial design decisions in Rhiza are recorded as Architecture Decision Records~\cite{nygard2011adr} in \texttt{docs/adr/}. This practice serves two purposes. First, it provides newcomers with the \emph{reasoning} behind choices, not just the choices themselves---critical for understanding why, say, \texttt{uv} was chosen over \texttt{poetry} or why the CLI and template repository are separate packages. Second, it creates a structured audit trail that makes revisiting decisions easier when the context changes.
+
+Nine ADRs have been recorded to date, covering: the use of ADRs themselves (ADR-0001), adoption of \texttt{uv} (ADR-0002), CI platform choices (ADR-0003), the modular Makefile architecture (ADR-0004), separation of template from CLI (ADR-0005), the bundle system (ADR-0006), dual GitHub/GitLab support (ADR-0007), Marimo integration (ADR-0008), and pre-commit hook strategy (ADR-0009).
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Related Work}
+\label{sec:related}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Rhiza sits at the intersection of several research and engineering topics:
+
+\paragraph{Infrastructure as Code.} The IaC movement~\cite{humble2010continuous} established that infrastructure should be version-controlled, peer-reviewed, and automatically applied. Rhiza applies this principle to the layer \emph{below} application infrastructure: the configuration files and tooling that enable developers to write and test application code.
+
+\paragraph{Convention over configuration.} Ruby on Rails~\cite{rails} popularised the principle that opinionated defaults reduce cognitive overhead. Rhiza's template bundles encode opinionated defaults for Python projects, with the expectation that most projects will use them as-is and only override where genuinely necessary.
+
+\paragraph{Package managers and dependency pinning.} The reproducibility guarantees that Nix~\cite{dolstra2004nix}, Cargo, and modern Python tools like \texttt{uv} provide for application dependencies are extended by Rhiza to infrastructure configuration: the \texttt{ref} field in \texttt{template.yml} pins the exact version of infrastructure used, making environments reproducible not just in terms of library versions but also in terms of development tooling.
+
+\paragraph{Polyglot monorepos.} Organisations using monorepos (e.g.,~\cite{potvin2016google}) face a similar challenge: keeping build and CI configuration consistent across many packages. Rhiza offers a lighter-weight alternative for organisations that prefer independent repositories.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Future Directions}
+\label{sec:future}
+% ─────────────────────────────────────────────────────────────────────────────
+
+The Rhiza roadmap identifies several directions for future work:
+
+\paragraph{Finer-grained synchronisation.} The current sync model operates at the bundle level. Future work will explore file-level and section-level synchronisation, enabling, for example, the update of a single GitHub Actions job within a larger workflow file without touching the rest of the file.
+
+\paragraph{Validation tooling.} A \texttt{rhiza validate} command currently checks that a project's \texttt{template.yml} is consistent with the files on disk. Expanding this to a full compliance report---identifying files that have drifted from the template---would help teams understand the cost of deferred upgrades.
+
+\paragraph{Multi-language support.} The core abstractions (versioned templates, named bundles, modular task files) are language-agnostic. Extending Rhiza to support TypeScript and Rust projects would broaden its applicability without requiring fundamental architectural changes.
+
+\paragraph{Community bundle registry.} Currently, all bundles live in the canonical Rhiza repository. A community registry would allow third parties to publish bundles---for example, a bundle for a particular cloud provider's deployment tooling---that can be mixed in alongside the core set.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Conclusion}
+\label{sec:conclusion}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Software infrastructure is not a one-time concern. It requires the same ongoing investment as the application code it supports, yet most organisations lack the tooling to make that investment systematically rather than heroically. Rhiza addresses this gap with a living-template system that treats infrastructure configuration as a versioned, upgradeable dependency. Its key contributions are:
+
+\begin{enumerate}[leftmargin=*]
+  \item A two-component architecture that separates template content from the sync mechanism, enabling independent evolution of each.
+  \item A named bundle system that provides coarse-grained, dependency-aware feature selection.
+  \item A modular Makefile architecture with hook points that accommodate local customisation without preventing template updates.
+  \item First-class integration with modern Python tooling (\texttt{uv}, \texttt{ruff}, \texttt{pre-commit}, Marimo) and AI-assisted development workflows.
+  \item A documented, ADR-driven design process that makes the system's rationale transparent and revisable.
+\end{enumerate}
+
+Rhiza is open source under the MIT licence. The template repository is available at \url{https://github.com/jebel-quant/rhiza} and the CLI is installable via \texttt{uvx rhiza}.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+
+\bibitem{humble2010continuous}
+J.~Humble and D.~Farley, \textit{Continuous Delivery: Reliable Software Releases through Build, Test, and Deployment Automation}. Addison-Wesley, 2010.
+
+\bibitem{fowler2016infrastructure}
+K.~Morris, \textit{Infrastructure as Code: Managing Servers in the Cloud}. O'Reilly Media, 2016.
+
+\bibitem{cunningham1992wycash}
+W.~Cunningham, ``The WyCash portfolio management system,'' in \textit{Proc. ACM OOPSLA}, 1992.
+
+\bibitem{cookiecutter}
+A.~Roy, D.~Greenfeld, et al., ``Cookiecutter,'' \url{https://cookiecutter.readthedocs.io}, 2013--.
+
+\bibitem{copier}
+J.~M.~Macías et al., ``Copier,'' \url{https://copier.readthedocs.io}, 2019--.
+
+\bibitem{cruft}
+S.~Kothari et al., ``cruft,'' \url{https://cruft.github.io/cruft}, 2019--.
+
+\bibitem{uv}
+Astral, ``uv: An extremely fast Python package and project manager,'' \url{https://docs.astral.sh/uv}, 2024--.
+
+\bibitem{claudecode}
+Anthropic, ``Claude Code: Agentic coding in the terminal,'' \url{https://claude.ai/code}, 2025--.
+
+\bibitem{nygard2011adr}
+M.~T.~Nygard, ``Documenting architecture decisions,'' \url{https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions}, 2011.
+
+\bibitem{rails}
+D.~H.~Hansson, ``Ruby on Rails,'' \url{https://rubyonrails.org}, 2004--.
+
+\bibitem{dolstra2004nix}
+E.~Dolstra, M.~de Jonge, and E.~Visser, ``Nix: A safe and policy-free system for software deployment,'' in \textit{Proc. LISA}, 2004.
+
+\bibitem{potvin2016google}
+R.~Potvin and J.~Levenberg, ``Why Google stores billions of lines of code in a single repository,'' \textit{Communications of the ACM}, vol.~59, no.~7, pp.~78--87, 2016.
+
+\end{thebibliography}
+
+\end{document}

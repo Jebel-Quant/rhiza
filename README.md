@@ -225,7 +225,7 @@ Keep your templates up-to-date with automated sync workflows:
 - The `.github/workflows/sync.yml` workflow runs on schedule or manually
 - Creates pull requests with template updates
 
-For GitHub Token configuration and details, see the [GitHub Actions documentation](.github/README.md).
+For GitHub Token configuration and details, see the [GitHub Actions documentation](.rhiza/docs/TOKEN_SETUP.md).
 
 ### What to Expect After Integration
 
@@ -368,7 +368,7 @@ make presentation-pdf    # Generate PDF slides
 make presentation-serve  # Serve with live reload
 ```
 
-For detailed information about creating and customising presentations, see [presentation/README.md](presentation/README.md).
+For detailed information about creating and customising presentations, see [presentation/README.md](docs/presentations/README.md).
 
 ### Documentation Examples
 
@@ -392,7 +392,7 @@ Hello, World!
 
 ### Documentation Customisation
 
-For information on customising the look and feel of your documentation, see [book/README.md](book/README.md).
+For information on customising the look and feel of your documentation, see [book/README.md](docs/BOOK.md).
 
 ### Python Version Management
 
