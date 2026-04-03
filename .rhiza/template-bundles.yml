@@ -250,7 +250,7 @@ bundles:
       - .rhiza/requirements/marimo.txt
 
       # Marimo notebooks directory
-      - book/marimo
+      - book/marimo/notebooks
 
       # Documentation
       - docs/MARIMO.md

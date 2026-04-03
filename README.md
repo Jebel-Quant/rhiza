@@ -464,7 +464,6 @@ Rhiza includes comprehensive maintainability features to help track project heal
 
 ### Roadmap & Planning
 
-- **[ROADMAP.md](ROADMAP.md)** - Detailed project roadmap with planned features, release timeline, and long-term vision
 - **[docs/PROJECT_BOARD.md](docs/PROJECT_BOARD.md)** - Guide for setting up GitHub Project Boards to track enhancements and roadmap items
 
 ### Technical Debt Tracking
@@ -504,7 +503,6 @@ Contributions are welcome! To contribute to Rhiza itself (not using Rhiza in you
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## 📄 License
 
