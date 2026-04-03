@@ -27,16 +27,6 @@ security: install ## run security scans (pip-audit and bandit)
 	@printf "${BLUE}[INFO] Running bandit security scan...${RESET}\n"
 	@${UVX_BIN} bandit -r ${SOURCE_FOLDER} -ll -q -c pyproject.toml
 
-##@ Security
-
-
-#.PHONY: security
-#security: install ## run security scans (pip-audit and bandit)
-#	@printf "${BLUE}[INFO] Running pip-audit for dependency vulnerabilities...${RESET}\n"
-#	@${UVX_BIN} pip-audit
-#	@printf "${BLUE}[INFO] Running bandit security scan...${RESET}\n"
-#	@${UVX_BIN} bandit -r ${SOURCE_FOLDER} -ll -q -c pyproject.toml
-
 ##@ Quality
 
 .PHONY: semgrep
