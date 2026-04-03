@@ -1,0 +1,46 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Paper (GitLab CI)
+#
+# Purpose: Compile the LaTeX paper (paper/*.tex) to a PDF and publish
+#          it as a downloadable pipeline artifact.
+#          Only active when a *.tex file exists under paper/.
+#
+# Trigger: On push to main/master or when files under paper/ change.
+
+paper:build:
+  stage: build
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  before_script:
+    - apt-get update && apt-get install -y texlive-latex-extra texlive-fonts-recommended texlive-bibtex-extra latexmk
+  script:
+    - |
+      if ! compgen -G "paper/*.tex" > /dev/null 2>&1; then
+        echo "No paper/*.tex found; skipping LaTeX compilation."
+        exit 0
+      fi
+
+      if [ -f paper/basanos.tex ]; then
+        tex_file="basanos.tex"
+      else
+        tex_file=$(find paper -maxdepth 1 -name "*.tex" | head -1 | xargs basename)
+      fi
+      pdf_file="${tex_file%.tex}.pdf"
+
+      cd paper && latexmk -pdf -interaction=nonstopmode "${tex_file}"
+      cp "${pdf_file}" "../${pdf_file}"
+  artifacts:
+    paths:
+      - "*.pdf"
+    expire_in: 30 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master"
+      changes:
+        - paper/**/*
+        - .gitlab/workflows/rhiza_paper.yml
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - paper/**/*
+        - .gitlab/workflows/rhiza_paper.yml
