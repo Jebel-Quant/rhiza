@@ -3,11 +3,11 @@
 #
 # Workflow: Paper (GitLab CI)
 #
-# Purpose: Compile the LaTeX paper (paper/*.tex) to a PDF and publish
+# Purpose: Compile the LaTeX paper (docs/paper/*.tex) to a PDF and publish
 #          it as a downloadable pipeline artifact.
-#          Only active when a *.tex file exists under paper/.
+#          Only active when a *.tex file exists under docs/paper/.
 #
-# Trigger: On push to main/master or when files under paper/ change.
+# Trigger: On push to main/master or when files under docs/paper/ change.
 
 paper:build:
   stage: build
@@ -17,20 +17,20 @@ paper:build:
     - apt-get update && apt-get install -y texlive-latex-extra texlive-fonts-recommended texlive-bibtex-extra latexmk
   script:
     - |
-      if ! compgen -G "paper/*.tex" > /dev/null 2>&1; then
-        echo "No paper/*.tex found; skipping LaTeX compilation."
+      if ! compgen -G "docs/paper/*.tex" > /dev/null 2>&1; then
+        echo "No docs/paper/*.tex found; skipping LaTeX compilation."
         exit 0
       fi
 
-      if [ -f paper/basanos.tex ]; then
+      if [ -f docs/paper/basanos.tex ]; then
         tex_file="basanos.tex"
       else
-        tex_file=$(find paper -maxdepth 1 -name "*.tex" | head -1 | xargs basename)
+        tex_file=$(find docs/paper -maxdepth 1 -name "*.tex" | head -1 | xargs basename)
       fi
       pdf_file="${tex_file%.tex}.pdf"
 
-      cd paper && latexmk -pdf -interaction=nonstopmode "${tex_file}"
-      cp "${pdf_file}" "../${pdf_file}"
+      cd docs/paper && latexmk -pdf -interaction=nonstopmode "${tex_file}"
+      cp "${pdf_file}" "../../${pdf_file}"
   artifacts:
     paths:
       - "*.pdf"
@@ -38,9 +38,9 @@ paper:build:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master"
       changes:
-        - paper/**/*
+        - docs/paper/**/*
         - .gitlab/workflows/rhiza_paper.yml
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
-        - paper/**/*
+        - docs/paper/**/*
         - .gitlab/workflows/rhiza_paper.yml
