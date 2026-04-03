@@ -1,75 +1,51 @@
-# MkDocs configuration for project documentation
-# https://www.mkdocs.org/user-guide/configuration/
+site_name: rhiza
+site_description: Reusable configuration templates for modern Python projects.
+site_url: https://jebel-quant.github.io/rhiza/
+repo_url: https://github.com/Jebel-Quant/rhiza
+repo_name: Jebel-Quant/rhiza
 
-site_name: Rhiza Documentation
-site_description: Reusable configuration templates for modern Python projects
-site_url: ""
+docs_dir: docs
+site_dir: _mkdocs
 
-# Documentation source directory (relative to this config file location)
-# Note: site_dir is passed via command line (-d flag) to avoid path conflicts
-docs_dir: .
-
-# Theme configuration - Material for MkDocs
-# https://squidfunk.github.io/mkdocs-material/
 theme:
   name: material
   logo: assets/rhiza-logo.svg
   favicon: assets/rhiza-logo.svg
-  palette:
-    # Dark mode
-    - scheme: slate
-      primary: indigo
-      accent: purple
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-    # Light mode
-    - scheme: default
-      primary: indigo
-      accent: purple
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
   features:
     - navigation.tabs
     - navigation.sections
     - navigation.top
+    - search.suggest
     - search.highlight
-    - search.share
-    - content.code.copy
-    - content.code.annotate
 
-# Markdown extensions
+plugins:
+  - search
+
 markdown_extensions:
-  # Code highlighting
-  - pymdownx.highlight:
-      anchor_linenums: true
-      line_spans: __span
-      pygments_lang_class: true
-  - pymdownx.inlinehilite
-  - pymdownx.snippets
-  # Code fences with Mermaid diagram support
+  - md_in_html
+  - pymdownx.highlight
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
-  # Admonitions (note, warning, tip boxes)
+  - pymdownx.snippets:
+      base_path: ["."]
   - admonition
-  - pymdownx.details
-  # Tables
-  - tables
-  # Task lists
-  - pymdownx.tasklist:
-      custom_checkbox: true
+  - toc:
+      permalink: true
+      toc_depth: 3
 
-# Navigation structure
+extra_javascript:
+  - https://unpkg.com/mermaid@11.4.0/dist/mermaid.esm.min.mjs
+
 nav:
   - Home: index.md
   - Getting Started:
     - Quick Reference: QUICK_REFERENCE.md
     - Demo: DEMO.md
     - Customization: CUSTOMIZATION.md
+    - Book (Docs Site): BOOK.md
     - Extending Rhiza: EXTENDING_RHIZA.md
   - Reference:
     - Architecture: ARCHITECTURE.md
@@ -83,7 +59,6 @@ nav:
     - Dev Container: DEVCONTAINER.md
     - VSCode Extensions: VSCODE_EXTENSIONS.md
     - Marimo: MARIMO.md
-    - Book: BOOK.md
     - Presentation: PRESENTATION.md
     - GitHub Agentic Workflows: GH_AW.md
   - Operations:
@@ -104,9 +79,5 @@ nav:
     - ADR-0007 Support Dual CI/CD (GitHub & GitLab): adr/0007-support-dual-cicd-github-and-gitlab.md
     - ADR-0008 Use Marimo for Interactive Notebooks: adr/0008-use-marimo-for-interactive-notebooks.md
     - ADR-0009 Use Pre-commit Hooks for Code Quality: adr/0009-use-pre-commit-hooks-for-code-quality.md
-
-# Mermaid diagram support
-# https://squidfunk.github.io/mkdocs-material/reference/diagrams/
-extra_javascript:
-  - https://unpkg.com/mermaid@11.4.0/dist/mermaid.esm.min.mjs
-
+  - Notebooks: notebooks.md
+  - Reports: reports.md

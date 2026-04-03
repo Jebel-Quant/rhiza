@@ -1,67 +1,142 @@
-# Project Book and Documentation
+# Book (Documentation Site)
 
-This directory contains the source and templates for generating the Rhiza companion book and API documentation.
+The Rhiza documentation site — referred to as the **book** — is built with [MkDocs](https://www.mkdocs.org/) using the [Material theme](https://squidfunk.github.io/mkdocs-material/). This page explains how to customise its look and feel.
 
-## Structure
-
-- `marimo/`: Interactive [Marimo](https://marimo.io/) notebooks that are included in the book.
-- `minibook-templates/`: Jinja2 templates for the minibook generation.
-- `pdoc-templates/`: Custom templates for [pdoc](https://pdoc.dev/) API documentation.
-- `book.mk`: Specialised Makefile for building the book and documentation.
-
-## Building the Book
-
-You can build the complete documentation book using the main project Makefile:
+## Building and Serving
 
 ```bash
+# Build the full book (runs tests, exports notebooks, then builds MkDocs)
 make book
+
+# Serve the docs locally with live reload (useful while editing)
+make mkdocs-serve
+
+# Build only the MkDocs site (skips test reports and notebooks)
+make mkdocs-build
 ```
 
-This process involves:
-1. Exporting Marimo notebooks to HTML.
-2. Generating API documentation from the source code.
-3. Combining them into a cohesive "book" structure.
-
-## Documentation Customisation
-
-You can customise the look and feel of your documentation by providing your own templates.
-
-### API Documentation (pdoc)
-
-The `make docs` command checks for a directory at `book/pdoc-templates`. If found, it uses the templates within that directory to generate the API documentation.
-
-To customise the API docs:
-1. Create the directory: `mkdir -p book/pdoc-templates`
-2. Add your Jinja2 templates (e.g., `module.html.jinja2`) to this directory.
-
-See the [pdoc documentation](https://pdoc.dev/docs/pdoc.html#templates) for more details on templating.
-
-### Project Logo
-
-The documentation generation supports embedding a project logo in the sidebar.
-
-**Default Behavior:**
-By default, the build looks for `assets/rhiza-logo.svg`.
-
-**Customization:**
-You can change the logo by setting the `LOGO_FILE` variable in your project's `Makefile` or `local.mk`.
+The built site is written to `_book/` by default. To change the output directory:
 
 ```makefile
-# Example: Use a custom PNG logo
-LOGO_FILE := assets/my-company-logo.png
+# In your root Makefile or local.mk
+BOOK_OUTPUT := _site
 ```
 
-To disable the logo entirely, set the variable to an empty string:
+## Configuration
+
+The MkDocs configuration lives in `mkdocs.yml` at the root of the repository. Key settings:
+
+| Setting | Description |
+|---------|-------------|
+| `site_name` | The title shown in the browser tab and header |
+| `site_url` | Canonical URL for the deployed site |
+| `docs_dir` | Source directory for Markdown files (default: `docs`) |
+| `site_dir` | Build output for `mkdocs-build` (default: `_mkdocs`) |
+| `theme.name` | Theme name — currently `material` |
+
+## Theme Customization
+
+### Logo and Favicon
+
+The logo shown in the sidebar is controlled by the `LOGO_FILE` Makefile variable:
 
 ```makefile
-# Example: Disable logo
-LOGO_FILE :=
+# In your root Makefile or local.mk
+LOGO_FILE := assets/my-logo.svg
 ```
 
-### Companion Book (minibook)
+To change the logo and favicon directly in `mkdocs.yml`:
 
-The `make book` command checks for a template at `book/minibook-templates/custom.html.jinja2`. If found, it uses this template for the minibook generation.
+```yaml
+theme:
+  name: material
+  logo: assets/my-logo.svg
+  favicon: assets/my-favicon.png
+```
 
-To customise the book:
-1. Create the directory: `mkdir -p book/minibook-templates`
-2. Create your custom template at `book/minibook-templates/custom.html.jinja2`.
+### Colour Palette
+
+Add a `palette` block to the `theme` section of `mkdocs.yml`:
+
+```yaml
+theme:
+  name: material
+  palette:
+    primary: indigo
+    accent: indigo
+```
+
+See the [Material colour reference](https://squidfunk.github.io/mkdocs-material/setup/changing-the-colors/) for the full list of named colours. You can also supply a hex value via CSS (see below).
+
+### Fonts
+
+```yaml
+theme:
+  name: material
+  font:
+    text: Roboto
+    code: Roboto Mono
+```
+
+Set `font: false` to use system fonts and avoid loading anything from Google Fonts.
+
+### Custom CSS and JavaScript
+
+Create override files and reference them in `mkdocs.yml`:
+
+```yaml
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/extra.js
+```
+
+Place the files under `docs/stylesheets/` and `docs/javascripts/` respectively. For example, `docs/stylesheets/extra.css`:
+
+```css
+:root {
+  --md-primary-fg-color: #1a73e8;
+  --md-primary-fg-color--light: #e8f0fe;
+  --md-primary-fg-color--dark: #1557b0;
+}
+```
+
+### Overriding Theme Templates
+
+Material supports a `custom_dir` override mechanism. Create a `docs/overrides/` directory and point to it in `mkdocs.yml`:
+
+```yaml
+theme:
+  name: material
+  custom_dir: docs/overrides
+```
+
+Any file placed in `docs/overrides/` that matches a path from the Material theme will replace the original. For example, to customise the footer, copy `partials/footer.html` from the Material theme source into `docs/overrides/partials/footer.html` and edit it there.
+
+See the [Material theme documentation on template overrides](https://squidfunk.github.io/mkdocs-material/customization/#extending-the-theme) for the full list of available partials.
+
+## Navigation
+
+The page tree is defined under the `nav` key in `mkdocs.yml`:
+
+```yaml
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Reference: QUICK_REFERENCE.md
+    - Demo: DEMO.md
+  - Reference:
+    - Architecture: ARCHITECTURE.md
+```
+
+Omitting the `nav` key causes MkDocs to generate navigation automatically from the `docs/` directory structure.
+
+## Makefile Variables Reference
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BOOK_OUTPUT` | `_book` | Output directory for `make book` |
+| `MKDOCS_OUTPUT` | `_mkdocs` | Output directory for `make mkdocs-build` |
+| `MKDOCS_CONFIG` | `mkdocs.yml` | Path to the MkDocs config file |
+| `LOGO_FILE` | `.rhiza/assets/rhiza-logo.svg` | Logo used in the sidebar |

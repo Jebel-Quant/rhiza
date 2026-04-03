@@ -112,8 +112,8 @@ bundles:
       - LICENSE
 
       # Community files
-      - CONTRIBUTING.md
-      - CODE_OF_CONDUCT.md
+      - .rhiza/CONTRIBUTING.md
+      - .rhiza/CODE_OF_CONDUCT.md
 
       # Security policy (root-level for GitHub visibility)
       - SECURITY.md
@@ -242,8 +242,8 @@ bundles:
   # ============================================================================
   marimo:
     description: "Interactive Marimo notebooks for data exploration and documentation"
-    standalone: false
-    requires: [book]
+    standalone: true
+    requires: []
     files:
       # Marimo configuration
       - .rhiza/make.d/marimo.mk
@@ -275,10 +275,6 @@ bundles:
     files:
       # Book building configuration
       - .rhiza/make.d/book.mk
-      - .rhiza/templates/minibook
-
-      # Documentation
-      - docs/BOOK.md
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_book.yml
