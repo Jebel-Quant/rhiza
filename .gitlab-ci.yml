@@ -9,8 +9,7 @@
 # Workflows included:
 #   - CI: Run tests on multiple Python versions
 #   - VALIDATE: Validate Rhiza configuration
-#   - DEPTRY: Check dependencies
-#   - PRE-COMMIT: Run pre-commit checks
+#   - QUALITY: Dependency checks, pre-commit hooks, docs coverage, link checking
 #   - BOOK: Build and deploy documentation
 #   - SYNC: Synchronize with template repository
 #   - RELEASE: Release workflow for tags
@@ -53,16 +52,8 @@ include:
       - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       - if: $CI_COMMIT_BRANCH
 
-  # Deptry - Check dependencies
-  - local: '.gitlab/workflows/rhiza_deptry.yml'
-    rules:
-      - if: $CI_COMMIT_TAG
-        when: never
-      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      - if: $CI_COMMIT_BRANCH
-
-  # Pre-commit - Code quality checks
-  - local: '.gitlab/workflows/rhiza_pre-commit.yml'
+  # Quality - Dependency checks, pre-commit hooks, docs coverage, link checking
+  - local: '.gitlab/workflows/rhiza_quality.yml'
     rules:
       - if: $CI_COMMIT_TAG
         when: never

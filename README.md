@@ -225,7 +225,7 @@ Keep your templates up-to-date with automated sync workflows:
 - The `.github/workflows/sync.yml` workflow runs on schedule or manually
 - Creates pull requests with template updates
 
-For GitHub Token configuration and details, see the [GitHub Actions documentation](.github/README.md).
+For GitHub Token configuration and details, see the [GitHub Actions documentation](.rhiza/docs/TOKEN_SETUP.md).
 
 ### What to Expect After Integration
 
@@ -317,7 +317,7 @@ Presentation
   presentation-serve    serve presentation interactively with Marp
 
 Docker
-  docker-build          build Docker image 
+  docker-build          build Docker image
   docker-run            run the Docker container
   docker-clean          remove Docker image
 
@@ -368,7 +368,7 @@ make presentation-pdf    # Generate PDF slides
 make presentation-serve  # Serve with live reload
 ```
 
-For detailed information about creating and customising presentations, see [presentation/README.md](presentation/README.md).
+For detailed information about creating and customising presentations, see [presentation/README.md](docs/presentations/README.md).
 
 ### Documentation Examples
 
@@ -392,7 +392,7 @@ Hello, World!
 
 ### Documentation Customisation
 
-For information on customising the look and feel of your documentation, see [book/README.md](book/README.md).
+For information on customising the look and feel of your documentation, see [book/README.md](docs/BOOK.md).
 
 ### Python Version Management
 
@@ -464,7 +464,6 @@ Rhiza includes comprehensive maintainability features to help track project heal
 
 ### Roadmap & Planning
 
-- **[ROADMAP.md](ROADMAP.md)** - Detailed project roadmap with planned features, release timeline, and long-term vision
 - **[docs/PROJECT_BOARD.md](docs/PROJECT_BOARD.md)** - Guide for setting up GitHub Project Boards to track enhancements and roadmap items
 
 ### Technical Debt Tracking
@@ -504,7 +503,6 @@ Contributions are welcome! To contribute to Rhiza itself (not using Rhiza in you
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## 📄 License
 

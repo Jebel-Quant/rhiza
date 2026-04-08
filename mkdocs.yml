@@ -45,6 +45,7 @@ nav:
     - Quick Reference: QUICK_REFERENCE.md
     - Demo: DEMO.md
     - Customization: CUSTOMIZATION.md
+    - Book (Docs Site): BOOK.md
     - Extending Rhiza: EXTENDING_RHIZA.md
   - Reference:
     - Architecture: ARCHITECTURE.md
