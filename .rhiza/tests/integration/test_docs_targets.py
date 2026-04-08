@@ -44,15 +44,26 @@ def test_mkdocs_extra_packages_used_in_serve(docs_makefile):
     )
 
 
-def test_mkdocs_build_dry_run_with_extra_package(git_repo, docs_makefile):
-    """Test that passing MKDOCS_EXTRA_PACKAGES on the command line is accepted by make."""
-    result = subprocess.run(  # nosec
-        [MAKE, "-n", "mkdocs-build", "MKDOCS_EXTRA_PACKAGES=--with mkdocs-graphviz"],
-        cwd=git_repo,
-        capture_output=True,
-        text=True,
-    )
-    assert "no rule to make target" not in result.stderr.lower(), "mkdocs-build should be a defined target"
-    assert result.returncode == 0, f"Dry-run failed: {result.stderr}"
-    # The extra package flag should appear in the dry-run output
-    assert "mkdocs-graphviz" in result.stdout, "MKDOCS_EXTRA_PACKAGES value should be visible in the dry-run command"
+def test_mkdocs_build_dry_run_with_extra_packages(git_repo, docs_makefile):
+    """Test that passing MKDOCS_EXTRA_PACKAGES on the command line is accepted by make.
+
+    Validates both a single package and multiple packages to confirm the variable
+    correctly extends the uvx invocation in all cases.
+    """
+    for extra in [
+        "--with mkdocs-graphviz",
+        "--with mkdocs-graphviz --with mkdocs-mermaid2",
+    ]:
+        result = subprocess.run(  # nosec
+            [MAKE, "-n", "mkdocs-build", f"MKDOCS_EXTRA_PACKAGES={extra}"],
+            cwd=git_repo,
+            capture_output=True,
+            text=True,
+        )
+        assert "no rule to make target" not in result.stderr.lower(), "mkdocs-build should be a defined target"
+        assert result.returncode == 0, f"Dry-run failed: {result.stderr}"
+        # Each extra package flag should appear in the dry-run output
+        for pkg in ["mkdocs-graphviz", "mkdocs-mermaid2"][: len(extra.split("--with")) - 1]:
+            assert pkg in result.stdout, (
+                f"MKDOCS_EXTRA_PACKAGES package '{pkg}' should be visible in the dry-run command"
+            )
