@@ -16,6 +16,9 @@ mkdocs-build:: install-uv
 
 BOOK_OUTPUT ?= _book
 
+# Detect mkdocs config: prefer root-level, fall back to docs/mkdocs.yml
+_MKDOCS_CFG := $(if $(wildcard mkdocs.yml),mkdocs.yml,$(if $(wildcard docs/mkdocs.yml),docs/mkdocs.yml,))
+
 ##@ Book
 
 _book-reports: test benchmark stress hypothesis-test
@@ -58,7 +61,8 @@ _book-notebooks:
 	fi
 
 book:: _book-reports _book-notebooks ## compile the companion book via MkDocs
-	@$(MAKE) mkdocs-build MKDOCS_OUTPUT=$(BOOK_OUTPUT)
+	@$(MAKE) mkdocs-build MKDOCS_OUTPUT=$(BOOK_OUTPUT)$(if $(_MKDOCS_CFG), MKDOCS_CONFIG=$(_MKDOCS_CFG),)
+	@mkdir -p "$(BOOK_OUTPUT)"
 	@touch "$(BOOK_OUTPUT)/.nojekyll"
 	@printf "${GREEN}[SUCCESS] Book built at $(BOOK_OUTPUT)/${RESET}\n"
 	@tree $(BOOK_OUTPUT)
