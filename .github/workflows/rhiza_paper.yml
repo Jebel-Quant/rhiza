@@ -81,7 +81,7 @@ jobs:
 
       - name: Upload PDF artifact
         if: ${{ steps.check_tex.outputs.tex_present == 'true' }}
-        uses: actions/upload-artifact@v7.0.0
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{ steps.detect_tex.outputs.pdf_file }}
           path: paper/${{ steps.detect_tex.outputs.pdf_file }}
