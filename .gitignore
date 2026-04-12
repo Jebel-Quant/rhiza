@@ -15,7 +15,7 @@ __marimo__
 _tests
 _book
 _pdoc
-docs/notebooks
+docs/notebooks/*.html
 docs/reports
 docs/notebooks.md
 docs/reports.md
@@ -24,6 +24,14 @@ _mkdocs
 _benchmarks
 _jupyter
 _site
+
+# LaTeX build artifacts
+docs/paper/*.aux
+docs/paper/*.fdb_latexmk
+docs/paper/*.fls
+docs/paper/*.log
+docs/paper/*.out
+docs/paper/*.toc
 
 # temp file used by Junie
 .output.txt

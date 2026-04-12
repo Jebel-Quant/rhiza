@@ -16,6 +16,9 @@ mkdocs-build:: install-uv
 
 BOOK_OUTPUT ?= _book
 
+# Detect mkdocs config: prefer root-level, fall back to docs/mkdocs.yml
+_MKDOCS_CFG := $(if $(wildcard mkdocs.yml),mkdocs.yml,$(if $(wildcard docs/mkdocs.yml),docs/mkdocs.yml,))
+
 ##@ Book
 
 _book-reports: test benchmark stress hypothesis-test
@@ -42,22 +45,24 @@ _book-reports: test benchmark stress hypothesis-test
 	@[ -f "docs/reports/coverage/index.html" ]     && echo "- [Coverage Report](reports/coverage/index.html)"      >> docs/reports.md || true
 
 _book-notebooks:
-	@if [ -d "docs/notebooks" ]; then \
-	  for nb in docs/notebooks/*.py; do \
+	@if [ -d "$(MARIMO_FOLDER)" ]; then \
+	  for nb in $(MARIMO_FOLDER)/*.py; do \
 	    name=$$(basename "$$nb" .py); \
 	    printf "${BLUE}[INFO] Exporting $$nb${RESET}\n"; \
 	    abs_output="$$(pwd)/docs/notebooks/$$name.html"; \
-	    (cd "$$(dirname "$$nb")" && uv run marimo export html --sandbox "$$(basename "$$nb")" -o "$$abs_output"); \
+	    mkdir -p docs/notebooks; \
+	    (cd "$$(dirname "$$nb")" && ${UV_BIN} run marimo export html --sandbox "$$(basename "$$nb")" -o "$$abs_output"); \
 	  done; \
 	  printf "# Marimo Notebooks\n\n" > docs/notebooks.md; \
 	  for html in docs/notebooks/*.html; do \
 	    name=$$(basename "$$html" .html); \
-	    echo "- [$$name](notebooks/$$name.html)" >> docs/notebooks.md; \
+	    echo "- [$$name]($$name.html)" >> docs/notebooks.md; \
 	  done; \
 	fi
 
 book:: _book-reports _book-notebooks ## compile the companion book via MkDocs
-	@$(MAKE) mkdocs-build MKDOCS_OUTPUT=$(BOOK_OUTPUT)
+	@$(MAKE) mkdocs-build MKDOCS_OUTPUT=$(BOOK_OUTPUT)$(if $(_MKDOCS_CFG), MKDOCS_CONFIG=$(_MKDOCS_CFG),)
+	@mkdir -p "$(BOOK_OUTPUT)"
 	@touch "$(BOOK_OUTPUT)/.nojekyll"
 	@printf "${GREEN}[SUCCESS] Book built at $(BOOK_OUTPUT)/${RESET}\n"
 	@tree $(BOOK_OUTPUT)
