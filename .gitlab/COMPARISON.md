@@ -9,6 +9,11 @@ This document provides a side-by-side comparison of GitHub Actions and GitLab CI
 | Main Config | `.github/workflows/*.yml` | `.gitlab-ci.yml` + `.gitlab/workflows/*.yml` | ✅ Complete |
 | CI Testing | `rhiza_ci.yml` | `rhiza_ci.yml` | ✅ Complete |
 | Validation | `rhiza_validate.yml` | `rhiza_validate.yml` | ✅ Complete |
+| Semgrep | `rhiza_validate.yml` (semgrep job) | `rhiza_semgrep.yml` | ✅ Complete |
+| Security | `rhiza_validate.yml` (security job) | `rhiza_validate.yml` (validate:security job) | ✅ Complete |
+| Pip-audit | `rhiza_validate.yml` (pip-audit job) | `rhiza_validate.yml` (validate:pip-audit job) | ✅ Complete |
+| Type checking | `rhiza_validate.yml` (typecheck job) | `rhiza_validate.yml` (validate:typecheck job) | ✅ Complete |
+| License | `rhiza_validate.yml` (license job) | `rhiza_license.yml` | ✅ Complete |
 | Dependencies | `rhiza_deptry.yml` | `rhiza_deptry.yml` | ✅ Complete |
 | Pre-commit | `rhiza_pre-commit.yml` | `rhiza_pre-commit.yml` | ✅ Complete |
 | Documentation | `rhiza_book.yml` | `rhiza_book.yml` | ✅ Complete |

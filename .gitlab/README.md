@@ -8,8 +8,10 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 .gitlab/
 ├── workflows/
 │   ├── rhiza_ci.yml           # Continuous Integration - Python matrix testing
-│   ├── rhiza_validate.yml     # Rhiza configuration validation
+│   ├── rhiza_validate.yml     # Rhiza configuration validation, security and type checking
 │   ├── rhiza_quality.yml      # Quality checks (deptry, pre-commit, docs coverage, link check)
+│   ├── rhiza_semgrep.yml      # Semgrep static analysis (numpy rules)
+│   ├── rhiza_license.yml      # License compliance scan
 │   ├── rhiza_marimo.yml       # Marimo notebook execution and artefact publishing
 │   ├── rhiza_book.yml         # Documentation building (GitLab Pages)
 │   ├── rhiza_sync.yml         # Template synchronization
@@ -41,15 +43,19 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 ---
 
 ### 2. Validate (`rhiza_validate.yml`)
-**Purpose:** Validate Rhiza configuration against template.
+**Purpose:** Validate Rhiza configuration against template, run security scans and type checking.
 
 **Trigger:**
 - On push to any branch
 - On merge requests to main/master
+- `pip-audit` job only runs on scheduled pipelines
 
 **Key Features:**
 - Runs `make validate`, which fires the full hook chain (`pre-validate`, `rhiza-test`, `uvx rhiza validate .`, `post-validate`)
 - Skips validation in the rhiza repository itself (handled internally by `make validate`)
+- Runs `make security` (pip-audit + bandit) on push/MR
+- Runs `uvx pip-audit` on scheduled pipelines for dependency vulnerability scanning
+- Runs `make typecheck` (ty type checker) on push/MR
 
 **Equivalent GitHub Action:** `.github/workflows/rhiza_validate.yml`
 
@@ -72,7 +78,38 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 4. Marimo (`rhiza_marimo.yml`)
+### 4. Semgrep (`rhiza_semgrep.yml`)
+**Purpose:** Run static analysis using Semgrep with local numpy rules to detect common NumPy-related bugs and security issues.
+
+**Trigger:**
+- On push to any branch
+- On merge requests to main/master
+
+**Key Features:**
+- Runs `make semgrep` using `.rhiza/semgrep.yml` local rules
+- Skips if `SOURCE_FOLDER` is not found
+
+**Equivalent GitHub Action:** `.github/workflows/rhiza_validate.yml` (semgrep job)
+
+---
+
+### 5. License (`rhiza_license.yml`)
+**Purpose:** Check that no copyleft-licensed dependencies (GPL, LGPL, AGPL) have been introduced via transitive updates.
+
+**Trigger:**
+- On push to any branch
+- On merge requests to main/master
+
+**Key Features:**
+- Runs `make license` to fail on forbidden licenses
+- Generates `LICENSES.md` markdown report of all dependency licenses
+- Publishes `LICENSES.md` as a GitLab CI artifact (retained 30 days)
+
+**Equivalent GitHub Action:** `.github/workflows/rhiza_validate.yml` (license job)
+
+---
+
+### 6. Marimo (`rhiza_marimo.yml`)
 **Purpose:** Discover and execute all Marimo notebooks in the repository, publishing results as artefacts.
 
 **Trigger:**
@@ -90,7 +127,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 5. Book (`rhiza_book.yml`)
+### 7. Book (`rhiza_book.yml`)
 **Purpose:** Build and deploy documentation to GitLab Pages.
 
 **Trigger:**
@@ -107,7 +144,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 6. Sync (`rhiza_sync.yml`)
+### 8. Sync (`rhiza_sync.yml`)
 **Purpose:** Synchronize repository with its template.
 
 **Trigger:**
@@ -126,7 +163,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 7. Release (`rhiza_release.yml`)
+### 9. Release (`rhiza_release.yml`)
 **Purpose:** Create releases and publish packages to PyPI.
 
 **Trigger:**
