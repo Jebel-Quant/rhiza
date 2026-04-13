@@ -16,8 +16,8 @@ mkdocs-build:: install-uv
 
 BOOK_OUTPUT ?= _book
 
-# Detect mkdocs config: prefer root-level, fall back to docs/mkdocs.yml
-_MKDOCS_CFG := $(if $(wildcard mkdocs.yml),mkdocs.yml,$(if $(wildcard docs/mkdocs.yml),docs/mkdocs.yml,))
+# Detect mkdocs config: prefer root-level, fall back to docs/mkdocs-base.yml
+_MKDOCS_CFG := $(if $(wildcard mkdocs.yml),mkdocs.yml,$(if $(wildcard docs/mkdocs-base.yml),docs/mkdocs-base.yml,))
 
 ##@ Book
 
