@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src=".rhiza/assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza 
+# <img src=".rhiza/assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza
 ![GitHub Release](https://img.shields.io/github/v/release/jebel-quant/rhiza?sort=semver&color=2FA4A9&label=rhiza)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -74,7 +74,7 @@ exclude: |
   .rhiza/scripts/customisations/*
 ```
 
-> **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention. 
+> **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention.
 >
 > To enable this in your project, copy the [`regexManagers` configuration](renovate.json#L31-L40) from this repository's `renovate.json` file into your own Renovate configuration. See the linked configuration for the complete setup.
 
@@ -407,6 +407,7 @@ Rhiza uses a modular Makefile system with extension points (hooks) for customisa
 
 ### Custom Build Scripts
 
+For system dependencies and custom build steps, see [docs/CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md).
 For system dependencies and custom build steps, see [docs/guides/CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md).
 
 ### Private GitHub Packages
