@@ -1,5 +1,6 @@
 site_name: My Project
 docs_dir: .
+site_dir: _mkdocs
 
 theme:
   name: material
@@ -9,6 +10,8 @@ theme:
     - navigation.top
     - search.suggest
     - search.highlight
+  logo: assets/rhiza-logo.svg
+  favicon: assets/rhiza-logo.svg
 
 plugins:
   - search
