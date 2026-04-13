@@ -65,7 +65,7 @@ bundles:
       - docs/guides/QUICK_REFERENCE.md
       - docs/guides/DEMO.md
       - docs/guides/EXTENDING_RHIZA.md
-      - docs/adr
+      - docs/adr/0000-adr-template.md
 
   github:
     description: "GitHub Actions workflows for CI/CD"
