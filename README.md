@@ -392,7 +392,7 @@ Hello, World!
 
 ### Documentation Customisation
 
-For information on customising the look and feel of your documentation, see [book/README.md](docs/BOOK.md).
+For information on customising the look and feel of your documentation, see [book/README.md](docs/guides/BOOK.md).
 
 ### Python Version Management
 
@@ -407,7 +407,7 @@ Rhiza uses a modular Makefile system with extension points (hooks) for customisa
 
 ### Custom Build Scripts
 
-For system dependencies and custom build steps, see [docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md).
+For system dependencies and custom build steps, see [docs/guides/CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md).
 
 ### Private GitHub Packages
 
@@ -431,7 +431,7 @@ For information on versioning, tagging, and publishing releases, see [.rhiza/doc
 
 This repository includes a template Dev Container configuration for seamless development in VS Code and GitHub Codespaces. See [.devcontainer/README.md](.devcontainer/README.md) for setup, configuration, and troubleshooting.
 
-For details about the VS Code extensions configured in the Dev Container, see [docs/VSCODE_EXTENSIONS.md](docs/VSCODE_EXTENSIONS.md).
+For details about the VS Code extensions configured in the Dev Container, see [docs/VSCODE_EXTENSIONS.md](docs/development/VSCODE_EXTENSIONS.md).
 
 ## 🔄 CI/CD Support
 
@@ -464,16 +464,16 @@ Rhiza includes comprehensive maintainability features to help track project heal
 
 ### Roadmap & Planning
 
-- **[docs/PROJECT_BOARD.md](docs/PROJECT_BOARD.md)** - Guide for setting up GitHub Project Boards to track enhancements and roadmap items
+- **[docs/PROJECT_BOARD.md](docs/ops/PROJECT_BOARD.md)** - Guide for setting up GitHub Project Boards to track enhancements and roadmap items
 
 ### Technical Debt Tracking
 
-- **[docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md)** - Comprehensive tracking of known limitations, debt items, and future improvements
+- **[docs/TECHNICAL_DEBT.md](docs/ops/TECHNICAL_DEBT.md)** - Comprehensive tracking of known limitations, debt items, and future improvements
 - **`make todos`** - Automated scanning for TODO, FIXME, and HACK comments across the codebase
 
 ### Changelog Management
 
-- **[docs/CHANGELOG_GUIDE.md](docs/CHANGELOG_GUIDE.md)** - Guide for enhanced changelog generation with PR categorization
+- **[docs/CHANGELOG_GUIDE.md](docs/ops/CHANGELOG_GUIDE.md)** - Guide for enhanced changelog generation with PR categorization
 - **[.github/release.yml](.github/release.yml)** - Automated PR categorization for release notes
 
 Run `make todos` to scan for technical debt markers in your codebase, or explore the roadmap and technical debt documents to understand project evolution and planned improvements.
