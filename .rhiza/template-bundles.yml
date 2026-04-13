@@ -57,14 +57,11 @@ bundles:
       - .python-version
       - ruff.toml
 
-      # Documentation files (user-facing docs)
-      - docs/index.md
-      - docs/mkdocs-base.yml
-      - docs/assets
-      - docs/reference
-      - docs/guides/QUICK_REFERENCE.md
-      - docs/guides/EXTENDING_RHIZA.md
-      - docs/adr/0000-adr-template.md
+      # Documentation files.
+      - docs/index.md                  # Pointer to README
+      - docs/mkdocs-base.yml           # Inherit from this file in your local mkdocs.yml
+      - docs/assets                    # The rhiza logo
+      - docs/adr/0000-adr-template.md  # The template for adr
 
   github:
     description: "GitHub Actions workflows for CI/CD"
