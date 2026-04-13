@@ -1,6 +1,6 @@
 ## book.mk - Book-building targets (MkDocs-based)
 
-.PHONY: book test benchmark stress hypothesis-test _book-reports _book-notebooks mkdocs-serve mkdocs
+.PHONY: book mkdocs-build test benchmark stress hypothesis-test _book-reports _book-notebooks mkdocs-serve mkdocs
 
 # No-op stubs — overridden by test.mk / bench.mk when present
 test:: ; @:
@@ -72,6 +72,20 @@ book:: _book-reports _book-notebooks ## compile the companion book via MkDocs
 	@touch "$(BOOK_OUTPUT)/.nojekyll"
 	@printf "${GREEN}[SUCCESS] Book built at $(BOOK_OUTPUT)/${RESET}\n"
 	@tree $(BOOK_OUTPUT)
+
+mkdocs-build: install-uv ## build MkDocs documentation site
+	@if [ -n "$(_MKDOCS_CFG)" ]; then \
+	  rm -rf "$(BOOK_OUTPUT)"; \
+	  ${UVX_BIN} --with "mkdocs-material<10.0" --with "pymdown-extensions>=10.0" --with "mkdocs<2.0" $(MKDOCS_EXTRA_PACKAGES) mkdocs build \
+	    -f "$(_MKDOCS_CFG)" \
+	    -d "$$(pwd)/$(BOOK_OUTPUT)"; \
+	else \
+	  printf "${RED}[ERROR] No mkdocs config found${RESET}\n"; \
+	  exit 1; \
+	fi
+	@mkdir -p "$(BOOK_OUTPUT)"
+	@touch "$(BOOK_OUTPUT)/.nojekyll"
+	@printf "${GREEN}[SUCCESS] Docs built at $(BOOK_OUTPUT)/${RESET}\n"
 
 mkdocs-serve: install-uv ## serve MkDocs site with live reload
 	@if [ -n "$(_MKDOCS_CFG)" ]; then \
