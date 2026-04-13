@@ -82,6 +82,21 @@ jobs:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: make docs-coverage
 
+  no-rej-files:
+    name: No unresolved patch rejections
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Check for .rej files
+        run: |
+          if find . -name "*.rej" | grep -q .; then
+            echo "Found unresolved patch rejection files:"
+            find . -name "*.rej"
+            exit 1
+          fi
+
   link-check:
     name: Check links in README.md
     runs-on: ubuntu-latest
