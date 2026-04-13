@@ -60,11 +60,7 @@ bundles:
       - docs/index.md
       - docs/mkdocs-base.yml
       - docs/assets
-      - docs/reference/ARCHITECTURE.md
-      - docs/reference/DEPENDENCIES.md
-      - docs/reference/TOOLS_REFERENCE.md
-      - docs/reference/SHELL_SCRIPTS.md
-      - docs/reference/GLOSSARY.md
+      - docs/reference
       - docs/guides/CUSTOMIZATION.md
       - docs/guides/QUICK_REFERENCE.md
       - docs/guides/DEMO.md
