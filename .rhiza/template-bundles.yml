@@ -36,6 +36,7 @@ bundles:
       - .rhiza/.gitignore
       - .rhiza/.rhiza-version
       - .rhiza/make.d/custom-env.mk
+      - .rhiza/make.d/book.mk
       - .rhiza/make.d/gh-aw.mk
       - .rhiza/make.d/custom-task.mk
       - .rhiza/make.d/quality.mk
@@ -73,21 +74,21 @@ bundles:
       - .rhiza/make.d/github.mk
       - .rhiza/make.d/agentic.mk
       # Core GitHub Actions workflows
+      # We don't copy the entire .github folder as there are
+      # workflows like .github/rhiza_docker etc.
       - .github/workflows/copilot-setup-steps.yml
       - .github/workflows/rhiza_sync.yml
       - .github/workflows/rhiza_release.yml
       - .github/workflows/rhiza_weekly.yml
-      - .github/actions/configure-git-auth
+      - .github/actions
       - .github/dependabot.yml
       - .github/copilot-instructions.md
       - .github/agents
       - .github/hooks
       - .github/secret_scanning.yml
-      - .rhiza/semgrep.yml
-      # Issue templates (config.yml excluded — contains repo-specific URLs)
-      - .github/ISSUE_TEMPLATE/bug_report.yml
-      - .github/ISSUE_TEMPLATE/feature_request.yml
-      - .github/DISCUSSION_TEMPLATE/q-and-a.yml
+      - .github/semgrep.yml
+      - .github/ISSUE_TEMPLATE
+      - .github/DISCUSSION_TEMPLATE
 
   # ============================================================================
   # RENOVATE - Automated dependency updates
@@ -116,6 +117,7 @@ bundles:
       - .rhiza/CODE_OF_CONDUCT.md
 
       # Security policy (root-level for GitHub visibility)
+      # Overwrite this file
       - SECURITY.md
 
   # ============================================================================
@@ -206,10 +208,12 @@ bundles:
   tests:
     description: "Testing infrastructure with pytest, coverage, and type checking"
     standalone: true
-    requires: []
+    requires:
+      - book
     files:
       # Make targets and configuration
       - .rhiza/make.d/test.mk
+
       - .rhiza/requirements/tests.txt
       - pytest.ini
 
@@ -243,7 +247,8 @@ bundles:
   marimo:
     description: "Interactive Marimo notebooks for data exploration and documentation"
     standalone: true
-    requires: []
+    requires:
+      - book
     files:
       # Marimo configuration
       - .rhiza/make.d/marimo.mk
