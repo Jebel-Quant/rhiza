@@ -202,7 +202,7 @@ Alternatively, create `.vscode/extensions.json` with:
 - [DevContainer Configuration](DEVCONTAINER.md) - Dev container setup and usage
 - [Makefile Customisation](../.rhiza/make.d/README.md) - Task automation and customization
 - [Marimo Documentation](MARIMO.md) - Interactive notebooks and Marimo integration
-- [Quick Reference](QUICK_REFERENCE.md) - Common development tasks
+- [Quick Reference](../guides/QUICK_REFERENCE.md) - Common development tasks
 
 ## Extension Requirements
 

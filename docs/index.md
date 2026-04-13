@@ -27,20 +27,19 @@ uvx rhiza init
 uvx rhiza sync
 ```
 
-See the [Quick Reference](QUICK_REFERENCE.md) for a concise command overview, or the [Demo](DEMO.md) for a hands-on walkthrough.
+See the [Quick Reference](guides/QUICK_REFERENCE.md) for a concise command overview, or the [Demo](guides/DEMO.md) for a hands-on walkthrough.
 
 ## Explore the Documentation
 
 | Section | Description |
 |---------|-------------|
-| [Quick Reference](QUICK_REFERENCE.md) | Common commands and tasks at a glance |
-| [Architecture](ARCHITECTURE.md) | System diagrams and component overview |
-| [Customization](CUSTOMIZATION.md) | Adapting Rhiza to your project's needs |
-| [Extending Rhiza](EXTENDING_RHIZA.md) | Adding custom templates and hooks |
-| [Dependencies](DEPENDENCIES.md) | Dependency management with uv and deptry |
-| [Docker](DOCKER.md) | Containerisation support |
-| [Dev Container](DEVCONTAINER.md) | VS Code / GitHub Codespaces setup |
-| [Marimo](MARIMO.md) | Interactive notebook integration |
-| [Security](SECURITY.md) | Security policy and reporting |
-| [Glossary](GLOSSARY.md) | Key terms and concepts |
+| [Quick Reference](guides/QUICK_REFERENCE.md) | Common commands and tasks at a glance |
+| [Architecture](reference/ARCHITECTURE.md) | System diagrams and component overview |
+| [Customization](guides/CUSTOMIZATION.md) | Adapting Rhiza to your project's needs |
+| [Extending Rhiza](guides/EXTENDING_RHIZA.md) | Adding custom templates and hooks |
+| [Dependencies](reference/DEPENDENCIES.md) | Dependency management with uv and deptry |
+| [Docker](development/DOCKER.md) | Containerisation support |
+| [Dev Container](development/DEVCONTAINER.md) | VS Code / GitHub Codespaces setup |
+| [Marimo](development/MARIMO.md) | Interactive notebook integration |
+| [Glossary](reference/GLOSSARY.md) | Key terms and concepts |
 | [ADR Overview](adr/README.md) | Architecture Decision Records |

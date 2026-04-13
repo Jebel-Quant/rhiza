@@ -11,31 +11,31 @@ docs_dir: docs
 nav:
   - Home: index.md
   - Getting Started:
-    - Quick Reference: QUICK_REFERENCE.md
-    - Demo: DEMO.md
-    - Customization: CUSTOMIZATION.md
-    - Book (Docs Site): BOOK.md
-    - Extending Rhiza: EXTENDING_RHIZA.md
+    - Quick Reference: guides/QUICK_REFERENCE.md
+    - Demo: guides/DEMO.md
+    - Customization: guides/CUSTOMIZATION.md
+    - Book (Docs Site): guides/BOOK.md
+    - Extending Rhiza: guides/EXTENDING_RHIZA.md
   - Reference:
-    - Architecture: ARCHITECTURE.md
-    - Dependencies: DEPENDENCIES.md
-    - Tools Reference: TOOLS_REFERENCE.md
-    - Shell Scripts: SHELL_SCRIPTS.md
-    - Glossary: GLOSSARY.md
+    - Architecture: reference/ARCHITECTURE.md
+    - Dependencies: reference/DEPENDENCIES.md
+    - Tools Reference: reference/TOOLS_REFERENCE.md
+    - Shell Scripts: reference/SHELL_SCRIPTS.md
+    - Glossary: reference/GLOSSARY.md
   - Development:
-    - Tests: TESTS.md
-    - Docker: DOCKER.md
-    - Dev Container: DEVCONTAINER.md
-    - VSCode Extensions: VSCODE_EXTENSIONS.md
-    - Marimo: MARIMO.md
-    - Presentation: PRESENTATION.md
-    - GitHub Agentic Workflows: GH_AW.md
+    - Tests: development/TESTS.md
+    - Docker: development/DOCKER.md
+    - Dev Container: development/DEVCONTAINER.md
+    - VSCode Extensions: development/VSCODE_EXTENSIONS.md
+    - Marimo: development/MARIMO.md
+    - Presentation: development/PRESENTATION.md
+    - GitHub Agentic Workflows: development/GH_AW.md
   - Operations:
-    - Changelog Guide: CHANGELOG_GUIDE.md
-    - Project Board: PROJECT_BOARD.md
-    - Technical Debt: TECHNICAL_DEBT.md
+    - Changelog Guide: ops/CHANGELOG_GUIDE.md
+    - Project Board: ops/PROJECT_BOARD.md
+    - Technical Debt: ops/TECHNICAL_DEBT.md
   - Security:
-    - Security Testing: SECURITY_TESTING.md
+    - Security Testing: security/SECURITY_TESTING.md
   - Architecture Decision Records:
     - Overview: adr/README.md
     - ADR-0001 Use Architecture Decision Records: adr/0001-use-architecture-decision-records.md
