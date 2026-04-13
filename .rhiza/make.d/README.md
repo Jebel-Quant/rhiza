@@ -91,7 +91,6 @@ pre-install::
 | `custom-env.mk` | Example environment customizations |
 | `custom-task.mk` | Example custom tasks |
 | `docker.mk` | Docker build and run targets |
-| `docs.mk` | Documentation generation (pdoc) |
 | `github.mk` | GitHub CLI integrations |
 | `lfs.mk` | Git LFS management |
 | `marimo.mk` | Marimo notebook support |

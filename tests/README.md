@@ -28,5 +28,3 @@ Those tests cover:
 - **`utils/`** — test infrastructure and utility code
 - **`deps/`** — dependency health validation
 - **`stress/`** — Rhiza-specific operations under load
-
-See [`.rhiza/tests/README.md`](../.rhiza/tests/README.md) for full documentation.

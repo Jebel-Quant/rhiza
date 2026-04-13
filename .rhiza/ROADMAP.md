@@ -19,9 +19,9 @@ Rhiza aims to be the definitive solution for maintaining consistency and best pr
 - CI/CD workflow automation
 - Development container support
 - TODO/FIXME/HACK comment tracking (`make todos`)
-- Technical debt documentation (`docs/TECHNICAL_DEBT.md`)
+- Technical debt documentation (`docs/ops/TECHNICAL_DEBT.md`)
 - Enhanced changelog automation with PR categorization (`.github/release.yml`)
-- GitHub project board integration guide (`docs/PROJECT_BOARD.md`)
+- GitHub project board integration guide (`docs/ops/PROJECT_BOARD.md`)
 - Automated code quality metrics dashboard (`make all` aggregates fmt, deptry, test, docs-coverage, security, typecheck)
 - Template customization validator (`make validate`)
 - Pre-commit hook improvements (`.pre-commit-config.yaml`, ADR-0009)
@@ -36,7 +36,7 @@ Rhiza aims to be the definitive solution for maintaining consistency and best pr
 - MkDocs documentation site (`make mkdocs-build`, `make mkdocs-serve`)
 - Marp presentation generation (`make presentation`, `make presentation-pdf`, `make presentation-serve`)
 - Template bundles system — 13 bundles: `core`, `github`, `gitlab`, `tests`, `marimo`, `book`, `docker`, `devcontainer`, `presentation`, `lfs`, `legal`, `renovate`, `gh-aw`
-- GitHub Agentic Workflows (`make gh-aw-*`, 10+ targets, 3 starter workflows, `docs/GH_AW.md`)
+- GitHub Agentic Workflows (`make gh-aw-*`, 10+ targets, 3 starter workflows, `docs/development/GH_AW.md`)
 
 ### v0.9.0 - Enhanced Template Management (Q2 2026)
 **Theme: Flexibility & Extensibility**
@@ -146,4 +146,4 @@ Your feedback shapes our roadmap! Please:
 **Last Updated**: February 2026 (v0.8.1-rc.2)  
 **Next Review**: May 2026
 
-For technical debt and known limitations, see [docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md).
+For technical debt and known limitations, see [docs/ops/TECHNICAL_DEBT.md](docs/ops/TECHNICAL_DEBT.md).
