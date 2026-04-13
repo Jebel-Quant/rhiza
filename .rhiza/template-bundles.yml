@@ -57,11 +57,19 @@ bundles:
       - ruff.toml
 
       # Documentation files (user-facing docs)
+      - docs/index.md
+      - docs/mkdocs-base.yml
+      - docs/assets
       - docs/reference/ARCHITECTURE.md
-      - docs/guides/CUSTOMIZATION.md
+      - docs/reference/DEPENDENCIES.md
+      - docs/reference/TOOLS_REFERENCE.md
+      - docs/reference/SHELL_SCRIPTS.md
       - docs/reference/GLOSSARY.md
+      - docs/guides/CUSTOMIZATION.md
       - docs/guides/QUICK_REFERENCE.md
       - docs/guides/DEMO.md
+      - docs/guides/EXTENDING_RHIZA.md
+      - docs/adr
 
   github:
     description: "GitHub Actions workflows for CI/CD"
