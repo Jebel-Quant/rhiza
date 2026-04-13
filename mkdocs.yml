@@ -1,4 +1,4 @@
-INHERIT: docs/mkdocs.yml
+INHERIT: docs/mkdocs-base.yml
 
 site_name: rhiza
 site_description: Reusable configuration templates for modern Python projects.
