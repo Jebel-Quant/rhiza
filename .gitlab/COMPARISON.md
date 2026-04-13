@@ -14,7 +14,6 @@ This document provides a side-by-side comparison of GitHub Actions and GitLab CI
 | Pip-audit | `rhiza_validate.yml` (pip-audit job) | `rhiza_validate.yml` (validate:pip-audit job) | ✅ Complete |
 | Type checking | `rhiza_validate.yml` (typecheck job) | `rhiza_validate.yml` (validate:typecheck job) | ✅ Complete |
 | License | `rhiza_validate.yml` (license job) | `rhiza_license.yml` | ✅ Complete |
-| Dependencies | `rhiza_deptry.yml` | `rhiza_deptry.yml` | ✅ Complete |
 | Pre-commit | `rhiza_pre-commit.yml` | `rhiza_pre-commit.yml` | ✅ Complete |
 | Documentation | `rhiza_book.yml` | `rhiza_book.yml` | ✅ Complete |
 | Sync | `rhiza_sync.yml` | `rhiza_sync.yml` | ✅ Complete |
@@ -202,23 +201,6 @@ script:
 - ❌ OIDC-based authentication (use tokens)
 - ❌ GitHub-specific APIs (use GitLab APIs)
 - ❌ GitHub Apps (use GitLab integrations)
-
-## Testing Status
-
-| Workflow | YAML Valid | Logic Verified | Notes |
-|----------|------------|----------------|-------|
-| CI | ✅ | ⏳ | Needs test with actual Python matrix |
-| Validate | ✅ | ⏳ | Skips in rhiza repo |
-| Deptry | ✅ | ⏳ | Needs test with dependencies |
-| Pre-commit | ✅ | ⏳ | Needs test with hooks |
-| Book | ✅ | ⏳ | Needs GitLab Pages setup |
-| Sync | ✅ | ⏳ | Needs PAT_TOKEN |
-| Release | ✅ | ⏳ | Needs PYPI_TOKEN |
-
-Legend:
-- ✅ Complete
-- ⏳ Pending (ready for testing)
-- ❌ Not tested
 
 ## Recommendations
 
