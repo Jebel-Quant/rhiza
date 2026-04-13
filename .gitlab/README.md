@@ -8,10 +8,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 .gitlab/
 ├── workflows/
 │   ├── rhiza_ci.yml           # Continuous Integration - Python matrix testing
-│   ├── rhiza_validate.yml     # Rhiza configuration validation, security and type checking
 │   ├── rhiza_quality.yml      # Quality checks (deptry, pre-commit, docs coverage, link check)
-│   ├── rhiza_semgrep.yml      # Semgrep static analysis (numpy rules)
-│   ├── rhiza_license.yml      # License compliance scan
 │   ├── rhiza_marimo.yml       # Marimo notebook execution and artefact publishing
 │   ├── rhiza_book.yml         # Documentation building (GitLab Pages)
 │   ├── rhiza_sync.yml         # Template synchronization
@@ -185,45 +182,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ## Key Differences from GitHub Actions
 
-### 1. **Syntax and Structure**
-- **GitHub Actions:** Uses `jobs` and `steps` with `uses` for actions
-- **GitLab CI:** Uses `jobs` with `script` and `before_script` sections
-
-### 2. **Triggers**
-- **GitHub Actions:** `on: push`, `on: pull_request`
-- **GitLab CI:** `rules` with conditions like `if: $CI_PIPELINE_SOURCE == "merge_request_event"`
-
-### 3. **Artifacts and Caching**
-- **GitHub Actions:** `actions/upload-artifact@v6`, `actions/download-artifact@v7`
-- **GitLab CI:** `artifacts: paths:` and automatic artifact passing between stages
-
-### 4. **Container Images**
-- **GitHub Actions:** `runs-on: ubuntu-latest` with `uses: actions/setup-python`
-- **GitLab CI:** `image: python:3.12` or specific Docker images
-
-### 5. **Matrix Strategy**
-- **GitHub Actions:** Built-in `strategy.matrix` with dynamic values from JSON
-- **GitLab CI:** `parallel.matrix` with limited dynamic support (workaround: child pipelines)
-
-### 6. **Pages Deployment**
-- **GitHub Actions:** `actions/deploy-pages@v4`
-- **GitLab CI:** Job named `pages` with `artifacts: paths: [public]`
-
-### 7. **Secrets and Variables**
-- **GitHub Actions:** `secrets.*` and `vars.*`
-- **GitLab CI:** `$CI_VARIABLE_NAME` or protected/masked variables
-
-### 8. **Release Management**
-- **GitHub Actions:** `softprops/action-gh-release@v2`
-- **GitLab CI:** GitLab Releases API with `curl` commands
-
-### 9. **Authentication**
-- **GitHub Actions:** OIDC Trusted Publishing for PyPI, `GITHUB_TOKEN` for registry
-- **GitLab CI:** Token-based authentication with `PYPI_TOKEN`, `CI_JOB_TOKEN` for registry
-
-### 10. **Conditional Execution**
-- **GitHub Actions:** `if:` conditions at job/step level
-- **GitLab CI:** `rules:` at job level, `when:` for manual/conditional execution
+For a detailed side-by-side syntax comparison and per-feature breakdown, see [COMPARISON.md](COMPARISON.md).
 
 ---
 
