@@ -82,8 +82,8 @@ jobs:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: make docs-coverage
 
-  no-rej-files:
-    name: No unresolved patch rejections
+  no-unresolved-conflicts:
+    name: No unresolved merge conflicts or patch rejections
     runs-on: ubuntu-latest
 
     steps:
@@ -94,6 +94,13 @@ jobs:
           if find . -name "*.rej" | grep -q .; then
             echo "Found unresolved patch rejection files:"
             find . -name "*.rej"
+            exit 1
+          fi
+
+      - name: Check for merge conflict markers
+        run: |
+          if grep -rI --include="*" -l "^<<<<<<< " .; then
+            echo "Found unresolved merge conflict markers in the above files."
             exit 1
           fi
 
