@@ -17,7 +17,8 @@
 #     repo_url: https://github.com/example/my-project
 #     repo_name: example/my-project
 #
-#     docs_dir: docs   # override: base uses docs_dir: . (relative to this file)
+#     docs_dir: docs   # always set this explicitly — base uses docs_dir: . which
+#                      # resolves relative to docs/mkdocs-base.yml, not mkdocs.yml
 #
 #     nav:             # nav is fully replaced — not merged — by the child config
 #       - Home: index.md
