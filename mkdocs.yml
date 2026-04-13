@@ -13,7 +13,6 @@ nav:
   - Getting Started:
     - Quick Reference: guides/QUICK_REFERENCE.md
     - Demo: guides/DEMO.md
-    - Customization: guides/CUSTOMIZATION.md
     - Book (Docs Site): guides/BOOK.md
     - Extending Rhiza: guides/EXTENDING_RHIZA.md
   - Reference:

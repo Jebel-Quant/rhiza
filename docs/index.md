@@ -35,8 +35,7 @@ See the [Quick Reference](guides/QUICK_REFERENCE.md) for a concise command overv
 |---------|-------------|
 | [Quick Reference](guides/QUICK_REFERENCE.md) | Common commands and tasks at a glance |
 | [Architecture](reference/ARCHITECTURE.md) | System diagrams and component overview |
-| [Customization](guides/CUSTOMIZATION.md) | Adapting Rhiza to your project's needs |
-| [Extending Rhiza](guides/EXTENDING_RHIZA.md) | Adding custom templates and hooks |
+| [Extending Rhiza](guides/EXTENDING_RHIZA.md) | Customising and extending Rhiza for your project |
 | [Dependencies](reference/DEPENDENCIES.md) | Dependency management with uv and deptry |
 | [Docker](development/DOCKER.md) | Containerisation support |
 | [Dev Container](development/DEVCONTAINER.md) | VS Code / GitHub Codespaces setup |

@@ -61,9 +61,7 @@ bundles:
       - docs/mkdocs-base.yml
       - docs/assets
       - docs/reference
-      - docs/guides/CUSTOMIZATION.md
       - docs/guides/QUICK_REFERENCE.md
-      - docs/guides/DEMO.md
       - docs/guides/EXTENDING_RHIZA.md
       - docs/adr/0000-adr-template.md
 
