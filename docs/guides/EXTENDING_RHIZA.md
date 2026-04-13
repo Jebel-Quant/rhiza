@@ -11,6 +11,8 @@ This guide provides comprehensive examples and best practices for extending and 
 - [Real-World Examples](#real-world-examples)
 - [Best Practices](#best-practices)
 - [Troubleshooting](#troubleshooting)
+- [CodeQL Configuration](#codeql-configuration)
+- [Documentation Customization](#documentation-customization)
 
 ---
 
@@ -903,11 +905,77 @@ endif
 
 ---
 
+## CodeQL Configuration
+
+The CodeQL workflow (`.github/workflows/rhiza_codeql.yml`) performs security analysis on your code. However, **CodeQL requires GitHub Advanced Security**, which is:
+
+- ✅ **Available for free** on public repositories
+- ⚠️ **Requires GitHub Enterprise license** for private repositories
+
+### Automatic Behavior
+
+By default, the CodeQL workflow:
+
+- **Runs automatically** on public repositories
+- **Skips automatically** on private repositories (unless you have Advanced Security)
+
+### Controlling CodeQL
+
+You can override the default behavior using a repository variable:
+
+1. Go to your repository → **Settings** → **Secrets and variables** → **Actions** → **Variables** tab
+2. Create a new repository variable named `CODEQL_ENABLED`
+3. Set the value:
+   - `true` - Force CodeQL to run (use if you have Advanced Security on a private repo)
+   - `false` - Disable CodeQL entirely (e.g., if it's causing issues)
+
+For private repositories with Advanced Security enabled:
+
+```bash
+gh variable set CODEQL_ENABLED --body "true"
+```
+
+For users without Advanced Security, no action is needed. To disable it completely:
+
+```bash
+gh variable set CODEQL_ENABLED --body "false"
+```
+
+Or remove the workflow file entirely:
+
+```bash
+git rm .github/workflows/rhiza_codeql.yml
+git commit -m "Remove CodeQL workflow"
+```
+
+---
+
+## Documentation Customization
+
+### Project Logo
+
+The API documentation includes a logo in the sidebar. Override the default logo (`assets/rhiza-logo.svg`) by setting the `LOGO_FILE` variable in your `Makefile` or `local.mk`:
+
+```makefile
+LOGO_FILE := assets/my-custom-logo.png
+```
+
+### Custom pdoc Templates
+
+Customize the look and feel of the API documentation by providing your own Jinja2 templates. Place custom templates in the `book/pdoc-templates` directory.
+
+For example, to override the main module template, create `book/pdoc-templates/module.html.jinja2`.
+
+See the [pdoc documentation on templates](https://pdoc.dev/docs/pdoc.html#edit-pdocs-html-template) for full details on overriding specific parts of the documentation.
+
+For more details on customizing the documentation book, see [BOOK.md](BOOK.md).
+
+---
+
 ## See Also
 
 - [Quick Reference](QUICK_REFERENCE.md) - Command quick reference
 - [Tools Reference](../reference/TOOLS_REFERENCE.md) - Comprehensive tool documentation
-- [Customization Guide](CUSTOMIZATION.md) - Basic customization
 - [Makefile Cookbook](.rhiza/make.d/README.md) - Make recipes
 - [rhiza-education Lesson 10: Customising Safely](https://github.com/Jebel-Quant/rhiza-education/blob/main/lessons/10-customizing-safely.md) - Tutorial overview of extension mechanisms and the template-managed file rule
 
