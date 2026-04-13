@@ -407,7 +407,7 @@ Rhiza uses a modular Makefile system with extension points (hooks) for customisa
 
 ### Custom Build Scripts
 
-For system dependencies and custom build steps, see [docs/CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md).
+For system dependencies and custom build steps, see [docs/guides/CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md).
 
 ### Private GitHub Packages
 

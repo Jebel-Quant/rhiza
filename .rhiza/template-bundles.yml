@@ -58,11 +58,11 @@ bundles:
       - ruff.toml
 
       # Documentation files (user-facing docs)
-      - docs/ARCHITECTURE.md
-      - docs/CUSTOMIZATION.md
-      - docs/GLOSSARY.md
-      - docs/QUICK_REFERENCE.md
-      - docs/DEMO.md
+      - docs/reference/ARCHITECTURE.md
+      - docs/guides/CUSTOMIZATION.md
+      - docs/reference/GLOSSARY.md
+      - docs/guides/QUICK_REFERENCE.md
+      - docs/guides/DEMO.md
 
   github:
     description: "GitHub Actions workflows for CI/CD"
@@ -129,7 +129,7 @@ bundles:
       - .devcontainer
 
       # Documentation
-      - docs/DEVCONTAINER.md
+      - docs/development/DEVCONTAINER.md
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_devcontainer.yml
@@ -149,7 +149,7 @@ bundles:
       - .rhiza/make.d/docker.mk
 
       # Documentation
-      - docs/DOCKER.md
+      - docs/development/DOCKER.md
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_docker.yml
@@ -179,7 +179,7 @@ bundles:
       - marimo  # Presentations often use Marimo for interactive slides
     files:
       - .rhiza/make.d/presentation.mk
-      - docs/PRESENTATION.md
+      - docs/development/PRESENTATION.md
 
   # ============================================================================
   # GITLAB - GitLab CI/CD pipeline configuration
@@ -214,7 +214,7 @@ bundles:
 
       # Core/generic test files
       - .rhiza/tests
-      - docs/TESTS.md
+      - docs/development/TESTS.md
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_ci.yml
@@ -249,7 +249,7 @@ bundles:
       - .rhiza/requirements/marimo.txt
 
       # Documentation
-      - docs/MARIMO.md
+      - docs/development/MARIMO.md
 
       # GitHub Actions workflows
       - .github/workflows/rhiza_marimo.yml
@@ -302,4 +302,4 @@ bundles:
       - .github/workflows/rhiza_gh-aw-validate.yml
 
       # Documentation
-      - docs/GH_AW.md
+      - docs/development/GH_AW.md
