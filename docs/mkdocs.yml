@@ -1,0 +1,32 @@
+site_name: My Project
+docs_dir: .
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+
+plugins:
+  - search
+
+markdown_extensions:
+  - md_in_html
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.snippets:
+      base_path: ["."]
+  - admonition
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+extra_javascript:
+  - https://unpkg.com/mermaid@11.4.0/dist/mermaid.esm.min.mjs
