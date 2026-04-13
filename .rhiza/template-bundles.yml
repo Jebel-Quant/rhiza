@@ -58,7 +58,6 @@ bundles:
       - ruff.toml
 
       # Documentation files (user-facing docs)
-      - docs/SECURITY.md
       - docs/ARCHITECTURE.md
       - docs/CUSTOMIZATION.md
       - docs/GLOSSARY.md
