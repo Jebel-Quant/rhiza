@@ -48,3 +48,8 @@ pyyaml = "yaml"
 [tool.ty.environment]
 python-version = "3.13"
 
+# Interrogate docstring coverage configuration
+[tool.interrogate]
+fail-under = 100
+ignore-init-method = true
+ignore-magic = true
