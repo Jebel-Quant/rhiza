@@ -9,6 +9,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 ├── workflows/
 │   ├── rhiza_ci.yml           # Continuous Integration - Python matrix testing
 │   ├── rhiza_quality.yml      # Quality checks (deptry, pre-commit, docs coverage, link check)
+│   ├── rhiza_semgrep.yml      # Semgrep static analysis with local numpy rules
 │   ├── rhiza_marimo.yml       # Marimo notebook execution and artefact publishing
 │   ├── rhiza_book.yml         # Documentation building (GitLab Pages)
 │   ├── rhiza_sync.yml         # Template synchronization
@@ -76,7 +77,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 ---
 
 ### 4. Semgrep (`rhiza_semgrep.yml`)
-**Purpose:** Run static analysis using Semgrep with local numpy rules to detect common NumPy-related bugs and security issues.
+**Purpose:** Run static analysis using Semgrep with local rules to detect common bugs and security issues.
 
 **Trigger:**
 - On push to any branch
@@ -86,7 +87,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 - Runs `make semgrep` using `.rhiza/semgrep.yml` local rules
 - Skips if `SOURCE_FOLDER` is not found
 
-**Equivalent GitHub Action:** `.github/workflows/rhiza_validate.yml` (semgrep job)
+**Equivalent GitHub Action:** `.github/workflows/rhiza_semgrep.yml`
 
 ---
 

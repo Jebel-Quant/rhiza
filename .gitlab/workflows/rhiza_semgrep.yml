@@ -1,0 +1,21 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Semgrep (GitLab CI)
+#
+# Purpose: Run static analysis using Semgrep with local rules to detect
+#          common bugs and security issues.
+#
+# Trigger: On push to any branch and on merge requests to main/master.
+#
+# Equivalent GitHub Action: .github/workflows/rhiza_semgrep.yml
+
+semgrep:
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - make semgrep
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH

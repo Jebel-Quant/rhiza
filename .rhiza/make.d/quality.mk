@@ -5,10 +5,10 @@
 LICENSE_FAIL_ON ?= GPL;LGPL;AGPL
 
 # Declare phony targets (they don't produce files)
-.PHONY: all deptry fmt license todos suppression-audit
+.PHONY: all deptry fmt license todos suppression-audit semgrep
 
 ##@ Quality and Formatting
-all: fmt deptry test docs-coverage security license typecheck rhiza-test ## run all CI targets locally
+all: fmt deptry test docs-coverage security semgrep license typecheck rhiza-test ## run all CI targets locally
 
 deptry: install-uv ## Run deptry
 	@if [ -d ${SOURCE_FOLDER} ]; then \
@@ -49,3 +49,14 @@ suppression-audit: ## scan codebase for inline suppressions and report (grade, d
 license: install ## run license compliance scan (fail on GPL, LGPL, AGPL)
 	@printf "${BLUE}[INFO] Running license compliance scan...${RESET}\n"
 	@${UV_BIN} run --with pip-licenses pip-licenses --fail-on="${LICENSE_FAIL_ON}"
+
+# The 'semgrep' target runs static analysis using Semgrep with local rules.
+# 1. Checks if the source directory exists; skips if not found.
+# 2. Runs semgrep with the local rules defined in .rhiza/semgrep.yml.
+semgrep: install-uv ## run semgrep static analysis with local rules
+	@if [ -d "${SOURCE_FOLDER}" ]; then \
+	  printf "${BLUE}[INFO] Running semgrep static analysis...${RESET}\n"; \
+	  ${UVX_BIN} semgrep scan --config .rhiza/semgrep.yml --error ${SOURCE_FOLDER}; \
+	else \
+	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping semgrep${RESET}\n"; \
+	fi
