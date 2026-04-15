@@ -1,0 +1,3 @@
+[bandit]
+skips = B101
+exclude_dirs = .venv,tests,.rhiza/tests,.git,.pytest_cache
