@@ -62,7 +62,7 @@ _book-notebooks:
 book:: _book-reports _book-notebooks ## compile the companion book via MkDocs
 	@if [ -n "$(_MKDOCS_CFG)" ]; then \
 	  rm -rf "$(BOOK_OUTPUT)"; \
-	  ${UVX_BIN} --with "mkdocs-material<10.0" --with "pymdown-extensions>=10.0" --with "mkdocs<2.0" $(MKDOCS_EXTRA_PACKAGES) mkdocs build \
+	  ${UVX_BIN} --with "mkdocs-material<10.0" --with "pymdown-extensions>=10.0" --with "mkdocs<2.0" --with "mkdocstrings[python]" $(MKDOCS_EXTRA_PACKAGES) mkdocs build \
 	    -f "$(_MKDOCS_CFG)" \
 	    -d "$$(pwd)/$(BOOK_OUTPUT)"; \
 	else \
@@ -76,7 +76,7 @@ book:: _book-reports _book-notebooks ## compile the companion book via MkDocs
 mkdocs-build: install-uv ## build MkDocs documentation site
 	@if [ -n "$(_MKDOCS_CFG)" ]; then \
 	  rm -rf "$(BOOK_OUTPUT)"; \
-	  ${UVX_BIN} --with "mkdocs-material<10.0" --with "pymdown-extensions>=10.0" --with "mkdocs<2.0" $(MKDOCS_EXTRA_PACKAGES) mkdocs build \
+	  ${UVX_BIN} --with "mkdocs-material<10.0" --with "pymdown-extensions>=10.0" --with "mkdocs<2.0" --with "mkdocstrings[python]" $(MKDOCS_EXTRA_PACKAGES) mkdocs build \
 	    -f "$(_MKDOCS_CFG)" \
 	    -d "$$(pwd)/$(BOOK_OUTPUT)"; \
 	else \
@@ -89,7 +89,7 @@ mkdocs-build: install-uv ## build MkDocs documentation site
 
 mkdocs-serve: install-uv ## serve MkDocs site with live reload
 	@if [ -n "$(_MKDOCS_CFG)" ]; then \
-	  ${UVX_BIN} --with "mkdocs-material<10.0" --with "pymdown-extensions>=10.0" --with "mkdocs<2.0" $(MKDOCS_EXTRA_PACKAGES) mkdocs serve \
+	  ${UVX_BIN} --with "mkdocs-material<10.0" --with "pymdown-extensions>=10.0" --with "mkdocs<2.0" --with "mkdocstrings[python]" $(MKDOCS_EXTRA_PACKAGES) mkdocs serve \
 	    -f "$(_MKDOCS_CFG)"; \
 	else \
 	  printf "${RED}[ERROR] No mkdocs config found${RESET}\n"; \
