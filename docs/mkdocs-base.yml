@@ -45,6 +45,10 @@ theme:
 plugins:
   - search
 
+extra:
+  version:
+    provider: mike
+
 markdown_extensions:
   - md_in_html
   - pymdownx.highlight
