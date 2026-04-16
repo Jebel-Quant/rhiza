@@ -1,8 +1,7 @@
 ## Makefile (repo-owned)
 # Keep this file small. It can be edited without breaking template sync.
 
-DOCFORMAT=google
-DEFAULT_AI_MODEL=claude-sonnet-4.5
+DEFAULT_AI_MODEL=claude-sonnet-4.6
 LOGO_FILE=.rhiza/assets/rhiza-logo.svg
 GH_AW_ENGINE ?= copilot  # Default AI engine for gh-aw workflows (copilot, claude, or codex)
 
@@ -11,10 +10,6 @@ include .rhiza/rhiza.mk
 
 # Optional: developer-local extensions (not committed)
 -include local.mk
-
-# Wire typecheck into make validate
-post-validate::
-	@$(MAKE) typecheck
 
 ## Custom targets
 
