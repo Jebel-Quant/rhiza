@@ -50,6 +50,7 @@ bundles:
       - .rhiza/requirements/tools.txt
 
       # Root configuration files
+      - .bandit
       - Makefile
       - .pre-commit-config.yaml
       - .editorconfig

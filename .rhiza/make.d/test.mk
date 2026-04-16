@@ -68,7 +68,7 @@ security: install ## run security scans (pip-audit and bandit)
 	@printf "${BLUE}[INFO] Running pip-audit for dependency vulnerabilities...${RESET}\n"
 	@${UVX_BIN} pip-audit ${PIP_AUDIT_ARGS}
 	@printf "${BLUE}[INFO] Running bandit security scan...${RESET}\n"
-	@${UVX_BIN} bandit -r ${SOURCE_FOLDER} -ll -q -c pyproject.toml
+	@${UVX_BIN} bandit -r ${SOURCE_FOLDER} -ll -q --ini .bandit
 
 # The 'benchmark' target runs performance benchmarks using pytest-benchmark.
 # 1. Installs benchmarking dependencies (pytest-benchmark, pygal).
