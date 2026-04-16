@@ -58,6 +58,10 @@ plugins:
             members_order: source
             show_signature_annotations: true
 
+extra:
+  version:
+    provider: mike
+
 markdown_extensions:
   - md_in_html
   - pymdownx.highlight
