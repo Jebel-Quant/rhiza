@@ -115,7 +115,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 **Key Features:**
 - Discovers notebooks dynamically from `MARIMO_FOLDER` (default: `marimo`)
-- Runs each notebook sequentially with `uvx uv run`
+- Runs each notebook sequentially with `uv run`
 - `fail-fast: false` equivalent — all notebooks are attempted even if one fails
 - Publishes `results/` as GitLab CI artefacts (retained for 1 week)
 - Git LFS support
