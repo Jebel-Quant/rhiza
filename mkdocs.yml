@@ -49,4 +49,9 @@ nav:
   - Notebooks:
     - Rhiza: notebooks/rhiza.html
     - Rhiza2: notebooks/rhiza.html
-  - Reports: reports.md
+  - Reports:
+    - benchmark: reports/benchmark/report.html
+    - hypothesis: reports/hypothesis/report.html
+    - stress: reports/stress/report.html
+    - test-report: reports/test-report/report.html
+
