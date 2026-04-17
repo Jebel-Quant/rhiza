@@ -47,5 +47,6 @@ nav:
     - ADR-0008 Use Marimo for Interactive Notebooks: adr/0008-use-marimo-for-interactive-notebooks.md
     - ADR-0009 Use Pre-commit Hooks for Code Quality: adr/0009-use-pre-commit-hooks-for-code-quality.md
   - Notebooks:
-    - rhiza: notebooks/rhiza.html
+    - Rhiza: notebooks/rhiza.html
+    - Rhiza2: notebooks/rhiza.html
   - Reports: reports.md
