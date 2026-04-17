@@ -20,27 +20,12 @@ MKDOCS_EXTRA_PACKAGES ?=
 ##@ Book
 
 _book-reports: test benchmark stress hypothesis-test
-	@mkdir -p docs/reports
-	@for src_dir in \
-	  "_tests/html-coverage:reports/coverage" \
-	  "_tests/html-report:reports/test-report" \
-	  "_tests/benchmarks:reports/benchmarks" \
-	  "_tests/stress:reports/stress" \
-	  "_tests/hypothesis:reports/hypothesis"; do \
-	  src=$${src_dir%%:*}; dest=docs/$${src_dir#*:}; \
-	  if [ -d "$$src" ] && [ -n "$$(ls -A "$$src" 2>/dev/null)" ]; then \
-	    printf "${BLUE}[INFO] Copying $$src -> $$dest${RESET}\n"; \
-	    mkdir -p "$$dest"; cp -r "$$src/." "$$dest/"; \
-	  else \
-	    printf "${YELLOW}[WARN] $$src not found, skipping${RESET}\n"; \
-	  fi; \
-	done
-	@printf "# Reports\n\n" > docs/reports.md
-	@[ -f "docs/reports/test-report/report.html" ] && echo "- [Test Report](reports/test-report/report.html)"       >> docs/reports.md || true
-	@[ -f "docs/reports/hypothesis/report.html" ]  && echo "- [Hypothesis Report](reports/hypothesis/report.html)" >> docs/reports.md || true
-	@[ -f "docs/reports/benchmarks/report.html" ]  && echo "- [Benchmarks](reports/benchmarks/report.html)"        >> docs/reports.md || true
-	@[ -f "docs/reports/stress/report.html" ]      && echo "- [Stress Report](reports/stress/report.html)"          >> docs/reports.md || true
-	@[ -f "docs/reports/coverage/index.html" ]     && echo "- [Coverage Report](reports/coverage/index.html)"      >> docs/reports.md || true
+	@if [ -d "${ROOT}/_tests" ] && [ -n "$$(ls -A "${ROOT}/_tests" 2>/dev/null)" ]; then \
+	  printf "${BLUE}[INFO] Copying ${ROOT}/_tests -> docs/reports${RESET}\n"; \
+	  mkdir -p ${ROOT}/docs/reports; cp -r "${ROOT}/_tests/." "${ROOT}/docs/reports/"; \
+	else \
+	  printf "${YELLOW}[WARN] ${ROOT}/_tests not found or empty, skipping${RESET}\n"; \
+	fi
 
 # Export each Marimo notebook to a self-contained HTML file under docs/notebooks/.
 # Skipped silently when MARIMO_FOLDER is not set or does not exist.
