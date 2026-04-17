@@ -1,6 +1,6 @@
-<div align="center">
+<div align="center" markdown>
 
-# <img src=".rhiza/assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza
+# <img src="https://raw.githubusercontent.com/Jebel-Quant/rhiza/main/.rhiza/assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza
 ![GitHub Release](https://img.shields.io/github/v/release/jebel-quant/rhiza?sort=semver&color=2FA4A9&label=rhiza)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
