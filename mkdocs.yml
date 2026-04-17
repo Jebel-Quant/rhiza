@@ -48,8 +48,8 @@ nav:
     - ADR-0009 Use Pre-commit Hooks for Code Quality: adr/0009-use-pre-commit-hooks-for-code-quality.md
   - Notebooks:
     - Rhiza: notebooks/rhiza.html
-  - Reports:
-    - benchmark: reports/benchmarks/report.html
-    - hypothesis: reports/hypothesis/report.html
-    - stress: reports/stress/report.html
+  #- Reports:
+  #  - benchmark: reports/benchmarks/report.html
+  #  - hypothesis: reports/hypothesis/report.html
+  #  - stress: reports/stress/report.html
 
