@@ -2,7 +2,7 @@
 
 ROOT := $(shell git rev-parse --show-toplevel)
 
-.PHONY: book test benchmark stress hypothesis-test _book-reports _book-notebooks
+.PHONY: book serve test benchmark stress hypothesis-test _book-reports _book-notebooks
 
 # No-op stubs — overridden by test.mk / bench.mk when present
 test:: ; @:
@@ -60,6 +60,13 @@ _book-notebooks:
 	    echo "- [$$name]($$name.html)" >> docs/notebooks.md; \
 	  done; \
 	fi
+
+# Serve the built book locally on port 8000.
+# Uses Python's built-in HTTP server so the JetBrains built-in server (which
+# refuses to serve gitignored directories like _book) is not needed.
+serve: book ## build and serve the book at http://localhost:8000
+	@printf "${BLUE}[INFO] Serving book at http://localhost:8000 (Ctrl-C to stop)${RESET}\n"
+	@cd $(BOOK_OUTPUT) && python3 -m http.server 8000
 
 book:: _book-reports _book-notebooks ## compile the companion book via MkDocs
 	@if [ -n "$(_MKDOCS_CFG)" ]; then \
