@@ -55,11 +55,11 @@ theme:
   palette:
     - scheme: default
       toggle:
-        icon: lucide/sun
+        icon: material/brightness-7
         name: Switch to dark mode
     - scheme: slate
       toggle:
-        icon: lucide/moon
+        icon: material/brightness-4
         name: Switch to light mode
 
 # ----------------------------------------------------------------------------
