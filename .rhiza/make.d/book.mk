@@ -45,8 +45,8 @@ _book-reports: test benchmark stress hypothesis-test
 # Export each Marimo notebook to a self-contained HTML file under docs/notebooks/.
 # Skipped silently when MARIMO_FOLDER is not set or does not exist.
 _book-notebooks:
-	@rm -rf ${ROOT}/docs/notebooks
-	@mkdir -p ${ROOT}/docs/notebooks
+	#@rm -rf ${ROOT}/docs/notebooks
+	#@mkdir -p ${ROOT}/docs/notebooks
 
 	@if [ -d "$(MARIMO_FOLDER)" ]; then \
 	  printf "${BLUE}[INFO] Exporting Marimo notebooks from $(MARIMO_FOLDER)${RESET}\n"; \
