@@ -42,20 +42,22 @@ _book-reports: test benchmark stress hypothesis-test
 	@[ -f "docs/reports/stress/report.html" ]      && echo "- [Stress Report](reports/stress/report.html)"          >> docs/reports.md || true
 	@[ -f "docs/reports/coverage/index.html" ]     && echo "- [Coverage Report](reports/coverage/index.html)"      >> docs/reports.md || true
 
+# Export each Marimo notebook to a self-contained HTML file under docs/notebooks/.
+# Skipped silently when MARIMO_FOLDER is not set or does not exist.
 _book-notebooks:
+	@rm -rf ${ROOT}/docs/notebooks
+	@mkdir -p ${ROOT}/docs/notebooks
+
 	@if [ -d "$(MARIMO_FOLDER)" ]; then \
+	  printf "${BLUE}[INFO] Exporting Marimo notebooks from $(MARIMO_FOLDER)${RESET}\n"; \
 	  for nb in $(MARIMO_FOLDER)/*.py; do \
 	    name=$$(basename "$$nb" .py); \
-	    printf "${BLUE}[INFO] Exporting $$nb${RESET}\n"; \
-	    abs_output="$$(pwd)/docs/notebooks/$$name.html"; \
-	    mkdir -p docs/notebooks; \
+	    printf "${BLUE}[INFO] Exporting $$nb -> ${ROOT}/docs/notebooks/$$name.html${RESET}\n"; \
+	    abs_output="${ROOT}/docs/notebooks/$$name.html"; \
 	    (cd "$$(dirname "$$nb")" && ${UV_BIN} run marimo export html --sandbox "$$(basename "$$nb")" -o "$$abs_output"); \
 	  done; \
-	  printf "# Marimo Notebooks\n\n" > docs/notebooks.md; \
-	  for html in docs/notebooks/*.html; do \
-	    name=$$(basename "$$html" .html); \
-	    echo "- [$$name]($$name.html)" >> docs/notebooks.md; \
-	  done; \
+	else \
+	  printf "${YELLOW}[WARN] MARIMO_FOLDER not set or missing, skipping notebook export${RESET}\n"; \
 	fi
 
 # Serve the built book locally on port 8000.
