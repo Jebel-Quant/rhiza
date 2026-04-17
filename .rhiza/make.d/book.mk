@@ -17,9 +17,6 @@ BOOK_OUTPUT ?= _book
 #   MKDOCS_EXTRA_PACKAGES = --with "mkdocs-graphviz"
 MKDOCS_EXTRA_PACKAGES ?=
 
-# Detect mkdocs config: prefer root-level, fall back to docs/mkdocs-base.yml
-_MKDOCS_CFG := $(if $(wildcard mkdocs.yml),mkdocs.yml,$(if $(wildcard docs/mkdocs-base.yml),docs/mkdocs-base.yml,))
-
 ##@ Book
 
 _book-reports: test benchmark stress hypothesis-test
@@ -69,15 +66,8 @@ serve: book ## build and serve the book at http://localhost:8000
 	@cd $(BOOK_OUTPUT) && python3 -m http.server 8000
 
 book:: _book-reports _book-notebooks ## compile the companion book via MkDocs
-	@if [ -n "$(_MKDOCS_CFG)" ]; then \
-	  rm -rf "$(BOOK_OUTPUT)"; \
-	  ${UVX_BIN} --with "mkdocs-material<10.0" --with "pymdown-extensions>=10.0" --with "mkdocs<2.0" $(MKDOCS_EXTRA_PACKAGES) mkdocs build \
-	    -f "$(_MKDOCS_CFG)" \
-	    -d "$$(pwd)/$(BOOK_OUTPUT)"; \
-	else \
-	  printf "${YELLOW}[WARN] No mkdocs config found, skipping MkDocs build${RESET}\n"; \
-	fi
-	@mkdir -p "$(BOOK_OUTPUT)"
+	@rm -rf "$(BOOK_OUTPUT)"
+	@${UVX_BIN} --with "mkdocs-material<10.0" --with "pymdown-extensions>=10.0" --with "mkdocs<2.0" $(MKDOCS_EXTRA_PACKAGES) mkdocs build -f "${ROOT}/mkdocs.yml" -d "$$(pwd)/$(BOOK_OUTPUT)"
 	@touch "$(BOOK_OUTPUT)/.nojekyll"
 	@printf "${GREEN}[SUCCESS] Book built at $(BOOK_OUTPUT)/${RESET}\n"
 	@tree $(BOOK_OUTPUT)
