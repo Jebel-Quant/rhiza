@@ -50,8 +50,8 @@ nav:
     - Rhiza: notebooks/rhiza.html
     - Rhiza2: notebooks/rhiza.html
   - Reports:
-    - benchmark: reports/benchmark/report.html
+    - benchmark: reports/benchmarks/report.html
     - hypothesis: reports/hypothesis/report.html
     - stress: reports/stress/report.html
-    - test-report: reports/test-report/report.html
+    - test-report: reports/html-report/report.html
 
