@@ -65,20 +65,15 @@ bundles:
     standalone: true
     requires: [core]
     files:
-      - .rhiza/make.d/github.mk
-      - .rhiza/make.d/agentic.mk
-      - .rhiza/make.d/gh-aw.mk
       # Core GitHub Actions workflows
       # We don't copy the entire .github folder as there are
       # workflows like .github/rhiza_docker etc.
-      - .github/workflows/copilot-setup-steps.yml
+
       - .github/workflows/rhiza_sync.yml
       - .github/workflows/rhiza_release.yml
       - .github/actions
       - .github/dependabot.yml
-      - .github/copilot-instructions.md
-      - .github/agents
-      - .github/hooks
+
       - .github/secret_scanning.yml
       - .github/semgrep.yml
       - .github/ISSUE_TEMPLATE
@@ -288,7 +283,14 @@ bundles:
       - Documentation
     files:
       # Makefile extensions
+      - .rhiza/make.d/github.mk
+      - .rhiza/make.d/agentic.mk
       - .rhiza/make.d/gh-aw.mk
+
+      - .github/agents
+      - .github/hooks
+      - .github/copilot-instructions.md
+      - .github/workflows/copilot-setup-steps.yml
 
       # Starter agentic workflows
       - .github/workflows/daily-repo-status.md
