@@ -42,7 +42,6 @@ bundles:
       - .rhiza/make.d/quality.mk
       - .rhiza/make.d/bootstrap.mk
       - .rhiza/make.d/releasing.mk
-      - .rhiza/make.d/README.md
       - .rhiza/assets
       - .rhiza/requirements/README.md
       - .rhiza/requirements/docs.txt
