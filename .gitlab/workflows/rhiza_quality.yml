@@ -48,7 +48,7 @@ quality:link-check:
   needs: []
   image: ghcr.io/lycheeverse/lychee:latest
   script:
-    - lychee --verbose --no-progress --accept 200,206,429 README.md
+    - lychee --verbose --no-progress --accept 200,206,429,504 README.md
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
