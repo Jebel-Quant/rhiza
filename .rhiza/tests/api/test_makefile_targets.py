@@ -168,7 +168,7 @@ class TestMakefile:
 
         proc = run_make(logger, ["coverage-badge"])
         out = proc.stdout
-        assert "genbadge coverage" in out
+        assert "genbadge[coverage]" in out
         assert "_tests/coverage.xml" in out
         assert "_tests/coverage-badge.svg" in out
 
