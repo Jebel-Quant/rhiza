@@ -12,9 +12,6 @@ hypothesis-test:: ; @:
 
 BOOK_OUTPUT ?= _book
 
-# Additional uvx --with packages to inject into mkdocs build and serve.
-# Projects can extend the package list without editing this template, e.g.:
-#   MKDOCS_EXTRA_PACKAGES = --with "mkdocs-graphviz"
 MKDOCS_EXTRA_PACKAGES ?=
 
 ##@ Book
@@ -30,9 +27,6 @@ _book-reports: test benchmark stress hypothesis-test
 # Export each Marimo notebook to a self-contained HTML file under docs/notebooks/.
 # Skipped silently when MARIMO_FOLDER is not set or does not exist.
 _book-notebooks:
-	#@rm -rf ${ROOT}/docs/notebooks
-	#@mkdir -p ${ROOT}/docs/notebooks
-
 	@if [ -d "$(MARIMO_FOLDER)" ]; then \
 	  printf "${BLUE}[INFO] Exporting Marimo notebooks from $(MARIMO_FOLDER)${RESET}\n"; \
 	  for nb in $(MARIMO_FOLDER)/*.py; do \
@@ -54,9 +48,12 @@ serve: book ## build and serve the book at http://localhost:8000
 
 book:: _book-reports _book-notebooks ## compile the companion book via MkDocs
 	@rm -rf "$(BOOK_OUTPUT)"
-	# @${UVX_BIN} --with "mkdocs-material<10.0" --with "pymdown-extensions>=10.0" --with "mkdocs<2.0" $(MKDOCS_EXTRA_PACKAGES) mkdocs build -f "${ROOT}/mkdocs.yml" -d "$$(pwd)/$(BOOK_OUTPUT)"
-	@${UVX_BIN} zensical build -f "$(ROOT)/mkdocs.yml"
+	@${UVX_BIN} $(MKDOCS_EXTRA_PACKAGES) zensical build -f "$(ROOT)/mkdocs.yml"
 	@touch "$(BOOK_OUTPUT)/.nojekyll"
+	@if [ -f "${ROOT}/_tests/coverage.xml" ]; then \
+	  printf "${BLUE}[INFO] Generating coverage badge${RESET}\n"; \
+	  ${UVX_BIN} "genbadge[coverage]" coverage -i "${ROOT}/_tests/coverage.xml" -o "$(BOOK_OUTPUT)/coverage-badge.svg"; \
+	fi
 	@printf "${GREEN}[SUCCESS] Book built at $(BOOK_OUTPUT)/${RESET}\n"
 	@tree $(BOOK_OUTPUT)
 
