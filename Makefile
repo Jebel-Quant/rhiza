@@ -10,5 +10,3 @@ include .rhiza/rhiza.mk
 
 # Optional: developer-local extensions (not committed)
 -include local.mk
-
-## Custom targets
