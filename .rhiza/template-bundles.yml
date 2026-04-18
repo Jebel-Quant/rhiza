@@ -75,7 +75,6 @@ bundles:
       - .github/dependabot.yml
 
       - .github/secret_scanning.yml
-      - .github/semgrep.yml
       - .github/ISSUE_TEMPLATE
       - .github/DISCUSSION_TEMPLATE
 
@@ -211,6 +210,7 @@ bundles:
       - docs/development/TESTS.md
 
       # GitHub Actions workflows
+      - .github/semgrep.yml
       - .github/workflows/rhiza_ci.yml
       - .github/workflows/rhiza_codeql.yml
       - .github/workflows/rhiza_weekly.yml
