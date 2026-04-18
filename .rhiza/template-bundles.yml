@@ -37,7 +37,6 @@ bundles:
       - .rhiza/.rhiza-version
       - .rhiza/make.d/custom-env.mk
       - .rhiza/make.d/book.mk
-      - .rhiza/make.d/gh-aw.mk
       - .rhiza/make.d/custom-task.mk
       - .rhiza/make.d/quality.mk
       - .rhiza/make.d/bootstrap.mk
@@ -60,7 +59,6 @@ bundles:
       - docs/index.md                  # Pointer to README
       - docs/mkdocs-base.yml           # Inherit from this file in your local mkdocs.yml
       - docs/assets                    # The rhiza logo
-      - docs/adr/0000-adr-template.md  # The template for adr
 
   github:
     description: "GitHub Actions workflows for CI/CD"
@@ -69,13 +67,13 @@ bundles:
     files:
       - .rhiza/make.d/github.mk
       - .rhiza/make.d/agentic.mk
+      - .rhiza/make.d/gh-aw.mk
       # Core GitHub Actions workflows
       # We don't copy the entire .github folder as there are
       # workflows like .github/rhiza_docker etc.
       - .github/workflows/copilot-setup-steps.yml
       - .github/workflows/rhiza_sync.yml
       - .github/workflows/rhiza_release.yml
-      - .github/workflows/rhiza_weekly.yml
       - .github/actions
       - .github/dependabot.yml
       - .github/copilot-instructions.md

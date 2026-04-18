@@ -47,7 +47,7 @@ This is a Rhiza-based Python project that maintains ADRs in `docs/adr/`. The ADR
 
 - **Location**: `docs/adr/` directory
 - **Naming**: Files use 4-digit sequential numbering: `XXXX-title-with-hyphens.md` (e.g., `0002-use-postgresql.md`)
-- **Template**: `docs/adr/0000-adr-template.md` defines the standard format
+- **Template**: `.github/agents/0000-adr-template.md` defines the standard format
 - **Index**: `docs/adr/README.md` maintains a table of all ADRs
 
 ### ADR Format
@@ -106,7 +106,7 @@ Each section should have 2-4 bullet points with substantive detail.
 
 ### Step 4: Create the ADR File
 
-1. Copy the template: `docs/adr/0000-adr-template.md` → `docs/adr/XXXX-slug.md`
+1. Copy the template: `.github/agents/0000-adr-template.md` → `docs/adr/XXXX-slug.md`
 2. Replace all template placeholders with actual content:
    - `[NUMBER]` → actual number
    - `[TITLE]` → actual title
