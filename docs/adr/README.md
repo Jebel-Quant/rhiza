@@ -8,7 +8,7 @@ An Architecture Decision Record (ADR) is a document that captures an important a
 
 ## ADR Format
 
-Each ADR follows a consistent format defined in [0000-adr-template.md](0000-adr-template.md):
+Each ADR follows a consistent format defined in [0000-adr-template.md](../../.github/agents/0000-adr-template.md):
 
 - **Title and Number**: Sequential numbering with descriptive title
 - **Date**: When the decision was made
@@ -53,7 +53,7 @@ This will:
 
 If you prefer to create an ADR manually:
 
-1. Copy the template: `cp docs/adr/0000-adr-template.md docs/adr/0010-example-decision.md`
+1. Copy the template: `cp .github/agents/0000-adr-template.md docs/adr/0010-example-decision.md`
 2. Use the next available 4-digit number (e.g., 0010, 0011, 0012)
 3. Fill in all sections with relevant information
 4. Update this README to add your ADR to the index
