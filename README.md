@@ -167,19 +167,19 @@ Rhiza organises its templates into **bundles** — pre-configured sets of relate
 | Bundle | Description | Requires | Standalone |
 |--------|-------------|----------|------------|
 | `core` | Core Rhiza infrastructure (Makefile, linting, docs) | — | ✅ |
-| `github` | GitHub Actions workflows for CI/CD | `core` | ✅ |
+| `github` | GitHub Actions workflows for CI/CD | `core` | ❌ |
 | `tests` | Testing infrastructure with pytest, coverage, and type checking | — | ✅ |
 | `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book` | ❌ |
 | `benchmarks` | Performance benchmarking with pytest-benchmark and reporting | `tests` | ❌ |
 | `book` | Comprehensive documentation book (API docs, coverage, notebooks) | - | ✅ |
 | `docker` | Docker containerization support | — | ✅ |
 | `devcontainer` | VS Code DevContainer configuration | — | ✅ |
-| `gitlab` | GitLab CI/CD pipeline configuration | `core` | ✅ |
+| `gitlab` | GitLab CI/CD pipeline configuration | `core` | ❌ |
 | `presentation` | Presentation building using Marp | — | ✅ |
 | `lfs` | Git LFS (Large File Storage) support | — | ✅ |
 | `legal` | Legal and community files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT) | — | ✅ |
 | `renovate` | Renovate bot configuration for automated dependency updates | — | ✅ |
-| `gh-aw` | GitHub Agentic Workflows for AI-driven repository automation | `github` | ✅ |
+| `gh-aw` | GitHub Agentic Workflows for AI-driven repository automation | `github` | ❌ |
 
 **Tip:** Bundles marked **Standalone: ❌** cannot be used alone and must be combined with the bundles listed in the *Requires* column.
 
