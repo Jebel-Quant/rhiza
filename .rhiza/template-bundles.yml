@@ -232,9 +232,6 @@ bundles:
       # Benchmark test infrastructure
       - tests/benchmarks
 
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_benchmarks.yml
-
   # ============================================================================
   # MARIMO - Interactive Marimo notebooks
   # ============================================================================
