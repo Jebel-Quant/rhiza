@@ -8,11 +8,14 @@
 #
 # Workflows included:
 #   - CI: Run tests on multiple Python versions
-#   - VALIDATE: Validate Rhiza configuration
 #   - QUALITY: Dependency checks, pre-commit hooks, docs coverage, link checking
+#   - MARIMO: Discover and execute Marimo notebooks
+#   - PAPER: Build paper/report artifacts
 #   - BOOK: Build and deploy documentation
 #   - SYNC: Synchronize with template repository
 #   - RELEASE: Release workflow for tags
+#   - RENOVATE: Automated dependency updates (scheduled)
+#   - WEEKLY: Semgrep, license, and deptry checks (scheduled)
 
 # Define pipeline stages
 stages:
@@ -44,30 +47,6 @@ include:
       - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       - if: $CI_COMMIT_BRANCH
 
-  # Rhiza Validation - Validate project structure
-  - local: '.gitlab/workflows/rhiza_validate.yml'
-    rules:
-      - if: $CI_COMMIT_TAG
-        when: never
-      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      - if: $CI_COMMIT_BRANCH
-
-  # Semgrep - Static analysis with numpy rules
-  - local: '.gitlab/workflows/rhiza_semgrep.yml'
-    rules:
-      - if: $CI_COMMIT_TAG
-        when: never
-      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      - if: $CI_COMMIT_BRANCH
-
-  # License compliance - Check for copyleft dependencies
-  - local: '.gitlab/workflows/rhiza_license.yml'
-    rules:
-      - if: $CI_COMMIT_TAG
-        when: never
-      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      - if: $CI_COMMIT_BRANCH
-
   # Quality - Dependency checks, pre-commit hooks, docs coverage, link checking
   - local: '.gitlab/workflows/rhiza_quality.yml'
     rules:
@@ -85,6 +64,14 @@ include:
       - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       - if: $CI_COMMIT_BRANCH == "main"
       - if: $CI_COMMIT_BRANCH == "master"
+
+  # Paper - Build paper/report artifacts
+  - local: '.gitlab/workflows/rhiza_paper.yml'
+    rules:
+      - if: $CI_COMMIT_TAG
+        when: never
+      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      - if: $CI_COMMIT_BRANCH
 
 # Deployment Workflows
   # Book - Build and deploy documentation to GitLab Pages
@@ -108,6 +95,21 @@ include:
           when: always
 
         - when: never
+
+  # Renovate - Automated dependency updates (scheduled)
+  - local: '.gitlab/workflows/rhiza_renovate.yml'
+    rules:
+      - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        when: always
+      - when: never
+
+  # Weekly - Semgrep, license checks, deptry (scheduled)
+  - local: '.gitlab/workflows/rhiza_weekly.yml'
+    rules:
+      - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        when: always
+      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      - when: never
 
 
 # Release Workflow
