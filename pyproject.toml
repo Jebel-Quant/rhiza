@@ -45,6 +45,9 @@ plotly = "plotly"
 pandas = "pandas"
 pyyaml = "yaml"
 
+[tool.hatch.publish.index]
+disable = true
+
 [tool.ty.environment]
 python-version = "3.13"
 
