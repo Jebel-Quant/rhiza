@@ -45,6 +45,7 @@ bundles:
       - .rhiza/requirements/README.md
       - .rhiza/requirements/docs.txt
       - .rhiza/requirements/tools.txt
+      - .rhiza/utils
 
       # Root configuration files
       - .bandit
