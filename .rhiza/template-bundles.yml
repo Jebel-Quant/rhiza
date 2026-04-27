@@ -211,7 +211,7 @@ bundles:
       - docs/development/TESTS.md
 
       # GitHub Actions workflows
-      - .github/semgrep.yml
+      - .rhiza/semgrep.yml
       - .github/workflows/rhiza_ci.yml
       - .github/workflows/rhiza_codeql.yml
       - .github/workflows/rhiza_weekly.yml
