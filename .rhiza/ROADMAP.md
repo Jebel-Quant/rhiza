@@ -37,6 +37,7 @@ Rhiza aims to be the definitive solution for maintaining consistency and best pr
 - Marp presentation generation (`make presentation`, `make presentation-pdf`, `make presentation-serve`)
 - Template bundles system — 13 bundles: `core`, `github`, `gitlab`, `tests`, `marimo`, `book`, `docker`, `devcontainer`, `presentation`, `lfs`, `legal`, `renovate`, `gh-aw`
 - GitHub Agentic Workflows (`make gh-aw-*`, 10+ targets, 3 starter workflows, `docs/development/GH_AW.md`)
+- Layered bundle/profile model — local-first feature bundles, GitHub overlay bundles, three starter profiles (`local`, `github-project`, `gitlab-project`)
 
 ### v0.9.0 - Enhanced Template Management (Q2 2026)
 **Theme: Flexibility & Extensibility**
