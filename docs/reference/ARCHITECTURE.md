@@ -416,21 +416,36 @@ post-release::   # Runs after make release
    - Named by **purpose**: `tests.txt`, `docs.txt`, `marimo.txt`, `tools.txt`
    - Not by library: ❌ `pytest.txt`, `pdoc.txt`
 
-### Template Bundle Naming
+### Template Bundle and Profile Naming
 
-Template bundles in `template-bundles.yml` follow these conventions:
+`template-bundles.yml` defines two layers: **bundles** (file-owning building blocks) and **profiles** (user-facing presets). See [ADR-0010](../adr/0010-layered-bundle-profile-model.md) for the rationale.
 
-1. **Lowercase singular**: `core`, `github`, `tests`, `marimo`, `book`
-2. **Domain-focused**: Named after the feature domain, not implementation
-   - ✅ `marimo` (notebooks)
-   - ✅ `book` (documentation)
-   - ❌ `notebooks`, `documentation-generation`
+#### Bundles
 
-3. **Bundle metadata**:
+1. **Lowercase, hyphen-separated**: `core`, `github`, `tests`, `github-tests`
+2. **Feature bundles are local-first**: they do not own hosted workflow files
+3. **Platform overlays use a `<platform>-` prefix**: `github-tests`, `github-book`, `gitlab`
+   - ✅ `github-tests` (GitHub Actions for the `tests` feature)
+   - ✅ `github-book` (GitHub Actions for the `book` feature)
+   - ❌ embedding workflow files directly in `tests` or `book`
+
+4. **Bundle metadata**:
    - `description` - Clear, concise explanation
    - `standalone` - Whether bundle can be used independently
    - `requires` - Hard dependencies on other bundles
    - `recommends` - Soft dependencies that enhance functionality
+
+#### Profiles
+
+1. **Lowercase, hyphen-separated**: `local`, `github-project`, `gitlab-project`
+2. **Intent-focused**: Named after the hosting and automation context, not the tool
+   - ✅ `local` (no hosted automation)
+   - ✅ `github-project` (standard GitHub project)
+   - ❌ `no-workflows`, `full-setup`
+
+3. **Profile metadata**:
+   - `description` - Clear summary of the intended context
+   - `bundles` - Ordered list of bundles this profile expands to
 
 ### Variable Naming
 

@@ -30,6 +30,7 @@ Each ADR follows a consistent format defined in [0000-adr-template.md](../../.gi
 | [0007](0007-support-dual-cicd-github-and-gitlab.md) | Support Dual CI/CD with GitHub Actions and GitLab CI | Accepted | 2024-08-01 |
 | [0008](0008-use-marimo-for-interactive-notebooks.md) | Use Marimo for Interactive Notebooks | Accepted | 2025-03-01 |
 | [0009](0009-use-pre-commit-hooks-for-code-quality.md) | Use Pre-commit Hooks for Automated Code Quality Enforcement | Accepted | 2024-04-01 |
+| [0010](0010-layered-bundle-profile-model.md) | Introduce a Layered Bundle and Profile Model | Accepted | 2026-05-02 |
 
 ## Creating a New ADR
 

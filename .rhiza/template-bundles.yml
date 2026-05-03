@@ -1,23 +1,35 @@
 # Rhiza Template Bundle Definitions
 #
-# This file defines template bundles - pre-configured sets of files that can be
-# included in downstream projects by selecting templates instead of listing
-# individual file paths.
+# This file defines two layers of configuration:
+#
+# 1. bundles: atomic, file-owning building blocks.
+#    Every synced file belongs to a bundle. Feature bundles are local-first —
+#    they do not include hosted workflow files. GitHub Actions workflows for a
+#    feature live in a dedicated github-<feature> overlay bundle.
+#
+# 2. profiles: higher-level named presets that expand to a set of bundles.
+#    Profiles represent stable user intents (local-only, GitHub-hosted, etc.)
+#    and do not own files directly.
 #
 # Usage in downstream projects (.rhiza/template.yml):
 #
+#   # Profile-based (recommended — picks a sensible bundle set for your context):
+#   profiles:
+#     - local
+#
+#   # Bundle-based (advanced — full manual control):
 #   templates:
+#     - core
 #     - tests
-#     - docker
+#     - github
+#     - github-tests
+#
+#   # Mixed (profile plus extra bundles):
+#   profiles:
+#     - github-project
+#   templates:
 #     - marimo
-#
-# Instead of manually listing:
-#
-#   include: |
-#     .rhiza/make.d/test.mk
-#     pytest.ini
-#     docker/Dockerfile
-#     ...
+#     - github-marimo
 
 # Bundle Definitions
 bundles:
@@ -116,6 +128,8 @@ bundles:
     description: "VS Code DevContainer configuration for consistent development environments"
     standalone: true
     requires: []
+    recommends:
+      - github-devcontainer  # Add for GitHub-hosted DevContainer publishing
     files:
       # DevContainer configuration
       - .devcontainer
@@ -123,7 +137,16 @@ bundles:
       # Documentation
       - docs/development/DEVCONTAINER.md
 
-      # GitHub Actions workflows
+  # ============================================================================
+  # GITHUB-DEVCONTAINER - GitHub Actions workflow for DevContainer publishing
+  # ============================================================================
+  github-devcontainer:
+    description: "GitHub Actions workflow for DevContainer image publishing"
+    standalone: false
+    requires:
+      - github
+      - devcontainer
+    files:
       - .github/workflows/rhiza_devcontainer.yml
 
   # ============================================================================
@@ -133,6 +156,8 @@ bundles:
     description: "Docker containerization support for building and running containers"
     standalone: true
     requires: []
+    recommends:
+      - github-docker  # Add for GitHub-hosted Docker build and publish workflows
     files:
       # Docker configuration and files
       - docker
@@ -143,7 +168,16 @@ bundles:
       # Documentation
       - docs/development/DOCKER.md
 
-      # GitHub Actions workflows
+  # ============================================================================
+  # GITHUB-DOCKER - GitHub Actions workflow for Docker builds
+  # ============================================================================
+  github-docker:
+    description: "GitHub Actions workflow for Docker image building and publishing"
+    standalone: false
+    requires:
+      - github
+      - docker
+    files:
       - .github/workflows/rhiza_docker.yml
 
   # ============================================================================
@@ -195,10 +229,12 @@ bundles:
   # TESTS - Testing infrastructure with pytest, coverage, and type checking
   # ============================================================================
   tests:
-    description: "Testing infrastructure with pytest, coverage, and type checking"
+    description: "Local testing infrastructure with pytest, coverage, and type checking"
     standalone: true
     requires:
       - book
+    recommends:
+      - github-tests  # Add for GitHub-hosted CI workflows
     files:
       # Make targets and configuration
       - .rhiza/make.d/test.mk
@@ -210,8 +246,19 @@ bundles:
       - .rhiza/tests
       - docs/development/TESTS.md
 
-      # GitHub Actions workflows
+      # Semgrep config (local static analysis, not a workflow)
       - .rhiza/semgrep.yml
+
+  # ============================================================================
+  # GITHUB-TESTS - GitHub Actions workflows for test automation
+  # ============================================================================
+  github-tests:
+    description: "GitHub Actions workflows for test automation (CI, CodeQL, weekly runs)"
+    standalone: false
+    requires:
+      - github
+      - tests
+    files:
       - .github/workflows/rhiza_ci.yml
       - .github/workflows/rhiza_codeql.yml
       - .github/workflows/rhiza_weekly.yml
@@ -236,6 +283,8 @@ bundles:
     standalone: true
     requires:
       - book
+    recommends:
+      - github-marimo  # Add for GitHub-hosted notebook automation
     files:
       # Marimo configuration
       - .rhiza/make.d/marimo.mk
@@ -244,7 +293,16 @@ bundles:
       # Documentation
       - docs/development/MARIMO.md
 
-      # GitHub Actions workflows
+  # ============================================================================
+  # GITHUB-MARIMO - GitHub Actions workflow for Marimo notebooks
+  # ============================================================================
+  github-marimo:
+    description: "GitHub Actions workflow for Marimo notebook automation"
+    standalone: false
+    requires:
+      - github
+      - marimo
+    files:
       - .github/workflows/rhiza_marimo.yml
 
   # ============================================================================
@@ -261,11 +319,21 @@ bundles:
     recommends:
       - tests   # Optional: book includes coverage and test reports when tests are enabled
       - marimo  # Optional: book works better with notebook exports
+      - github-book  # Add for GitHub-hosted docs publishing
     files:
       # Book building configuration
       - .rhiza/make.d/book.mk
 
-      # GitHub Actions workflows
+  # ============================================================================
+  # GITHUB-BOOK - GitHub Actions workflow for documentation publishing
+  # ============================================================================
+  github-book:
+    description: "GitHub Actions workflow for documentation building and publishing"
+    standalone: false
+    requires:
+      - github
+      - book
+    files:
       - .github/workflows/rhiza_book.yml
 
   # ============================================================================
@@ -273,7 +341,7 @@ bundles:
   # ============================================================================
   gh-aw:
     description: "GitHub Agentic Workflows for AI-driven repository automation"
-    standalone: true
+    standalone: false
     requires: [github]
     recommends: [tests]
     notes: |
@@ -282,6 +350,7 @@ bundles:
       - Starter workflow templates
       - CI validation for lock file freshness
       - Documentation
+      Note: gh-aw is inherently GitHub-specific and has no local-only split.
     files:
       # Makefile extensions
       - .rhiza/make.d/github.mk
@@ -303,3 +372,78 @@ bundles:
 
       # Documentation
       - docs/development/GH_AW.md
+
+# ==============================================================================
+# PROFILE DEFINITIONS
+#
+# Profiles are higher-level named presets that expand to a set of bundles.
+# They represent stable user intents (local-only, GitHub-hosted, etc.) and do
+# not own files directly.
+#
+# Rules:
+#   - profiles reference bundles only, not raw file paths
+#   - selecting a profile is equivalent to selecting all its constituent bundles
+#   - users may combine profiles with additional manual bundle selection
+#
+# Usage in .rhiza/template.yml:
+#
+#   profiles:
+#     - local
+#
+#   # or combined with extra bundles:
+#   profiles:
+#     - github-project
+#   templates:
+#     - marimo
+#     - github-marimo
+# ==============================================================================
+profiles:
+
+  # ============================================================================
+  # LOCAL - Local-first development with no hosted workflows
+  # ============================================================================
+  local:
+    description: |
+      Local-first development setup with no hosted CI/CD workflow files.
+      Suitable for:
+        - experiments and research codebases
+        - early-stage projects not yet ready for hosted automation
+        - projects hosted privately or on platforms other than GitHub/GitLab
+      Includes core infrastructure, testing tooling, and documentation.
+      No .github/workflows/* files are synced.
+    bundles:
+      - core
+      - book
+      - tests
+
+  # ============================================================================
+  # GITHUB-PROJECT - Standard GitHub-hosted project
+  # ============================================================================
+  github-project:
+    description: |
+      Standard GitHub-hosted project with CI/CD and release automation.
+      Suitable for open-source or team projects hosted on GitHub.
+      Includes core infrastructure, testing tooling, documentation,
+      and GitHub Actions workflows for CI, CodeQL, release, and sync.
+    bundles:
+      - core
+      - github
+      - book
+      - github-book
+      - tests
+      - github-tests
+
+  # ============================================================================
+  # GITLAB-PROJECT - Standard GitLab-hosted project
+  # ============================================================================
+  gitlab-project:
+    description: |
+      Standard GitLab-hosted project with GitLab CI/CD pipelines.
+      Suitable for projects hosted on GitLab.com or a self-hosted GitLab instance.
+      Includes core infrastructure, testing tooling, documentation,
+      and GitLab CI pipelines. No .github/ files are synced.
+    bundles:
+      - core
+      - gitlab
+      - book
+      - tests
