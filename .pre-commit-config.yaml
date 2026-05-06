@@ -59,7 +59,7 @@ repos:
         args: ["--ini", ".bandit", "--exclude", ".venv,tests,.rhiza/tests,.git,.pytest_cache"]
 
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.8
+    rev: 0.11.10
     hooks:
       - id: uv-lock
 
