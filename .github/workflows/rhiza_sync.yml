@@ -18,7 +18,7 @@ on:
     paths:
       - '.rhiza/template.yml'
   schedule:
-    - cron: '0 0 * * 1'  # Weekly on Monday
+    - cron: '0 0 * * 1'  # Configured via RHIZA_SYNC_SCHEDULE in .rhiza/.env
   workflow_dispatch:
     inputs:
       create-pr:
