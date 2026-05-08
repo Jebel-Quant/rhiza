@@ -35,7 +35,8 @@ RESET := \033[0m
 	sync \
 	validate \
 	version-matrix \
-	ci-os-matrix
+	ci-os-matrix \
+	sync-schedule
 
 # we need absolute paths!
 INSTALL_DIR ?= $(abspath ./bin)
@@ -148,6 +149,9 @@ version-matrix: install-uv ## Emit the list of supported Python versions from py
 
 ci-os-matrix: ## Emit GitHub CI OSes (RHIZA_CI_OS_MATRIX as JSON array, default ["ubuntu-latest"])
 	@printf '%s\n' '$(or $(RHIZA_CI_OS_MATRIX),["ubuntu-latest"])'
+
+sync-schedule: ## Emit sync workflow cron schedule (RHIZA_SYNC_SCHEDULE, default '0 0 * * 1')
+	@printf '%s\n' $(or $(RHIZA_SYNC_SCHEDULE),'0 0 * * 1')
 
 print-% : ## print the value of a variable (usage: make print-VARIABLE)
 	@printf "${BLUE}[INFO] Printing value of variable '$*':${RESET}\n"
