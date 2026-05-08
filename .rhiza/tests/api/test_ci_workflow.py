@@ -10,7 +10,7 @@ import yaml
 from api.conftest import run_make
 
 WORKFLOW_PATH = Path(".github") / "workflows" / "rhiza_ci.yml"
-MULTI_OS_MATRIX = r"RHIZA_CI_OS_MATRIX=[\"ubuntu-latest\",\"windows-latest\"]"
+MULTI_OS_MATRIX = 'RHIZA_CI_OS_MATRIX=["ubuntu-latest","windows-latest"]'
 
 
 def _load_workflow(root: Path) -> dict:
