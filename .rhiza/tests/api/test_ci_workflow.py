@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
 import yaml
+from api.conftest import run_make
 
 WORKFLOW_PATH = Path(".github") / "workflows" / "rhiza_ci.yml"
+MULTI_OS_MATRIX = r"RHIZA_CI_OS_MATRIX=[\"ubuntu-latest\",\"windows-latest\"]"
 
 
 def _load_workflow(root: Path) -> dict:
@@ -34,11 +37,29 @@ def test_ci_workflow_defines_os_matrix_output(root):
     assert outputs["os_matrix"] == "${{ steps.os.outputs.list }}"
 
 
-def test_ci_workflow_os_matrix_defaults_to_ubuntu(root):
-    """OS matrix generation must default to Ubuntu when env config is unset."""
+def test_ci_workflow_generates_os_matrix_via_make_target(root):
+    """OS matrix generation must delegate to the dedicated Make target."""
     workflow = _load_workflow(root)
     steps = workflow["jobs"]["generate-matrix"]["steps"]
-    os_step = next(step for step in steps if step.get("id") == "os")
+    os_step = next((step for step in steps if step.get("id") == "os"), None)
+    assert os_step is not None, "Expected a step with id='os' in generate-matrix job"
     run = os_step["run"]
-    assert "RHIZA_CI_OS_MATRIX" in run
-    assert "ubuntu-latest" in run
+    assert "ci-os-matrix" in run
+
+
+def test_ci_os_matrix_make_target_defaults_to_ubuntu_when_env_missing(logger):
+    """ci-os-matrix target must default to ubuntu-latest when env value is absent."""
+    result = run_make(logger, ["-f", ".rhiza/rhiza.mk", "RHIZA_CI_OS_MATRIX=", "ci-os-matrix"], dry_run=False)
+    assert result.returncode == 0
+    assert json.loads(result.stdout.strip()) == ["ubuntu-latest"]
+
+
+def test_ci_os_matrix_make_target_can_be_configured(logger):
+    """ci-os-matrix target must use the configured RHIZA_CI_OS_MATRIX value."""
+    result = run_make(
+        logger,
+        ["-f", ".rhiza/rhiza.mk", MULTI_OS_MATRIX, "ci-os-matrix"],
+        dry_run=False,
+    )
+    assert result.returncode == 0
+    assert json.loads(result.stdout.strip()) == ["ubuntu-latest", "windows-latest"]

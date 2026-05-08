@@ -54,7 +54,7 @@ jobs:
 
       - id: os
         run: |
-          OS_MATRIX=$(make -s -f .rhiza/rhiza.mk -f - print <<< "print: ; @echo \$(or \$(RHIZA_CI_OS_MATRIX),[\"ubuntu-latest\"])" )
+          OS_MATRIX=$(make -f .rhiza/rhiza.mk -s ci-os-matrix)
           echo "list=$OS_MATRIX" >> "$GITHUB_OUTPUT"
 
       - name: Debug OS matrix
