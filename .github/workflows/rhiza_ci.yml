@@ -33,7 +33,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
-          version: "0.11.12"
+          version: "0.11.14"
 
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
@@ -79,7 +79,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
-          version: "0.11.12"
+          version: "0.11.14"
           python-version: ${{ matrix.python-version }}
 
       - name: Configure git auth for private packages
@@ -112,7 +112,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
-          version: "0.11.12"
+          version: "0.11.14"
 
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
@@ -136,7 +136,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
-          version: "0.11.12"
+          version: "0.11.14"
 
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
@@ -179,7 +179,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
-          version: "0.11.12"
+          version: "0.11.14"
 
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
@@ -204,7 +204,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
-          version: "0.11.12"
+          version: "0.11.14"
 
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
@@ -226,7 +226,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
-          version: "0.11.12"
+          version: "0.11.14"
 
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
@@ -248,7 +248,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
-          version: "0.11.12"
+          version: "0.11.14"
 
       - name: Configure git auth for private packages
         uses: ./.github/actions/configure-git-auth
