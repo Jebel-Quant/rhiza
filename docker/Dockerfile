@@ -63,7 +63,8 @@ RUN apt-get update && \
 # CVE-2026-1703 (pip: information disclosure via path traversal)
 # CVE-2026-23949 (jaraco.context: path traversal)
 # CVE-2026-24049 (wheel: privilege escalation)
-RUN pip install --no-cache-dir --upgrade pip==26.0 && \
+# CVE-2026-6357 (pip: arbitrary code execution or information disclosure via malicious wheel)
+RUN pip install --no-cache-dir --upgrade pip==26.1 && \
     pip install --no-cache-dir setuptools==82.0.0
 
 # Create non-root user
