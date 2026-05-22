@@ -1,4 +1,9 @@
-## [unreleased]
+## [0.10.9] - 2026-05-22
+
+### 💼 Other
+
+- Bump version 0.10.8 → 0.10.9
+## [0.10.8] - 2026-05-22
 
 ### 🚀 Features
 
@@ -7,6 +12,14 @@
 ### 🐛 Bug Fixes
 
 - *(docker)* Upgrade pip to 26.1 to fix CVE-2026-6357 (#1058)
+
+### 💼 Other
+
+- Bump version 0.10.7 → 0.10.8
+
+### ⚙️ Miscellaneous Tasks
+
+- Generate CHANGELOG.md with git-cliff
 ## [0.10.7] - 2026-05-17
 
 ### 🚀 Features
