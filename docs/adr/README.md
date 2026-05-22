@@ -8,7 +8,7 @@ An Architecture Decision Record (ADR) is a document that captures an important a
 
 ## ADR Format
 
-Each ADR follows a consistent format defined in [0000-adr-template.md](0000-adr-template.md):
+Each ADR follows a consistent format defined in [0000-adr-template.md](../../.github/agents/0000-adr-template.md):
 
 - **Title and Number**: Sequential numbering with descriptive title
 - **Date**: When the decision was made
@@ -30,6 +30,7 @@ Each ADR follows a consistent format defined in [0000-adr-template.md](0000-adr-
 | [0007](0007-support-dual-cicd-github-and-gitlab.md) | Support Dual CI/CD with GitHub Actions and GitLab CI | Accepted | 2024-08-01 |
 | [0008](0008-use-marimo-for-interactive-notebooks.md) | Use Marimo for Interactive Notebooks | Accepted | 2025-03-01 |
 | [0009](0009-use-pre-commit-hooks-for-code-quality.md) | Use Pre-commit Hooks for Automated Code Quality Enforcement | Accepted | 2024-04-01 |
+| [0010](0010-layered-bundle-profile-model.md) | Introduce a Layered Bundle and Profile Model | Accepted | 2026-05-02 |
 
 ## Creating a New ADR
 
@@ -53,7 +54,7 @@ This will:
 
 If you prefer to create an ADR manually:
 
-1. Copy the template: `cp docs/adr/0000-adr-template.md docs/adr/0010-example-decision.md`
+1. Copy the template: `cp .github/agents/0000-adr-template.md docs/adr/0010-example-decision.md`
 2. Use the next available 4-digit number (e.g., 0010, 0011, 0012)
 3. Fill in all sections with relevant information
 4. Update this README to add your ADR to the index

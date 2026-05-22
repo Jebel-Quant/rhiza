@@ -642,7 +642,6 @@ uv run pytest --help
 
 # Read documentation
 cat docs/QUICK_REFERENCE.md
-cat docs/CUSTOMIZATION.md
 cat docs/EXTENDING_RHIZA.md
 ```
 
@@ -809,9 +808,8 @@ PYTHON_VERSION = 3.12
 
 ## See Also
 
-- [Quick Reference](QUICK_REFERENCE.md) - Condensed command reference
-- [Customization Guide](CUSTOMIZATION.md) - Extending and customizing Rhiza
-- [Extending Rhiza](EXTENDING_RHIZA.md) - Detailed extension patterns
+- [Quick Reference](../guides/QUICK_REFERENCE.md) - Condensed command reference
+- [Extending Rhiza](../guides/EXTENDING_RHIZA.md) - Extending and customizing Rhiza
 - [Contributing Guide](../CONTRIBUTING.md) - How to contribute
 - [README](../README.md) - Project overview
 

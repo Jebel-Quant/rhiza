@@ -22,8 +22,8 @@ paper:build:
         exit 0
       fi
 
-      if [ -f docs/paper/basanos.tex ]; then
-        tex_file="basanos.tex"
+      if [ -f docs/paper/rhiza.tex ]; then
+        tex_file="rhiza.tex"
       else
         tex_file=$(find docs/paper -maxdepth 1 -name "*.tex" | head -1 | xargs basename)
       fi

@@ -17,7 +17,11 @@ Security is a critical aspect of the Rhiza template system. We employ a defense-
 
 [Bandit](https://github.com/PyCQA/bandit) is a security linter specifically designed for Python. It scans code for common security issues.
 
-**Configuration**: Configured in `.pre-commit-config.yaml` and `pyproject.toml`
+**Configuration**: Configured in `.bandit` (INI file, single source of truth) and `.pre-commit-config.yaml`
+
+**Why `.bandit` and not `pyproject.toml`**: CodeFactor runs `bandit -r .` without the `-c pyproject.toml`
+flag, so any `[tool.bandit]` settings in `pyproject.toml` are silently ignored. The `.bandit` INI
+file is read automatically by both bandit and CodeFactor, making it the single source of truth.
 
 **What it checks**:
 - Subprocess calls with shell injection risks
@@ -31,8 +35,8 @@ Security is a critical aspect of the Rhiza template system. We employ a defense-
 # Run via pre-commit
 pre-commit run bandit --all-files
 
-# Or directly with uv
-uv tool run bandit -r . -c pyproject.toml
+# Or directly with uv (reads .bandit automatically)
+uv tool run bandit -r . --ini .bandit
 ```
 
 ### Ruff Security Checks (S)
@@ -141,10 +145,10 @@ The SAST baseline captures the security state of production code and ensures no 
 uv tool install bandit
 
 # Generate baseline for production code (excluding tests)
-uv tool run bandit -r book/ .rhiza/scripts/ -f json -o .bandit-baseline.json
+uv tool run bandit -r book/ .rhiza/scripts/ --ini .bandit -f json -o .bandit-baseline.json
 
 # Or generate text report
-uv tool run bandit -r book/ .rhiza/scripts/ -f txt -o .bandit-baseline.txt
+uv tool run bandit -r book/ .rhiza/scripts/ --ini .bandit -f txt -o .bandit-baseline.txt
 ```
 
 ### Interpreting the Baseline

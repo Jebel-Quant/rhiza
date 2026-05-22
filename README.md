@@ -1,6 +1,6 @@
-<div align="center">
+<div align="center" markdown>
 
-# <img src=".rhiza/assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza 
+# <img src="https://raw.githubusercontent.com/Jebel-Quant/rhiza/main/.rhiza/assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza
 ![GitHub Release](https://img.shields.io/github/v/release/jebel-quant/rhiza?sort=semver&color=2FA4A9&label=rhiza)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -43,24 +43,35 @@ When you run `uvx rhiza init` or `uvx rhiza sync`, you are invoking the `rhiza-c
 
 ### How It Works
 
-Rhiza uses a simple configuration file (`.rhiza/template.yml`) to control which templates sync to your project. The recommended approach is to select **template bundles** by name — pre-configured sets of related files grouped by feature:
+Rhiza uses a simple configuration file (`.rhiza/template.yml`) to control which templates sync to your project. The recommended approach is to select a **profile** — a named preset for common project contexts — or to select individual **bundles** for full control:
 
 ```yaml
-# .rhiza/template.yml
+# .rhiza/template.yml — profile-based (recommended)
 repository: Jebel-Quant/rhiza
-ref: v0.7.1
+ref: v0.9.0
+
+profiles:
+  - github-project
+```
+
+```yaml
+# .rhiza/template.yml — bundle-based (advanced)
+repository: Jebel-Quant/rhiza
+ref: v0.9.0
 
 templates:
   - core
   - tests
   - github
+  - github-tests
   - docker
 ```
 
 **What you're seeing:**
 - **`repository`** - The upstream template source (**can be any repository, not just Rhiza!**)
-- **`ref`** - Which version tag/branch to sync from (e.g., `v0.7.1` or `main`)
-- **`templates`** - Template bundles to include by name (see [Available Template Bundles](#-available-template-bundles) below)
+- **`ref`** - Which version tag/branch to sync from (e.g., `v0.9.0` or `main`)
+- **`profiles`** - Named presets that expand to a set of bundles (see [Profiles](#profiles-recommended-starting-point) below)
+- **`templates`** - Individual template bundles for advanced or additional selection
 
 For advanced use cases you can still use explicit `include`/`exclude` file patterns alongside or instead of bundles:
 
@@ -74,7 +85,7 @@ exclude: |
   .rhiza/scripts/customisations/*
 ```
 
-> **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention. 
+> **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention.
 >
 > To enable this in your project, copy the [`regexManagers` configuration](renovate.json#L31-L40) from this repository's `renovate.json` file into your own Renovate configuration. See the linked configuration for the complete setup.
 
@@ -160,26 +171,73 @@ For more information about the ADR format and how to create new records, see the
 - 🎤 **Presentations** - Generate slides from Markdown using Marp
 - 🐳 **Containerization** - Docker and Dev Container configurations
 
+### Profiles (Recommended Starting Point)
+
+Rhiza provides **profiles** — named presets that select a sensible set of bundles for common project contexts. Profiles are the recommended way to get started.
+
+| Profile | Description | Includes |
+|---------|-------------|---------|
+| `local` | Local-first development with no hosted CI/CD workflow files | `core`, `book`, `tests` |
+| `github-project` | GitHub-hosted project with CI/CD and release automation | `core`, `github`, `book`, `github-book`, `tests`, `github-tests` |
+| `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `core`, `gitlab`, `book`, `tests` |
+
+Declare a profile in `.rhiza/template.yml`:
+
+```yaml
+repository: Jebel-Quant/rhiza
+ref: v0.9.0
+
+profiles:
+  - local
+```
+
+You can combine a profile with additional bundles:
+
+```yaml
+profiles:
+  - github-project
+templates:
+  - marimo
+  - github-marimo
+```
+
 ### Available Template Bundles
 
-Rhiza organises its templates into **bundles** — pre-configured sets of related files grouped by feature. Select the bundles you need in `.rhiza/template.yml`:
+Bundles are the atomic building blocks. Feature bundles are **local-first** — they do not include hosted workflow files. Platform overlay bundles (prefixed `github-` or `gitlab-`) add the CI/CD workflows for a given feature.
+
+**Feature bundles**
 
 | Bundle | Description | Requires | Standalone |
 |--------|-------------|----------|------------|
 | `core` | Core Rhiza infrastructure (Makefile, linting, docs) | — | ✅ |
-| `github` | GitHub Actions workflows for CI/CD | `core` | ✅ |
-| `tests` | Testing infrastructure with pytest, coverage, and type checking | — | ✅ |
-| `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book` | ❌ |
+| `tests` | Local testing infrastructure with pytest, coverage, and type checking | `book` | ✅ |
+| `book` | Comprehensive documentation book (API docs, coverage, notebooks) | — | ✅ |
+| `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book` | ✅ |
 | `benchmarks` | Performance benchmarking with pytest-benchmark and reporting | `tests` | ❌ |
-| `book` | Comprehensive documentation book (API docs, coverage, notebooks) | - | ✅ |
 | `docker` | Docker containerization support | — | ✅ |
 | `devcontainer` | VS Code DevContainer configuration | — | ✅ |
-| `gitlab` | GitLab CI/CD pipeline configuration | `core` | ✅ |
 | `presentation` | Presentation building using Marp | — | ✅ |
 | `lfs` | Git LFS (Large File Storage) support | — | ✅ |
 | `legal` | Legal and community files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT) | — | ✅ |
 | `renovate` | Renovate bot configuration for automated dependency updates | — | ✅ |
-| `gh-aw` | GitHub Agentic Workflows for AI-driven repository automation | `github` | ✅ |
+
+**Platform bundles — GitHub**
+
+| Bundle | Description | Requires | Standalone |
+|--------|-------------|----------|------------|
+| `github` | Base GitHub repository automation (sync, release, dependabot) | `core` | ❌ |
+| `github-tests` | GitHub Actions workflows for test automation (CI, CodeQL, weekly) | `github`, `tests` | ❌ |
+| `github-book` | GitHub Actions workflow for documentation publishing | `github`, `book` | ❌ |
+| `github-marimo` | GitHub Actions workflow for Marimo notebook automation | `github`, `marimo` | ❌ |
+| `github-docker` | GitHub Actions workflow for Docker image building and publishing | `github`, `docker` | ❌ |
+| `github-devcontainer` | GitHub Actions workflow for DevContainer image publishing | `github`, `devcontainer` | ❌ |
+| `gh-aw` | GitHub Agentic Workflows for AI-driven repository automation | `github` | ❌ |
+
+**Platform bundles — GitLab**
+
+| Bundle | Description | Requires | Standalone |
+|--------|-------------|----------|------------|
+| `gitlab` | GitLab CI/CD pipeline configuration and workflows | `core` | ❌ |
 
 **Tip:** Bundles marked **Standalone: ❌** cannot be used alone and must be combined with the bundles listed in the *Requires* column.
 
@@ -392,7 +450,7 @@ Hello, World!
 
 ### Documentation Customisation
 
-For information on customising the look and feel of your documentation, see [book/README.md](docs/BOOK.md).
+For information on customising the look and feel of your documentation, see [book/README.md](docs/guides/BOOK.md).
 
 ### Python Version Management
 
@@ -407,7 +465,7 @@ Rhiza uses a modular Makefile system with extension points (hooks) for customisa
 
 ### Custom Build Scripts
 
-For system dependencies and custom build steps, see [docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md).
+For system dependencies and custom build steps, see [docs/guides/EXTENDING_RHIZA.md](docs/guides/EXTENDING_RHIZA.md).
 
 ### Private GitHub Packages
 
@@ -431,7 +489,7 @@ For information on versioning, tagging, and publishing releases, see [.rhiza/doc
 
 This repository includes a template Dev Container configuration for seamless development in VS Code and GitHub Codespaces. See [.devcontainer/README.md](.devcontainer/README.md) for setup, configuration, and troubleshooting.
 
-For details about the VS Code extensions configured in the Dev Container, see [docs/VSCODE_EXTENSIONS.md](docs/VSCODE_EXTENSIONS.md).
+For details about the VS Code extensions configured in the Dev Container, see [docs/VSCODE_EXTENSIONS.md](docs/development/VSCODE_EXTENSIONS.md).
 
 ## 🔄 CI/CD Support
 
@@ -464,16 +522,16 @@ Rhiza includes comprehensive maintainability features to help track project heal
 
 ### Roadmap & Planning
 
-- **[docs/PROJECT_BOARD.md](docs/PROJECT_BOARD.md)** - Guide for setting up GitHub Project Boards to track enhancements and roadmap items
+- **[docs/PROJECT_BOARD.md](docs/ops/PROJECT_BOARD.md)** - Guide for setting up GitHub Project Boards to track enhancements and roadmap items
 
 ### Technical Debt Tracking
 
-- **[docs/TECHNICAL_DEBT.md](docs/TECHNICAL_DEBT.md)** - Comprehensive tracking of known limitations, debt items, and future improvements
+- **[docs/TECHNICAL_DEBT.md](docs/ops/TECHNICAL_DEBT.md)** - Comprehensive tracking of known limitations, debt items, and future improvements
 - **`make todos`** - Automated scanning for TODO, FIXME, and HACK comments across the codebase
 
 ### Changelog Management
 
-- **[docs/CHANGELOG_GUIDE.md](docs/CHANGELOG_GUIDE.md)** - Guide for enhanced changelog generation with PR categorization
+- **[docs/CHANGELOG_GUIDE.md](docs/ops/CHANGELOG_GUIDE.md)** - Guide for enhanced changelog generation with PR categorization
 - **[.github/release.yml](.github/release.yml)** - Automated PR categorization for release notes
 
 Run `make todos` to scan for technical debt markers in your codebase, or explore the roadmap and technical debt documents to understand project evolution and planned improvements.

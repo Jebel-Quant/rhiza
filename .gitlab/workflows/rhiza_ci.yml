@@ -20,6 +20,7 @@ ci:test:
   before_script:
     - apt-get update && apt-get install -y git-lfs
     - git lfs pull
+  coverage: '/TOTAL.*\s+(\d+%)$/'
   script:
     - echo "Testing with Python $PYTHON_VERSION"
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"

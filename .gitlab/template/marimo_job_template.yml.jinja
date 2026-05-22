@@ -5,7 +5,7 @@ marimo_test_{{JOB_NAME}}:
     GIT_LFS_SKIP_SMUDGE: "0"
   before_script:
     - apt-get update && apt-get install -y git-lfs
-    - git lfs install
+    - git lfs install --force
     - git lfs pull
   script:
     - echo "🚀 Running notebook: {{NOTEBOOK}}"
