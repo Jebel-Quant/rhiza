@@ -265,6 +265,9 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
       - name: Generate CHANGELOG.md with git-cliff
         run: uvx git-cliff --output CHANGELOG.md
 
