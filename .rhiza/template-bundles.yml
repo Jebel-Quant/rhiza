@@ -70,13 +70,6 @@ bundles:
     files:
       - .rhiza/make.d/github.mk
       - .rhiza/make.d/agentic.mk
-      # Core GitHub Actions workflows
-      # We don't copy the entire .github folder as there are
-      # workflows like .github/rhiza_docker etc.
-      - .github/workflows/copilot-setup-steps.yml
-      - .github/workflows/rhiza_sync.yml
-      - .github/workflows/rhiza_release.yml
-      - .github/workflows/rhiza_weekly.yml
       - .github/actions
       - .github/dependabot.yml
       - .github/copilot-instructions.md
@@ -131,9 +124,6 @@ bundles:
       # Documentation
       - docs/development/DEVCONTAINER.md
 
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_devcontainer.yml
-
   # ============================================================================
   # DOCKER - Docker containerization support
   # ============================================================================
@@ -150,9 +140,6 @@ bundles:
 
       # Documentation
       - docs/development/DOCKER.md
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_docker.yml
 
   # ============================================================================
   # LFS - Git Large File Storage support
@@ -218,11 +205,6 @@ bundles:
       - .rhiza/tests
       - docs/development/TESTS.md
 
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_ci.yml
-      - .github/workflows/rhiza_codeql.yml
-      - .github/workflows/rhiza_weekly.yml
-
   # ============================================================================
   # BENCHMARKS - Performance benchmarking with pytest-benchmark
   # ============================================================================
@@ -234,9 +216,6 @@ bundles:
     files:
       # Benchmark test infrastructure
       - tests/benchmarks
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_benchmarks.yml
 
   # ============================================================================
   # MARIMO - Interactive Marimo notebooks
@@ -253,9 +232,6 @@ bundles:
 
       # Documentation
       - docs/development/MARIMO.md
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_marimo.yml
 
   # ============================================================================
   # BOOK - Documentation book generation
@@ -274,9 +250,6 @@ bundles:
     files:
       # Book building configuration
       - .rhiza/make.d/book.mk
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_book.yml
 
   # ============================================================================
   # GH-AW - GitHub Agentic Workflows
@@ -297,12 +270,9 @@ bundles:
       - .rhiza/make.d/gh-aw.mk
 
       # Starter agentic workflows
-      - .github/workflows/daily-repo-status.md
-      - .github/workflows/ci-doctor.md
-      - .github/workflows/issue-triage.md
-
-      # CI validation workflow
-      - .github/workflows/rhiza_gh-aw-validate.yml
+      - .github/agents/daily-repo-status.md
+      - .github/agents/ci-doctor.md
+      - .github/agents/issue-triage.md
 
       # Documentation
       - docs/development/GH_AW.md
