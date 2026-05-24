@@ -25,6 +25,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_call:
 
 jobs:
   # Build a matrix of notebooks to test
