@@ -18,6 +18,12 @@ permissions:
 on:
   push:
   pull_request:
+  workflow_call:
+    secrets:
+      GH_PAT:
+        required: false
+      UV_EXTRA_INDEX_URL:
+        required: false
 
 jobs:
   generate-matrix:
