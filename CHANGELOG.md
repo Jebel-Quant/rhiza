@@ -1,3 +1,37 @@
+## [0.12.0] - 2026-05-24
+
+### 🚀 Features
+
+- Remove .github/workflows from template bundles
+
+### 💼 Other
+
+- Bump version 0.11.0 → 0.12.0
+## [0.11.3] - 2026-05-24
+
+### 🚀 Features
+
+- Add workflow_call trigger to support reusable workflow usage
+- Add workflow_call trigger with direct/create-pr inputs
+## [0.11.2] - 2026-05-24
+
+### 🚀 Features
+
+- Add workflow_call trigger to support reusable workflow usage
+- Add workflow_call trigger to support reusable workflow usage
+## [0.11.1] - 2026-05-24
+
+### 🚀 Features
+
+- Add workflow_call trigger to support reusable workflow usage
+
+### 🐛 Bug Fixes
+
+- Remove tests for generate-matrix/test jobs no longer in ci workflow
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.11.0 [skip ci]
 ## [0.11.0] - 2026-05-24
 
 ### 🚀 Features
