@@ -25,11 +25,24 @@ on:
         description: "Create a pull request"
         type: boolean
         default: true
+  workflow_call:
+    inputs:
+      direct:
+        description: "Run sync-direct (commit to branch) instead of sync-pr"
+        type: boolean
+        default: false
+      create-pr:
+        description: "Create a pull request (sync-pr mode only)"
+        type: boolean
+        default: true
+    secrets:
+      PAT_TOKEN:
+        required: false
 
 jobs:
   sync-direct:
     name: Sync and commit (Renovate)
-    if: github.event_name == 'push' && github.repository != 'jebel-quant/rhiza'
+    if: (github.event_name == 'push' || inputs.direct == true) && github.repository != 'jebel-quant/rhiza'
     runs-on: ubuntu-latest
 
     steps:
@@ -101,7 +114,7 @@ jobs:
 
   sync-pr:
     name: Sync and open PR (scheduled/manual)
-    if: github.event_name != 'push' && github.repository != 'jebel-quant/rhiza'
+    if: github.event_name != 'push' && inputs.direct != true && github.repository != 'jebel-quant/rhiza'
     runs-on: ubuntu-latest
 
     steps:
