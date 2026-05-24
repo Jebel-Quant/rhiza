@@ -1,3 +1,17 @@
+## [0.11.0] - 2026-05-24
+
+### 🚀 Features
+
+- Add RHIZA_SYNC_SCHEDULE variable to override default sync cron (#955)
+
+### 💼 Other
+
+- Update template-bundles and bump version 0.12.1 → 0.14.1
+- Bump version 0.10.9 → 0.11.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.10.9 [skip ci]
 ## [0.10.9] - 2026-05-22
 
 ### 💼 Other
