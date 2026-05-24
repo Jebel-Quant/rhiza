@@ -233,6 +233,7 @@ bundles:
     standalone: true
     requires:
       - book
+      - core
     recommends:
       - github-tests  # Add for GitHub-hosted CI workflows
     files:
@@ -280,9 +281,10 @@ bundles:
   # ============================================================================
   marimo:
     description: "Interactive Marimo notebooks for data exploration and documentation"
-    standalone: true
+    standalone: false
     requires:
       - book
+      - core
     recommends:
       - github-marimo  # Add for GitHub-hosted notebook automation
     files:
@@ -315,7 +317,8 @@ bundles:
       - Interactive notebooks (if marimo is enabled)
       - Test coverage reports and results (if tests bundle is also enabled)
     standalone: true
-    requires: []
+    requires:
+      - core
     recommends:
       - tests   # Optional: book includes coverage and test reports when tests are enabled
       - marimo  # Optional: book works better with notebook exports
@@ -412,9 +415,9 @@ profiles:
       Includes core infrastructure, testing tooling, and documentation.
       No .github/workflows/* files are synced.
     bundles:
-      - core
       - book
       - tests
+      - marimo
 
   # ============================================================================
   # GITHUB-PROJECT - Standard GitHub-hosted project
@@ -426,12 +429,9 @@ profiles:
       Includes core infrastructure, testing tooling, documentation,
       and GitHub Actions workflows for CI, CodeQL, release, and sync.
     bundles:
-      - core
-      - github
-      - book
       - github-book
-      - tests
       - github-tests
+      - github-marimo
 
   # ============================================================================
   # GITLAB-PROJECT - Standard GitLab-hosted project
@@ -443,7 +443,7 @@ profiles:
       Includes core infrastructure, testing tooling, documentation,
       and GitLab CI pipelines. No .github/ files are synced.
     bundles:
-      - core
       - gitlab
       - book
       - tests
+      - marimo
