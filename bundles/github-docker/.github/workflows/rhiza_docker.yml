@@ -1,0 +1,29 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Docker
+#
+# Purpose: Lint docker/Dockerfile with hadolint, build the image for validation,
+#          and scan it for security vulnerabilities with Trivy.
+#
+# Trigger: On push and pull_request to main/master.
+
+name: (RHIZA) DOCKER
+
+permissions:
+  contents: read
+  security-events: write
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  docker:
+    uses: jebel-quant/rhiza/.github/workflows/rhiza_docker.yml@v0.14.0
+    secrets: inherit
+    permissions:
+      contents: read
+      security-events: write
