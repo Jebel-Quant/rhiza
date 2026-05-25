@@ -1,3 +1,54 @@
+## [0.13.0] - 2026-05-25
+
+### 🚀 Features
+
+- Add workflow stubs and granular gitlab/github bundles
+
+### 🐛 Bug Fixes
+
+- Handle {source, dest} dict entries in template bundle tests
+
+### 💼 Other
+
+- Bump version 0.12.0 → 0.13.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump .rhiza-version to 0.15.0 (#1067)
+## [0.12.0] - 2026-05-24
+
+### 🚀 Features
+
+- Remove .github/workflows from template bundles
+
+### 💼 Other
+
+- Bump version 0.11.0 → 0.12.0
+## [0.11.3] - 2026-05-24
+
+### 🚀 Features
+
+- Add workflow_call trigger to support reusable workflow usage
+- Add workflow_call trigger with direct/create-pr inputs
+## [0.11.2] - 2026-05-24
+
+### 🚀 Features
+
+- Add workflow_call trigger to support reusable workflow usage
+- Add workflow_call trigger to support reusable workflow usage
+## [0.11.1] - 2026-05-24
+
+### 🚀 Features
+
+- Add workflow_call trigger to support reusable workflow usage
+
+### 🐛 Bug Fixes
+
+- Remove tests for generate-matrix/test jobs no longer in ci workflow
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.11.0 [skip ci]
 ## [0.11.0] - 2026-05-24
 
 ### 🚀 Features
