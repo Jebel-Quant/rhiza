@@ -165,7 +165,7 @@ class TestGithubOverlaySync:
         """Every injected workflow file parses as valid YAML."""
         workflows_dir = self.project / ".github" / "workflows"
         for wf in workflows_dir.glob("*.yml"):
-            with open(wf) as f:
+            with open(wf, encoding="utf-8") as f:
                 parsed = yaml.safe_load(f)
             assert parsed is not None, f"Empty or invalid YAML: {wf.name}"
 
