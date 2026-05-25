@@ -24,6 +24,7 @@ on:
       - 'paper/**'
       - '.github/workflows/rhiza_paper.yml'
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: write

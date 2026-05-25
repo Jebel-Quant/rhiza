@@ -48,6 +48,8 @@ on:
       - ".devcontainer/**"
       - ".github/workflows/rhiza_devcontainer.yml"
 
+  workflow_call:
+
 permissions:
   contents: read
   packages: write

@@ -135,6 +135,17 @@ bundles:
       - docs/development/DEVCONTAINER.md
 
   # ============================================================================
+  # GITHUB-DEVCONTAINER - GitHub Actions workflow for devcontainer CI
+  # ============================================================================
+  github-devcontainer:
+    description: "GitHub Actions workflow stub for devcontainer image build validation"
+    standalone: true
+    requires: [devcontainer, github]
+    files:
+      - source: .rhiza/stubs/workflows/rhiza_devcontainer.yml
+        dest: .github/workflows/rhiza_devcontainer.yml
+
+  # ============================================================================
   # DOCKER - Docker containerization support
   # ============================================================================
   docker:
@@ -150,6 +161,17 @@ bundles:
 
       # Documentation
       - docs/development/DOCKER.md
+
+  # ============================================================================
+  # GITHUB-DOCKER - GitHub Actions workflow for Docker lint and build validation
+  # ============================================================================
+  github-docker:
+    description: "GitHub Actions workflow stub for Docker lint, build, and security scan"
+    standalone: true
+    requires: [docker, github]
+    files:
+      - source: .rhiza/stubs/workflows/rhiza_docker.yml
+        dest: .github/workflows/rhiza_docker.yml
 
   # ============================================================================
   # LFS - Git Large File Storage support
@@ -177,6 +199,17 @@ bundles:
     files:
       - .rhiza/make.d/presentation.mk
       - docs/development/PRESENTATION.md
+
+  # ============================================================================
+  # GITHUB-PAPER - GitHub Actions workflow for LaTeX paper compilation
+  # ============================================================================
+  github-paper:
+    description: "GitHub Actions workflow stub for LaTeX paper compilation and PDF publishing"
+    standalone: true
+    requires: [github]
+    files:
+      - source: .rhiza/stubs/workflows/rhiza_paper.yml
+        dest: .github/workflows/rhiza_paper.yml
 
   # ============================================================================
   # GITLAB - GitLab CI/CD pipeline configuration
