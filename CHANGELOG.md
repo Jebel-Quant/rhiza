@@ -1,3 +1,20 @@
+## [0.13.1] - 2026-05-25
+
+### 🐛 Bug Fixes
+
+- Add github as dependency of github-book, github-marimo, github-tests
+
+### 💼 Other
+
+- Bump version 0.13.0 → 0.13.1
+
+### 🧪 Testing
+
+- Add bundle reliability tests and fix book.mk ownership conflict (#1068)
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.13.0 [skip ci]
 ## [0.13.0] - 2026-05-25
 
 ### 🚀 Features
