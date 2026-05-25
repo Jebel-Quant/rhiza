@@ -76,7 +76,6 @@ bundles:
     standalone: true
     requires: [core]
     files:
-      - .github/actions
       - .github/dependabot.yml
       - .github/secret_scanning.yml
       - .github/ISSUE_TEMPLATE
