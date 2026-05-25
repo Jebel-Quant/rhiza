@@ -1,3 +1,16 @@
+## [0.14.0] - 2026-05-25
+
+### 🚀 Features
+
+- Introduce bundle-centric directory layout (#1071)
+
+### 💼 Other
+
+- Bump version 0.13.3 → 0.14.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.13.3 [skip ci]
 ## [0.13.3] - 2026-05-25
 
 ### 🐛 Bug Fixes
