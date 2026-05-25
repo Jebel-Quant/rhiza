@@ -3,10 +3,15 @@
 # This file defines two layers of configuration:
 #
 # 1. bundles: atomic, file-owning building blocks.
-#    Every synced file belongs to a bundle. Feature bundles are local-first —
-#    they do not include hosted workflow files. GitHub Actions workflow stubs
-#    (thin wrappers that delegate to reusable workflows in jebel-quant/rhiza)
-#    live in dedicated github-<feature> overlay bundles.
+#    Every synced file belongs to exactly one bundle. Feature bundles are
+#    local-first — they do not include hosted workflow files. GitHub Actions
+#    workflow files (thin wrappers that delegate to reusable workflows in
+#    jebel-quant/rhiza) live in dedicated github-<feature> overlay bundles.
+#
+#    File ownership is expressed through the filesystem: each bundle has a
+#    corresponding directory under bundles/<name>/ in this repository.
+#    Symlinks point to the real files; overlay bundles (github-*, gitlab-*)
+#    contain the actual injection files directly.
 #
 # 2. profiles: higher-level named presets that expand to a set of bundles.
 #    Profiles represent stable user intents (local-only, GitHub-hosted, etc.)
@@ -39,55 +44,11 @@ bundles:
     description: "Core Rhiza infrastructure"
     required: true
     standalone: true
-    files:
-      # Core Rhiza files
-      - .rhiza/rhiza.mk
-      - .rhiza/.cfg.toml
-      - .rhiza/.env
-      - .rhiza/.gitignore
-      - .rhiza/.rhiza-version
-      - .rhiza/make.d/custom-env.mk
-      - .rhiza/make.d/custom-task.mk
-      - .rhiza/make.d/quality.mk
-      - .rhiza/make.d/bootstrap.mk
-      - .rhiza/make.d/releasing.mk
-      - .rhiza/assets
-      - .rhiza/requirements/README.md
-      - .rhiza/requirements/docs.txt
-      - .rhiza/requirements/tools.txt
-      - .rhiza/utils
-
-      # Root configuration files
-      - .bandit
-      - Makefile
-      - .pre-commit-config.yaml
-      - .editorconfig
-      - .gitignore
-      - .python-version
-      - ruff.toml
-
-      # Documentation files.
-      - docs/index.md                  # Pointer to README
-      - docs/mkdocs-base.yml           # Inherit from this file in your local mkdocs.yml
-      - docs/assets                    # The rhiza logo
 
   github:
     description: "GitHub repository configuration (actions, dependabot, templates, core workflows)"
     standalone: true
     requires: [core]
-    files:
-      - .github/dependabot.yml
-      - .github/secret_scanning.yml
-      - .github/ISSUE_TEMPLATE
-      - .github/DISCUSSION_TEMPLATE
-
-      # GitHub Actions workflow stubs (synced to .github/workflows/ in downstream repos)
-      - source: .rhiza/stubs/workflows/rhiza_sync.yml
-        dest: .github/workflows/rhiza_sync.yml
-      - source: .rhiza/stubs/workflows/rhiza_release.yml
-        dest: .github/workflows/rhiza_release.yml
-      - source: .rhiza/stubs/workflows/rhiza_weekly.yml
-        dest: .github/workflows/rhiza_weekly.yml
 
   # ============================================================================
   # RENOVATE - Automated dependency updates
@@ -96,9 +57,6 @@ bundles:
     description: "Renovate bot configuration for automated dependency updates"
     standalone: true
     requires: []
-    files:
-      # Renovate configuration
-      - renovate.json
 
   # ============================================================================
   # LEGAL - Legal and community files
@@ -107,17 +65,6 @@ bundles:
     description: "Legal and community documentation files"
     standalone: true
     requires: []
-    files:
-      # Legal files
-      - LICENSE
-
-      # Community files
-      - .rhiza/CONTRIBUTING.md
-      - .rhiza/CODE_OF_CONDUCT.md
-
-      # Security policy (root-level for GitHub visibility)
-      # Overwrite this file
-      - SECURITY.md
 
   # ============================================================================
   # DEVCONTAINER - VS Code DevContainer configuration
@@ -126,12 +73,6 @@ bundles:
     description: "VS Code DevContainer configuration for consistent development environments"
     standalone: true
     requires: []
-    files:
-      # DevContainer configuration
-      - .devcontainer
-
-      # Documentation
-      - docs/development/DEVCONTAINER.md
 
   # ============================================================================
   # GITHUB-DEVCONTAINER - GitHub Actions workflow for devcontainer CI
@@ -140,9 +81,6 @@ bundles:
     description: "GitHub Actions workflow stub for devcontainer image build validation"
     standalone: true
     requires: [devcontainer, github]
-    files:
-      - source: .rhiza/stubs/workflows/rhiza_devcontainer.yml
-        dest: .github/workflows/rhiza_devcontainer.yml
 
   # ============================================================================
   # DOCKER - Docker containerization support
@@ -151,15 +89,6 @@ bundles:
     description: "Docker containerization support for building and running containers"
     standalone: true
     requires: []
-    files:
-      # Docker configuration and files
-      - docker
-
-      # Make targets
-      - .rhiza/make.d/docker.mk
-
-      # Documentation
-      - docs/development/DOCKER.md
 
   # ============================================================================
   # GITHUB-DOCKER - GitHub Actions workflow for Docker lint and build validation
@@ -168,9 +97,6 @@ bundles:
     description: "GitHub Actions workflow stub for Docker lint, build, and security scan"
     standalone: true
     requires: [docker, github]
-    files:
-      - source: .rhiza/stubs/workflows/rhiza_docker.yml
-        dest: .github/workflows/rhiza_docker.yml
 
   # ============================================================================
   # LFS - Git Large File Storage support
@@ -179,12 +105,6 @@ bundles:
     description: "Git LFS (Large File Storage) installation and management"
     standalone: true
     requires: []
-    files:
-      # Make targets for LFS
-      - .rhiza/make.d/lfs.mk
-
-      # Documentation
-      - .rhiza/docs/LFS.md
 
   # ============================================================================
   # PRESENTATION - Presentation building with reveal.js
@@ -195,9 +115,6 @@ bundles:
     requires: []
     recommends:
       - marimo  # Presentations often use Marimo for interactive slides
-    files:
-      - .rhiza/make.d/presentation.mk
-      - docs/development/PRESENTATION.md
 
   # ============================================================================
   # GITHUB-PAPER - GitHub Actions workflow for LaTeX paper compilation
@@ -206,9 +123,6 @@ bundles:
     description: "GitHub Actions workflow stub for LaTeX paper compilation and PDF publishing"
     standalone: true
     requires: [github]
-    files:
-      - source: .rhiza/stubs/workflows/rhiza_paper.yml
-        dest: .github/workflows/rhiza_paper.yml
 
   # ============================================================================
   # GITLAB - GitLab CI/CD pipeline configuration
@@ -220,22 +134,6 @@ bundles:
     notes: |
       GitLab workflows provide similar functionality to GitHub Actions.
       Add gitlab-tests, gitlab-marimo, or gitlab-book for feature-specific pipelines.
-    files:
-      # Main GitLab CI configuration
-      - .gitlab-ci.yml
-
-      # GitLab documentation and base config
-      - .gitlab/COMPARISON.md
-      - .gitlab/README.md
-      - .gitlab/TESTING.md
-
-      # Core GitLab workflow files
-      - .gitlab/workflows/rhiza_sync.yml
-      - .gitlab/workflows/rhiza_release.yml
-      - .gitlab/workflows/rhiza_weekly.yml
-      - .gitlab/workflows/rhiza_renovate.yml
-      - .gitlab/workflows/rhiza_quality.yml
-      - .gitlab/workflows/rhiza_paper.yml
 
   # ============================================================================
   # GITLAB-TESTS - GitLab CI pipeline for testing
@@ -244,8 +142,6 @@ bundles:
     description: "GitLab CI pipeline for running tests (rhiza_ci)"
     standalone: true
     requires: [tests, gitlab]
-    files:
-      - .gitlab/workflows/rhiza_ci.yml
 
   # ============================================================================
   # GITLAB-MARIMO - GitLab CI pipeline for Marimo notebooks
@@ -254,9 +150,6 @@ bundles:
     description: "GitLab CI pipeline for Marimo notebook execution"
     standalone: true
     requires: [marimo, gitlab]
-    files:
-      - .gitlab/workflows/rhiza_marimo.yml
-      - .gitlab/template/marimo_job_template.yml.jinja
 
   # ============================================================================
   # GITLAB-BOOK - GitLab CI pipeline for book/docs publishing
@@ -265,8 +158,6 @@ bundles:
     description: "GitLab CI pipeline for book/docs publishing to GitLab Pages"
     standalone: true
     requires: [book, gitlab]
-    files:
-      - .gitlab/workflows/rhiza_book.yml
 
   # ============================================================================
   # TESTS - Testing infrastructure with pytest, coverage, and type checking
@@ -277,19 +168,6 @@ bundles:
     requires:
       - book
       - core
-    files:
-      # Make targets and configuration
-      - .rhiza/make.d/test.mk
-
-      - .rhiza/requirements/tests.txt
-      - pytest.ini
-
-      # Core/generic test files
-      - .rhiza/tests
-      - docs/development/TESTS.md
-
-      # Semgrep config (local static analysis, not a workflow)
-      - .rhiza/semgrep.yml
 
   # ============================================================================
   # GITHUB-TESTS - GitHub Actions workflows for CI
@@ -298,11 +176,6 @@ bundles:
     description: "GitHub Actions workflow stubs for CI (rhiza_ci, rhiza_codeql)"
     standalone: true
     requires: [tests, github]
-    files:
-      - source: .rhiza/stubs/workflows/rhiza_ci.yml
-        dest: .github/workflows/rhiza_ci.yml
-      - source: .rhiza/stubs/workflows/rhiza_codeql.yml
-        dest: .github/workflows/rhiza_codeql.yml
 
   # ============================================================================
   # BENCHMARKS - Performance benchmarking with pytest-benchmark
@@ -312,9 +185,6 @@ bundles:
     standalone: false
     requires:
       - tests  # Required: benchmarks depend on the test infrastructure
-    files:
-      # Benchmark test infrastructure
-      - tests/benchmarks
 
   # ============================================================================
   # MARIMO - Interactive Marimo notebooks
@@ -325,13 +195,6 @@ bundles:
     requires:
       - book
       - core
-    files:
-      # Marimo configuration
-      - .rhiza/make.d/marimo.mk
-      - .rhiza/requirements/marimo.txt
-
-      # Documentation
-      - docs/development/MARIMO.md
 
   # ============================================================================
   # GITHUB-MARIMO - GitHub Actions workflow for Marimo notebooks
@@ -340,9 +203,6 @@ bundles:
     description: "GitHub Actions workflow stub for Marimo notebook publishing"
     standalone: true
     requires: [marimo, github]
-    files:
-      - source: .rhiza/stubs/workflows/rhiza_marimo.yml
-        dest: .github/workflows/rhiza_marimo.yml
 
   # ============================================================================
   # BOOK - Documentation book generation
@@ -359,9 +219,6 @@ bundles:
     recommends:
       - tests   # Optional: book includes coverage and test reports when tests are enabled
       - marimo  # Optional: book works better with notebook exports
-    files:
-      # Book building configuration
-      - .rhiza/make.d/book.mk
 
   # ============================================================================
   # GITHUB-BOOK - GitHub Actions workflow for book/docs publishing
@@ -370,9 +227,6 @@ bundles:
     description: "GitHub Actions workflow stub for book/docs publishing to GitHub Pages"
     standalone: true
     requires: [book, github]
-    files:
-      - source: .rhiza/stubs/workflows/rhiza_book.yml
-        dest: .github/workflows/rhiza_book.yml
 
   # ============================================================================
   # GH-AW - GitHub Agentic Workflows
@@ -389,18 +243,6 @@ bundles:
       - CI validation for lock file freshness
       - Documentation
       Note: gh-aw is inherently GitHub-specific and has no local-only split.
-    files:
-      # Makefile extensions
-      - .rhiza/make.d/github.mk
-      - .rhiza/make.d/agentic.mk
-      - .rhiza/make.d/gh-aw.mk
-
-      - .github/agents
-      - .github/hooks
-      - .github/copilot-instructions.md
-
-      # Documentation
-      - docs/development/GH_AW.md
 
 # ==============================================================================
 # PROFILE DEFINITIONS

@@ -1,0 +1,1 @@
+../../../../.rhiza/make.d/lfs.mk
