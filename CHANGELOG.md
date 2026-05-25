@@ -1,3 +1,16 @@
+## [0.13.2] - 2026-05-25
+
+### 🚀 Features
+
+- Add workflow_call support and github-specific workflow bundles
+
+### 💼 Other
+
+- Bump version 0.13.1 → 0.13.2
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.13.1 [skip ci]
 ## [0.13.1] - 2026-05-25
 
 ### 🐛 Bug Fixes
