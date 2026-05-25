@@ -47,7 +47,6 @@ bundles:
       - .rhiza/.gitignore
       - .rhiza/.rhiza-version
       - .rhiza/make.d/custom-env.mk
-      - .rhiza/make.d/book.mk
       - .rhiza/make.d/custom-task.mk
       - .rhiza/make.d/quality.mk
       - .rhiza/make.d/bootstrap.mk
