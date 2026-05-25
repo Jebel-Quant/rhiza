@@ -266,7 +266,7 @@ bundles:
   github-tests:
     description: "GitHub Actions workflow stubs for CI (rhiza_ci, rhiza_codeql)"
     standalone: true
-    requires: [tests]
+    requires: [tests, github]
     files:
       - source: .rhiza/stubs/workflows/rhiza_ci.yml
         dest: .github/workflows/rhiza_ci.yml
@@ -308,7 +308,7 @@ bundles:
   github-marimo:
     description: "GitHub Actions workflow stub for Marimo notebook publishing"
     standalone: true
-    requires: [marimo]
+    requires: [marimo, github]
     files:
       - source: .rhiza/stubs/workflows/rhiza_marimo.yml
         dest: .github/workflows/rhiza_marimo.yml
@@ -338,7 +338,7 @@ bundles:
   github-book:
     description: "GitHub Actions workflow stub for book/docs publishing to GitHub Pages"
     standalone: true
-    requires: [book]
+    requires: [book, github]
     files:
       - source: .rhiza/stubs/workflows/rhiza_book.yml
         dest: .github/workflows/rhiza_book.yml
