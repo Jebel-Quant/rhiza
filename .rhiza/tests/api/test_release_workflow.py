@@ -67,5 +67,3 @@ class TestReleaseWorkflowStructure:
         """Workflow must have contents: write permission to push CHANGELOG.md."""
         permissions = workflow.get("permissions", {})
         assert permissions.get("contents") == "write", "Workflow must have contents: write permission"
-
-
