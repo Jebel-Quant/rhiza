@@ -22,7 +22,7 @@ on:
 
 jobs:
   docker:
-    uses: jebel-quant/rhiza/.github/workflows/rhiza_docker.yml@v0.13.1
+    uses: jebel-quant/rhiza/.github/workflows/rhiza_docker.yml@v0.14.0
     secrets: inherit
     permissions:
       contents: read
