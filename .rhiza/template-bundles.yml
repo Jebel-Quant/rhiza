@@ -9,7 +9,7 @@
 #    jebel-quant/rhiza) live in dedicated github-<feature> overlay bundles.
 #
 #    File ownership is expressed through the filesystem: each bundle has a
-#    corresponding directory under bundles/<name>/ in this repository.
+#    corresponding directory under bundles/<name>/ in this repository (23 bundles).
 #    Symlinks point to the real files; overlay bundles (github-*, gitlab-*)
 #    contain the actual injection files directly.
 #
