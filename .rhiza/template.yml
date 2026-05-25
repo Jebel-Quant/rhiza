@@ -1,0 +1,8 @@
+template-repository: "jebel-quant/rhiza"
+template-branch: "v0.14.0"
+
+profiles:
+  - github-project
+
+templates:
+  - legal
