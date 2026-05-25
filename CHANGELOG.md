@@ -1,3 +1,19 @@
+## [0.13.3] - 2026-05-25
+
+### 🐛 Bug Fixes
+
+- Use absolute action reference for configure-git-auth
+- Use absolute action reference for configure-git-auth
+- Use absolute action reference for configure-git-auth
+- Remove tests asserting unexpanded reusable workflow jobs (#1070)
+
+### 💼 Other
+
+- Bump version 0.13.2 → 0.13.3
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.13.2 [skip ci]
 ## [0.13.2] - 2026-05-25
 
 ### 🚀 Features
