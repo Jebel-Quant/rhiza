@@ -4,8 +4,9 @@
 #
 # 1. bundles: atomic, file-owning building blocks.
 #    Every synced file belongs to a bundle. Feature bundles are local-first —
-#    they do not include hosted workflow files. GitHub Actions workflows for a
-#    feature live in a dedicated github-<feature> overlay bundle.
+#    they do not include hosted workflow files. GitHub Actions workflow stubs
+#    (thin wrappers that delegate to reusable workflows in jebel-quant/rhiza)
+#    live in dedicated github-<feature> overlay bundles.
 #
 # 2. profiles: higher-level named presets that expand to a set of bundles.
 #    Profiles represent stable user intents (local-only, GitHub-hosted, etc.)
@@ -72,7 +73,7 @@ bundles:
       - docs/assets                    # The rhiza logo
 
   github:
-    description: "GitHub repository configuration (actions, dependabot, templates)"
+    description: "GitHub repository configuration (actions, dependabot, templates, core workflows)"
     standalone: true
     requires: [core]
     files:
@@ -81,6 +82,14 @@ bundles:
       - .github/secret_scanning.yml
       - .github/ISSUE_TEMPLATE
       - .github/DISCUSSION_TEMPLATE
+
+      # GitHub Actions workflow stubs (synced to .github/workflows/ in downstream repos)
+      - source: .rhiza/stubs/workflows/rhiza_sync.yml
+        dest: .github/workflows/rhiza_sync.yml
+      - source: .rhiza/stubs/workflows/rhiza_release.yml
+        dest: .github/workflows/rhiza_release.yml
+      - source: .rhiza/stubs/workflows/rhiza_weekly.yml
+        dest: .github/workflows/rhiza_weekly.yml
 
   # ============================================================================
   # RENOVATE - Automated dependency updates
@@ -174,19 +183,59 @@ bundles:
   # GITLAB - GitLab CI/CD pipeline configuration
   # ============================================================================
   gitlab:
-    description: "GitLab CI/CD pipeline configuration and workflows"
+    description: "GitLab CI/CD pipeline configuration and core workflows (sync, release, weekly)"
     standalone: true
     requires: [core]
     notes: |
       GitLab workflows provide similar functionality to GitHub Actions.
-      Some workflows (like book, ci) may benefit from having their
-      corresponding feature templates (book, tests) also enabled.
+      Add gitlab-tests, gitlab-marimo, or gitlab-book for feature-specific pipelines.
     files:
       # Main GitLab CI configuration
       - .gitlab-ci.yml
 
-      # GitLab workflow files
-      - .gitlab
+      # GitLab documentation and base config
+      - .gitlab/COMPARISON.md
+      - .gitlab/README.md
+      - .gitlab/TESTING.md
+
+      # Core GitLab workflow files
+      - .gitlab/workflows/rhiza_sync.yml
+      - .gitlab/workflows/rhiza_release.yml
+      - .gitlab/workflows/rhiza_weekly.yml
+      - .gitlab/workflows/rhiza_renovate.yml
+      - .gitlab/workflows/rhiza_quality.yml
+      - .gitlab/workflows/rhiza_paper.yml
+
+  # ============================================================================
+  # GITLAB-TESTS - GitLab CI pipeline for testing
+  # ============================================================================
+  gitlab-tests:
+    description: "GitLab CI pipeline for running tests (rhiza_ci)"
+    standalone: true
+    requires: [tests, gitlab]
+    files:
+      - .gitlab/workflows/rhiza_ci.yml
+
+  # ============================================================================
+  # GITLAB-MARIMO - GitLab CI pipeline for Marimo notebooks
+  # ============================================================================
+  gitlab-marimo:
+    description: "GitLab CI pipeline for Marimo notebook execution"
+    standalone: true
+    requires: [marimo, gitlab]
+    files:
+      - .gitlab/workflows/rhiza_marimo.yml
+      - .gitlab/template/marimo_job_template.yml.jinja
+
+  # ============================================================================
+  # GITLAB-BOOK - GitLab CI pipeline for book/docs publishing
+  # ============================================================================
+  gitlab-book:
+    description: "GitLab CI pipeline for book/docs publishing to GitLab Pages"
+    standalone: true
+    requires: [book, gitlab]
+    files:
+      - .gitlab/workflows/rhiza_book.yml
 
   # ============================================================================
   # TESTS - Testing infrastructure with pytest, coverage, and type checking
@@ -210,6 +259,19 @@ bundles:
 
       # Semgrep config (local static analysis, not a workflow)
       - .rhiza/semgrep.yml
+
+  # ============================================================================
+  # GITHUB-TESTS - GitHub Actions workflows for CI
+  # ============================================================================
+  github-tests:
+    description: "GitHub Actions workflow stubs for CI (rhiza_ci, rhiza_codeql)"
+    standalone: true
+    requires: [tests]
+    files:
+      - source: .rhiza/stubs/workflows/rhiza_ci.yml
+        dest: .github/workflows/rhiza_ci.yml
+      - source: .rhiza/stubs/workflows/rhiza_codeql.yml
+        dest: .github/workflows/rhiza_codeql.yml
 
   # ============================================================================
   # BENCHMARKS - Performance benchmarking with pytest-benchmark
@@ -241,6 +303,17 @@ bundles:
       - docs/development/MARIMO.md
 
   # ============================================================================
+  # GITHUB-MARIMO - GitHub Actions workflow for Marimo notebooks
+  # ============================================================================
+  github-marimo:
+    description: "GitHub Actions workflow stub for Marimo notebook publishing"
+    standalone: true
+    requires: [marimo]
+    files:
+      - source: .rhiza/stubs/workflows/rhiza_marimo.yml
+        dest: .github/workflows/rhiza_marimo.yml
+
+  # ============================================================================
   # BOOK - Documentation book generation
   # ============================================================================
   book:
@@ -258,6 +331,17 @@ bundles:
     files:
       # Book building configuration
       - .rhiza/make.d/book.mk
+
+  # ============================================================================
+  # GITHUB-BOOK - GitHub Actions workflow for book/docs publishing
+  # ============================================================================
+  github-book:
+    description: "GitHub Actions workflow stub for book/docs publishing to GitHub Pages"
+    standalone: true
+    requires: [book]
+    files:
+      - source: .rhiza/stubs/workflows/rhiza_book.yml
+        dest: .github/workflows/rhiza_book.yml
 
   # ============================================================================
   # GH-AW - GitHub Agentic Workflows
@@ -327,8 +411,8 @@ profiles:
       No .github/workflows/* files are synced.
     bundles:
       - book
-      - tests
       - marimo
+      - tests
 
   # ============================================================================
   # GITHUB-PROJECT - Standard GitHub-hosted project
@@ -338,12 +422,11 @@ profiles:
       Standard GitHub-hosted project.
       Suitable for open-source or team projects hosted on GitHub.
       Includes core infrastructure, GitHub repository configuration,
-      testing tooling, documentation, and notebooks.
+      testing tooling, documentation, notebooks, and hosted CI workflows.
     bundles:
-      - github
-      - book
-      - tests
-      - marimo
+      - github-book
+      - github-marimo
+      - github-tests
 
   # ============================================================================
   # GITLAB-PROJECT - Standard GitLab-hosted project
@@ -355,7 +438,6 @@ profiles:
       Includes core infrastructure, testing tooling, documentation,
       and GitLab CI pipelines. No .github/ files are synced.
     bundles:
-      - gitlab
-      - book
-      - tests
-      - marimo
+      - gitlab-book
+      - gitlab-marimo
+      - gitlab-tests
