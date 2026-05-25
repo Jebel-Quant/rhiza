@@ -14,6 +14,13 @@ import pytest
 import yaml
 
 
+def _resolve_path(entry: str | dict) -> str:
+    """Return the source path from a file entry (string or {source, dest} dict)."""
+    if isinstance(entry, dict):
+        return entry["source"]
+    return entry
+
+
 class TestTemplateBundles:
     """Tests for template-bundles.yml validation."""
 
@@ -66,10 +73,10 @@ class TestTemplateBundles:
 
             for file_path in files:
                 total_files += 1
-                path = root / file_path
+                path = root / _resolve_path(file_path)
 
                 if not path.exists():
-                    all_missing.append((bundle_name, file_path))
+                    all_missing.append((bundle_name, _resolve_path(file_path)))
 
         # Report results
         if all_missing:
@@ -90,10 +97,10 @@ class TestTemplateBundles:
             missing_in_bundle = []
 
             for file_path in files:
-                path = root / file_path
+                path = root / _resolve_path(file_path)
 
                 if not path.exists():
-                    missing_in_bundle.append(file_path)
+                    missing_in_bundle.append(_resolve_path(file_path))
 
             if missing_in_bundle:
                 error_msg = f"\nBundle '{bundle_name}' has {len(missing_in_bundle)} missing path(s):\n"
@@ -148,8 +155,9 @@ class TestTemplateBundles:
         for bundle_name in local_bundles:
             bundle_config = bundles.get(bundle_name, {})
             for file_path in bundle_config.get("files", []):
-                if ".github/workflows/" in file_path:
-                    workflow_files.append(f"  [{bundle_name}] {file_path}")
+                resolved = _resolve_path(file_path)
+                if ".github/workflows/" in resolved:
+                    workflow_files.append(f"  [{bundle_name}] {resolved}")
 
         if workflow_files:
             pytest.fail(
