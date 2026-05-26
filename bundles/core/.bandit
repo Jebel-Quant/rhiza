@@ -1,1 +1,2 @@
-../../.bandit
+[bandit]
+skips = B101

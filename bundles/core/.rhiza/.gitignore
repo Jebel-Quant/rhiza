@@ -1,1 +1,2 @@
-../../../.rhiza/.gitignore
+# Dedicated rhiza ignore rules
+!.env
