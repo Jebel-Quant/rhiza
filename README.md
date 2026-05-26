@@ -48,7 +48,7 @@ Rhiza uses a simple configuration file (`.rhiza/template.yml`) to control which 
 ```yaml
 # .rhiza/template.yml — profile-based (recommended)
 repository: Jebel-Quant/rhiza
-ref: v0.9.0
+ref: v0.14.0
 
 profiles:
   - github-project
@@ -57,7 +57,7 @@ profiles:
 ```yaml
 # .rhiza/template.yml — bundle-based (advanced)
 repository: Jebel-Quant/rhiza
-ref: v0.9.0
+ref: v0.14.0
 
 templates:
   - core
@@ -82,7 +82,7 @@ include: |
   ruff.toml
 
 exclude: |
-  .rhiza/scripts/customisations/*
+  .rhiza/make.d/custom-task.mk
 ```
 
 > **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention.
@@ -137,6 +137,17 @@ make install
 
 ## ✨ What You Get
 
+Adopt a Rhiza bundle and your project immediately gains:
+
+- **Makefile** with 40+ targets for install, test, fmt, release, docs, and more
+- **CI/CD workflows** for GitHub Actions and/or GitLab CI — test, lint, release, sync
+- **Pre-commit hooks** — ruff, bandit, markdownlint, interrogate, actionlint, and more
+- **pytest** with coverage, benchmarks, and property-based testing via Hypothesis
+- **Documentation** via pdoc + MkDocs, with optional Marimo notebook exports
+- **Release automation** — version bumping, OIDC PyPI publishing, SLSA provenance
+- **Security scanning** — CodeQL, pip-audit, bandit, secret scanning, Dependabot
+- **Shell completions** for bash and zsh (tab-complete all `make` targets)
+
 ## 📝 Architecture Decision Records
 
 This project maintains Architecture Decision Records (ADRs) to document important architectural and design decisions.
@@ -177,19 +188,21 @@ Rhiza provides **profiles** — named presets that select a sensible set of bund
 
 | Profile | Description | Includes |
 |---------|-------------|---------|
-| `local` | Local-first development with no hosted CI/CD workflow files | `core`, `book`, `tests` |
-| `github-project` | GitHub-hosted project with CI/CD and release automation | `core`, `github`, `book`, `github-book`, `tests`, `github-tests` |
-| `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `core`, `gitlab`, `book`, `tests` |
+| `local` | Local-first development with no hosted CI/CD workflow files | `book`, `marimo`, `tests` |
+| `github-project` | GitHub-hosted project with CI/CD and release automation | `github-book`, `github-marimo`, `github-tests` |
+| `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `gitlab-book`, `gitlab-marimo`, `gitlab-tests` |
 
 Declare a profile in `.rhiza/template.yml`:
 
 ```yaml
 repository: Jebel-Quant/rhiza
-ref: v0.9.0
+ref: v0.14.0
 
 profiles:
   - local
 ```
+
+> **Note:** Profiles expand to their constituent bundles including all transitive requirements. For example, `github-project` selects `github-book`, `github-marimo`, and `github-tests`, which in turn require `core`, `github`, `book`, `marimo`, and `tests`.
 
 You can combine a profile with additional bundles:
 
@@ -220,6 +233,7 @@ Bundles are the atomic building blocks. Feature bundles are **local-first** — 
 | `lfs` | Git LFS (Large File Storage) support | — | ✅ |
 | `legal` | Legal and community files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT) | — | ✅ |
 | `renovate` | Renovate bot configuration for automated dependency updates | — | ✅ |
+| `paper` | LaTeX paper compilation targets (`make paper`, `make paper-clean`) | — | ✅ |
 
 **Platform bundles — GitHub**
 
@@ -231,13 +245,17 @@ Bundles are the atomic building blocks. Feature bundles are **local-first** — 
 | `github-marimo` | GitHub Actions workflow for Marimo notebook automation | `github`, `marimo` | ❌ |
 | `github-docker` | GitHub Actions workflow for Docker image building and publishing | `github`, `docker` | ❌ |
 | `github-devcontainer` | GitHub Actions workflow for DevContainer image publishing | `github`, `devcontainer` | ❌ |
+| `github-paper` | GitHub Actions workflow for LaTeX paper compilation and PDF publishing | `github`, `paper` | ❌ |
 | `gh-aw` | GitHub Agentic Workflows for AI-driven repository automation | `github` | ❌ |
 
 **Platform bundles — GitLab**
 
 | Bundle | Description | Requires | Standalone |
 |--------|-------------|----------|------------|
-| `gitlab` | GitLab CI/CD pipeline configuration and workflows | `core` | ❌ |
+| `gitlab` | GitLab CI/CD pipeline configuration and core workflows | `core` | ❌ |
+| `gitlab-tests` | GitLab CI pipeline for test automation | `gitlab`, `tests` | ❌ |
+| `gitlab-marimo` | GitLab CI pipeline for Marimo notebook execution | `gitlab`, `marimo` | ❌ |
+| `gitlab-book` | GitLab CI pipeline for documentation publishing to GitLab Pages | `gitlab`, `book` | ❌ |
 
 **Tip:** Bundles marked **Standalone: ❌** cannot be used alone and must be combined with the bundles listed in the *Requires* column.
 
@@ -283,7 +301,7 @@ Keep your templates up-to-date with automated sync workflows:
 - The `.github/workflows/sync.yml` workflow runs on schedule or manually
 - Creates pull requests with template updates
 
-For GitHub Token configuration and details, see the [GitHub Actions documentation](.rhiza/docs/TOKEN_SETUP.md).
+For GitHub Token configuration and details, see the [GitHub Actions documentation](.github/CONFIG.md).
 
 ### What to Expect After Integration
 
@@ -479,17 +497,17 @@ my-package = { git = "https://github.com/jebel-quant/my-package.git", rev = "v1.
 
 **Git authentication is already configured** in all Rhiza workflows (CI, book, release, etc.) using the default `GITHUB_TOKEN`, which automatically provides read access to repositories in the same organization.
 
-For custom workflows or local development setup, see [.rhiza/docs/PRIVATE_PACKAGES.md](.rhiza/docs/PRIVATE_PACKAGES.md).
+For custom workflows or local development setup, see [docs/development/DOCKER.md](docs/development/DOCKER.md).
 
 ### Release Management
 
-For information on versioning, tagging, and publishing releases, see [.rhiza/docs/RELEASING.md](.rhiza/docs/RELEASING.md).
+For information on versioning, tagging, and publishing releases, run `make help` and see the `Releasing and Versioning` section, or refer to [docs/ops/CHANGELOG_GUIDE.md](docs/ops/CHANGELOG_GUIDE.md).
 
 ### Dev Container
 
-This repository includes a template Dev Container configuration for seamless development in VS Code and GitHub Codespaces. See [.devcontainer/README.md](.devcontainer/README.md) for setup, configuration, and troubleshooting.
+This repository includes a template Dev Container configuration for seamless development in VS Code and GitHub Codespaces. See [docs/development/DEVCONTAINER.md](docs/development/DEVCONTAINER.md) for setup, configuration, and troubleshooting.
 
-For details about the VS Code extensions configured in the Dev Container, see [docs/VSCODE_EXTENSIONS.md](docs/development/VSCODE_EXTENSIONS.md).
+For details about the VS Code extensions configured in the Dev Container, see [docs/development/VSCODE_EXTENSIONS.md](docs/development/VSCODE_EXTENSIONS.md).
 
 ## 🔄 CI/CD Support
 
