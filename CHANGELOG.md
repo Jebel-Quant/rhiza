@@ -1,3 +1,23 @@
+## [0.15.1] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- Skip test_bundles_directory_exists in downstream repos
+- Correct release workflow trigger assertions in test_workflow_stubs
+
+### 💼 Other
+
+- Bump version 0.15.0 → 0.16.1
+- Bump version 0.15.0 → 0.15.1
+
+### 🧪 Testing
+
+- Add 75 new tests across bundle content, combinations, and sync
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.15.0 [skip ci]
+- Register kaleido pytest mark in pytest.ini
 ## [0.15.0] - 2026-05-26
 
 ### 🚀 Features
