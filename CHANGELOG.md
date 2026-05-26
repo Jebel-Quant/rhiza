@@ -1,3 +1,16 @@
+## [0.15.0] - 2026-05-26
+
+### 🚀 Features
+
+- Overhaul bundle structure, testing, and GitHub workflows (#1072)
+
+### 💼 Other
+
+- Bump version 0.14.0 → 0.15.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.14.0 [skip ci]
 ## [0.14.0] - 2026-05-25
 
 ### 🚀 Features
