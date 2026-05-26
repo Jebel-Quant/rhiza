@@ -1,0 +1,255 @@
+"""Tests for GitHub workflow stubs injected by the github-* bundles.
+
+This file and its associated tests flow down via a SYNC action from the
+jebel-quant/rhiza repository (https://github.com/jebel-quant/rhiza).
+
+Workflow stubs in downstream projects are thin wrappers that delegate
+to the reusable canonical workflows in jebel-quant/rhiza.  These tests
+verify that:
+
+- Every injected .github/workflows/*.yml file is valid YAML
+- Each workflow has a 'name' and 'on' field
+- Workflows that use the reusable pattern reference jebel-quant/rhiza
+- The CI workflow exposes expected job names
+- The release workflow has proper trigger conditions
+- The sync workflow runs on a schedule
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+import yaml
+
+
+@pytest.fixture(scope="module")
+def workflows_dir(root: Path) -> Path:
+    """Return the path to .github/workflows/ or skip if absent."""
+    d = root / ".github" / "workflows"
+    if not d.is_dir():
+        pytest.skip(".github/workflows/ not found — github bundle not synced")
+    return d
+
+
+@pytest.fixture(scope="module")
+def workflow_files(workflows_dir: Path) -> list[Path]:
+    """Return all .yml files in the workflows directory."""
+    return sorted(workflows_dir.glob("*.yml"))
+
+
+def _load_workflow(path: Path) -> dict:
+    """Load a workflow YAML file and return the parsed document."""
+    with path.open(encoding="utf-8") as fh:
+        return yaml.safe_load(fh)
+
+
+class TestWorkflowStructure:
+    """Structural validation for all injected workflow files."""
+
+    def test_all_workflows_are_valid_yaml(self, workflow_files: list[Path]) -> None:
+        """Every .yml file in workflows/ must parse as valid YAML without error."""
+        errors: list[str] = []
+        for wf in workflow_files:
+            try:
+                with wf.open(encoding="utf-8") as fh:
+                    yaml.safe_load(fh)
+            except yaml.YAMLError as exc:
+                errors.append(f"  {wf.name}: {exc}")
+        if errors:
+            pytest.fail("YAML errors in workflow files:\n" + "\n".join(errors))
+
+    def test_all_workflows_have_name(self, workflow_files: list[Path]) -> None:
+        """Every workflow must declare a 'name' field for legibility in GitHub UI."""
+        missing: list[str] = []
+        for wf in workflow_files:
+            doc = _load_workflow(wf)
+            if not isinstance(doc, dict) or "name" not in doc:
+                missing.append(f"  {wf.name}")
+        if missing:
+            pytest.fail("Workflows missing 'name' field:\n" + "\n".join(missing))
+
+    def test_all_workflows_have_on_trigger(self, workflow_files: list[Path]) -> None:
+        """Every workflow must declare at least one trigger via the 'on' key.
+
+        Note: pyyaml parses the bare YAML key 'on' as Python boolean True because
+        'on' is a valid YAML boolean literal.  We check for both True and the string
+        'on' to handle both the parsed representation and any future parser changes.
+        """
+        missing: list[str] = []
+        for wf in workflow_files:
+            doc = _load_workflow(wf)
+            if not isinstance(doc, dict):
+                missing.append(f"  {wf.name}")
+                continue
+            has_on = "on" in doc or True in doc
+            if not has_on:
+                missing.append(f"  {wf.name}")
+        if missing:
+            pytest.fail("Workflows missing 'on' trigger:\n" + "\n".join(missing))
+
+    def test_all_workflows_have_jobs(self, workflow_files: list[Path]) -> None:
+        """Every workflow must define at least one job."""
+        missing: list[str] = []
+        for wf in workflow_files:
+            doc = _load_workflow(wf)
+            if not isinstance(doc, dict):
+                continue
+            jobs = doc.get("jobs") or {}
+            if not jobs:
+                missing.append(f"  {wf.name}")
+        if missing:
+            pytest.fail("Workflows with no jobs defined:\n" + "\n".join(missing))
+
+    def test_reusable_workflow_stubs_reference_jebel_quant(self, workflow_files: list[Path]) -> None:
+        """Stub workflows that use the 'uses:' pattern must point to jebel-quant/rhiza."""
+        violations: list[str] = []
+        for wf in workflow_files:
+            content = wf.read_text(encoding="utf-8")
+            if "uses:" not in content:
+                continue
+            if "jebel-quant/rhiza" not in content:
+                violations.append(f"  {wf.name}: uses: present but no jebel-quant/rhiza reference")
+        if violations:
+            pytest.fail("Stub workflows not delegating to jebel-quant/rhiza:\n" + "\n".join(violations))
+
+    def test_no_workflow_is_empty(self, workflow_files: list[Path]) -> None:
+        """No workflow file should be a null (empty) YAML document."""
+        empty: list[str] = []
+        for wf in workflow_files:
+            doc = _load_workflow(wf)
+            if doc is None:
+                empty.append(f"  {wf.name}")
+        if empty:
+            pytest.fail("Empty workflow files (null YAML document):\n" + "\n".join(empty))
+
+
+class TestCiWorkflow:
+    """Tests specific to the CI workflow (rhiza_ci.yml)."""
+
+    @pytest.fixture
+    def ci_workflow(self, workflows_dir: Path) -> dict:
+        """Load and return the CI workflow YAML."""
+        ci_path = workflows_dir / "rhiza_ci.yml"
+        if not ci_path.exists():
+            pytest.skip("rhiza_ci.yml not found")
+        return _load_workflow(ci_path)
+
+    def _get_triggers(self, workflow_doc: dict) -> dict:
+        """Extract the 'on' triggers from a workflow document.
+
+        pyyaml parses 'on:' as the Python boolean True (YAML boolean literal).
+        This helper retrieves the trigger mapping regardless of key type.
+        """
+        return workflow_doc.get(True, workflow_doc.get("on", {})) or {}
+
+    def test_ci_workflow_has_push_trigger(self, ci_workflow: dict) -> None:
+        """CI workflow must be triggered by push events."""
+        triggers = self._get_triggers(ci_workflow)
+        assert "push" in triggers or "push" in str(triggers), "CI workflow must be triggered on push"
+
+    def test_ci_workflow_has_pull_request_trigger(self, ci_workflow: dict) -> None:
+        """CI workflow must be triggered by pull_request events."""
+        triggers = self._get_triggers(ci_workflow)
+        assert "pull_request" in triggers or "pull_request" in str(triggers), (
+            "CI workflow must be triggered on pull_request"
+        )
+
+    def test_ci_workflow_exposes_workflow_call(self, ci_workflow: dict) -> None:
+        """CI workflow must support workflow_call for use as a reusable workflow."""
+        triggers = self._get_triggers(ci_workflow)
+        assert "workflow_call" in triggers or "workflow_call" in str(triggers), (
+            "CI workflow must support workflow_call (reusable workflow pattern)"
+        )
+
+    def test_ci_workflow_has_permissions(self, ci_workflow: dict) -> None:
+        """CI workflow must declare explicit permissions (principle of least privilege)."""
+        assert "permissions" in ci_workflow, (
+            "CI workflow should declare explicit permissions to limit GitHub token scope"
+        )
+
+
+def _get_workflow_triggers(workflow_doc: dict) -> dict:
+    """Extract the 'on' triggers from a parsed workflow document.
+
+    pyyaml parses 'on:' as Python boolean True (YAML boolean literal).
+    This helper retrieves the trigger mapping regardless of key type.
+    """
+    return workflow_doc.get(True, workflow_doc.get("on", {})) or {}
+
+
+class TestSyncWorkflow:
+    """Tests specific to the sync workflow (rhiza_sync.yml)."""
+
+    @pytest.fixture
+    def sync_workflow(self, workflows_dir: Path) -> dict:
+        """Load and return the sync workflow YAML."""
+        sync_path = workflows_dir / "rhiza_sync.yml"
+        if not sync_path.exists():
+            pytest.skip("rhiza_sync.yml not found")
+        return _load_workflow(sync_path)
+
+    def test_sync_workflow_has_schedule_trigger(self, sync_workflow: dict) -> None:
+        """Sync workflow must run on a schedule to automatically pull template updates."""
+        triggers = _get_workflow_triggers(sync_workflow)
+        assert "schedule" in triggers or "schedule" in str(triggers), "sync workflow should run on a schedule"
+
+    def test_sync_workflow_has_workflow_dispatch(self, sync_workflow: dict) -> None:
+        """Sync workflow should support manual dispatch for on-demand syncing."""
+        triggers = _get_workflow_triggers(sync_workflow)
+        assert "workflow_dispatch" in triggers or "workflow_dispatch" in str(triggers), (
+            "sync workflow should support manual workflow_dispatch trigger"
+        )
+
+
+class TestReleaseWorkflow:
+    """Tests specific to the release workflow (rhiza_release.yml)."""
+
+    @pytest.fixture
+    def release_workflow(self, workflows_dir: Path) -> dict:
+        """Load and return the release workflow YAML."""
+        release_path = workflows_dir / "rhiza_release.yml"
+        if not release_path.exists():
+            pytest.skip("rhiza_release.yml not found")
+        return _load_workflow(release_path)
+
+    def test_release_workflow_has_workflow_dispatch(self, release_workflow: dict) -> None:
+        """Release workflow must be manually dispatchable (not auto-triggered)."""
+        triggers = _get_workflow_triggers(release_workflow)
+        assert "workflow_dispatch" in triggers or "workflow_dispatch" in str(triggers), (
+            "release workflow must be triggered via workflow_dispatch"
+        )
+
+    def test_release_workflow_not_triggered_on_push(self, release_workflow: dict) -> None:
+        """Release workflow must not run automatically on every push."""
+        triggers = _get_workflow_triggers(release_workflow)
+        assert "push" not in triggers, "release workflow must not be auto-triggered by push — it should be manual only"
+
+
+class TestWeeklyWorkflow:
+    """Tests specific to the weekly checks workflow (rhiza_weekly.yml)."""
+
+    @pytest.fixture
+    def weekly_workflow(self, workflows_dir: Path) -> dict:
+        """Load and return the weekly workflow YAML."""
+        weekly_path = workflows_dir / "rhiza_weekly.yml"
+        if not weekly_path.exists():
+            pytest.skip("rhiza_weekly.yml not found")
+        return _load_workflow(weekly_path)
+
+    def test_weekly_workflow_has_schedule(self, weekly_workflow: dict) -> None:
+        """Weekly workflow must run on a schedule to catch dependency drift."""
+        triggers = _get_workflow_triggers(weekly_workflow)
+        assert "schedule" in triggers or "schedule" in str(triggers), "weekly workflow should run on a schedule"
+
+    def test_weekly_workflow_has_cron_expression(self, weekly_workflow: dict) -> None:
+        """Weekly workflow schedule must define a cron expression."""
+        triggers = _get_workflow_triggers(weekly_workflow)
+        schedule_val = triggers.get("schedule") if isinstance(triggers, dict) else None
+        if schedule_val is None:
+            pytest.skip("schedule not structured as expected")
+        # cron expressions typically appear as a list of dicts with 'cron' key
+        cron_found = any(
+            "cron" in str(item) for item in (schedule_val if isinstance(schedule_val, list) else [schedule_val])
+        )
+        assert cron_found, "weekly workflow schedule should define a cron expression"
