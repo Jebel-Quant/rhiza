@@ -92,11 +92,6 @@ class TestCoreBundleSync:
         """Ruff linting configuration is present."""
         assert (self.project / "ruff.toml").is_file()
 
-    def test_docs_skeleton_exists(self):
-        """Base documentation files are present."""
-        assert (self.project / "docs" / "index.md").is_file()
-        assert (self.project / "docs" / "mkdocs-base.yml").is_file()
-
     def test_no_symlinks_in_synced_project(self):
         """Synced files are real files, not symlinks — as a downstream project would receive."""
         for path in self.project.rglob("*"):
@@ -180,6 +175,11 @@ class TestProfileLocalSync:
         """Sync all bundles in the local profile transitive closure."""
         sync_bundles(root, self.LOCAL_BUNDLES, tmp_path)
         self.project = tmp_path
+
+    def test_docs_skeleton_exists(self):
+        """Base documentation files from the book bundle are present."""
+        assert (self.project / "docs" / "index.md").is_file()
+        assert (self.project / "docs" / "mkdocs-base.yml").is_file()
 
     def test_no_github_workflows_injected(self):
         """Local profile must not produce any .github/workflows/ files."""
