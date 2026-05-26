@@ -1,3 +1,17 @@
+## [0.15.3] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- Pin configure-git-auth action to v0.15.2 instead of @main
+- Downgrade setup-uv from v8.1.0 to v7.6.0
+
+### 💼 Other
+
+- Bump version 0.15.2 → 0.15.3
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.15.2 [skip ci]
 ## [0.15.2] - 2026-05-26
 
 ### 🐛 Bug Fixes
