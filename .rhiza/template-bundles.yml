@@ -117,12 +117,20 @@ bundles:
       - marimo  # Presentations often use Marimo for interactive slides
 
   # ============================================================================
+  # PAPER - LaTeX paper compilation targets
+  # ============================================================================
+  paper:
+    description: "LaTeX paper compilation targets (make paper, make paper-clean)"
+    standalone: true
+    requires: []
+
+  # ============================================================================
   # GITHUB-PAPER - GitHub Actions workflow for LaTeX paper compilation
   # ============================================================================
   github-paper:
     description: "GitHub Actions workflow stub for LaTeX paper compilation and PDF publishing"
     standalone: true
-    requires: [github]
+    requires: [paper, github]
 
   # ============================================================================
   # GITLAB - GitLab CI/CD pipeline configuration
