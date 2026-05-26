@@ -213,17 +213,25 @@ class TestReleaseWorkflow:
             pytest.skip("rhiza_release.yml not found")
         return _load_workflow(release_path)
 
-    def test_release_workflow_has_workflow_dispatch(self, release_workflow: dict) -> None:
-        """Release workflow must be manually dispatchable (not auto-triggered)."""
+    def test_release_workflow_has_push_tags_trigger(self, release_workflow: dict) -> None:
+        """Release workflow must be triggered by tag pushes (v* pattern).
+
+        The rhiza release workflow fires when a version tag is pushed — the standard
+        GitHub Actions pattern for release automation.  Tags gate the release rather
+        than workflow_dispatch, ensuring every published release is traceable to a tag.
+        """
         triggers = _get_workflow_triggers(release_workflow)
-        assert "workflow_dispatch" in triggers or "workflow_dispatch" in str(triggers), (
-            "release workflow must be triggered via workflow_dispatch"
+        assert "push" in triggers or "push" in str(triggers), (
+            "release workflow must be triggered by tag push (push: tags: [v*])"
         )
 
-    def test_release_workflow_not_triggered_on_push(self, release_workflow: dict) -> None:
-        """Release workflow must not run automatically on every push."""
+    def test_release_workflow_push_trigger_is_tag_scoped(self, release_workflow: dict) -> None:
+        """Release workflow push trigger must be scoped to version tags, not all branches."""
         triggers = _get_workflow_triggers(release_workflow)
-        assert "push" not in triggers, "release workflow must not be auto-triggered by push — it should be manual only"
+        push_config = triggers.get("push", {}) if isinstance(triggers, dict) else {}
+        assert "tags" in str(push_config), (
+            "release workflow push trigger should be scoped to tags (e.g. tags: ['v*']), not fire on every branch push"
+        )
 
 
 class TestWeeklyWorkflow:
