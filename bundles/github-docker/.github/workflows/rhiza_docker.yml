@@ -3,12 +3,10 @@
 #
 # Workflow: Docker
 #
-# Purpose: Lint the Dockerfile with hadolint, build the image with Docker Buildx,
-#          and scan it for vulnerabilities with Trivy. The image is built locally
-#          for validation only and is never pushed to a registry. Fails on
-#          CRITICAL or HIGH severity vulnerabilities.
+# Purpose: Lint docker/Dockerfile with hadolint, build the image for validation,
+#          and scan it for security vulnerabilities with Trivy.
 #
-# Trigger: On push to main/master and pull requests when Dockerfile or workflow changes.
+# Trigger: On push and pull_request to main/master.
 
 name: "(RHIZA) DOCKER"
 
@@ -21,90 +19,11 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_call:
 
 jobs:
-  lint_and_build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6.0.2
-
-      - name: Detect docker/Dockerfile presence
-        id: check_dockerfile
-        run: |
-          if [ -f docker/Dockerfile ]; then
-            echo "docker_present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "docker_present=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Skip notice (no docker/Dockerfile present)
-        if: ${{ steps.check_dockerfile.outputs.docker_present != 'true' }}
-        run: echo "No docker/Dockerfile found; skipping hadolint and image build."
-
-      - name: Lint Dockerfile with hadolint
-        if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
-        uses: hadolint/hadolint-action@v3.3.0
-        with:
-          dockerfile: docker/Dockerfile
-          # Fail on any error-level findings (default behavior). Adjust if needed:
-          # failure-threshold: error
-
-      - name: Set up Docker Buildx
-        if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
-        uses: docker/setup-buildx-action@v4.1.0
-
-      - name: Read Python version from .python-version
-        if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
-        id: python_version
-        run: |
-          if [ -f .python-version ]; then
-            PYTHON_VERSION=$(tr -d '[:space:]' < .python-version)
-            echo "version=$PYTHON_VERSION" >> "$GITHUB_OUTPUT"
-            echo "Using Python version: $PYTHON_VERSION"
-          else
-            echo "version=3.12" >> "$GITHUB_OUTPUT"
-            echo "::warning::.python-version not found, using default 3.12"
-          fi
-
-      - name: Build container image with Docker Buildx (validation only)
-        id: docker_build
-        if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
-        run: |
-          # Derive image tag from repository name and sanitize (remove '.' and '_')
-          REPO_NAME="${GITHUB_REPOSITORY##*/}"
-          REPO_NAME="${REPO_NAME//[._]/}"
-          docker buildx build \
-            --file docker/Dockerfile \
-            --build-arg PYTHON_VERSION=${{ steps.python_version.outputs.version }} \
-            --tag "${REPO_NAME}:ci" \
-            --load \
-            .
-          echo "image_name=${REPO_NAME}:ci" >> "$GITHUB_OUTPUT"
-
-      - name: Scan Docker Image with Trivy
-        uses: aquasecurity/trivy-action@v0.36.0
-        if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
-        with:
-          image-ref: '${{ steps.docker_build.outputs.image_name }}'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          exit-code: '0'  # Don't fail on vulnerabilities - rely on SARIF upload to GitHub Security
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-
-      - name: Upload Trivy scan results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4
-        if: always() && steps.check_dockerfile.outputs.docker_present == 'true'
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-      - name: Upload Trivy scan results as artifact
-        uses: actions/upload-artifact@v7.0.1
-        if: always() && steps.check_dockerfile.outputs.docker_present == 'true'
-        with:
-          name: trivy-docker-report
-          path: trivy-results.sarif
+  docker:
+    uses: jebel-quant/rhiza/.github/workflows/rhiza_docker.yml@v0.14.0
+    secrets: inherit
+    permissions:
+      contents: read
+      security-events: write
