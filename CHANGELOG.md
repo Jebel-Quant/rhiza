@@ -1,3 +1,16 @@
+## [0.15.2] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- Strip whitespace from PYTHON_VERSION read from .python-version
+
+### 💼 Other
+
+- Bump version 0.15.1 → 0.15.2
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.15.1 [skip ci]
 ## [0.15.1] - 2026-05-26
 
 ### 🐛 Bug Fixes
