@@ -478,7 +478,12 @@ class TestRenovateBundleContent:
         assert len(renovate_json["extends"]) > 0, "'extends' list is empty"
 
     def test_renovate_json_has_enabled_managers(self, renovate_json: dict) -> None:
-        """renovate.json should declare enabledManagers to control what Renovate updates."""
+        """renovate.json must declare enabledManagers covering all required dependency surfaces."""
         assert "enabledManagers" in renovate_json, (
             "renovate.json should declare 'enabledManagers' to scope what Renovate updates"
         )
+        enabled = renovate_json["enabledManagers"]
+        assert isinstance(enabled, list), "'enabledManagers' must be a list"
+        required = {"pep621", "github-actions", "gitlabci"}
+        missing = required - set(enabled)
+        assert not missing, f"renovate.json 'enabledManagers' is missing required managers: {sorted(missing)}"
