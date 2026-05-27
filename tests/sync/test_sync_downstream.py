@@ -12,10 +12,16 @@ from __future__ import annotations
 
 import os
 import shutil
+import subprocess  # nosec B404
+import sys
 from pathlib import Path
 
 import pytest
 import yaml
+
+# Get absolute paths for executables to avoid S607 warnings
+GIT = shutil.which("git") or "/usr/bin/git"
+MAKE = shutil.which("make") or "/usr/bin/make"
 
 # ---------------------------------------------------------------------------
 # Sync helper (mirrors tests/bundles/test_bundle_sync.py — kept local)
@@ -224,3 +230,67 @@ class TestWorkflowStubsAfterSync:
         assert "uses: jebel-quant/rhiza/.github/workflows/rhiza_book.yml" in content, (
             "Book stub must delegate to jebel-quant/rhiza shared book workflow"
         )
+
+
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="make sync relies on Unix shell tooling (curl|sh, command -v) not available on Windows",
+)
+class TestDownstreamRepoEndToEndSync:
+    """End-to-end sync against a minimal downstream repository."""
+
+    @staticmethod
+    def _init_minimal_downstream_repo(root: Path, downstream: Path) -> None:
+        """Create a minimal downstream repo that can run make sync."""
+        (downstream / ".rhiza" / "make.d").mkdir(parents=True, exist_ok=True)
+
+        shutil.copy2(root / "Makefile", downstream / "Makefile")
+        shutil.copy2(root / ".rhiza" / "rhiza.mk", downstream / ".rhiza" / "rhiza.mk")
+        shutil.copy2(root / ".rhiza" / ".rhiza-version", downstream / ".rhiza" / ".rhiza-version")
+        shutil.copy2(root / ".rhiza" / "make.d" / "bootstrap.mk", downstream / ".rhiza" / "make.d" / "bootstrap.mk")
+
+        (downstream / ".rhiza" / "template.yml").write_text(
+            "repository: jebel-quant/rhiza\nref: main\ntemplates:\n  - core\n  - tests\n",
+            encoding="utf-8",
+        )
+        (downstream / "pyproject.toml").write_text(
+            '[project]\nname = "downstream-test-project"\nversion = "0.1.0"\n',
+            encoding="utf-8",
+        )
+
+        subprocess.run([GIT, "init"], cwd=downstream, check=True, capture_output=True)  # nosec B603
+        subprocess.run(
+            [GIT, "config", "user.email", "test@example.com"], cwd=downstream, check=True, capture_output=True
+        )  # nosec B603
+        subprocess.run([GIT, "config", "user.name", "Rhiza Tests"], cwd=downstream, check=True, capture_output=True)  # nosec B603
+        subprocess.run(  # nosec B603
+            [GIT, "remote", "add", "origin", "https://example.com/acme/downstream.git"],
+            cwd=downstream,
+            check=True,
+            capture_output=True,
+        )
+        subprocess.run([GIT, "add", "."], cwd=downstream, check=True, capture_output=True)  # nosec B603
+        subprocess.run(
+            [GIT, "commit", "-m", "initial downstream scaffold"], cwd=downstream, check=True, capture_output=True
+        )  # nosec B603
+
+    def test_sync_populates_expected_files(self, root: Path, tmp_path: Path) -> None:
+        """Sync should produce a functional core+tests downstream tree."""
+        self._init_minimal_downstream_repo(root, tmp_path)
+
+        proc = subprocess.run(  # nosec B603
+            [MAKE, "sync"],
+            cwd=tmp_path,
+            capture_output=True,
+            text=True,
+        )
+
+        assert proc.returncode == 0, f"make sync failed\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}"
+        assert (tmp_path / "pytest.ini").is_file()
+        assert (tmp_path / ".rhiza" / "tests" / "conftest.py").is_file()
+        assert (tmp_path / ".rhiza" / "make.d" / "test.mk").is_file()
+
+        pytest_ini = (tmp_path / "pytest.ini").read_text(encoding="utf-8")
+        makefile = (tmp_path / "Makefile").read_text(encoding="utf-8")
+        assert "testpaths" in pytest_ini
+        assert "include .rhiza/rhiza.mk" in makefile
