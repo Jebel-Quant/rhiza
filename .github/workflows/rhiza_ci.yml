@@ -138,6 +138,7 @@ jobs:
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: |
+          uv sync --resolution lowest-direct
           for req in .rhiza/requirements/*.txt; do
             uv pip install --resolution lowest-direct -r "$req"
           done
