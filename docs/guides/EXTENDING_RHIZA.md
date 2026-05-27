@@ -5,6 +5,7 @@ This guide provides comprehensive examples and best practices for extending and 
 ## Table of Contents
 
 - [Overview](#overview)
+- [Step-by-Step: Add a New Bundle](#step-by-step-add-a-new-bundle)
 - [Extension Points](#extension-points)
 - [Common Patterns](#common-patterns)
 - [Advanced Techniques](#advanced-techniques)
@@ -34,6 +35,100 @@ Rhiza's modular design allows you to extend functionality without modifying temp
 | `.rhiza/.env` | Environment variables | ✅ Yes (optional) |
 
 **Important**: Never modify files in `.rhiza/` directly—they are template-managed and will be overwritten during sync operations.
+
+---
+
+## Step-by-Step: Add a New Bundle
+
+Use this checklist when you want to add a new bundle to Rhiza itself.
+
+### Worked Example: `linter`
+
+This example adds a minimal `linter` bundle that injects a `.ruff.toml` override into downstream projects.
+
+1. **Create the bundle directory under `bundles/`**
+
+   Every bundle must have a matching directory under `bundles/<name>/`.
+
+   ```text
+   bundles/
+   └── linter/
+       └── .ruff.toml
+   ```
+
+2. **Add the bundle files**
+
+   Files inside `bundles/linter/` are copied into the downstream project at the same relative path. A minimal Ruff override can extend the `core` bundle's `ruff.toml` and add stricter rules:
+
+   ```toml
+   # bundles/linter/.ruff.toml
+   extend = "ruff.toml"
+
+   [lint]
+   extend-select = ["B", "I"]
+   ```
+
+   In a synced downstream project, that produces:
+
+   ```text
+   .ruff.toml
+   ```
+
+3. **Declare the bundle in `.rhiza/template-bundles.yml`**
+
+   Add metadata for the new bundle and declare any dependencies it needs. Because this example extends the `core` bundle's Ruff config, it should require `core`.
+
+   ```yaml
+   linter:
+     description: "Optional Ruff overrides for stricter linting"
+     standalone: false
+     requires: [core]
+   ```
+
+4. **Add bundle content tests in `tests/bundles/`**
+
+   Add a focused sync test so the new bundle is exercised the same way downstream projects receive it. For this example, extending `tests/bundles/test_bundle_combinations.py` is enough:
+
+   ```python
+   class TestLinterBundleSync:
+       """Syncing core + linter adds the Ruff override file."""
+
+       @pytest.fixture(autouse=True)
+       def synced(self, tmp_path: Path, root: Path) -> None:
+           sync_bundles(root, ["core", "linter"], tmp_path)
+           self.project = tmp_path
+
+       def test_ruff_override_exists(self) -> None:
+           assert (self.project / ".ruff.toml").is_file()
+
+       def test_ruff_override_extends_core_config(self) -> None:
+           content = (self.project / ".ruff.toml").read_text(encoding="utf-8")
+           assert 'extend = "ruff.toml"' in content
+   ```
+
+   Existing tests in `tests/bundles/test_bundle_content_validity.py` will also pick up any new YAML or JSON files automatically.
+
+5. **Run `make validate`**
+
+   Before opening a PR, run the normal validation flow:
+
+   ```bash
+   make validate
+   ```
+
+   In this repository, `make validate` intentionally skips downstream-template validation because Rhiza itself has no `.rhiza/template.yml`. When you add a bundle here, also run the repository test suite so the new `tests/bundles/` coverage actually executes.
+
+6. **Open a PR**
+
+   Include the new bundle directory, the `.rhiza/template-bundles.yml` entry, and the matching `tests/bundles/` coverage in one PR so reviewers can validate the bundle end to end.
+
+### Quick Review Checklist
+
+- `bundles/<name>/` exists
+- `.rhiza/template-bundles.yml` contains the bundle metadata
+- Dependencies are declared with `requires`
+- `tests/bundles/` covers the new bundle's synced output
+- `make validate` has been run locally
 
 ---
 
@@ -981,4 +1076,4 @@ For more details on customizing the documentation book, see [BOOK.md](BOOK.md).
 
 ---
 
-*Last updated: 2026-02-15*
+*Last updated: 2026-05-27*
