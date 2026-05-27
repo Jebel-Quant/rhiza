@@ -12,6 +12,7 @@ each failure message self-contained.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 from pathlib import Path
 
@@ -57,6 +58,66 @@ def sync_bundles(root: Path, bundle_names: list[str], dest: Path) -> None:
             for f in files:
                 child = current / f
                 _copy_entry(child, dest / child.relative_to(bundle_dir))
+
+
+PARITY_JOB_COMMANDS = {
+    "test": "make test",
+    "docs-coverage": "make docs-coverage",
+    "typecheck": "make typecheck",
+    "deptry": "make deptry",
+    "pre-commit": "make fmt",
+    "validate": "make validate",
+    "security": "make security",
+    "license": "make license",
+}
+
+
+def _load_yaml(path: Path) -> dict:
+    """Load a YAML document from disk."""
+    with path.open(encoding="utf-8") as fh:
+        return yaml.safe_load(fh)
+
+
+def _normalise_job_name(name: str) -> str:
+    """Collapse forge-specific job namespaces to a shared parity key."""
+    job_name = name.split(":", 1)[-1]
+    return "validate" if job_name == "validation" else job_name
+
+
+def _supported_python_versions(root: Path) -> list[str]:
+    """Return the supported Python versions declared in pyproject classifiers."""
+    pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
+    return re.findall(r"Programming Language :: Python :: (3\.\d+)", pyproject)
+
+
+def _gitlab_jobs_from_includes(project: Path) -> dict[str, dict]:
+    """Load all included GitLab workflow jobs from the synced project."""
+    pipeline = _load_yaml(project / ".gitlab-ci.yml")
+    jobs: dict[str, dict] = {}
+
+    for include in pipeline.get("include", []):
+        local_path = include.get("local") if isinstance(include, dict) else None
+        if not local_path:
+            continue
+        workflow = _load_yaml(project / local_path)
+        for name, job in workflow.items():
+            if isinstance(job, dict) and not name.startswith("."):
+                jobs[name] = job
+
+    return jobs
+
+
+def _job_commands(job: dict, key: str) -> list[str]:
+    """Return the shell commands for a GitHub or GitLab job block."""
+    commands = job.get(key, []) or []
+    if isinstance(commands, str):
+        return [commands]
+    return [str(command) for command in commands]
+
+
+def _contains_make_command(commands: str, target: str) -> bool:
+    """Return True when commands invoke the given Make target with or without -f."""
+    return any(candidate in commands for candidate in (f"make {target}", f"make -f .rhiza/rhiza.mk {target}"))
 
 
 # ---------------------------------------------------------------------------
@@ -115,6 +176,52 @@ class TestGitlabProjectProfileSync:
     def test_test_mk_present(self) -> None:
         """test.mk fragment must be synced (from the tests bundle)."""
         assert (self.project / ".rhiza" / "make.d" / "test.mk").is_file()
+
+    def test_ci_workflows_expose_same_core_job_names(self, root: Path) -> None:
+        """GitHub and GitLab CI definitions must expose the same core parity jobs."""
+        github_jobs = _load_yaml(root / ".github" / "workflows" / "rhiza_ci.yml")["jobs"]
+        gitlab_jobs = _gitlab_jobs_from_includes(self.project)
+        expected = set(PARITY_JOB_COMMANDS)
+
+        github_job_names = {_normalise_job_name(name) for name in github_jobs}
+        gitlab_job_names = {_normalise_job_name(name) for name in gitlab_jobs}
+
+        assert github_job_names & expected == expected
+        assert gitlab_job_names & expected == expected
+
+    def test_ci_workflows_share_python_version_matrix(self, root: Path) -> None:
+        """GitHub and GitLab CI must reference the same supported Python versions."""
+        github_workflow = _load_yaml(root / ".github" / "workflows" / "rhiza_ci.yml")
+        github_generate_steps = github_workflow["jobs"]["generate-matrix"]["steps"]
+        github_matrix_source = "\n".join(
+            step["run"] for step in github_generate_steps if isinstance(step, dict) and "run" in step
+        )
+        gitlab_test_job = _gitlab_jobs_from_includes(self.project)["ci:test"]
+        gitlab_matrix = gitlab_test_job["parallel"]["matrix"][0]["PYTHON_VERSION"]
+
+        assert "make -f .rhiza/rhiza.mk -s version-matrix" in github_matrix_source
+        assert github_workflow["jobs"]["test"]["strategy"]["matrix"]["python-version"] == (
+            "${{ fromJson(needs.generate-matrix.outputs.matrix) }}"
+        )
+        assert gitlab_matrix == _supported_python_versions(root)
+
+    @pytest.mark.parametrize(("job_name", "command"), PARITY_JOB_COMMANDS.items())
+    def test_ci_workflows_match_core_commands(self, root: Path, job_name: str, command: str) -> None:
+        """GitHub and GitLab CI must run equivalent commands for core parity jobs."""
+        github_jobs = _load_yaml(root / ".github" / "workflows" / "rhiza_ci.yml")["jobs"]
+        gitlab_jobs = _gitlab_jobs_from_includes(self.project)
+
+        github_job = next(job for name, job in github_jobs.items() if _normalise_job_name(name) == job_name)
+        gitlab_job = next(job for name, job in gitlab_jobs.items() if _normalise_job_name(name) == job_name)
+
+        github_commands = "\n".join(
+            _job_commands(step, "run")[0] for step in github_job.get("steps", []) if "run" in step
+        )
+        gitlab_commands = "\n".join(_job_commands(gitlab_job, "script"))
+
+        target = command.removeprefix("make ")
+        assert _contains_make_command(github_commands, target)
+        assert _contains_make_command(gitlab_commands, target)
 
 
 class TestDockerBundleSync:
