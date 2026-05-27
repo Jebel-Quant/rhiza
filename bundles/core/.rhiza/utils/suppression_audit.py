@@ -238,18 +238,8 @@ def _nosec_cves(suppressions: list[Suppression]) -> set[str]:
     return cves
 
 
-def main(argv: list[str] | None = None) -> int:
-    """Run the suppression audit and print a structured report."""
-    parser = argparse.ArgumentParser(add_help=True)
-    parser.add_argument(
-        "--fail-stale-nosec-cve",
-        action="store_true",
-        help="Fail when # nosec comments reference CVEs that pip-audit no longer reports.",
-    )
-    args, pip_audit_args = parser.parse_known_args(argv)
-
-    root = Path(".")
-
+def _collect_suppressions(root: Path) -> tuple[list[Path], list[Suppression], int]:
+    """Collect Python files, suppressions, and non-empty line counts."""
     in_rhiza_repo = _is_rhiza_repo(root)
 
     def _include(p: Path) -> bool:
@@ -262,11 +252,15 @@ def main(argv: list[str] | None = None) -> int:
 
     all_suppressions: list[Suppression] = []
     total_lines = 0
-
     for py_file in py_files:
         all_suppressions.extend(scan_file(py_file))
         total_lines += count_non_empty_lines(py_file)
 
+    return py_files, all_suppressions, total_lines
+
+
+def _print_report(py_files: list[Path], all_suppressions: list[Suppression], total_lines: int) -> None:
+    """Print the suppression audit report."""
     # -----------------------------------------------------------------------
     # Header
     # -----------------------------------------------------------------------
@@ -325,26 +319,47 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  Grade           : {grade_colour}{_BOLD}{grade}{_RESET}")
     print()
 
+
+def _check_stale_nosec_cves(suppressions: list[Suppression], pip_audit_args: list[str]) -> int:
+    """Validate CVE-tagged # nosec suppressions against active pip-audit findings."""
+    suppressed_cves = _nosec_cves(suppressions)
+    if not suppressed_cves:
+        print(f"{_GREEN}[OK]{_RESET} No CVE-tagged # nosec suppressions found.")
+        return 0
+
+    try:
+        active_cves = _active_pip_audit_ids(pip_audit_args)
+    except RuntimeError as exc:
+        print(f"{_RED}[FAIL]{_RESET} {exc}")
+        return 2
+
+    stale = sorted(cve for cve in suppressed_cves if cve not in active_cves)
+    if stale:
+        print(f"{_RED}[FAIL]{_RESET} Stale # nosec CVE suppressions detected:")
+        for cve in stale:
+            print(f"  - {cve}")
+        return 1
+
+    print(f"{_GREEN}[OK]{_RESET} All CVE-tagged # nosec suppressions match active pip-audit findings.")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run the suppression audit and print a structured report."""
+    parser = argparse.ArgumentParser(add_help=True)
+    parser.add_argument(
+        "--fail-stale-nosec-cve",
+        action="store_true",
+        help="Fail when # nosec comments reference CVEs that pip-audit no longer reports.",
+    )
+    args, pip_audit_args = parser.parse_known_args(argv)
+
+    root = Path(".")
+    py_files, all_suppressions, total_lines = _collect_suppressions(root)
+    _print_report(py_files, all_suppressions, total_lines)
+
     if args.fail_stale_nosec_cve:
-        suppressed_cves = _nosec_cves(all_suppressions)
-        if not suppressed_cves:
-            print(f"{_GREEN}[OK]{_RESET} No CVE-tagged # nosec suppressions found.")
-            return 0
-
-        try:
-            active_cves = _active_pip_audit_ids(pip_audit_args)
-        except RuntimeError as exc:
-            print(f"{_RED}[FAIL]{_RESET} {exc}")
-            return 2
-
-        stale = sorted(cve for cve in suppressed_cves if cve not in active_cves)
-        if stale:
-            print(f"{_RED}[FAIL]{_RESET} Stale # nosec CVE suppressions detected:")
-            for cve in stale:
-                print(f"  - {cve}")
-            return 1
-
-        print(f"{_GREEN}[OK]{_RESET} All CVE-tagged # nosec suppressions match active pip-audit findings.")
+        return _check_stale_nosec_cves(all_suppressions, pip_audit_args)
 
     return 0
 
