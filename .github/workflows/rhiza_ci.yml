@@ -134,6 +134,14 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
+      - name: Install .rhiza/requirements with lowest-direct resolution
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        run: |
+          for req in .rhiza/requirements/*.txt; do
+            uv pip install --resolution lowest-direct -r "$req"
+          done
+
       - name: Run tests with lowest-direct resolution
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
