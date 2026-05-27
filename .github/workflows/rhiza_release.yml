@@ -70,6 +70,19 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Version tag to release (e.g. v1.2.3). Required when called via workflow_call.'
+        required: true
+        type: string
+    secrets:
+      GH_PAT:
+        required: false
+      UV_EXTRA_INDEX_URL:
+        required: false
+      PYPI_TOKEN:
+        required: false
 
 permissions:
   contents: write       # Needed to create releases
@@ -92,7 +105,11 @@ jobs:
       - name: Set Tag Variable
         id: set_tag
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
+          if [[ -n "${{ inputs.tag }}" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Validate Release
