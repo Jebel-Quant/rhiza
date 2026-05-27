@@ -299,6 +299,11 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Fail stale CVE suppressions
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        run: |
+          uv run python .rhiza/utils/suppression_audit.py --fail-stale-nosec-cve
 
   license:
     name: License compliance scan
