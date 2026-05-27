@@ -24,6 +24,8 @@ on:
         required: false
       UV_EXTRA_INDEX_URL:
         required: false
+      GITLEAKS_LICENSE:
+        required: false
 
 jobs:
   generate-matrix:
