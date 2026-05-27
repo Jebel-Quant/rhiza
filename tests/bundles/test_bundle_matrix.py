@@ -20,7 +20,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -117,7 +116,7 @@ else:
 _ALL_BUNDLES: dict = _ALL_DATA.get("bundles", {})
 _ALL_BUNDLE_NAMES: list[str] = list(_ALL_BUNDLES.keys())
 
-# Full matrix: every bundle name × every CI platform
+# Full matrix: every bundle name x every CI platform
 _MATRIX: list[tuple[str, str]] = list(itertools.product(_ALL_BUNDLE_NAMES, PLATFORMS))
 _MATRIX_IDS: list[str] = [f"{b}\u00d7{p}" for b, p in _MATRIX]
 
@@ -155,10 +154,7 @@ class TestBundlePlatformMatrix:
                     errors.append(f"  [{name}] {rel}: {exc}")
 
         if errors:
-            pytest.fail(
-                f"YAML parse errors in ({bundle_name}\u00d7{platform}) combination:\n"
-                + "\n".join(errors)
-            )
+            pytest.fail(f"YAML parse errors in ({bundle_name}\u00d7{platform}) combination:\n" + "\n".join(errors))
 
     def test_no_file_ownership_conflict(self, root: Path, bundle_name: str, platform: str) -> None:
         """No deployment path is claimed by two bundles in the combination."""
@@ -177,13 +173,10 @@ class TestBundlePlatformMatrix:
         if conflicts:
             lines = [f"  {p!r}: owned by {owners}" for p, owners in sorted(conflicts.items())]
             pytest.fail(
-                f"File ownership conflicts in ({bundle_name}\u00d7{platform}) combination:\n"
-                + "\n".join(lines)
+                f"File ownership conflicts in ({bundle_name}\u00d7{platform}) combination:\n" + "\n".join(lines)
             )
 
-    def test_all_declared_dependencies_present(
-        self, root: Path, bundle_name: str, platform: str
-    ) -> None:
+    def test_all_declared_dependencies_present(self, root: Path, bundle_name: str, platform: str) -> None:
         """Every bundle referenced in a ``requires`` list exists in template-bundles.yml."""
         expanded = _expanded_bundle_set(bundle_name, platform, _ALL_BUNDLES)
         missing: list[str] = []
@@ -194,12 +187,9 @@ class TestBundlePlatformMatrix:
                 continue
             for dep in _ALL_BUNDLES[name].get("requires", []):
                 if dep not in _ALL_BUNDLES:
-                    missing.append(
-                        f"  [{name}] requires unknown bundle '{dep}'"
-                    )
+                    missing.append(f"  [{name}] requires unknown bundle '{dep}'")
 
         if missing:
             pytest.fail(
-                f"Missing bundle dependencies in ({bundle_name}\u00d7{platform}) combination:\n"
-                + "\n".join(missing)
+                f"Missing bundle dependencies in ({bundle_name}\u00d7{platform}) combination:\n" + "\n".join(missing)
             )
