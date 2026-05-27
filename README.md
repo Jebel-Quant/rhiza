@@ -541,6 +541,7 @@ Rhiza includes comprehensive maintainability features to help track project heal
 ### Roadmap & Planning
 
 - **[docs/PROJECT_BOARD.md](docs/ops/PROJECT_BOARD.md)** - Guide for setting up GitHub Project Boards to track enhancements and roadmap items
+- **[docs/GLOBAL_PATCH.md](docs/ops/GLOBAL_PATCH.md)** - Workflow for propagating the same patch across repeated bundle files
 
 ### Technical Debt Tracking
 
