@@ -298,6 +298,7 @@ jobs:
       - name: Gitleaks — full-history secret scan
         uses: gitleaks/gitleaks-action@v2
         env:
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Fail stale CVE suppressions
         env:
