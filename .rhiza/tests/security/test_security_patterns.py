@@ -200,6 +200,28 @@ class TestSecurityConfiguration:
         )
 
     @_REQUIRES_GITHUB_BUNDLE
+    def test_gitleaks_config_exists(self) -> None:
+        """Verify that a Gitleaks configuration file exists.
+
+        The .gitleaks.toml file configures Gitleaks for full-history secret
+        scanning. It extends the upstream default ruleset and suppresses known
+        false positives such as test fixtures and documentation examples.
+        """
+        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        gitleaks_config = repo_root / ".gitleaks.toml"
+
+        assert gitleaks_config.exists(), (
+            ".gitleaks.toml not found. "
+            "Create this file to configure Gitleaks secret scanning. "
+            "See https://github.com/gitleaks/gitleaks for configuration reference."
+        )
+
+        content = gitleaks_config.read_text()
+        assert "useDefault" in content, (
+            ".gitleaks.toml should extend the upstream default ruleset via 'useDefault = true'"
+        )
+
+    @_REQUIRES_GITHUB_BUNDLE
     def test_dependabot_configured(self) -> None:
         """Verify that Dependabot is configured for dependency updates.
 

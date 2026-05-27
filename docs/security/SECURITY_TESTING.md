@@ -7,11 +7,36 @@ This document describes the security testing approach for the Rhiza project, inc
 Security is a critical aspect of the Rhiza template system. We employ a defense-in-depth approach with multiple layers of security validation:
 
 1. **Static Application Security Testing (SAST)** - Automated code analysis
-2. **Security Test Suite** - Custom tests validating security patterns
-3. **Dependency Scanning** - Vulnerability checks in dependencies
-4. **Pre-commit Hooks** - Prevention at commit time
+2. **Secret Scanning** - Full-history credential and secret detection
+3. **Security Test Suite** - Custom tests validating security patterns
+4. **Dependency Scanning** - Vulnerability checks in dependencies
+5. **Pre-commit Hooks** - Prevention at commit time
 
 ## Security Testing Tools
+
+### Gitleaks
+
+[Gitleaks](https://github.com/gitleaks/gitleaks) scans the full git history and working tree for secrets, credentials, and tokens.
+
+**Configuration**: Configured in `.gitleaks.toml` at the repository root. Extends the upstream default ruleset and suppresses known false positives (test fixtures, documentation examples).
+
+**What it checks**:
+- API keys and tokens across the full git history
+- Passwords and credentials in all committed files
+- Private keys and certificates
+- Cloud provider credentials (AWS, GCP, Azure, etc.)
+
+**Running Gitleaks locally**:
+
+```bash
+# Scan full git history (requires gitleaks installed)
+gitleaks detect --source . --config .gitleaks.toml
+
+# Scan working tree only
+gitleaks detect --source . --config .gitleaks.toml --no-git
+```
+
+**In CI**: The `gitleaks/gitleaks-action@v2` step runs on every push and PR in the `security` workflow job. A full history checkout (`fetch-depth: 0`) is used to ensure no historical secrets are missed.
 
 ### Bandit
 
@@ -210,6 +235,11 @@ git commit -m "Update SAST baseline"
    - Configured in `.github/workflows/codeql.yml`
    - Runs on push to main and on PRs
 
+3. **Gitleaks** scans for secrets across the full git history:
+   - Configured via `.gitleaks.toml`
+   - Runs in the `security` job on every push and PR
+   - Uses `fetch-depth: 0` to scan all commits
+
 ## Common Security Issues and Solutions
 
 ### Issue: Subprocess with shell=True
@@ -315,6 +345,7 @@ Before merging any PR with code changes:
 - [ ] Pre-commit hooks pass (includes Bandit and Ruff security checks)
 - [ ] No new security findings from Bandit in pre-commit
 - [ ] No new security findings from Ruff (`make fmt`)
+- [ ] No secrets detected by Gitleaks (full-history scan)
 - [ ] Any `# nosec` comments are documented and justified
 - [ ] No hardcoded secrets in the code
 - [ ] SAST baseline is updated if production code changed
@@ -324,6 +355,7 @@ Before merging any PR with code changes:
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/) - Common web security risks
 - [Bandit Documentation](https://bandit.readthedocs.io/) - Bandit rule reference
 - [Ruff Security Rules](https://docs.astral.sh/ruff/rules/#flake8-bandit-s) - Ruff S-rules reference
+- [Gitleaks Documentation](https://github.com/gitleaks/gitleaks) - Gitleaks configuration reference
 - [Python Security Best Practices](https://python.readthedocs.io/en/latest/library/security_warnings.html)
 - [CWE Database](https://cwe.mitre.org/) - Common Weakness Enumeration
 

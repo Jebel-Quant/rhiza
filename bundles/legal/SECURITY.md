@@ -71,6 +71,7 @@ This project implements several security measures:
 - **CodeQL**: Automated code scanning for Python and GitHub Actions
 - **Bandit**: Python security linter integrated in CI and pre-commit
 - **pip-audit**: Dependency vulnerability scanning
+- **Gitleaks**: Full-history secret scanning via `gitleaks/gitleaks-action` in CI (`.gitleaks.toml`)
 - **Secret Scanning**: GitHub secret scanning enabled on this repository
 
 ### Supply Chain Security

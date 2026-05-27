@@ -1,0 +1,31 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Configuration: Gitleaks Secret Scanning
+#
+# Purpose: Configure Gitleaks for full-history secret scanning.
+# Extends the upstream default ruleset and defines project-specific
+# false-positive suppressions.
+#
+# Documentation: https://github.com/gitleaks/gitleaks
+
+title = "Gitleaks Config"
+
+[extend]
+# Inherit all upstream default detection rules.
+useDefault = true
+
+[[allowlists]]
+description = "Known safe paths — test fixtures, documentation, and example tokens"
+paths = [
+  # Test directories may contain placeholder/fake credentials for testing
+  '''.rhiza/tests/''',
+  '''tests/''',
+  # Documentation may reference example tokens or keys
+  '''docs/''',
+  '''book/''',
+  # This file itself references rule IDs that look like patterns
+  '''\.gitleaks\.toml''',
+  # GitHub secret scanning config may list example patterns
+  '''\.github/secret_scanning\.yml''',
+]

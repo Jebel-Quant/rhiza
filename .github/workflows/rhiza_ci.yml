@@ -271,9 +271,14 @@ jobs:
   security:
     name: Security scanning
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
       - uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7.6.0
@@ -289,6 +294,11 @@ jobs:
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: make security
+
+      - name: Gitleaks — full-history secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   license:
     name: License compliance scan
