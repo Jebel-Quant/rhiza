@@ -290,6 +290,12 @@ jobs:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: make security
 
+      - name: Fail stale CVE suppressions
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        run: |
+          uv run python .rhiza/utils/suppression_audit.py --fail-stale-nosec-cve
+
   license:
     name: License compliance scan
     runs-on: ubuntu-latest
