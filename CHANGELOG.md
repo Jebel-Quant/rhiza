@@ -1,3 +1,16 @@
+## [0.17.0] - 2026-05-27
+
+### 💼 Other
+
+- Bump version 0.16.0 → 0.17.0
+
+### 📚 Documentation
+
+- *(github)* Explain why rhiza_release cannot use a workflow stub
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.16.0 [skip ci]
 ## [0.16.0] - 2026-05-27
 
 ### 🚀 Features
