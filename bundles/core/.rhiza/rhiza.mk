@@ -102,8 +102,8 @@ sync: pre-sync ## sync with template repository as defined in .rhiza/template.ym
 	@if git remote get-url origin 2>/dev/null | grep -iqE 'jebel-quant/rhiza(\.git)?$$'; then \
 		printf "${BLUE}[INFO] Skipping sync in rhiza repository (no template.yml by design)${RESET}\n"; \
 	else \
-		$(MAKE) install-uv; \
-		${UVX_BIN} "rhiza==$(RHIZA_VERSION)" sync .; \
+		$(MAKE) install-uv && \
+		${UVX_BIN} "rhiza==$(RHIZA_VERSION)" sync . && \
 		$(MAKE) _apply-sync-schedule; \
 	fi
 	@$(MAKE) post-sync
