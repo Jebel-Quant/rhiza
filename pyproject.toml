@@ -29,7 +29,7 @@ dev = [
     "numpy>=2.4.0,<3.0",     # Numerical computing for notebook data analysis (v2.4+ includes 2.0 improvements, <3.0 avoids breaking changes)
     "plotly>=6.5.0,<7.0",    # Interactive visualization in notebooks (v6.5+ mature features, <7.0 for API stability)
     "pandas>=3,<3.1",        # Data manipulation for notebook examples (v3+ for modern APIs, <3.1 conservative after major release)
-    "pyyaml>=6.0,<7.0",      # YAML parsing for validation scripts (v6+ for security fixes, <7.0 for API stability)
+    "pyyaml>=6.0.1,<7.0",    # YAML parsing for validation scripts (v6.0.1+ fixes Cython build failure on newer setuptools, <7.0 for API stability)
     # See docs/DEPENDENCIES.md for detailed version rationale
 ]
 
