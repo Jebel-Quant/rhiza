@@ -193,6 +193,7 @@ _BOLD = "\033[1m"
 _BLUE = "\033[36m"
 _YELLOW = "\033[33m"
 _GREEN = "\033[32m"
+_RED = "\033[31m"
 _CVE_RE = re.compile(r"\bCVE-\d{4}-\d+\b", re.IGNORECASE)
 
 
@@ -205,7 +206,7 @@ def _active_pip_audit_ids(extra_args: list[str]) -> set[str]:
     """Return vulnerability IDs currently reported by pip-audit."""
     uvx = shutil.which("uvx") or "uvx"
     cmd = [uvx, "pip-audit", "--format", "json", *extra_args]
-    proc = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603
+    proc = subprocess.run(cmd, capture_output=True, text=True)  # noqa: S603  # nosec B603
 
     if proc.returncode not in {0, 1}:
         sys.stdout.write(proc.stdout)

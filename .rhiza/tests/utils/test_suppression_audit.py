@@ -10,7 +10,8 @@ from types import SimpleNamespace
 def _load_module(root: Path):
     module_path = root / ".rhiza" / "utils" / "suppression_audit.py"
     spec = importlib.util.spec_from_file_location("suppression_audit", module_path)
-    assert spec is not None and spec.loader is not None
+    assert spec is not None
+    assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

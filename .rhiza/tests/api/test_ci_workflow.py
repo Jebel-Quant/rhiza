@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from api.conftest import run_make
 import yaml
+from api.conftest import run_make
 
 MULTI_OS_MATRIX = 'RHIZA_CI_OS_MATRIX=["ubuntu-latest","windows-latest"]'
 WORKFLOW_PATH = Path(".github") / "workflows" / "rhiza_ci.yml"
