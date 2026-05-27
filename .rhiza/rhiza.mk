@@ -5,6 +5,11 @@
 # Lines with `##` after a target are parsed into help text,
 # and lines starting with `##@` create section headers in the help output.
 #
+# Require GNU Make (MAKE_VERSION is unset in BSD make)
+ifndef MAKE_VERSION
+$(error GNU Make is required. macOS ships BSD make — install GNU Make with: brew install make)
+endif
+
 # Colours for pretty output in help messages
 BLUE := \033[36m
 BOLD := \033[1m

@@ -566,6 +566,17 @@ The curriculum walks you through twelve lessons in order, from the motivation fo
 
 Contributions are welcome! To contribute to Rhiza itself (not using Rhiza in your project):
 
+### Prerequisites
+
+| Tool | Minimum version | Notes |
+|---|---|---|
+| **GNU Make** | 3.81 | Must be GNU Make — macOS ships BSD make; install via `brew install make` and use `gmake` |
+| **uv** | 0.5.0 | Installed automatically by `make install` if missing |
+| **Git** | 2.x | |
+| **Python** | 3.11 | Managed automatically by `uv` |
+
+### Steps
+
 1. Fork the repository
 2. Clone and setup:
    ```bash
