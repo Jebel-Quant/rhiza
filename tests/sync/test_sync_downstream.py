@@ -13,6 +13,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess  # nosec B404
+import sys
 from pathlib import Path
 
 import pytest
@@ -231,6 +232,10 @@ class TestWorkflowStubsAfterSync:
         )
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="make sync relies on Unix shell tooling (curl|sh, command -v) not available on Windows",
+)
 class TestDownstreamRepoEndToEndSync:
     """End-to-end sync against a minimal downstream repository."""
 
