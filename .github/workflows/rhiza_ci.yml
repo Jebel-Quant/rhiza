@@ -24,8 +24,6 @@ on:
         required: false
       UV_EXTRA_INDEX_URL:
         required: false
-      GITLEAKS_LICENSE:
-        required: false
 
 jobs:
   generate-matrix:
@@ -290,7 +288,6 @@ jobs:
       - name: Run security scans
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
         run: make security
 
       - name: Fail stale CVE suppressions
