@@ -461,3 +461,8 @@ class TestRenovateBundleContent:
         assert "enabledManagers" in renovate_json, (
             "renovate.json should declare 'enabledManagers' to scope what Renovate updates"
         )
+        enabled_managers = renovate_json["enabledManagers"]
+        assert isinstance(enabled_managers, list), "'enabledManagers' must be a list"
+        assert {"pep621", "github-actions", "gitlabci"}.issubset(enabled_managers), (
+            "'enabledManagers' should include pep621, github-actions, and gitlabci"
+        )
