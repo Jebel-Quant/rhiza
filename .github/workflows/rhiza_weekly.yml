@@ -27,6 +27,12 @@ on:
   schedule:
     - cron: "0 8 * * 1"  # Every Monday at 08:00 UTC
   workflow_dispatch:
+  workflow_call:
+    secrets:
+      GH_PAT:
+        required: false
+      UV_EXTRA_INDEX_URL:
+        required: false
 
 jobs:
   dep-compat-test:
