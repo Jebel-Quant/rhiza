@@ -291,6 +291,7 @@ profiles:
       Includes core infrastructure, testing tooling, and documentation.
       No .github/workflows/* files are synced.
     bundles:
+      - core
       - book
       - marimo
       - tests
@@ -305,6 +306,11 @@ profiles:
       Includes core infrastructure, GitHub repository configuration,
       testing tooling, documentation, notebooks, and hosted CI workflows.
     bundles:
+      - core
+      - github
+      - book
+      - marimo
+      - tests
       - github-book
       - github-marimo
       - github-tests
@@ -319,6 +325,11 @@ profiles:
       Includes core infrastructure, testing tooling, documentation,
       and GitLab CI pipelines. No .github/ files are synced.
     bundles:
+      - core
+      - gitlab
+      - book
+      - marimo
+      - tests
       - gitlab-book
       - gitlab-marimo
       - gitlab-tests
