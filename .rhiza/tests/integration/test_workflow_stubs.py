@@ -162,10 +162,36 @@ class TestCiWorkflow:
             "CI workflow must support workflow_call (reusable workflow pattern)"
         )
 
+    def test_ci_workflow_declares_gitleaks_license_secret(self, ci_workflow: dict) -> None:
+        """CI workflow must declare the Gitleaks license secret for workflow_call users."""
+        triggers = self._get_triggers(ci_workflow)
+        workflow_call = triggers.get("workflow_call", {}) if isinstance(triggers, dict) else {}
+        secrets = workflow_call.get("secrets", {}) if isinstance(workflow_call, dict) else {}
+        assert "GITLEAKS_LICENSE" in secrets, (
+            "CI reusable workflow must declare GITLEAKS_LICENSE under workflow_call.secrets"
+        )
+
     def test_ci_workflow_has_permissions(self, ci_workflow: dict) -> None:
         """CI workflow must declare explicit permissions (principle of least privilege)."""
         assert "permissions" in ci_workflow, (
             "CI workflow should declare explicit permissions to limit GitHub token scope"
+        )
+
+    def test_ci_workflow_passes_gitleaks_license_to_security_step(self, ci_workflow: dict) -> None:
+        """Security scan step must pass GITLEAKS_LICENSE into the runtime environment."""
+        jobs = ci_workflow.get("jobs", {})
+        security_job = jobs.get("security", {}) if isinstance(jobs, dict) else {}
+        steps = security_job.get("steps", []) if isinstance(security_job, dict) else []
+
+        security_step = next(
+            (step for step in steps if step.get("name") == "Run security scans"),
+            None,
+        )
+
+        assert security_step is not None, "CI workflow should define a 'Run security scans' step"
+        env = security_step.get("env", {})
+        assert env.get("GITLEAKS_LICENSE") == "${{ secrets.GITLEAKS_LICENSE }}", (
+            "Run security scans step must pass GITLEAKS_LICENSE from workflow secrets"
         )
 
 
