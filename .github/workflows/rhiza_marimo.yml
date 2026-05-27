@@ -94,6 +94,7 @@ jobs:
       # Execute the notebook with the appropriate runner based on its content
       - name: Run notebook
         id: artefact-folder
+        timeout-minutes: 10
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: |
