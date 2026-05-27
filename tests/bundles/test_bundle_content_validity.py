@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 
 import pytest
@@ -188,6 +189,26 @@ class TestBundleJsonValidity:
                     content = f.read_text(encoding="utf-8").strip()
                     rel = f.relative_to(bundles_root)
                     assert content, f"JSONC file is empty: [{name}] {rel}"
+
+
+# ---------------------------------------------------------------------------
+# Documentation coverage
+# ---------------------------------------------------------------------------
+
+
+class TestBundleDocumentation:
+    """Reference docs that describe bundles should stay aligned with bundle metadata."""
+
+    def test_glossary_bundle_dependency_map_lists_all_bundles(self, root: Path, bundle_names: list[str]) -> None:
+        """The glossary Mermaid bundle map should mention every defined bundle."""
+        glossary = (root / "docs" / "reference" / "GLOSSARY.md").read_text(encoding="utf-8")
+
+        match = re.search(r"### Bundle Dependency Map\n.*?```mermaid\n(.*?)\n```", glossary, re.DOTALL)
+        assert match, "GLOSSARY.md should contain a Mermaid bundle dependency map"
+
+        diagram = match.group(1)
+        missing = [name for name in bundle_names if name not in diagram]
+        assert not missing, f"Bundle dependency map is missing bundles: {missing}"
 
 
 # ---------------------------------------------------------------------------
