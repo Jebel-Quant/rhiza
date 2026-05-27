@@ -22,6 +22,94 @@ A project that has adopted Rhiza templates. It receives updates from the upstrea
 ### Upstream Repository
 The source Rhiza repository (`jebel-quant/rhiza`) that contains the canonical template configurations. Changes here propagate to downstream projects via sync.
 
+## Bundle Model
+
+### Bundle
+The atomic unit of Rhiza adoption. A bundle owns a coherent set of synced files and may declare hard dependencies via `requires` and optional relationships via `recommends`.
+
+### Profile
+A named preset in `.rhiza/template-bundles.yml` that expands to a curated set of bundles for a common use case such as `local`, `github-project`, or `gitlab-project`.
+
+### Overlay Bundle
+A platform-specific bundle such as `github-tests` or `gitlab-book` that layers hosted CI/CD files on top of a feature bundle. Overlay bundles depend on both the feature they extend and the platform base bundle.
+
+### Stub Workflow
+A thin injected workflow file that delegates to a reusable workflow in `jebel-quant/rhiza`. These stubs live in overlay bundles rather than in local-first feature bundles.
+
+### Bundle Dependency Map
+Solid arrows show `requires` dependencies; dotted arrows show `recommends` relationships.
+
+```mermaid
+flowchart LR
+    subgraph Foundation["Foundation"]
+        core["core"]
+    end
+
+    subgraph Local["Local-first bundles"]
+        renovate["renovate"]
+        legal["legal"]
+        devcontainer["devcontainer"]
+        docker["docker"]
+        lfs["lfs"]
+        presentation["presentation"]
+        paper["paper"]
+        book["book"]
+        tests["tests"]
+        benchmarks["benchmarks"]
+        marimo["marimo"]
+    end
+
+    subgraph GitHub["GitHub base and overlays"]
+        github["github"]
+        github_devcontainer["github-devcontainer"]
+        github_docker["github-docker"]
+        github_paper["github-paper"]
+        github_tests["github-tests"]
+        github_marimo["github-marimo"]
+        github_book["github-book"]
+        gh_aw["gh-aw"]
+    end
+
+    subgraph GitLab["GitLab base and overlays"]
+        gitlab["gitlab"]
+        gitlab_tests["gitlab-tests"]
+        gitlab_marimo["gitlab-marimo"]
+        gitlab_book["gitlab-book"]
+    end
+
+    github --> core
+    gitlab --> core
+    book --> core
+    tests --> book
+    tests --> core
+    benchmarks --> tests
+    marimo --> book
+    marimo --> core
+    github_devcontainer --> devcontainer
+    github_devcontainer --> github
+    github_docker --> docker
+    github_docker --> github
+    github_paper --> paper
+    github_paper --> github
+    github_tests --> tests
+    github_tests --> github
+    github_marimo --> marimo
+    github_marimo --> github
+    github_book --> book
+    github_book --> github
+    gitlab_tests --> tests
+    gitlab_tests --> gitlab
+    gitlab_marimo --> marimo
+    gitlab_marimo --> gitlab
+    gitlab_book --> book
+    gitlab_book --> gitlab
+    gh_aw --> github
+    presentation -.-> marimo
+    book -.-> tests
+    book -.-> marimo
+    gh_aw -.-> tests
+```
+
 ## Directory Structure
 
 ### `.rhiza/`
