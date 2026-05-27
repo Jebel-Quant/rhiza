@@ -30,6 +30,7 @@ nav:
     - Presentation: development/PRESENTATION.md
     - GitHub Agentic Workflows: development/GH_AW.md
   - Operations:
+    - Global Patch Workflow: ops/GLOBAL_PATCH.md
     - Changelog Guide: ops/CHANGELOG_GUIDE.md
     - Project Board: ops/PROJECT_BOARD.md
     - Technical Debt: ops/TECHNICAL_DEBT.md
@@ -48,4 +49,3 @@ nav:
     - ADR-0009 Use Pre-commit Hooks for Code Quality: adr/0009-use-pre-commit-hooks-for-code-quality.md
   - Notebooks:
     - Rhiza: notebooks/rhiza.html
-
