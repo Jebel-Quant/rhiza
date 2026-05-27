@@ -158,6 +158,26 @@ class TestPreCommitConfig:
             "bandit pre-commit hook not found — security scanning must be configured"
         )
 
+    def test_shellcheck_hook_scoped_to_rhiza_utils_shell_scripts(self, precommit_data: dict) -> None:
+        """Shellcheck hook must lint shell scripts under .rhiza/utils/."""
+        repos = precommit_data.get("repos", [])
+
+        shellcheck_hook = None
+        for repo in repos:
+            if "shellcheck-py/shellcheck-py" in str(repo.get("repo", "")).lower():
+                for hook in repo.get("hooks", []):
+                    if hook.get("id", "").lower() == "shellcheck":
+                        shellcheck_hook = hook
+                        break
+            if shellcheck_hook is not None:
+                break
+
+        assert shellcheck_hook is not None, "shellcheck pre-commit hook not found in .pre-commit-config.yaml"
+        assert shellcheck_hook.get("files") == r"\.rhiza/utils/.*\.sh$", (
+            "shellcheck hook must be scoped to .rhiza/utils/*.sh via "
+            r"files: \.rhiza/utils/.*\.sh$"
+        )
+
 
 class TestGitignore:
     """Tests for .gitignore — ensures common artefact patterns are excluded."""

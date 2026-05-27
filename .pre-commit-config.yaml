@@ -64,6 +64,12 @@ repos:
       - id: bandit
         args: ["--ini", ".bandit", "--exclude", ".venv,tests,.rhiza/tests,.git,.pytest_cache"]
 
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+        files: '\.rhiza/utils/.*\.sh$'
+
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.11.16
     hooks:
