@@ -1,3 +1,25 @@
+## [0.16.0] - 2026-05-27
+
+### 🚀 Features
+
+- Add workflow_call support to rhiza_release workflow
+- Add workflow_call support to weekly and gh-aw-validate workflows
+
+### 🐛 Bug Fixes
+
+- *(book)* Run docs server via uv in `serve` target (#1074)
+
+### 💼 Other
+
+- Bump version 0.15.3 → 0.16.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.15.3 [skip ci]
+- Add CodeFactor config to exclude bundles/ from analysis
+- Add .codefactor.yml to core bundle
+- Remove .codefactor.yml from core bundle
+- Bump workflow stubs to rhiza v0.16.0
 ## [0.15.3] - 2026-05-26
 
 ### 🐛 Bug Fixes
