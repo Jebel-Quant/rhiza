@@ -85,7 +85,7 @@ class TestCoreBundleSync:
     def test_make_d_fragments_exist(self):
         """All core Makefile fragments are present."""
         make_d = self.project / ".rhiza" / "make.d"
-        for name in ("bootstrap.mk", "quality.mk", "releasing.mk", "custom-env.mk", "custom-task.mk"):
+        for name in ("bootstrap.mk", "doctor.mk", "quality.mk", "releasing.mk", "custom-env.mk", "custom-task.mk"):
             assert (make_d / name).is_file(), f"Missing make.d fragment: {name}"
 
     def test_ruff_config_exists(self):

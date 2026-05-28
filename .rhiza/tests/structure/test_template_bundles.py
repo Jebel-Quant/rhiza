@@ -10,6 +10,7 @@ This module ensures:
   - every bundle directory is non-empty
   - no symlinks inside bundle dirs are broken
   - no deployment path is claimed by more than one bundle (ownership conflict)
+  - no source file is included by more than one bundle
   - github-* bundles only deliver .github/ paths; gitlab-* only .gitlab/ paths
   - the local profile resolves to zero .github/workflows/* files
   - bundle dependency references (requires/recommends) point to existing bundles
@@ -52,6 +53,23 @@ def _deployment_paths(bundle_dir: Path) -> list[str]:
             child = root_path / name
             paths.append(str(child.relative_to(bundle_dir)))
     return paths
+
+
+def _bundle_files_with_sources(bundle_dir: Path) -> list[tuple[str, str]]:
+    """Return (deployment path, source file path) pairs for files in a bundle."""
+    files_with_sources: list[tuple[str, str]] = []
+    for root, dirs, files in os.walk(bundle_dir, followlinks=False):
+        root_path = Path(root)
+        for name in dirs[:]:
+            child = root_path / name
+            if child.is_symlink():
+                dirs.remove(name)  # don't recurse into symlinked dirs
+        for name in files:
+            child = root_path / name
+            if child.is_symlink() and not child.exists():
+                continue
+            files_with_sources.append((str(child.relative_to(bundle_dir)), str(child.resolve())))
+    return files_with_sources
 
 
 class TestTemplateBundles:
@@ -146,6 +164,21 @@ class TestTemplateBundles:
         if conflicts:
             lines = [f"  {dest}: {owners}" for dest, owners in sorted(conflicts.items())]
             pytest.fail("\nFile ownership conflicts (same deployment path in multiple bundles):\n" + "\n".join(lines))
+
+    def test_no_source_file_is_shared_between_bundles(self, bundles_data, bundles_root):
+        """Test that a single source file is not included by more than one bundle."""
+        source_owners: dict[str, list[str]] = {}
+        for name in bundles_data["bundles"]:
+            bundle_dir = bundles_root / name
+            if not bundle_dir.is_dir():
+                continue
+            for dep_path, source_file in _bundle_files_with_sources(bundle_dir):
+                source_owners.setdefault(source_file, []).append(f"{name}/{dep_path}")
+
+        conflicts = {source: owners for source, owners in source_owners.items() if len(owners) > 1}
+        if conflicts:
+            lines = [f"  {source}: {owners}" for source, owners in sorted(conflicts.items())]
+            pytest.fail("\nSource files included by multiple bundles:\n" + "\n".join(lines))
 
     @pytest.mark.parametrize(
         ("prefix", "namespace"),

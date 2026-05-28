@@ -12,6 +12,7 @@ This guide provides comprehensive examples and best practices for extending and 
 - [Real-World Examples](#real-world-examples)
 - [Best Practices](#best-practices)
 - [Troubleshooting](#troubleshooting)
+- [Bundle Sync Troubleshooting Guide](../troubleshooting.md)
 - [CodeQL Configuration](#codeql-configuration)
 - [Documentation Customization](#documentation-customization)
 
@@ -918,6 +919,9 @@ dev: ## Start development server
 ---
 
 ## Troubleshooting
+
+For sync-specific failure modes and recovery commands, see
+[docs/troubleshooting.md](../troubleshooting.md).
 
 ### Issue: Hook Not Running
 
