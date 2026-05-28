@@ -82,7 +82,7 @@ class TestFileOperations:
         for py_file in repo_root.rglob("*.py"):
             # Skip test files and virtual environment
             if ".venv" not in str(py_file) and "test" not in str(py_file).lower():
-                content = py_file.read_text()
+                content = py_file.read_text(encoding="utf-8")
                 if chmod_pattern.search(content):
                     violations.append(str(py_file))
 

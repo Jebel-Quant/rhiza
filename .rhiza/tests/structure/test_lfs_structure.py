@@ -6,16 +6,21 @@ This file and its associated tests flow down via a SYNC action from the jebel-qu
 Verifies that LFS-related files and configurations are present.
 """
 
+import pathlib
+
 import pytest
+
+# Skip the entire module when the lfs bundle is not present.
+# pathlib.Path(__file__).parent * 3 = .rhiza/ directory
+_LFS_MK = pathlib.Path(__file__).parent.parent.parent / "make.d" / "lfs.mk"
+if not _LFS_MK.exists():
+    pytest.skip("lfs bundle not installed (lfs.mk not found)", allow_module_level=True)
 
 
 @pytest.fixture
 def lfs_makefile(root):
-    """Fixture that returns the path to lfs.mk if it exists, else skips."""
-    path = root / ".rhiza" / "make.d" / "lfs.mk"
-    if not path.exists():
-        pytest.skip("lfs.mk not found, skipping LFS tests")
-    return path
+    """Return the path to lfs.mk."""
+    return root / ".rhiza" / "make.d" / "lfs.mk"
 
 
 class TestLFSTemplateStructure:

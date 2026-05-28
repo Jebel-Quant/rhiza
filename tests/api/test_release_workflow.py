@@ -25,7 +25,7 @@ def _load_workflow(root: Path) -> dict:
     workflow_file = root / WORKFLOW_PATH
     if not workflow_file.exists():
         pytest.fail(f"Workflow file not found: {workflow_file}")
-    with open(workflow_file) as fh:
+    with open(workflow_file, encoding="utf-8") as fh:
         return yaml.safe_load(fh)
 
 

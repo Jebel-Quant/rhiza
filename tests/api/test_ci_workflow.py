@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 from tests.util import run_make
@@ -12,7 +14,15 @@ from tests.util import run_make
 MULTI_OS_MATRIX = 'RHIZA_CI_OS_MATRIX=["ubuntu-latest","windows-latest"]'
 WORKFLOW_PATH = Path(".github") / "workflows" / "rhiza_ci.yml"
 
+# ci-os-matrix relies on `printf` from a POSIX shell; MinGW make on Windows
+# doesn't reproduce the same stdout, and JSON quoting in make variable
+# assignments is incompatible with cmd.exe expansion.
+_skip_on_windows = pytest.mark.skipif(
+    sys.platform == "win32", reason="ci-os-matrix requires a POSIX shell (not available on Windows)"
+)
 
+
+@_skip_on_windows
 def test_ci_os_matrix_make_target_defaults_to_ubuntu_when_env_missing(logger):
     """ci-os-matrix target must default to ubuntu-latest when env value is absent."""
     result = run_make(logger, ["-f", ".rhiza/rhiza.mk", "RHIZA_CI_OS_MATRIX=", "ci-os-matrix"], dry_run=False)
@@ -20,6 +30,7 @@ def test_ci_os_matrix_make_target_defaults_to_ubuntu_when_env_missing(logger):
     assert json.loads(result.stdout.strip()) == ["ubuntu-latest"]
 
 
+@_skip_on_windows
 def test_ci_os_matrix_make_target_can_be_configured(logger):
     """ci-os-matrix target must use the configured RHIZA_CI_OS_MATRIX value."""
     result = run_make(

@@ -6,10 +6,17 @@ This file and its associated tests flow down via a SYNC action from the jebel-qu
 Tests the lfs-install, lfs-pull, lfs-track, and lfs-status targets.
 """
 
+import pathlib
 import shutil
 import subprocess  # nosec
 
 import pytest
+
+# Skip the entire module when the lfs bundle is not present.
+# pathlib.Path(__file__).parent * 3 = .rhiza/ directory
+_LFS_MK = pathlib.Path(__file__).parent.parent.parent / "make.d" / "lfs.mk"
+if not _LFS_MK.exists():
+    pytest.skip("lfs bundle not installed (lfs.mk not found)", allow_module_level=True)
 
 # Get make command once at module level
 MAKE = shutil.which("make") or "/usr/bin/make"
@@ -17,11 +24,8 @@ MAKE = shutil.which("make") or "/usr/bin/make"
 
 @pytest.fixture
 def lfs_makefile(git_repo):
-    """Return the lfs.mk path or skip tests if missing."""
-    makefile = git_repo / ".rhiza" / "make.d" / "lfs.mk"
-    if not makefile.exists():
-        pytest.skip("lfs.mk not found, skipping test")
-    return makefile
+    """Return the lfs.mk path within the test git repo."""
+    return git_repo / ".rhiza" / "make.d" / "lfs.mk"
 
 
 @pytest.fixture

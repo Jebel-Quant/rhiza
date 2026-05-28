@@ -48,10 +48,10 @@ def _deployment_paths(bundle_dir: Path) -> list[str]:
             child = root_path / name
             if child.is_symlink():
                 dirs.remove(name)  # don't recurse into symlinked dirs
-                paths.append(str(child.relative_to(bundle_dir)))
+                paths.append(child.relative_to(bundle_dir).as_posix())
         for name in files:
             child = root_path / name
-            paths.append(str(child.relative_to(bundle_dir)))
+            paths.append(child.relative_to(bundle_dir).as_posix())
     return paths
 
 
@@ -68,7 +68,7 @@ def _bundle_files_with_sources(bundle_dir: Path) -> list[tuple[str, str]]:
             child = root_path / name
             if child.is_symlink() and not child.exists():
                 continue
-            files_with_sources.append((str(child.relative_to(bundle_dir)), str(child.resolve())))
+            files_with_sources.append((child.relative_to(bundle_dir).as_posix(), str(child.resolve())))
     return files_with_sources
 
 
