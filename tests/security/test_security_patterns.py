@@ -31,7 +31,7 @@ def _github_bundle_active(repo_root: pathlib.Path | None = None) -> bool:
             this file's location (four levels up from the test file).
     """
     if repo_root is None:
-        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent
     template_yml = repo_root / ".rhiza" / "template.yml"
     if not template_yml.exists():
         # Running inside rhiza itself - all bundles apply.
@@ -73,7 +73,7 @@ class TestFileOperations:
 
         Note: This check is NOT covered by Bandit, hence included here.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent
         violations = []
         # Look for chmod calls with overly permissive modes (world-writable: 0o77x)
         # We're specifically looking for 0o777, 0o776, 0o775, etc. (world-writable)
@@ -102,7 +102,7 @@ class TestSecurityConfiguration:
         This ensures the project has Ruff security rules configured.
         The actual security scanning happens in pre-commit hooks.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent
         ruff_config = repo_root / "ruff.toml"
 
         assert ruff_config.exists(), "ruff.toml not found"
@@ -117,7 +117,7 @@ class TestSecurityConfiguration:
         This ensures Python cache files (__pycache__, .pyc, .pyo, .pyd) cannot
         be accidentally committed to the repository.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent
         precommit_config = repo_root / ".pre-commit-config.yaml"
 
         assert precommit_config.exists(), ".pre-commit-config.yaml not found"
@@ -134,7 +134,7 @@ class TestSecurityConfiguration:
         This ensures Bandit security scanning is part of the development workflow.
         The actual security scanning happens in pre-commit hooks.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent
         precommit_config = repo_root / ".pre-commit-config.yaml"
 
         assert precommit_config.exists(), ".pre-commit-config.yaml not found"
@@ -153,7 +153,7 @@ class TestSecurityConfiguration:
         The ``.bandit`` file is the single source of truth for bandit
         configuration and is read automatically by both bandit and CodeFactor.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent
         bandit_ini = repo_root / ".bandit"
 
         assert bandit_ini.exists(), (
@@ -174,7 +174,7 @@ class TestSecurityConfiguration:
         the root, .github/, or docs/ directory. Root-level placement ensures
         maximum visibility in the GitHub UI.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent
         root_security = repo_root / "SECURITY.md"
 
         assert root_security.exists(), (
@@ -190,7 +190,7 @@ class TestSecurityConfiguration:
         for the repository. Secret scanning must also be enabled in repository
         Settings > Security > Code security and analysis.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent
         secret_scanning_config = repo_root / ".github" / "secret_scanning.yml"
 
         assert secret_scanning_config.exists(), (
@@ -207,7 +207,7 @@ class TestSecurityConfiguration:
         security updates. Dependabot security updates must also be enabled in
         repository Settings > Security > Code security and analysis.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent
         dependabot_config = repo_root / ".github" / "dependabot.yml"
 
         assert dependabot_config.exists(), (
@@ -228,7 +228,7 @@ class TestSecurityConfiguration:
         This is a custom requirement for this project to ensure security
         exceptions are justified and understood.
         """
-        repo_root = pathlib.Path(__file__).parent.parent.parent.parent
+        repo_root = pathlib.Path(__file__).parent.parent.parent
         conftest_files = list(repo_root.rglob("conftest.py"))
 
         # For each conftest, verify it has security documentation

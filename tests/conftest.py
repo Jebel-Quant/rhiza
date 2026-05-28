@@ -8,9 +8,16 @@ Security Notes:
   as the test environment is controlled
 """
 
+import logging
 import pathlib
 
 import pytest
+
+
+@pytest.fixture(scope="session")
+def logger() -> logging.Logger:
+    """Provide a session-scoped logger for tests."""
+    return logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="session")

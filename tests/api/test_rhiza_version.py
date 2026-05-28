@@ -12,7 +12,7 @@ These tests validate:
 from __future__ import annotations
 
 # Import from local conftest
-from sync.conftest import run_make, strip_ansi
+from tests.util import run_make, strip_ansi
 
 
 class TestRhizaVersion:
