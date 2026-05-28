@@ -17,6 +17,8 @@ import shutil
 import tomllib
 from pathlib import Path
 
+from packaging.requirements import Requirement
+
 import pytest
 import yaml
 
@@ -122,8 +124,8 @@ def _contains_make_command(commands: str, target: str) -> bool:
 
 
 def _group_has_dependency(group: list[str], package_name: str) -> bool:
-    """Return True if a dependency group contains a given package name."""
-    return any(dep.lower().startswith(package_name.lower()) for dep in group)
+    """Return True if a dependency group contains a given package name (exact match)."""
+    return any(Requirement(dep).name.lower() == package_name.lower() for dep in group)
 
 
 # ---------------------------------------------------------------------------
@@ -156,6 +158,20 @@ def test_pyproject_declares_uv_dependency_groups(root: Path) -> None:
     assert _group_has_dependency(groups["docs"], "plotly")
     assert _group_has_dependency(groups["docs"], "mkdocs-material")
     assert _group_has_dependency(groups["docs"], "pdoc")
+
+
+def test_core_bundle_pyproject_declares_uv_dependency_groups(root: Path) -> None:
+    """bundles/core/pyproject.toml must expose lint/test/docs groups for downstream repos."""
+    pyproject_path = root / "bundles" / "core" / "pyproject.toml"
+    assert pyproject_path.is_file(), "bundles/core/pyproject.toml not found"
+
+    with pyproject_path.open("rb") as fh:
+        pyproject = tomllib.load(fh)
+
+    groups = pyproject.get("dependency-groups", {})
+    assert {"lint", "test", "docs"} <= set(groups), (
+        f"bundles/core/pyproject.toml is missing dependency groups; found: {set(groups)}"
+    )
 
 
 class TestGitlabProjectProfileSync:
