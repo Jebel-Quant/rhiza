@@ -33,7 +33,6 @@ test = [
     "pytest>=8,<9",
     "pytest-cov>=5,<7",
     "hypothesis>=6,<7",
-    "mutmut>=2,<3",
     "pytest-timeout>=2,<3",
     "pytest-xdist>=3,<4",
     "pytest-html>=4,<5",

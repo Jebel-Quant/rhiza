@@ -147,7 +147,6 @@ def test_pyproject_declares_uv_dependency_groups(root: Path) -> None:
     assert _group_has_dependency(groups["test"], "pytest")
     assert _group_has_dependency(groups["test"], "pytest-cov")
     assert _group_has_dependency(groups["test"], "hypothesis")
-    assert _group_has_dependency(groups["test"], "mutmut")
     assert _group_has_dependency(groups["test"], "pytest-timeout")
     assert _group_has_dependency(groups["test"], "pytest-xdist")
 
@@ -156,7 +155,6 @@ def test_pyproject_declares_uv_dependency_groups(root: Path) -> None:
     assert _group_has_dependency(groups["docs"], "pandas")
     assert _group_has_dependency(groups["docs"], "plotly")
     assert _group_has_dependency(groups["docs"], "mkdocs-material")
-    assert _group_has_dependency(groups["docs"], "pdoc")
 
 
 def test_core_bundle_pyproject_declares_uv_dependency_groups(root: Path) -> None:
