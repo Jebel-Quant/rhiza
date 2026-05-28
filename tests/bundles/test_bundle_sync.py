@@ -49,13 +49,13 @@ class TestCoreBundleSync:
         """Ruff linting configuration is present."""
         assert (self.project / "ruff.toml").is_file()
 
-    def test_pyproject_template_exists(self):
+    def test_pyproject_template_exists(self, test_data_dir):
         """Core bundle ships a pyproject.toml template."""
-        assert (self.project / "pyproject.toml").is_file()
+        assert (test_data_dir / "pyproject.toml").is_file()
 
-    def test_pyproject_template_has_required_structure(self):
+    def test_pyproject_template_has_required_structure(self, test_data_dir):
         """Core pyproject template has the minimum Rhiza-required sections."""
-        with (self.project / "pyproject.toml").open("rb") as f:
+        with (test_data_dir / "pyproject.toml").open("rb") as f:
             pyproject = tomllib.load(f)
 
         project = pyproject.get("project", {})

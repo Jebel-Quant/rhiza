@@ -17,3 +17,9 @@ import pytest
 def root() -> pathlib.Path:
     """Return the repository root directory."""
     return pathlib.Path(__file__).parent.parent
+
+
+@pytest.fixture(scope="session")
+def test_data_dir(root: pathlib.Path) -> pathlib.Path:
+    """Return the directory containing test data."""
+    return root / "tests" / "resources"

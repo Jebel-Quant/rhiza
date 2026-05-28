@@ -112,10 +112,10 @@ def test_pyproject_declares_uv_dependency_groups(root: Path) -> None:
     assert _group_has_dependency(groups["docs"], "mkdocs-material")
 
 
-def test_core_bundle_pyproject_declares_uv_dependency_groups(root: Path) -> None:
+def test_core_bundle_pyproject_declares_uv_dependency_groups(test_data_dir: Path) -> None:
     """bundles/core/pyproject.toml must expose lint/test/docs groups for downstream repos."""
-    pyproject_path = root / "bundles" / "core" / "pyproject.toml"
-    assert pyproject_path.is_file(), "bundles/core/pyproject.toml not found"
+    pyproject_path = test_data_dir / "pyproject.toml"
+    assert pyproject_path.is_file(), f"{test_data_dir / 'pyproject.toml'} not found"
 
     with pyproject_path.open("rb") as fh:
         pyproject = tomllib.load(fh)
