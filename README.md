@@ -69,7 +69,7 @@ templates:
 
 **What you're seeing:**
 - **`repository`** - The upstream template source (**can be any repository, not just Rhiza!**)
-- **`ref`** - Which version tag/branch to sync from (e.g., `v0.9.0` or `main`)
+- **`ref`** - Which version tag/branch to sync from (e.g., `v0.14.0` or `main`)
 - **`profiles`** - Named presets that expand to a set of bundles (see [Profiles](#profiles-recommended-starting-point) below)
 - **`templates`** - Individual template bundles for advanced or additional selection
 
@@ -98,7 +98,7 @@ When you run `uvx rhiza sync` or trigger the automated sync workflow, Rhiza fetc
 - [Why Rhiza?](#-why-rhiza)
 - [Quick Start](#-quick-start)
 - [What You Get](#-what-you-get)
-- [Available Template Bundles](#-available-template-bundles)
+- [Available Templates](#-available-templates)
 - [Integration Guide](#-integration-guide)
 - [Available Tasks](#-available-tasks)
 - [Advanced Topics](#-advanced-topics)
@@ -143,7 +143,7 @@ Adopt a Rhiza bundle and your project immediately gains:
 - **CI/CD workflows** for GitHub Actions and/or GitLab CI — test, lint, release, sync
 - **Pre-commit hooks** — ruff, bandit, markdownlint, interrogate, actionlint, and more
 - **pytest** with coverage, benchmarks, and property-based testing via Hypothesis
-- **Documentation** via pdoc + MkDocs, with optional Marimo notebook exports
+- **Documentation** via MkDocs + zensical, with optional Marimo notebook exports
 - **Release automation** — version bumping, OIDC PyPI publishing, SLSA provenance
 - **Security scanning** — CodeQL, pip-audit, bandit, secret scanning, Dependabot
 - **Shell completions** for bash and zsh (tab-complete all `make` targets)
@@ -175,7 +175,7 @@ For more information about the ADR format and how to create new records, see the
 
 - 🚀 **CI/CD Templates** - Ready-to-use GitHub Actions and GitLab CI workflows
 - 🧪 **Testing Framework** - Comprehensive test setup with pytest
-- 📚 **Documentation** - Automated documentation generation with pdoc and companion books
+- 📚 **Documentation** - Automated documentation site via MkDocs + zensical, with optional Marimo notebook exports
 - 🔍 **Code Quality** - Linting with ruff, formatting, and dependency checking with deptry
 - 📝 **Editor Configuration** - Cross-platform .editorconfig for consistent coding style
 - 📊 **Marimo Integration** - Interactive notebook support for documentation and exploration
@@ -188,9 +188,9 @@ Rhiza provides **profiles** — named presets that select a sensible set of bund
 
 | Profile | Description | Includes |
 |---------|-------------|---------|
-| `local` | Local-first development with no hosted CI/CD workflow files | `book`, `marimo`, `tests` |
-| `github-project` | GitHub-hosted project with CI/CD and release automation | `github-book`, `github-marimo`, `github-tests` |
-| `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `gitlab-book`, `gitlab-marimo`, `gitlab-tests` |
+| `local` | Local-first development with no hosted CI/CD workflow files | `core`, `book`, `marimo`, `tests` |
+| `github-project` | GitHub-hosted project with CI/CD and release automation | `core`, `github`, `book`, `marimo`, `tests`, `github-book`, `github-marimo`, `github-tests` |
+| `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `core`, `gitlab`, `book`, `marimo`, `tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-tests` |
 
 Declare a profile in `.rhiza/template.yml`:
 
@@ -199,10 +199,10 @@ repository: Jebel-Quant/rhiza
 ref: v0.14.0
 
 profiles:
-  - local
+  - github-project
 ```
 
-> **Note:** Profiles expand to their constituent bundles including all transitive requirements. For example, `github-project` selects `github-book`, `github-marimo`, and `github-tests`, which in turn require `core`, `github`, `book`, `marimo`, and `tests`.
+> **Note:** Profiles expand to their constituent bundles including all transitive requirements.
 
 You can combine a profile with additional bundles:
 
@@ -210,54 +210,54 @@ You can combine a profile with additional bundles:
 profiles:
   - github-project
 templates:
-  - marimo
-  - github-marimo
+  - docker
+  - github-docker
 ```
 
 ### Available Template Bundles
 
 Bundles are the atomic building blocks. Feature bundles are **local-first** — they do not include hosted workflow files. Platform overlay bundles (prefixed `github-` or `gitlab-`) add the CI/CD workflows for a given feature.
 
+Any bundle can be selected on its own — its dependencies are resolved and installed automatically. The *Auto-installs* column shows which bundles are pulled in transitively when you select that bundle.
+
 **Feature bundles**
 
-| Bundle | Description | Requires | Standalone |
-|--------|-------------|----------|------------|
-| `core` | Core Rhiza infrastructure (Makefile, linting, docs) | — | ✅ |
-| `tests` | Local testing infrastructure with pytest, coverage, and type checking | `book` | ✅ |
-| `book` | Comprehensive documentation book (API docs, coverage, notebooks) | — | ✅ |
-| `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book` | ✅ |
-| `benchmarks` | Performance benchmarking with pytest-benchmark and reporting | `tests` | ❌ |
-| `docker` | Docker containerization support | — | ✅ |
-| `devcontainer` | VS Code DevContainer configuration | — | ✅ |
-| `presentation` | Presentation building using Marp | — | ✅ |
-| `lfs` | Git LFS (Large File Storage) support | — | ✅ |
-| `legal` | Legal and community files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT) | — | ✅ |
-| `renovate` | Renovate bot configuration for automated dependency updates | — | ✅ |
-| `paper` | LaTeX paper compilation targets (`make paper`, `make paper-clean`) | — | ✅ |
+| Bundle | Description | Auto-installs |
+|--------|-------------|---------------|
+| `core` | Core Rhiza infrastructure (Makefile, linting, docs) | — |
+| `tests` | Local testing infrastructure with pytest, coverage, and type checking | `book`, `core` |
+| `book` | Comprehensive documentation book (API docs, coverage, notebooks) | `core` |
+| `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book`, `core` |
+| `benchmarks` | Performance benchmarking with pytest-benchmark and reporting | `tests` |
+| `docker` | Docker containerization support | — |
+| `devcontainer` | VS Code DevContainer configuration | — |
+| `presentation` | Presentation building using Marp | — |
+| `paper` | LaTeX paper compilation targets (`make paper`, `make paper-clean`) | — |
+| `lfs` | Git LFS (Large File Storage) support | — |
+| `legal` | Legal and community files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT) | — |
+| `renovate` | Renovate bot configuration for automated dependency updates | — |
 
 **Platform bundles — GitHub**
 
-| Bundle | Description | Requires | Standalone |
-|--------|-------------|----------|------------|
-| `github` | Base GitHub repository automation (sync, release, dependabot) | `core` | ❌ |
-| `github-tests` | GitHub Actions workflows for test automation (CI, CodeQL, weekly) | `github`, `tests` | ❌ |
-| `github-book` | GitHub Actions workflow for documentation publishing | `github`, `book` | ❌ |
-| `github-marimo` | GitHub Actions workflow for Marimo notebook automation | `github`, `marimo` | ❌ |
-| `github-docker` | GitHub Actions workflow for Docker image building and publishing | `github`, `docker` | ❌ |
-| `github-devcontainer` | GitHub Actions workflow for DevContainer image publishing | `github`, `devcontainer` | ❌ |
-| `github-paper` | GitHub Actions workflow for LaTeX paper compilation and PDF publishing | `github`, `paper` | ❌ |
-| `gh-aw` | GitHub Agentic Workflows for AI-driven repository automation | `github` | ❌ |
+| Bundle | Description | Auto-installs |
+|--------|-------------|---------------|
+| `github` | Base GitHub repository automation (sync, release, dependabot) | `core` |
+| `github-tests` | GitHub Actions workflows for test automation (CI, CodeQL, weekly) | `github`, `tests`, `core` |
+| `github-book` | GitHub Actions workflow for documentation publishing | `github`, `book`, `core` |
+| `github-marimo` | GitHub Actions workflow for Marimo notebook automation | `github`, `marimo`, `book`, `core` |
+| `github-docker` | GitHub Actions workflow for Docker image building and publishing | `github`, `docker`, `core` |
+| `github-devcontainer` | GitHub Actions workflow for DevContainer image publishing | `github`, `devcontainer`, `core` |
+| `github-paper` | GitHub Actions workflow for LaTeX paper compilation and PDF publishing | `github`, `paper`, `core` |
+| `gh-aw` | GitHub Agentic Workflows for AI-driven repository automation | `github`, `core` |
 
 **Platform bundles — GitLab**
 
-| Bundle | Description | Requires | Standalone |
-|--------|-------------|----------|------------|
-| `gitlab` | GitLab CI/CD pipeline configuration and core workflows | `core` | ❌ |
-| `gitlab-tests` | GitLab CI pipeline for test automation | `gitlab`, `tests` | ❌ |
-| `gitlab-marimo` | GitLab CI pipeline for Marimo notebook execution | `gitlab`, `marimo` | ❌ |
-| `gitlab-book` | GitLab CI pipeline for documentation publishing to GitLab Pages | `gitlab`, `book` | ❌ |
-
-**Tip:** Bundles marked **Standalone: ❌** cannot be used alone and must be combined with the bundles listed in the *Requires* column.
+| Bundle | Description | Auto-installs |
+|--------|-------------|---------------|
+| `gitlab` | GitLab CI/CD pipeline configuration and core workflows | `core` |
+| `gitlab-tests` | GitLab CI pipeline for test automation | `gitlab`, `tests`, `core` |
+| `gitlab-marimo` | GitLab CI pipeline for Marimo notebook execution | `gitlab`, `marimo`, `book`, `core` |
+| `gitlab-book` | GitLab CI pipeline for documentation publishing to GitLab Pages | `gitlab`, `book`, `core` |
 
 For a complete reference of every file included in each bundle, see [`.rhiza/template-bundles.yml`](.rhiza/template-bundles.yml).
 
@@ -310,6 +310,47 @@ For GitHub Token configuration and details, see the [GitHub Actions documentatio
 - **Task Automation** - Makefile with common development tasks
 - **Dev Container** - Optional VS Code/Codespaces environment
 - **Documentation** - Automated documentation generation
+
+### Downstream Project Requirements
+
+For Rhiza templates to work correctly, your project must satisfy these expectations before and after sync.
+
+**Project structure**
+
+| Requirement | Details |
+|-------------|---------|
+| Git repository | `git init` or cloned — Rhiza does not initialise git |
+| `pyproject.toml` | Must have `[project]` with `name`, `version`, `description`, `readme`, and `requires-python` (all non-empty strings), plus a `[dependency-groups]` table |
+| `.python-version` | Single line specifying the target Python version (e.g. `3.13`) — used by `uv` and CI |
+| `.rhiza/template.yml` | Created by `uvx rhiza init` — specifies `repository`, `ref`, and bundle/profile selection |
+
+**Tool requirements**
+
+| Tool | Minimum version | Notes |
+|------|-----------------|-------|
+| **GNU Make** | 3.81 | macOS ships BSD make; install via `brew install make` and use `gmake` |
+| **uv** | 0.5.0 | Installed automatically by `make install-uv` if missing |
+| **Python** | 3.11 | Managed automatically by `uv` via `.python-version` |
+
+**What Rhiza owns vs what you own**
+
+| Path | Owner | Notes |
+|------|-------|-------|
+| `.rhiza/` | Rhiza | Template-managed; overwritten on sync |
+| `.github/workflows/rhiza_*.yml` | Rhiza | Template-managed workflow stubs |
+| `Makefile` | Rhiza | Template-managed; add your hooks *above* the `include` line |
+| `ruff.toml`, `.editorconfig`, `.pre-commit-config.yaml` | Rhiza | Template-managed config files |
+| `pyproject.toml` | Yours | Rhiza ships a starter template; you own and extend it freely |
+| `src/` or application code | Yours | Never touched by Rhiza |
+| `tests/` | Yours | Never touched by Rhiza |
+| `local.mk` | Yours | Local shortcuts — not committed, not synced, auto-loaded |
+
+**Safe extension points** (survive every sync):
+- **Root `Makefile` hooks** — add `pre-install::` / `post-install::` etc. above `include .rhiza/rhiza.mk`
+- **`local.mk`** — untracked local shortcuts, auto-loaded by `rhiza.mk`
+- **`pyproject.toml`** — add dependencies, scripts, and tool configs freely
+
+See [docs/guides/CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md) for worked examples.
 
 ### Troubleshooting Integration
 
@@ -381,7 +422,7 @@ Development and Testing
   benchmark             run performance benchmarks
 
 Documentation
-  docs                  create documentation with pdoc
+  book                  compile the companion book
   book                  compile the companion book
 
 Marimo Notebooks
@@ -485,7 +526,7 @@ Rhiza uses a modular Makefile system with extension points (hooks) for customisa
 
 ### Custom Build Scripts
 
-For system dependencies and custom build steps, see [docs/guides/EXTENDING_RHIZA.md](docs/guides/EXTENDING_RHIZA.md).
+For system dependencies and custom build steps, see [docs/guides/CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md).
 
 ### Private GitHub Packages
 

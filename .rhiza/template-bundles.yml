@@ -218,7 +218,7 @@ bundles:
   book:
     description: |
       Comprehensive documentation book generation combining:
-      - API documentation (pdoc)
+      - Documentation site (MkDocs + zensical)
       - Interactive notebooks (if marimo is enabled)
       - Test coverage reports and results (if tests bundle is also enabled)
     standalone: true

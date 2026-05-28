@@ -53,12 +53,6 @@ def _load_bundle_names(root: Path) -> list[str]:
 
 
 @pytest.fixture(scope="module")
-def bundles_root(root: Path) -> Path:
-    """Return the path to the bundles/ directory."""
-    return root / "bundles"
-
-
-@pytest.fixture(scope="module")
 def bundle_names(root: Path) -> list[str]:
     """Return all bundle names defined in template-bundles.yml."""
     return _load_bundle_names(root)
@@ -82,7 +76,7 @@ def _is_mkdocs_python_tag_file(path: Path) -> bool:
 class TestBundleYamlValidity:
     """Every YAML file in every bundle directory must parse without error."""
 
-    def test_all_yaml_files_are_parseable(self, bundles_root: Path, bundle_names: list[str]) -> None:
+    def test_all_yaml_files_are_parseable(self, root: Path, bundle_names: list[str]) -> None:
         """Walk every bundle and assert every .yml / .yaml file loads cleanly.
 
         mkdocs config files that use Python YAML tags (tag:yaml.org,2002:python/name:...)
@@ -91,7 +85,7 @@ class TestBundleYamlValidity:
         """
         errors: list[str] = []
         for name in bundle_names:
-            bundle_dir = bundles_root / name
+            bundle_dir = root / "bundles" / name
             if not bundle_dir.is_dir():
                 continue
             for f in _all_files_in_bundle(bundle_dir):
@@ -106,12 +100,12 @@ class TestBundleYamlValidity:
                     # Python-specific YAML tags are acceptable in mkdocs-adjacent files
                     pass
                 except yaml.YAMLError as exc:
-                    rel = f.relative_to(bundles_root)
+                    rel = f.relative_to(root / "bundles")
                     errors.append(f"  [{name}] {rel}: {exc}")
         if errors:
             pytest.fail("YAML parse errors in bundle files:\n" + "\n".join(errors))
 
-    def test_no_yaml_file_is_empty(self, bundles_root: Path, bundle_names: list[str]) -> None:
+    def test_no_yaml_file_is_empty(self, root: Path, bundle_names: list[str]) -> None:
         """No .yml / .yaml bundle file should be empty (null document).
 
         mkdocs config files that require Python YAML tags are skipped here too
@@ -119,7 +113,7 @@ class TestBundleYamlValidity:
         """
         empties: list[str] = []
         for name in bundle_names:
-            bundle_dir = bundles_root / name
+            bundle_dir = root / "bundles" / name
             if not bundle_dir.is_dir():
                 continue
             for f in _all_files_in_bundle(bundle_dir):
@@ -133,7 +127,7 @@ class TestBundleYamlValidity:
                 except yaml.YAMLError:
                     continue
                 if doc is None:
-                    rel = f.relative_to(bundles_root)
+                    rel = f.relative_to(root / "bundles")
                     empties.append(f"  [{name}] {rel}")
         if empties:
             pytest.fail("Empty (null) YAML documents in bundle files:\n" + "\n".join(empties))
@@ -152,7 +146,7 @@ def _is_jsonc_file(path: Path) -> bool:
 class TestBundleJsonValidity:
     """Every JSON file in every bundle directory must parse without error."""
 
-    def test_all_json_files_are_parseable(self, bundles_root: Path, bundle_names: list[str]) -> None:
+    def test_all_json_files_are_parseable(self, root: Path, bundle_names: list[str]) -> None:
         """Walk every bundle and assert every .json file loads cleanly.
 
         Files using JSONC format (JSON with Comments) such as devcontainer.json are
@@ -161,7 +155,7 @@ class TestBundleJsonValidity:
         """
         errors: list[str] = []
         for name in bundle_names:
-            bundle_dir = bundles_root / name
+            bundle_dir = root / "bundles" / name
             if not bundle_dir.is_dir():
                 continue
             for f in _all_files_in_bundle(bundle_dir):
@@ -173,21 +167,21 @@ class TestBundleJsonValidity:
                     with f.open(encoding="utf-8") as fh:
                         json.load(fh)
                 except json.JSONDecodeError as exc:
-                    rel = f.relative_to(bundles_root)
+                    rel = f.relative_to(root / "bundles")
                     errors.append(f"  [{name}] {rel}: {exc}")
         if errors:
             pytest.fail("JSON parse errors in bundle files:\n" + "\n".join(errors))
 
-    def test_jsonc_files_are_non_empty(self, bundles_root: Path, bundle_names: list[str]) -> None:
+    def test_jsonc_files_are_non_empty(self, root: Path, bundle_names: list[str]) -> None:
         """JSONC files (devcontainer.json) must be non-empty even though we skip parse validation."""
         for name in bundle_names:
-            bundle_dir = bundles_root / name
+            bundle_dir = root / "bundles" / name
             if not bundle_dir.is_dir():
                 continue
             for f in _all_files_in_bundle(bundle_dir):
                 if f.suffix == ".json" and _is_jsonc_file(f):
                     content = f.read_text(encoding="utf-8").strip()
-                    rel = f.relative_to(bundles_root)
+                    rel = f.relative_to(root / "bundles")
                     assert content, f"JSONC file is empty: [{name}] {rel}"
 
 
@@ -223,11 +217,11 @@ class TestGithubWorkflowStubs:
         """Return bundle names that are github-* overlays."""
         return [n for n in bundle_names if n.startswith("github-")]
 
-    def test_workflow_stubs_have_name_field(self, bundles_root: Path, bundle_names: list[str]) -> None:
+    def test_workflow_stubs_have_name_field(self, root: Path, bundle_names: list[str]) -> None:
         """Every GitHub workflow YAML file has a top-level 'name' field."""
         errors: list[str] = []
         for bundle_name in self._github_overlay_bundles(bundle_names):
-            bundle_dir = bundles_root / bundle_name
+            bundle_dir = root / "bundles" / bundle_name
             workflows_dir = bundle_dir / ".github" / "workflows"
             if not workflows_dir.is_dir():
                 continue
@@ -239,7 +233,7 @@ class TestGithubWorkflowStubs:
         if errors:
             pytest.fail("Workflow stubs without 'name':\n" + "\n".join(errors))
 
-    def test_workflow_stubs_have_on_trigger(self, bundles_root: Path, bundle_names: list[str]) -> None:
+    def test_workflow_stubs_have_on_trigger(self, root: Path, bundle_names: list[str]) -> None:
         """Every GitHub workflow YAML file has an 'on' trigger section.
 
         Note: pyyaml parses the bare YAML key 'on' as Python boolean True (since 'on'
@@ -248,7 +242,7 @@ class TestGithubWorkflowStubs:
         """
         errors: list[str] = []
         for bundle_name in self._github_overlay_bundles(bundle_names):
-            bundle_dir = bundles_root / bundle_name
+            bundle_dir = root / "bundles" / bundle_name
             workflows_dir = bundle_dir / ".github" / "workflows"
             if not workflows_dir.is_dir():
                 continue
@@ -265,11 +259,11 @@ class TestGithubWorkflowStubs:
         if errors:
             pytest.fail("Workflow stubs without 'on' trigger:\n" + "\n".join(errors))
 
-    def test_workflow_stubs_have_jobs(self, bundles_root: Path, bundle_names: list[str]) -> None:
+    def test_workflow_stubs_have_jobs(self, root: Path, bundle_names: list[str]) -> None:
         """Every GitHub workflow YAML file has a non-empty 'jobs' section."""
         errors: list[str] = []
         for bundle_name in self._github_overlay_bundles(bundle_names):
-            bundle_dir = bundles_root / bundle_name
+            bundle_dir = root / "bundles" / bundle_name
             workflows_dir = bundle_dir / ".github" / "workflows"
             if not workflows_dir.is_dir():
                 continue
@@ -284,11 +278,11 @@ class TestGithubWorkflowStubs:
         if errors:
             pytest.fail("Workflow stubs without 'jobs':\n" + "\n".join(errors))
 
-    def test_workflow_stubs_delegate_to_jebel_quant_rhiza(self, bundles_root: Path, bundle_names: list[str]) -> None:
+    def test_workflow_stubs_delegate_to_jebel_quant_rhiza(self, root: Path, bundle_names: list[str]) -> None:
         """Workflow stubs that contain a 'uses:' job reference the jebel-quant/rhiza repo."""
         errors: list[str] = []
         for bundle_name in self._github_overlay_bundles(bundle_names):
-            bundle_dir = bundles_root / bundle_name
+            bundle_dir = root / "bundles" / bundle_name
             workflows_dir = bundle_dir / ".github" / "workflows"
             if not workflows_dir.is_dir():
                 continue
@@ -314,9 +308,9 @@ class TestShellCompletions:
     """Shell completion scripts in the core bundle must have real content."""
 
     @pytest.fixture
-    def completions_dir(self, bundles_root: Path) -> Path:
+    def completions_dir(self, root: Path) -> Path:
         """Return the completions directory inside the core bundle."""
-        return bundles_root / "core" / ".rhiza" / "completions"
+        return root / "bundles" / "core" / ".rhiza" / "completions"
 
     def test_bash_completion_exists_and_is_non_empty(self, completions_dir: Path) -> None:
         """rhiza-completion.bash must exist and contain at least 10 lines."""
@@ -366,14 +360,12 @@ class TestShellCompletions:
 class TestMakefileFragments:
     """Makefile fragments in bundles must follow the help-comment convention."""
 
-    def test_all_mk_files_have_at_least_one_documented_target(
-        self, bundles_root: Path, bundle_names: list[str]
-    ) -> None:
+    def test_all_mk_files_have_at_least_one_documented_target(self, root: Path, bundle_names: list[str]) -> None:
         """Every .mk fragment that is not a customisation template must document at least one target with ##."""
         skip_names = {"custom-env.mk", "custom-task.mk", "README.md"}
         violations: list[str] = []
         for bundle_name in bundle_names:
-            bundle_dir = bundles_root / bundle_name
+            bundle_dir = root / "bundles" / bundle_name
             if not bundle_dir.is_dir():
                 continue
             for mk_file in _all_files_in_bundle(bundle_dir):
@@ -382,17 +374,17 @@ class TestMakefileFragments:
                 content = mk_file.read_text(encoding="utf-8")
                 # A documented target looks like: target: ... ## description
                 if "##" not in content:
-                    rel = mk_file.relative_to(bundles_root)
+                    rel = mk_file.relative_to(root / "bundles")
                     violations.append(f"  [{bundle_name}] {rel}")
         if violations:
             pytest.fail("Makefile fragments without any ## help comment:\n" + "\n".join(violations))
 
-    def test_all_mk_files_have_phony_declarations(self, bundles_root: Path, bundle_names: list[str]) -> None:
+    def test_all_mk_files_have_phony_declarations(self, root: Path, bundle_names: list[str]) -> None:
         """Makefile fragments that define targets should declare them as .PHONY."""
         skip_names = {"custom-env.mk", "custom-task.mk"}
         violations: list[str] = []
         for bundle_name in bundle_names:
-            bundle_dir = bundles_root / bundle_name
+            bundle_dir = root / "bundles" / bundle_name
             if not bundle_dir.is_dir():
                 continue
             for mk_file in _all_files_in_bundle(bundle_dir):
@@ -406,7 +398,7 @@ class TestMakefileFragments:
                     for line in content.splitlines()
                 )
                 if has_targets and ".PHONY" not in content:
-                    rel = mk_file.relative_to(bundles_root)
+                    rel = mk_file.relative_to(root / "bundles")
                     violations.append(f"  [{bundle_name}] {rel}")
         if violations:
             pytest.fail("Makefile fragments with targets but no .PHONY declaration:\n" + "\n".join(violations))
@@ -421,9 +413,9 @@ class TestLegalBundleContent:
     """Files in the legal bundle must have real, non-trivial content."""
 
     @pytest.fixture
-    def legal_dir(self, bundles_root: Path) -> Path:
+    def legal_dir(self, root: Path) -> Path:
         """Return the legal bundle directory."""
-        d = bundles_root / "legal"
+        d = root / "bundles" / "legal"
         if not d.is_dir():
             pytest.skip("legal bundle not present")
         return d
@@ -463,9 +455,9 @@ class TestRenovateBundleContent:
     """renovate.json in the renovate bundle must be a valid, non-trivial config."""
 
     @pytest.fixture
-    def renovate_json(self, bundles_root: Path) -> dict:
+    def renovate_json(self, root: Path) -> dict:
         """Load and return the parsed renovate.json from the renovate bundle."""
-        rj = bundles_root / "renovate" / "renovate.json"
+        rj = root / "bundles" / "renovate" / "renovate.json"
         if not rj.exists():
             pytest.skip("renovate bundle not present")
         with rj.open(encoding="utf-8") as fh:

@@ -55,7 +55,7 @@ The core abstraction is the **bundle** — a named group of configuration files.
 - `gitlab`: GitLab CI
 - `docker`, `devcontainer`: containerisation
 - `marimo`: interactive notebooks
-- `book`: documentation with pdoc + mkdocs
+- `book`: documentation with MkDocs + zensical
 - `presentation`: Marp slides
 - `lfs`, `legal`, `renovate`, `gh-aw`: miscellaneous tooling
 

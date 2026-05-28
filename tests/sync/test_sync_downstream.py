@@ -19,48 +19,11 @@ from pathlib import Path
 import pytest
 import yaml
 
+from tests.util import sync_bundles
+
 # Get absolute paths for executables to avoid S607 warnings
 GIT = shutil.which("git") or "/usr/bin/git"
 MAKE = shutil.which("make") or "/usr/bin/make"
-
-# ---------------------------------------------------------------------------
-# Sync helper (mirrors tests/bundles/test_bundle_sync.py — kept local)
-# ---------------------------------------------------------------------------
-
-
-def _copy_entry(src: Path, dest: Path) -> None:
-    """Copy src into dest, resolving any symlink to get the real content."""
-    real = src.resolve() if src.is_symlink() else src
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    if real.is_dir():
-        shutil.copytree(real, dest, dirs_exist_ok=True)
-    else:
-        shutil.copy2(real, dest)
-
-
-def sync_bundles(bundles_root: Path, bundle_names: list[str], dest: Path) -> None:
-    """Copy all files from the named bundles into dest."""
-    for name in bundle_names:
-        bundle_dir = bundles_root / name
-        if not bundle_dir.is_dir():
-            pytest.fail(f"Bundle directory does not exist: bundles/{name}")
-
-        for dirpath, dirs, files in os.walk(bundle_dir, followlinks=False):
-            current = Path(dirpath)
-            for d in dirs[:]:
-                child = current / d
-                if child.is_symlink():
-                    dirs.remove(d)
-                    _copy_entry(child, dest / child.relative_to(bundle_dir))
-            for f in files:
-                child = current / f
-                _copy_entry(child, dest / child.relative_to(bundle_dir))
-
-
-@pytest.fixture(scope="module")
-def bundles_root(root: Path) -> Path:
-    """Return the bundles/ directory."""
-    return root / "bundles"
 
 
 # ---------------------------------------------------------------------------
@@ -71,10 +34,10 @@ def bundles_root(root: Path) -> Path:
 class TestPlatformIsolation:
     """GitHub and GitLab bundle files must not co-mingle in a single project."""
 
-    def test_gitlab_project_profile_has_no_github_workflows(self, bundles_root: Path, tmp_path: Path) -> None:
+    def test_gitlab_project_profile_has_no_github_workflows(self, root: Path, tmp_path: Path) -> None:
         """GitLab-project profile sync must produce zero .github/workflows/*.yml files."""
         gitlab_bundles = ["core", "book", "marimo", "tests", "gitlab", "gitlab-book", "gitlab-marimo", "gitlab-tests"]
-        sync_bundles(bundles_root, gitlab_bundles, tmp_path)
+        sync_bundles(root, gitlab_bundles, tmp_path)
 
         workflows_dir = tmp_path / ".github" / "workflows"
         if workflows_dir.exists():
@@ -83,17 +46,17 @@ class TestPlatformIsolation:
                 f"GitLab-project profile produced GitHub workflow files: {[f.name for f in yml_files]}"
             )
 
-    def test_github_project_profile_has_no_gitlab_ci(self, bundles_root: Path, tmp_path: Path) -> None:
+    def test_github_project_profile_has_no_gitlab_ci(self, root: Path, tmp_path: Path) -> None:
         """GitHub-project profile sync must not produce a .gitlab-ci.yml file."""
         github_bundles = ["core", "book", "marimo", "tests", "github", "github-book", "github-marimo", "github-tests"]
-        sync_bundles(bundles_root, github_bundles, tmp_path)
+        sync_bundles(root, github_bundles, tmp_path)
 
         assert not (tmp_path / ".gitlab-ci.yml").is_file(), "GitHub-project profile should not produce .gitlab-ci.yml"
 
-    def test_local_profile_has_no_ci_workflows(self, bundles_root: Path, tmp_path: Path) -> None:
+    def test_local_profile_has_no_ci_workflows(self, root: Path, tmp_path: Path) -> None:
         """Local profile sync must produce no CI workflow files at all."""
         local_bundles = ["core", "book", "marimo", "tests"]
-        sync_bundles(bundles_root, local_bundles, tmp_path)
+        sync_bundles(root, local_bundles, tmp_path)
 
         github_wf = tmp_path / ".github" / "workflows"
         gitlab_wf = tmp_path / ".gitlab" / "workflows"
@@ -113,16 +76,16 @@ class TestPlatformIsolation:
 class TestSyncIdempotency:
     """Syncing the same bundles twice must produce identical results."""
 
-    def test_double_sync_is_idempotent(self, bundles_root: Path, tmp_path: Path) -> None:
+    def test_double_sync_is_idempotent(self, root: Path, tmp_path: Path) -> None:
         """Syncing core + tests twice must produce the same set of files."""
         dest1 = tmp_path / "first"
         dest2 = tmp_path / "second"
 
-        sync_bundles(bundles_root, ["core", "tests"], dest1)
-        sync_bundles(bundles_root, ["core", "tests"], dest2)
+        sync_bundles(root, ["core", "tests"], dest1)
+        sync_bundles(root, ["core", "tests"], dest2)
 
         # Sync again into dest1 (simulate re-sync)
-        sync_bundles(bundles_root, ["core", "tests"], dest1)
+        sync_bundles(root, ["core", "tests"], dest1)
 
         files1 = {p.relative_to(dest1) for p in dest1.rglob("*") if p.is_file()}
         files2 = {p.relative_to(dest2) for p in dest2.rglob("*") if p.is_file()}
@@ -150,29 +113,27 @@ class TestCoreInvariantsAcrossProfiles:
 
     @pytest.mark.parametrize(("profile", "bundles"), list(PROFILES.items()))
     def test_makefile_present_in_all_profiles(
-        self, profile: str, bundles: list[str], bundles_root: Path, tmp_path: Path
+        self, profile: str, bundles: list[str], root: Path, tmp_path: Path
     ) -> None:
         """Every profile sync must produce a root Makefile."""
         dest = tmp_path / profile
-        sync_bundles(bundles_root, bundles, dest)
+        sync_bundles(root, bundles, dest)
         assert (dest / "Makefile").is_file(), f"Profile '{profile}': Makefile not found"
 
     @pytest.mark.parametrize(("profile", "bundles"), list(PROFILES.items()))
     def test_rhiza_mk_present_in_all_profiles(
-        self, profile: str, bundles: list[str], bundles_root: Path, tmp_path: Path
+        self, profile: str, bundles: list[str], root: Path, tmp_path: Path
     ) -> None:
         """Every profile sync must produce the core .rhiza/rhiza.mk file."""
         dest = tmp_path / profile
-        sync_bundles(bundles_root, bundles, dest)
+        sync_bundles(root, bundles, dest)
         assert (dest / ".rhiza" / "rhiza.mk").is_file(), f"Profile '{profile}': .rhiza/rhiza.mk not found"
 
     @pytest.mark.parametrize(("profile", "bundles"), list(PROFILES.items()))
-    def test_no_symlinks_in_any_profile(
-        self, profile: str, bundles: list[str], bundles_root: Path, tmp_path: Path
-    ) -> None:
+    def test_no_symlinks_in_any_profile(self, profile: str, bundles: list[str], root: Path, tmp_path: Path) -> None:
         """Synced files must be real files — no symlinks should survive the copy."""
         dest = tmp_path / profile
-        sync_bundles(bundles_root, bundles, dest)
+        sync_bundles(root, bundles, dest)
         symlinks = [p for p in dest.rglob("*") if p.is_symlink()]
         assert not symlinks, f"Profile '{profile}': unexpected symlinks after sync: " + ", ".join(
             str(s.relative_to(dest)) for s in symlinks
@@ -188,10 +149,10 @@ class TestWorkflowStubsAfterSync:
     """Workflow stubs must contain correct content once copied to a downstream project."""
 
     @pytest.fixture(autouse=True)
-    def synced_github_project(self, bundles_root: Path, tmp_path: Path) -> None:
+    def synced_github_project(self, root: Path, tmp_path: Path) -> None:
         """Sync the full github-project closure into a fresh temp directory."""
         bundles = ["core", "book", "marimo", "tests", "github", "github-book", "github-marimo", "github-tests"]
-        sync_bundles(bundles_root, bundles, tmp_path)
+        sync_bundles(root, bundles, tmp_path)
         self.project = tmp_path
 
     def test_ci_stub_delegates_to_shared_workflow(self) -> None:

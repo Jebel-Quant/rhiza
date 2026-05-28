@@ -33,11 +33,9 @@ test = [
     "pytest>=8,<9",
     "pytest-cov>=5,<7",
     "hypothesis>=6,<7",
-    "mutmut>=2,<3",
     "pytest-timeout>=2,<3",
     "pytest-xdist>=3,<4",
     "pytest-html>=4,<5",
-    "pytest-mock>=3,<4",
     "python-dotenv>=1,<2",
     "pyyaml>=6.0.1,<7.0",
     "defusedxml>=0.7,<1",
@@ -48,7 +46,6 @@ docs = [
     "plotly>=6.5.0,<7.0",    # Interactive visualization in notebooks (v6.5+ mature features, <7.0 for API stability)
     "pandas>=3,<3.1",        # Data manipulation for notebook examples (v3+ for modern APIs, <3.1 conservative after major release)
     "mkdocs-material>=9,<10",
-    "pdoc>=14,<15",
 ]
 
 [project.urls]
@@ -57,17 +54,5 @@ Repository = "https://github.com/jebel-quant/rhiza"
 Issues = "https://github.com/jebel-quant/rhiza/issues"
 
 [tool.deptry.package_module_name_map]
-marimo = "marimo"
-numpy = "numpy"
-plotly = "plotly"
-pandas = "pandas"
 pyyaml = "yaml"
 
-[tool.ty.environment]
-python-version = "3.13"
-
-# Interrogate docstring coverage configuration
-[tool.interrogate]
-fail-under = 100
-ignore-init-method = true
-ignore-magic = true

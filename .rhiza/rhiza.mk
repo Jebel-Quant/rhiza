@@ -87,7 +87,7 @@ endef
 export RHIZA_LOGO
 
 # Declare phony targets for Rhiza Core
-.PHONY: print-logo sync sync-experimental materialize validate readme pre-sync post-sync pre-validate post-validate _apply-sync-schedule
+.PHONY: print-logo sync sync-experimental materialize validate readme pre-sync post-sync pre-validate post-validate _apply-sync-schedule test-pyproject
 
 # Hook targets (double-colon rules allow multiple definitions)
 # Note: pre-install/post-install are defined in bootstrap.mk
@@ -131,6 +131,15 @@ summarise-sync: install-uv ## summarise differences created by sync with templat
 		$(MAKE) install-uv; \
 		${UVX_BIN} "rhiza==$(RHIZA_VERSION)" summarise .; \
 	fi
+
+test-pyproject: install ## run pyproject.toml structure tests
+	@${UV_BIN} run pytest .rhiza/tests/structure/test_pyproject.py \
+		-v \
+		--tb=long \
+		--showlocals \
+		-rA \
+		--durations=0 \
+		--no-header
 
 rhiza-test: install ## run rhiza's own tests (if any)
 	@if [ -d ".rhiza/tests" ]; then \

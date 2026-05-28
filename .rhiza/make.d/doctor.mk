@@ -52,8 +52,7 @@ doctor: ## verify local prerequisites and print actionable guidance
 		fi; \
 	}; \
 	check_tool "uv" "0.4.0" "https://docs.astral.sh/uv/getting-started/installation/" "uv --version | awk 'NR==1 {print \$$2}'" ""; \
-	check_tool "python" "3.11.0" "https://www.python.org/downloads/" "python --version | awk 'NR==1 {print \$$2}'" ""; \
-	check_tool "make" "4.3.0" "https://www.gnu.org/software/make/" "make --version | awk 'NR==1 {for (i=1; i<=NF; i++) if (\$$i ~ /^[0-9]+(\\.[0-9]+)+$$/) {print \$$i; exit}}'" "gnu"; \
+	check_tool "make" "3.8.0" "https://www.gnu.org/software/make/" "make --version | awk 'NR==1 {for (i=1; i<=NF; i++) if (\$$i ~ /^[0-9]+(\\.[0-9]+)+$$/) {print \$$i; exit}}'" "gnu"; \
 	check_tool "git" "2.0.0" "https://git-scm.com" "git --version | awk 'NR==1 {print \$$3}'" ""; \
 	if [ "$$failed" -ne 0 ]; then \
 		printf "\n${YELLOW}[WARN] One or more prerequisites are missing or below minimum version.${RESET}\n"; \
