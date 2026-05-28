@@ -231,6 +231,16 @@ class TestWorkflowStubsAfterSync:
             "Book stub must delegate to jebel-quant/rhiza shared book workflow"
         )
 
+    def test_benchmark_stub_delegates_to_shared_workflow(self) -> None:
+        """rhiza_benchmark.yml stub must delegate to the shared reusable benchmark workflow."""
+        benchmark_yml = self.project / ".github" / "workflows" / "rhiza_benchmark.yml"
+        if not benchmark_yml.exists():
+            pytest.skip("rhiza_benchmark.yml not found after sync")
+        content = benchmark_yml.read_text(encoding="utf-8")
+        assert "uses: jebel-quant/rhiza/.github/workflows/rhiza_benchmark.yml" in content, (
+            "Benchmark stub must delegate to jebel-quant/rhiza shared benchmark workflow"
+        )
+
 
 @pytest.mark.skipif(
     sys.platform == "win32",

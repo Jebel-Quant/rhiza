@@ -447,6 +447,10 @@ class TestGithubProjectProfileSync:
         """rhiza_book.yml documentation workflow must be present."""
         assert (self.project / ".github" / "workflows" / "rhiza_book.yml").is_file()
 
+    def test_benchmark_workflow_present(self) -> None:
+        """rhiza_benchmark.yml benchmark workflow must be present."""
+        assert (self.project / ".github" / "workflows" / "rhiza_benchmark.yml").is_file()
+
     def test_marimo_workflow_present(self) -> None:
         """rhiza_marimo.yml notebook workflow must be present."""
         assert (self.project / ".github" / "workflows" / "rhiza_marimo.yml").is_file()
