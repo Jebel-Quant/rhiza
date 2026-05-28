@@ -17,10 +17,9 @@ import shutil
 import tomllib
 from pathlib import Path
 
-from packaging.requirements import Requirement
-
 import pytest
 import yaml
+from packaging.requirements import Requirement
 
 # ---------------------------------------------------------------------------
 # Sync helper (same as test_bundle_sync.py — kept local for independence)
