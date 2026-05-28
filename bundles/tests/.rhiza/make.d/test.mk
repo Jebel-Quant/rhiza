@@ -4,7 +4,7 @@
 # executing performance benchmarks.
 
 # Declare phony targets (they don't produce files)
-.PHONY: test benchmark typecheck security docs-coverage hypothesis-test coverage-badge stress
+.PHONY: test benchmark typecheck security docs-coverage hypothesis-test coverage-badge stress test-pyproject
 
 # Default directory for tests
 TESTS_FOLDER := tests
@@ -144,3 +144,12 @@ stress:: install ## run stress/load tests
 	  -m stress \
 	  --tb=short \
 	  --html=_tests/stress/report.html
+
+test-pyproject: install ## run pyproject.toml structure tests
+	@${UV_BIN} run pytest .rhiza/tests/structure/test_pyproject.py \
+		-v \
+		--tb=long \
+		--showlocals \
+		-rA \
+		--durations=0 \
+		--no-header
