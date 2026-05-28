@@ -1,3 +1,28 @@
+## [0.18.3] - 2026-05-28
+
+### 🐛 Bug Fixes
+
+- Resolve Windows CI failures and reduce LFS skip noise
+- Comment out optional_dirs check in test_root_contains_expected_directories
+- Sync bundle copy of test_project_layout.py with root .rhiza/
+
+### 💼 Other
+
+- Bump version 0.18.2 → 0.18.3
+
+### 🚜 Refactor
+
+- Move rhiza-only tests from .rhiza/tests/ to tests/
+- Delete test_lfs_structure.py, fold existence checks into integration
+- Delete test_completions.py and test_config_files.py from structure/
+
+### 🧪 Testing
+
+- Add lint dependency group check to test-pyproject
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.2 [skip ci]
 ## [0.18.2] - 2026-05-28
 
 ### 🚀 Features
