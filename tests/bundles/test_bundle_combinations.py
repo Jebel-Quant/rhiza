@@ -14,6 +14,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -120,9 +121,41 @@ def _contains_make_command(commands: str, target: str) -> bool:
     return any(candidate in commands for candidate in (f"make {target}", f"make -f .rhiza/rhiza.mk {target}"))
 
 
+def _group_has_dependency(group: list[str], package_name: str) -> bool:
+    """Return True if a dependency group contains a given package name."""
+    return any(dep.lower().startswith(package_name.lower()) for dep in group)
+
+
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
+
+def test_pyproject_declares_uv_dependency_groups(root: Path) -> None:
+    """pyproject.toml should expose lint/test/docs uv groups for focused installs."""
+    with (root / "pyproject.toml").open("rb") as fh:
+        pyproject = tomllib.load(fh)
+
+    groups = pyproject.get("dependency-groups", {})
+    assert {"lint", "test", "docs"} <= set(groups)
+
+    assert _group_has_dependency(groups["lint"], "ruff")
+    assert _group_has_dependency(groups["lint"], "interrogate")
+    assert _group_has_dependency(groups["lint"], "pre-commit")
+
+    assert _group_has_dependency(groups["test"], "pytest")
+    assert _group_has_dependency(groups["test"], "pytest-cov")
+    assert _group_has_dependency(groups["test"], "hypothesis")
+    assert _group_has_dependency(groups["test"], "mutmut")
+    assert _group_has_dependency(groups["test"], "pytest-timeout")
+    assert _group_has_dependency(groups["test"], "pytest-xdist")
+
+    assert _group_has_dependency(groups["docs"], "marimo")
+    assert _group_has_dependency(groups["docs"], "numpy")
+    assert _group_has_dependency(groups["docs"], "pandas")
+    assert _group_has_dependency(groups["docs"], "plotly")
+    assert _group_has_dependency(groups["docs"], "mkdocs-material")
+    assert _group_has_dependency(groups["docs"], "pdoc")
 
 
 class TestGitlabProjectProfileSync:
