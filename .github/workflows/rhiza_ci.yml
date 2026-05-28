@@ -27,6 +27,8 @@ on:
 
 jobs:
   generate-matrix:
+    # CI budget: ≤5 min (matrix generation/setup). Last measured: 2026-05-28.
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.versions.outputs.list }}
@@ -68,6 +70,8 @@ jobs:
           echo "OS versions: ${{ steps.os.outputs.list }}"
 
   test:
+    # CI budget: ≤20 min (test matrix execution). Last measured: 2026-05-28.
+    timeout-minutes: 20
     needs: generate-matrix
     runs-on: ${{ matrix.os }}
     strategy:
@@ -102,6 +106,14 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
+      - name: Cache uv artifacts
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
       - name: Run tests
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
@@ -119,6 +131,8 @@ jobs:
 
   lowest-deps:
     name: Lowest-direct dependency compatibility
+    # CI budget: ≤20 min (dependency compatibility test run). Last measured: 2026-05-28.
+    timeout-minutes: 20
     runs-on: ubuntu-latest
 
     steps:
@@ -150,6 +164,8 @@ jobs:
 
   typecheck:
     name: Type checking (Python ${{ matrix.python-version }})
+    # CI budget: ≤5 min (lint/typecheck quality gate). Last measured: 2026-05-28.
+    timeout-minutes: 5
     needs: generate-matrix
     runs-on: ubuntu-latest
     strategy:
@@ -180,6 +196,8 @@ jobs:
 
   deptry:
     name: Check dependencies with deptry
+    # CI budget: ≤5 min (lint/dependency hygiene check). Last measured: 2026-05-28.
+    timeout-minutes: 5
     runs-on: ubuntu-latest
 
     steps:
@@ -200,6 +218,8 @@ jobs:
 
   pre-commit:
     name: Pre-commit hooks
+    # CI budget: ≤5 min (lint/format hooks). Last measured: 2026-05-28.
+    timeout-minutes: 5
     runs-on: ubuntu-latest
 
     steps:
@@ -214,15 +234,17 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
           restore-keys: |
-            pre-commit-${{ runner.os }}-
+            ${{ runner.os }}-pre-commit-
 
       - name: Run pre-commit
         run: |
           make fmt
 
   docs-coverage:
+    # CI budget: ≤10 min (docs quality check). Last measured: 2026-05-28.
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -245,6 +267,8 @@ jobs:
           make docs-coverage
 
   validation:
+    # CI budget: ≤5 min (validation quality gate). Last measured: 2026-05-28.
+    timeout-minutes: 5
     runs-on: ubuntu-latest
 
     steps:
@@ -270,6 +294,8 @@ jobs:
 
   security:
     name: Security scanning
+    # CI budget: ≤10 min (security scanning and suppression audit). Last measured: 2026-05-28.
+    timeout-minutes: 10
     runs-on: ubuntu-latest
 
     steps:
@@ -298,6 +324,8 @@ jobs:
 
   license:
     name: License compliance scan
+    # CI budget: ≤10 min (license and artifact generation). Last measured: 2026-05-28.
+    timeout-minutes: 10
     runs-on: ubuntu-latest
 
     steps:

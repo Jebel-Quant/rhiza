@@ -256,6 +256,23 @@ class TestGitlabProjectProfileSync:
         assert _contains_make_command(github_commands, target)
         assert _contains_make_command(gitlab_commands, target)
 
+    def test_gitlab_ci_jobs_define_timeout_budgets(self) -> None:
+        """GitLab CI core jobs must define explicit timeout budgets."""
+        gitlab_jobs = _gitlab_jobs_from_includes(self.project)
+        expected = {
+            "ci:test": "20m",
+            "ci:docs-coverage": "10m",
+            "ci:typecheck": "5m",
+            "ci:deptry": "5m",
+            "ci:pre-commit": "5m",
+            "ci:validate": "5m",
+            "ci:security": "10m",
+            "ci:license": "10m",
+        }
+
+        for job_name, timeout in expected.items():
+            assert gitlab_jobs[job_name]["timeout"] == timeout
+
 
 class TestDockerBundleSync:
     """Syncing core + docker bundle produces containerisation scaffolding."""
@@ -479,6 +496,10 @@ class TestGithubProjectProfileSync:
     def test_book_workflow_present(self) -> None:
         """rhiza_book.yml documentation workflow must be present."""
         assert (self.project / ".github" / "workflows" / "rhiza_book.yml").is_file()
+
+    def test_benchmark_workflow_present(self) -> None:
+        """rhiza_benchmark.yml benchmark workflow must be present."""
+        assert (self.project / ".github" / "workflows" / "rhiza_benchmark.yml").is_file()
 
     def test_marimo_workflow_present(self) -> None:
         """rhiza_marimo.yml notebook workflow must be present."""

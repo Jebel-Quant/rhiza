@@ -40,3 +40,45 @@ def test_ci_security_job_runs_stale_suppression_gate(root):
 
     assert any("make security" in run for run in run_steps)
     assert any("--fail-stale-nosec-cve" in run for run in run_steps)
+
+
+def test_ci_jobs_define_timeout_budgets(root):
+    """CI jobs must define explicit timeout budgets."""
+    with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
+        workflow = yaml.safe_load(fh)
+
+    jobs = workflow["jobs"]
+    expected = {
+        "generate-matrix": 5,
+        "test": 20,
+        "lowest-deps": 20,
+        "typecheck": 5,
+        "deptry": 5,
+        "pre-commit": 5,
+        "docs-coverage": 10,
+        "validation": 5,
+        "security": 10,
+        "license": 10,
+    }
+
+    for job_name, timeout in expected.items():
+        assert jobs[job_name]["timeout-minutes"] == timeout
+
+
+def test_ci_cache_keys_match_audit_policy(root):
+    """CI cache keys must follow the documented shared key format."""
+    with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
+        workflow = yaml.safe_load(fh)
+
+    test_steps = workflow["jobs"]["test"]["steps"]
+    uv_cache_step = next(step for step in test_steps if step.get("name") == "Cache uv artifacts")
+    assert uv_cache_step["with"]["key"] == "${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}"
+
+    pre_commit_steps = workflow["jobs"]["pre-commit"]["steps"]
+    pre_commit_cache_step = next(
+        step for step in pre_commit_steps if step.get("name") == "Cache pre-commit environments"
+    )
+    assert (
+        pre_commit_cache_step["with"]["key"]
+        == "${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}"
+    )

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -91,6 +92,26 @@ class TestCoreBundleSync:
     def test_ruff_config_exists(self):
         """Ruff linting configuration is present."""
         assert (self.project / "ruff.toml").is_file()
+
+    def test_pyproject_template_exists(self):
+        """Core bundle ships a pyproject.toml template."""
+        assert (self.project / "pyproject.toml").is_file()
+
+    def test_pyproject_template_has_required_structure(self):
+        """Core pyproject template has the minimum Rhiza-required sections."""
+        with (self.project / "pyproject.toml").open("rb") as f:
+            pyproject = tomllib.load(f)
+
+        project = pyproject.get("project", {})
+        assert isinstance(project, dict), "[project] section missing from pyproject.toml template"
+
+        for field in ("name", "version", "description", "readme", "requires-python"):
+            value = project.get(field)
+            assert isinstance(value, str), f"[project].{field} missing in pyproject.toml template"
+            assert value.strip(), f"[project].{field} cannot be empty in pyproject.toml template"
+
+        groups = pyproject.get("dependency-groups", {})
+        assert isinstance(groups, dict), "[dependency-groups] section missing from pyproject.toml template"
 
     def test_no_symlinks_in_synced_project(self):
         """Synced files are real files, not symlinks — as a downstream project would receive."""

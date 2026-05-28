@@ -231,6 +231,16 @@ class TestWorkflowStubsAfterSync:
             "Book stub must delegate to jebel-quant/rhiza shared book workflow"
         )
 
+    def test_benchmark_stub_delegates_to_shared_workflow(self) -> None:
+        """rhiza_benchmark.yml stub must delegate to the shared reusable benchmark workflow."""
+        benchmark_yml = self.project / ".github" / "workflows" / "rhiza_benchmark.yml"
+        if not benchmark_yml.exists():
+            pytest.skip("rhiza_benchmark.yml not found after sync")
+        content = benchmark_yml.read_text(encoding="utf-8")
+        assert "uses: jebel-quant/rhiza/.github/workflows/rhiza_benchmark.yml" in content, (
+            "Benchmark stub must delegate to jebel-quant/rhiza shared benchmark workflow"
+        )
+
 
 @pytest.mark.skipif(
     sys.platform == "win32",
@@ -278,12 +288,7 @@ class TestDownstreamRepoEndToEndSync:
         """Sync should produce a functional core+tests downstream tree."""
         self._init_minimal_downstream_repo(root, tmp_path)
 
-        proc = subprocess.run(  # nosec B603
-            [MAKE, "sync"],
-            cwd=tmp_path,
-            capture_output=True,
-            text=True,
-        )
+        proc = self._run_sync(tmp_path)
 
         assert proc.returncode == 0, f"make sync failed\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}"
         assert (tmp_path / "pytest.ini").is_file()
@@ -294,3 +299,75 @@ class TestDownstreamRepoEndToEndSync:
         makefile = (tmp_path / "Makefile").read_text(encoding="utf-8")
         assert "testpaths" in pytest_ini
         assert "include .rhiza/rhiza.mk" in makefile
+
+    @staticmethod
+    def _run_sync(downstream: Path) -> subprocess.CompletedProcess[str]:
+        """Run make sync in a downstream repository."""
+        return subprocess.run(  # nosec B603
+            [MAKE, "sync"],
+            cwd=downstream,
+            capture_output=True,
+            text=True,
+        )
+
+    @staticmethod
+    def _project_snapshot(downstream: Path) -> dict[Path, bytes]:
+        """Snapshot non-git project files for rollback checks."""
+        snapshot: dict[Path, bytes] = {}
+        for path in downstream.rglob("*"):
+            if path.is_file() and ".git" not in path.relative_to(downstream).parts:
+                snapshot[path.relative_to(downstream)] = path.read_bytes()
+        return snapshot
+
+    def test_sync_fails_on_invalid_template_yaml(self, root: Path, tmp_path: Path) -> None:
+        """Invalid YAML in template config should fail sync and identify template.yml."""
+        self._init_minimal_downstream_repo(root, tmp_path)
+        (tmp_path / ".rhiza" / "template.yml").write_text(
+            "repository: jebel-quant/rhiza\nref: main\ntemplates:\n  - core\n  - tests\n  :\n",
+            encoding="utf-8",
+        )
+        subprocess.run([GIT, "add", ".rhiza/template.yml"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
+        subprocess.run(
+            [GIT, "commit", "-m", "add invalid template yaml"], cwd=tmp_path, check=True, capture_output=True
+        )  # nosec B603
+
+        proc = self._run_sync(tmp_path)
+        output = f"{proc.stdout}\n{proc.stderr}"
+
+        assert proc.returncode != 0
+        assert "template.yml" in output
+
+    def test_sync_fails_when_declared_bundle_is_missing(self, root: Path, tmp_path: Path) -> None:
+        """Missing bundle in template declaration should be reported by name."""
+        self._init_minimal_downstream_repo(root, tmp_path)
+        missing_bundle = "nonexistent-bundle-for-test"
+        (tmp_path / ".rhiza" / "template.yml").write_text(
+            f"repository: jebel-quant/rhiza\nref: main\ntemplates:\n  - core\n  - tests\n  - {missing_bundle}\n",
+            encoding="utf-8",
+        )
+        subprocess.run([GIT, "add", ".rhiza/template.yml"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
+        subprocess.run([GIT, "commit", "-m", "add nonexistent bundle"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
+
+        proc = self._run_sync(tmp_path)
+        output = f"{proc.stdout}\n{proc.stderr}"
+
+        assert proc.returncode != 0
+        assert missing_bundle in output
+
+    def test_sync_rolls_back_when_target_directory_is_read_only(self, root: Path, tmp_path: Path) -> None:
+        """Read-only target must fail without partially writing project files."""
+        self._init_minimal_downstream_repo(root, tmp_path)
+        before = self._project_snapshot(tmp_path)
+
+        original_mode = tmp_path.stat().st_mode
+        tmp_path.chmod(0o555)
+        try:
+            proc = self._run_sync(tmp_path)
+        finally:
+            tmp_path.chmod(original_mode)
+
+        after = self._project_snapshot(tmp_path)
+
+        assert proc.returncode != 0
+        assert before == after
+        assert not (tmp_path / "pytest.ini").exists()

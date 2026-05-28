@@ -261,3 +261,30 @@ class TestWeeklyWorkflow:
             "cron" in str(item) for item in (schedule_val if isinstance(schedule_val, list) else [schedule_val])
         )
         assert cron_found, "weekly workflow schedule should define a cron expression"
+
+
+class TestBenchmarkWorkflow:
+    """Tests specific to the benchmark workflow (rhiza_benchmark.yml)."""
+
+    @pytest.fixture
+    def benchmark_workflow(self, workflows_dir: Path) -> dict:
+        """Load and return the benchmark workflow YAML."""
+        benchmark_path = workflows_dir / "rhiza_benchmark.yml"
+        if not benchmark_path.exists():
+            pytest.skip("rhiza_benchmark.yml not found")
+        return _load_workflow(benchmark_path)
+
+    def test_benchmark_workflow_pushes_to_main_only(self, benchmark_workflow: dict) -> None:
+        """Benchmark workflow should run only on push to main."""
+        triggers = _get_workflow_triggers(benchmark_workflow)
+        push_config = triggers.get("push", {}) if isinstance(triggers, dict) else {}
+        branches = push_config.get("branches", []) if isinstance(push_config, dict) else []
+        assert branches == ["main"], "benchmark workflow push trigger should be scoped to main only"
+        assert "pull_request" not in str(triggers), "benchmark workflow must not run on pull requests"
+
+    def test_benchmark_workflow_supports_workflow_call(self, benchmark_workflow: dict) -> None:
+        """Benchmark workflow should support workflow_call for reuse from stubs."""
+        triggers = _get_workflow_triggers(benchmark_workflow)
+        assert "workflow_call" in triggers or "workflow_call" in str(triggers), (
+            "benchmark workflow must support workflow_call (reusable workflow pattern)"
+        )
