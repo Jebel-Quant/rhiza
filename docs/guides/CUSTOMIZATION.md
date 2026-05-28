@@ -173,12 +173,7 @@ LOGO_FILE := assets/my-custom-logo.png
 
 ### Custom Templates
 
-You can customize the look and feel of the API documentation by providing your own Jinja2 templates.
-Place your custom templates in the `book/pdoc-templates` directory.
-
-For example, to override the main module template, create `book/pdoc-templates/module.html.jinja2`.
-
-See the [pdoc documentation on templates](https://pdoc.dev/docs/pdoc.html#edit-pdocs-html-template) for full details on how to override specific parts of the documentation.
+You can customise the look and feel of the documentation site by overriding MkDocs Material theme settings in `mkdocs.yml` (or `mkdocs-base.yml` if you use the split config approach). See the [MkDocs Material documentation](https://squidfunk.github.io/mkdocs-material/customization/) for available options.
 
 For more details on customizing the documentation, see [docs/BOOK.md](BOOK.md).
 

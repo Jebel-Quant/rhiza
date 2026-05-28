@@ -48,7 +48,6 @@ docs = [
     "plotly>=6.5.0,<7.0",    # Interactive visualization in notebooks (v6.5+ mature features, <7.0 for API stability)
     "pandas>=3,<3.1",        # Data manipulation for notebook examples (v3+ for modern APIs, <3.1 conservative after major release)
     "mkdocs-material>=9,<10",
-    "pdoc>=14,<15",
 ]
 
 [project.urls]

@@ -1064,20 +1064,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pdoc"
-version = "14.7.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "jinja2" },
-    { name = "markupsafe" },
-    { name = "pygments" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/28/50/e801b13b07efecaf8c2349c64edfffdd7bc1d9ebb9837f840c0e8af11cf8/pdoc-14.7.0.tar.gz", hash = "sha256:2d28af9c0acc39180744ad0543e4bbc3223ecba0d1302db315ec521c51f71f93", size = 154626, upload-time = "2024-09-11T23:35:36.132Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/27/bb/6dfa7e6f4eeed22d3311af76256615da637f821d584cf7b7aab5f4cbffc5/pdoc-14.7.0-py3-none-any.whl", hash = "sha256:72377a907efc6b2c5b3c56b717ef34f11d93621dced3b663f3aede0b844c0ad2", size = 144805, upload-time = "2024-09-11T23:35:34.385Z" },
-]
-
-[[package]]
 name = "platformdirs"
 version = "4.10.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1479,7 +1465,6 @@ docs = [
     { name = "mkdocs-material" },
     { name = "numpy" },
     { name = "pandas" },
-    { name = "pdoc" },
     { name = "plotly" },
 ]
 lint = [
@@ -1509,7 +1494,6 @@ docs = [
     { name = "mkdocs-material", specifier = ">=9,<10" },
     { name = "numpy", specifier = ">=2.4.0,<3.0" },
     { name = "pandas", specifier = ">=3,<3.1" },
-    { name = "pdoc", specifier = ">=14,<15" },
     { name = "plotly", specifier = ">=6.5.0,<7.0" },
 ]
 lint = [

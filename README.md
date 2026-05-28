@@ -143,7 +143,7 @@ Adopt a Rhiza bundle and your project immediately gains:
 - **CI/CD workflows** for GitHub Actions and/or GitLab CI — test, lint, release, sync
 - **Pre-commit hooks** — ruff, bandit, markdownlint, interrogate, actionlint, and more
 - **pytest** with coverage, benchmarks, and property-based testing via Hypothesis
-- **Documentation** via pdoc + MkDocs, with optional Marimo notebook exports
+- **Documentation** via MkDocs + zensical, with optional Marimo notebook exports
 - **Release automation** — version bumping, OIDC PyPI publishing, SLSA provenance
 - **Security scanning** — CodeQL, pip-audit, bandit, secret scanning, Dependabot
 - **Shell completions** for bash and zsh (tab-complete all `make` targets)
@@ -175,7 +175,7 @@ For more information about the ADR format and how to create new records, see the
 
 - 🚀 **CI/CD Templates** - Ready-to-use GitHub Actions and GitLab CI workflows
 - 🧪 **Testing Framework** - Comprehensive test setup with pytest
-- 📚 **Documentation** - Automated documentation generation with pdoc and companion books
+- 📚 **Documentation** - Automated documentation site via MkDocs + zensical, with optional Marimo notebook exports
 - 🔍 **Code Quality** - Linting with ruff, formatting, and dependency checking with deptry
 - 📝 **Editor Configuration** - Cross-platform .editorconfig for consistent coding style
 - 📊 **Marimo Integration** - Interactive notebook support for documentation and exploration
@@ -422,7 +422,7 @@ Development and Testing
   benchmark             run performance benchmarks
 
 Documentation
-  docs                  create documentation with pdoc
+  book                  compile the companion book
   book                  compile the companion book
 
 Marimo Notebooks

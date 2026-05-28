@@ -66,10 +66,8 @@ These are the commands you'll use most frequently:
 
 | Command | Description |
 |---------|-------------|
-| `make docs` | Generate API documentation with pdoc |
-| `make book` | Build companion book |
-| `make mkdocs-serve` | Serve MkDocs site with live reload |
-| `make mkdocs-build` | Build MkDocs documentation site |
+| `make book` | Build documentation site via zensical |
+| `make serve` | Build and serve the book locally on port 8000 |
 
 ### Template Management
 
@@ -730,7 +728,7 @@ make print-PYTHON_VERSION
 | `make install` | `uv sync --all-extras` |
 | `make test` | `uv run pytest --cov` |
 | `make fmt` | `uv run ruff format . && uv run ruff check --fix .` |
-| `make docs` | `uv run pdoc --html --output-dir docs/api src/` |
+| `make book` | `uvx 'zensical>=0.0.36' build -f mkdocs.yml` |
 
 **Always prefer make commands** when available, as they include additional logic and hooks.
 
