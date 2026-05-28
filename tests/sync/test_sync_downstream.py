@@ -316,6 +316,10 @@ class TestDownstreamRepoEndToEndSync:
             "repository: jebel-quant/rhiza\nref: main\ntemplates:\n  - core\n  - tests\n  :\n",
             encoding="utf-8",
         )
+        subprocess.run([GIT, "add", ".rhiza/template.yml"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
+        subprocess.run(
+            [GIT, "commit", "-m", "add invalid template yaml"], cwd=tmp_path, check=True, capture_output=True
+        )  # nosec B603
 
         proc = self._run_sync(tmp_path)
         output = f"{proc.stdout}\n{proc.stderr}"
@@ -328,10 +332,11 @@ class TestDownstreamRepoEndToEndSync:
         self._init_minimal_downstream_repo(root, tmp_path)
         missing_bundle = "nonexistent-bundle-for-test"
         (tmp_path / ".rhiza" / "template.yml").write_text(
-            "repository: jebel-quant/rhiza\nref: main\ntemplates:\n  - core\n  - tests\n"
-            f"  - {missing_bundle}\n",
+            f"repository: jebel-quant/rhiza\nref: main\ntemplates:\n  - core\n  - tests\n  - {missing_bundle}\n",
             encoding="utf-8",
         )
+        subprocess.run([GIT, "add", ".rhiza/template.yml"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
+        subprocess.run([GIT, "commit", "-m", "add nonexistent bundle"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
 
         proc = self._run_sync(tmp_path)
         output = f"{proc.stdout}\n{proc.stderr}"
