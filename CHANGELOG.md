@@ -1,3 +1,17 @@
+## [0.18.4] - 2026-05-28
+
+### 💼 Other
+
+- Bump version 0.18.3 → 0.18.4
+
+### 🚜 Refactor
+
+- Move test_lfs.py to lfs bundle, test_gh_aw/github targets to gh-aw bundle
+- Move test-pyproject target and test file to tests bundle
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.3 [skip ci]
 ## [0.18.3] - 2026-05-28
 
 ### 🐛 Bug Fixes
