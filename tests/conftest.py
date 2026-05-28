@@ -1,4 +1,4 @@
-"""Pytest configuration for bundle integration tests.
+"""Pytest configuration for rhiza tests.
 
 Security Notes:
 - S101 (assert usage): Asserts are appropriate in test code for validating conditions
@@ -16,4 +16,4 @@ import pytest
 @pytest.fixture(scope="session")
 def root() -> pathlib.Path:
     """Return the repository root directory."""
-    return pathlib.Path(__file__).parent.parent.parent
+    return pathlib.Path(__file__).parent.parent
