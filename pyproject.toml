@@ -36,7 +36,6 @@ test = [
     "pytest-timeout>=2,<3",
     "pytest-xdist>=3,<4",
     "pytest-html>=4,<5",
-    "pytest-mock>=3,<4",
     "python-dotenv>=1,<2",
     "pyyaml>=6.0.1,<7.0",
     "defusedxml>=0.7,<1",
