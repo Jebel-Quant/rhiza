@@ -25,10 +25,10 @@ The source Rhiza repository (`jebel-quant/rhiza`) that contains the canonical te
 ## Bundle Model
 
 ### Bundle
-The atomic unit of Rhiza adoption. A bundle owns a coherent set of synced files and may declare hard dependencies via `requires` and optional relationships via `recommends`.
+The atomic unit of Rhiza adoption. A bundle owns a coherent set of synced files and may declare hard dependencies via `requires` and optional relationships via `recommends`. Any bundle can be selected on its own — its declared dependencies are resolved and installed automatically, including transitive ones. For example, selecting `github-tests` automatically installs `tests`, `github`, and `core`. See also: [Profile](#profile).
 
 ### Profile
-A named preset in `.rhiza/template-bundles.yml` that expands to a curated set of bundles for a common use case such as `local`, `github-project`, or `gitlab-project`.
+A named preset in `.rhiza/template-bundles.yml` that expands to a curated set of bundles for a common use case such as `local`, `github-project`, or `gitlab-project`. Declaring a profile is equivalent to selecting all its constituent bundles. Profiles are the recommended starting point; bundles give full manual control. See also: [Bundle](#bundle).
 
 ### Overlay Bundle
 A platform-specific bundle such as `github-tests` or `gitlab-book` that layers hosted CI/CD files on top of a feature bundle. Overlay bundles depend on both the feature they extend and the platform base bundle.
@@ -149,6 +149,9 @@ Extension points in the Makefile system. Available hooks:
 ### Make Target
 A named command in the Makefile (e.g., `make test`, `make fmt`). Rhiza provides 40+ targets out of the box.
 
+### `make doctor`
+A diagnostic target that validates required tools, checks versions, and reports environment issues. Run this first when something is wrong with your setup.
+
 ## Version Management
 
 ### Version Bump
@@ -210,8 +213,9 @@ A reactive Python notebook format. Rhiza includes support for marimo notebooks i
 
 ### `pyproject.toml`
 The central Python project configuration file (PEP 518/621). Contains project metadata, dependencies, and tool configurations.
-Rhiza's core template ships a starter `pyproject.toml` and validates a minimum structure:
-`[project]` with `name`, `version`, `description`, `readme`, `requires-python`, plus `[dependency-groups]`.
+Rhiza's core bundle ships a starter `pyproject.toml` and validates a minimum structure downstream:
+- `[project]` table with `name`, `version`, `description`, `readme`, and `requires-python` (all non-empty strings)
+- `[dependency-groups]` table with at least `lint`, `test`, and `docs` groups
 
 ### `uv.lock`
 Lock file containing exact versions of all dependencies. Ensures reproducible builds across environments.
@@ -260,5 +264,7 @@ Workflow running security scans (pip-audit, bandit) on the codebase.
 | `make release` | Create and push release tag |
 | `make publish` | Bump version, create tag and push in one step |
 | `make release-status` | Show release workflow status and latest release |
+| `make doctor` | Validate tools and environment — start here when something is wrong |
+| `make validate` | Validate project structure against `.rhiza/template.yml` |
 | `make deptry` | Check for unused/missing dependencies |
 | `make help` | Show all available targets |

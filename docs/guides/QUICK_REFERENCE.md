@@ -9,6 +9,7 @@ A concise reference for common Rhiza operations.
 | `make install` | Install dependencies and set up environment |
 | `make test` | Run pytest with coverage |
 | `make fmt` | Format and lint code with ruff |
+| `make doctor` | Validate required tools and versions (start here when something is wrong) |
 | `make help` | Show all available targets |
 
 ## Version & Release
@@ -36,6 +37,30 @@ A concise reference for common Rhiza operations.
 | Command | Description |
 |---------|-------------|
 | `make sync` | Sync templates from upstream Rhiza |
+| `make validate` | Validate project structure against `.rhiza/template.yml` |
+
+### `.rhiza/template.yml` — profile-based (recommended)
+
+```yaml
+repository: Jebel-Quant/rhiza
+ref: v0.14.0
+
+profiles:
+  - github-project   # or: local, gitlab-project
+```
+
+### `.rhiza/template.yml` — bundle-based (advanced)
+
+```yaml
+repository: Jebel-Quant/rhiza
+ref: v0.14.0
+
+templates:
+  - core
+  - tests
+  - github
+  - github-tests
+```
 
 ## GitHub Agentic Workflows (gh-aw)
 
@@ -100,11 +125,12 @@ Extend these with `::` syntax in `local.mk` or `.rhiza/make.d/`:
 
 | File | Purpose |
 |------|---------|
-| `pyproject.toml` | Project metadata, dependencies, version |
+| `pyproject.toml` | Project metadata, dependencies, version — must have `[project]` (name, version, description, readme, requires-python) and `[dependency-groups]` |
 | `uv.lock` | Locked dependency versions |
-| `.python-version` | Default Python version |
+| `.python-version` | Default Python version — single line, e.g. `3.13` |
+| `.rhiza/template.yml` | Sync configuration (repository, ref, profiles/bundles) |
 | `ruff.toml` | Linter/formatter configuration |
-| `local.mk` | Local Makefile customizations (not synced) |
+| `local.mk` | Local Makefile customizations (not synced, auto-loaded) |
 
 ## Python Execution
 
@@ -135,18 +161,27 @@ uv build                   # Build distribution packages
 
 ### Add a custom make target
 
-Create `.rhiza/make.d/50-custom.mk`:
+Add to your root `Makefile` (above the `include .rhiza/rhiza.mk` line):
 ```makefile
-my-target:
+##@ Custom Tasks
+my-target: ## My custom task
 	@echo "Custom target"
 ```
 
-### Extend a hook
+### Extend a hook (root Makefile)
 
-Add to `local.mk`:
+Add above the `include` line in your root `Makefile`:
 ```makefile
 post-install::
 	@echo "Additional setup after install"
+```
+
+### Extend a hook (local only)
+
+Add to `local.mk` (not committed, not synced):
+```makefile
+post-install::
+	@echo "Local developer setup"
 ```
 
 ### Skip CI on commit
