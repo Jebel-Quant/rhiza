@@ -39,6 +39,12 @@ def lfs_install_dry_run(git_repo, lfs_makefile):
     )
 
 
+def test_lfs_files_exist():
+    """lfs.mk and LFS.md must be present in the bundle."""
+    assert _LFS_MK.exists()
+    assert (_LFS_MK.parent.parent / "docs" / "LFS.md").exists()
+
+
 def test_lfs_targets_exist(git_repo, logger, lfs_makefile):
     """Test that all LFS targets are defined in the Makefile."""
     result = subprocess.run(
