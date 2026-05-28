@@ -218,46 +218,46 @@ templates:
 
 Bundles are the atomic building blocks. Feature bundles are **local-first** — they do not include hosted workflow files. Platform overlay bundles (prefixed `github-` or `gitlab-`) add the CI/CD workflows for a given feature.
 
+Any bundle can be selected on its own — its dependencies are resolved and installed automatically. The *Auto-installs* column shows which bundles are pulled in transitively when you select that bundle.
+
 **Feature bundles**
 
-| Bundle | Description | Requires | Standalone |
-|--------|-------------|----------|------------|
-| `core` | Core Rhiza infrastructure (Makefile, linting, docs) | — | ✅ |
-| `tests` | Local testing infrastructure with pytest, coverage, and type checking | `book`, `core` | ✅ |
-| `book` | Comprehensive documentation book (API docs, coverage, notebooks) | `core` | ✅ |
-| `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book`, `core` | ❌ |
-| `benchmarks` | Performance benchmarking with pytest-benchmark and reporting | `tests` | ❌ |
-| `docker` | Docker containerization support | — | ✅ |
-| `devcontainer` | VS Code DevContainer configuration | — | ✅ |
-| `presentation` | Presentation building using Marp | — | ✅ |
-| `paper` | LaTeX paper compilation targets (`make paper`, `make paper-clean`) | — | ✅ |
-| `lfs` | Git LFS (Large File Storage) support | — | ✅ |
-| `legal` | Legal and community files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT) | — | ✅ |
-| `renovate` | Renovate bot configuration for automated dependency updates | — | ✅ |
+| Bundle | Description | Auto-installs |
+|--------|-------------|---------------|
+| `core` | Core Rhiza infrastructure (Makefile, linting, docs) | — |
+| `tests` | Local testing infrastructure with pytest, coverage, and type checking | `book`, `core` |
+| `book` | Comprehensive documentation book (API docs, coverage, notebooks) | `core` |
+| `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book`, `core` |
+| `benchmarks` | Performance benchmarking with pytest-benchmark and reporting | `tests` |
+| `docker` | Docker containerization support | — |
+| `devcontainer` | VS Code DevContainer configuration | — |
+| `presentation` | Presentation building using Marp | — |
+| `paper` | LaTeX paper compilation targets (`make paper`, `make paper-clean`) | — |
+| `lfs` | Git LFS (Large File Storage) support | — |
+| `legal` | Legal and community files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT) | — |
+| `renovate` | Renovate bot configuration for automated dependency updates | — |
 
 **Platform bundles — GitHub**
 
-| Bundle | Description | Requires | Standalone |
-|--------|-------------|----------|------------|
-| `github` | Base GitHub repository automation (sync, release, dependabot) | `core` | ❌ |
-| `github-tests` | GitHub Actions workflows for test automation (CI, CodeQL, weekly) | `github`, `tests` | ❌ |
-| `github-book` | GitHub Actions workflow for documentation publishing | `github`, `book` | ❌ |
-| `github-marimo` | GitHub Actions workflow for Marimo notebook automation | `github`, `marimo` | ❌ |
-| `github-docker` | GitHub Actions workflow for Docker image building and publishing | `github`, `docker` | ❌ |
-| `github-devcontainer` | GitHub Actions workflow for DevContainer image publishing | `github`, `devcontainer` | ❌ |
-| `github-paper` | GitHub Actions workflow for LaTeX paper compilation and PDF publishing | `github`, `paper` | ❌ |
-| `gh-aw` | GitHub Agentic Workflows for AI-driven repository automation | `github` | ❌ |
+| Bundle | Description | Auto-installs |
+|--------|-------------|---------------|
+| `github` | Base GitHub repository automation (sync, release, dependabot) | `core` |
+| `github-tests` | GitHub Actions workflows for test automation (CI, CodeQL, weekly) | `github`, `tests`, `core` |
+| `github-book` | GitHub Actions workflow for documentation publishing | `github`, `book`, `core` |
+| `github-marimo` | GitHub Actions workflow for Marimo notebook automation | `github`, `marimo`, `book`, `core` |
+| `github-docker` | GitHub Actions workflow for Docker image building and publishing | `github`, `docker`, `core` |
+| `github-devcontainer` | GitHub Actions workflow for DevContainer image publishing | `github`, `devcontainer`, `core` |
+| `github-paper` | GitHub Actions workflow for LaTeX paper compilation and PDF publishing | `github`, `paper`, `core` |
+| `gh-aw` | GitHub Agentic Workflows for AI-driven repository automation | `github`, `core` |
 
 **Platform bundles — GitLab**
 
-| Bundle | Description | Requires | Standalone |
-|--------|-------------|----------|------------|
-| `gitlab` | GitLab CI/CD pipeline configuration and core workflows | `core` | ❌ |
-| `gitlab-tests` | GitLab CI pipeline for test automation | `gitlab`, `tests` | ❌ |
-| `gitlab-marimo` | GitLab CI pipeline for Marimo notebook execution | `gitlab`, `marimo` | ❌ |
-| `gitlab-book` | GitLab CI pipeline for documentation publishing to GitLab Pages | `gitlab`, `book` | ❌ |
-
-**Tip:** Bundles marked **Standalone: ❌** cannot be used alone and must be combined with the bundles listed in the *Requires* column.
+| Bundle | Description | Auto-installs |
+|--------|-------------|---------------|
+| `gitlab` | GitLab CI/CD pipeline configuration and core workflows | `core` |
+| `gitlab-tests` | GitLab CI pipeline for test automation | `gitlab`, `tests`, `core` |
+| `gitlab-marimo` | GitLab CI pipeline for Marimo notebook execution | `gitlab`, `marimo`, `book`, `core` |
+| `gitlab-book` | GitLab CI pipeline for documentation publishing to GitLab Pages | `gitlab`, `book`, `core` |
 
 For a complete reference of every file included in each bundle, see [`.rhiza/template-bundles.yml`](.rhiza/template-bundles.yml).
 

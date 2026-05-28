@@ -25,7 +25,7 @@ The source Rhiza repository (`jebel-quant/rhiza`) that contains the canonical te
 ## Bundle Model
 
 ### Bundle
-The atomic unit of Rhiza adoption. A bundle owns a coherent set of synced files and may declare hard dependencies via `requires` and optional relationships via `recommends`. Any bundle can be selected on its own — its declared dependencies are resolved and installed automatically, including transitive ones. For example, selecting `github-tests` automatically installs `tests`, `github`, and `core`. See also: [Profile](#profile).
+The atomic unit of Rhiza adoption. A bundle owns a coherent set of synced files and may declare hard dependencies via `requires` and optional relationships via `recommends`. Any bundle can be selected on its own — its declared dependencies are resolved and installed automatically, including transitive ones. For example, selecting `github-tests` automatically installs `tests`, `github`, and `core`. Bundles are either **feature bundles** (local-first, no CI/CD workflows) or **platform overlay bundles** (prefixed `github-` or `gitlab-`, adding hosted workflow stubs). See also: [Profile](#profile).
 
 ### Profile
 A named preset in `.rhiza/template-bundles.yml` that expands to a curated set of bundles for a common use case such as `local`, `github-project`, or `gitlab-project`. Declaring a profile is equivalent to selecting all its constituent bundles. Profiles are the recommended starting point; bundles give full manual control. See also: [Bundle](#bundle).
@@ -109,6 +109,7 @@ flowchart LR
     book -.-> marimo
     gh_aw -.-> tests
 ```
+
 
 ## Directory Structure
 
