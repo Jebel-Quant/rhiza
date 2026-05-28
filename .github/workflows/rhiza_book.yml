@@ -59,11 +59,22 @@ jobs:
           # will just use .python-version?
           uv sync --all-extras --all-groups --frozen
 
+      - name: Cache MkDocs plugin cache
+        uses: actions/cache@v5
+        with:
+          path: .cache/plugin/
+          key: mkdocs-plugin-${{ runner.os }}-${{ hashFiles('mkdocs.yml', 'uv.lock', 'pyproject.toml') }}
+          restore-keys: |
+            mkdocs-plugin-${{ runner.os }}-
+
       - name: "Make the book"
+        timeout-minutes: 10
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: |
+          START=$(date +%s)
           make book
+          echo "Docs build: $(($(date +%s) - START))s" >> "$GITHUB_STEP_SUMMARY"
 
       # Step 5a: Upload the book as a downloadable workflow artifact
       # This allows anyone to download the built documentation directly from
