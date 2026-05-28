@@ -75,5 +75,10 @@ def test_ci_cache_keys_match_audit_policy(root):
     assert uv_cache_step["with"]["key"] == "${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}"
 
     pre_commit_steps = workflow["jobs"]["pre-commit"]["steps"]
-    pre_commit_cache_step = next(step for step in pre_commit_steps if step.get("name") == "Cache pre-commit environments")
-    assert pre_commit_cache_step["with"]["key"] == "${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}"
+    pre_commit_cache_step = next(
+        step for step in pre_commit_steps if step.get("name") == "Cache pre-commit environments"
+    )
+    assert (
+        pre_commit_cache_step["with"]["key"]
+        == "${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}"
+    )
