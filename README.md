@@ -69,7 +69,7 @@ templates:
 
 **What you're seeing:**
 - **`repository`** - The upstream template source (**can be any repository, not just Rhiza!**)
-- **`ref`** - Which version tag/branch to sync from (e.g., `v0.9.0` or `main`)
+- **`ref`** - Which version tag/branch to sync from (e.g., `v0.14.0` or `main`)
 - **`profiles`** - Named presets that expand to a set of bundles (see [Profiles](#profiles-recommended-starting-point) below)
 - **`templates`** - Individual template bundles for advanced or additional selection
 
@@ -98,7 +98,7 @@ When you run `uvx rhiza sync` or trigger the automated sync workflow, Rhiza fetc
 - [Why Rhiza?](#-why-rhiza)
 - [Quick Start](#-quick-start)
 - [What You Get](#-what-you-get)
-- [Available Template Bundles](#-available-template-bundles)
+- [Available Templates](#-available-templates)
 - [Integration Guide](#-integration-guide)
 - [Available Tasks](#-available-tasks)
 - [Advanced Topics](#-advanced-topics)
@@ -188,9 +188,9 @@ Rhiza provides **profiles** — named presets that select a sensible set of bund
 
 | Profile | Description | Includes |
 |---------|-------------|---------|
-| `local` | Local-first development with no hosted CI/CD workflow files | `book`, `marimo`, `tests` |
-| `github-project` | GitHub-hosted project with CI/CD and release automation | `github-book`, `github-marimo`, `github-tests` |
-| `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `gitlab-book`, `gitlab-marimo`, `gitlab-tests` |
+| `local` | Local-first development with no hosted CI/CD workflow files | `core`, `book`, `marimo`, `tests` |
+| `github-project` | GitHub-hosted project with CI/CD and release automation | `core`, `github`, `book`, `marimo`, `tests`, `github-book`, `github-marimo`, `github-tests` |
+| `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `core`, `gitlab`, `book`, `marimo`, `tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-tests` |
 
 Declare a profile in `.rhiza/template.yml`:
 
@@ -199,10 +199,10 @@ repository: Jebel-Quant/rhiza
 ref: v0.14.0
 
 profiles:
-  - local
+  - github-project
 ```
 
-> **Note:** Profiles expand to their constituent bundles including all transitive requirements. For example, `github-project` selects `github-book`, `github-marimo`, and `github-tests`, which in turn require `core`, `github`, `book`, `marimo`, and `tests`.
+> **Note:** Profiles expand to their constituent bundles including all transitive requirements.
 
 You can combine a profile with additional bundles:
 
@@ -210,8 +210,8 @@ You can combine a profile with additional bundles:
 profiles:
   - github-project
 templates:
-  - marimo
-  - github-marimo
+  - docker
+  - github-docker
 ```
 
 ### Available Template Bundles
@@ -223,17 +223,17 @@ Bundles are the atomic building blocks. Feature bundles are **local-first** — 
 | Bundle | Description | Requires | Standalone |
 |--------|-------------|----------|------------|
 | `core` | Core Rhiza infrastructure (Makefile, linting, docs) | — | ✅ |
-| `tests` | Local testing infrastructure with pytest, coverage, and type checking | `book` | ✅ |
-| `book` | Comprehensive documentation book (API docs, coverage, notebooks) | — | ✅ |
-| `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book` | ✅ |
+| `tests` | Local testing infrastructure with pytest, coverage, and type checking | `book`, `core` | ✅ |
+| `book` | Comprehensive documentation book (API docs, coverage, notebooks) | `core` | ✅ |
+| `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book`, `core` | ❌ |
 | `benchmarks` | Performance benchmarking with pytest-benchmark and reporting | `tests` | ❌ |
 | `docker` | Docker containerization support | — | ✅ |
 | `devcontainer` | VS Code DevContainer configuration | — | ✅ |
 | `presentation` | Presentation building using Marp | — | ✅ |
+| `paper` | LaTeX paper compilation targets (`make paper`, `make paper-clean`) | — | ✅ |
 | `lfs` | Git LFS (Large File Storage) support | — | ✅ |
 | `legal` | Legal and community files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT) | — | ✅ |
 | `renovate` | Renovate bot configuration for automated dependency updates | — | ✅ |
-| `paper` | LaTeX paper compilation targets (`make paper`, `make paper-clean`) | — | ✅ |
 
 **Platform bundles — GitHub**
 
@@ -310,6 +310,47 @@ For GitHub Token configuration and details, see the [GitHub Actions documentatio
 - **Task Automation** - Makefile with common development tasks
 - **Dev Container** - Optional VS Code/Codespaces environment
 - **Documentation** - Automated documentation generation
+
+### Downstream Project Requirements
+
+For Rhiza templates to work correctly, your project must satisfy these expectations before and after sync.
+
+**Project structure**
+
+| Requirement | Details |
+|-------------|---------|
+| Git repository | `git init` or cloned — Rhiza does not initialise git |
+| `pyproject.toml` | Must have `[project]` with `name`, `version`, `description`, `readme`, and `requires-python` (all non-empty strings), plus a `[dependency-groups]` table |
+| `.python-version` | Single line specifying the target Python version (e.g. `3.13`) — used by `uv` and CI |
+| `.rhiza/template.yml` | Created by `uvx rhiza init` — specifies `repository`, `ref`, and bundle/profile selection |
+
+**Tool requirements**
+
+| Tool | Minimum version | Notes |
+|------|-----------------|-------|
+| **GNU Make** | 3.81 | macOS ships BSD make; install via `brew install make` and use `gmake` |
+| **uv** | 0.5.0 | Installed automatically by `make install-uv` if missing |
+| **Python** | 3.11 | Managed automatically by `uv` via `.python-version` |
+
+**What Rhiza owns vs what you own**
+
+| Path | Owner | Notes |
+|------|-------|-------|
+| `.rhiza/` | Rhiza | Template-managed; overwritten on sync |
+| `.github/workflows/rhiza_*.yml` | Rhiza | Template-managed workflow stubs |
+| `Makefile` | Rhiza | Template-managed; add your hooks *above* the `include` line |
+| `ruff.toml`, `.editorconfig`, `.pre-commit-config.yaml` | Rhiza | Template-managed config files |
+| `pyproject.toml` | Yours | Rhiza ships a starter template; you own and extend it freely |
+| `src/` or application code | Yours | Never touched by Rhiza |
+| `tests/` | Yours | Never touched by Rhiza |
+| `local.mk` | Yours | Local shortcuts — not committed, not synced, auto-loaded |
+
+**Safe extension points** (survive every sync):
+- **Root `Makefile` hooks** — add `pre-install::` / `post-install::` etc. above `include .rhiza/rhiza.mk`
+- **`local.mk`** — untracked local shortcuts, auto-loaded by `rhiza.mk`
+- **`pyproject.toml`** — add dependencies, scripts, and tool configs freely
+
+See [docs/guides/CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md) for worked examples.
 
 ### Troubleshooting Integration
 
