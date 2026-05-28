@@ -303,11 +303,13 @@ class TestDownstreamRepoEndToEndSync:
     @staticmethod
     def _run_sync(downstream: Path) -> subprocess.CompletedProcess[str]:
         """Run make sync in a downstream repository."""
+        env = {**os.environ, "UV_CACHE_DIR": str(downstream / ".uv-cache")}
         return subprocess.run(  # nosec B603
             [MAKE, "sync"],
             cwd=downstream,
             capture_output=True,
             text=True,
+            env=env,
         )
 
     @staticmethod

@@ -27,6 +27,17 @@ navigate to its root, and run the following command:
 make install
 ```
 
+### Optional uv dependency groups
+
+For faster, focused installs you can sync only the dependency groups you need:
+
+```bash
+uv sync --group lint        # linting + pre-commit tooling
+uv sync --group test        # test tooling
+uv sync --group docs        # docs/notebook stack (marimo, numpy, pandas, plotly)
+uv sync --all-groups        # full development environment
+```
+
 ## Contributing code
 
 To contribute to the project, send us pull requests.
