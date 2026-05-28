@@ -1,3 +1,22 @@
+## [0.18.2] - 2026-05-28
+
+### 🚀 Features
+
+- Group bundles by platform in explain-bundles output
+
+### 💼 Other
+
+- Bump version 0.18.1 → 0.18.2
+
+### 🧪 Testing
+
+- Add bundle-root sync check and fix all stale bundle files
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.1 [skip ci]
+- Align core bundle doctor.mk with .rhiza version
+- Sync ty version constraint in core bundle with .rhiza
 ## [0.18.1] - 2026-05-28
 
 ### 💼 Other
