@@ -1,3 +1,47 @@
+## [0.18.0] - 2026-05-28
+
+### 🚀 Features
+
+- *(ci)* Add lowest-deps job to rhiza_ci workflow
+- *(ci)* Run typecheck job across full Python version matrix
+- Add make explain-bundles onboarding target
+
+### 🐛 Bug Fixes
+
+- Quote pre-commit entry to fix YAML syntax error in no-rej-files hook
+- Bump pyyaml lower bound to 6.0.1 to fix lowest-deps build failure
+- *(ci)* Install .rhiza/requirements in lowest-deps job
+- *(ci)* Run uv sync before pip install in lowest-deps job
+- *(ci)* Pass GITLEAKS_LICENSE through reusable CI workflow (#1106)
+
+### 💼 Other
+
+- Parallelize `make test` and bound Marimo notebook runtime (#1107)
+- Add `make doctor` diagnostics and bundle-sync troubleshooting guide (#1114)
+- Enforce per-job time budgets and standardize cache keys (#1118)
+- Add docs build cache/timing and benchmark baseline workflow (#1123)
+- Bump version 0.17.0 → 0.18.0
+
+### 📚 Documentation
+
+- Add comprehensive repository quality analysis
+- Document GNU Make requirement and add BSD make guard
+- Add bundle dependency map to glossary (#1085)
+- Add worked “new bundle” tutorial to EXTENDING_RHIZA (#1102)
+- Revisit README and document downstream expectations (#1124)
+
+### 🧪 Testing
+
+- Enforce required Renovate manager coverage in validation test
+- Add end-to-end downstream sync test for minimal git repo (#1087)
+- *(bundles)* Add bundle×platform compatibility matrix (144 parametrized cases) (#1103)
+- Add global pytest timeout and sync failure-mode coverage (#1119)
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.17.0 [skip ci]
+- Add pytest-xdist to test requirements
+- Remove stale Claude agent worktree references
 ## [0.17.0] - 2026-05-27
 
 ### 💼 Other
