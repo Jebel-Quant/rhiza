@@ -12,6 +12,7 @@ Validates that pyproject.toml:
 - provides [project.urls] with Homepage and Repository
 - includes at least one Python version classifier
 - declares a [dependency-groups] test group containing pytest
+- declares a [dependency-groups] lint group
 """
 
 from __future__ import annotations
@@ -157,7 +158,7 @@ class TestProjectClassifiers:
 
 
 class TestDependencyGroups:
-    """Tests for [dependency-groups] — ensures the test group declares pytest."""
+    """Tests for [dependency-groups] — ensures required groups are declared."""
 
     @pytest.fixture(scope="class")
     def dependency_groups(self, pyproject: dict) -> dict:
@@ -177,3 +178,7 @@ class TestDependencyGroups:
         assert any("pytest" in str(dep).lower() for dep in test_deps), (
             "[dependency-groups.test] must list pytest as a dependency"
         )
+
+    def test_lint_group_present(self, dependency_groups: dict) -> None:
+        """A 'lint' dependency group must be declared."""
+        assert "lint" in dependency_groups, "[dependency-groups] must include a 'lint' group"
