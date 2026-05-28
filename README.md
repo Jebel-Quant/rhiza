@@ -313,6 +313,8 @@ For GitHub Token configuration and details, see the [GitHub Actions documentatio
 
 ### Troubleshooting Integration
 
+- Start with `make doctor` to validate required tools and versions.
+- For bundle sync failures and recovery steps, see [docs/troubleshooting.md](docs/troubleshooting.md).
 - **Makefile conflicts**: Merge targets with existing build scripts
 - **Pre-commit failures**: Run `make fmt` to fix formatting issues
 - **Workflow failures**: Check Python version in `.python-version` and `pyproject.toml`
