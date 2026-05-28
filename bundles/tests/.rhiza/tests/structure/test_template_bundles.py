@@ -15,33 +15,23 @@ This module ensures:
   - the local profile resolves to zero .github/workflows/* files
   - bundle dependency references (requires/recommends) point to existing bundles
   - no circular dependencies exist in bundle requires chains
+  - profiles list bundle prerequisites explicitly
   - profile definitions reference existing bundles
 """
 
 from __future__ import annotations
 
 import os
+from graphlib import CycleError, TopologicalSorter
 from pathlib import Path
 
 import pytest
 import yaml
 
 
-def _find_cycle(start: str, bundles: dict, visited: set, path: list) -> list | None:
-    """DFS helper returning the cycle path if one exists, else None."""
-    visited.add(start)
-    path.append(start)
-    for dep in bundles.get(start, {}).get("requires", []):
-        if dep not in bundles:
-            continue
-        if dep in path:
-            return [*path[path.index(dep) :], dep]
-        if dep not in visited:
-            result = _find_cycle(dep, bundles, visited, path)
-            if result:
-                return result
-    path.pop()
-    return None
+def _bundle_dependency_graph(bundles: dict) -> dict[str, set[str]]:
+    """Return the bundle dependency graph in TopologicalSorter input format."""
+    return {name: set(config.get("requires", [])) for name, config in bundles.items()}
 
 
 def _deployment_paths(bundle_dir: Path) -> list[str]:
@@ -123,7 +113,7 @@ class TestTemplateBundles:
     # Bundle directory structure
     # ------------------------------------------------------------------
 
-    def test_bundles_directory_exists(self, bundles_data, bundles_root):
+    def test_bundles_directory_exists(self, bundles_root):
         """Test that the bundles/ directory exists."""
         assert bundles_root.is_dir(), "bundles/ directory must exist at the repo root"
 
@@ -270,15 +260,11 @@ class TestTemplateBundles:
     def test_no_circular_bundle_dependencies(self, bundles_data, bundle_names):
         """Test that no circular dependencies exist in bundle requires chains."""
         bundles = bundles_data["bundles"]
-        visited: set = set()
-        cycles = []
-        for name in bundle_names:
-            if name not in visited:
-                cycle = _find_cycle(name, bundles, visited, [])
-                if cycle:
-                    cycles.append(" -> ".join(cycle))
-        if cycles:
-            pytest.fail("\nCircular bundle dependencies detected:\n" + "\n".join(f"  {c}" for c in cycles))
+        try:
+            tuple(TopologicalSorter(_bundle_dependency_graph(bundles)).static_order())
+        except CycleError as exc:
+            cycle = " -> ".join(exc.args[1])
+            pytest.fail(f"\nCircular bundle dependencies detected:\n  {cycle}")
 
     @pytest.mark.parametrize("bundle_name", ["github-marimo", "github-tests", "github-book"])
     def test_github_overlay_bundles_require_github(self, bundles_data, bundle_names, bundle_name):
@@ -333,6 +319,25 @@ class TestTemplateBundles:
         empty = [name for name, cfg in profiles_data.items() if not cfg.get("bundles")]
         if empty:
             pytest.fail(f"\nProfiles with no bundles listed: {empty}")
+
+    def test_profiles_include_required_bundle_prerequisites(self, bundles_data, profiles_data, bundle_names):
+        """Test that profiles explicitly include the prerequisites of each listed bundle."""
+        if not profiles_data:
+            pytest.skip("No profiles defined in template-bundles.yml")
+        bundles = bundles_data["bundles"]
+
+        errors = []
+        for profile_name, profile_config in profiles_data.items():
+            selected = set(profile_config.get("bundles", []))
+            for bundle_name in profile_config.get("bundles", []):
+                if bundle_name not in bundle_names:
+                    continue
+                missing = sorted(set(bundles[bundle_name].get("requires", [])) - selected)
+                if missing:
+                    errors.append(f"  [profile:{profile_name}] bundle '{bundle_name}' missing requires: {missing}")
+
+        if errors:
+            pytest.fail("\nProfiles must list required bundle prerequisites explicitly:\n" + "\n".join(errors))
 
     def test_profile_transitive_closure_is_self_consistent(self, bundles_data, profiles_data, bundle_names):
         """Test that each profile's full transitive bundle closure has no unresolvable references.

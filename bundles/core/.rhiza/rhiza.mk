@@ -5,6 +5,11 @@
 # Lines with `##` after a target are parsed into help text,
 # and lines starting with `##@` create section headers in the help output.
 #
+# Require GNU Make (MAKE_VERSION is unset in BSD make)
+ifndef MAKE_VERSION
+$(error GNU Make is required. macOS ships BSD make — install GNU Make with: brew install make)
+endif
+
 # Colours for pretty output in help messages
 BLUE := \033[36m
 BOLD := \033[1m
@@ -44,7 +49,7 @@ UVX_BIN ?= $(shell command -v uvx 2>/dev/null || echo ${INSTALL_DIR}/uvx)
 VENV ?= .venv
 
 # Read Python version from .python-version (single source of truth)
-PYTHON_VERSION ?= $(shell cat .python-version 2>/dev/null || echo "3.13")
+PYTHON_VERSION ?= $(strip $(shell cat .python-version 2>/dev/null || echo "3.13"))
 export PYTHON_VERSION
 
 # Read Rhiza version from .rhiza/.rhiza-version (single source of truth for rhiza-tools)
@@ -82,7 +87,7 @@ endef
 export RHIZA_LOGO
 
 # Declare phony targets for Rhiza Core
-.PHONY: print-logo sync sync-experimental materialize validate readme pre-sync post-sync pre-validate post-validate _apply-sync-schedule
+.PHONY: print-logo sync sync-experimental materialize validate readme pre-sync post-sync pre-validate post-validate _apply-sync-schedule test-pyproject
 
 # Hook targets (double-colon rules allow multiple definitions)
 # Note: pre-install/post-install are defined in bootstrap.mk
@@ -126,6 +131,15 @@ summarise-sync: install-uv ## summarise differences created by sync with templat
 		$(MAKE) install-uv; \
 		${UVX_BIN} "rhiza==$(RHIZA_VERSION)" summarise .; \
 	fi
+
+test-pyproject: install ## run pyproject.toml structure tests
+	@${UV_BIN} run pytest .rhiza/tests/structure/test_pyproject.py \
+		-v \
+		--tb=long \
+		--showlocals \
+		-rA \
+		--durations=0 \
+		--no-header
 
 rhiza-test: install ## run rhiza's own tests (if any)
 	@if [ -d ".rhiza/tests" ]; then \
