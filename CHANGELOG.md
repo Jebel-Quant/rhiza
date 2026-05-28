@@ -1,3 +1,13 @@
+## [0.18.1] - 2026-05-28
+
+### 💼 Other
+
+- Bump version 0.18.0 → 0.18.1
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.0 [skip ci]
+- Rename pyproject.toml to .template and centralize test fixtures (#1125)
 ## [0.18.0] - 2026-05-28
 
 ### 🚀 Features
