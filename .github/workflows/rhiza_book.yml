@@ -25,6 +25,7 @@ on:
 
 jobs:
   book:
+    if: ${{ !github.event.repository.fork }}
     runs-on: "ubuntu-latest"
 
     environment:
