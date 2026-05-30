@@ -127,6 +127,52 @@ jobs:
             fi
           fi
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7.6.0
+
+      - name: Ensure release version is newer than latest published
+        env:
+          TAG: ${{ steps.set_tag.outputs.tag }}
+        run: |
+          # Backstop for issue #1126: refuse a tag that is not strictly newer than the
+          # highest version already released. A diverged branch with a stale pyproject.toml
+          # can otherwise publish an older version (e.g. v0.3.3 after v0.4.0). The bump
+          # tooling enforces the same rule; this guards manually-pushed tags too.
+          git tag -l 'v*' | uv run --with packaging --no-project python3 -c '
+          import sys
+          from packaging.version import Version, InvalidVersion
+
+          new = sys.argv[1].lstrip("v")
+          try:
+              new_v = Version(new)
+          except InvalidVersion:
+              print(f"::error::Tag {sys.argv[1]} is not a valid version")
+              sys.exit(1)
+
+          latest = None
+          for line in sys.stdin:
+              tag = line.strip().lstrip("v")
+              if not tag:
+                  continue
+              try:
+                  candidate = Version(tag)
+              except InvalidVersion:
+                  continue
+              if candidate == new_v:
+                  continue
+              if latest is None or candidate > latest:
+                  latest = candidate
+
+          if latest is not None and new_v <= latest:
+              print(
+                  f"::error::Refusing to release v{new_v}: it is not newer than the latest "
+                  f"released version v{latest} (issue #1126). Sync with the default branch and bump again."
+              )
+              sys.exit(1)
+          print(f"v{new_v} is newer than the latest released version v{latest}" if latest
+                else f"v{new_v} is the first release")
+          ' "$TAG"
+
   build:
     name: Build
     runs-on: ubuntu-latest
