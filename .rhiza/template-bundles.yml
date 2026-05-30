@@ -73,6 +73,8 @@ bundles:
     description: "VS Code DevContainer configuration for consistent development environments"
     standalone: true
     requires: []
+    recommends:
+      - github-devcontainer  # Add the GitHub Actions workflow for devcontainer image build validation
 
   # ============================================================================
   # GITHUB-DEVCONTAINER - GitHub Actions workflow for devcontainer CI
