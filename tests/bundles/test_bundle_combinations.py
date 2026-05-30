@@ -296,6 +296,53 @@ class TestDockerWithGithubOverlaySync:
         assert parsed is not None
 
 
+class TestDevcontainerBundleSync:
+    """Syncing the devcontainer bundle provides the VS Code DevContainer configuration."""
+
+    @pytest.fixture(autouse=True)
+    def synced(self, tmp_path: Path, root: Path) -> None:
+        """Sync the devcontainer bundle into a fresh directory."""
+        sync_bundles(root, ["devcontainer"], tmp_path)
+        self.project = tmp_path
+
+    def test_devcontainer_json_exists(self) -> None:
+        """devcontainer.json must be present after syncing the devcontainer bundle."""
+        assert (self.project / ".devcontainer" / "devcontainer.json").is_file()
+
+    def test_bootstrap_sh_exists(self) -> None:
+        """bootstrap.sh post-create script must be present."""
+        assert (self.project / ".devcontainer" / "bootstrap.sh").is_file()
+
+    def test_no_github_workflows_from_devcontainer_bundle(self) -> None:
+        """The plain devcontainer bundle must not inject any GitHub workflows."""
+        workflows = self.project / ".github" / "workflows"
+        if workflows.exists():
+            devcontainer_wf = [f for f in workflows.glob("*.yml") if "devcontainer" in f.name]
+            assert not devcontainer_wf, (
+                f"devcontainer bundle unexpectedly injected: {[f.name for f in devcontainer_wf]}"
+            )
+
+
+class TestDevcontainerWithGithubOverlaySync:
+    """Syncing devcontainer + github + github-devcontainer adds the DevContainer CI workflow."""
+
+    @pytest.fixture(autouse=True)
+    def synced(self, tmp_path: Path, root: Path) -> None:
+        """Sync devcontainer, github, and github-devcontainer bundles."""
+        sync_bundles(root, ["devcontainer", "github", "github-devcontainer"], tmp_path)
+        self.project = tmp_path
+
+    def test_devcontainer_ci_workflow_exists(self) -> None:
+        """rhiza_devcontainer.yml CI workflow stub must be injected."""
+        assert (self.project / ".github" / "workflows" / "rhiza_devcontainer.yml").is_file()
+
+    def test_devcontainer_ci_workflow_is_valid_yaml(self) -> None:
+        """The injected DevContainer CI workflow must be valid YAML."""
+        wf = self.project / ".github" / "workflows" / "rhiza_devcontainer.yml"
+        parsed = yaml.safe_load(wf.read_text(encoding="utf-8"))
+        assert parsed is not None
+
+
 class TestLegalBundleSync:
     """Syncing the legal bundle provides LICENSE, SECURITY.md, and community docs."""
 
