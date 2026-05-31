@@ -1,3 +1,24 @@
+## [0.18.5] - 2026-05-31
+
+### 🚀 Features
+
+- *(devcontainer)* Link github-devcontainer overlay via recommends and add bundle combination tests (#1129)
+- Add mutation testing via mutmut (#1138)
+
+### 💼 Other
+
+- Bump version 0.18.4 → 0.18.5
+
+### 🚜 Refactor
+
+- *(tests)* Move rhiza-specific tests to correct locations (#1139)
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.4 [skip ci]
+- Skip book workflow on forks
+- Bump workflow stubs v0.16.0 → v0.18.4 in bundles
+- Enforce monotonic release tags and align pyproject sync tests (#1133)
 ## [0.18.4] - 2026-05-28
 
 ### 💼 Other
