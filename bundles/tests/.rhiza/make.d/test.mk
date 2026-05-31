@@ -152,12 +152,15 @@ mutation: install ## run mutation tests with mutmut
 	fi; \
 	printf "${BLUE}[INFO] Running mutation tests on ${SOURCE_FOLDER}...${RESET}\n"; \
 	mkdir -p _tests/mutation; \
+	run_status=0; \
 	${UV_BIN} run mutmut run \
-	  --paths-to-mutate=${SOURCE_FOLDER} \
-	  --tests-dir=${TESTS_FOLDER} || true; \
-	${UV_BIN} run mutmut html; \
-	mv html _tests/mutation/html 2>/dev/null || true; \
-	${UV_BIN} run mutmut results
+	  --paths-to-mutate="${SOURCE_FOLDER}" \
+	  --tests-dir="${TESTS_FOLDER}" || run_status=$$?; \
+	${UV_BIN} run mutmut html || exit $$?; \
+	rm -rf _tests/mutation/html; \
+	mv html _tests/mutation/html || exit $$?; \
+	${UV_BIN} run mutmut results || exit $$?; \
+	exit $$run_status
 
 test-pyproject: install ## run pyproject.toml structure tests
 	@${UV_BIN} run pytest .rhiza/tests/structure/test_pyproject.py \
