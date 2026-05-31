@@ -25,6 +25,7 @@ import tomllib
 from pathlib import Path
 
 import pytest
+from packaging.version import Version
 
 _GIT = shutil.which("git") or "/usr/bin/git"
 
@@ -208,9 +209,9 @@ class TestGitTagVersion:
 
     def test_latest_tag_matches_pyproject_version(self, latest_tag: str, project: dict) -> None:
         """The latest git tag (vX.Y.Z) must match [project].version in pyproject.toml."""
-        tag_version = latest_tag.lstrip("v")
-        pyproject_version = project.get("version", "")
-        assert tag_version == pyproject_version, (
-            f"Latest git tag {latest_tag!r} (→ {tag_version!r}) does not match "
-            f"[project].version {pyproject_version!r} in pyproject.toml"
+        normalized_tag_version = str(Version(latest_tag.lstrip("v")))
+        normalized_pyproject_version = str(Version(str(project.get("version", ""))))
+        assert normalized_tag_version == normalized_pyproject_version, (
+            f"Latest git tag {latest_tag!r} (→ {normalized_tag_version!r}) does not match "
+            f"[project].version {normalized_pyproject_version!r} in pyproject.toml"
         )
