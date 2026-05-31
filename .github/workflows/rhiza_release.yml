@@ -370,12 +370,15 @@ jobs:
 
       - name: Check if conda recipe should be generated
         id: check_conda
+        env:
+          PUBLISH_CONDA: ${{ vars.PUBLISH_CONDA }}
         run: |
-          if [[ "${{ needs.pypi.outputs.should_publish }}" == "true" ]] && [[ "${{ needs.pypi.result }}" == "success" ]]; then
+          PUBLISH_CONDA="${PUBLISH_CONDA:-true}"
+          if [[ "$PUBLISH_CONDA" == "true" ]] && [[ "${{ needs.pypi.outputs.should_publish }}" == "true" ]] && [[ "${{ needs.pypi.result }}" == "success" ]]; then
             echo "should_generate=true" >> "$GITHUB_OUTPUT"
           else
             echo "should_generate=false" >> "$GITHUB_OUTPUT"
-            echo "⏭️ Skipping conda recipe generation (PyPI publish disabled or failed)"
+            echo "⏭️ Skipping conda recipe generation (PUBLISH_CONDA not true, or PyPI publish disabled or failed)"
           fi
 
       - name: Set up Python

@@ -87,6 +87,7 @@ class TestReleaseWorkflowStructure:
         conda_job = workflow["jobs"]["conda"]
         assert "pypi" in conda_job.get("needs", []), "Conda job must depend on pypi job output"
         commands = "\n".join(_step_commands(conda_job))
+        assert "PUBLISH_CONDA" in commands
         assert "needs.pypi.outputs.should_publish" in commands
         assert "grayskull pypi" in commands
 
