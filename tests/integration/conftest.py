@@ -1,6 +1,10 @@
 """Fixtures for rhiza-specific integration tests.
 
 These tests live in tests/ (not .rhiza/tests/) and do not sync downstream.
+
+Security Notes:
+- S603 (subprocess without shell=True): subprocess calls use command lists, not user input
+- S607 (subprocess with partial path): executables resolved from PATH in controlled test env
 """
 
 from __future__ import annotations
