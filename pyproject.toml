@@ -39,6 +39,7 @@ test = [
     "python-dotenv>=1,<2",
     "pyyaml>=6.0.1,<7.0",
     "defusedxml>=0.7,<1",
+    "mutmut>=2.0,<3.0",
 ]
 docs = [
     "marimo>=0.18.0,<1.0",   # Reactive notebook runtime for book/ examples (v0.18+ for streaming, <1.0 for API stability)
