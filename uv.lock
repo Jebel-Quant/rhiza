@@ -1444,7 +1444,7 @@ wheels = [
 
 [[package]]
 name = "rhiza"
-version = "0.18.4"
+version = "0.18.5"
 source = { virtual = "." }
 
 [package.dev-dependencies]
