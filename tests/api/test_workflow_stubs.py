@@ -1,7 +1,8 @@
 """Tests for GitHub workflow stubs injected by the github-* bundles.
 
-This file and its associated tests flow down via a SYNC action from the
-jebel-quant/rhiza repository (https://github.com/jebel-quant/rhiza).
+Rhiza-specific: validates that rhiza's own workflow stubs reference
+jebel-quant/rhiza and carry the expected structure. Lives in tests/,
+not .rhiza/tests/, so it does not sync to downstream projects.
 
 Workflow stubs in downstream projects are thin wrappers that delegate
 to the reusable canonical workflows in jebel-quant/rhiza.  These tests

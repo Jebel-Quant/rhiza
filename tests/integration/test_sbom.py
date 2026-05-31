@@ -1,7 +1,7 @@
 """Integration test for SBOM generation using cyclonedx-bom.
 
-This file and its associated tests flow down via a SYNC action from the jebel-quant/rhiza repository
-(https://github.com/jebel-quant/rhiza).
+Rhiza-specific: tests rhiza's release-pipeline SBOM generation tooling.
+Lives in tests/, not .rhiza/tests/, so it does not sync to downstream projects.
 
 Tests the SBOM (Software Bill of Materials) generation workflow to ensure
 the cyclonedx-bom tool works correctly with uvx.
