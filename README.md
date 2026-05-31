@@ -144,7 +144,7 @@ Adopt a Rhiza bundle and your project immediately gains:
 - **Pre-commit hooks** — ruff, bandit, markdownlint, interrogate, actionlint, and more
 - **pytest** with coverage, benchmarks, and property-based testing via Hypothesis
 - **Documentation** via MkDocs + zensical, with optional Marimo notebook exports
-- **Release automation** — version bumping, OIDC PyPI publishing, SLSA provenance
+- **Release automation** — version bumping, OIDC PyPI publishing, optional grayskull conda recipe generation, SLSA provenance
 - **Security scanning** — CodeQL, pip-audit, bandit, secret scanning, Dependabot
 - **Shell completions** for bash and zsh (tab-complete all `make` targets)
 

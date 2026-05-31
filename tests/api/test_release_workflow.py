@@ -12,7 +12,16 @@ import pytest
 import yaml
 
 WORKFLOW_PATH = Path(".github") / "workflows" / "rhiza_release.yml"
-EXPECTED_JOBS = {"tag", "build", "draft-release", "update-changelog", "pypi", "devcontainer", "finalise-release"}
+EXPECTED_JOBS = {
+    "tag",
+    "build",
+    "draft-release",
+    "update-changelog",
+    "pypi",
+    "conda",
+    "devcontainer",
+    "finalise-release",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -67,3 +76,22 @@ class TestReleaseWorkflowStructure:
         """Workflow must have contents: write permission to push CHANGELOG.md."""
         permissions = workflow.get("permissions", {})
         assert permissions.get("contents") == "write", "Workflow must have contents: write permission"
+
+    def test_workflow_contains_expected_jobs(self, workflow):
+        """Workflow should keep the expected release job structure."""
+        jobs = workflow.get("jobs", {})
+        assert EXPECTED_JOBS.issubset(set(jobs)), "Release workflow is missing expected jobs"
+
+    def test_conda_job_depends_on_pypi(self, workflow):
+        """Conda recipe generation should only run after PyPI publish decision."""
+        conda_job = workflow["jobs"]["conda"]
+        assert "pypi" in conda_job.get("needs", []), "Conda job must depend on pypi job output"
+        commands = "\n".join(_step_commands(conda_job))
+        assert "needs.pypi.outputs.should_publish" in commands
+        assert "grayskull pypi" in commands
+
+    def test_finalise_release_includes_conda_signal(self, workflow):
+        """Final release gating should account for conda recipe generation."""
+        finalise_job = workflow["jobs"]["finalise-release"]
+        assert "conda" in finalise_job.get("needs", [])
+        assert "needs.conda.result == 'success'" in str(finalise_job.get("if", ""))
