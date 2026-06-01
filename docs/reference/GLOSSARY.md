@@ -245,7 +245,7 @@ Configuration for Renovate, an automated dependency update bot.
 Continuous Integration workflow that runs tests on every push and pull request.
 
 ### Release Workflow
-Multi-phase workflow triggered by version tags. Builds packages, creates GitHub releases, publishes to PyPI, and optionally publishes devcontainer images.
+Multi-phase workflow triggered by version tags. Builds packages, creates GitHub releases, publishes to PyPI, optionally generates a conda recipe with grayskull, and can publish devcontainer images.
 
 ### Sync Workflow
 Workflow that synchronizes template files from upstream Rhiza repository.

@@ -109,18 +109,24 @@ flowchart TD
     validate --> build[Build Package]
     build --> draft[Draft GitHub Release]
     draft --> pypi[Publish to PyPI]
+    pypi --> conda[Generate Conda Recipe<br/>with grayskull]
     draft --> devcontainer[Publish Devcontainer]
     pypi --> finalize[Finalize Release]
+    conda --> finalize
     devcontainer --> finalize
 
     subgraph Conditions
         pypi_cond{Has dist/ &<br/>not Private?}
+        conda_cond{PyPI publish<br/>succeeded?}
         dev_cond{PUBLISH_DEVCONTAINER<br/>= true?}
     end
 
     draft --> pypi_cond
     pypi_cond -->|yes| pypi
     pypi_cond -->|no| finalize
+    pypi --> conda_cond
+    conda_cond -->|yes| conda
+    conda_cond -->|no| finalize
     draft --> dev_cond
     dev_cond -->|yes| devcontainer
     dev_cond -->|no| finalize
