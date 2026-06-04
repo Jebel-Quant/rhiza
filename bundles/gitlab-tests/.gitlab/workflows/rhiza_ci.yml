@@ -20,7 +20,7 @@ ci:test:
   variables:
     GIT_LFS_SKIP_SMUDGE: "0"
   before_script:
-    - apt-get update && apt-get install -y git-lfs
+    - apt-get update && apt-get install -y git-lfs chromium
     - git lfs pull
   coverage: '/TOTAL.*\s+(\d+%)$/'
   script:

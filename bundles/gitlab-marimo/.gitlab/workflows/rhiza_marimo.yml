@@ -21,7 +21,7 @@ marimo:notebooks:
   variables:
     GIT_LFS_SKIP_SMUDGE: "0"
   before_script:
-    - apt-get update && apt-get install -y git-lfs make
+    - apt-get update && apt-get install -y git-lfs make chromium
     - git lfs install --force
     - git lfs pull
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
