@@ -1,3 +1,13 @@
+## [0.18.8] - 2026-06-06
+
+### 💼 Other
+
+- Update workflow references to version 0.18.7
+- Bump version 0.18.7 → 0.18.8
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.7 [skip ci]
 ## [0.18.7] - 2026-06-06
 
 ### 🐛 Bug Fixes
