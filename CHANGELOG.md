@@ -1,3 +1,17 @@
+## [0.18.7] - 2026-06-06
+
+### 🐛 Bug Fixes
+
+- *(ci)* Install chromium in GitLab CI jobs for kaleido/plotly image export
+- *(ci)* Use versioned remote ref for configure-git-auth action (#1143)
+
+### 💼 Other
+
+- Bump version 0.18.6 → 0.18.7
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.6 [skip ci]
 ## [0.18.6] - 2026-06-04
 
 ### 💼 Other
