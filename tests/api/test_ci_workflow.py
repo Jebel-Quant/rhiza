@@ -94,3 +94,13 @@ def test_ci_cache_keys_match_audit_policy(root):
         pre_commit_cache_step["with"]["key"]
         == "${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}"
     )
+
+
+def test_ci_test_job_runs_make_under_bash(root):
+    """CI test job must run make under bash for Windows compatibility."""
+    with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
+        workflow = yaml.safe_load(fh)
+
+    run_tests_step = next(step for step in workflow["jobs"]["test"]["steps"] if step.get("name") == "Run tests")
+    assert run_tests_step["shell"] == "bash"
+    assert "make test" in run_tests_step["run"]

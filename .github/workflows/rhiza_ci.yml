@@ -117,6 +117,7 @@ jobs:
       - name: Run tests
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        shell: bash
         run: |
           make test
 
