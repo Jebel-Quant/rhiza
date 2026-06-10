@@ -1,0 +1,1 @@
+../../bundles/devcontainer/docs/development/VSCODE_EXTENSIONS.md

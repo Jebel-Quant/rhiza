@@ -9,7 +9,7 @@
 #
 # Trigger: On push and pull_request.
 
-name: (RHIZA) CI
+name: "(RHIZA) CI"
 
 permissions:
   contents: read
@@ -18,24 +18,33 @@ permissions:
 on:
   push:
   pull_request:
+  workflow_call:
+    secrets:
+      GH_PAT:
+        required: false
+      UV_EXTRA_INDEX_URL:
+        required: false
 
 jobs:
   generate-matrix:
+    # CI budget: ≤5 min (matrix generation/setup). Last measured: 2026-05-28.
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.versions.outputs.list }}
+      os_matrix: ${{ steps.os.outputs.list }}
     steps:
       - uses: actions/checkout@v6.0.2
         with:
           lfs: true
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.0.0
+        uses: astral-sh/setup-uv@v7.6.0
         with:
-          version: "0.11.3"
+          version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: ./.github/actions/configure-git-auth
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.8
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -51,13 +60,24 @@ jobs:
         run: |
           echo "Python versions: ${{ steps.versions.outputs.list }}"
 
+      - id: os
+        run: |
+          OS_MATRIX=$(make -f .rhiza/rhiza.mk -s ci-os-matrix)
+          echo "list=$OS_MATRIX" >> "$GITHUB_OUTPUT"
+
+      - name: Debug OS matrix
+        run: |
+          echo "OS versions: ${{ steps.os.outputs.list }}"
+
   test:
+    # CI budget: ≤20 min (test matrix execution). Last measured: 2026-05-28.
+    timeout-minutes: 20
     needs: generate-matrix
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         python-version: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: ${{ fromJson(needs.generate-matrix.outputs.os_matrix) }}
       fail-fast: false
 
     steps:
@@ -67,19 +87,37 @@ jobs:
           lfs: true
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.0.0
+        id: install-uv
+        continue-on-error: true
+        uses: astral-sh/setup-uv@v7.6.0
         with:
-          version: "0.11.3"
+          version: "0.11.16"
+          python-version: ${{ matrix.python-version }}
+
+      - name: Retry uv installation
+        if: steps.install-uv.outcome == 'failure'
+        uses: astral-sh/setup-uv@v7.6.0
+        with:
+          version: "0.11.16"
           python-version: ${{ matrix.python-version }}
 
       - name: Configure git auth for private packages
-        uses: ./.github/actions/configure-git-auth
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.8
         with:
           token: ${{ secrets.GH_PAT }}
+
+      - name: Cache uv artifacts
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
 
       - name: Run tests
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        shell: bash
         run: |
           make test
 
@@ -92,8 +130,10 @@ jobs:
           if-no-files-found: ignore
 
 
-  typecheck:
-    name: Type checking
+  lowest-deps:
+    name: Lowest-direct dependency compatibility
+    # CI budget: ≤20 min (dependency compatibility test run). Last measured: 2026-05-28.
+    timeout-minutes: 20
     runs-on: ubuntu-latest
 
     steps:
@@ -102,10 +142,49 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7.6.0
         with:
-          version: "0.11.2"
+          version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: ./.github/actions/configure-git-auth
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.8
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Install .rhiza/requirements with lowest-direct resolution
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        run: |
+          uv sync --resolution lowest-direct
+          for req in .rhiza/requirements/*.txt; do
+            uv pip install --resolution lowest-direct -r "$req"
+          done
+
+      - name: Run tests with lowest-direct resolution
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        run: uv run --resolution lowest-direct pytest tests -q --ignore=tests/stress --ignore=tests/benchmarks
+
+  typecheck:
+    name: Type checking (Python ${{ matrix.python-version }})
+    # CI budget: ≤5 min (lint/typecheck quality gate). Last measured: 2026-05-28.
+    timeout-minutes: 5
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7.6.0
+        with:
+          version: "0.11.16"
+          python-version: ${{ matrix.python-version }}
+
+      - name: Configure git auth for private packages
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.8
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -118,6 +197,8 @@ jobs:
 
   deptry:
     name: Check dependencies with deptry
+    # CI budget: ≤5 min (lint/dependency hygiene check). Last measured: 2026-05-28.
+    timeout-minutes: 5
     runs-on: ubuntu-latest
 
     steps:
@@ -126,10 +207,10 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7.6.0
         with:
-          version: "0.11.2"
+          version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: ./.github/actions/configure-git-auth
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.8
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -138,13 +219,15 @@ jobs:
 
   pre-commit:
     name: Pre-commit hooks
+    # CI budget: ≤5 min (lint/format hooks). Last measured: 2026-05-28.
+    timeout-minutes: 5
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v6.0.2
 
       - name: Configure git auth for private packages
-        uses: ./.github/actions/configure-git-auth
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.8
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -152,27 +235,29 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.cache/pre-commit
-          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
           restore-keys: |
-            pre-commit-${{ runner.os }}-
+            ${{ runner.os }}-pre-commit-
 
       - name: Run pre-commit
         run: |
           make fmt
 
   docs-coverage:
+    # CI budget: ≤10 min (docs quality check). Last measured: 2026-05-28.
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.0.0
+        uses: astral-sh/setup-uv@v7.6.0
         with:
-          version: "0.11.3"
+          version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: ./.github/actions/configure-git-auth
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.8
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -183,6 +268,8 @@ jobs:
           make docs-coverage
 
   validation:
+    # CI budget: ≤5 min (validation quality gate). Last measured: 2026-05-28.
+    timeout-minutes: 5
     runs-on: ubuntu-latest
 
     steps:
@@ -194,10 +281,10 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7.6.0
         with:
-          version: "0.11.2"
+          version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: ./.github/actions/configure-git-auth
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.8
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -208,6 +295,8 @@ jobs:
 
   security:
     name: Security scanning
+    # CI budget: ≤10 min (security scanning and suppression audit). Last measured: 2026-05-28.
+    timeout-minutes: 10
     runs-on: ubuntu-latest
 
     steps:
@@ -216,10 +305,10 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7.6.0
         with:
-          version: "0.11.2"
+          version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: ./.github/actions/configure-git-auth
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.8
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -228,8 +317,16 @@ jobs:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: make security
 
+      - name: Fail stale CVE suppressions
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        run: |
+          uv run python .rhiza/utils/suppression_audit.py --fail-stale-nosec-cve
+
   license:
     name: License compliance scan
+    # CI budget: ≤10 min (license and artifact generation). Last measured: 2026-05-28.
+    timeout-minutes: 10
     runs-on: ubuntu-latest
 
     steps:
@@ -238,10 +335,10 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7.6.0
         with:
-          version: "0.11.2"
+          version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: ./.github/actions/configure-git-auth
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.8
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -262,56 +359,3 @@ jobs:
           name: LICENSES.md
           path: LICENSES.md
           if-no-files-found: ignore
-
-  coverage-badge:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6.0.2
-        with:
-          token: ${{ secrets.GH_PAT || github.token }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v8.0.0
-        with:
-          version: "0.11.3"
-
-      - name: Download coverage report
-        id: download-coverage
-        continue-on-error: true
-        uses: actions/download-artifact@v8
-        with:
-          name: coverage-report
-          path: _tests/
-
-      - name: Generate coverage badge
-        if: steps.download-coverage.outcome == 'success'
-        run: |
-          uvx "genbadge[coverage]" coverage -i _tests/coverage.xml -o /tmp/coverage-badge.svg
-
-      - name: Push badge to gh-pages
-        if: steps.download-coverage.outcome == 'success'
-        run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-
-          if git fetch origin gh-pages 2>/dev/null; then
-            git checkout gh-pages
-          else
-            git checkout --orphan gh-pages
-            git rm -rf .
-          fi
-
-          cp /tmp/coverage-badge.svg coverage-badge.svg
-          git add coverage-badge.svg
-
-          if ! git diff --staged --quiet; then
-            git commit -m "chore: update coverage badge [skip ci]"
-            git push origin gh-pages
-          else
-            echo "Coverage badge unchanged, skipping push"
-          fi

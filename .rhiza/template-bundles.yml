@@ -1,23 +1,39 @@
 # Rhiza Template Bundle Definitions
 #
-# This file defines template bundles - pre-configured sets of files that can be
-# included in downstream projects by selecting templates instead of listing
-# individual file paths.
+# This file defines two layers of configuration:
+#
+# 1. bundles: atomic, file-owning building blocks.
+#    Every synced file belongs to exactly one bundle. Feature bundles are
+#    local-first — they do not include hosted workflow files. GitHub Actions
+#    workflow files (thin wrappers that delegate to reusable workflows in
+#    jebel-quant/rhiza) live in dedicated github-<feature> overlay bundles.
+#
+#    File ownership is expressed through the filesystem: each bundle has a
+#    corresponding directory under bundles/<name>/ in this repository (23 bundles).
+#    Symlinks point to the real files; overlay bundles (github-*, gitlab-*)
+#    contain the actual injection files directly.
+#
+# 2. profiles: higher-level named presets that expand to a set of bundles.
+#    Profiles represent stable user intents (local-only, GitHub-hosted, etc.)
+#    and do not own files directly.
 #
 # Usage in downstream projects (.rhiza/template.yml):
 #
+#   # Profile-based (recommended — picks a sensible bundle set for your context):
+#   profiles:
+#     - local
+#
+#   # Bundle-based (advanced — full manual control):
 #   templates:
+#     - core
 #     - tests
-#     - docker
+#     - github
+#
+#   # Mixed (profile plus extra bundles):
+#   profiles:
+#     - github-project
+#   templates:
 #     - marimo
-#
-# Instead of manually listing:
-#
-#   include: |
-#     .rhiza/make.d/test.mk
-#     pytest.ini
-#     docker/Dockerfile
-#     ...
 
 # Bundle Definitions
 bundles:
@@ -28,66 +44,11 @@ bundles:
     description: "Core Rhiza infrastructure"
     required: true
     standalone: true
-    files:
-      # Core Rhiza files
-      - .rhiza/rhiza.mk
-      - .rhiza/.cfg.toml
-      - .rhiza/.env
-      - .rhiza/.gitignore
-      - .rhiza/.rhiza-version
-      - .rhiza/make.d/custom-env.mk
-      - .rhiza/make.d/docs.mk
-      - .rhiza/make.d/gh-aw.mk
-      - .rhiza/make.d/custom-task.mk
-      - .rhiza/make.d/quality.mk
-      - .rhiza/make.d/bootstrap.mk
-      - .rhiza/make.d/releasing.mk
-      - .rhiza/make.d/README.md
-      - .rhiza/docs
-      - .rhiza/assets
-      - .rhiza/requirements/README.md
-      - .rhiza/requirements/docs.txt
-      - .rhiza/requirements/tools.txt
-
-      # Root configuration files
-      - Makefile
-      - .pre-commit-config.yaml
-      - .editorconfig
-      - .gitignore
-      - .python-version
-      - ruff.toml
-
-      # Documentation files (user-facing docs)
-      - docs/SECURITY.md
-      - docs/ARCHITECTURE.md
-      - docs/CUSTOMIZATION.md
-      - docs/GLOSSARY.md
-      - docs/QUICK_REFERENCE.md
-      - docs/DEMO.md
 
   github:
-    description: "GitHub Actions workflows for CI/CD"
+    description: "GitHub repository configuration (actions, dependabot, templates, core workflows)"
     standalone: true
     requires: [core]
-    files:
-      - .rhiza/make.d/github.mk
-      - .rhiza/make.d/agentic.mk
-      # Core GitHub Actions workflows
-      - .github/workflows/copilot-setup-steps.yml
-      - .github/workflows/rhiza_sync.yml
-      - .github/workflows/rhiza_release.yml
-      - .github/workflows/rhiza_weekly.yml
-      - .github/actions/configure-git-auth
-      - .github/dependabot.yml
-      - .github/copilot-instructions.md
-      - .github/agents
-      - .github/hooks
-      - .github/secret_scanning.yml
-      - .rhiza/semgrep.yml
-      # Issue templates (config.yml excluded — contains repo-specific URLs)
-      - .github/ISSUE_TEMPLATE/bug_report.yml
-      - .github/ISSUE_TEMPLATE/feature_request.yml
-      - .github/DISCUSSION_TEMPLATE/q-and-a.yml
 
   # ============================================================================
   # RENOVATE - Automated dependency updates
@@ -96,9 +57,6 @@ bundles:
     description: "Renovate bot configuration for automated dependency updates"
     standalone: true
     requires: []
-    files:
-      # Renovate configuration
-      - renovate.json
 
   # ============================================================================
   # LEGAL - Legal and community files
@@ -107,16 +65,6 @@ bundles:
     description: "Legal and community documentation files"
     standalone: true
     requires: []
-    files:
-      # Legal files
-      - LICENSE
-
-      # Community files
-      - .rhiza/CONTRIBUTING.md
-      - .rhiza/CODE_OF_CONDUCT.md
-
-      # Security policy (root-level for GitHub visibility)
-      - SECURITY.md
 
   # ============================================================================
   # DEVCONTAINER - VS Code DevContainer configuration
@@ -125,15 +73,16 @@ bundles:
     description: "VS Code DevContainer configuration for consistent development environments"
     standalone: true
     requires: []
-    files:
-      # DevContainer configuration
-      - .devcontainer
+    recommends:
+      - github-devcontainer  # Add the GitHub Actions workflow for devcontainer image build validation
 
-      # Documentation
-      - docs/DEVCONTAINER.md
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_devcontainer.yml
+  # ============================================================================
+  # GITHUB-DEVCONTAINER - GitHub Actions workflow for devcontainer CI
+  # ============================================================================
+  github-devcontainer:
+    description: "GitHub Actions workflow stub for devcontainer image build validation"
+    standalone: true
+    requires: [devcontainer, github]
 
   # ============================================================================
   # DOCKER - Docker containerization support
@@ -142,18 +91,14 @@ bundles:
     description: "Docker containerization support for building and running containers"
     standalone: true
     requires: []
-    files:
-      # Docker configuration and files
-      - docker
 
-      # Make targets
-      - .rhiza/make.d/docker.mk
-
-      # Documentation
-      - docs/DOCKER.md
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_docker.yml
+  # ============================================================================
+  # GITHUB-DOCKER - GitHub Actions workflow for Docker lint and build validation
+  # ============================================================================
+  github-docker:
+    description: "GitHub Actions workflow stub for Docker lint, build, and security scan"
+    standalone: true
+    requires: [docker, github]
 
   # ============================================================================
   # LFS - Git Large File Storage support
@@ -162,12 +107,6 @@ bundles:
     description: "Git LFS (Large File Storage) installation and management"
     standalone: true
     requires: []
-    files:
-      # Make targets for LFS
-      - .rhiza/make.d/lfs.mk
-
-      # Documentation
-      - .rhiza/docs/LFS.md
 
   # ============================================================================
   # PRESENTATION - Presentation building with reveal.js
@@ -178,49 +117,75 @@ bundles:
     requires: []
     recommends:
       - marimo  # Presentations often use Marimo for interactive slides
-    files:
-      - .rhiza/make.d/presentation.mk
-      - docs/PRESENTATION.md
+
+  # ============================================================================
+  # PAPER - LaTeX paper compilation targets
+  # ============================================================================
+  paper:
+    description: "LaTeX paper compilation targets (make paper, make paper-clean)"
+    standalone: true
+    requires: []
+
+  # ============================================================================
+  # GITHUB-PAPER - GitHub Actions workflow for LaTeX paper compilation
+  # ============================================================================
+  github-paper:
+    description: "GitHub Actions workflow stub for LaTeX paper compilation and PDF publishing"
+    standalone: true
+    requires: [paper, github]
 
   # ============================================================================
   # GITLAB - GitLab CI/CD pipeline configuration
   # ============================================================================
   gitlab:
-    description: "GitLab CI/CD pipeline configuration and workflows"
+    description: "GitLab CI/CD pipeline configuration and core workflows (sync, release, weekly)"
     standalone: true
     requires: [core]
     notes: |
       GitLab workflows provide similar functionality to GitHub Actions.
-      Some workflows (like book, ci) may benefit from having their
-      corresponding feature templates (book, tests) also enabled.
-    files:
-      # Main GitLab CI configuration
-      - .gitlab-ci.yml
+      Add gitlab-tests, gitlab-marimo, or gitlab-book for feature-specific pipelines.
 
-      # GitLab workflow files
-      - .gitlab
+  # ============================================================================
+  # GITLAB-TESTS - GitLab CI pipeline for testing
+  # ============================================================================
+  gitlab-tests:
+    description: "GitLab CI pipeline for running tests (rhiza_ci)"
+    standalone: true
+    requires: [tests, gitlab]
+
+  # ============================================================================
+  # GITLAB-MARIMO - GitLab CI pipeline for Marimo notebooks
+  # ============================================================================
+  gitlab-marimo:
+    description: "GitLab CI pipeline for Marimo notebook execution"
+    standalone: true
+    requires: [marimo, gitlab]
+
+  # ============================================================================
+  # GITLAB-BOOK - GitLab CI pipeline for book/docs publishing
+  # ============================================================================
+  gitlab-book:
+    description: "GitLab CI pipeline for book/docs publishing to GitLab Pages"
+    standalone: true
+    requires: [book, gitlab]
 
   # ============================================================================
   # TESTS - Testing infrastructure with pytest, coverage, and type checking
   # ============================================================================
   tests:
-    description: "Testing infrastructure with pytest, coverage, and type checking"
+    description: "Local testing infrastructure with pytest, coverage, and type checking"
     standalone: true
-    requires: []
-    files:
-      # Make targets and configuration
-      - .rhiza/make.d/test.mk
-      - .rhiza/requirements/tests.txt
-      - pytest.ini
+    requires:
+      - book
+      - core
 
-      # Core/generic test files
-      - .rhiza/tests
-      - docs/TESTS.md
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_ci.yml
-      - .github/workflows/rhiza_codeql.yml
-      - .github/workflows/rhiza_weekly.yml
+  # ============================================================================
+  # GITHUB-TESTS - GitHub Actions workflows for CI
+  # ============================================================================
+  github-tests:
+    description: "GitHub Actions workflow stubs for CI (rhiza_ci, rhiza_codeql)"
+    standalone: true
+    requires: [tests, github]
 
   # ============================================================================
   # BENCHMARKS - Performance benchmarking with pytest-benchmark
@@ -230,33 +195,24 @@ bundles:
     standalone: false
     requires:
       - tests  # Required: benchmarks depend on the test infrastructure
-    files:
-      # Benchmark test infrastructure
-      - tests/benchmarks
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_benchmarks.yml
 
   # ============================================================================
   # MARIMO - Interactive Marimo notebooks
   # ============================================================================
   marimo:
     description: "Interactive Marimo notebooks for data exploration and documentation"
+    standalone: false
+    requires:
+      - book
+      - core
+
+  # ============================================================================
+  # GITHUB-MARIMO - GitHub Actions workflow for Marimo notebooks
+  # ============================================================================
+  github-marimo:
+    description: "GitHub Actions workflow stub for Marimo notebook publishing"
     standalone: true
-    requires: []
-    files:
-      # Marimo configuration
-      - .rhiza/make.d/marimo.mk
-      - .rhiza/requirements/marimo.txt
-
-      # Marimo notebooks directory
-      - book/marimo/notebooks
-
-      # Documentation
-      - docs/MARIMO.md
-
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_marimo.yml
+    requires: [marimo, github]
 
   # ============================================================================
   # BOOK - Documentation book generation
@@ -264,27 +220,30 @@ bundles:
   book:
     description: |
       Comprehensive documentation book generation combining:
-      - API documentation (pdoc)
+      - Documentation site (MkDocs + zensical)
       - Interactive notebooks (if marimo is enabled)
       - Test coverage reports and results (if tests bundle is also enabled)
     standalone: true
-    requires: []
+    requires:
+      - core
     recommends:
       - tests   # Optional: book includes coverage and test reports when tests are enabled
       - marimo  # Optional: book works better with notebook exports
-    files:
-      # Book building configuration
-      - .rhiza/make.d/book.mk
 
-      # GitHub Actions workflows
-      - .github/workflows/rhiza_book.yml
+  # ============================================================================
+  # GITHUB-BOOK - GitHub Actions workflow for book/docs publishing
+  # ============================================================================
+  github-book:
+    description: "GitHub Actions workflow stub for book/docs publishing to GitHub Pages"
+    standalone: true
+    requires: [book, github]
 
   # ============================================================================
   # GH-AW - GitHub Agentic Workflows
   # ============================================================================
   gh-aw:
     description: "GitHub Agentic Workflows for AI-driven repository automation"
-    standalone: true
+    standalone: false
     requires: [github]
     recommends: [tests]
     notes: |
@@ -293,17 +252,86 @@ bundles:
       - Starter workflow templates
       - CI validation for lock file freshness
       - Documentation
-    files:
-      # Makefile extensions
-      - .rhiza/make.d/gh-aw.mk
+      Note: gh-aw is inherently GitHub-specific and has no local-only split.
 
-      # Starter agentic workflows
-      - .github/workflows/daily-repo-status.md
-      - .github/workflows/ci-doctor.md
-      - .github/workflows/issue-triage.md
+# ==============================================================================
+# PROFILE DEFINITIONS
+#
+# Profiles are higher-level named presets that expand to a set of bundles.
+# They represent stable user intents (local-only, GitHub-hosted, etc.) and do
+# not own files directly.
+#
+# Rules:
+#   - profiles reference bundles only, not raw file paths
+#   - selecting a profile is equivalent to selecting all its constituent bundles
+#   - users may combine profiles with additional manual bundle selection
+#
+# Usage in .rhiza/template.yml:
+#
+#   profiles:
+#     - local
+#
+#   # or combined with extra bundles:
+#   profiles:
+#     - github-project
+#   templates:
+#     - marimo
+#     - github-marimo
+# ==============================================================================
+profiles:
 
-      # CI validation workflow
-      - .github/workflows/rhiza_gh-aw-validate.yml
+  # ============================================================================
+  # LOCAL - Local-first development with no hosted workflows
+  # ============================================================================
+  local:
+    description: |
+      Local-first development setup with no hosted CI/CD workflow files.
+      Suitable for:
+        - experiments and research codebases
+        - early-stage projects not yet ready for hosted automation
+        - projects hosted privately or on platforms other than GitHub/GitLab
+      Includes core infrastructure, testing tooling, and documentation.
+      No .github/workflows/* files are synced.
+    bundles:
+      - core
+      - book
+      - marimo
+      - tests
 
-      # Documentation
-      - docs/GH_AW.md
+  # ============================================================================
+  # GITHUB-PROJECT - Standard GitHub-hosted project
+  # ============================================================================
+  github-project:
+    description: |
+      Standard GitHub-hosted project.
+      Suitable for open-source or team projects hosted on GitHub.
+      Includes core infrastructure, GitHub repository configuration,
+      testing tooling, documentation, notebooks, and hosted CI workflows.
+    bundles:
+      - core
+      - github
+      - book
+      - marimo
+      - tests
+      - github-book
+      - github-marimo
+      - github-tests
+
+  # ============================================================================
+  # GITLAB-PROJECT - Standard GitLab-hosted project
+  # ============================================================================
+  gitlab-project:
+    description: |
+      Standard GitLab-hosted project with GitLab CI/CD pipelines.
+      Suitable for projects hosted on GitLab.com or a self-hosted GitLab instance.
+      Includes core infrastructure, testing tooling, documentation,
+      and GitLab CI pipelines. No .github/ files are synced.
+    bundles:
+      - core
+      - gitlab
+      - book
+      - marimo
+      - tests
+      - gitlab-book
+      - gitlab-marimo
+      - gitlab-tests

@@ -1,10 +1,18 @@
-name: (RHIZA) SYNC
-# Synchronizes the repository with its rhiza template.
-# - On Renovate/rhiza branch push: auto-commits synced files directly to the branch.
-# - On schedule/dispatch: opens a pull request with the synced changes.
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Sync
+#
+# Purpose: Synchronizes the repository with its upstream rhiza template.
+#          On Renovate/rhiza branch push: auto-commits synced files directly
+#          to the branch. On schedule/dispatch: opens a pull request.
 #
 # IMPORTANT: A PAT with 'workflow' scope (PAT_TOKEN) is required when workflow
-# files are modified. See .rhiza/docs/TOKEN_SETUP.md for setup instructions.
+#            files are modified. See .github/CONFIG.md for setup instructions.
+#
+# Trigger: On Renovate/rhiza branch push, weekly schedule, and manual dispatch.
+
+name: "(RHIZA) SYNC"
 
 permissions:
   contents: write
@@ -25,11 +33,24 @@ on:
         description: "Create a pull request"
         type: boolean
         default: true
+  workflow_call:
+    inputs:
+      direct:
+        description: "Run sync-direct (commit to branch) instead of sync-pr"
+        type: boolean
+        default: false
+      create-pr:
+        description: "Create a pull request (sync-pr mode only)"
+        type: boolean
+        default: true
+    secrets:
+      PAT_TOKEN:
+        required: false
 
 jobs:
   sync-direct:
     name: Sync and commit (Renovate)
-    if: github.event_name == 'push' && github.repository != 'jebel-quant/rhiza'
+    if: (github.event_name == 'push' || inputs.direct == true) && github.repository != 'jebel-quant/rhiza'
     runs-on: ubuntu-latest
 
     steps:
@@ -47,7 +68,7 @@ jobs:
           if [ -z "$PAT_TOKEN" ]; then
             echo "::warning::PAT_TOKEN secret is not configured."
             echo "::warning::If this sync modifies workflow files, the push will fail."
-            echo "::warning::See .rhiza/docs/TOKEN_SETUP.md for setup instructions."
+            echo "::warning::See .github/CONFIG.md for setup instructions."
           else
             echo "✓ PAT_TOKEN is configured."
           fi
@@ -101,7 +122,7 @@ jobs:
 
   sync-pr:
     name: Sync and open PR (scheduled/manual)
-    if: github.event_name != 'push' && github.repository != 'jebel-quant/rhiza'
+    if: github.event_name != 'push' && inputs.direct != true && github.repository != 'jebel-quant/rhiza'
     runs-on: ubuntu-latest
 
     steps:
@@ -124,13 +145,13 @@ jobs:
           if [ -z "$PAT_TOKEN" ]; then
             echo "::warning::PAT_TOKEN secret is not configured."
             echo "::warning::If this sync modifies workflow files, the push will fail."
-            echo "::warning::See .rhiza/docs/TOKEN_SETUP.md for setup instructions."
+            echo "::warning::See .github/CONFIG.md for setup instructions."
           else
             echo "✓ PAT_TOKEN is configured."
           fi
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.0.0
+        uses: astral-sh/setup-uv@v7.6.0
 
       - name: Get Rhiza version
         id: rhiza-version
@@ -170,7 +191,7 @@ jobs:
         if: >
           (github.event_name == 'schedule' || inputs.create-pr == true)
           && steps.sync.outputs.changes_detected == 'true'
-        uses: peter-evans/create-pull-request@v8.1.0
+        uses: peter-evans/create-pull-request@v8.1.1
         with:
           token: ${{ secrets.PAT_TOKEN || github.token }}
           base: ${{ github.event.repository.default_branch }}

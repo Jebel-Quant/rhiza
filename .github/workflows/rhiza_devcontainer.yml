@@ -48,6 +48,8 @@ on:
       - ".devcontainer/**"
       - ".github/workflows/rhiza_devcontainer.yml"
 
+  workflow_call:
+
 permissions:
   contents: read
   packages: write
@@ -70,7 +72,7 @@ jobs:
           echo "registry=$REGISTRY" >> "$GITHUB_OUTPUT"
 
       - name: Login to Container Registry
-        uses: docker/login-action@v4.1.0
+        uses: docker/login-action@v4.2.0
         with:
           registry: ${{ steps.registry.outputs.registry }}
           username: ${{ github.repository_owner }}

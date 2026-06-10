@@ -1,0 +1,126 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Continuous Integration (GitLab CI)
+#
+# Purpose: Run tests on multiple Python versions, check dependencies, run
+#          pre-commit hooks, verify documentation coverage, validate the
+#          project, run security scans, and check license compliance.
+#
+# Trigger: On push and merge requests.
+
+ci:test:
+  # CI budget: ≤20 min (test matrix execution). Last measured: 2026-05-28.
+  timeout: 20m
+  stage: test
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  parallel:
+    matrix:
+      - PYTHON_VERSION: ["3.11", "3.12", "3.13", "3.14"]
+  variables:
+    GIT_LFS_SKIP_SMUDGE: "0"
+  before_script:
+    - apt-get update && apt-get install -y git-lfs chromium
+    - git lfs pull
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  script:
+    - echo "Testing with Python $PYTHON_VERSION"
+    - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
+    - uv venv --python ${PYTHON_VERSION}
+    - make -f .rhiza/rhiza.mk test
+
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ci:docs-coverage:
+  # CI budget: ≤10 min (docs quality check). Last measured: 2026-05-28.
+  timeout: 10m
+  stage: test
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
+    - uv venv
+    - make -f .rhiza/rhiza.mk docs-coverage
+
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ci:typecheck:
+  # CI budget: ≤5 min (lint/typecheck quality gate). Last measured: 2026-05-28.
+  timeout: 5m
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
+    - uv venv
+    - make typecheck
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ci:deptry:
+  # CI budget: ≤5 min (lint/dependency hygiene check). Last measured: 2026-05-28.
+  timeout: 5m
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - make deptry
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ci:pre-commit:
+  # CI budget: ≤5 min (lint/format hooks). Last measured: 2026-05-28.
+  timeout: 5m
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - make fmt
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ci:validate:
+  # CI budget: ≤5 min (validation quality gate). Last measured: 2026-05-28.
+  timeout: 5m
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - make validate
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ci:security:
+  # CI budget: ≤10 min (security scanning). Last measured: 2026-05-28.
+  timeout: 10m
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
+    - uv venv
+    - make security
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+ci:license:
+  # CI budget: ≤10 min (license compliance scan). Last measured: 2026-05-28.
+  timeout: 10m
+  stage: test
+  needs: []
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  script:
+    - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
+    - uv venv
+    - make license
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH

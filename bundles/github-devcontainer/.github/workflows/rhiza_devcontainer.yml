@@ -1,0 +1,37 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Devcontainer CI
+#
+# Purpose: Validates that the devcontainer image builds successfully when
+#          devcontainer-related files change. Does not push the image.
+#
+# Trigger: On push to any branch or pull_request when .devcontainer/** changes.
+
+name: (RHIZA) DEVCONTAINER
+
+permissions:
+  contents: read
+  packages: write
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - ".devcontainer/**"
+      - ".github/workflows/rhiza_devcontainer.yml"
+
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - ".devcontainer/**"
+      - ".github/workflows/rhiza_devcontainer.yml"
+
+jobs:
+  devcontainer:
+    uses: jebel-quant/rhiza/.github/workflows/rhiza_devcontainer.yml@v0.18.7
+    secrets: inherit
+    permissions:
+      contents: read
+      packages: write

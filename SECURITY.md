@@ -6,9 +6,9 @@ We actively support the following versions with security updates:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.8.x   | :white_check_mark: |
-| 0.7.x   | :white_check_mark: |
-| < 0.7   | :x:                |
+| 0.14.x  | :white_check_mark: |
+| 0.13.x  | :white_check_mark: |
+| < 0.13  | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -26,7 +26,7 @@ Instead, please report them via one of the following methods:
    - Fill in the details and submit
 
 2. **Email**
-   - Send details to the repository maintainers
+   - Send details to `thomas.s@yukkalab.com`
    - Include "SECURITY" in the subject line
 
 ### What to Include
@@ -52,7 +52,6 @@ This security policy applies to:
 
 - The Rhiza template system and configuration files
 - GitHub Actions workflows provided by this repository
-- Shell scripts in `.rhiza/scripts/`
 - Python utilities in `.rhiza/utils/`
 
 ### Out of Scope

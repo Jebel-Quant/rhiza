@@ -1,3 +1,15 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Validate Agentic Workflows
+#
+# Purpose: Ensures that agentic workflow lock files (.lock.yml) are up to date
+#          with their Markdown sources. Fails if any .lock.yml is stale after
+#          running `gh aw compile`. Skips gracefully when the gh-aw extension
+#          is not yet available.
+#
+# Trigger: On pull requests and pushes to main when .github/workflows/*.md changes.
+
 name: "(RHIZA) VALIDATE AGENTIC WORKFLOWS"
 
 permissions:
@@ -11,6 +23,7 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/*.md"
+  workflow_call:
 
 jobs:
   validate:

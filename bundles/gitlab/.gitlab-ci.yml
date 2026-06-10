@@ -1,0 +1,142 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# GitLab CI/CD Main Configuration
+#
+# This file includes all individual workflow files from .gitlab/workflows/
+# and defines the pipeline structure for the rhiza project.
+#
+# Workflows included:
+#   - CI: Run tests on multiple Python versions
+#   - QUALITY: Dependency checks, pre-commit hooks, docs coverage, link checking
+#   - MARIMO: Discover and execute Marimo notebooks
+#   - PAPER: Build paper/report artifacts
+#   - BOOK: Build and deploy documentation
+#   - SYNC: Synchronize with template repository
+#   - RELEASE: Release workflow for tags
+#   - RENOVATE: Automated dependency updates (scheduled)
+#   - WEEKLY: Semgrep, license, and deptry checks (scheduled)
+
+# Define pipeline stages
+stages:
+  - .pre          # Pre-pipeline jobs (matrix generation, validation)
+  - build         # Build jobs
+  - test          # Test jobs (CI, marimo, validate, deptry, pre-commit)
+  - deploy        # Deployment jobs (pages, sync)
+  - .post         # Post-pipeline jobs (finalization)
+
+# Default settings for all jobs
+default:
+  # Retry failed jobs once
+  retry:
+    max: 1
+    when:
+      - runner_system_failure
+      - stuck_or_timeout_failure
+
+# Include individual workflow files
+# These files are organised by purpose and mirror the GitHub Actions structure
+
+# CI/CD Testing Workflows
+include:
+  # Continuous Integration - Python matrix testing
+  - local: '.gitlab/workflows/rhiza_ci.yml'
+    rules:
+      - if: $CI_COMMIT_TAG
+        when: never
+      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      - if: $CI_COMMIT_BRANCH
+
+  # Quality - Dependency checks, pre-commit hooks, docs coverage, link checking
+  - local: '.gitlab/workflows/rhiza_quality.yml'
+    rules:
+      - if: $CI_COMMIT_TAG
+        when: never
+      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      - if: $CI_COMMIT_BRANCH
+
+  # Marimo Notebooks - Run and publish notebook artefacts
+  - local: '.gitlab/workflows/rhiza_marimo.yml'
+    rules:
+      - if: $CI_COMMIT_TAG
+        when: never
+      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      - if: $CI_COMMIT_BRANCH == "main"
+      - if: $CI_COMMIT_BRANCH == "master"
+
+  # Paper - Build paper/report artifacts
+  - local: '.gitlab/workflows/rhiza_paper.yml'
+    rules:
+      - if: $CI_COMMIT_TAG
+        when: never
+      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      - if: $CI_COMMIT_BRANCH
+
+# Deployment Workflows
+  # Book - Build and deploy documentation to GitLab Pages
+  - local: '.gitlab/workflows/rhiza_book.yml'
+    rules:
+      - if: $CI_COMMIT_TAG
+        when: never
+      - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      - if: $CI_COMMIT_BRANCH == "main"
+      - if: $CI_COMMIT_BRANCH == "master"
+
+  # Sync - Synchronize with template repository
+  - local: '.gitlab/workflows/rhiza_sync.yml'
+    rules:
+        # Automatic sync for scheduled pipelines
+        - if: '$CI_PIPELINE_SOURCE == "schedule"'
+          when: always
+
+        # Automatic sync when triggered from the UI
+        - if: '$CI_PIPELINE_SOURCE == "web"'
+          when: always
+
+        - when: never
+
+  # Renovate - Automated dependency updates (scheduled)
+  - local: '.gitlab/workflows/rhiza_renovate.yml'
+    rules:
+      - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        when: always
+      - when: never
+
+  # Weekly - Semgrep, license checks, deptry (scheduled)
+  - local: '.gitlab/workflows/rhiza_weekly.yml'
+    rules:
+      - if: '$CI_PIPELINE_SOURCE == "schedule"'
+        when: always
+      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      - when: never
+
+
+# Release Workflow
+  # Release - Create releases and publish packages
+  - local: '.gitlab/workflows/rhiza_release.yml'
+    rules:
+      - if: $CI_COMMIT_TAG =~ /^v.*/
+
+# Variables that can be overridden per project
+# These are the same variables used in GitHub Actions workflows
+variables:
+  # UV package manager configuration
+  UV_EXTRA_INDEX_URL: ""
+
+  # PyPI configuration
+  PYPI_REPOSITORY_URL: ""
+
+  # Documentation configuration
+  PUBLISH_COMPANION_BOOK: "true"
+
+  # Sync configuration
+  CREATE_MR: "true"
+
+# Job templates for reusable configuration
+.python_base:
+  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  before_script:
+    - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
+    - uv python install $(cat .python-version)
+    - uv sync --all-extras --all-groups --frozen

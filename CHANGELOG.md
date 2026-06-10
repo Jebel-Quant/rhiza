@@ -1,0 +1,1042 @@
+## [0.18.9] - 2026-06-10
+
+### 💼 Other
+
+- Bump version 0.18.8 → 0.18.9
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.8 [skip ci]
+## [0.18.8] - 2026-06-06
+
+### 💼 Other
+
+- Update workflow references to version 0.18.7
+- Bump version 0.18.7 → 0.18.8
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.7 [skip ci]
+## [0.18.7] - 2026-06-06
+
+### 🐛 Bug Fixes
+
+- *(ci)* Install chromium in GitLab CI jobs for kaleido/plotly image export
+- *(ci)* Use versioned remote ref for configure-git-auth action (#1143)
+
+### 💼 Other
+
+- Bump version 0.18.6 → 0.18.7
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.6 [skip ci]
+## [0.18.6] - 2026-06-04
+
+### 💼 Other
+
+- Bump version 0.18.5 → 0.18.6
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.5 [skip ci]
+## [0.18.5] - 2026-05-31
+
+### 🚀 Features
+
+- *(devcontainer)* Link github-devcontainer overlay via recommends and add bundle combination tests (#1129)
+- Add mutation testing via mutmut (#1138)
+
+### 💼 Other
+
+- Bump version 0.18.4 → 0.18.5
+
+### 🚜 Refactor
+
+- *(tests)* Move rhiza-specific tests to correct locations (#1139)
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.4 [skip ci]
+- Skip book workflow on forks
+- Bump workflow stubs v0.16.0 → v0.18.4 in bundles
+- Enforce monotonic release tags and align pyproject sync tests (#1133)
+## [0.18.4] - 2026-05-28
+
+### 💼 Other
+
+- Bump version 0.18.3 → 0.18.4
+
+### 🚜 Refactor
+
+- Move test_lfs.py to lfs bundle, test_gh_aw/github targets to gh-aw bundle
+- Move test-pyproject target and test file to tests bundle
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.3 [skip ci]
+## [0.18.3] - 2026-05-28
+
+### 🐛 Bug Fixes
+
+- Resolve Windows CI failures and reduce LFS skip noise
+- Comment out optional_dirs check in test_root_contains_expected_directories
+- Sync bundle copy of test_project_layout.py with root .rhiza/
+
+### 💼 Other
+
+- Bump version 0.18.2 → 0.18.3
+
+### 🚜 Refactor
+
+- Move rhiza-only tests from .rhiza/tests/ to tests/
+- Delete test_lfs_structure.py, fold existence checks into integration
+- Delete test_completions.py and test_config_files.py from structure/
+
+### 🧪 Testing
+
+- Add lint dependency group check to test-pyproject
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.2 [skip ci]
+## [0.18.2] - 2026-05-28
+
+### 🚀 Features
+
+- Group bundles by platform in explain-bundles output
+
+### 💼 Other
+
+- Bump version 0.18.1 → 0.18.2
+
+### 🧪 Testing
+
+- Add bundle-root sync check and fix all stale bundle files
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.1 [skip ci]
+- Align core bundle doctor.mk with .rhiza version
+- Sync ty version constraint in core bundle with .rhiza
+## [0.18.1] - 2026-05-28
+
+### 💼 Other
+
+- Bump version 0.18.0 → 0.18.1
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.0 [skip ci]
+- Rename pyproject.toml to .template and centralize test fixtures (#1125)
+## [0.18.0] - 2026-05-28
+
+### 🚀 Features
+
+- *(ci)* Add lowest-deps job to rhiza_ci workflow
+- *(ci)* Run typecheck job across full Python version matrix
+- Add make explain-bundles onboarding target
+
+### 🐛 Bug Fixes
+
+- Quote pre-commit entry to fix YAML syntax error in no-rej-files hook
+- Bump pyyaml lower bound to 6.0.1 to fix lowest-deps build failure
+- *(ci)* Install .rhiza/requirements in lowest-deps job
+- *(ci)* Run uv sync before pip install in lowest-deps job
+- *(ci)* Pass GITLEAKS_LICENSE through reusable CI workflow (#1106)
+
+### 💼 Other
+
+- Parallelize `make test` and bound Marimo notebook runtime (#1107)
+- Add `make doctor` diagnostics and bundle-sync troubleshooting guide (#1114)
+- Enforce per-job time budgets and standardize cache keys (#1118)
+- Add docs build cache/timing and benchmark baseline workflow (#1123)
+- Bump version 0.17.0 → 0.18.0
+
+### 📚 Documentation
+
+- Add comprehensive repository quality analysis
+- Document GNU Make requirement and add BSD make guard
+- Add bundle dependency map to glossary (#1085)
+- Add worked “new bundle” tutorial to EXTENDING_RHIZA (#1102)
+- Revisit README and document downstream expectations (#1124)
+
+### 🧪 Testing
+
+- Enforce required Renovate manager coverage in validation test
+- Add end-to-end downstream sync test for minimal git repo (#1087)
+- *(bundles)* Add bundle×platform compatibility matrix (144 parametrized cases) (#1103)
+- Add global pytest timeout and sync failure-mode coverage (#1119)
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.17.0 [skip ci]
+- Add pytest-xdist to test requirements
+- Remove stale Claude agent worktree references
+## [0.17.0] - 2026-05-27
+
+### 💼 Other
+
+- Bump version 0.16.0 → 0.17.0
+
+### 📚 Documentation
+
+- *(github)* Explain why rhiza_release cannot use a workflow stub
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.16.0 [skip ci]
+## [0.16.0] - 2026-05-27
+
+### 🚀 Features
+
+- Add workflow_call support to rhiza_release workflow
+- Add workflow_call support to weekly and gh-aw-validate workflows
+
+### 🐛 Bug Fixes
+
+- *(book)* Run docs server via uv in `serve` target (#1074)
+
+### 💼 Other
+
+- Bump version 0.15.3 → 0.16.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.15.3 [skip ci]
+- Add CodeFactor config to exclude bundles/ from analysis
+- Add .codefactor.yml to core bundle
+- Remove .codefactor.yml from core bundle
+- Bump workflow stubs to rhiza v0.16.0
+## [0.15.3] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- Pin configure-git-auth action to v0.15.2 instead of @main
+- Downgrade setup-uv from v8.1.0 to v7.6.0
+
+### 💼 Other
+
+- Bump version 0.15.2 → 0.15.3
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.15.2 [skip ci]
+## [0.15.2] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- Strip whitespace from PYTHON_VERSION read from .python-version
+
+### 💼 Other
+
+- Bump version 0.15.1 → 0.15.2
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.15.1 [skip ci]
+## [0.15.1] - 2026-05-26
+
+### 🐛 Bug Fixes
+
+- Skip test_bundles_directory_exists in downstream repos
+- Correct release workflow trigger assertions in test_workflow_stubs
+
+### 💼 Other
+
+- Bump version 0.15.0 → 0.16.1
+- Bump version 0.15.0 → 0.15.1
+
+### 🧪 Testing
+
+- Add 75 new tests across bundle content, combinations, and sync
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.15.0 [skip ci]
+- Register kaleido pytest mark in pytest.ini
+## [0.15.0] - 2026-05-26
+
+### 🚀 Features
+
+- Overhaul bundle structure, testing, and GitHub workflows (#1072)
+
+### 💼 Other
+
+- Bump version 0.14.0 → 0.15.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.14.0 [skip ci]
+## [0.14.0] - 2026-05-25
+
+### 🚀 Features
+
+- Introduce bundle-centric directory layout (#1071)
+
+### 💼 Other
+
+- Bump version 0.13.3 → 0.14.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.13.3 [skip ci]
+## [0.13.3] - 2026-05-25
+
+### 🐛 Bug Fixes
+
+- Use absolute action reference for configure-git-auth
+- Use absolute action reference for configure-git-auth
+- Use absolute action reference for configure-git-auth
+- Remove tests asserting unexpanded reusable workflow jobs (#1070)
+
+### 💼 Other
+
+- Bump version 0.13.2 → 0.13.3
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.13.2 [skip ci]
+## [0.13.2] - 2026-05-25
+
+### 🚀 Features
+
+- Add workflow_call support and github-specific workflow bundles
+
+### 💼 Other
+
+- Bump version 0.13.1 → 0.13.2
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.13.1 [skip ci]
+## [0.13.1] - 2026-05-25
+
+### 🐛 Bug Fixes
+
+- Add github as dependency of github-book, github-marimo, github-tests
+
+### 💼 Other
+
+- Bump version 0.13.0 → 0.13.1
+
+### 🧪 Testing
+
+- Add bundle reliability tests and fix book.mk ownership conflict (#1068)
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.13.0 [skip ci]
+## [0.13.0] - 2026-05-25
+
+### 🚀 Features
+
+- Add workflow stubs and granular gitlab/github bundles
+
+### 🐛 Bug Fixes
+
+- Handle {source, dest} dict entries in template bundle tests
+
+### 💼 Other
+
+- Bump version 0.12.0 → 0.13.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump .rhiza-version to 0.15.0 (#1067)
+## [0.12.0] - 2026-05-24
+
+### 🚀 Features
+
+- Remove .github/workflows from template bundles
+
+### 💼 Other
+
+- Bump version 0.11.0 → 0.12.0
+## [0.11.3] - 2026-05-24
+
+### 🚀 Features
+
+- Add workflow_call trigger to support reusable workflow usage
+- Add workflow_call trigger with direct/create-pr inputs
+## [0.11.2] - 2026-05-24
+
+### 🚀 Features
+
+- Add workflow_call trigger to support reusable workflow usage
+- Add workflow_call trigger to support reusable workflow usage
+## [0.11.1] - 2026-05-24
+
+### 🚀 Features
+
+- Add workflow_call trigger to support reusable workflow usage
+
+### 🐛 Bug Fixes
+
+- Remove tests for generate-matrix/test jobs no longer in ci workflow
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.11.0 [skip ci]
+## [0.11.0] - 2026-05-24
+
+### 🚀 Features
+
+- Add RHIZA_SYNC_SCHEDULE variable to override default sync cron (#955)
+
+### 💼 Other
+
+- Update template-bundles and bump version 0.12.1 → 0.14.1
+- Bump version 0.10.9 → 0.11.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.10.9 [skip ci]
+## [0.10.9] - 2026-05-22
+
+### 💼 Other
+
+- Bump version 0.10.8 → 0.10.9
+## [0.10.8] - 2026-05-22
+
+### 🚀 Features
+
+- Update CHANGELOG.md on every release via git-cliff (#1052)
+
+### 🐛 Bug Fixes
+
+- *(docker)* Upgrade pip to 26.1 to fix CVE-2026-6357 (#1058)
+
+### 💼 Other
+
+- Bump version 0.10.7 → 0.10.8
+
+### ⚙️ Miscellaneous Tasks
+
+- Generate CHANGELOG.md with git-cliff
+## [0.10.7] - 2026-05-17
+
+### 🚀 Features
+
+- *(ci)* Parameterize CI OS matrix via RHIZA_CI_OS_MATRIX (#1040)
+
+### 💼 Other
+
+- Bump version 0.10.6 → 0.10.7
+## [0.10.6] - 2026-05-06
+
+### 🚀 Features
+
+- Introduce layered bundle/profile model with local-first bundles (#1028)
+
+### 🐛 Bug Fixes
+
+- *(tests)* Skip GitHub-specific security checks when github bundle not included (#1027)
+
+### 💼 Other
+
+- Bump version 0.10.5 → 0.10.6
+
+### ⚙️ Miscellaneous Tasks
+
+- Restore renovate.json
+## [0.10.5] - 2026-04-29
+
+### 🚀 Features
+
+- *(ci)* Add coverage regex to ci:test job
+- Add no-python-cache-files local pre-commit hook (#1026)
+
+### 💼 Other
+
+- Bump version 0.10.4 → 0.10.5
+## [0.10.4] - 2026-04-27
+
+### 🚀 Features
+
+- Move semgrep.yml from .github to .rhiza (#1020)
+
+### 🐛 Bug Fixes
+
+- Ensure _book output dir exists before touching .nojekyll
+- *(book)* Pin zensical>=0.0.36 to avoid stale CI cache resolving broken older version
+
+### 💼 Other
+
+- Bump version 0.10.3 → 0.10.4
+## [0.10.3] - 2026-04-25
+
+### 🚀 Features
+
+- *(core)* Add .rhiza/utils to core bundle
+
+### 🐛 Bug Fixes
+
+- *(security)* Warn on tooling CVEs, fail only on runtime dep vulnerabilities (#1016)
+
+### 💼 Other
+
+- Bump version 0.10.2 → 0.10.3
+## [0.10.2] - 2026-04-22
+
+### 🐛 Bug Fixes
+
+- *(ci)* Use git lfs install --force to avoid hook conflict on runners
+- *(ci)* Use git lfs install --force to avoid hook conflict on runners
+
+### 💼 Other
+
+- Bump version 0.10.1 → 0.10.2
+
+### ⚙️ Miscellaneous Tasks
+
+- Replace removed workflows with current rhiza equivalents
+## [0.10.1] - 2026-04-18
+
+### 💼 Other
+
+- Bump version 0.10.0 → 0.10.1
+## [0.10.0] - 2026-04-17
+
+### 🚀 Features
+
+- Add .bandit INI file as single source of truth for bandit configuration (#997)
+
+### 💼 Other
+
+- Replace `uvx uv run` with `uv run --script` in marimo workflow (#1004)
+- Bump version 0.9.5 → 0.10.0
+
+### 🚜 Refactor
+
+- Move `adr` target from root Makefile to `.rhiza/make.d/gh-aw.mk` (#1011)
+
+### 📚 Documentation
+
+- Fix template documentation issues from Copilot review (#999)
+
+### 🧪 Testing
+
+- Add tests for rhiza_weekly.yml jobs and Makefile targets (#994)
+## [0.9.5] - 2026-04-13
+
+### 💼 Other
+
+- Add CI job to catch unresolved .rej patch files
+- Extend conflict check to also catch merge conflict markers
+- Bump version 0.9.4 → 0.9.5
+## [0.9.4] - 2026-04-13
+
+### 💼 Other
+
+- Bump version 0.9.3 → 0.9.4
+## [0.9.3] - 2026-04-13
+
+### 🚀 Features
+
+- *(core)* Add important docs files and folders to core bundle (#991)
+
+### 💼 Other
+
+- Bump version 0.9.2 → 0.9.3
+## [0.9.2] - 2026-04-12
+
+### 💼 Other
+
+- Bump version 0.9.1 → 0.9.2
+## [0.9.1] - 2026-04-12
+
+### 🚀 Features
+
+- *(docs.mk)* Add MKDOCS_EXTRA_PACKAGES to extend uvx package list without editing template (#975)
+- *(gitlab)* Bring GitLab rhiza_validate to parity with GitHub Actions equivalent (#952)
+
+### 🐛 Bug Fixes
+
+- *(book)* Use MARIMO_FOLDER in _book-notebooks, fix double-nested links, narrow .gitignore (#973)
+
+### 💼 Other
+
+- Bump version 0.9.0 → 0.9.1
+## [0.9.0] - 2026-04-03
+
+### 💼 Other
+
+- Bump version 0.8.21 → 0.9.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Merge origin/main into main, keep workflow consolidation from release/v0.8.21
+## [0.8.21] - 2026-04-03
+
+### 🚀 Features
+
+- Add suppression-audit makefile target (#896)
+- Use git-cliff for release notes in rhiza_release.yml (#901)
+- Add lychee link check workflow and fix make security (#906)
+- Add `license` make target to quality.mk for license compliance scanning (#914)
+- Add rhiza_paper.yml — LaTeX paper compilation workflow (#920)
+- Exclude recipe/meta.yaml from check-yaml pre-commit hook (#931)
+- Relocate Marimo notebooks to docs/notebooks (#939)
+- Add .gitlab/workflows/rhiza_quality.yml as GitLab equivalent of GitHub quality workflow (#950)
+- Add `license` make target to quality.mk for license compliance scanning (#914)
+
+### 🐛 Bug Fixes
+
+- Analyse-repo target uses Claude CLI instead of Copilot CLI (#902)
+- Resolve broken file references in README and template bundles
+- Update rhiza_paper.yml paths from paper/ to docs/paper/
+
+### 💼 Other
+
+- Bump version 0.8.16 → 0.8.17
+- Bump version 0.8.20 → 0.8.21
+
+### 🚜 Refactor
+
+- Consolidate individual rhiza_ CI workflows into rhiza_quality and rhiza_validate (#940)
+
+### 📚 Documentation
+
+- Update requirements README to reflect current dependencies
+- Clean up README formatting and remove outdated references
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove branch-based trigger restrictions from rhiza_sync workflow
+- Sync .github/agents from tschm/jquantstats
+- Consolidate root-level community files into .github/ (#938)
+- Move paper into docs/paper (#945)
+- Move presentation/ folder to docs/presentations/ (#948)
+- Merge main into release/v0.8.21, keep workflow consolidation
+## [0.8.20] - 2026-04-02
+
+### 🐛 Bug Fixes
+
+- Align rhiza_weekly.yml comment with actual triggers
+- Add pull_request trigger and fix on: syntax in rhiza_ci.yml
+
+### 💼 Other
+
+- Bump version 0.8.19 → 0.8.20
+
+### 📚 Documentation
+
+- Fix bibliography formatting and add bibtex to paper build
+
+### ⚙️ Miscellaneous Tasks
+
+- Update semgrep config path to .rhiza/semgrep.yml
+- Consolidate GitHub Actions workflows
+- Consolidate GitLab CI workflows to mirror GitHub Actions structure
+## [0.8.19] - 2026-04-01
+
+### 🚀 Features
+
+- Add GitLab CI workflows for link checking and paper compilation
+
+### 🐛 Bug Fixes
+
+- Update broken markdown links to correct file paths
+
+### 💼 Other
+
+- Bump version 0.8.18 → 0.8.19
+
+### ⚙️ Miscellaneous Tasks
+
+- Update template-bundles.yml to replace deprecated workflows with `rhiza_quality.yml`
+- Simplify CI trigger by removing branch restrictions
+- Remove branch restrictions from GitHub Actions triggers
+- Remove `--exclude-mail` flag from link checker configuration
+- Remove branch restrictions from `rhiza_validate.yml` trigger
+- Update `.rhiza/template-bundles.yml` to replace outdated workflow references with `.rhiza/semgrep.yml`
+- Remove `rhiza_pip_audit.yml` from template-bundles.yml
+- Remove `rhiza_security.yml` from template-bundles.yml
+- Remove event-based restrictions from `rhiza_validate.yml` triggers
+- Consolidate `license` and `semgrep` checks into `rhiza_validate.yml` and remove standalone workflows
+## [0.8.18] - 2026-04-01
+
+### 🚀 Features
+
+- Add paper, presentations, and devcontainer docs from main
+
+### 💼 Other
+
+- Bump version 0.8.17 → 0.8.18
+
+### 🚜 Refactor
+
+- Move .semgrep.yml to .rhiza/semgrep.yml
+- Consolidate CI workflows from main
+
+### ⚙️ Miscellaneous Tasks
+
+- Delete REPOSITORY_ANALYSIS.md
+- Sync .pre-commit-config.yaml and GitLab CI from origin/main
+- Remove deprecated `.claude/plan.md` and `.claude/quality.md` files
+- Sync .gitlab/README.md from origin/main
+## [0.8.17] - 2026-03-31
+
+### 🚀 Features
+
+- Exclude recipe/meta.yaml from check-yaml pre-commit hook (#931)
+- Add lychee link check workflow and fix make security (#906)
+- Add `license` make target to quality.mk for license compliance scanning (#914)
+
+### 💼 Other
+
+- Bump version 0.8.16 → 0.8.17
+## [0.8.16] - 2026-03-22
+
+### 🚀 Features
+
+- Add rhiza_typecheck workflow with ty integration (#881)
+- Add license compliance scan (make license + rhiza_license workflow) (#887)
+- Add Semgrep static analysis (make semgrep + rhiza_semgrep workflow) (#888)
+- Add issue templates to github template bundle (#890)
+
+### 🐛 Bug Fixes
+
+- Use `make validate` in CI so `post-validate` hooks fire (#884)
+
+### 💼 Other
+
+- Bump version 0.8.15 → 0.8.16
+## [0.8.15] - 2026-03-21
+
+### 💼 Other
+
+- Bump version 0.8.14 → 0.8.15
+## [0.8.14] - 2026-03-19
+
+### 🚀 Features
+
+- Add coverage badge generation via gh-pages (#863)
+- Add XML coverage report output to test target (#871)
+
+### 🐛 Bug Fixes
+
+- *(ci)* Align artifact versions and guard badge steps on missing coverage
+- *(ci)* Revert upload-artifact to v7 (v8 does not exist)
+
+### 💼 Other
+
+- Bump version 0.8.13 → 0.8.14
+
+### ⚙️ Miscellaneous Tasks
+
+- Replace deptry container with setup-uv action and update Makefile comments
+- *(ci)* Replace container image with setup-uv action in security workflow
+## [0.8.13] - 2026-03-17
+
+### 🚀 Features
+
+- Make book bundle standalone (#853)
+- Extract benchmarks into its own bundle depending on tests (#855)
+- Make marimo bundle depend on book bundle (#857)
+- Re-add deprecated `materialize` target pointing to `sync` (#859)
+
+### 💼 Other
+
+- Bump version 0.8.12 → 0.8.13
+## [0.8.12] - 2026-03-13
+
+### 🚀 Features
+
+- Add GitLab CI Marimo notebooks workflow (#843)
+
+### 💼 Other
+
+- Update UV image version 0.9.18 → 0.9.30 in marimo job template
+- Bump version 0.8.11 → 0.8.12
+## [0.8.11] - 2026-03-13
+
+### 🐛 Bug Fixes
+
+- Correct typos in .gitlab/workflows/rhiza_release.yml (#842)
+- Resolve release workflow deprecation warnings (#840)
+
+### 💼 Other
+
+- Bump version 0.8.10 → 0.8.11
+## [0.8.10] - 2026-03-13
+
+### 💼 Other
+
+- Bump version 0.8.9 → 0.8.10
+## [0.8.9] - 2026-03-10
+
+### 🚀 Features
+
+- Add per-notebook artefact folders for rhiza_marimo runs (#832)
+
+### 🐛 Bug Fixes
+
+- Remove module docstring from rhiza.py so marimo recognises it as a notebook
+
+### 💼 Other
+
+- Bump version 0.8.8 → 0.8.9
+## [0.8.8] - 2026-03-10
+
+### 💼 Other
+
+- Bump version 0.8.7 → 0.8.8
+## [0.8.7] - 2026-03-09
+
+### 💼 Other
+
+- Bump version 0.8.6 → 0.8.7
+
+### ⚙️ Miscellaneous Tasks
+
+- Update rhiza.mk to use equality for version sync (#824)
+## [0.8.6] - 2026-03-06
+
+### 💼 Other
+
+- Bump version 0.8.5 → 0.8.6
+## [0.8.5] - 2026-02-27
+
+### 💼 Other
+
+- Bump version 0.8.4 → 0.8.5
+## [0.8.4] - 2026-02-27
+
+### 🚀 Features
+
+- Upload book as downloadable workflow artifact (#793)
+
+### 🐛 Bug Fixes
+
+- Replace `uvx hatch build` with `uv build` in release workflows (#798)
+
+### 💼 Other
+
+- Bump version 0.8.3 → 0.8.4
+## [0.8.3] - 2026-02-24
+
+### 🐛 Bug Fixes
+
+- Document subprocess security exceptions in test conftest files
+- Handle pytest exit code 5 in hypothesis-test target
+
+### 💼 Other
+
+- Bump version 0.8.2 → 0.8.3
+
+### ⚙️ Miscellaneous Tasks
+
+- Move all type checking to ty (#786)
+- Remove version field from template-bundles.yml (#788)
+## [0.8.2] - 2026-02-23
+
+### 🚀 Features
+
+- Include hypothesis-test HTML report in book (#759)
+- Add CodeFactor link to minibook with dynamic repo detection (#777)
+- Enable blank issue creation (#779)
+
+### 🐛 Bug Fixes
+
+- Normalize tag version for version mismatch check (#729)
+- Pin mkdocs<2.0 and mkdocs-material<10.0 to avoid MkDocs 2.0 incompatibility (#743)
+- Add benchmark dependency to book target so Benchmarks panel is built
+- Enable Mermaid diagram rendering in MkDocs documentation (#747)
+- Include logo inside docs_dir so MkDocs copies it to the build
+- Set hypothesis report title to "Hypothesis tests"
+- Set hypothesis HTML report title via conftest hook
+- Add security exception docs to stress and property conftest files
+
+### 💼 Other
+
+- Surface template bundles as the primary abstraction for template selection (#753)
+- Bump version 0.8.1-rc.2 → 0.8.2
+
+### 🚜 Refactor
+
+- Simplify pytest HTML title hooks across test suites
+
+### 📚 Documentation
+
+- Reference rhiza-education in README, ROADMAP, and docs (#755)
+- Add issue/PR templates and commit conventions
+- Clarify the boundary between rhiza (template) and rhiza-tools (CLI) (#761)
+- Fix rhiza-tools → rhiza-cli naming in README and GLOSSARY (#766)
+- *(adr)* Backfill ADR-0002 through ADR-0009 (#769)
+- Add ADR dropdown menu to mkdocs navigation (#771)
+- Clarify tests/ as downstream blueprints, not Rhiza's own test suite (#774)
+- Flesh out index.md and restructure mkdocs nav with dropdown sections (#776)
+- Update ROADMAP.md to reflect v0.8.1-rc.2 and completed work (#781)
+
+### 🛡️ Security
+
+- Add SECURITY.md, secret scanning config, and update template bundles (#757)
+## [0.8.1-rc.2] - 2026-02-17
+
+### 💼 Other
+
+- Bump version 0.8.1-rc.1 → 0.8.1-rc.2
+## [0.8.0] - 2026-02-15
+
+### 💼 Other
+
+- Releasing
+- Bump version 0.7.5 → 0.8.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Update Renovate schedule to run nightly (#683)
+## [0.7.5] - 2026-02-14
+
+### 💼 Other
+
+- Bump version 0.7.4 → 0.7.5
+## [0.7.4] - 2026-02-14
+
+### 💼 Other
+
+- Bump version 0.7.3 → 0.7.4
+## [0.7.3] - 2026-02-14
+
+### 💼 Other
+
+- Bump version 0.7.2 → 0.7.3
+## [0.7.2] - 2026-02-14
+
+### 💼 Other
+
+- Sync template-bundles.yml version to 0.7.1
+- Bump version 0.7.1 → 0.7.2
+
+### 🚜 Refactor
+
+- Move user customizations from .rhiza/make.d to root Makefile (#589)
+
+### 📚 Documentation
+
+- Consolidate infrastructure docs into .rhiza/docs/ (#638)
+
+### ⚙️ Miscellaneous Tasks
+
+- Make tests more DRY (#610)
+## [0.7.1] - 2026-02-07
+
+### 💼 Other
+
+- Bump version 0.7.0 → 0.7.1
+
+### 🚜 Refactor
+
+- Migrate and reorganize test suite to .rhiza/tests with categorical structure (#542)
+
+### ⚙️ Miscellaneous Tasks
+
+- Add `.rhiza/template-bundles.yml` to define reusable template … (#545)
+## [0.7.0] - 2026-02-05
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version v0.6.2 -> 0.7.0
+## [0.6.2] - 2026-02-02
+
+### 💼 Other
+
+- Bump version 0.6.1 → 0.6.2
+## [0.6.1] - 2026-01-26
+
+### 🐛 Bug Fixes
+
+- Incorrect values (#333)
+
+### 💼 Other
+
+- Remove unnecessary mo parameter from app cells in rhiza.py (#362)
+- Bump version 0.6.0 → 0.6.1
+## [0.6.0] - 2026-01-16
+
+### 🐛 Bug Fixes
+
+- Copilot install (#262)
+
+### 💼 Other
+
+- Bump version 0.5.0 → 0.6.0
+## [0.5.0] - 2026-01-03
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version 0.4.1 -> 0.5.0
+## [0.4.1] - 2026-01-01
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version to 0.4.1
+## [0.4.0] - 2025-12-26
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version to 0.4.0
+## [0.3.2] - 2025-12-25
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version to 0.3.2
+## [0.3.1] - 2025-12-24
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency pre-commit to v4.5.1 (#67)
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version to 0.3.1
+
+### 🛡️ Security
+
+- Add workflow (#86)
+## [0.3.0] - 2025-12-16
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version to 0.3.0
+## [0.2.0] - 2025-12-16
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version to 0.2.0
+## [0.1.0] - 2025-12-16
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version to 0.1.0
+## [0.0.3] - 2025-12-16
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version to 0.0.3
+## [0.0.2] - 2025-12-16
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version to 0.0.2
+## [0.0.1] - 2025-12-16
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency marimo to v0.17.8 (#137)
+- *(deps)* Update dependency pytest to v9 (#140)
+- *(deps)* Update dependency pre-commit to v4.5.0 (#150)
+- *(deps)* Update dependency marimo to v0.18.0 (#149)
+- *(deps)* Update dependency marimo to v0.18.1 (#169)
+- *(deps)* Update dependency marimo to v0.18.2 (#225)
+- *(deps)* Update dependency marimo to v0.18.3 (#252)
+- *(deps)* Update dependency pytest to v9.0.2 (#260)
+- *(deps)* Update dependency marimo to v0.18.4 (#297)
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump version to 0.9.0
+- Bump version to 0.10.0
+- Bump version to 0.0.1
