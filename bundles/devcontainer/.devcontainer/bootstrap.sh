@@ -16,7 +16,8 @@ error_with_recovery() {
 
 # Read Python version from .python-version (single source of truth)
 if [ -f ".python-version" ]; then
-    export PYTHON_VERSION=$(cat .python-version | tr -d '[:space:]')
+    PYTHON_VERSION=$(tr -d '[:space:]' < .python-version)
+    export PYTHON_VERSION
     echo "✓ Using Python version from .python-version: $PYTHON_VERSION"
 else
     error_with_recovery \
@@ -42,9 +43,11 @@ export UV_VENV_CLEAR=1
 export UV_LINK_MODE=copy
 
 # Make UV environment variables persistent for all sessions
-echo "export UV_LINK_MODE=copy" >> ~/.bashrc
-echo "export UV_VENV_CLEAR=1" >> ~/.bashrc
-echo "export PATH=\"$INSTALL_DIR:\$PATH\"" >> ~/.bashrc
+{
+    echo "export UV_LINK_MODE=copy"
+    echo "export UV_VENV_CLEAR=1"
+    echo "export PATH=\"$INSTALL_DIR:\$PATH\""
+} >> ~/.bashrc
 
 # Add to current PATH so subsequent commands can find uv
 export PATH="$INSTALL_DIR:$PATH"
