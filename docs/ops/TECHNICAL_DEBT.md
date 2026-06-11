@@ -274,7 +274,4 @@ See [CONTRIBUTING.md](../../.rhiza/CONTRIBUTING.md) for general contribution gui
 
 ---
 
-**Last Updated**: February 2026  
-**Next Review**: March 2026
-
 For planned features and improvements, see `ROADMAP.md` (if your project keeps one).

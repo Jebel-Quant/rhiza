@@ -1077,7 +1077,3 @@ For more details on customizing the documentation book, see [BOOK.md](BOOK.md).
 - [Tools Reference](../reference/TOOLS_REFERENCE.md) - Comprehensive tool documentation
 - [Makefile Cookbook](../../.rhiza/make.d/README.md) - Make recipes
 - [rhiza-education Lesson 10: Customising Safely](https://github.com/Jebel-Quant/rhiza-education/blob/main/lessons/10-customizing-safely.md) - Tutorial overview of extension mechanisms and the template-managed file rule
-
----
-
-*Last updated: 2026-05-27*

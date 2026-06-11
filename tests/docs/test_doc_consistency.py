@@ -152,3 +152,77 @@ class TestBundleDocumentation:
         assert f"`{bundle_name}`" in claude_md, (
             f"bundle '{bundle_name}' is defined in .rhiza/template-bundles.yml but not documented in CLAUDE.md"
         )
+
+
+_MAKE_SOURCES = (
+    "Makefile",
+    ".rhiza/rhiza.mk",
+    *sorted(str(p.relative_to(_ROOT)) for p in (_ROOT / ".rhiza" / "make.d").glob("*.mk")),
+)
+
+_TARGET_DEF_RE = re.compile(r"^([A-Za-z0-9_.-]+(?:\s+[A-Za-z0-9_.-]+)*)\s*::?(?!=)", re.MULTILINE)
+_MAKE_MENTION_RE = re.compile(r"\bmake\s+([a-z][A-Za-z0-9_-]*)")
+_CODE_REGION_RE = re.compile(r"```.*?```|`[^`\n]+`", re.DOTALL)
+
+_BUNDLE_COUNT_RE = re.compile(r"\b\d+\s+(?:\w+\s+){0,2}bundles\b", re.IGNORECASE)
+_STAMP_RE = re.compile(r"^\s*\*{0,2}Last Updated", re.MULTILINE | re.IGNORECASE)
+
+# Markdown files exempt from prose-drift gates: generated or historical records.
+_PROSE_GATE_EXEMPT = {"CHANGELOG.md"}
+
+
+def _defined_make_targets() -> set[str]:
+    """Return every make target defined by the root Makefile and .rhiza make modules."""
+    targets: set[str] = set()
+    for source in _MAKE_SOURCES:
+        text = (_ROOT / source).read_text(encoding="utf-8")
+        for match in _TARGET_DEF_RE.finditer(text):
+            targets.update(name for name in match.group(1).split() if not name.startswith("."))
+    return targets
+
+
+def _make_mention_cases() -> list[tuple[str, str]]:
+    """Collect (label, target) for every `make <target>` mention in CLAUDE.md and README.md code."""
+    cases: list[tuple[str, str]] = []
+    for doc in ("CLAUDE.md", "README.md"):
+        text = (_ROOT / doc).read_text(encoding="utf-8")
+        for region in _CODE_REGION_RE.findall(text):
+            for match in _MAKE_MENTION_RE.finditer(region):
+                cases.append((f"{doc}: make {match.group(1)}", match.group(1)))
+    return sorted(set(cases))
+
+
+class TestProseDrift:
+    """Verify that documentation prose cannot drift from the repository state."""
+
+    @pytest.mark.parametrize(("label", "target"), _make_mention_cases(), ids=[c[0] for c in _make_mention_cases()])
+    def test_mentioned_make_targets_exist(self, label: str, target: str) -> None:
+        """Every `make <target>` mentioned in CLAUDE.md/README.md code must be a real target."""
+        assert target in _defined_make_targets(), (
+            f"{label}: target is not defined in the Makefile or any .rhiza/make.d module"
+        )
+
+    @pytest.mark.parametrize(
+        "md_file",
+        [p for p in _markdown_files() if p.name not in _PROSE_GATE_EXEMPT],
+        ids=lambda p: str(p.relative_to(_ROOT)),
+    )
+    def test_no_hardcoded_bundle_counts(self, md_file: Path) -> None:
+        """Docs must not hard-code the bundle count; template-bundles.yml is authoritative."""
+        hits = _BUNDLE_COUNT_RE.findall(md_file.read_text(encoding="utf-8", errors="replace"))
+        assert not hits, f"hard-coded bundle count {hits} — refer to .rhiza/template-bundles.yml instead"
+
+    @pytest.mark.parametrize(
+        "md_file",
+        [p for p in _markdown_files() if p.name not in _PROSE_GATE_EXEMPT],
+        ids=lambda p: str(p.relative_to(_ROOT)),
+    )
+    def test_no_last_updated_stamps(self, md_file: Path) -> None:
+        """Docs must not carry manual 'Last Updated' stamps; git history answers that question."""
+        assert not _STAMP_RE.search(md_file.read_text(encoding="utf-8", errors="replace")), (
+            "manual 'Last Updated' stamp found — these drift silently; rely on git history instead"
+        )
+
+    def test_make_mentions_were_collected(self) -> None:
+        """Guard against the make-mention scanner silently collecting nothing."""
+        assert len(_make_mention_cases()) > 10, "expected CLAUDE.md/README.md to mention make targets"
