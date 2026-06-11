@@ -109,7 +109,14 @@ This example adds a minimal `linter` bundle that injects a `.ruff.toml` override
 
    Existing tests in `tests/bundles/test_bundle_content_validity.py` will also pick up any new YAML or JSON files automatically.
 
-5. **Run `make validate`**
+5. **Document the bundle in CLAUDE.md and README.md**
+
+   Mention the new bundle in CLAUDE.md's bundle overview (under "Template Bundles") and add a row to the
+   matching bundle table in README.md ("Feature bundles", "Platform overlay bundles", or "Meta-bundles").
+   The CLAUDE.md mention is test-enforced: `tests/docs/test_doc_consistency.py::TestBundleDocumentation`
+   fails for any bundle defined in `.rhiza/template-bundles.yml` that CLAUDE.md does not name.
+
+6. **Run `make validate`**
 
    Before opening a PR, run the normal validation flow:
 
@@ -119,17 +126,28 @@ This example adds a minimal `linter` bundle that injects a `.ruff.toml` override
 
    In this repository, `make validate` intentionally skips downstream-template validation because Rhiza itself has no `.rhiza/template.yml`. When you add a bundle here, also run the repository test suite so the new `tests/bundles/` coverage actually executes.
 
-6. **Open a PR**
+7. **Open a PR**
 
-   Include the new bundle directory, the `.rhiza/template-bundles.yml` entry, and the matching `tests/bundles/` coverage in one PR so reviewers can validate the bundle end to end.
+   Include the new bundle directory, the `.rhiza/template-bundles.yml` entry, the documentation updates, and the matching `tests/bundles/` coverage in one PR so reviewers can validate the bundle end to end.
 
 ### Quick Review Checklist
 
-- `bundles/<name>/` exists
-- `.rhiza/template-bundles.yml` contains the bundle metadata
-- Dependencies are declared with `requires`
-- `tests/bundles/` covers the new bundle's synced output
-- `make validate` has been run locally
+Each step lists the gate that enforces it, so a miss is discovered here rather than as a surprise CI failure:
+
+- `.rhiza/template-bundles.yml` contains the bundle metadata with a `description`
+  (gate: `tests/bundles/test_template_bundles.py::TestTemplateBundles`)
+- `bundles/<name>/` exists, is non-empty, and owns no file claimed by another bundle
+  (gate: `tests/bundles/test_template_bundles.py::TestTemplateBundles`)
+- Dependencies are declared with `requires` and reference existing bundles
+  (gate: `tests/bundles/test_template_bundles.py::TestTemplateBundles`)
+- CLAUDE.md mentions the bundle in its overview
+  (gate: `tests/docs/test_doc_consistency.py::TestBundleDocumentation`)
+- README.md's bundle tables include the bundle (no gate — reviewer responsibility)
+- Bundle × platform compatibility coverage picks the bundle up automatically from
+  `.rhiza/template-bundles.yml` (gate: `tests/bundles/test_bundle_matrix.py` — nothing to add manually,
+  but a matrix failure for `<name>` points at a YAML, ownership, or dependency problem in the new bundle)
+- `tests/bundles/` covers the new bundle's synced output (focused test you write)
+- `make validate` and the full test suite have been run locally
 
 ---
 
