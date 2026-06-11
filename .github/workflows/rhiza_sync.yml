@@ -14,6 +14,12 @@
 
 name: "(RHIZA) SYNC"
 
+# Queue runs instead of cancelling: a release or sync must never be
+# interrupted mid-publish or mid-push.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
   pull-requests: write

@@ -50,6 +50,11 @@ on:
 
   workflow_call:
 
+# Cancel superseded in-progress runs of this workflow for the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   packages: write
@@ -130,7 +135,7 @@ jobs:
           echo "sanitized_tag=$SANITIZED_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Build Devcontainer Image
-        uses: devcontainers/ci@v0.3
+        uses: devcontainers/ci@v0.3.1900000450
         if: steps.check.outputs.exists == 'true'
         with:
           configFile: .devcontainer/devcontainer.json
