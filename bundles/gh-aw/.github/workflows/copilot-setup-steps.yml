@@ -20,6 +20,11 @@ on:
     paths:
       - .github/workflows/copilot-setup-steps.yml
 
+# Cancel superseded in-progress runs of this workflow for the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   copilot-setup-steps:
     runs-on: ubuntu-latest
@@ -32,12 +37,12 @@ jobs:
           lfs: true
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@v7.6.0
         with:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: ./.github/actions/configure-git-auth
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.8
         with:
           token: ${{ secrets.GH_PAT }}
 

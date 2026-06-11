@@ -11,6 +11,11 @@
 
 name: "(RHIZA) CI"
 
+# Cancel superseded in-progress runs of this workflow for the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   actions: read
@@ -107,7 +112,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - name: Cache uv artifacts
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.cache/uv
           key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
@@ -123,7 +128,7 @@ jobs:
 
       - name: Upload coverage report
         if: matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: coverage-report
           path: _tests/coverage.xml
@@ -232,7 +237,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - name: Cache pre-commit environments
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.cache/pre-commit
           key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -354,7 +359,7 @@ jobs:
           uv run --with pip-licenses pip-licenses --format markdown --output-file LICENSES.md
 
       - name: Upload LICENSES.md
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: LICENSES.md
           path: LICENSES.md

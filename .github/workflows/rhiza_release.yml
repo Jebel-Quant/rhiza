@@ -91,6 +91,12 @@ on:
       PYPI_TOKEN:
         required: false
 
+# Queue runs instead of cancelling: a release or sync must never be
+# interrupted mid-publish or mid-push.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write       # Needed to create releases
   id-token: write       # Needed for OIDC authentication with PyPI
@@ -276,7 +282,7 @@ jobs:
 
       - name: Generate SLSA provenance attestations
         if: steps.buildable.outputs.buildable == 'true' && github.event.repository.private == false
-        uses: actions/attest-build-provenance@v4
+        uses: actions/attest-build-provenance@v4.1.0
         with:
           subject-path: dist/*
 
@@ -393,7 +399,7 @@ jobs:
       # repository-url and password only used for custom feeds, not for PyPI with OIDC
       - name: Publish to PyPI
         if: ${{ steps.check_dist.outputs.should_publish == 'true' }}
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@v1.14.0
         with:
           packages-dir: dist/
           skip-existing: true
@@ -543,7 +549,7 @@ jobs:
 
       - name: Build and Publish Devcontainer Image
         if: steps.check_publish.outputs.should_publish == 'true'
-        uses: devcontainers/ci@v0.3
+        uses: devcontainers/ci@v0.3.1900000450
         with:
           configFile: .devcontainer/devcontainer.json
           push: always

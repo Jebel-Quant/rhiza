@@ -15,6 +15,11 @@
 
 name: "(RHIZA) WEEKLY"
 
+# Cancel superseded in-progress runs of this workflow for the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -119,7 +124,7 @@ jobs:
       - uses: actions/checkout@v6.0.2
 
       - name: Check links in README.md
-        uses: lycheeverse/lychee-action@v2
+        uses: lycheeverse/lychee-action@v2.8.0
         with:
           args: >-
             --verbose
