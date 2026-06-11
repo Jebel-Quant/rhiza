@@ -287,8 +287,6 @@ For inspiration, see the Rhiza project board:
 
 ---
 
-**Last Updated**: February 2026
-
 For related documentation:
 - `ROADMAP.md` - Project roadmap and planned features (create one in your repository root)
 - [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) - Known limitations and debt items

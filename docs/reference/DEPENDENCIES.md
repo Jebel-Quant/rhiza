@@ -216,7 +216,3 @@ A: Update the lower bound and document the reason. Run full tests and get PR app
 
 **Q: How do I check for outdated dependencies?**  
 A: Run `uv lock --upgrade` to see available updates. Renovate also creates PRs automatically.
-
----
-
-*Last Updated: 2026-02-15*
