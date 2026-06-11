@@ -458,6 +458,6 @@ After implementing changelog enhancements:
 **Last Updated**: February 2026
 
 For related documentation:
-- [ROADMAP.md](../ROADMAP.md) - Project roadmap
-- [CONTRIBUTING.md](../CONTRIBUTING.md) - Contribution guidelines
-- [.github/workflows/rhiza_release.yml](../.github/workflows/rhiza_release.yml) - Release workflow
+- `ROADMAP.md` - Project roadmap (create one in your repository root)
+- [CONTRIBUTING.md](../../.rhiza/CONTRIBUTING.md) - Contribution guidelines
+- [.github/workflows/rhiza_release.yml](../../.github/workflows/rhiza_release.yml) - Release workflow

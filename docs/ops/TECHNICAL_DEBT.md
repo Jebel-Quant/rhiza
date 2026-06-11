@@ -270,11 +270,11 @@ Found technical debt? Help us improve:
 4. Suggest potential solutions
 5. Link to relevant code sections
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for general contribution guidelines.
+See [CONTRIBUTING.md](../../.rhiza/CONTRIBUTING.md) for general contribution guidelines.
 
 ---
 
 **Last Updated**: February 2026  
 **Next Review**: March 2026
 
-For planned features and improvements, see [ROADMAP.md](../ROADMAP.md).
+For planned features and improvements, see `ROADMAP.md` (if your project keeps one).

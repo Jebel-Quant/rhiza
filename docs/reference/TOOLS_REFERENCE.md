@@ -808,8 +808,8 @@ PYTHON_VERSION = 3.12
 
 - [Quick Reference](../guides/QUICK_REFERENCE.md) - Condensed command reference
 - [Extending Rhiza](../guides/EXTENDING_RHIZA.md) - Extending and customizing Rhiza
-- [Contributing Guide](../CONTRIBUTING.md) - How to contribute
-- [README](../README.md) - Project overview
+- [Contributing Guide](../../.rhiza/CONTRIBUTING.md) - How to contribute
+- [README](../../README.md) - Project overview
 
 ---
 

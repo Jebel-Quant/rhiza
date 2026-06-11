@@ -619,7 +619,6 @@ engine: copilot
 
 ### Rhiza-Specific
 
-- [Integration Plan](GH_AW_INTEGRATION.md) - Technical implementation details
 - [Extending Rhiza](../guides/EXTENDING_RHIZA.md) - Creating custom template bundles
 - [Quick Reference](../guides/QUICK_REFERENCE.md) - Rhiza command reference
 
