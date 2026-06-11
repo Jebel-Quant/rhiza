@@ -285,3 +285,55 @@ class TestGithubBundleActive:
             "repository: Jebel-Quant/rhiza\nref: main\ntemplates:\n# core bundles\n- core\n- github\n"
         )
         assert _github_bundle_active(tmp_path) is True
+
+
+# Lines allowed to pipe a downloaded script into a shell. The uv installer is
+# the documented bootstrap path and runs before any package manager exists;
+# every other installer must use a verifiable package manager (npm, uv, ...).
+_PIPED_INSTALLER_ALLOWLIST = ("astral.sh/uv/install.sh",)
+
+_PIPED_INSTALLER_RE = re.compile(
+    r"(?:curl|wget)[^|\n]*\|\s*(?:[A-Za-z_][A-Za-z0-9_]*=\S+\s+)*(?:env\s+)?(?:ba|da|z)?sh\b"
+)
+
+_SCANNED_SUFFIXES = {".mk", ".sh"}
+_SCAN_EXCLUDED_DIRS = {".git", ".venv", ".idea", ".pytest_cache", ".ruff_cache", "__pycache__", "node_modules"}
+
+
+def _shell_and_make_sources(repo_root: pathlib.Path) -> list[pathlib.Path]:
+    """Return all Makefile, *.mk, and *.sh sources outside excluded directories."""
+    return sorted(
+        path
+        for path in repo_root.rglob("*")
+        if path.is_file()
+        and (path.suffix in _SCANNED_SUFFIXES or path.name == "Makefile")
+        and not _SCAN_EXCLUDED_DIRS.intersection(path.relative_to(repo_root).parts)
+    )
+
+
+class TestPipedInstallers:
+    """No make target or shell script may pipe a downloaded script into a shell.
+
+    curl|bash executes unverified remote content; installers must go through a
+    package manager instead (see the allowlist for the single bootstrap
+    exception).
+    """
+
+    def test_no_piped_installers_outside_allowlist(self) -> None:
+        """Every curl/wget-piped-to-shell line must be on the explicit allowlist."""
+        repo_root = pathlib.Path(__file__).parent.parent.parent
+        violations = []
+        for source in _shell_and_make_sources(repo_root):
+            for line_number, line in enumerate(source.read_text(encoding="utf-8", errors="replace").splitlines(), 1):
+                if line.lstrip().startswith("#"):
+                    continue
+                if _PIPED_INSTALLER_RE.search(line) and not any(a in line for a in _PIPED_INSTALLER_ALLOWLIST):
+                    violations.append(f"{source.relative_to(repo_root)}:{line_number}: {line.strip()}")
+        assert not violations, "piped remote-script execution found (use a package manager instead):\n" + "\n".join(
+            violations
+        )
+
+    def test_scanner_finds_sources(self) -> None:
+        """Guard against the scanner silently matching nothing."""
+        repo_root = pathlib.Path(__file__).parent.parent.parent
+        assert len(_shell_and_make_sources(repo_root)) > 10, "expected to scan make and shell sources"
