@@ -455,8 +455,6 @@ After implementing changelog enhancements:
 
 ---
 
-**Last Updated**: February 2026
-
 For related documentation:
 - `ROADMAP.md` - Project roadmap (create one in your repository root)
 - [CONTRIBUTING.md](../../.rhiza/CONTRIBUTING.md) - Contribution guidelines

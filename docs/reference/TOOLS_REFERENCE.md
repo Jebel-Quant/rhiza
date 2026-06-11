@@ -810,7 +810,3 @@ PYTHON_VERSION = 3.12
 - [Extending Rhiza](../guides/EXTENDING_RHIZA.md) - Extending and customizing Rhiza
 - [Contributing Guide](../../.rhiza/CONTRIBUTING.md) - How to contribute
 - [README](../../README.md) - Project overview
-
----
-
-*Last updated: 2026-02-15*

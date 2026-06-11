@@ -261,7 +261,3 @@ m te<TAB>  # Expands to: m test
 - [Tools Reference](../../docs/reference/TOOLS_REFERENCE.md) - Complete command reference
 - [Quick Reference](../../docs/guides/QUICK_REFERENCE.md) - Quick command reference
 - [Extending Rhiza](../../docs/guides/EXTENDING_RHIZA.md) - How to add custom targets
-
----
-
-*Last updated: 2026-02-15*
