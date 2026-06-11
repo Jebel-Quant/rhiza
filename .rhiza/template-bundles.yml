@@ -109,10 +109,10 @@ bundles:
     requires: []
 
   # ============================================================================
-  # PRESENTATION - Presentation building with reveal.js
+  # PRESENTATION - Presentation building with Marp
   # ============================================================================
   presentation:
-    description: "Presentation building using reveal.js and Marimo"
+    description: "Presentation slides built from PRESENTATION.md using Marp"
     standalone: true
     requires: []
     recommends:

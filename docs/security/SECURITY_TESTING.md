@@ -329,4 +329,4 @@ Before merging any PR with code changes:
 
 ## Contact
 
-For security vulnerabilities, please see [SECURITY.md](SECURITY.md) for our responsible disclosure process.
+For security vulnerabilities, please see [SECURITY.md](../../SECURITY.md) for our responsible disclosure process.

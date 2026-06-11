@@ -1,6 +1,6 @@
 # VSCode Extensions
 
-This document describes the VSCode extensions that are automatically configured when using the [Dev Container](.devcontainer/) or [GitHub Codespaces](https://github.com/features/codespaces) environment.
+This document describes the VSCode extensions that are automatically configured when using the [Dev Container](../../.devcontainer/) or [GitHub Codespaces](https://github.com/features/codespaces) environment.
 
 ## Extension Overview
 
@@ -94,7 +94,7 @@ The project configures extensions in `.devcontainer/devcontainer.json` to provid
 - Build problem matching
 - IntelliSense for make targets
 
-**Why included**: This project uses a comprehensive [Makefile](../Makefile) as its primary task runner (`make install`, `make test`, `make fmt`, etc.). This extension makes it easy to discover and run available tasks.
+**Why included**: This project uses a comprehensive [Makefile](../../Makefile) as its primary task runner (`make install`, `make test`, `make fmt`, etc.). This extension makes it easy to discover and run available tasks.
 
 ### AI Assistance
 
@@ -200,7 +200,7 @@ Alternatively, create `.vscode/extensions.json` with:
 ## Related Documentation
 
 - [DevContainer Configuration](DEVCONTAINER.md) - Dev container setup and usage
-- [Makefile Customisation](../.rhiza/make.d/README.md) - Task automation and customization
+- [Makefile Customisation](../../.rhiza/make.d/README.md) - Task automation and customization
 - [Marimo Documentation](MARIMO.md) - Interactive notebooks and Marimo integration
 - [Quick Reference](../guides/QUICK_REFERENCE.md) - Common development tasks
 
