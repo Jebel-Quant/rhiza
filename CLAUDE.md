@@ -47,17 +47,25 @@ The virtual environment is managed automatically by `make` and `uv run`. No manu
 
 ### Template Bundles
 
-The core abstraction is the **bundle** — a named group of configuration files. The 13 bundles are defined in `.rhiza/template-bundles.yml`:
+The core abstraction is the **bundle** — a named group of configuration files. All bundles are defined in `.rhiza/template-bundles.yml` (the authoritative list) and fall into three groups:
+
+**Feature bundles** — one per capability:
 
 - `core` (required): Makefiles, linting, base infrastructure
 - `tests`: pytest, coverage, type checking
-- `github`: GitHub Actions workflows
-- `gitlab`: GitLab CI
+- `benchmarks`: pytest-benchmark infrastructure and reporting
+- `github`: GitHub repository configuration (actions, dependabot, core workflows)
+- `gitlab`: GitLab CI/CD pipeline configuration and core workflows
 - `docker`, `devcontainer`: containerisation
 - `marimo`: interactive notebooks
 - `book`: documentation with MkDocs + zensical
 - `presentation`: Marp slides
+- `paper`: LaTeX paper compilation
 - `lfs`, `legal`, `renovate`, `gh-aw`: miscellaneous tooling
+
+**Platform overlay bundles** — CI workflow stubs that pair a feature with a platform: `github-tests`, `github-book`, `github-marimo`, `github-docker`, `github-devcontainer`, `github-paper`, `gitlab-tests`, `gitlab-book`, `gitlab-marimo`.
+
+**Meta-bundles** — curated compositions of other bundles: `github-project`, `gitlab-project`, `local` (no hosted CI).
 
 ### Modular Makefile System
 

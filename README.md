@@ -298,10 +298,10 @@ For a full step-by-step tutorial covering init, bundle selection, first material
 Keep your templates up-to-date with automated sync workflows:
 
 - Configure `.rhiza/template.yml` to define which templates to include/exclude
-- The `.github/workflows/sync.yml` workflow runs on schedule or manually
+- The `.github/workflows/rhiza_sync.yml` workflow runs on schedule or manually
 - Creates pull requests with template updates
 
-For GitHub Token configuration and details, see the [GitHub Actions documentation](.github/CONFIG.md).
+For GitHub Token configuration and details, see the [GitHub Actions documentation](bundles/github/.github/CONFIG.md).
 
 ### What to Expect After Integration
 
@@ -359,7 +359,7 @@ See [docs/guides/CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md) for worked exam
 - **Makefile conflicts**: Merge targets with existing build scripts
 - **Pre-commit failures**: Run `make fmt` to fix formatting issues
 - **Workflow failures**: Check Python version in `.python-version` and `pyproject.toml`
-- **Dev container issues**: See [.devcontainer/README.md](.devcontainer/README.md)
+- **Dev container issues**: See [.devcontainer/README.md](bundles/devcontainer/.devcontainer/README.md)
 
 ## 📋 Available Tasks
 
@@ -575,7 +575,7 @@ cp -r .gitlab/ /path/to/your/project/
 cp .gitlab-ci.yml /path/to/your/project/
 ```
 
-For complete GitLab setup instructions, configuration variables, and troubleshooting, see **[.gitlab/README.md](.gitlab/README.md)**.
+For complete GitLab setup instructions, configuration variables, and troubleshooting, see **[.gitlab/README.md](bundles/gitlab/.gitlab/README.md)**.
 
 ## 📋 Project Maintainability
 
