@@ -1,3 +1,12 @@
+## [0.18.9] - 2026-06-10
+
+### 💼 Other
+
+- Bump version 0.18.8 → 0.18.9
+
+### ⚙️ Miscellaneous Tasks
+
+- Update CHANGELOG.md for v0.18.8 [skip ci]
 ## [0.18.8] - 2026-06-06
 
 ### 💼 Other
