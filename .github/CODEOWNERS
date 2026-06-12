@@ -1,0 +1,13 @@
+# Code owners for rhiza.
+#
+# Pull requests that modify matching paths require an approving review from a
+# listed owner. This is enforced by the `require_code_owner_review` rule in
+# .github/rulesets/main-branch-protection.json and feeds the OpenSSF Scorecard
+# Code-Review and Branch-Protection checks.
+#
+# Repository admins can still bypass per that ruleset's `bypass_actors` entry,
+# so a maintainer can self-merge without a second reviewer. Listing multiple
+# owners means any one of them can satisfy the requirement.
+
+# Default owner for everything in the repository.
+*       @tschm @Jebel-Quant/rhiza
