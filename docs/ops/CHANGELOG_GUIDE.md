@@ -29,6 +29,36 @@ GitHub automatically generates release notes by:
 - Including contributor attribution
 - Showing full changelog link
 
+## Changelog Generation with git-cliff
+
+Rhiza generates `CHANGELOG.md` from git history using
+[git-cliff](https://git-cliff.org/). The release workflow
+(`.github/workflows/rhiza_release.yml`) already runs `uvx git-cliff` on every
+release — both to regenerate `CHANGELOG.md` and to produce the per-release
+`RELEASE_NOTES.md`. The `make changelog` target (in
+`.rhiza/make.d/releasing.mk`) runs the identical command locally so you can
+preview the result before tagging:
+
+```bash
+make changelog   # runs: uvx git-cliff --output CHANGELOG.md
+```
+
+Both the CI step and the local target read `cliff.toml` (synced from the `core`
+bundle), which groups commits into sections — New Features, Bug Fixes,
+Documentation, Performance, Maintenance, Reverts, and Other Changes — based on
+their [Conventional Commits](https://www.conventionalcommits.org/) prefix.
+Releases are detected via the `tag_pattern = "v[0-9].*"` convention.
+
+The shipped `cliff.toml` is intentionally forge-agnostic: it leaves `(#123)`
+references intact rather than hard-coding repository URLs, and both GitHub and
+GitLab auto-link those references when rendering the file in a repository. To
+add full URLs or contributor attribution, enable git-cliff's
+[remote integration](https://git-cliff.org/docs/integration).
+
+The GitHub release-notes categorisation described below is a complementary
+option for projects that prefer notes attached to each GitHub release rather
+than a checked-in `CHANGELOG.md`.
+
 ## Enhancing Changelog with PR Categorization
 
 To get better-organized changelogs, use GitHub's release notes categories feature.

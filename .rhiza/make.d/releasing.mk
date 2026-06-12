@@ -2,7 +2,7 @@
 # This file provides targets for version bumping and release management.
 
 # Declare phony targets (they don't produce files)
-.PHONY: bump release publish release-status pre-bump post-bump pre-release post-release
+.PHONY: bump release publish release-status changelog pre-bump post-bump pre-release post-release
 
 # Hook targets (double-colon rules allow multiple definitions)
 pre-bump:: ; @:
@@ -45,6 +45,11 @@ else ifeq ($(FORGE_TYPE),gitlab)
 else
 	@printf "${RED}[ERROR] Could not detect forge type (.github/workflows/ or .gitlab-ci.yml not found)${RESET}\n"
 endif
+
+changelog: install-uv ## generate/update CHANGELOG.md from git history using git-cliff (config: cliff.toml)
+	@printf "${BLUE}[INFO] Generating CHANGELOG.md with git-cliff...${RESET}\n"
+	@${UVX_BIN} git-cliff --output CHANGELOG.md
+	@printf "${GREEN}[OK] CHANGELOG.md updated.${RESET}\n"
 
 
 
