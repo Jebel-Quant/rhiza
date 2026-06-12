@@ -81,7 +81,7 @@ This project implements several security measures:
 
 ### Release Security
 - **OIDC Publishing**: PyPI trusted publishing without stored credentials
-- **Signed Commits**: GPG signing supported for releases
+- **SBOM Attestations**: CycloneDX SBOMs generated and attested for release artifacts (public repositories only)
 - **Tag Protection**: Releases require version tag validation
 
 ## Security Best Practices
