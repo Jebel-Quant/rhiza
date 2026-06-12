@@ -9,7 +9,6 @@ Run in ClusterFuzzLite: this file is built by .clusterfuzzlite/build.sh.
 
 from __future__ import annotations
 
-import importlib.util
 import os
 import sys
 import tempfile
@@ -17,17 +16,18 @@ from pathlib import Path
 
 import atheris
 
-_REPO_ROOT = Path(os.environ.get("RHIZA_FUZZ_ROOT", "/src/rhiza"))
-_MODULE_PATH = _REPO_ROOT / ".rhiza" / "utils" / "suppression_audit.py"
-_MODULE_SPEC = importlib.util.spec_from_file_location("rhiza_suppression_audit", _MODULE_PATH)
-_LOAD_ERROR = "Unable to load suppression_audit.py"
+# When running from the source tree (local development), add .rhiza/utils to
+# sys.path so suppression_audit can be imported without installation.
+# In ClusterFuzzLite, build.sh copies suppression_audit.py into fuzz/ before
+# invoking PyInstaller, which allows PyInstaller to discover and bundle it
+# into the frozen binary. At runtime inside the frozen binary, PyInstaller's
+# import system loads the bundled copy regardless of filesystem paths.
+_REPO_ROOT = Path(os.environ.get("RHIZA_FUZZ_ROOT", str(Path(__file__).resolve().parent.parent)))
+_utils_dir = str(_REPO_ROOT / ".rhiza" / "utils")
+if _utils_dir not in sys.path:
+    sys.path.insert(0, _utils_dir)
 
-if _MODULE_SPEC is None or _MODULE_SPEC.loader is None:
-    raise ImportError(_LOAD_ERROR)
-
-suppression_audit = importlib.util.module_from_spec(_MODULE_SPEC)
-sys.modules[_MODULE_SPEC.name] = suppression_audit
-_MODULE_SPEC.loader.exec_module(suppression_audit)
+import suppression_audit  # noqa: E402
 
 
 def test_one_input(data: bytes) -> None:
