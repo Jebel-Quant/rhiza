@@ -20,10 +20,15 @@ This directly improves two Scorecard checks that cannot be fixed by workflow fil
 
 - Pull request required, with **1 approving review** and stale-review dismissal on new pushes.
 - **No force-pushes** (`non_fast_forward`) and **no deletion** of the default branch.
-- **Required status checks** must pass before merge (strict — the branch must be up to date).
 
-The `required_status_checks` list ships **empty** on purpose: check names ("contexts") differ per project and
-change as workflows evolve. Populate it for this repo once (see below) so superseded merges are blocked on red CI.
+Repository **admins can bypass** (`bypass_actors` → `RepositoryRole` id 5, `bypass_mode: always`) so a solo
+maintainer can still self-merge. Drop the `bypass_actors` entry for the strictest posture (admins included), at
+the cost of needing a second approver on every PR.
+
+There is intentionally **no `required_status_checks` rule**: the GitHub API rejects an empty check list, and a
+single config can't safely hard-require checks across projects — conditional workflows (book, docker, paper,
+marimo, devcontainer) only run on relevant changes, so requiring them would wedge unrelated PRs that never
+trigger them. Add the checks that run on *every* PR for your repo (see below) when you want red CI to block merges.
 
 ## Apply it
 
@@ -45,22 +50,30 @@ gh api --method PUT repos/Jebel-Quant/rhiza/rulesets/<RULESET_ID> \
 
 ## Adding required status checks
 
-Find the exact check names from a recent run on `main`, then add them under `required_status_checks`:
+Pick checks that run on **every** PR (not the conditional overlay workflows), then add a
+`required_status_checks` rule to the `rules` array and re-apply with the `PUT` command above:
 
 ```bash
-# List check/context names from the latest main commit
-gh api repos/Jebel-Quant/rhiza/commits/main/check-runs --jq '.check_runs[].name' | sort -u
+# List context names from a recent PR head (PRs exercise the full matrix, unlike main)
+gh api repos/Jebel-Quant/rhiza/commits/<PR_HEAD_SHA>/check-runs --jq '.check_runs[].name' | sort -u
 ```
 
 ```jsonc
-"required_status_checks": [
-  { "context": "test (3.13, ubuntu-latest)" },
-  { "context": "Type checking (Python 3.13)" },
-  { "context": "Pre-commit hooks" }
-]
+{
+  "type": "required_status_checks",
+  "parameters": {
+    "strict_required_status_checks_policy": true,
+    "do_not_enforce_on_create": false,
+    "required_status_checks": [
+      { "context": "test (3.13, ubuntu-latest)" },
+      { "context": "Type checking (Python 3.13)" },
+      { "context": "Pre-commit hooks" }
+    ]
+  }
+}
 ```
 
-Re-apply with the `PUT` command above.
+The list must be non-empty — the API returns `422` for `"required_status_checks": []`.
 
 ## Notes
 
