@@ -63,6 +63,11 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
 
+  - package-ecosystem: docker
+    directory: /bundles/docker
+    schedule:
+      interval: daily
+
   # Docker
   #- package-ecosystem: "docker"
   #  directory: "/docker"
