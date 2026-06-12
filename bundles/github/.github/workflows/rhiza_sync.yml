@@ -21,8 +21,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 on:
   push:
@@ -47,3 +46,6 @@ jobs:
       direct: ${{ github.event_name == 'push' }}
       create-pr: ${{ github.event_name != 'push' && (github.event_name == 'schedule' || inputs.create-pr == true) }}
     secrets: inherit
+    permissions:
+      contents: write         # Commit/push synced files (direct mode)
+      pull-requests: write    # Open the sync PR (scheduled/dispatch mode)

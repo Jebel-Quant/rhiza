@@ -27,6 +27,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   book:
     uses: jebel-quant/rhiza/.github/workflows/rhiza_book.yml@v0.18.9
