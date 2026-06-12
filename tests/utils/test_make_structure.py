@@ -37,7 +37,7 @@ def _single_colon_targets(path: Path) -> set[str]:
     """
     targets: set[str] = set()
     in_define = False
-    for line in path.read_text().splitlines():
+    for line in path.read_text(encoding="utf-8").splitlines():
         stripped = line.strip()
         if in_define:
             in_define = stripped != "endef"
@@ -82,7 +82,7 @@ def test_no_duplicate_section_headers_across_fragments(root):
     """
     owners: dict[str, list[str]] = defaultdict(list)
     for fragment in _make_fragments(root):
-        for line in fragment.read_text().splitlines():
+        for line in fragment.read_text(encoding="utf-8").splitlines():
             match = _SECTION_HEADER.match(line)
             if match:
                 owners[match.group("title")].append(fragment.name)
