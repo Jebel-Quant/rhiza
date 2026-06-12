@@ -21,15 +21,13 @@
         "required_review_thread_resolution": false,
         "allowed_merge_methods": ["squash", "merge", "rebase"]
       }
-    },
-    {
-      "type": "required_status_checks",
-      "parameters": {
-        "strict_required_status_checks_policy": true,
-        "do_not_enforce_on_create": false,
-        "required_status_checks": []
-      }
     }
   ],
-  "bypass_actors": []
+  "bypass_actors": [
+    {
+      "actor_type": "RepositoryRole",
+      "actor_id": 5,
+      "bypass_mode": "always"
+    }
+  ]
 }
