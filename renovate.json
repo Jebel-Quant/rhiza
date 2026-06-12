@@ -12,7 +12,6 @@
   "enabledManagers": [
     "pep621",
     "pre-commit",
-    "github-actions",
     "gitlabci",
     "devcontainer",
     "dockerfile",
