@@ -30,7 +30,7 @@ lint = [
     "pre-commit>=3.7,<5.0",
 ]
 test = [
-    "pytest>=8,<9",
+    "pytest>=9,<10",
     "pytest-cov>=5,<7",
     "hypothesis>=6,<7",
     "pytest-timeout>=2,<3",
