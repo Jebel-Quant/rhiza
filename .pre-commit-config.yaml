@@ -55,8 +55,8 @@ repos:
     rev: v1.7.12
     hooks:
       - id: actionlint
-        # Generated gh-aw output (DO NOT EDIT headers) uses concurrency keys
-        # ahead of the published workflow schema - the compiler owns its validity
+        # Same carve-out as check-github-workflows above: gh-aw-generated
+        # workflows are owned and validated by the gh-aw compiler
         exclude: ^\.github/workflows/(.*\.lock\.yml|agentics-maintenance\.yml)$
 
   - repo: https://github.com/abravalheri/validate-pyproject
