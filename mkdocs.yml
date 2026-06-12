@@ -37,6 +37,8 @@ nav:
     - Technical Debt: ops/TECHNICAL_DEBT.md
   - Security:
     - Security Testing: security/SECURITY_TESTING.md
+    - Branch Protection: ops/BRANCH_PROTECTION.md
+    - OpenSSF Best Practices Badge: ops/CII_BEST_PRACTICES.md
   - Architecture Decision Records:
     - Overview: adr/README.md
     - ADR-0001 Use Architecture Decision Records: adr/0001-use-architecture-decision-records.md
