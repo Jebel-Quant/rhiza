@@ -40,7 +40,7 @@ repos:
         args: ["--disable", "MD013"]
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.2
+    rev: 0.37.3
     hooks:
       - id: check-renovate
         args: [ "--verbose" ]
@@ -76,7 +76,7 @@ repos:
       - id: gitleaks
 
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.16
+    rev: 0.11.21
     hooks:
       - id: uv-lock
 
@@ -88,7 +88,7 @@ repos:
         files: ^src/
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v0.4.0  # Use the latest release
+    rev: v0.5.1  # Use the latest release
     hooks:
       # Migrated from rhiza
       - id: check-rhiza-workflow-names
