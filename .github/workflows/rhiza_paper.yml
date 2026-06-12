@@ -45,7 +45,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Detect paper/*.tex presence
         id: check_tex
@@ -92,7 +92,7 @@ jobs:
 
       - name: Upload PDF artifact
         if: ${{ steps.check_tex.outputs.tex_present == 'true' }}
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.detect_tex.outputs.pdf_file }}
           path: paper/${{ steps.detect_tex.outputs.pdf_file }}
