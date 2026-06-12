@@ -47,11 +47,17 @@ repos:
 
       - id: check-github-workflows
         args: ["--verbose"]
+        # Generated gh-aw output (DO NOT EDIT headers) uses concurrency keys
+        # ahead of the published workflow schema - the compiler owns its validity
+        exclude: ^\.github/workflows/(.*\.lock\.yml|agentics-maintenance\.yml)$
 
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.12
     hooks:
       - id: actionlint
+        # Generated gh-aw output (DO NOT EDIT headers) uses concurrency keys
+        # ahead of the published workflow schema - the compiler owns its validity
+        exclude: ^\.github/workflows/(.*\.lock\.yml|agentics-maintenance\.yml)$
 
   - repo: https://github.com/abravalheri/validate-pyproject
     rev: v0.25

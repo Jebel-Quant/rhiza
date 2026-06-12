@@ -8,7 +8,8 @@
 #          running `gh aw compile`. Skips gracefully when the gh-aw extension
 #          is not yet available.
 #
-# Trigger: On pull requests and pushes to main when .github/workflows/*.md changes.
+# Trigger: On pull requests and pushes to main when .github/workflows/*.md or
+#          *.lock.yml files change.
 
 name: "(RHIZA) VALIDATE AGENTIC WORKFLOWS"
 
@@ -24,10 +25,12 @@ on:
   pull_request:
     paths:
       - ".github/workflows/*.md"
+      - ".github/workflows/*.lock.yml"
   push:
     branches: [main]
     paths:
       - ".github/workflows/*.md"
+      - ".github/workflows/*.lock.yml"
   workflow_call:
 
 jobs:
