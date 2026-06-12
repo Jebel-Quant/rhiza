@@ -120,3 +120,6 @@ local.mk
 
 .bandit-baseline.json
 
+
+# ClusterFuzzLite copies the audited module next to the harness at build time
+fuzz/suppression_audit.py
