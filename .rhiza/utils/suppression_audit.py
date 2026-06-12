@@ -127,8 +127,8 @@ def scan_file(path: Path) -> list[Suppression]:
                         )
                     )
                     break  # count each comment line once
-    except tokenize.TokenError:
-        pass  # skip files with tokenization errors (e.g. incomplete source)
+    except (tokenize.TokenError, IndentationError):
+        pass  # skip files with tokenization errors or bad indentation
 
     return suppressions
 
