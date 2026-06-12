@@ -72,7 +72,8 @@ expressed inside that template as Jinja branches (`{% if use_docker %}`), which 
 feature combination multiplies the template's internal complexity, and adopting a new feature
 after generation is awkward.
 
-Rhiza composes instead: 23 atomic bundles, each owning a disjoint set of files, with explicit
+Rhiza composes instead: a set of atomic bundles (defined in `.rhiza/template-bundles.yml`),
+each owning a disjoint set of files, with explicit
 `requires`/`recommends` relationships, plus profiles as curated presets
 ([ADR-0006](../adr/0006-organise-templates-into-bundles.md),
 [ADR-0010](../adr/0010-layered-bundle-profile-model.md)). A project adopts `marimo` or drops
