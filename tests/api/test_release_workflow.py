@@ -72,10 +72,21 @@ class TestReleaseWorkflowStructure:
         tags = push.get("tags", [])
         assert any("v*" in tag for tag in tags), "Workflow must trigger on v* tags"
 
-    def test_workflow_has_contents_write_permission(self, workflow):
-        """Workflow must have contents: write permission to push CHANGELOG.md."""
+    def test_workflow_top_level_permissions_are_read_only(self, workflow):
+        """Top-level permissions must stay least-privilege (read-only).
+
+        Write scopes are granted per-job (Scorecard Token-Permissions); the
+        workflow must not hand every job write access by default.
+        """
         permissions = workflow.get("permissions", {})
-        assert permissions.get("contents") == "write", "Workflow must have contents: write permission"
+        assert permissions.get("contents") == "read", "Top-level contents permission must be read"
+        assert "write" not in permissions.values(), f"Top-level permissions must be read-only, got {permissions}"
+
+    def test_changelog_job_has_contents_write_permission(self, workflow):
+        """The update-changelog job must have contents: write to push CHANGELOG.md."""
+        job = workflow["jobs"]["update-changelog"]
+        permissions = job.get("permissions", {})
+        assert permissions.get("contents") == "write", "update-changelog job must have contents: write"
 
     def test_workflow_contains_expected_jobs(self, workflow):
         """Workflow should keep the expected release job structure."""
