@@ -46,17 +46,22 @@ jobs:
 
     steps:
       # Check out the repository code
-      - uses: actions/checkout@v6.0.2
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v7.6.0
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.8
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@ae79c6f0729b21239655abe390269be9171f907d # v0.18.8
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -69,7 +74,7 @@ jobs:
           uv sync --all-extras --all-groups --frozen
 
       - name: Cache MkDocs plugin cache
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: .cache/plugin/
           key: mkdocs-plugin-${{ runner.os }}-${{ hashFiles('mkdocs.yml', 'uv.lock', 'pyproject.toml') }}
@@ -89,7 +94,7 @@ jobs:
       # This allows anyone to download the built documentation directly from
       # GitHub Actions without needing to run a full local build.
       - name: Upload book as workflow artifact
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: book
           path: _book/
@@ -98,7 +103,7 @@ jobs:
       # Step 5b: Package all artifacts for GitHub Pages deployment
       # This prepares the combined outputs for deployment by creating a single artifact
       - name: Upload static files as artifact
-        uses: actions/upload-pages-artifact@v5.0.0  # Official GitHub Pages artifact upload action
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: _book/  # Path to the directory containing all artifacts to deploy
 
@@ -109,5 +114,5 @@ jobs:
       # If PUBLISH_COMPANION_BOOK is not set, it defaults to allowing deployment
       - name: Deploy to GitHub Pages
         if: ${{ !github.event.repository.fork && (vars.PUBLISH_COMPANION_BOOK == 'true' || vars.PUBLISH_COMPANION_BOOK == '') }}
-        uses: actions/deploy-pages@v5.0.0  # Official GitHub Pages deployment action
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
         continue-on-error: true

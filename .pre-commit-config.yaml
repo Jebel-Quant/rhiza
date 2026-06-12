@@ -5,6 +5,8 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
       - id: check-toml
       - id: check-yaml
         args: ['--unsafe']
@@ -104,3 +106,7 @@ repos:
       - id: check-makefile-targets
       - id: check-python-version-consistency
       # - id: check-template-bundles
+  - repo: https://github.com/pylint-dev/pylint
+    rev: v2.17.2
+    hooks:
+      - id: pylint

@@ -40,7 +40,12 @@ jobs:
       notebook-list: ${{ steps.notebooks.outputs.matrix }}
     steps:
       # Check out the repository code
-      - uses: actions/checkout@v6.0.2
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       # Find all Python files in the marimo folder and create a matrix for parallel execution
       - name: Find notebooks and build matrix
@@ -81,18 +86,23 @@ jobs:
     name: Run notebook ${{ matrix.notebook }}
     steps:
       # Check out the repository code
-      - uses: actions/checkout@v6.0.2
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: true
 
       # Install uv/uvx
       - name: Install uv
-        uses: astral-sh/setup-uv@v7.6.0
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.8
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@ae79c6f0729b21239655abe390269be9171f907d # v0.18.8
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -114,7 +124,7 @@ jobs:
 
       - name: Upload notebook artefacts
         if: always()
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: notebook-artefacts-${{ steps.artefact-folder.outputs.name }}
           path: results/${{ steps.artefact-folder.outputs.name }}/
