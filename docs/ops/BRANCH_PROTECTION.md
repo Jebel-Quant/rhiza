@@ -19,10 +19,12 @@ This directly improves two Scorecard checks that cannot be fixed by workflow fil
 ## What the ruleset enforces
 
 - Pull request required, with **1 approving review**, **code-owner review** (see
-  [`.github/CODEOWNERS`](../../.github/CODEOWNERS)), **last-push approval**, and stale-review dismissal on new
-  pushes.
+  [`.github/CODEOWNERS`](../../.github/CODEOWNERS)), **last-push approval**, **review-thread resolution**, and
+  stale-review dismissal on new pushes.
 - **Required status checks** — the always-on CI gates must pass before merge: `Pre-commit hooks`, `validation`,
-  `Check dependencies with deptry`, `docs-coverage`, `Security scanning`, `License compliance scan`.
+  `Check dependencies with deptry`, `docs-coverage`, `Security scanning`, `License compliance scan`. The
+  **strict policy** is on (`strict_required_status_checks_policy: true`), so a PR branch must be up to date with
+  the default branch before it can merge — Scorecard rewards this in the status-checks tier.
 - **No force-pushes** (`non_fast_forward`) and **no deletion** of the default branch.
 
 Repository **admins can bypass** (`bypass_actors` → `RepositoryRole` id 5, `bypass_mode: always`) so a solo
