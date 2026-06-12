@@ -17,7 +17,6 @@ concurrency:
 
 permissions:
   contents: read
-  security-events: write
 
 on:
   push:
