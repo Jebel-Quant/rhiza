@@ -72,6 +72,7 @@ This project implements several security measures:
 - **Bandit**: Python security linter integrated in CI and pre-commit
 - **pip-audit**: Dependency vulnerability scanning
 - **Secret Scanning**: GitHub secret scanning enabled on this repository
+- **Fuzzing**: ClusterFuzzLite exercises Atheris-based fuzz targets on pull requests and scheduled batch runs
 
 ### Supply Chain Security
 - **SLSA Provenance**: Build attestations for release artifacts (public repositories only)
