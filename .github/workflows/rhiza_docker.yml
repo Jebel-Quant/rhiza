@@ -19,7 +19,6 @@ concurrency:
 
 permissions:
   contents: read
-  security-events: write
 
 on:
   push:
@@ -31,6 +30,9 @@ on:
 jobs:
   lint_and_build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # Needed to upload the Trivy SARIF report to code scanning
 
     steps:
       - name: Harden the runner (Audit all outbound calls)

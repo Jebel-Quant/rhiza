@@ -21,8 +21,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 on:
   push:
@@ -58,6 +57,8 @@ jobs:
     name: Sync and commit (Renovate)
     if: (github.event_name == 'push' || inputs.direct == true) && github.repository != 'jebel-quant/rhiza'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # Needed to commit and push synced changes to the branch
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -135,6 +136,9 @@ jobs:
     name: Sync and open PR (scheduled/manual)
     if: github.event_name != 'push' && inputs.direct != true && github.repository != 'jebel-quant/rhiza'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write         # Needed to push the sync branch
+      pull-requests: write    # Needed to open the sync PR
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
