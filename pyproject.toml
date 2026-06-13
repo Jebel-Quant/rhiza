@@ -10,6 +10,8 @@ authors = [
 ]
 keywords = ["templates", "configuration", "ci", "ruff"]
 classifiers = [
+    # Deliberate PyPI kill-switch: rhiza_release.yml skips publish when this classifier is present.
+    # Remove it to enable publishing (after configuring PyPI Trusted Publisher for the repository).
     "Private :: Do Not Upload",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
@@ -56,4 +58,3 @@ Issues = "https://github.com/jebel-quant/rhiza/issues"
 
 [tool.deptry.package_module_name_map]
 pyyaml = "yaml"
-
