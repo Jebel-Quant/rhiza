@@ -49,6 +49,19 @@ class TestCoreBundleSync:
         """Ruff linting configuration is present."""
         assert (self.project / "ruff.toml").is_file()
 
+    def test_cliff_config_exists(self):
+        """git-cliff config is synced by the core bundle."""
+        assert (self.project / "cliff.toml").is_file()
+
+    def test_cliff_config_uses_keep_a_changelog_groups(self):
+        """cliff.toml keeps semantic changelog groupings instead of git-cliff defaults."""
+        cliff_toml = (self.project / "cliff.toml").read_text(encoding="utf-8")
+        assert "New Features" in cliff_toml
+        assert "Bug Fixes" in cliff_toml
+        assert "Documentation" in cliff_toml
+        assert "Dependencies" in cliff_toml
+        assert "skip = true" in cliff_toml
+
     def test_pyproject_template_exists(self, test_data_dir):
         """Core bundle ships a pyproject.toml template."""
         assert (test_data_dir / "pyproject.toml").is_file()

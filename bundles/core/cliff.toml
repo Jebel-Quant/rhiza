@@ -64,16 +64,21 @@ sort_commits = "oldest"
 # Group commits into changelog sections. The leading HTML comment controls the
 # section ordering and is stripped from the rendered heading via `striptags`.
 commit_parsers = [
+  # Drop automated noise commits that don't provide user-facing signal.
+  { message = ".*\\[skip ci\\].*", skip = true },
+  { message = "^chore(\\([^)]+\\))?:\\s*(bump|release)( version)?\\b", skip = true },
+  { message = "^chore:\\s*update changelog\\.md\\b", skip = true },
   { message = "^feat", group = "<!-- 0 -->New Features" },
   { message = "^fix", group = "<!-- 1 -->Bug Fixes" },
   { message = "^docs?", group = "<!-- 2 -->Documentation" },
   { message = "^perf", group = "<!-- 3 -->Performance" },
-  { message = "^refactor", group = "<!-- 4 -->Maintenance" },
-  { message = "^style", group = "<!-- 4 -->Maintenance" },
-  { message = "^chore", group = "<!-- 4 -->Maintenance" },
-  { message = "^build", group = "<!-- 4 -->Maintenance" },
-  { message = "^ci", group = "<!-- 4 -->Maintenance" },
-  { message = "^test", group = "<!-- 4 -->Maintenance" },
-  { message = "^revert", group = "<!-- 5 -->Reverts" },
-  { message = ".*", group = "<!-- 6 -->Other Changes" },
+  { message = "^(build|chore)\\(deps[^)]*\\):", group = "<!-- 4 -->Dependencies" },
+  { message = "^refactor", group = "<!-- 5 -->Maintenance" },
+  { message = "^style", group = "<!-- 5 -->Maintenance" },
+  { message = "^chore", group = "<!-- 5 -->Maintenance" },
+  { message = "^build", group = "<!-- 5 -->Maintenance" },
+  { message = "^ci", group = "<!-- 5 -->Maintenance" },
+  { message = "^test", group = "<!-- 5 -->Maintenance" },
+  { message = "^revert", group = "<!-- 6 -->Reverts" },
+  { message = ".*", group = "<!-- 7 -->Other Changes" },
 ]
