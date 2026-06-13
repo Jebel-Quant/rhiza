@@ -94,6 +94,11 @@ class TestCoreAndTestsBundleSync:
         content = (self.project / "pytest.ini").read_text()
         assert "testpaths" in content
 
+    def test_pytest_ini_disables_live_logging_by_default(self):
+        """pytest.ini disables noisy live CLI logging by default."""
+        content = (self.project / "pytest.ini").read_text()
+        assert "log_cli = false" in content
+
     def test_test_mk_exists(self):
         """test.mk Makefile fragment is present."""
         assert (self.project / ".rhiza" / "make.d" / "test.mk").is_file()
