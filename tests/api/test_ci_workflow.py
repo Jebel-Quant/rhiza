@@ -104,3 +104,10 @@ def test_ci_test_job_runs_make_under_bash(root):
     run_tests_step = next(step for step in workflow["jobs"]["test"]["steps"] if step.get("name") == "Run tests")
     assert run_tests_step["shell"] == "bash"
     assert "make test" in run_tests_step["run"]
+
+
+def test_ci_workflow_header_documents_classifier_driven_matrix(root):
+    """CI workflow header must document that Python classifiers drive the matrix."""
+    content = (root / WORKFLOW_PATH).read_text(encoding="utf-8")
+    assert "Programming Language :: Python :: 3.x" in content
+    assert "Adding/removing classifiers updates CI Python coverage automatically" in content
