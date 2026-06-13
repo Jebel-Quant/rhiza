@@ -165,7 +165,10 @@ Incrementing the version number in `pyproject.toml`. Types:
 A git tag prefixed with `v` (e.g., `v1.2.3`) that triggers the release workflow.
 
 ### Version Matrix
-A JSON array of Python versions to test against, generated from `pyproject.toml`'s `requires-python` field. Used in CI for matrix testing.
+A JSON array of Python versions to test against, generated from the
+`Programming Language :: Python :: 3.x` classifiers in `pyproject.toml`.
+In `rhiza_ci.yml`, adding or removing one of these classifiers automatically
+changes CI Python version coverage.
 
 ## CI/CD
 
