@@ -255,11 +255,15 @@ class TestDownstreamRepoEndToEndSync:
         assert (tmp_path / "pytest.ini").is_file()
         assert (tmp_path / ".rhiza" / "tests" / "conftest.py").is_file()
         assert (tmp_path / ".rhiza" / "make.d" / "test.mk").is_file()
+        assert (tmp_path / "cliff.toml").is_file()
 
         pytest_ini = (tmp_path / "pytest.ini").read_text(encoding="utf-8")
         makefile = (tmp_path / "Makefile").read_text(encoding="utf-8")
+        cliff_toml = (tmp_path / "cliff.toml").read_text(encoding="utf-8")
         assert "testpaths" in pytest_ini
         assert "include .rhiza/rhiza.mk" in makefile
+        assert "New Features" in cliff_toml
+        assert "Bug Fixes" in cliff_toml
 
     @staticmethod
     def _run_sync(downstream: Path) -> subprocess.CompletedProcess[str]:
