@@ -1,0 +1,60 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Mutation Testing
+#
+# Purpose: Measure test *assertion strength* with mutmut. 100% line/branch
+#          coverage proves code is executed, not that a wrong result would be
+#          caught; surviving mutants reveal assertions that are too weak.
+#
+#          `make mutation` exits non-zero on any surviving mutant
+#          (genuinely-equivalent ones are marked `# pragma: no mutate`), so the
+#          job is a blocking gate when enabled. The HTML report is uploaded as
+#          an artifact for inspection.
+#
+#          Opt-in: set the MUTATION_ENABLED repository variable to 'true' to
+#          run the gate. It is skipped otherwise, so adopting this bundle never
+#          breaks a repo that has not yet reached a 100% mutation score.
+#
+# Trigger: Weekly schedule (mutation runs are slow) and manual dispatch — it
+#          does NOT run per-PR, to avoid adding minutes to every pull request.
+
+name: "(RHIZA) MUTATION"
+
+# Cancel superseded in-progress runs of this workflow for the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"  # Monday 09:00 UTC (after the rhiza weekly job at 08:00)
+  workflow_dispatch:
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    # Opt-in gate: only run where the repo has explicitly enabled mutation testing.
+    if: vars.MUTATION_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      # `make mutation` bootstraps uv, creates the venv, installs deps, then runs
+      # mutmut. It exits non-zero when any mutant survives, failing the job.
+      - name: Run mutation tests
+        run: make mutation
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mutation-report
+          path: _tests/mutation/html
+          if-no-files-found: warn
