@@ -82,9 +82,8 @@ These are the commands you'll use most frequently:
 
 | Command | Description | Options |
 |---------|-------------|---------|
-| `make publish` | Bump version, tag, and push (all-in-one) | `DRY_RUN=1` for preview |
-| `make bump` | Bump version (prompts for level) | `BUMP=major/minor/patch` |
-| `make release` | Create and push release tag | `DRY_RUN=1` for preview |
+| `make release` | Bump version, tag, and push to trigger the release workflow (prompts for level) | `DRY_RUN=1` for preview |
+| `make bump` | Bump version only, without releasing (prompts for level) | `BUMP=major/minor/patch` |
 | `make release-status` | Show release workflow status | |
 
 ### Docker
@@ -429,10 +428,7 @@ make bump DRY_RUN=1
 ### Creating Releases
 
 ```bash
-# Full release (bump + tag + push)
-make publish
-
-# Just create and push tag
+# Full release: bump + tag + push (interactive bump-level prompt)
 make release
 
 # Preview release
@@ -683,7 +679,7 @@ make all          # Run all CI checks
 ```bash
 make test         # Verify tests pass
 make all          # Run all CI checks
-make publish      # Bump, tag, and push
+make release      # Bump, tag, and push
 ```
 
 ### Adding Dependencies
