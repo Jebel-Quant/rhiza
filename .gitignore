@@ -122,4 +122,4 @@ local.mk
 
 
 # ClusterFuzzLite copies the audited module next to the harness at build time
-fuzz/suppression_audit.py
+tests/fuzz/suppression_audit.py
