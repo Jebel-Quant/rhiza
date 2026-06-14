@@ -118,11 +118,14 @@ class TestSourceFolderVariable:
             env_file.write_text(env_file.read_text() + "\nSOURCE_FOLDER=mypackage\n")
 
         proc = run_make(logger, ["typecheck", "SOURCE_FOLDER=mypackage"])
-        assert "uv run ty check mypackage" in proc.stdout, (
-            "typecheck should pass SOURCE_FOLDER to ty; got:\n" + proc.stdout[:400]
+        assert 'typecheck_paths="mypackage"' in proc.stdout, (
+            "typecheck should include SOURCE_FOLDER in computed path list; got:\n" + proc.stdout[:400]
         )
-        assert "uv run mypy --strict mypackage" in proc.stdout, (
-            "typecheck should pass SOURCE_FOLDER to mypy; got:\n" + proc.stdout[:400]
+        assert " run ty check ${typecheck_paths}" in proc.stdout, (
+            "typecheck should pass computed path list to ty; got:\n" + proc.stdout[:400]
+        )
+        assert " run mypy --strict ${typecheck_paths}" in proc.stdout, (
+            "typecheck should pass computed path list to mypy; got:\n" + proc.stdout[:400]
         )
 
     def test_deptry_uses_source_folder(self, logger, tmp_path) -> None:
