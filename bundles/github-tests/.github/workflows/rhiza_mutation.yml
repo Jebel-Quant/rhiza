@@ -11,6 +11,9 @@
 #          run the gate. It is skipped otherwise, so adopting this bundle never
 #          breaks a repo that has not yet reached a 100% mutation score.
 #
+#          Published mutation badge URL (when enabled):
+#          https://<org>.github.io/<repo>/mutation-badge.svg
+#
 #          Thin stub: the mutation logic and the opt-in gate live in the
 #          reusable workflow in jebel-quant/rhiza; this file only wires up the
 #          triggers.
