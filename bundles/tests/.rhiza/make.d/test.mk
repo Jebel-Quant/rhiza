@@ -50,17 +50,24 @@ test:: install ## run all tests
 	fi
 
 # The 'typecheck' target runs static type analysis using ty and mypy.
-# 1. Checks if the source directory exists.
-# 2. Runs ty on the source folder.
-# 3. Runs mypy in strict mode on the source folder as a cross-check.
+# 1. Builds a list of existing Python source folders to check.
+# 2. Runs ty on those folders.
+# 3. Runs mypy in strict mode on those folders as a cross-check.
 typecheck: install ## run ty and mypy type checking
-	@if [ -d ${SOURCE_FOLDER} ]; then \
-	  printf "${BLUE}[INFO] Running ty type checking...${RESET}\n"; \
-	  ${UV_BIN} run ty check ${SOURCE_FOLDER} && \
-	  printf "${BLUE}[INFO] Running mypy strict type checking...${RESET}\n"; \
-	  ${UV_BIN} run mypy --strict ${SOURCE_FOLDER}; \
+	@typecheck_paths=""; \
+	if [ -d "${SOURCE_FOLDER}" ]; then \
+	  typecheck_paths="${SOURCE_FOLDER}"; \
+	fi; \
+	if [ -d ".rhiza/utils" ]; then \
+	  typecheck_paths="$${typecheck_paths} .rhiza/utils"; \
+	fi; \
+	if [ -n "$${typecheck_paths}" ]; then \
+	  printf "${BLUE}[INFO] Running ty type checking in:$${typecheck_paths}${RESET}\n"; \
+	  ${UV_BIN} run ty check $${typecheck_paths} && \
+	  printf "${BLUE}[INFO] Running mypy strict type checking in:$${typecheck_paths}${RESET}\n"; \
+	  ${UV_BIN} run mypy --strict $${typecheck_paths}; \
 	else \
-	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping typecheck${RESET}\n"; \
+	  printf "${YELLOW}[WARN] No typecheck folders found (SOURCE_FOLDER='${SOURCE_FOLDER}', .rhiza/utils missing), skipping typecheck${RESET}\n"; \
 	fi
 
 # Extra flags forwarded to pip-audit (e.g. --ignore-vuln CVE-XXXX-YYYY)

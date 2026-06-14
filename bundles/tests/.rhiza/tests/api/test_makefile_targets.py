@@ -115,23 +115,16 @@ class TestMakefile:
         out = proc.stdout
         assert_uvx_command_uses_version(out, tmp_path, "deptry src")
 
-    def test_typecheck_target_dry_run(self, logger, tmp_path):
-        """Typecheck target should invoke ty and mypy via uv run in dry-run output."""
-        # Create a mock SOURCE_FOLDER directory so the typecheck command runs
-        source_folder = tmp_path / "src"
-        source_folder.mkdir(exist_ok=True)
-
-        # Update .env to set SOURCE_FOLDER
-        env_file = tmp_path / ".rhiza" / ".env"
-        env_content = env_file.read_text()
-        env_content += "\nSOURCE_FOLDER=src\n"
-        env_file.write_text(env_content)
-
+    def test_typecheck_target_dry_run(self, logger):
+        """Typecheck target should invoke ty and mypy via uv run and include .rhiza/utils."""
         proc = run_make(logger, ["typecheck"])
         out = proc.stdout
-        # Check for both uv run commands
-        assert "uv run ty check src" in out
-        assert "uv run mypy --strict src" in out
+        # Both type checkers are invoked
+        assert "uv run ty check" in out
+        assert "uv run mypy --strict" in out
+        # .rhiza/utils is folded into the path list so utility code is type-checked
+        assert 'if [ -d ".rhiza/utils" ]' in out
+        assert ".rhiza/utils" in out
 
     def test_test_target_dry_run(self, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
