@@ -51,6 +51,11 @@ repos:
         # ahead of the published workflow schema - the compiler owns its validity
         exclude: ^\.github/workflows/(.*\.lock\.yml|agentics-maintenance\.yml)$
 
+      - id: check-jsonschema
+        name: Validate template-bundles.yml
+        files: ^\.rhiza/template-bundles\.yml$
+        args: ["--schemafile", ".rhiza/template-bundles.schema.json", "--verbose"]
+
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.12
     hooks:

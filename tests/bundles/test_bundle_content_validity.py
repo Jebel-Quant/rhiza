@@ -204,6 +204,29 @@ class TestBundleDocumentation:
         missing = [name for name in bundle_names if name not in diagram]
         assert not missing, f"Bundle dependency map is missing bundles: {missing}"
 
+    @staticmethod
+    def _readme_bundle_tables(root: Path) -> str:
+        """Return the body of the README 'Available Template Bundles' tables section."""
+        readme = (root / "README.md").read_text(encoding="utf-8")
+        parts = readme.split("### Available Template Bundles", 1)
+        assert len(parts) == 2, "README should contain an '### Available Template Bundles' section"
+        # The bundle tables end at the closing pointer line back to template-bundles.yml.
+        return parts[1].split("For a complete reference", 1)[0]
+
+    def test_readme_bundle_tables_list_all_bundles(self, root: Path, bundle_names: list[str]) -> None:
+        """Every bundle in template-bundles.yml must appear in the README bundle tables."""
+        body = self._readme_bundle_tables(root)
+        missing = [name for name in bundle_names if f"`{name}`" not in body]
+        assert not missing, f"README bundle tables are missing bundles: {missing}"
+
+    def test_readme_bundle_tables_have_no_stale_bundles(self, root: Path, bundle_names: list[str]) -> None:
+        """Every bundle documented in the README bundle tables must be a defined bundle."""
+        body = self._readme_bundle_tables(root)
+        # First column of each table row, e.g. ``| `core` | ...``.
+        documented = set(re.findall(r"^\|\s*`([a-z0-9-]+)`\s*\|", body, re.MULTILINE))
+        stale = sorted(documented - set(bundle_names))
+        assert not stale, f"README bundle tables document unknown bundles: {stale}"
+
 
 # ---------------------------------------------------------------------------
 # GitHub workflow stubs

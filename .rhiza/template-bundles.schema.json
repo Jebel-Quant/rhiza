@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jebel-quant.github.io/rhiza/schemas/template-bundles.schema.json",
+  "title": "Rhiza template bundle definitions",
+  "description": "Schema for .rhiza/template-bundles.yml: the authoritative list of Rhiza bundles and profiles.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["bundles"],
+  "properties": {
+    "bundles": {
+      "type": "object",
+      "description": "Atomic, file-owning building blocks, keyed by bundle name.",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["description"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "standalone": {
+            "type": "boolean"
+          },
+          "requires": {
+            "type": "array",
+            "items": {"type": "string"},
+            "uniqueItems": true
+          },
+          "recommends": {
+            "type": "array",
+            "items": {"type": "string"},
+            "uniqueItems": true
+          },
+          "notes": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "profiles": {
+      "type": "object",
+      "description": "Higher-level named presets that expand to a set of bundles, keyed by profile name.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["description", "bundles"],
+        "properties": {
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bundles": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        }
+      }
+    }
+  }
+}
