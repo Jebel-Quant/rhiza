@@ -106,6 +106,16 @@ def test_ci_test_job_runs_make_under_bash(root):
     assert "make test" in run_tests_step["run"]
 
 
+def test_ci_typecheck_job_documents_ty_and_mypy(root):
+    """CI typecheck job must advertise the ty+mypy cross-check."""
+    with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
+        workflow = yaml.safe_load(fh)
+
+    typecheck_steps = workflow["jobs"]["typecheck"]["steps"]
+    typecheck_step = next(step for step in typecheck_steps if step.get("run") == "make typecheck")
+    assert "ty and mypy" in typecheck_step["name"]
+
+
 def test_ci_workflow_header_documents_classifier_driven_matrix(root):
     """CI workflow header must document that Python classifiers drive the matrix."""
     content = (root / WORKFLOW_PATH).read_text(encoding="utf-8")
