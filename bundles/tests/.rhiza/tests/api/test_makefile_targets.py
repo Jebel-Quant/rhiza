@@ -114,7 +114,7 @@ class TestMakefile:
         assert_uvx_command_uses_version(out, tmp_path, "deptry src")
 
     def test_typecheck_target_dry_run(self, logger, tmp_path):
-        """Typecheck target should invoke ty via uv run in dry-run output."""
+        """Typecheck target should invoke ty and mypy via uv run in dry-run output."""
         # Create a mock SOURCE_FOLDER directory so the typecheck command runs
         source_folder = tmp_path / "src"
         source_folder.mkdir(exist_ok=True)
@@ -127,8 +127,9 @@ class TestMakefile:
 
         proc = run_make(logger, ["typecheck"])
         out = proc.stdout
-        # Check for uv run command
+        # Check for both uv run commands
         assert "uv run ty check src" in out
+        assert "uv run mypy --strict src" in out
 
     def test_test_target_dry_run(self, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
