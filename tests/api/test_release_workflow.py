@@ -116,3 +116,25 @@ class TestReleaseWorkflowStructure:
         finalise_job = workflow["jobs"]["finalise-release"]
         assert "conda" in finalise_job.get("needs", [])
         assert "needs.conda.result == 'success'" in str(finalise_job.get("if", ""))
+
+    def test_sbom_attestation_is_staged_as_release_signature(self, workflow):
+        """Non-buildable repos must still ship a recognised signature asset.
+
+        Repos without a ``[build-system]`` produce no ``dist/*.intoto.jsonl``
+        provenance, so the SBOM's Sigstore attestation bundle is staged as a
+        ``*.sigstore.json`` release asset to satisfy OpenSSF Scorecard's
+        Signed-Releases check.
+        """
+        build_job = workflow["jobs"]["build"]
+        steps = build_job.get("steps", [])
+        attest_step = next((s for s in steps if s.get("name") == "Attest SBOM"), None)
+        assert attest_step is not None, "Attest SBOM step must exist"
+        assert attest_step.get("id") == "attest-sbom", "Attest SBOM step needs an id to reference its bundle"
+
+        commands = "\n".join(_step_commands(build_job))
+        assert "steps.attest-sbom.outputs.bundle-path" in commands
+        assert "sbom.cdx.json.sigstore.json" in commands
+
+        upload_step = next((s for s in steps if s.get("name") == "Upload SBOM artifacts"), None)
+        assert upload_step is not None, "Upload SBOM artifacts step must exist"
+        assert "sbom.cdx.json.sigstore.json" in upload_step["with"]["path"]
