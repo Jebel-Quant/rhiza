@@ -164,6 +164,14 @@ class TestMakefile:
         assert "uv run pytest" in out
         assert "--html=_tests/html-report/report.html" in out
 
+    def test_docs_coverage_includes_rhiza_utils(self, logger):
+        """Docs coverage should include .rhiza/utils so utility docstrings are gated."""
+        proc = run_make(logger, ["docs-coverage"])
+        out = proc.stdout
+        assert 'if [ -d ".rhiza/utils" ]' in out
+        assert "uv run interrogate" in out
+        assert ".rhiza/utils" in out
+
     def test_python_version_defaults_to_3_13_if_missing(self, logger, tmp_path):
         """`PYTHON_VERSION` should default to `3.13` if .python-version is missing."""
         # Ensure .python-version does not exist
