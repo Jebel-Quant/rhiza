@@ -318,3 +318,28 @@ class TestBenchmarkWorkflow:
         assert "workflow_call" in triggers or "workflow_call" in str(triggers), (
             "benchmark workflow must support workflow_call (reusable workflow pattern)"
         )
+
+
+class TestMutationWorkflow:
+    """Tests specific to the mutation workflow (rhiza_mutation.yml)."""
+
+    @pytest.fixture
+    def mutation_workflow(self, workflows_dir: Path) -> dict:
+        """Load and return the mutation workflow YAML."""
+        mutation_path = workflows_dir / "rhiza_mutation.yml"
+        if not mutation_path.exists():
+            pytest.skip("rhiza_mutation.yml not found")
+        return _load_workflow(mutation_path)
+
+    def test_mutation_workflow_has_pull_request_trigger(self, mutation_workflow: dict) -> None:
+        """Mutation workflow must run on pull requests."""
+        triggers = _get_workflow_triggers(mutation_workflow)
+        assert "pull_request" in triggers or "pull_request" in str(triggers), (
+            "mutation workflow must be triggered on pull_request"
+        )
+
+    def test_mutation_workflow_is_not_opt_in(self, mutation_workflow: dict) -> None:
+        """Mutation workflow should not be gated by MUTATION_ENABLED."""
+        jobs = mutation_workflow.get("jobs", {})
+        mutation_job = jobs.get("mutation", {})
+        assert "if" not in mutation_job, "mutation workflow should not use an opt-in job-level if gate"
