@@ -141,6 +141,18 @@ jobs:
         run: |
           make test
 
+      - name: Verify clean working tree
+        if: matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          status="$(git status --porcelain)"
+          if [[ -n "$status" ]]; then
+            echo "Working tree is dirty after make test:"
+            printf '%s\n' "$status"
+            git diff --exit-code || true
+            exit 1
+          fi
+
       - name: Upload coverage report
         if: matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
