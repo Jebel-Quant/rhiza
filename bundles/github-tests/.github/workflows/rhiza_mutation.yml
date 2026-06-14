@@ -38,7 +38,7 @@ on:
 
 jobs:
   mutation:
-    uses: jebel-quant/rhiza/.github/workflows/rhiza_mutation.yml@v0.18.10
+    uses: jebel-quant/rhiza/.github/workflows/rhiza_mutation.yml@v0.19.0
     secrets: inherit
     permissions:
       contents: read
