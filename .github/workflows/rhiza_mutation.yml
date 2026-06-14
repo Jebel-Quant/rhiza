@@ -12,9 +12,8 @@
 #          job is a blocking gate when enabled. The HTML report is uploaded as
 #          an artifact for inspection.
 #
-#          Opt-in: set the MUTATION_ENABLED repository variable to 'true' to
-#          run the gate. It is skipped otherwise, so adopting this bundle never
-#          breaks a repo that has not yet reached a 100% mutation score.
+#          Enforced gate: mutation runs are required and fail the job if any
+#          mutant survives (equivalent to a 100% mutation score threshold).
 #
 #          Publishes a generated mutation-score badge at:
 #          https://<org>.github.io/<repo>/mutation-badge.svg
@@ -22,9 +21,8 @@
 #          This is the canonical reusable workflow; downstream repos call it
 #          via the thin stub shipped in the github-tests bundle.
 #
-# Trigger: workflow_call (from the bundle stub), plus a weekly schedule and
-#          manual dispatch for rhiza's own repository. Mutation runs are slow,
-#          so it does NOT run per-PR.
+# Trigger: workflow_call (from the bundle stub), weekly schedule and manual
+#          dispatch, plus pull_request so mutation testing is part of PR CI.
 
 name: "(RHIZA) MUTATION"
 
@@ -37,6 +35,7 @@ permissions:
   contents: read
 
 on:
+  pull_request:
   schedule:
     - cron: "0 9 * * 1"  # Monday 09:00 UTC (after the rhiza weekly job at 08:00)
   workflow_dispatch:
@@ -46,8 +45,6 @@ on:
 jobs:
   mutation:
     runs-on: ubuntu-latest
-    # Opt-in gate: only run where the repo has explicitly enabled mutation testing.
-    if: vars.MUTATION_ENABLED == 'true'
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
