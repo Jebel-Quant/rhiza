@@ -283,11 +283,21 @@ jobs:
       - name: Attest SBOM
         # Attest only the JSON format as it's the canonical machine-readable format.
         # The XML format is provided for compatibility but doesn't need separate attestation.
+        id: attest-sbom
         if: hashFiles('pyproject.toml') != '' && github.event.repository.private == false
         uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
         with:
           subject-path: sbom.cdx.json
           sbom-path: sbom.cdx.json
+
+      - name: Stage SBOM attestation for the GitHub release
+        # Attach the SBOM's Sigstore attestation bundle to the release as a
+        # recognised signature asset (*.sigstore.json). Non-buildable repos
+        # (no [build-system], so no dist/*.intoto.jsonl provenance) would
+        # otherwise ship releases without any signature asset, which fails
+        # OpenSSF Scorecard's Signed-Releases check.
+        if: hashFiles('pyproject.toml') != '' && github.event.repository.private == false
+        run: cp "${{ steps.attest-sbom.outputs.bundle-path }}" sbom.cdx.json.sigstore.json
 
       - name: Upload SBOM artifacts
         if: hashFiles('pyproject.toml') != ''
@@ -297,6 +307,7 @@ jobs:
           path: |
             sbom.cdx.json
             sbom.cdx.xml
+            sbom.cdx.json.sigstore.json
 
       - name: Generate SLSA provenance attestations
         id: provenance
