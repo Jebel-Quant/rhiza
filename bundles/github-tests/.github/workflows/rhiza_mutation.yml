@@ -10,9 +10,12 @@
 #          Enforced gate: mutation runs are required and fail when mutants
 #          survive (100% mutation score threshold in the reusable workflow).
 #
-#          Thin stub: the mutation logic lives in the
+#          Thin stub: the mutation logic and the opt-in gate live in the
 #          reusable workflow in jebel-quant/rhiza; this file only wires up the
 #          triggers.
+#
+#          Published mutation badge URL (when enabled):
+#          https://<org>.github.io/<repo>/mutation-badge.svg
 #
 # Trigger: Weekly schedule, manual dispatch, and pull_request so mutation
 #          testing is included in PR CI.

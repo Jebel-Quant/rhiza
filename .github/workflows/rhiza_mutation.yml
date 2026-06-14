@@ -15,6 +15,9 @@
 #          Enforced gate: mutation runs are required and fail the job if any
 #          mutant survives (equivalent to a 100% mutation score threshold).
 #
+#          Publishes a generated mutation-score badge at:
+#          https://<org>.github.io/<repo>/mutation-badge.svg
+#
 #          This is the canonical reusable workflow; downstream repos call it
 #          via the thin stub shipped in the github-tests bundle.
 #
@@ -50,9 +53,112 @@ jobs:
           python-version: "3.12"
 
       # `make mutation` bootstraps uv, creates the venv, installs deps, then runs
-      # mutmut. It exits non-zero when any mutant survives, failing the job.
+      # mutmut. We preserve the gate result, but defer failing until after we
+      # generate and upload the badge/report artifacts.
       - name: Run mutation tests
-        run: make mutation
+        id: run-mutation
+        shell: bash
+        run: |
+          mkdir -p _tests/mutation
+          set +e
+          set -o pipefail
+          make mutation 2>&1 | tee _tests/mutation/mutmut.log
+          status=${PIPESTATUS[0]}
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Generate mutation badge
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import re
+          from pathlib import Path
+
+          log_path = Path("_tests/mutation/mutmut.log")
+          text = log_path.read_text(encoding="utf-8") if log_path.exists() else ""
+
+          pattern_simple = re.compile(
+              r"KILLED (\d+)\s+TIMEOUT (\d+)\s+SUSPICIOUS (\d+)\s+SURVIVED (\d+)\s+SKIPPED (\d+)"
+          )
+          pattern_emoji = re.compile(r"🎉 (\d+)\s+⏰ (\d+)\s+🤔 (\d+)\s+🙁 (\d+)\s+🔇 (\d+)")
+          matches = pattern_simple.findall(text) or pattern_emoji.findall(text)
+
+          if matches:
+              killed, timeout, suspicious, survived, skipped = map(int, matches[-1])
+              total = killed + timeout + suspicious + survived + skipped
+          else:
+              killed = timeout = suspicious = survived = skipped = total = 0
+
+          if total > 0:
+              score = (killed / total) * 100
+              value = f"{score:.1f}%".replace(".0%", "%")
+              if score >= 100:
+                  color = "#4c1"
+              elif score >= 90:
+                  color = "#97CA00"
+              elif score >= 75:
+                  color = "#a4a61d"
+              elif score >= 50:
+                  color = "#dfb317"
+              else:
+                  color = "#e05d44"
+          else:
+              value = "n/a"
+              color = "#9f9f9f"
+
+          label = "mutation"
+          left_width = 72
+          right_width = max(34, 10 * len(value) + 10)
+          total_width = left_width + right_width
+          left_center = left_width / 2
+          right_center = left_width + right_width / 2
+
+          badge = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{total_width}" height="20" role="img" aria-label="{label}: {value}">
+          <title>{label}: {value}</title>
+          <linearGradient id="s" x2="0" y2="100%">
+            <stop offset="0" stop-color="#fff" stop-opacity=".7"/>
+            <stop offset=".1" stop-color="#aaa" stop-opacity=".1"/>
+            <stop offset=".9" stop-opacity=".3"/>
+            <stop offset="1" stop-opacity=".5"/>
+          </linearGradient>
+          <clipPath id="r">
+            <rect width="{total_width}" height="20" rx="3" fill="#fff"/>
+          </clipPath>
+          <g clip-path="url(#r)">
+            <rect width="{left_width}" height="20" fill="#555"/>
+            <rect x="{left_width}" width="{right_width}" height="20" fill="{color}"/>
+            <rect width="{total_width}" height="20" fill="url(#s)"/>
+          </g>
+          <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="11">
+            <text x="{left_center}" y="15" fill="#010101" fill-opacity=".3">{label}</text>
+            <text x="{left_center}" y="14">{label}</text>
+            <text x="{right_center}" y="15" fill="#010101" fill-opacity=".3">{value}</text>
+            <text x="{right_center}" y="14">{value}</text>
+          </g>
+          </svg>
+          """
+
+          output = Path("_tests/mutation/mutation-badge.svg")
+          output.parent.mkdir(parents=True, exist_ok=True)
+          output.write_text(badge, encoding="utf-8")
+
+          summary = Path("_tests/mutation/score-summary.txt")
+          summary.write_text(
+              (
+                  f"killed={killed}\n"
+                  f"timeout={timeout}\n"
+                  f"suspicious={suspicious}\n"
+                  f"survived={survived}\n"
+                  f"skipped={skipped}\n"
+                  f"total={total}\n"
+                  f"value={value}\n"
+              ),
+              encoding="utf-8",
+          )
+          PY
 
       - name: Upload mutation report
         if: always()
@@ -61,3 +167,85 @@ jobs:
           name: mutation-report
           path: _tests/mutation/html
           if-no-files-found: warn
+
+      - name: Upload mutation badge
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mutation-badge
+          path: |
+            _tests/mutation/mutation-badge.svg
+            _tests/mutation/score-summary.txt
+          if-no-files-found: error
+
+      - name: Enforce mutation gate
+        if: always()
+        shell: bash
+        run: |
+          status='${{ steps.run-mutation.outputs.status }}'
+          if [ "$status" -ne 0 ]; then
+            echo "Mutation gate failed with exit code $status"
+            exit "$status"
+          fi
+
+  publish-mutation-badge:
+    needs: mutation
+    if: ${{ always() && vars.MUTATION_ENABLED == 'true' && !github.event.repository.fork && (vars.PUBLISH_COMPANION_BOOK == 'true' || vars.PUBLISH_COMPANION_BOOK == '') }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.11.16"
+
+      - name: Configure git auth for private packages
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.9
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: "Sync the virtual environment for ${{ github.repository }}"
+        shell: bash
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        run: |
+          uv sync --all-extras --all-groups --frozen
+
+      - name: Download mutation badge
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: mutation-badge
+          path: _tests/mutation
+
+      - name: Build companion book
+        timeout-minutes: 10
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        run: make book
+
+      - name: Publish mutation badge into pages bundle
+        shell: bash
+        run: |
+          cp _tests/mutation/mutation-badge.svg _book/mutation-badge.svg
+
+      - name: Upload static files as artifact
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: _book/
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+
+      - name: Report badge URL
+        shell: bash
+        run: |
+          echo "Mutation badge URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/mutation-badge.svg" >> "$GITHUB_STEP_SUMMARY"
