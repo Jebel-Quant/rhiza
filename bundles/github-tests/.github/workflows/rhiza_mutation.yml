@@ -7,19 +7,18 @@
 #          coverage proves code is executed, not that a wrong result would be
 #          caught; surviving mutants reveal assertions that are too weak.
 #
-#          Opt-in: set the MUTATION_ENABLED repository variable to 'true' to
-#          run the gate. It is skipped otherwise, so adopting this bundle never
-#          breaks a repo that has not yet reached a 100% mutation score.
-#
-#          Published mutation badge URL (when enabled):
-#          https://<org>.github.io/<repo>/mutation-badge.svg
+#          Enforced gate: mutation runs are required and fail when mutants
+#          survive (100% mutation score threshold in the reusable workflow).
 #
 #          Thin stub: the mutation logic and the opt-in gate live in the
 #          reusable workflow in jebel-quant/rhiza; this file only wires up the
 #          triggers.
 #
-# Trigger: Weekly schedule (mutation runs are slow) and manual dispatch — it
-#          does NOT run per-PR, to avoid adding minutes to every pull request.
+#          Published mutation badge URL (when enabled):
+#          https://<org>.github.io/<repo>/mutation-badge.svg
+#
+# Trigger: Weekly schedule, manual dispatch, and pull_request so mutation
+#          testing is included in PR CI.
 
 name: "(RHIZA) MUTATION"
 
@@ -32,6 +31,7 @@ permissions:
   contents: read
 
 on:
+  pull_request:
   schedule:
     - cron: "0 9 * * 1"  # Monday 09:00 UTC (after the rhiza weekly job at 08:00)
   workflow_dispatch:
