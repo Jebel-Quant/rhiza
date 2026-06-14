@@ -132,6 +132,14 @@ class TestWeeklyWorkflowMakeTargets:
         assert result.returncode == 0
         assert "pip-audit" in result.stdout
 
+    def test_security_target_scans_existing_python_or_warns(self, logger):
+        """Make security must not silently pass when the default source folder is missing."""
+        result = run_make(logger, ["security"])
+        assert result.returncode == 0
+        assert 'if [ -d ".rhiza/utils" ]' in result.stdout
+        assert "Running bandit security scan in:" in result.stdout
+        assert "No bandit scan folders found" in result.stdout
+
     def test_pip_audit_args_forwarded(self, logger):
         """PIP_AUDIT_ARGS variable must be forwarded to the pip-audit call."""
         result = run_make(logger, ["security", "PIP_AUDIT_ARGS=--ignore-vuln TEST-0001"])
