@@ -1,5 +1,5 @@
 ---
-description: Run the full code-quality gate (format, lint, types, tests, deps, docs, security, rhiza-test, validate)
+description: Run the full code-quality gate (format, lint, types, tests, deps, docs, security, rhiza-test)
 ---
 
 Run the project's quality gates in order and report results. These mirror the
@@ -21,7 +21,6 @@ Run each of the following, in order:
 5. `make test` — full test suite (runs **without** a coverage gate here, since there is no `src/` to measure with `--cov`)
 6. `make security` — pip-audit + bandit scans
 7. `make rhiza-test` — rhiza's own suite under `.rhiza/tests/` (the templates, Makefile-target, sync, and `.rhiza/utils/` tests that travel downstream), distinct from the root `tests/` suite collected by `make test`
-8. `make validate` — validate project structure against the template repository defined in `.rhiza/template.yml`
 
 Guidelines:
 
@@ -38,12 +37,8 @@ Expected skips are not failures. While `make typecheck` and `make docs-coverage`
 are being repointed from `src` to `.rhiza/utils`, they may still print a
 `[WARN] Source folder src not found, skipping…` and exit clean; once repointed
 they run against `.rhiza/utils`. `make test` runs without a coverage gate (there
-is no `src/` to measure with `--cov`). `make validate` **skips its
-structure-validation step by design in this repo** — the mother repo ships no
-`.rhiza/template.yml`, so it prints `[INFO] Skipping validate in rhiza repository
-(no template.yml by design)` and exits clean; note that `validate` depends on
-`rhiza-test`, so it re-runs that suite as a prerequisite. Report any of these as
-**SKIP (by design)** — do not score them as failures or gaps.
+is no `src/` to measure with `--cov`). Report any of these as **SKIP (by design)**
+— do not score them as failures or gaps.
 
 Test depth (replaces line-coverage scoring). Since there is no runtime source,
 there is no line-coverage percentage to hit. Judge the test suite by **behavioural
