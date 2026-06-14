@@ -14,6 +14,7 @@ from tests.util import strip_ansi
 
 
 def _load_module(root: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, yaml_text: str):
+    """Load explain_bundles.py against a temp project whose template-bundles.yml holds yaml_text."""
     module_path = root / ".rhiza" / "utils" / "explain_bundles.py"
     config_dir = tmp_path / ".rhiza"
     config_dir.mkdir()
@@ -124,6 +125,7 @@ def test_import_exits_with_install_hint_when_pyyaml_is_missing(root, monkeypatch
     original_import = builtins.__import__
 
     def _fake_import(name: str, *args, **kwargs):
+        """Stand in for __import__, raising ImportError for ``yaml`` to simulate the missing dep."""
         if name == "yaml":
             raise ImportError
         return original_import(name, *args, **kwargs)
