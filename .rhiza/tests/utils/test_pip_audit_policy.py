@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
-from tests.util import strip_ansi
+from test_utils import strip_ansi
 
 
 def _load_module(root: Path):
