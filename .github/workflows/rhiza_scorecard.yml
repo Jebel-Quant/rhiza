@@ -25,6 +25,8 @@ on:
   push:
     branches: [ "main", "master" ]
   workflow_dispatch:
+  # Callable as a reusable workflow by the github-bundle stub in downstream repos.
+  workflow_call:
 
 # Cancel superseded in-progress runs of this workflow for the same ref.
 concurrency:
