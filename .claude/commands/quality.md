@@ -1,5 +1,5 @@
 ---
-description: Run the full code-quality gate (format, lint, types, tests, deps, docs, security)
+description: Run the full code-quality gate (format, lint, tests, deps, security)
 ---
 
 Run the project's quality gates in order and report results. These mirror the
@@ -15,11 +15,9 @@ downstream projects sync their dev infrastructure *from* this repo, so there is 
 Run each of the following, in order:
 
 1. `make fmt` — pre-commit hooks (ruff format/check, markdownlint, bandit, actionlint, jsonschema, uv-lock)
-2. `make typecheck` — static type checking with `ty` (expected to **skip** here: `SOURCE_FOLDER=src` does not exist)
-3. `make deptry` — unused/missing dependency check
-4. `make docs-coverage` — docstring coverage (expected to **skip** here: no `src/`)
-5. `make test` — full test suite (runs **without** a coverage gate here, since there is no `src/` to measure with `--cov`)
-6. `make security` — pip-audit + bandit scans
+2. `make deptry` — unused/missing dependency check
+3. `make test` — full test suite (runs **without** a coverage gate here, since there is no `src/` to measure with `--cov`)
+4. `make security` — pip-audit + bandit scans
 
 Guidelines:
 
@@ -33,11 +31,10 @@ Guidelines:
 - End with a concise PASS/FAIL summary per gate.
 
 Expected skips are not failures. Because this repo has no runtime `src/`
-(`SOURCE_FOLDER ?= src` in `.rhiza/rhiza.mk` is absent on disk), `make typecheck`
-and `make docs-coverage` print a `[WARN] Source folder src not found, skipping…`
-and exit clean, and `make test` runs without coverage. Report these as
-**SKIP (by design)** — do not score them as failures or gaps. The interrogate
-docstring hook in `make fmt` likewise has no files to check.
+(`SOURCE_FOLDER ?= src` in `.rhiza/rhiza.mk` is absent on disk), `make test`
+runs without coverage and the interrogate docstring hook in `make fmt` has no
+files to check. Report these as **SKIP (by design)** — do not score them as
+failures or gaps.
 
 Test depth (replaces line-coverage scoring). Since there is no runtime source,
 there is no line-coverage percentage to hit. Judge the test suite by **behavioural
