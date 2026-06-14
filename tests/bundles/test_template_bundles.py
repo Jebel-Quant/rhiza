@@ -349,6 +349,7 @@ class TestTemplateBundles:
         bundles = bundles_data["bundles"]
 
         def full_closure(seeds: list) -> tuple:
+            """Resolve the transitive bundle closure for the seeds, returning (closure, missing)."""
             closure: set = set()
             missing: list = []
             queue = list(seeds)

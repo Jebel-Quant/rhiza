@@ -9,6 +9,7 @@ from types import SimpleNamespace
 
 
 def _load_module(root: Path):
+    """Import the repo's suppression_audit.py utility as a standalone module."""
     module_path = root / ".rhiza" / "utils" / "suppression_audit.py"
     spec = importlib.util.spec_from_file_location("suppression_audit", module_path)
     assert spec is not None
