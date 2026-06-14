@@ -304,7 +304,7 @@ from pathlib import Path
 args = sys.argv[1:]
 print(f"[MOCK] uvx {' '.join(args)}")
 
-# Check if this is the bump command: "rhiza-tools>=0.5.1" bump
+# Check if this is the bump command: "rhiza-tools>=0.7.0" bump
 if "bump" in args:
     # Simulate bumping version in pyproject.toml
     pyproject = Path("pyproject.toml")
@@ -334,7 +334,7 @@ if "bump" in args:
         result = run_make(logger, ["bump", f"UV_BIN={uv_bin}", f"UVX_BIN={uvx_bin}"], dry_run=False)
 
         # Verify that the mock tools were called
-        assert "[MOCK] uvx rhiza-tools>=0.5.1 bump" in result.stdout
+        assert "[MOCK] uvx rhiza-tools>=0.7.0 bump" in result.stdout
         assert "[MOCK] uv lock" in result.stdout
 
         # Verify that 'make install' was called (which calls uv sync)
