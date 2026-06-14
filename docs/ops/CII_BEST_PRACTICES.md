@@ -40,7 +40,7 @@ to the evidence that already exists in rhiza, so the questionnaire is mostly cop
 | Coding style / static analysis | `ruff`, `ty`, `bandit`, `interrogate` (`make fmt`) |
 | Secured delivery (HTTPS) | GitHub + PyPI over HTTPS |
 | Crypto / no hardcoded secrets | `detect-secrets` pre-commit hook |
-| Dynamic / fuzz analysis | ClusterFuzzLite + Atheris (`fuzz/`, `rhiza_fuzzing.yml`) |
+| Dynamic / fuzz analysis | ClusterFuzzLite + Atheris (`tests/fuzz/`, `rhiza_fuzzing.yml`) |
 | Dependency vulnerability monitoring | Dependabot + Renovate + `pip-audit` (`make security`) |
 | Contribution guide | `CONTRIBUTING.md` |
 | Code review of changes | Branch-protection ruleset (`docs/ops/BRANCH_PROTECTION.md`) |
