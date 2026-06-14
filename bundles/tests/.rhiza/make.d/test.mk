@@ -49,13 +49,16 @@ test:: install ## run all tests
 	  --html=_tests/html-report/report.html; \
 	fi
 
-# The 'typecheck' target runs static type analysis using ty.
+# The 'typecheck' target runs static type analysis using ty and mypy.
 # 1. Checks if the source directory exists.
 # 2. Runs ty on the source folder.
-typecheck: install ## run ty type checking
+# 3. Runs mypy in strict mode on the source folder as a cross-check.
+typecheck: install ## run ty and mypy type checking
 	@if [ -d ${SOURCE_FOLDER} ]; then \
 	  printf "${BLUE}[INFO] Running ty type checking...${RESET}\n"; \
-	  ${UV_BIN} run ty check ${SOURCE_FOLDER}; \
+	  ${UV_BIN} run ty check ${SOURCE_FOLDER} && \
+	  printf "${BLUE}[INFO] Running mypy strict type checking...${RESET}\n"; \
+	  ${UV_BIN} run mypy --strict ${SOURCE_FOLDER}; \
 	else \
 	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping typecheck${RESET}\n"; \
 	fi

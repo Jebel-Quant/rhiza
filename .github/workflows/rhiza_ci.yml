@@ -230,9 +230,9 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
-      - name: Run ty type checker (make typecheck)
-        # Runs `uv run ty check src/` as defined in .rhiza/make.d/test.mk.
-        # ty is configured via [tool.ty.environment] in pyproject.toml.
+      - name: Run ty and mypy type checkers (make typecheck)
+        # Runs `uv run ty check src/` and `uv run mypy --strict src/`
+        # as defined in .rhiza/make.d/test.mk.
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: make typecheck

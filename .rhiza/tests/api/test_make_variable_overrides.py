@@ -109,7 +109,7 @@ class TestSourceFolderVariable:
     """SOURCE_FOLDER drives coverage collection and static analysis targets."""
 
     def test_typecheck_uses_source_folder(self, logger, tmp_path) -> None:
-        """The typecheck target must check the directory set by SOURCE_FOLDER."""
+        """The typecheck target must pass SOURCE_FOLDER to ty and mypy."""
         src_dir = tmp_path / "mypackage"
         src_dir.mkdir(exist_ok=True)
 
@@ -118,7 +118,12 @@ class TestSourceFolderVariable:
             env_file.write_text(env_file.read_text() + "\nSOURCE_FOLDER=mypackage\n")
 
         proc = run_make(logger, ["typecheck", "SOURCE_FOLDER=mypackage"])
-        assert "mypackage" in proc.stdout, "typecheck should reference SOURCE_FOLDER; got:\n" + proc.stdout[:400]
+        assert "uv run ty check mypackage" in proc.stdout, (
+            "typecheck should pass SOURCE_FOLDER to ty; got:\n" + proc.stdout[:400]
+        )
+        assert "uv run mypy --strict mypackage" in proc.stdout, (
+            "typecheck should pass SOURCE_FOLDER to mypy; got:\n" + proc.stdout[:400]
+        )
 
     def test_deptry_uses_source_folder(self, logger, tmp_path) -> None:
         """The deptry target must scan the directory set by SOURCE_FOLDER."""
