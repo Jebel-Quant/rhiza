@@ -15,6 +15,7 @@ These tests only verify that:
 
 import pathlib
 import re
+import tomllib
 
 import pytest
 
@@ -110,6 +111,32 @@ class TestSecurityConfiguration:
         content = ruff_config.read_text()
         # Check that "S" is in either select or extend-select
         assert '"S"' in content or "'S'" in content, "Ruff security checks (S) should be enabled in ruff.toml"
+
+    def test_ruff_annotation_checks_enabled(self) -> None:
+        """Verify that Ruff annotation checks are enabled with test-friendly defaults."""
+        repo_root = pathlib.Path(__file__).parent.parent.parent
+        ruff_config = repo_root / "ruff.toml"
+
+        assert ruff_config.exists(), "ruff.toml not found"
+
+        config = tomllib.loads(ruff_config.read_text())
+        lint_config = config["lint"]
+        selected_rules = set(lint_config.get("select", [])) | set(lint_config.get("extend-select", []))
+
+        assert "ANN001" in selected_rules, "Ruff should require function argument annotations (ANN001)"
+        assert any(rule.startswith("ANN2") for rule in selected_rules), (
+            "Ruff should require return annotations via ANN2xx rules"
+        )
+
+        ignored_rules = set(lint_config.get("ignore", []))
+        assert "ANN401" in ignored_rules, "Ruff should ignore ANN401 for *args/**kwargs Any defaults"
+
+        per_file_ignores = lint_config.get("per-file-ignores", {})
+        test_ignores = set(per_file_ignores.get("**/tests/**/*.py", []))
+        assert "ANN" in test_ignores, "Test files should be excluded from ANN enforcement by default"
+
+        notebook_ignores = set(per_file_ignores.get("**/notebooks/*.py", []))
+        assert "ANN" in notebook_ignores, "Notebook files should be excluded from ANN enforcement by default"
 
     def test_no_python_cache_files_hook_configured(self) -> None:
         """Verify that the no-python-cache-files hook is configured in pre-commit.

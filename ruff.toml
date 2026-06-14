@@ -68,6 +68,8 @@ extend-select = [
     "D105",  # pydocstyle - Require docstrings for magic methods
     "D107",  # pydocstyle - Require docstrings for __init__
     "A",     # flake8-builtins - Don't shadow Python builtins
+    "ANN001", # flake8-annotations - Require function argument annotations
+    "ANN2",   # flake8-annotations - Require function return annotations
     "ARG",   # flake8-unused-arguments - Unused arguments (tests exempt below: pytest fixtures)
     "B",     # flake8-bugbear - Find likely bugs and design problems
     "BLE",   # flake8-blind-except - No bare `except Exception` swallowing
@@ -87,7 +89,6 @@ extend-select = [
 # T10: stray breakpoints/pdb imports would fail local pre-commit mid-debugging; review catches leftovers
 # PL: Pylint family is large and opinionated (magic values, arg counts) — high noise for a template repo
 # FBT: boolean positional flags (e.g. dry_run=True) are idiomatic in our test/make drivers
-# ANN: annotation coverage is the typechecker's job (`make typecheck` / ty), not the linter's
 # COM: trailing-comma layout is owned by `ruff format`
 # ISC: implicit string concatenation is handled/conflicted by `ruff format`
 # Q: quote style is owned by `ruff format` (double quotes, configured below)
@@ -103,6 +104,7 @@ extend-select = [
 
 # Resolve incompatible pydocstyle rules: prefer D211 and D212 over D203 and D213
 ignore = [
+    "ANN401",  # dynamically typed *args/**kwargs in framework hooks are intentional
     "D203",  # one-blank-line-before-class (conflicts with D211)
     "D213",  # multi-line-summary-second-line (conflicts with D212)
 ]
@@ -125,6 +127,7 @@ line-ending = "auto"
 # .rhiza/tests/, and their bundle copies under bundles/). This glob subsumes the
 # project suite; tests/**/*.py below adds project-suite-only allowances on top.
 "**/tests/**/*.py" = [
+    "ANN",   # tests prioritize readability and fixtures over strict annotation coverage
     "S101",  # assert is the test idiom
     "S603",  # tests drive git/make/uv via subprocess with fixed argument lists
     "S607",  # partial executable paths (git, make) are intentional in test drivers
@@ -137,6 +140,7 @@ line-ending = "auto"
 ]
 # Marimo notebooks - allow flexible coding patterns for interactive exploration
 "**/notebooks/*.py" = [
+    "ANN",     # notebooks prioritize interactive readability over strict annotation coverage
     "D100",    # No module docstring - marimo requires `import marimo` as the first statement
     "N803",    # Allow non-lowercase variable names in notebooks
     "S101",    # Allow assert statements in notebooks
