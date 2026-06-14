@@ -123,6 +123,12 @@ docs-coverage: install ## check documentation coverage with interrogate
 	if [ -d ".rhiza/utils" ]; then \
 	  docstring_paths="$${docstring_paths} .rhiza/utils"; \
 	fi; \
+	if [ -d "tests" ]; then \
+	  docstring_paths="$${docstring_paths} tests"; \
+	fi; \
+	if [ -d ".rhiza/tests" ]; then \
+	  docstring_paths="$${docstring_paths} .rhiza/tests"; \
+	fi; \
 	if [ -n "$${docstring_paths}" ]; then \
 	  printf "${BLUE}[INFO] Checking documentation coverage in:$${docstring_paths}${RESET}\n"; \
 	  ${UV_BIN} run interrogate -vv --fail-under 100 --ignore-init-method --ignore-magic $${docstring_paths}; \

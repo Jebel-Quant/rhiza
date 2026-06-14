@@ -12,6 +12,7 @@ from test_utils import strip_ansi
 
 
 def _load_module(root: Path):
+    """Import the repo's pip_audit_policy.py utility as a standalone module."""
     module_path = root / ".rhiza" / "utils" / "pip_audit_policy.py"
     spec = importlib.util.spec_from_file_location("pip_audit_policy", module_path)
     assert spec is not None
@@ -37,6 +38,7 @@ def test_main_returns_zero_and_forwards_args_when_audit_passes(root, monkeypatch
     seen: dict[str, list[str]] = {}
 
     def _fake_run(cmd: list[str], *, capture_output: bool, text: bool):
+        """Record the invoked command and return a passing (returncode 0) pip-audit result."""
         seen["cmd"] = cmd
         assert capture_output is True
         assert text is True
@@ -56,6 +58,7 @@ def test_main_echoes_raw_output_when_json_parsing_fails(root, monkeypatch, capsy
     module = _load_module(root)
 
     def _fake_run(*args, **kwargs):
+        """Return a failing pip-audit result with non-JSON stdout to exercise the passthrough path."""
         return SimpleNamespace(returncode=2, stdout="oops\n", stderr="bad\n")
 
     monkeypatch.setattr(module.subprocess, "run", _fake_run)
