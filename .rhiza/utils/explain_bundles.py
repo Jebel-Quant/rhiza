@@ -3,7 +3,7 @@
 import sys
 
 try:
-    import yaml
+    import yaml  # type: ignore[import-untyped]
 except ImportError:
     sys.exit("pyyaml is not installed — run: make install")
 
@@ -40,7 +40,7 @@ def _bundle_group(name: str) -> str:
     return "base"
 
 
-def _print_bundle(name: str, info: dict) -> None:
+def _print_bundle(name: str, info: dict) -> None:  # type: ignore[type-arg]
     """Print one bundle entry with dependency metadata."""
     desc = info.get("description", "").strip().splitlines()[0]
     requires = info.get("requires") or []
@@ -54,7 +54,7 @@ def _print_bundle(name: str, info: dict) -> None:
         print(f"  {'':24}{DIM}recommends: {', '.join(recommends)}{RESET}")
 
 
-groups: dict[str, dict] = {"base": {}, "github": {}, "gitlab": {}}
+groups: dict[str, dict] = {"base": {}, "github": {}, "gitlab": {}}  # type: ignore[type-arg]
 for name, info in bundles.items():
     groups[_bundle_group(name)][name] = info
 
