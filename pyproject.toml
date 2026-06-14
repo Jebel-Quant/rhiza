@@ -57,4 +57,24 @@ Repository = "https://github.com/jebel-quant/rhiza"
 Issues = "https://github.com/jebel-quant/rhiza/issues"
 
 [tool.deptry.package_module_name_map]
+# uvx runs deptry without the project deps installed, so it cannot read each
+# package's metadata to resolve the import module name. Declaring the mappings
+# explicitly silences the "Assuming the corresponding module name ..." warnings.
 pyyaml = "yaml"
+ruff = "ruff"
+interrogate = "interrogate"
+pre-commit = "pre_commit"
+pytest = "pytest"
+pytest-cov = "pytest_cov"
+hypothesis = "hypothesis"
+pytest-timeout = "pytest_timeout"
+pytest-xdist = "xdist"
+pytest-html = "pytest_html"
+python-dotenv = "dotenv"
+defusedxml = "defusedxml"
+mutmut = "mutmut"
+marimo = "marimo"
+numpy = "numpy"
+plotly = "plotly"
+pandas = "pandas"
+mkdocs-material = "mkdocs_material"
