@@ -96,7 +96,7 @@ repos:
     hooks:
       - id: interrogate
         args: [--config=pyproject.toml]
-        files: ^src/
+        files: ^(src/|\.rhiza/utils/)
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
     rev: v0.5.1  # Use the latest release

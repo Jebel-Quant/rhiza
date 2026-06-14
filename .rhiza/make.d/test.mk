@@ -95,14 +95,21 @@ benchmark:: install ## run performance benchmarks
 	fi
 
 # The 'docs-coverage' target checks documentation coverage using interrogate.
-# 1. Checks if SOURCE_FOLDER exists.
-# 2. Runs interrogate on the source folder with verbose output.
+# 1. Builds a list of existing Python source folders to check.
+# 2. Runs interrogate with verbose output against those folders.
 docs-coverage: install ## check documentation coverage with interrogate
-	@if [ -d "${SOURCE_FOLDER}" ]; then \
-	  printf "${BLUE}[INFO] Checking documentation coverage in ${SOURCE_FOLDER}...${RESET}\n"; \
-	  ${UV_BIN} run interrogate -vv --fail-under 100 --ignore-init-method --ignore-magic ${SOURCE_FOLDER}; \
+	@docstring_paths=""; \
+	if [ -d "${SOURCE_FOLDER}" ]; then \
+	  docstring_paths="${SOURCE_FOLDER}"; \
+	fi; \
+	if [ -d ".rhiza/utils" ]; then \
+	  docstring_paths="$${docstring_paths} .rhiza/utils"; \
+	fi; \
+	if [ -n "$${docstring_paths}" ]; then \
+	  printf "${BLUE}[INFO] Checking documentation coverage in:$${docstring_paths}${RESET}\n"; \
+	  ${UV_BIN} run interrogate -vv --fail-under 100 --ignore-init-method --ignore-magic $${docstring_paths}; \
 	else \
-	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, skipping docs-coverage${RESET}\n"; \
+	  printf "${YELLOW}[WARN] No docs-coverage folders found (SOURCE_FOLDER='${SOURCE_FOLDER}', .rhiza/utils missing), skipping docs-coverage${RESET}\n"; \
 	fi
 
 # The 'hypothesis-test' target runs property-based tests using Hypothesis.

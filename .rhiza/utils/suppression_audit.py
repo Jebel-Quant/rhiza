@@ -244,6 +244,7 @@ def _collect_suppressions(root: Path) -> tuple[list[Path], list[Suppression], in
     in_rhiza_repo = _is_rhiza_repo(root)
 
     def _include(p: Path) -> bool:
+        """Return True when a Python file should be scanned for suppressions."""
         if _should_skip(p):
             return False
         # In consumer repos, skip the .rhiza/ framework directory entirely

@@ -22,14 +22,17 @@ profiles = data.get("profiles", {})
 
 
 def _is_github(name: str) -> bool:
+    """Return True when a bundle belongs to the GitHub family."""
     return name.startswith("github-") or name in {"github", "gh-aw"}
 
 
 def _is_gitlab(name: str) -> bool:
+    """Return True when a bundle belongs to the GitLab family."""
     return name.startswith("gitlab-") or name == "gitlab"
 
 
 def _bundle_group(name: str) -> str:
+    """Map a bundle name to its display group."""
     if _is_github(name):
         return "github"
     if _is_gitlab(name):
@@ -38,6 +41,7 @@ def _bundle_group(name: str) -> str:
 
 
 def _print_bundle(name: str, info: dict) -> None:
+    """Print one bundle entry with dependency metadata."""
     desc = info.get("description", "").strip().splitlines()[0]
     requires = info.get("requires") or []
     recommends = info.get("recommends") or []
