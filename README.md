@@ -374,7 +374,7 @@ make test            # Run test suite with coverage
 make fmt             # Format and lint code
 make todos           # Scan for TODO/FIXME/HACK comments
 make sync            # Sync with template repository
-make release         # Create and publish a new release
+make release         # Bump version, tag, and push to publish a new release
 make marimo          # Start Marimo notebook server
 make book            # Build documentation
 ```

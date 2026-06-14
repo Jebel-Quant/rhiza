@@ -229,28 +229,24 @@ Notebooks stored in `docs/notebooks/` with inline dependency management.
 
 ## 🚀 Release Workflow
 
-### One-Step Publish (Recommended)
+### Release (bump + tag + push)
 
 ```bash
-make publish
-# → Bumps version + creates tag + pushes
+make release
+# → Interactive prompt for patch/minor/major
+# → Bumps version (and folds CHANGELOG.md into the bump commit)
+# → Creates and pushes the git tag
 # → Triggers release workflow
 ```
 
-### Two-Step Process
+A release always bumps the version — there is no tag-only release.
+
+### Bump Without Releasing
 
 ```bash
-# 1. Bump version
 make bump
-# → Interactive prompts for patch/minor/major
-# → Updates pyproject.toml
-# → Commits and pushes changes
-
-# 2. Create release
-make release
-# → Creates git tag
-# → Pushes tag to GitHub
-# → Triggers release workflow
+# → Interactive prompt for patch/minor/major
+# → Updates pyproject.toml (and CHANGELOG.md), commits — no tag/push
 ```
 
 ### Check Status

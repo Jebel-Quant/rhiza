@@ -16,12 +16,11 @@ A concise reference for common Rhiza operations.
 
 | Command | Description |
 |---------|-------------|
-| `make publish` | Bump version, create tag and push in one step |
-| `make bump` | Bump version (prompts for major/minor/patch) |
+| `make release` | Bump version, create tag and push to trigger the release workflow (prompts for major/minor/patch) |
+| `make bump` | Bump version only, without releasing (prompts for major/minor/patch) |
 | `make bump BUMP=patch` | Bump patch version directly |
 | `make bump BUMP=minor` | Bump minor version directly |
 | `make bump BUMP=major` | Bump major version directly |
-| `make release` | Create and push release tag |
 | `make release-status` | Show release workflow status and latest release |
 
 ## Code Quality

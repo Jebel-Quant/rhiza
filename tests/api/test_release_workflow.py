@@ -1,7 +1,9 @@
 """Tests for the rhiza_release.yml workflow configuration.
 
-Validates that the release workflow is correctly defined, including the
-update-changelog job that generates and commits CHANGELOG.md on every release.
+Validates that the release workflow is correctly defined. CHANGELOG.md is
+folded into the version-bump commit by the rhiza-tools ``bump`` command (via a
+git-cliff pre-commit hook), so the tagged commit already carries the changelog
+and the workflow no longer commits it separately.
 """
 
 from __future__ import annotations
@@ -16,7 +18,6 @@ EXPECTED_JOBS = {
     "tag",
     "build",
     "draft-release",
-    "update-changelog",
     "pypi",
     "conda",
     "devcontainer",
@@ -82,11 +83,19 @@ class TestReleaseWorkflowStructure:
         assert permissions.get("contents") == "read", "Top-level contents permission must be read"
         assert "write" not in permissions.values(), f"Top-level permissions must be read-only, got {permissions}"
 
-    def test_changelog_job_has_contents_write_permission(self, workflow):
-        """The update-changelog job must have contents: write to push CHANGELOG.md."""
-        job = workflow["jobs"]["update-changelog"]
-        permissions = job.get("permissions", {})
-        assert permissions.get("contents") == "write", "update-changelog job must have contents: write"
+    def test_workflow_has_no_changelog_commit_job(self, workflow):
+        """CHANGELOG.md is folded into the bump commit, not committed by the workflow.
+
+        Guards against reintroducing a separate post-tag changelog commit, which
+        would duplicate the entry already carried by the tagged bump commit.
+        """
+        jobs = workflow.get("jobs", {})
+        assert "update-changelog" not in jobs, "update-changelog job must not be reintroduced"
+        for name, job in jobs.items():
+            commands = "\n".join(_step_commands(job))
+            assert "git-cliff --output CHANGELOG.md" not in commands, (
+                f"job '{name}' must not regenerate and commit CHANGELOG.md"
+            )
 
     def test_workflow_contains_expected_jobs(self, workflow):
         """Workflow should keep the expected release job structure."""
