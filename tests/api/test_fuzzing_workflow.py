@@ -8,7 +8,7 @@ import yaml
 
 WORKFLOW_PATH = Path(".github") / "workflows" / "rhiza_fuzzing.yml"
 PROJECT_PATH = Path(".clusterfuzzlite") / "project.yaml"
-FUZZER_PATH = Path("fuzz") / "fuzz_suppression_audit.py"
+FUZZER_PATH = Path("tests") / "fuzz" / "fuzz_suppression_audit.py"
 
 
 def _workflow_triggers(workflow_doc: dict) -> dict:

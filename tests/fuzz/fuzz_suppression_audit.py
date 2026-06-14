@@ -2,7 +2,7 @@
 
 Run locally:
     RHIZA_FUZZ_ROOT=$(pwd) pip install atheris
-    RHIZA_FUZZ_ROOT=$(pwd) python fuzz/fuzz_suppression_audit.py -atheris_runs=10000
+    RHIZA_FUZZ_ROOT=$(pwd) python tests/fuzz/fuzz_suppression_audit.py -atheris_runs=10000
 
 Run in ClusterFuzzLite: this file is built by .clusterfuzzlite/build.sh.
 """
@@ -18,11 +18,11 @@ import atheris
 
 # When running from the source tree (local development), add .rhiza/utils to
 # sys.path so suppression_audit can be imported without installation.
-# In ClusterFuzzLite, build.sh copies suppression_audit.py into fuzz/ before
-# invoking PyInstaller, which allows PyInstaller to discover and bundle it
-# into the frozen binary. At runtime inside the frozen binary, PyInstaller's
+# In ClusterFuzzLite, build.sh copies suppression_audit.py into tests/fuzz/
+# before invoking PyInstaller, which allows PyInstaller to discover and bundle
+# it into the frozen binary. At runtime inside the frozen binary, PyInstaller's
 # import system loads the bundled copy regardless of filesystem paths.
-_REPO_ROOT = Path(os.environ.get("RHIZA_FUZZ_ROOT", str(Path(__file__).resolve().parent.parent)))
+_REPO_ROOT = Path(os.environ.get("RHIZA_FUZZ_ROOT", str(Path(__file__).resolve().parent.parent.parent)))
 _utils_dir = str(_REPO_ROOT / ".rhiza" / "utils")
 if _utils_dir not in sys.path:
     sys.path.insert(0, _utils_dir)
