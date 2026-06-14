@@ -178,6 +178,26 @@ class TestCiWorkflow:
             "CI workflow should declare explicit permissions to limit GitHub token scope"
         )
 
+    def test_ci_workflow_verifies_clean_working_tree_after_tests(self, ci_workflow: dict) -> None:
+        """CI workflow should fail if tests leave tracked or untracked files behind."""
+        steps = ci_workflow.get("jobs", {}).get("test", {}).get("steps", [])
+        verify_step = next((step for step in steps if step.get("name") == "Verify clean working tree"), None)
+
+        assert verify_step is not None, "CI workflow should verify that tests leave the working tree clean"
+        assert verify_step.get("if") == "matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'"
+
+        run = verify_step.get("run", "")
+        assert "git status --porcelain" in run, "clean-tree verification must detect untracked files"
+        assert "git diff --exit-code" in run, "clean-tree verification must detect tracked modifications"
+        assert "printf '%s\\n' \"$status\"" in run, "clean-tree verification should print dirty paths on failure"
+
+    def test_ci_workflow_runs_clean_tree_check_after_tests(self, ci_workflow: dict) -> None:
+        """The clean-tree verification should run after the test command completes."""
+        steps = ci_workflow.get("jobs", {}).get("test", {}).get("steps", [])
+        step_names = [step.get("name") for step in steps]
+
+        assert step_names.index("Run tests") < step_names.index("Verify clean working tree")
+
 
 def _get_workflow_triggers(workflow_doc: dict) -> dict:
     """Extract the 'on' triggers from a parsed workflow document.
