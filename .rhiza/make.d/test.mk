@@ -68,12 +68,23 @@ PIP_AUDIT_ARGS ?=
 
 # The 'security' target performs security vulnerability scans.
 # 1. Runs pip-audit via pip_audit_policy.py: fails on runtime dep CVEs, warns on tooling (pip/setuptools/wheel).
-# 2. Runs bandit to find common security issues in the source code.
+# 2. Runs bandit to find common security issues in Python source folders that exist.
 security: install ## run security scans (pip-audit and bandit)
 	@printf "${BLUE}[INFO] Running pip-audit for dependency vulnerabilities...${RESET}\n"
 	@${UV_BIN} run python .rhiza/utils/pip_audit_policy.py ${PIP_AUDIT_ARGS}
-	@printf "${BLUE}[INFO] Running bandit security scan...${RESET}\n"
-	@${UVX_BIN} bandit -r ${SOURCE_FOLDER} -ll -q --ini .bandit
+	@bandit_paths=""; \
+	if [ -d "${SOURCE_FOLDER}" ]; then \
+	  bandit_paths="${SOURCE_FOLDER}"; \
+	fi; \
+	if [ -d ".rhiza/utils" ]; then \
+	  bandit_paths="$${bandit_paths} .rhiza/utils"; \
+	fi; \
+	if [ -n "$${bandit_paths}" ]; then \
+	  printf "${BLUE}[INFO] Running bandit security scan in:$${bandit_paths}${RESET}\n"; \
+	  ${UVX_BIN} bandit -r $${bandit_paths} -ll -q --ini .bandit; \
+	else \
+	  printf "${YELLOW}[WARN] No bandit scan folders found (SOURCE_FOLDER='${SOURCE_FOLDER}', .rhiza/utils missing), skipping bandit${RESET}\n"; \
+	fi
 
 # The 'benchmark' target runs performance benchmarks using pytest-benchmark.
 # 1. Installs benchmarking dependencies (pytest-benchmark, pygal).

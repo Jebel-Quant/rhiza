@@ -172,6 +172,15 @@ class TestMakefile:
         assert "uv run interrogate" in out
         assert ".rhiza/utils" in out
 
+    def test_security_target_includes_rhiza_utils_and_skip_warning(self, logger):
+        """Security target should scan .rhiza/utils or emit an explicit skip warning."""
+        proc = run_make(logger, ["security"])
+        out = proc.stdout
+        assert 'if [ -d ".rhiza/utils" ]' in out
+        assert "Running bandit security scan in:" in out
+        assert ".rhiza/utils" in out
+        assert "No bandit scan folders found" in out
+
     def test_python_version_defaults_to_3_13_if_missing(self, logger, tmp_path):
         """`PYTHON_VERSION` should default to `3.13` if .python-version is missing."""
         # Ensure .python-version does not exist
