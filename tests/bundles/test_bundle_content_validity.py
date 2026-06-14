@@ -210,24 +210,44 @@ class TestBundleDocumentation:
 # ---------------------------------------------------------------------------
 
 
-class TestGithubWorkflowStubs:
-    """Workflow files injected by github-* overlay bundles must delegate correctly."""
+# Prefix every reusable-workflow stub must call to delegate to this repository.
+_REUSABLE_WORKFLOW_PREFIX = "jebel-quant/rhiza/.github/workflows/"
 
-    def _github_overlay_bundles(self, bundle_names: list[str]) -> list[str]:
-        """Return bundle names that are github-* overlays."""
-        return [n for n in bundle_names if n.startswith("github-")]
+# rhiza_*.yml workflows that are intentionally NOT thin stubs.  rhiza_release.yml
+# is a full release-automation workflow that runs many first-party steps itself
+# rather than delegating to a reusable workflow.
+_NON_STUB_RHIZA_WORKFLOWS = {"rhiza_release.yml"}
+
+
+def _load_workflow_doc(path: Path) -> object:
+    """Parse a workflow YAML file and return the loaded document."""
+    with path.open(encoding="utf-8") as fh:
+        return yaml.safe_load(fh)
+
+
+class TestGithubWorkflowStubs:
+    """Bundle-shipped GitHub workflows must delegate to jebel-quant/rhiza reusables.
+
+    Covers every bundle that ships a .github/workflows/ directory — not just the
+    github-* overlays, but also the `github` and `gh-aw` bundles.  Documented full
+    workflows (rhiza_release.yml) are excepted from the thin-stub requirement.
+    """
+
+    def _bundles_with_github_workflows(self, root: Path, bundle_names: list[str]) -> list[tuple[str, Path]]:
+        """Return (bundle_name, workflows_dir) for every bundle shipping GitHub workflows."""
+        result: list[tuple[str, Path]] = []
+        for bundle_name in bundle_names:
+            workflows_dir = root / "bundles" / bundle_name / ".github" / "workflows"
+            if workflows_dir.is_dir():
+                result.append((bundle_name, workflows_dir))
+        return result
 
     def test_workflow_stubs_have_name_field(self, root: Path, bundle_names: list[str]) -> None:
         """Every GitHub workflow YAML file has a top-level 'name' field."""
         errors: list[str] = []
-        for bundle_name in self._github_overlay_bundles(bundle_names):
-            bundle_dir = root / "bundles" / bundle_name
-            workflows_dir = bundle_dir / ".github" / "workflows"
-            if not workflows_dir.is_dir():
-                continue
+        for bundle_name, workflows_dir in self._bundles_with_github_workflows(root, bundle_names):
             for wf in workflows_dir.glob("*.yml"):
-                with wf.open(encoding="utf-8") as fh:
-                    doc = yaml.safe_load(fh)
+                doc = _load_workflow_doc(wf)
                 if not isinstance(doc, dict) or "name" not in doc:
                     errors.append(f"  [{bundle_name}] {wf.name}: missing 'name' field")
         if errors:
@@ -241,14 +261,9 @@ class TestGithubWorkflowStubs:
         handle both parsed and raw representations.
         """
         errors: list[str] = []
-        for bundle_name in self._github_overlay_bundles(bundle_names):
-            bundle_dir = root / "bundles" / bundle_name
-            workflows_dir = bundle_dir / ".github" / "workflows"
-            if not workflows_dir.is_dir():
-                continue
+        for bundle_name, workflows_dir in self._bundles_with_github_workflows(root, bundle_names):
             for wf in workflows_dir.glob("*.yml"):
-                with wf.open(encoding="utf-8") as fh:
-                    doc = yaml.safe_load(fh)
+                doc = _load_workflow_doc(wf)
                 if not isinstance(doc, dict):
                     errors.append(f"  [{bundle_name}] {wf.name}: not a YAML mapping")
                     continue
@@ -262,14 +277,9 @@ class TestGithubWorkflowStubs:
     def test_workflow_stubs_have_jobs(self, root: Path, bundle_names: list[str]) -> None:
         """Every GitHub workflow YAML file has a non-empty 'jobs' section."""
         errors: list[str] = []
-        for bundle_name in self._github_overlay_bundles(bundle_names):
-            bundle_dir = root / "bundles" / bundle_name
-            workflows_dir = bundle_dir / ".github" / "workflows"
-            if not workflows_dir.is_dir():
-                continue
+        for bundle_name, workflows_dir in self._bundles_with_github_workflows(root, bundle_names):
             for wf in workflows_dir.glob("*.yml"):
-                with wf.open(encoding="utf-8") as fh:
-                    doc = yaml.safe_load(fh)
+                doc = _load_workflow_doc(wf)
                 if not isinstance(doc, dict):
                     continue
                 jobs = doc.get("jobs")
@@ -278,25 +288,68 @@ class TestGithubWorkflowStubs:
         if errors:
             pytest.fail("Workflow stubs without 'jobs':\n" + "\n".join(errors))
 
-    def test_workflow_stubs_delegate_to_jebel_quant_rhiza(self, root: Path, bundle_names: list[str]) -> None:
-        """Workflow stubs that contain a 'uses:' job reference the jebel-quant/rhiza repo."""
+    def test_reusable_calls_target_rhiza_workflows(self, root: Path, bundle_names: list[str]) -> None:
+        """Every job that calls a reusable workflow must target a jebel-quant/rhiza one.
+
+        This inspects the parsed job-level ``uses:`` reference rather than doing a
+        substring search of the file, so it is not satisfied by the jebel-quant/rhiza
+        URL in the boilerplate header comment.  Step-level ``uses:`` (third-party
+        actions) are intentionally ignored.
+        """
         errors: list[str] = []
-        for bundle_name in self._github_overlay_bundles(bundle_names):
-            bundle_dir = root / "bundles" / bundle_name
-            workflows_dir = bundle_dir / ".github" / "workflows"
-            if not workflows_dir.is_dir():
-                continue
+        for bundle_name, workflows_dir in self._bundles_with_github_workflows(root, bundle_names):
             for wf in workflows_dir.glob("*.yml"):
-                content = wf.read_text(encoding="utf-8")
-                # Only check workflows that use the reusable workflow pattern
-                if "uses:" not in content:
+                doc = _load_workflow_doc(wf)
+                if not isinstance(doc, dict):
                     continue
-                if "jebel-quant/rhiza" not in content:
-                    errors.append(
-                        f"  [{bundle_name}] {wf.name}: 'uses:' present but does not reference jebel-quant/rhiza"
-                    )
+                for job_name, job in (doc.get("jobs") or {}).items():
+                    if not isinstance(job, dict):
+                        continue
+                    uses = job.get("uses")
+                    if uses is None:
+                        continue  # not a reusable-workflow call
+                    if not (isinstance(uses, str) and uses.startswith(_REUSABLE_WORKFLOW_PREFIX)):
+                        errors.append(
+                            f"  [{bundle_name}] {wf.name}: job '{job_name}' calls '{uses}', "
+                            f"not a {_REUSABLE_WORKFLOW_PREFIX}* reusable workflow"
+                        )
         if errors:
-            pytest.fail("Workflow stubs with non-rhiza 'uses:' references:\n" + "\n".join(errors))
+            pytest.fail("Reusable-workflow calls not targeting jebel-quant/rhiza:\n" + "\n".join(errors))
+
+    def test_rhiza_workflows_are_thin_stubs(self, root: Path, bundle_names: list[str]) -> None:
+        """Every rhiza_*.yml bundle workflow is a thin stub (except documented exceptions).
+
+        A thin stub delegates entirely to a jebel-quant/rhiza reusable workflow: each
+        of its jobs has a ``uses:`` pointing at that repo and defines no inline
+        ``steps:``.  rhiza_release.yml is exempt (it is a full release workflow).
+        """
+        errors: list[str] = []
+        for bundle_name, workflows_dir in self._bundles_with_github_workflows(root, bundle_names):
+            for wf in workflows_dir.glob("*.yml"):
+                if not wf.name.startswith("rhiza_") or wf.name in _NON_STUB_RHIZA_WORKFLOWS:
+                    continue
+                doc = _load_workflow_doc(wf)
+                jobs = doc.get("jobs") if isinstance(doc, dict) else None
+                if not jobs:
+                    errors.append(f"  [{bundle_name}] {wf.name}: no jobs to delegate")
+                    continue
+                for job_name, job in jobs.items():
+                    if not isinstance(job, dict):
+                        errors.append(f"  [{bundle_name}] {wf.name}: job '{job_name}' is malformed")
+                        continue
+                    uses = job.get("uses")
+                    if not (isinstance(uses, str) and uses.startswith(_REUSABLE_WORKFLOW_PREFIX)):
+                        errors.append(
+                            f"  [{bundle_name}] {wf.name}: job '{job_name}' does not delegate to a "
+                            f"{_REUSABLE_WORKFLOW_PREFIX}* reusable workflow"
+                        )
+                    if "steps" in job:
+                        errors.append(
+                            f"  [{bundle_name}] {wf.name}: job '{job_name}' defines inline steps; "
+                            f"rhiza_* workflows must be thin stubs (add it to the reusable workflow instead)"
+                        )
+        if errors:
+            pytest.fail("rhiza_* bundle workflows that are not thin stubs:\n" + "\n".join(errors))
 
 
 # ---------------------------------------------------------------------------
