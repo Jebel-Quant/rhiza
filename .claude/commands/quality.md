@@ -15,9 +15,9 @@ downstream projects sync their dev infrastructure *from* this repo, so there is 
 Run each of the following, in order:
 
 1. `make fmt` — pre-commit hooks (ruff format/check, markdownlint, bandit, actionlint, jsonschema, uv-lock)
-2. `make typecheck` — static type checking with `ty` (expected to **skip** here: `SOURCE_FOLDER=src` does not exist)
+2. `make typecheck` — static type checking with `ty` (being repointed from `src` to `.rhiza/utils`)
 3. `make deptry` — unused/missing dependency check
-4. `make docs-coverage` — docstring coverage (expected to **skip** here: no `src/`)
+4. `make docs-coverage` — docstring coverage (being repointed from `src` to `.rhiza/utils`)
 5. `make test` — full test suite (runs **without** a coverage gate here, since there is no `src/` to measure with `--cov`)
 6. `make security` — pip-audit + bandit scans
 
@@ -32,12 +32,12 @@ Guidelines:
   to run, or specific files/paths to focus the checks on) and adjust accordingly.
 - End with a concise PASS/FAIL summary per gate.
 
-Expected skips are not failures. Because this repo has no runtime `src/`
-(`SOURCE_FOLDER ?= src` in `.rhiza/rhiza.mk` is absent on disk), `make typecheck`
-and `make docs-coverage` print a `[WARN] Source folder src not found, skipping…`
-and exit clean, and `make test` runs without coverage. Report these as
-**SKIP (by design)** — do not score them as failures or gaps. The interrogate
-docstring hook in `make fmt` likewise has no files to check.
+Expected skips are not failures. While `make typecheck` and `make docs-coverage`
+are being repointed from `src` to `.rhiza/utils`, they may still print a
+`[WARN] Source folder src not found, skipping…` and exit clean; once repointed
+they run against `.rhiza/utils`. `make test` runs without a coverage gate (there
+is no `src/` to measure with `--cov`). Report any of these as **SKIP (by design)**
+— do not score them as failures or gaps.
 
 Test depth (replaces line-coverage scoring). Since there is no runtime source,
 there is no line-coverage percentage to hit. Judge the test suite by **behavioural
