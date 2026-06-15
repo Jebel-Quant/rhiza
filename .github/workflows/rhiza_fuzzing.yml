@@ -6,6 +6,12 @@
 # Purpose: Run coverage-guided fuzzing for the repository's Python security
 #          parsing utilities. Pull requests run short code-change fuzzing,
 #          while main-branch pushes and the weekly schedule run batch fuzzing.
+#
+#          Opt-in: fuzzing is OFF by default and very optional. Both jobs only
+#          run when the repository variable `FUZZING_ENABLED` is set to 'true'.
+#          As a second safety net they still skip when the repo ships no
+#          .clusterfuzzlite/ config, so downstream repos are never forced into
+#          fuzzing.
 
 name: "(RHIZA) FUZZING"
 
@@ -31,7 +37,10 @@ permissions:
 jobs:
   pr-fuzzing:
     name: ClusterFuzzLite PR fuzzing
-    if: github.event_name == 'pull_request'
+    # Opt-in gate: fuzzing is very optional and OFF by default. Run only when the
+    # downstream repo sets `FUZZING_ENABLED` to 'true' (the .clusterfuzzlite/
+    # detection below is the second gate).
+    if: ${{ github.event_name == 'pull_request' && vars.FUZZING_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -81,7 +90,10 @@ jobs:
 
   batch-fuzzing:
     name: ClusterFuzzLite batch fuzzing
-    if: github.event_name != 'pull_request'
+    # Opt-in gate: fuzzing is very optional and OFF by default. Run only when the
+    # downstream repo sets `FUZZING_ENABLED` to 'true' (the .clusterfuzzlite/
+    # detection below is the second gate).
+    if: ${{ github.event_name != 'pull_request' && vars.FUZZING_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
