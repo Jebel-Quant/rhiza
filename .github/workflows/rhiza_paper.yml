@@ -3,12 +3,12 @@
 #
 # Workflow: Paper
 #
-# Purpose: Compile the LaTeX paper (paper/*.tex) to a PDF and publish
+# Purpose: Compile the LaTeX paper (docs/paper/*.tex) to a PDF and publish
 #          it as a downloadable workflow artifact.
-#          Only active when a *.tex file exists under paper/.
+#          Only active when a *.tex file exists under docs/paper/.
 #
 # Trigger: On push and pull requests to main/master branches, or whenever
-#          files under paper/ change.  Also supports manual dispatch.
+#          files under docs/paper/ change.  Also supports manual dispatch.
 
 name: "(RHIZA) PAPER"
 
@@ -16,12 +16,12 @@ on:
   push:
     branches: [ main, master ]
     paths:
-      - 'paper/**'
+      - 'docs/paper/**'
       - '.github/workflows/rhiza_paper.yml'
   pull_request:
     branches: [ main, master ]
     paths:
-      - 'paper/**'
+      - 'docs/paper/**'
       - '.github/workflows/rhiza_paper.yml'
   workflow_dispatch:
   workflow_call:
@@ -49,18 +49,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Detect paper/*.tex presence
+      - name: Detect docs/paper/*.tex presence
         id: check_tex
         run: |
-          if compgen -G "paper/*.tex" > /dev/null 2>&1; then
+          if compgen -G "docs/paper/*.tex" > /dev/null 2>&1; then
             echo "tex_present=true" >> "$GITHUB_OUTPUT"
           else
             echo "tex_present=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Skip notice (no paper/*.tex present)
+      - name: Skip notice (no docs/paper/*.tex present)
         if: ${{ steps.check_tex.outputs.tex_present != 'true' }}
-        run: echo "No paper/*.tex found; skipping LaTeX compilation."
+        run: echo "No docs/paper/*.tex found; skipping LaTeX compilation."
 
       - name: Install TeX Live
         if: ${{ steps.check_tex.outputs.tex_present == 'true' }}
@@ -77,10 +77,10 @@ jobs:
         if: ${{ steps.check_tex.outputs.tex_present == 'true' }}
         run: |
           # Prefer basanos.tex if it exists; otherwise pick the first *.tex file found.
-          if [ -f paper/basanos.tex ]; then
+          if [ -f docs/paper/basanos.tex ]; then
             tex_file="basanos.tex"
           else
-            tex_file=$(find paper -maxdepth 1 -name "*.tex" | head -1 | xargs basename)
+            tex_file=$(find docs/paper -maxdepth 1 -name "*.tex" | head -1 | xargs basename)
           fi
           pdf_file="${tex_file%.tex}.pdf"
           echo "tex_file=${tex_file}" >> "$GITHUB_OUTPUT"
@@ -88,7 +88,7 @@ jobs:
 
       - name: Compile LaTeX document
         if: ${{ steps.check_tex.outputs.tex_present == 'true' }}
-        working-directory: paper
+        working-directory: docs/paper
         run: |
           latexmk -pdf -interaction=nonstopmode "${{ steps.detect_tex.outputs.tex_file }}"
 
@@ -97,7 +97,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.detect_tex.outputs.pdf_file }}
-          path: paper/${{ steps.detect_tex.outputs.pdf_file }}
+          path: docs/paper/${{ steps.detect_tex.outputs.pdf_file }}
           retention-days: 30
 
       - name: Push PDF to paper branch
@@ -106,7 +106,7 @@ jobs:
           pdf_file="${{ steps.detect_tex.outputs.pdf_file }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          cp "paper/${pdf_file}" "/tmp/${pdf_file}"
+          cp "docs/paper/${pdf_file}" "/tmp/${pdf_file}"
           git fetch origin paper 2>/dev/null || true
           if git show-ref --verify --quiet refs/remotes/origin/paper; then
             git checkout -b paper origin/paper
