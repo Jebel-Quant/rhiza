@@ -45,7 +45,24 @@ jobs:
         with:
           persist-credentials: false
 
+      # ClusterFuzzLite builds from a repo-local .clusterfuzzlite/Dockerfile. That
+      # config is repo-specific and is NOT shipped by any Rhiza bundle, so most
+      # downstream repos don't have it. Without this guard, build_fuzzers fails
+      # with "lstat .../.clusterfuzzlite: no such file or directory". Detect it and
+      # skip the fuzzing steps (the job stays green) when the repo hasn't opted in.
+      - name: Detect ClusterFuzzLite config
+        id: cfl
+        shell: bash
+        run: |
+          if [ -f .clusterfuzzlite/Dockerfile ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=ClusterFuzzLite::No .clusterfuzzlite/Dockerfile in this repository — skipping fuzzing. Add a .clusterfuzzlite/ (Dockerfile + build.sh) to opt in."
+          fi
+
       - name: Build fuzzers
+        if: steps.cfl.outputs.present == 'true'
         uses: google/clusterfuzzlite/actions/build_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           language: python
@@ -53,6 +70,7 @@ jobs:
           sanitizer: address
 
       - name: Run fuzzers
+        if: steps.cfl.outputs.present == 'true'
         uses: google/clusterfuzzlite/actions/run_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -77,7 +95,21 @@ jobs:
         with:
           persist-credentials: false
 
+      # See the PR-fuzzing job: skip cleanly when this repo ships no
+      # .clusterfuzzlite/Dockerfile (it is not distributed by any Rhiza bundle).
+      - name: Detect ClusterFuzzLite config
+        id: cfl
+        shell: bash
+        run: |
+          if [ -f .clusterfuzzlite/Dockerfile ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=ClusterFuzzLite::No .clusterfuzzlite/Dockerfile in this repository — skipping fuzzing. Add a .clusterfuzzlite/ (Dockerfile + build.sh) to opt in."
+          fi
+
       - name: Build fuzzers
+        if: steps.cfl.outputs.present == 'true'
         uses: google/clusterfuzzlite/actions/build_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           language: python
@@ -85,6 +117,7 @@ jobs:
           sanitizer: address
 
       - name: Run fuzzers
+        if: steps.cfl.outputs.present == 'true'
         uses: google/clusterfuzzlite/actions/run_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
