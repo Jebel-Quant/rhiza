@@ -120,6 +120,9 @@ local.mk
 
 .bandit-baseline.json
 
+# mutmut mutation testing cache
+.mutmut-cache
+
 
 # ClusterFuzzLite copies the audited module next to the harness at build time
 tests/fuzz/suppression_audit.py
