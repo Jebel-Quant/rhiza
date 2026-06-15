@@ -200,7 +200,7 @@ jobs:
 
   publish-mutation-badge:
     needs: mutation
-    if: ${{ always() && vars.MUTATION_ENABLED == 'true' && !github.event.repository.fork && (vars.PUBLISH_COMPANION_BOOK == 'true' || vars.PUBLISH_COMPANION_BOOK == '') }}
+    if: ${{ always() && vars.MUTATION_ENABLED == 'true' && !github.event.repository.fork }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
