@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [0.19.1] - 2026-06-15
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1243)
+
+### Other Changes
+- Switch pre-commit secret scanner from gitleaks to betterleaks (#1242)
+- Repair reusable-workflow caller stubs (concurrency deadlock + mutation perms) (#1244)
+
 ## [0.19.0] - 2026-06-14
 
 ### New Features
@@ -47,6 +56,7 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - Fix validation job failure by updating typecheck dry-run assertions (#1228)
 - Ship a downstream /rhiza quality command in the core bundle (#1238)
 - Strip SLSA provenance from dist/ before PyPI publish (#1240)
+- Bump version 0.18.10 → 0.19.0
 
 ## [0.18.10] - 2026-06-12
 
