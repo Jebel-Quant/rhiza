@@ -27,11 +27,6 @@ on:
       - ".github/workflows/*.md"
       - ".github/workflows/*.lock.yml"
 
-# Cancel superseded in-progress runs of this workflow for the same ref.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
 
