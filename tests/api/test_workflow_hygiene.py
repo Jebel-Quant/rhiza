@@ -6,10 +6,15 @@ Lives in tests/, not .rhiza/tests/, so it does not sync downstream.
 
 Two invariants:
 
-1. Every workflow declares a top-level ``concurrency`` block so superseded
-   runs are cancelled instead of wasting CI minutes. Release and sync
-   workflows are the exception: they queue (``cancel-in-progress: false``)
-   because they must never be interrupted mid-publish or mid-push.
+1. Every workflow that runs its own jobs declares a top-level ``concurrency``
+   block so superseded runs are cancelled instead of wasting CI minutes.
+   Release and sync workflows are the exception: they queue
+   (``cancel-in-progress: false``) because they must never be interrupted
+   mid-publish or mid-push. Caller stubs that merely delegate to a reusable
+   workflow must NOT declare concurrency: the reusable workflow already
+   declares the same ``${{ github.workflow }}-${{ github.ref }}`` group, and a
+   duplicate caller-level group deadlocks (the top-level run and the nested
+   job each wait on the other for the shared group).
 2. Every ``uses:`` reference is pinned to an exact version — a full
    ``vX.Y.Z``-style tag or a 40-character commit SHA — so upgrades only
    happen through reviewed dependency-update PRs. Local actions (``./...``)
@@ -76,14 +81,36 @@ def _uses_refs(workflow: dict) -> list[str]:
     return refs
 
 
+def _delegates_to_reusable(workflow: dict) -> bool:
+    """True if the workflow is a thin caller that delegates to a reusable workflow.
+
+    Such stubs have a job-level ``uses:`` pointing at a reusable workflow file
+    (``.../.github/workflows/<name>.yml@<ref>``). They must not declare their
+    own ``concurrency`` block — the called workflow already does, and a shared
+    group deadlocks the run.
+    """
+    for job in (workflow.get("jobs") or {}).values():
+        uses = job.get("uses")
+        if uses and ".github/workflows/" in uses and ".yml@" in uses:
+            return True
+    return False
+
+
 class TestWorkflowConcurrency:
     """Every workflow must manage concurrency explicitly."""
 
     @pytest.mark.parametrize("workflow_file", _WORKFLOWS, ids=_IDS)
     def test_has_concurrency_group(self, workflow_file: Path) -> None:
-        """Each workflow must declare a top-level concurrency group."""
+        """Job-running workflows declare a concurrency group; caller stubs must not."""
         workflow = _load(workflow_file)
         concurrency = workflow.get("concurrency")
+        if _delegates_to_reusable(workflow):
+            assert concurrency is None, (
+                f"{workflow_file.name}: reusable-workflow caller must not declare a "
+                f"top-level 'concurrency' block — it shares the called workflow's "
+                f"group and deadlocks the run"
+            )
+            return
         assert isinstance(concurrency, dict), (
             f"{workflow_file.name}: missing top-level 'concurrency' block — "
             f"superseded runs will pile up instead of being cancelled or queued"
@@ -92,8 +119,11 @@ class TestWorkflowConcurrency:
 
     @pytest.mark.parametrize("workflow_file", _WORKFLOWS, ids=_IDS)
     def test_cancel_in_progress_policy(self, workflow_file: Path) -> None:
-        """Release/sync workflows queue; everything else cancels superseded runs."""
-        concurrency = _load(workflow_file).get("concurrency") or {}
+        """Release/sync workflows queue; other job-running workflows cancel superseded runs."""
+        workflow = _load(workflow_file)
+        if _delegates_to_reusable(workflow):
+            pytest.skip("reusable-workflow caller declares no concurrency block")
+        concurrency = workflow.get("concurrency") or {}
         expected = workflow_file.name not in _QUEUE_WORKFLOWS
         assert concurrency.get("cancel-in-progress") is expected, (
             f"{workflow_file.name}: cancel-in-progress must be {expected} "
