@@ -41,6 +41,46 @@ def test_fuzzing_workflow_covers_pull_requests_and_batch_runs(root):
     assert "batch" in str(workflow["jobs"]["batch-fuzzing"])
 
 
+def test_fuzzing_jobs_are_opt_in(root):
+    """Fuzzing is very optional: every job is gated on FUZZING_ENABLED.
+
+    Fuzzing is OFF by default; a downstream repo must set the `FUZZING_ENABLED`
+    repository variable to 'true' to run it. Each job's `if` must reference that
+    variable so the jobs skip cleanly when it is unset.
+    """
+    with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
+        workflow = yaml.safe_load(fh)
+
+    for job_name, job in workflow["jobs"].items():
+        assert "FUZZING_ENABLED" in str(job.get("if", "")), (
+            f"{job_name}: fuzzing job must be gated on the FUZZING_ENABLED repository variable (opt-in)"
+        )
+
+
+def test_fuzzing_steps_skip_when_no_clusterfuzzlite_config(root):
+    """build/run fuzzers must be gated on a detected .clusterfuzzlite/ config.
+
+    The config is repo-specific and not shipped by any Rhiza bundle, so a
+    downstream repo without it must skip fuzzing (the job stays green) instead
+    of failing in build_fuzzers. Every clusterfuzzlite step is guarded by the
+    detection step's output.
+    """
+    with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
+        workflow = yaml.safe_load(fh)
+
+    for job_name, job in workflow["jobs"].items():
+        steps = job.get("steps", [])
+        detect = [s for s in steps if s.get("id") == "cfl"]
+        assert detect, f"{job_name}: missing the ClusterFuzzLite config-detection step (id: cfl)"
+
+        guarded = [s for s in steps if "uses" in s and "clusterfuzzlite" in s["uses"]]
+        assert guarded, f"{job_name}: expected clusterfuzzlite steps"
+        for step in guarded:
+            assert "cfl" in step.get("if", ""), (
+                f"{job_name}: step '{step.get('name')}' must be gated on the config-detection output"
+            )
+
+
 def test_clusterfuzzlite_configuration_targets_python(root):
     """ClusterFuzzLite config must declare Python and a real Atheris harness."""
     with (root / PROJECT_PATH).open(encoding="utf-8") as fh:

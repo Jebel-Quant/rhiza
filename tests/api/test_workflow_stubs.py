@@ -338,8 +338,15 @@ class TestMutationWorkflow:
             "mutation workflow must be triggered on pull_request"
         )
 
-    def test_mutation_workflow_is_not_opt_in(self, mutation_workflow: dict) -> None:
-        """Mutation workflow should not be gated by MUTATION_ENABLED."""
+    def test_mutation_workflow_is_opt_in(self, mutation_workflow: dict) -> None:
+        """Mutation testing is very optional: the job is gated on MUTATION_ENABLED.
+
+        Downstream repos must explicitly opt in by setting the `MUTATION_ENABLED`
+        repository variable to 'true'; otherwise the mutation job skips cleanly
+        instead of running as a forced gate.
+        """
         jobs = mutation_workflow.get("jobs", {})
         mutation_job = jobs.get("mutation", {})
-        assert "if" not in mutation_job, "mutation workflow should not use an opt-in job-level if gate"
+        assert "MUTATION_ENABLED" in str(mutation_job.get("if", "")), (
+            "mutation job must be gated on the MUTATION_ENABLED repository variable (opt-in)"
+        )

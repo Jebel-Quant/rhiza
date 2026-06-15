@@ -41,6 +41,18 @@ class TestMutationWorkflowStructure:
         jobs = workflow.get("jobs", {})
         assert {"mutation", "publish-mutation-badge"}.issubset(set(jobs))
 
+    def test_mutation_job_is_opt_in(self, workflow: dict) -> None:
+        """Mutation testing is very optional: the job is gated on MUTATION_ENABLED.
+
+        The whole mutation job only runs when the downstream repo sets the
+        `MUTATION_ENABLED` repository variable to 'true'; otherwise it skips
+        cleanly so repos are never forced into a mutation gate.
+        """
+        mutation_job = workflow["jobs"]["mutation"]
+        assert "MUTATION_ENABLED" in str(mutation_job.get("if", "")), (
+            "mutation job must be gated on the MUTATION_ENABLED repository variable (opt-in)"
+        )
+
     def test_mutation_job_uploads_badge_artifact(self, workflow: dict) -> None:
         """Mutation job must publish the computed badge as an artifact."""
         mutation_job = workflow["jobs"]["mutation"]

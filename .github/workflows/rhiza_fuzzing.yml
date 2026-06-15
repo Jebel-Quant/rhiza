@@ -6,6 +6,12 @@
 # Purpose: Run coverage-guided fuzzing for the repository's Python security
 #          parsing utilities. Pull requests run short code-change fuzzing,
 #          while main-branch pushes and the weekly schedule run batch fuzzing.
+#
+#          Opt-in: fuzzing is OFF by default and very optional. Both jobs only
+#          run when the repository variable `FUZZING_ENABLED` is set to 'true'.
+#          As a second safety net they still skip when the repo ships no
+#          .clusterfuzzlite/ config, so downstream repos are never forced into
+#          fuzzing.
 
 name: "(RHIZA) FUZZING"
 
@@ -31,7 +37,10 @@ permissions:
 jobs:
   pr-fuzzing:
     name: ClusterFuzzLite PR fuzzing
-    if: github.event_name == 'pull_request'
+    # Opt-in gate: fuzzing is very optional and OFF by default. Run only when the
+    # downstream repo sets `FUZZING_ENABLED` to 'true' (the .clusterfuzzlite/
+    # detection below is the second gate).
+    if: ${{ github.event_name == 'pull_request' && vars.FUZZING_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -45,7 +54,24 @@ jobs:
         with:
           persist-credentials: false
 
+      # ClusterFuzzLite builds from a repo-local .clusterfuzzlite/Dockerfile. That
+      # config is repo-specific and is NOT shipped by any Rhiza bundle, so most
+      # downstream repos don't have it. Without this guard, build_fuzzers fails
+      # with "lstat .../.clusterfuzzlite: no such file or directory". Detect it and
+      # skip the fuzzing steps (the job stays green) when the repo hasn't opted in.
+      - name: Detect ClusterFuzzLite config
+        id: cfl
+        shell: bash
+        run: |
+          if [ -f .clusterfuzzlite/Dockerfile ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=ClusterFuzzLite::No .clusterfuzzlite/Dockerfile in this repository — skipping fuzzing. Add a .clusterfuzzlite/ (Dockerfile + build.sh) to opt in."
+          fi
+
       - name: Build fuzzers
+        if: steps.cfl.outputs.present == 'true'
         uses: google/clusterfuzzlite/actions/build_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           language: python
@@ -53,6 +79,7 @@ jobs:
           sanitizer: address
 
       - name: Run fuzzers
+        if: steps.cfl.outputs.present == 'true'
         uses: google/clusterfuzzlite/actions/run_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -63,7 +90,10 @@ jobs:
 
   batch-fuzzing:
     name: ClusterFuzzLite batch fuzzing
-    if: github.event_name != 'pull_request'
+    # Opt-in gate: fuzzing is very optional and OFF by default. Run only when the
+    # downstream repo sets `FUZZING_ENABLED` to 'true' (the .clusterfuzzlite/
+    # detection below is the second gate).
+    if: ${{ github.event_name != 'pull_request' && vars.FUZZING_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -77,7 +107,21 @@ jobs:
         with:
           persist-credentials: false
 
+      # See the PR-fuzzing job: skip cleanly when this repo ships no
+      # .clusterfuzzlite/Dockerfile (it is not distributed by any Rhiza bundle).
+      - name: Detect ClusterFuzzLite config
+        id: cfl
+        shell: bash
+        run: |
+          if [ -f .clusterfuzzlite/Dockerfile ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=ClusterFuzzLite::No .clusterfuzzlite/Dockerfile in this repository — skipping fuzzing. Add a .clusterfuzzlite/ (Dockerfile + build.sh) to opt in."
+          fi
+
       - name: Build fuzzers
+        if: steps.cfl.outputs.present == 'true'
         uses: google/clusterfuzzlite/actions/build_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           language: python
@@ -85,6 +129,7 @@ jobs:
           sanitizer: address
 
       - name: Run fuzzers
+        if: steps.cfl.outputs.present == 'true'
         uses: google/clusterfuzzlite/actions/run_fuzzers@884713a6c30a92e5e8544c39945cd7cb630abcd1 # v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

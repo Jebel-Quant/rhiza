@@ -12,8 +12,14 @@
 #          job is a blocking gate when enabled. The HTML report is uploaded as
 #          an artifact for inspection.
 #
-#          Enforced gate: mutation runs are required and fail the job if any
-#          mutant survives (equivalent to a 100% mutation score threshold).
+#          Opt-in: mutation testing is OFF by default and very optional. The
+#          whole `mutation` job only runs when the repository variable
+#          `MUTATION_ENABLED` is set to 'true'; otherwise it is skipped (the
+#          workflow stays green) so downstream repos are never forced into it.
+#
+#          Enforced gate (when enabled): mutation runs are required and fail the
+#          job if any mutant survives (equivalent to a 100% mutation score
+#          threshold).
 #
 #          Publishes a generated mutation-score badge at:
 #          https://<org>.github.io/<repo>/mutation-badge.svg
@@ -44,6 +50,10 @@ on:
 
 jobs:
   mutation:
+    # Opt-in gate: mutation testing is very optional and OFF by default. The job
+    # only runs when the downstream repo sets the `MUTATION_ENABLED` repository
+    # variable to 'true'; otherwise it skips cleanly (no forced gate).
+    if: ${{ vars.MUTATION_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
