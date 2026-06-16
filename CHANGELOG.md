@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [0.19.2] - 2026-06-16
+
+### Bug Fixes
+- *(paper)* Point GitHub paper workflow at docs/paper, matching paper.mk and GitLab (#1249)
+- *(fuzzing)* Scope security-events:write to job level (#1250)
+- *(scorecard)* Match reusable workflow top-level permissions to its job (#1251)
+- *(gh-aw)* Recompile lock files for gh-aw v0.79.8 (#1254)
+
+### Maintenance
+- Chore(deps-dev)(deps-dev): bump hypothesis (#1252)
+- Chore(deps)(deps): bump the github-actions group with 4 updates (#1253)
+
+### Other Changes
+- Skip fuzzing when the repo has no .clusterfuzzlite/ config (#1246)
+- Rename Claude commands to rhiza_* and drop PUBLISH_COMPANION_BOOK toggle (#1248)
+
 ## [0.19.1] - 2026-06-15
 
 ### Dependencies
@@ -13,6 +29,7 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 ### Other Changes
 - Switch pre-commit secret scanner from gitleaks to betterleaks (#1242)
 - Repair reusable-workflow caller stubs (concurrency deadlock + mutation perms) (#1244)
+- Bump version 0.19.0 → 0.19.1
 
 ## [0.19.0] - 2026-06-14
 
