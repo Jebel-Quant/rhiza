@@ -5,6 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [0.19.3] - 2026-06-16
+
+### Bug Fixes
+- *(scorecard)* Keep id-token/security-events write at job level only (#1255)
+
 ## [0.19.2] - 2026-06-16
 
 ### Bug Fixes
@@ -20,6 +25,7 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 ### Other Changes
 - Skip fuzzing when the repo has no .clusterfuzzlite/ config (#1246)
 - Rename Claude commands to rhiza_* and drop PUBLISH_COMPANION_BOOK toggle (#1248)
+- Bump version 0.19.1 → 0.19.2
 
 ## [0.19.1] - 2026-06-15
 

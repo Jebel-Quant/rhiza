@@ -32,7 +32,7 @@ permissions:
 
 jobs:
   validate:
-    uses: jebel-quant/rhiza/.github/workflows/rhiza_gh-aw-validate.yml@v0.19.2
+    uses: jebel-quant/rhiza/.github/workflows/rhiza_gh-aw-validate.yml@v0.19.3
     secrets: inherit
     permissions:
       contents: read
