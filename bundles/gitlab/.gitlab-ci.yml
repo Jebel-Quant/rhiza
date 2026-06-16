@@ -127,9 +127,6 @@ variables:
   # PyPI configuration
   PYPI_REPOSITORY_URL: ""
 
-  # Documentation configuration
-  PUBLISH_COMPANION_BOOK: "true"
-
   # Sync configuration
   CREATE_MR: "true"
 

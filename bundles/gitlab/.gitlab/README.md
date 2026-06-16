@@ -133,7 +133,6 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 **Key Features:**
 - Combines API docs, test coverage, and notebooks
 - Deploys to GitLab Pages
-- Controlled by `PUBLISH_COMPANION_BOOK` variable
 
 **Equivalent GitHub Action:** `.github/workflows/rhiza_book.yml`
 
@@ -195,7 +194,6 @@ These variables can be set in GitLab CI/CD settings (Settings > CI/CD > Variable
 | `UV_EXTRA_INDEX_URL` | `""` | Extra index URL for UV package manager |
 | `PYPI_REPOSITORY_URL` | `""` | Custom PyPI repository URL (empty = pypi.org) |
 | `PYPI_TOKEN` | N/A | **Secret** - PyPI authentication token |
-| `PUBLISH_COMPANION_BOOK` | `true` | Whether to publish documentation |
 | `CREATE_MR` | `true` | Whether to create merge request on sync |
 | `PAT_TOKEN` | N/A | **Secret** - Project/Group Access Token for sync |
 

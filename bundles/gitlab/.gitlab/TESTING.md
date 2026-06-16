@@ -157,7 +157,6 @@ ls -la _book/
 
 **Configuration needed:**
 - Enable GitLab Pages in project settings
-- Set `PUBLISH_COMPANION_BOOK=true` (default)
 
 ---
 
@@ -229,7 +228,6 @@ Set these in GitLab project settings (Settings > CI/CD > Variables):
 ### Configuration Variables
 - `UV_EXTRA_INDEX_URL` - Extra index URL for UV (optional)
 - `PYPI_REPOSITORY_URL` - Custom PyPI URL (optional)
-- `PUBLISH_COMPANION_BOOK` - Publish documentation (default: true)
 - `CREATE_MR` - Auto-create merge requests (default: true)
 
 ## Complete Testing Checklist

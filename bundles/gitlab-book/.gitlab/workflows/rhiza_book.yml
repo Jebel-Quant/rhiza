@@ -27,12 +27,6 @@ pages:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
   script:
     - |
-      # Check if PUBLISH_COMPANION_BOOK is set (defaults to allowing deployment)
-      if [ "${PUBLISH_COMPANION_BOOK:-true}" = "false" ]; then
-        echo "PUBLISH_COMPANION_BOOK is set to false, skipping deployment"
-        exit 0
-      fi
-
       # Build the book
       make book
 
