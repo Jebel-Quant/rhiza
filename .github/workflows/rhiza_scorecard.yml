@@ -33,8 +33,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Least privilege by default; the job grants itself only what Scorecard needs.
-permissions: read-all
+# Least privilege: declare exactly the scopes Scorecard needs. A caller invoking
+# this reusable workflow must grant at least these (via its job-level
+# `permissions`), so the top-level set must match the job below rather than
+# over-broadly request `read-all` -- which a least-privilege caller cannot
+# satisfy, and GitHub then rejects with "is requesting '... read', but is only
+# allowed '... none'".
+permissions:
+  security-events: write   # upload the SARIF results to code scanning
+  id-token: write          # publish results to the OpenSSF REST API (badge)
+  contents: read
+  actions: read
 
 jobs:
   analysis:
