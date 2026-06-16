@@ -44,7 +44,12 @@ gh-aw-logs: install-gh-aw ## show logs for recent agentic workflow runs
 	@gh aw logs
 
 gh-aw-validate: install-gh-aw ## validate lock files are up-to-date
-	@gh aw compile --check
+	@gh aw compile
+	@if ! git diff --quiet .github/workflows/*.lock.yml; then \
+		printf "$${RED}[ERROR] Agentic workflow lock files are out of date. Run 'make gh-aw-compile' and commit the changes.${RESET}\n"; \
+		git diff .github/workflows/*.lock.yml; \
+		exit 1; \
+	fi
 
 adr: install-gh-aw ## Create a new Architecture Decision Record (ADR) using AI assistance
 	@echo "Creating a new ADR..."
