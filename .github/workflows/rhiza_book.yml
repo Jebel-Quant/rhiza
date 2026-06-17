@@ -6,7 +6,10 @@
 #          It combines API documentation, test coverage reports, test results, and
 #          interactive notebooks into a single GitHub Pages site.
 #
-# Trigger: This workflow runs on every push to the main or master branch
+# Trigger: The build runs on every push (and via workflow_call), so every commit
+#          validates that the book still builds. The deploy job publishes to
+#          GitHub Pages only from the repository's default branch and never from
+#          a fork; feature branches build and upload an artifact but never publish.
 #
 # Components:
 #   - 📓 Process Marimo notebooks
@@ -32,17 +35,16 @@ permissions:
   contents: read
 
 jobs:
-  book:
+  # Build the book on every commit (any branch). This proves the documentation
+  # site still builds and uploads it as an artifact; it publishes nothing. It
+  # deliberately declares no environment so it stays runnable on every branch
+  # even when the github-pages environment restricts deployments to one branch.
+  build:
     if: ${{ !github.event.repository.fork }}
     runs-on: "ubuntu-latest"
 
-    environment:
-      name: github-pages  # 👈 this is the critical missing piece
-
     permissions:
       contents: read
-      pages: write            # Permission to deploy to Pages
-      id-token: write         # Permission to verify deployment origin
 
     steps:
       # Check out the repository code
@@ -90,9 +92,9 @@ jobs:
           make book
           echo "Docs build: $(($(date +%s) - START))s" >> "$GITHUB_STEP_SUMMARY"
 
-      # Step 5a: Upload the book as a downloadable workflow artifact
-      # This allows anyone to download the built documentation directly from
-      # GitHub Actions without needing to run a full local build.
+      # Upload the book as a downloadable workflow artifact (on every commit).
+      # This lets anyone download the built documentation directly from GitHub
+      # Actions without needing to run a full local build.
       - name: Upload book as workflow artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -100,17 +102,38 @@ jobs:
           path: _book/
           retention-days: 30
 
-      # Step 5b: Package all artifacts for GitHub Pages deployment
-      # This prepares the combined outputs for deployment by creating a single artifact
+      # Package the site as a Pages artifact so the deploy job can publish it.
+      # Uploading on every commit is cheap; only the deploy job ever consumes it.
       - name: Upload static files as artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: _book/  # Path to the directory containing all artifacts to deploy
 
-      # Step 6: Deploy the packaged artifacts to GitHub Pages
-      # This step publishes the content to GitHub Pages
-      # The deployment is skipped on forks to avoid unauthorised publishing
+  # Publish to GitHub Pages only from the default branch, and never from a fork.
+  # Referencing the github-pages environment here (not in build) keeps the build
+  # job runnable on every branch even when the environment restricts deployments.
+  deploy:
+    needs: build
+    if: ${{ github.ref_name == github.event.repository.default_branch && !github.event.repository.fork }}
+    runs-on: "ubuntu-latest"
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    permissions:
+      contents: read
+      pages: write            # Permission to deploy to Pages
+      id-token: write         # Permission to verify deployment origin
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      # Deploys the Pages artifact built by the `build` job in this same run.
       - name: Deploy to GitHub Pages
-        if: ${{ !github.event.repository.fork }}
+        id: deployment
         uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
         continue-on-error: true
