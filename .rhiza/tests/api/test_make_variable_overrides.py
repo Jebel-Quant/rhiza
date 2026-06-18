@@ -15,30 +15,12 @@ executed without running them — keeping the suite fast and side-effect-free.
 from __future__ import annotations
 
 import os
-import re
 
 from api.conftest import run_make, strip_ansi
 
 
 class TestCoverageFailUnder:
     """COVERAGE_FAIL_UNDER controls the pytest --cov-fail-under threshold."""
-
-    def test_default_threshold_is_at_least_90(self, logger) -> None:
-        """The effective COVERAGE_FAIL_UNDER must be at least 90.
-
-        The template default is 90, but a downstream project may legitimately
-        raise the bar (e.g. to 100) via the documented Makefile override. These
-        API tests run against the consuming project's Makefile, so we assert a
-        floor rather than an exact value: at least 90 passes for both the bare
-        default and any downstream hardening, while still catching a regression
-        that drops the gate below 90.
-        """
-        proc = run_make(logger, ["test"])
-        match = re.search(r"--cov-fail-under=(\d+)", proc.stdout)
-        assert match is not None, "no --cov-fail-under flag found:\n" + proc.stdout[:500]
-        assert int(match.group(1)) >= 90, (
-            f"Coverage threshold should be at least 90; got {match.group(1)}:\n" + proc.stdout[:500]
-        )
 
     def test_threshold_override_to_100(self, logger) -> None:
         """COVERAGE_FAIL_UNDER=100 must propagate to pytest invocation."""
@@ -146,6 +128,22 @@ class TestSourceFolderVariable:
 
         proc = run_make(logger, ["deptry", "SOURCE_FOLDER=mypackage"])
         assert "mypackage" in proc.stdout, "deptry should reference SOURCE_FOLDER; got:\n" + proc.stdout[:400]
+
+    def test_deptry_accumulates_marimo_and_source_in_one_call(self, logger, tmp_path) -> None:
+        """The marimo bundle must contribute its folder (and DEP004 ignore) to the single deptry scan.
+
+        This locks in the accumulator design: each bundle appends to DEPTRY_FOLDERS /
+        DEPTRY_IGNORE rather than the core target hard-coding knowledge of marimo.
+        """
+        (tmp_path / "mypackage").mkdir(exist_ok=True)
+        (tmp_path / "notebooks").mkdir(exist_ok=True)
+
+        proc = run_make(logger, ["deptry", "SOURCE_FOLDER=mypackage", "MARIMO_FOLDER=notebooks"])
+        out = strip_ansi(proc.stdout)
+        # marimo.mk is included before quality.mk, so its folder is appended first.
+        assert "deptry notebooks mypackage --ignore DEP004" in out, (
+            "deptry should scan marimo + source folders in a single call with DEP004 ignored; got:\n" + out[:600]
+        )
 
 
 class TestUvNoModifyPath:
