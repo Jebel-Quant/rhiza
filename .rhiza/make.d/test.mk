@@ -57,7 +57,7 @@ test:: install ## run all tests
 	fi; \
 	attempt=1; max_attempts=2; \
 	while :; do \
-	  rm -f .coverage .coverage.* _tests/coverage.xml _tests/coverage.json 2>/dev/null || true; \\
+	  rm -f .coverage .coverage.* _tests/coverage.xml _tests/coverage.json 2>/dev/null || true; \
 	  mkdir -p _tests/html-coverage _tests/html-report; \
 	  ${UV_BIN} run pytest "$$@"; status=$$?; \
 	  if [ $$status -ne 3 ]; then exit $$status; fi; \
