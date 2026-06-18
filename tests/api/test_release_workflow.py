@@ -138,3 +138,13 @@ class TestReleaseWorkflowStructure:
         upload_step = next((s for s in steps if s.get("name") == "Upload SBOM artifacts"), None)
         assert upload_step is not None, "Upload SBOM artifacts step must exist"
         assert "sbom.cdx.json.sigstore.json" in upload_step["with"]["path"]
+
+    def test_pypi_publish_strips_provenance_bundle(self, workflow):
+        """PyPI upload must remove the provenance bundle from ``dist/`` first."""
+        pypi_job = workflow["jobs"]["pypi"]
+        steps = pypi_job.get("steps", [])
+
+        cleanup_step = next((s for s in steps if s.get("name") == "Remove non-distribution files before publish"), None)
+        assert cleanup_step is not None, "PyPI job must remove non-distribution files before publish"
+        assert cleanup_step.get("if") == "${{ steps.check_dist.outputs.should_publish == 'true' }}"
+        assert cleanup_step.get("run") == "rm -f dist/*.intoto.jsonl"

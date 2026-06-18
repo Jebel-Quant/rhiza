@@ -428,7 +428,13 @@ jobs:
           fi
           cat "$GITHUB_OUTPUT"
 
-      # this should not take place, as "Private :: Do Not Upload" set in pyproject.toml
+      - name: Remove non-distribution files before publish
+        # The dist artifact also carries the SLSA provenance bundle (staged for
+        # the GitHub release). twine/pypi-publish rejects it as an unknown
+        # distribution format, so strip it here before publishing.
+        if: ${{ steps.check_dist.outputs.should_publish == 'true' }}
+        run: rm -f dist/*.intoto.jsonl
+
       # repository-url and password only used for custom feeds, not for PyPI with OIDC
       - name: Publish to PyPI
         if: ${{ steps.check_dist.outputs.should_publish == 'true' }}
