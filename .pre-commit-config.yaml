@@ -34,7 +34,7 @@ repos:
       - id: ruff-format
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.48.0
+    rev: v0.49.0
     hooks:
       - id: markdownlint
         args: ["--disable", "MD013"]
@@ -99,7 +99,7 @@ repos:
         files: ^(src/|\.rhiza/utils/)
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v0.6.2  # Use the latest release
+    rev: v0.6.3  # Use the latest release
     hooks:
       # Migrated from rhiza
       - id: check-rhiza-workflow-names

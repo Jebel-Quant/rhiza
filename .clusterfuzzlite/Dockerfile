@@ -2,7 +2,7 @@
 # Uses the OSS-Fuzz Python base image, which provides Atheris and
 # the compile_python_fuzzer helper.
 # Pinned by SHA256 so the build image only changes through reviewed updates.
-FROM gcr.io/oss-fuzz-base/base-builder-python@sha256:9c97273c8de83d22a40462fdda4371d1ff16eac065c72ee03bef7fdb1aaaf458
+FROM gcr.io/oss-fuzz-base/base-builder-python@sha256:99c714c91ec30778a3ce3ae5b37491a81fc043808bc8f2955159c2f608f80116
 
 COPY . $SRC/rhiza
 WORKDIR $SRC/rhiza
