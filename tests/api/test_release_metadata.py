@@ -13,13 +13,21 @@ def _load_pyproject(root: Path) -> dict:
         return tomllib.load(fh)
 
 
-def test_pyproject_is_configured_for_publishing(root: Path) -> None:
-    """The project metadata must allow building and publishing release artifacts."""
+def test_pyproject_has_build_backend(root: Path) -> None:
+    """The project metadata must define a build backend so release artifacts can be built."""
     pyproject = _load_pyproject(root)
 
     assert "build-system" in pyproject, "pyproject.toml must define a PEP 517 build backend"
     assert pyproject["tool"]["setuptools"]["packages"] == []
-    assert "Private :: Do Not Upload" not in pyproject["project"]["classifiers"]
+
+
+def test_pyproject_retains_pypi_kill_switch(root: Path) -> None:
+    """The ``Private :: Do Not Upload`` classifier must remain so PyPI publishing stays disabled."""
+    pyproject = _load_pyproject(root)
+
+    assert "Private :: Do Not Upload" in pyproject["project"]["classifiers"], (
+        "the PyPI kill-switch classifier must be present until publishing is deliberately enabled"
+    )
 
 
 def test_zenodo_metadata_exists_with_required_fields(root: Path) -> None:
