@@ -555,3 +555,43 @@ class TestRenovateBundleContent:
         required = {"pep621", "github-actions", "gitlabci"}
         missing = required - set(enabled)
         assert not missing, f"renovate.json 'enabledManagers' is missing required managers: {sorted(missing)}"
+
+
+# ---------------------------------------------------------------------------
+# Core pre-commit configuration
+# ---------------------------------------------------------------------------
+
+
+class TestCorePreCommitConfig:
+    """The core bundle's .pre-commit-config.yaml must pin node for npm-based hooks.
+
+    markdownlint-cli pulls a transitive dependency (ava) whose engines field is
+    ``^22.20 || ^24.12 || >=26``.  Odd-numbered current node releases such as v25
+    fall in the gap between those bands, so ``npm install`` aborts with EBADENGINE
+    and the hook fails to install.  Pinning ``default_language_version.node`` makes
+    pre-commit provision a compatible node via nodeenv instead of relying on the
+    system runtime.  This guard stops the pin from silently disappearing downstream.
+    """
+
+    @pytest.fixture
+    def precommit_config(self, root: Path) -> dict:
+        """Load and return the parsed core-bundle .pre-commit-config.yaml."""
+        cfg = root / "bundles" / "core" / ".pre-commit-config.yaml"
+        if not cfg.exists():
+            pytest.skip("core bundle .pre-commit-config.yaml not present")
+        with cfg.open(encoding="utf-8") as fh:
+            return yaml.safe_load(fh)
+
+    def test_default_language_version_pins_node(self, precommit_config: dict) -> None:
+        """default_language_version.node must be a non-empty pin so npm hooks get a compatible runtime."""
+        versions = precommit_config.get("default_language_version")
+        assert isinstance(versions, dict), (
+            "core .pre-commit-config.yaml must declare a 'default_language_version' table "
+            "pinning node for npm-based hooks (markdownlint-cli)"
+        )
+        node = versions.get("node")
+        assert isinstance(node, str), "'default_language_version.node' must be a version string"
+        assert node.strip(), (
+            "'default_language_version.node' must be a non-empty version string to keep markdownlint-cli "
+            "installable on odd-numbered current node releases (EBADENGINE guard)"
+        )

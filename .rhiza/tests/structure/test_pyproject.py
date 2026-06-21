@@ -116,8 +116,9 @@ class TestProjectFields:
 class TestProjectUrls:
     """Tests for [project.urls] — Homepage and Repository links."""
 
+    @classmethod
     @pytest.fixture(scope="class")
-    def urls(self, project: dict) -> dict:
+    def urls(cls, project: dict) -> dict:
         """Return the [project.urls] table."""
         table = project.get("urls")
         if not isinstance(table, dict):
@@ -142,8 +143,9 @@ class TestProjectUrls:
 class TestProjectClassifiers:
     """Tests for [project].classifiers — Python version and licence entries."""
 
+    @classmethod
     @pytest.fixture(scope="class")
-    def classifiers(self, project: dict) -> list[str]:
+    def classifiers(cls, project: dict) -> list[str]:
         """Return the classifiers list."""
         cl = project.get("classifiers", [])
         if not cl:
@@ -166,8 +168,9 @@ class TestProjectClassifiers:
 class TestDependencyGroups:
     """Tests for [dependency-groups] — ensures required groups are declared."""
 
+    @classmethod
     @pytest.fixture(scope="class")
-    def dependency_groups(self, pyproject: dict) -> dict:
+    def dependency_groups(cls, pyproject: dict) -> dict:
         """Return the [dependency-groups] table."""
         dg = pyproject.get("dependency-groups")
         if not isinstance(dg, dict):
@@ -193,8 +196,9 @@ class TestDependencyGroups:
 class TestGitTagVersion:
     """Tests for harmony between the latest git tag and pyproject.toml version."""
 
+    @classmethod
     @pytest.fixture(scope="class")
-    def latest_tag(self, root: Path) -> str:
+    def latest_tag(cls, root: Path) -> str:
         """Return the latest semver git tag, or skip if none exist."""
         result = subprocess.run(  # nosec B603
             [_GIT, "tag", "--list", "v*", "--sort=-version:refname"],
