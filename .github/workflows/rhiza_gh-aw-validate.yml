@@ -44,6 +44,14 @@ jobs:
 
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
+      - name: Check lock files are fresh (compiler-free body-hash check)
+        run: |
+          if [ -f .rhiza/utils/gh_aw_lock_freshness.py ]; then
+            python3 .rhiza/utils/gh_aw_lock_freshness.py
+          else
+            echo "::notice::gh_aw_lock_freshness.py not present; skipping body-hash freshness check."
+          fi
+
       - name: Install gh-aw extension
         id: install-gh-aw
         continue-on-error: true
