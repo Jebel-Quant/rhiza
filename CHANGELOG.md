@@ -5,10 +5,34 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [0.19.4] - 2026-06-22
+
+### New Features
+- *(book)* Build on every commit, deploy to Pages only from default branch (#1260)
+
+### Bug Fixes
+- *(make)* Skip worktree/current branches in clean branch-prune (#1258)
+- *(test)* Make parallel test teardown robust to xdist/report races (#1266)
+- *(pre-commit)* Pin node to 24.12.0 so npm hooks survive odd node releases (#1271)
+
+### Dependencies
+- *(deps)* Combined renovate dependency updates (#1265)
+- *(deps)* Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.18 (#1269)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.11.23 (#1270)
+- *(deps)* Lock file maintenance (#1275)
+
+### Maintenance
+- *(api)* Coverage-gate API tests tolerate a downstream override (#1259)
+- *(deptry)* Accumulate scan folders via DEPTRY_FOLDERS variables (#1261)
+- Migrate class-scoped fixtures to classmethods and guard node pin (#1274)
+
 ## [0.19.3] - 2026-06-16
 
 ### Bug Fixes
 - *(scorecard)* Keep id-token/security-events write at job level only (#1255)
+
+### Other Changes
+- Bump version 0.19.2 → 0.19.3
 
 ## [0.19.2] - 2026-06-16
 
