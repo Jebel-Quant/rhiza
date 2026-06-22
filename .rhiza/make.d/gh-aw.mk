@@ -44,6 +44,9 @@ gh-aw-logs: install-gh-aw ## show logs for recent agentic workflow runs
 	@gh aw logs
 
 gh-aw-validate: install-gh-aw ## validate lock files are up-to-date
+	@if [ -f .rhiza/utils/gh_aw_lock_freshness.py ]; then \
+		python3 .rhiza/utils/gh_aw_lock_freshness.py || exit 1; \
+	fi
 	@gh aw compile
 	@if ! git diff --quiet .github/workflows/*.lock.yml; then \
 		printf "$${RED}[ERROR] Agentic workflow lock files are out of date. Run 'make gh-aw-compile' and commit the changes.${RESET}\n"; \
