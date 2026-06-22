@@ -67,7 +67,7 @@ def _step_with_args(job: dict) -> list[dict]:
 class TestWeeklyWorkflowStructure:
     """Validate the static content of rhiza_weekly.yml."""
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def workflow(self, root):
         """Load and return the parsed weekly workflow YAML."""
         return _load_workflow(root)

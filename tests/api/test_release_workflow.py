@@ -57,7 +57,7 @@ def _step_uses(job: dict) -> list[str]:
 class TestReleaseWorkflowStructure:
     """Validate the static content of rhiza_release.yml."""
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def workflow(self, root):
         """Load and return the parsed release workflow YAML."""
         return _load_workflow(root)

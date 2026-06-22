@@ -27,7 +27,7 @@ def _step_names(job: dict) -> list[str]:
 class TestMutationWorkflowStructure:
     """Validate badge generation and publishing in rhiza_mutation.yml."""
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def workflow(self, root: Path) -> dict:
         """Return parsed workflow data."""
         return _load_workflow(root)
