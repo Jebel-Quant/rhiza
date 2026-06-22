@@ -1,4 +1,19 @@
-"""Print all Rhiza bundles and profiles with descriptions and dependencies."""
+"""Print all Rhiza bundles and profiles with descriptions and dependencies.
+
+Run as a script from a project root that contains ``.rhiza/template-bundles.yml``.
+It reads that file, groups every bundle into the base, GitHub, and GitLab families,
+and prints a colourised summary of each bundle (with its ``requires``/``recommends``
+dependencies) followed by the profiles and the bundles they expand to.
+
+Example:
+    Invoke through the Makefile target (the supported entry point)::
+
+        $ make explain-bundles
+
+    or run the module directly from the repository root::
+
+        $ python .rhiza/utils/explain_bundles.py
+"""
 
 import sys
 
@@ -22,17 +37,39 @@ profiles = data.get("profiles", {})
 
 
 def _is_github(name: str) -> bool:
-    """Return True when a bundle belongs to the GitHub family."""
+    """Return True when a bundle belongs to the GitHub family.
+
+    Args:
+        name: The bundle name (e.g. ``github-tests`` or ``gh-aw``).
+
+    Returns:
+        True if the bundle is GitHub-specific, False otherwise.
+    """
     return name.startswith("github-") or name in {"github", "gh-aw"}
 
 
 def _is_gitlab(name: str) -> bool:
-    """Return True when a bundle belongs to the GitLab family."""
+    """Return True when a bundle belongs to the GitLab family.
+
+    Args:
+        name: The bundle name (e.g. ``gitlab-tests`` or ``gitlab``).
+
+    Returns:
+        True if the bundle is GitLab-specific, False otherwise.
+    """
     return name.startswith("gitlab-") or name == "gitlab"
 
 
 def _bundle_group(name: str) -> str:
-    """Map a bundle name to its display group."""
+    """Map a bundle name to its display group.
+
+    Args:
+        name: The bundle name to classify.
+
+    Returns:
+        One of ``"github"``, ``"gitlab"``, or ``"base"`` — the section
+        heading the bundle is printed under.
+    """
     if _is_github(name):
         return "github"
     if _is_gitlab(name):
@@ -41,7 +78,17 @@ def _bundle_group(name: str) -> str:
 
 
 def _print_bundle(name: str, info: dict) -> None:  # type: ignore[type-arg]
-    """Print one bundle entry with dependency metadata."""
+    """Print one bundle entry with dependency metadata.
+
+    Args:
+        name: The bundle name, used as the row label.
+        info: The bundle's mapping from ``template-bundles.yml``. Recognised
+            keys are ``description``, ``requires``, ``recommends``, and
+            ``standalone``; all are optional and default sensibly.
+
+    Returns:
+        None. The formatted entry is written to standard output.
+    """
     desc = info.get("description", "").strip().splitlines()[0]
     requires = info.get("requires") or []
     recommends = info.get("recommends") or []
