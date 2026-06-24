@@ -2,7 +2,7 @@
 # ClusterFuzzLite build script — compiles each Python harness in tests/fuzz/
 # via OSS-Fuzz's compile_python_fuzzer helper.
 
-cd "$SRC/rhiza"
+cd "$SRC"
 
 # Copy suppression_audit into tests/fuzz/ so PyInstaller can discover and bundle
 # it into the frozen binary. Without this, the harness would dynamically load

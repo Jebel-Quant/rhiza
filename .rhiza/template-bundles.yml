@@ -46,7 +46,7 @@ bundles:
     standalone: true
 
   github:
-    description: "GitHub repository configuration (actions, dependabot, templates, core workflows)"
+    description: "GitHub repository configuration (actions, dependabot, templates, rulesets, core workflows)"
     standalone: true
     requires: [core]
 
