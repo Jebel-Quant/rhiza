@@ -17,7 +17,8 @@ commit already carries the changelog.
 **The bump type is a user decision.** Run interactively, `make release` prompts
 the user to pick `MAJOR`, `MINOR`, or `PATCH`. Because this command runs in a
 non-interactive shell (where the tool would silently default to `PATCH`), **you
-must ask the user which bump to apply** and pass their choice through explicitly.
+must ask the user which bump to apply** and pass their choice through with
+`BUMP=major|minor|patch` (supported by both `make release` and `make bump`).
 
 Do the following, in order:
 
@@ -36,22 +37,20 @@ Do the following, in order:
    Hold the chosen `<bump>` (lowercase: `major` / `minor` / `patch`) for the
    next steps.
 
-3. **Preview the bump (dry run).** Run
-   `uvx "rhiza-tools>=0.7.1" release --bump <bump> --dry-run` — the same tool
-   `make release` wraps — to show the user the planned new version and tag
-   **before** anything is pushed. Summarise what the real run will do
-   (old → new version, tag name).
+3. **Preview the bump (dry run).** Run `make release DRY_RUN=1 BUMP=<bump>` to
+   show the user the planned new version and tag **before** anything is pushed.
+   The `DRY_RUN=1` flag previews the bump/tag/push without applying them.
+   Summarise what the real run will do (old → new version, tag name).
 
 4. **Confirm.** Unless `$ARGUMENTS` explicitly authorises proceeding (see
    below), stop here and ask the user to confirm the previewed version before
    cutting the real release. Pushing a tag triggers a public release workflow —
    treat it as outward-facing and confirm first.
 
-5. **Cut the release.** Run `uvx "rhiza-tools>=0.7.1" release --bump <bump>`.
-   This bumps, commits (with changelog), tags, and pushes. Run it in the
-   foreground so any failure is visible. If it fails, show the relevant output,
-   diagnose the root cause, and stop — do not re-run blindly or hand-craft a
-   tag.
+5. **Cut the release.** Run `make release BUMP=<bump>`. This bumps, commits
+   (with changelog), tags, and pushes. Run it in the foreground so any failure
+   is visible. If it fails, show the relevant output, diagnose the root cause,
+   and stop — do not re-run blindly or hand-craft a tag.
 
 6. **Watch the workflow.** Run `make release-status` to show the release
    workflow run and the latest release info. If the workflow is still in
