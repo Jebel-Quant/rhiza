@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [0.19.5] - 2026-06-24
+
+### New Features
+- *(github)* Add .github/rulesets to the github bundle (#1286)
+- *(release)* Add rhiza_release command and BUMP=major|minor|patch passthrough (#1287)
+
+### Bug Fixes
+- *(bundles)* Move github.mk to the github bundle to match its test (#1276)
+
+### Documentation
+- *(utils)* Enrich .rhiza/utils docstrings with args/returns/examples (#1279) (#1281)
+
+### Maintenance
+- *(github)* Assert github targets emit their gh commands, cover all seven (#1280)
+- *(gh-aw)* Add compiler-free lock-file freshness check (#1282)
+- Chore(deps)(deps): bump the github-actions group with 2 updates (#1283)
+- Chore(deps-dev)(deps-dev): bump ruff in the python-dependencies group (#1284)
+- Chore(deps)(deps): bump actions/setup-python in the github-actions group (#1285)
+
 ## [0.19.4] - 2026-06-22
 
 ### New Features
@@ -25,6 +44,9 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - *(api)* Coverage-gate API tests tolerate a downstream override (#1259)
 - *(deptry)* Accumulate scan folders via DEPTRY_FOLDERS variables (#1261)
 - Migrate class-scoped fixtures to classmethods and guard node pin (#1274)
+
+### Other Changes
+- Bump version 0.19.3 → 0.19.4
 
 ## [0.19.3] - 2026-06-16
 
