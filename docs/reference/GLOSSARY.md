@@ -67,7 +67,6 @@ flowchart LR
         github_tests["github-tests"]
         github_marimo["github-marimo"]
         github_book["github-book"]
-        gh_aw["gh-aw"]
     end
 
     subgraph GitLab["GitLab base and overlays"]
@@ -103,11 +102,9 @@ flowchart LR
     gitlab_marimo --> gitlab
     gitlab_book --> book
     gitlab_book --> gitlab
-    gh_aw --> github
     presentation -.-> marimo
     book -.-> tests
     book -.-> marimo
-    gh_aw -.-> tests
 ```
 
 

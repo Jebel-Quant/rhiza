@@ -12,7 +12,6 @@ A comprehensive quick reference for all tools used in Rhiza-based projects.
 - [Code Quality](#code-quality)
 - [Documentation](#documentation)
 - [Release Management](#release-management)
-- [AI-Powered Workflows](#ai-powered-workflows)
 - [Environment Management](#environment-management)
 - [Troubleshooting](#troubleshooting)
 
@@ -130,15 +129,6 @@ These are the commands you'll use most frequently:
 | `make lfs-pull` | Download all git-lfs files |
 | `make lfs-track` | List patterns tracked by git-lfs |
 | `make lfs-status` | Show git-lfs file status |
-
-### AI-Powered Workflows
-
-| Command | Description |
-|---------|-------------|
-| `make copilot` | Open GitHub Copilot CLI |
-| `make claude` | Open Claude Code interactive prompt |
-| `make analyse-repo` | AI analysis of repository |
-| `make summarise-changes` | Summarize changes since last release |
 
 ### Meta Commands
 
@@ -439,38 +429,6 @@ make release-status
 
 # View latest release
 make latest-release
-```
-
----
-
-## AI-Powered Workflows
-
-### GitHub Copilot
-
-```bash
-# Open Copilot CLI
-make copilot
-
-# Or use directly
-gh copilot suggest "command description"
-gh copilot explain "command to explain"
-```
-
-### Claude Code
-
-```bash
-# Open Claude interactive prompt
-make claude
-```
-
-### Repository Analysis
-
-```bash
-# Analyze repository structure
-make analyse-repo
-
-# Summarize changes since last release
-make summarise-changes
 ```
 
 ---

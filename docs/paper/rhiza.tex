@@ -210,18 +210,6 @@ Rhiza integrates a layered quality stack that operates at multiple stages of the
 
 \paragraph{Automated dependency updates.} A Renovate configuration file, included in the \texttt{core} bundle, opens pull requests whenever a pinned dependency or the template \texttt{ref} is updated upstream. This closes the loop: Rhiza itself is treated as a dependency that can be automatically proposed for upgrade.
 
-\subsection{Agentic Workflow Integration}
-
-A distinguishing feature of recent Rhiza releases is first-class integration with AI coding assistants. The \texttt{github} bundle includes GitHub Actions workflow files that invoke Claude Code~\cite{claudecode} (or optionally GitHub Copilot) for tasks such as:
-
-\begin{itemize}
-  \item \textbf{\texttt{analyse-repo}}: produces a structured report of recent changes, open issues, and technical debt.
-  \item \textbf{\texttt{copilot}}: runs an AI agent on a specified task file, committing the result back to the branch.
-  \item \textbf{\texttt{summarise-changes}}: generates human-readable release notes from the git log.
-\end{itemize}
-
-These workflows treat AI agents as first-class CI participants: they are triggered by GitHub Actions events, receive a clean environment, and produce reviewable pull-request diffs. This integration reflects the view that AI-assisted development is increasingly part of the standard software engineering toolkit and should be configured consistently across projects.
-
 % ─────────────────────────────────────────────────────────────────────────────
 \section{Operational Experience}
 \label{sec:experience}

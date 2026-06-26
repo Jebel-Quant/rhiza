@@ -29,7 +29,6 @@ nav:
     - VSCode Extensions: development/VSCODE_EXTENSIONS.md
     - Marimo: development/MARIMO.md
     - Presentation: development/PRESENTATION.md
-    - GitHub Agentic Workflows: development/GH_AW.md
   - Operations:
     - Global Patch Workflow: ops/GLOBAL_PATCH.md
     - Changelog Guide: ops/CHANGELOG_GUIDE.md

@@ -252,8 +252,8 @@ class TestGithubWorkflowStubs:
     """Bundle-shipped GitHub workflows must delegate to jebel-quant/rhiza reusables.
 
     Covers every bundle that ships a .github/workflows/ directory — not just the
-    github-* overlays, but also the `github` and `gh-aw` bundles.  Documented full
-    workflows (rhiza_release.yml) are excepted from the thin-stub requirement.
+    github-* overlays, but also the `github` bundle.  Documented full workflows
+    (rhiza_release.yml) are excepted from the thin-stub requirement.
     """
 
     def _bundles_with_github_workflows(self, root: Path, bundle_names: list[str]) -> list[tuple[str, Path]]:

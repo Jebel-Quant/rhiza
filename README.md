@@ -168,7 +168,7 @@ ADRs help preserve the reasoning behind key decisions, making it easier for curr
 - [ADR-0008: Use Marimo for Interactive Notebooks](docs/adr/0008-use-marimo-for-interactive-notebooks.md)
 - [ADR-0009: Use Pre-commit Hooks for Automated Code Quality Enforcement](docs/adr/0009-use-pre-commit-hooks-for-code-quality.md)
 
-**Create a new ADR**: Use `make adr` to create a new ADR with AI assistance. The workflow will generate a comprehensive ADR document, update the index, and create a pull request for review.
+**Create a new ADR**: Copy the template in [docs/adr/](docs/adr/), give it the next number, and open a pull request for review.
 
 For more information about the ADR format and how to create new records, see the [ADR README](docs/adr/README.md).
 
@@ -249,7 +249,6 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 | `github-docker` | GitHub Actions workflow for Docker image building and publishing | `github`, `docker`, `core` |
 | `github-devcontainer` | GitHub Actions workflow for DevContainer image publishing | `github`, `devcontainer`, `core` |
 | `github-paper` | GitHub Actions workflow for LaTeX paper compilation and PDF publishing | `github`, `paper`, `core` |
-| `gh-aw` | GitHub Agentic Workflows for AI-driven repository automation | `github`, `core` |
 
 **Platform bundles — GitLab**
 
@@ -440,12 +439,6 @@ Docker
   docker-build          build Docker image
   docker-run            run the Docker container
   docker-clean          remove Docker image
-
-Agentic Workflows
-  copilot               open interactive prompt for copilot
-  analyse-repo          run the analyser agent to update REPOSITORY_ANALYSIS.md
-  summarise-changes     summarise changes since the most recent release/tag
-  install-copilot       checks for copilot and prompts to install
 
 GitHub Helpers
   gh-install            check for gh cli existence and install extensions
