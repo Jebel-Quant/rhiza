@@ -238,22 +238,6 @@ bundles:
     standalone: true
     requires: [book, github]
 
-  # ============================================================================
-  # GH-AW - GitHub Agentic Workflows
-  # ============================================================================
-  gh-aw:
-    description: "GitHub Agentic Workflows for AI-driven repository automation"
-    standalone: false
-    requires: [github]
-    recommends: [tests]
-    notes: |
-      Provides infrastructure for gh-aw (GitHub Agentic Workflows):
-      - Makefile targets for compile/run/status
-      - Starter workflow templates
-      - CI validation for lock file freshness
-      - Documentation
-      Note: gh-aw is inherently GitHub-specific and has no local-only split.
-
 # ==============================================================================
 # PROFILE DEFINITIONS
 #

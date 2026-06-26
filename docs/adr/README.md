@@ -8,7 +8,7 @@ An Architecture Decision Record (ADR) is a document that captures an important a
 
 ## ADR Format
 
-Each ADR follows a consistent format defined in [0000-adr-template.md](../../.github/agents/0000-adr-template.md):
+Each ADR follows a consistent format:
 
 - **Title and Number**: Sequential numbering with descriptive title
 - **Date**: When the decision was made
@@ -34,28 +34,10 @@ Each ADR follows a consistent format defined in [0000-adr-template.md](../../.gi
 
 ## Creating a New ADR
 
-### Option 1: Using AI Assistance (Recommended)
+To create an ADR manually:
 
-The easiest way to create a new ADR is using the automated workflow:
-
-```bash
-make adr
-```
-
-This will:
-1. Prompt you for the ADR title and optional context
-2. Trigger an AI-powered workflow that generates a comprehensive ADR
-3. Automatically determine the next ADR number
-4. Create the ADR file with well-researched content
-5. Update the index table
-6. Open a pull request for review
-
-### Option 2: Manual Creation
-
-If you prefer to create an ADR manually:
-
-1. Copy the template: `cp .github/agents/0000-adr-template.md docs/adr/0010-example-decision.md`
-2. Use the next available 4-digit number (e.g., 0010, 0011, 0012)
+1. Copy an existing ADR in this directory as a starting point
+2. Use the next available 4-digit number (e.g., 0011, 0012)
 3. Fill in all sections with relevant information
 4. Update this README to add your ADR to the index
 5. Submit via pull request for review

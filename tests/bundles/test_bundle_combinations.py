@@ -410,51 +410,6 @@ class TestRenovateBundleSync:
         assert len(parsed["extends"]) > 0, "renovate.json 'extends' must not be empty"
 
 
-class TestGhAwBundleSync:
-    """Syncing core + github + gh-aw produces agentic workflow infrastructure."""
-
-    @pytest.fixture(autouse=True)
-    def synced(self, tmp_path: Path, root: Path) -> None:
-        """Sync core, github, and gh-aw bundles."""
-        sync_bundles(root, ["core", "github", "gh-aw"], tmp_path)
-        self.project = tmp_path
-
-    def test_copilot_setup_steps_workflow_exists(self) -> None:
-        """copilot-setup-steps.yml must be present to pre-configure the agent environment."""
-        assert (self.project / ".github" / "workflows" / "copilot-setup-steps.yml").is_file()
-
-    def test_gh_aw_validate_workflow_exists(self) -> None:
-        """rhiza_gh-aw-validate.yml must be present to validate lock file freshness."""
-        assert (self.project / ".github" / "workflows" / "rhiza_gh-aw-validate.yml").is_file()
-
-    def test_gh_aw_mk_fragment_present(self) -> None:
-        """gh-aw.mk Makefile fragment must be present."""
-        assert (self.project / ".rhiza" / "make.d" / "gh-aw.mk").is_file()
-
-    def test_hooks_json_present(self) -> None:
-        """hooks.json quality gates must be present for agentic sessions."""
-        assert (self.project / ".github" / "hooks" / "hooks.json").is_file()
-
-    def test_hooks_json_is_valid_json(self) -> None:
-        """hooks.json must be valid JSON."""
-        import json
-
-        hooks_json = self.project / ".github" / "hooks" / "hooks.json"
-        parsed = json.loads(hooks_json.read_text(encoding="utf-8"))
-        assert isinstance(parsed, (dict, list)), "hooks.json must be a JSON object or array"
-
-    def test_copilot_instructions_present(self) -> None:
-        """Copilot instructions file must be present for AI agent guidance."""
-        assert (self.project / ".github" / "copilot-instructions.md").is_file()
-
-    def test_agent_definitions_present(self) -> None:
-        """At least one agent definition must exist in .github/agents/."""
-        agents_dir = self.project / ".github" / "agents"
-        assert agents_dir.is_dir(), ".github/agents/ directory not found"
-        agent_files = list(agents_dir.glob("*.md"))
-        assert len(agent_files) > 0, "No agent definition .md files found"
-
-
 class TestBenchmarksBundleSync:
     """Syncing core + tests + benchmarks produces benchmark scaffolding."""
 

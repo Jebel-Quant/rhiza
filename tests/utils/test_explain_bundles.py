@@ -34,7 +34,6 @@ def _load_module(root: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, ya
     ("name", "expected"),
     [
         ("github", "github"),
-        ("gh-aw", "github"),
         ("github-tests", "github"),
         ("gitlab", "gitlab"),
         ("gitlab-book", "gitlab"),

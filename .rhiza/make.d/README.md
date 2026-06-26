@@ -85,7 +85,6 @@ pre-install::
 
 | File | Purpose |
 |------|---------|
-| `agentic.mk` | AI agent integrations (copilot, claude) |
 | `book.mk` | Documentation book generation |
 | `bootstrap.mk` | Installation and environment setup |
 | `custom-env.mk` | Example environment customizations |

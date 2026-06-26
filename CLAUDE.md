@@ -61,7 +61,7 @@ The core abstraction is the **bundle** — a named group of configuration files.
 - `book`: documentation with MkDocs + zensical
 - `presentation`: Marp slides
 - `paper`: LaTeX paper compilation
-- `lfs`, `legal`, `renovate`, `gh-aw`: miscellaneous tooling
+- `lfs`, `legal`, `renovate`: miscellaneous tooling
 
 **Platform overlay bundles** — CI workflow stubs that pair a feature with a platform: `github-tests`, `github-book`, `github-marimo`, `github-docker`, `github-devcontainer`, `github-paper`, `gitlab-tests`, `gitlab-book`, `gitlab-marimo`.
 
@@ -87,18 +87,7 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 - **Test coverage**: 90% minimum
 - **Pre-commit hooks**: `make fmt` runs ruff, markdownlint, bandit, actionlint, interrogate, jsonschema, and uv-lock validation
 
-### GitHub Agentic Workflows (gh-aw)
-
-Agentic workflows live in `.github/workflows/` as `.md` source files compiled to `.lock.yml`. **Never edit `.lock.yml` files directly.** After editing any `.md` workflow:
-
-```bash
-make gh-aw-compile   # Recompile .md → .lock.yml
-```
-
-Always commit both the `.md` and the updated `.lock.yml` together.
-
 ### CI/CD
 
 - **GitHub Actions** (primary): `.github/workflows/` — CI, release, docker, CodeQL, weekly, sync
 - **GitLab CI** (parallel): `.gitlab-ci.yml` — mirrors GitHub Actions coverage
-- Agent environment is pre-configured via `.github/workflows/copilot-setup-steps.yml` (runs before agent starts) and `.github/hooks/hooks.json` (quality gates: `make fmt` + `make test` on session end)

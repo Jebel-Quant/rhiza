@@ -181,7 +181,6 @@ flowchart TD
     workflows --> security[rhiza_security.yml]
     workflows --> more[... 11 more]
 
-    maked --> agentic[agentic.mk]
     maked --> book[book.mk]
     maked --> bootstrap[bootstrap.mk]
     maked --> docker[docker.mk]
@@ -207,9 +206,8 @@ flowchart TB
             bundles[template-bundles.yml<br/>Bundle Definitions]
         end
         
-        subgraph maked["make.d/ (14 files, ~41KB)"]
+        subgraph maked["make.d/ (make fragments)"]
             direction LR
-            agentic[agentic.mk<br/>AI Agents]
             bootstrap[bootstrap.mk<br/>Installation]
             test[test.mk<br/>Testing]
             book_mk[book.mk<br/>Documentation]
@@ -339,7 +337,6 @@ Makefiles follow these conventions:
    - ❌ `Bootstrap.mk`, `customTask.mk`, `GitHub.mk`
 
 2. **Descriptive domain names**: Each file represents a logical domain or feature area
-   - `agentic.mk` - AI agent integrations
    - `bootstrap.mk` - Installation and setup
    - `docker.mk` - Docker containerization
    - `marimo.mk` - Marimo notebooks

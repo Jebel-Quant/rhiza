@@ -4,7 +4,7 @@ This document describes the shell scripts used in the Rhiza project, their purpo
 
 ## Overview
 
-Rhiza uses minimal, focused shell scripts (3 scripts, ~150 total lines) for critical automation tasks. All scripts follow strict bash practices:
+Rhiza uses minimal, focused shell scripts for critical automation tasks. All scripts follow strict bash practices:
 
 - ✅ **Strict error handling**: `set -euo pipefail` (fail on error, undefined variables, pipe failures)
 - ✅ **Descriptive error messages**: Clear error descriptions with remediation steps
@@ -75,102 +75,6 @@ PYTHON_VERSION                       # Read from .python-version file
 | `.python-version` missing | Error on startup | Ensure file exists in repo root |
 | UV installation fails | Commands not found | Check UV installer, verify PATH |
 
-### 2. `.github/hooks/session-start.sh`
-
-**Purpose**: Validates the development environment before GitHub Copilot agent sessions begin.
-
-**Location**: `.github/hooks/session-start.sh` (37 lines)
-
-**What it does**:
-1. Verifies UV package manager is available
-2. Confirms virtual environment (`.venv`) exists
-3. Checks that virtual environment is activated
-
-**Error Handling**:
-
-Each validation includes:
-- `[ERROR]` Clear error message
-- `[INFO]` Specific remediation steps
-- `[INFO]` Alternative solutions
-
-**Example Errors**:
-
-```bash
-# UV not found
-[copilot-hook] [ERROR] uv not found
-[copilot-hook] [INFO] Remediation: Run 'make install' to set up the environment
-[copilot-hook] [INFO] Alternative: Ensure uv is in PATH or ./bin/uv exists
-
-# Virtual environment missing
-[copilot-hook] [ERROR] .venv not found
-[copilot-hook] [INFO] Remediation: Run 'make install' to create the virtual environment
-[copilot-hook] [INFO] Details: The .venv directory should contain Python dependencies
-
-# Virtual environment not activated (warning only)
-[copilot-hook] [WARN] .venv/bin is not on PATH
-[copilot-hook] [INFO] Note: The agent may not use the correct Python version
-[copilot-hook] [INFO] Remediation: Ensure .venv/bin is added to PATH before running the agent
-```
-
-**Usage**:
-
-Called automatically by `.github/hooks/hooks.json` at session start:
-
-```json
-{
-  "sessionStart": ".github/hooks/session-start.sh"
-}
-```
-
-### 3. `.github/hooks/session-end.sh`
-
-**Purpose**: Runs quality gates after GitHub Copilot agent sessions complete.
-
-**Location**: `.github/hooks/session-end.sh` (35 lines)
-
-**What it does**:
-1. Formats code using `make fmt`
-2. Runs tests using `make test`
-3. Reports success or failure with detailed guidance
-
-**Error Handling**:
-
-Each quality gate provides:
-- `[ERROR]` Clear failure message
-- `[INFO]` Detailed remediation steps
-- `[INFO]` Common solutions
-
-**Example Errors**:
-
-```bash
-# Formatting failure
-[copilot-hook] [ERROR] Formatting check failed
-[copilot-hook] [INFO] Remediation: Review the formatting errors above
-[copilot-hook] [INFO] Common fixes:
-[copilot-hook]    - Run 'make fmt' locally to see detailed errors
-[copilot-hook]    - Check for syntax errors in modified files
-[copilot-hook]    - Ensure all files follow project style guidelines
-
-# Test failure
-[copilot-hook] [ERROR] Tests failed
-[copilot-hook] [INFO] Remediation: Review the test failures above
-[copilot-hook] [INFO] Common fixes:
-[copilot-hook]    - Run 'make test' locally to see detailed output
-[copilot-hook]    - Check if new code broke existing functionality
-[copilot-hook]    - Verify test assertions match expected behavior
-[copilot-hook]    - Review test logs in _tests/ directory
-```
-
-**Usage**:
-
-Called automatically by `.github/hooks/hooks.json` at session end:
-
-```json
-{
-  "sessionEnd": ".github/hooks/session-end.sh"
-}
-```
-
 ## Testing
 
 ### Test Suite: `.rhiza/tests/shell/test_scripts.sh`
@@ -203,26 +107,15 @@ bash .rhiza/tests/shell/test_scripts.sh --verbose
 === Shell Script Test Suite ===
 Repository: /home/runner/work/rhiza/rhiza
 
-Testing: session-start.sh
-```bash
-=== Shell Script Test Suite ===
-Repository: /home/runner/work/rhiza/rhiza
-
-Testing: session-start.sh
-✓ PASS: session-start.sh has bash shebang
-✓ PASS: session-start.sh uses strict error handling
-✓ PASS: session-start.sh normal mode runs validation
-
-Testing: session-end.sh
-✓ PASS: session-end.sh has bash shebang
-✓ PASS: session-end.sh uses strict error handling
-
 Testing: bootstrap.sh
+✓ PASS: bootstrap.sh has bash shebang
+✓ PASS: bootstrap.sh uses strict error handling
 [... more tests ...]
 
+Testing: Syntax validation
+✓ PASS: bootstrap.sh has valid bash syntax
+
 === Test Summary ===
-Tests run: 13
-Tests passed: 13
 All tests passed!
 ```
 
@@ -322,72 +215,6 @@ No external dependencies required (no bats-core needed).
 2. Install manually later: `uvx pre-commit install`
 3. Ensure `.pre-commit-config.yaml` exists
 
-### Session Hook Issues
-
-#### Issue: "uv not found"
-
-**Symptoms**:
-```
-[copilot-hook] [ERROR] uv not found
-```
-
-**Solutions**:
-1. Run `make install` to set up environment
-2. Check if `./bin/uv` exists: `ls -la ./bin/uv`
-3. Check if `uv` is in PATH: `command -v uv`
-4. Try manual UV installation: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-
-#### Issue: ".venv not found"
-
-**Symptoms**:
-```
-[copilot-hook] [ERROR] .venv not found
-```
-
-**Solutions**:
-1. Run `make install` to create virtual environment
-2. Check if `.venv` directory was deleted: `ls -la .venv`
-3. Verify `pyproject.toml` exists
-
-#### Issue: Virtual environment not activated
-
-**Symptoms**:
-```
-[copilot-hook] [WARN] .venv/bin is not on PATH
-```
-
-**Solutions**:
-1. This is a warning, not an error (session continues)
-2. Manually activate: `source .venv/bin/activate`
-3. Ensure copilot-setup-steps.yml activates venv
-4. Check PATH: `echo $PATH | grep .venv`
-
-#### Issue: Formatting fails
-
-**Symptoms**:
-```
-[copilot-hook] [ERROR] Formatting check failed
-```
-
-**Solutions**:
-1. Run `make fmt` locally to see detailed errors
-2. Check for syntax errors in modified files
-3. Review ruff configuration in `ruff.toml`
-4. Manually format: `uv run ruff format .`
-
-#### Issue: Tests fail
-
-**Symptoms**:
-```
-[copilot-hook] [ERROR] Tests failed
-```
-
-**Solutions**:
-1. Run `make test` locally for detailed output
-2. Check test logs in `_tests/html-report/`
-3. Verify new code doesn't break existing tests
-4. Run specific test: `uv run pytest tests/path/to/test.py`
-
 ## Advanced Usage
 
 ### Custom Error Handlers
@@ -429,8 +256,6 @@ assert_contains "$output" "expected text" "test description"
 
 Shell scripts integrate with GitHub Actions:
 
-- `.github/workflows/copilot-setup-steps.yml` - Runs `make install`
-- `.github/hooks/hooks.json` - Calls session hooks
 - `.github/workflows/*.yml` - Can use scripts in CI
 
 ## References

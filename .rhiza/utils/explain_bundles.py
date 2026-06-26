@@ -40,12 +40,12 @@ def _is_github(name: str) -> bool:
     """Return True when a bundle belongs to the GitHub family.
 
     Args:
-        name: The bundle name (e.g. ``github-tests`` or ``gh-aw``).
+        name: The bundle name (e.g. ``github-tests`` or ``github-book``).
 
     Returns:
         True if the bundle is GitHub-specific, False otherwise.
     """
-    return name.startswith("github-") or name in {"github", "gh-aw"}
+    return name.startswith("github-") or name == "github"
 
 
 def _is_gitlab(name: str) -> bool:
