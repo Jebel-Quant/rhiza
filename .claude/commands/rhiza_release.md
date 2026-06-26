@@ -47,10 +47,14 @@ Do the following, in order:
    cutting the real release. Pushing a tag triggers a public release workflow —
    treat it as outward-facing and confirm first.
 
-5. **Cut the release.** Run `make release BUMP=<bump>`. This bumps, commits
-   (with changelog), tags, and pushes. Run it in the foreground so any failure
-   is visible. If it fails, show the relevant output, diagnose the root cause,
-   and stop — do not re-run blindly or hand-craft a tag.
+5. **Cut the release.** Run `make release BUMP=<bump> PUSH=1`. This bumps,
+   commits (with changelog), tags, and pushes. The `PUSH=1` flag is **required
+   here**: without it the tool asks an interactive `Push tag to remote? [y/N]`
+   question that this non-interactive shell auto-declines, leaving the bump
+   commit and tag stranded locally (unpushed). Since you already confirmed with
+   the user in step 4, `PUSH=1` pushes straight through. Run it in the
+   foreground so any failure is visible. If it fails, show the relevant output,
+   diagnose the root cause, and stop — do not re-run blindly or hand-craft a tag.
 
 6. **Watch the workflow.** Run `make release-status` to show the release
    workflow run and the latest release info. If the workflow is still in
