@@ -17,8 +17,8 @@ from pathlib import Path
 import atheris
 
 # When running from the source tree (local development), add .rhiza/utils to
-# sys.path so suppression_audit can be imported without installation.
-# In ClusterFuzzLite, build.sh copies suppression_audit.py into tests/fuzz/
+# sys.path so suppression_parse can be imported without installation.
+# In ClusterFuzzLite, build.sh copies suppression_parse.py into tests/fuzz/
 # before invoking PyInstaller, which allows PyInstaller to discover and bundle
 # it into the frozen binary. At runtime inside the frozen binary, PyInstaller's
 # import system loads the bundled copy regardless of filesystem paths.
@@ -27,7 +27,7 @@ _utils_dir = str(_REPO_ROOT / ".rhiza" / "utils")
 if _utils_dir not in sys.path:
     sys.path.insert(0, _utils_dir)
 
-import suppression_audit  # noqa: E402
+import suppression_parse  # noqa: E402
 
 
 def test_one_input(data: bytes) -> None:
@@ -36,10 +36,10 @@ def test_one_input(data: bytes) -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         candidate = Path(tmpdir) / "candidate.py"
         candidate.write_text(source, encoding="utf-8", errors="replace")
-        suppressions = suppression_audit.scan_file(candidate)
-        suppression_audit.count_non_empty_lines(candidate)
-        suppression_audit._nosec_cves(suppressions)
-        suppression_audit.compute_grade(float(len(suppressions)))
+        suppressions = suppression_parse.scan_file(candidate)
+        suppression_parse.count_non_empty_lines(candidate)
+        suppression_parse.nosec_cves(suppressions)
+        suppression_parse.compute_grade(float(len(suppressions)))
 
 
 def main() -> None:
