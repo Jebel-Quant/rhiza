@@ -117,6 +117,38 @@ def _load_bundle_names() -> list[str]:
     return sorted(config["bundles"])
 
 
+def _load_profile_names() -> list[str]:
+    """Return all profile names defined in template-bundles.yml."""
+    config = yaml.safe_load(_TEMPLATE_BUNDLES.read_text(encoding="utf-8"))
+    return sorted(config["profiles"])
+
+
+_README = _ROOT / "README.md"
+
+# First-column backtick-wrapped token of a markdown table row, e.g. ``| `core` | ... |``.
+_TABLE_FIRST_COL_RE = re.compile(r"^\|\s*`([^`]+)`\s*\|", re.MULTILINE)
+
+
+def _readme_section(start: str, *, until: str) -> str:
+    """Return the slice of README.md from heading ``start`` up to the next heading ``until``."""
+    text = _README.read_text(encoding="utf-8")
+    begin = text.index(start)
+    end = text.index(until, begin + len(start))
+    return text[begin:end]
+
+
+def _readme_bundle_names() -> set[str]:
+    """Return the bundle names listed in README.md's 'Available Template Bundles' tables."""
+    section = _readme_section("### Available Template Bundles", until="\n## ")
+    return set(_TABLE_FIRST_COL_RE.findall(section))
+
+
+def _readme_profile_names() -> set[str]:
+    """Return the profile names listed in README.md's 'Profiles' table."""
+    section = _readme_section("### Profiles", until="### Available Template Bundles")
+    return set(_TABLE_FIRST_COL_RE.findall(section))
+
+
 class TestMarkdownLinks:
     """Verify that every relative markdown link points at something that exists."""
 
@@ -152,6 +184,45 @@ class TestBundleDocumentation:
         assert f"`{bundle_name}`" in claude_md, (
             f"bundle '{bundle_name}' is defined in .rhiza/template-bundles.yml but not documented in CLAUDE.md"
         )
+
+
+class TestReadmeBundleList:
+    """Verify the README's bundle/profile tables track the authoritative template-bundles.yml."""
+
+    @pytest.mark.parametrize("bundle_name", _load_bundle_names())
+    def test_bundle_listed_in_readme(self, bundle_name: str) -> None:
+        """Every bundle in template-bundles.yml must appear in the README's bundle tables."""
+        assert bundle_name in _readme_bundle_names(), (
+            f"bundle '{bundle_name}' is defined in .rhiza/template-bundles.yml but is not listed in "
+            "README.md's 'Available Template Bundles' tables"
+        )
+
+    def test_readme_lists_no_unknown_bundles(self) -> None:
+        """The README's bundle tables must not list bundles absent from template-bundles.yml."""
+        extra = _readme_bundle_names() - set(_load_bundle_names())
+        assert not extra, (
+            f"README.md's bundle tables list {sorted(extra)}, which is not defined in .rhiza/template-bundles.yml"
+        )
+
+    @pytest.mark.parametrize("profile_name", _load_profile_names())
+    def test_profile_listed_in_readme(self, profile_name: str) -> None:
+        """Every profile in template-bundles.yml must appear in the README's profiles table."""
+        assert profile_name in _readme_profile_names(), (
+            f"profile '{profile_name}' is defined in .rhiza/template-bundles.yml but is not listed in "
+            "README.md's 'Profiles' table"
+        )
+
+    def test_readme_lists_no_unknown_profiles(self) -> None:
+        """The README's profiles table must not list profiles absent from template-bundles.yml."""
+        extra = _readme_profile_names() - set(_load_profile_names())
+        assert not extra, (
+            f"README.md's profiles table lists {sorted(extra)}, which is not defined in .rhiza/template-bundles.yml"
+        )
+
+    def test_readme_tables_were_parsed(self) -> None:
+        """Guard against the README table scanner silently collecting nothing."""
+        assert len(_readme_bundle_names()) > 5, "expected README to list multiple bundles"
+        assert len(_readme_profile_names()) > 1, "expected README to list multiple profiles"
 
 
 _MAKE_SOURCES = (
