@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [0.19.6] - 2026-06-27
+
+### New Features
+- *(core)* Ship rhiza_release slash command via core bundle (#1298)
+
+### Bug Fixes
+- *(release)* Add PUSH=1 passthrough so non-interactive cuts push the tag (#1288)
+- *(paper)* Stop tracking docs/paper/rhiza.pdf (#1296)
+
+### Dependencies
+- *(deps)* Update gcr.io/oss-fuzz-base/base-builder-python docker digest to e0e18de (#1289)
+- *(deps)* Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.20 (#1290)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.11.24 (#1291)
+- *(deps)* Update pre-commit hook jebel-quant/rhiza-hooks to v0.7.0 (#1292)
+- *(deps)* Update pre-commit hook betterleaks/betterleaks to v1.6.0 (#1300)
+- *(deps)* Update gcr.io/oss-fuzz-base/base-builder-python docker digest to c9b2709 (#1299)
+
+### Maintenance
+- *(gh-aw)* Completely remove the gh-aw bundle (#1293)
+- Chore(deps)(deps): bump jebel-quant/rhiza in the github-actions group (#1295)
+- Chore(deps-dev)(deps-dev): bump the python-dependencies group with 2 updates (#1294)
+
 ## [0.19.5] - 2026-06-24
 
 ### New Features
@@ -23,6 +45,9 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - Chore(deps)(deps): bump the github-actions group with 2 updates (#1283)
 - Chore(deps-dev)(deps-dev): bump ruff in the python-dependencies group (#1284)
 - Chore(deps)(deps): bump actions/setup-python in the github-actions group (#1285)
+
+### Other Changes
+- Bump version 0.19.4 → 0.19.5
 
 ## [0.19.4] - 2026-06-22
 
