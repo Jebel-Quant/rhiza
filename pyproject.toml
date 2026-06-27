@@ -42,6 +42,7 @@ test = [
     "pyyaml>=6.0.1,<7.0",
     "defusedxml>=0.7,<1",
     "mutmut>=3.6,<3.7",
+    "packaging>=24,<26",
 ]
 docs = [
     "marimo>=0.18.0,<1.0",   # Reactive notebook runtime for book/ examples (v0.18+ for streaming, <1.0 for API stability)
@@ -73,6 +74,7 @@ pytest-html = "pytest_html"
 python-dotenv = "dotenv"
 defusedxml = "defusedxml"
 mutmut = "mutmut"
+packaging = "packaging"
 marimo = "marimo"
 numpy = "numpy"
 plotly = "plotly"
