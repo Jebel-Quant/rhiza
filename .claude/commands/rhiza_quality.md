@@ -15,15 +15,22 @@ downstream projects sync their dev infrastructure *from* this repo, so there is 
 Run each of the following, in order:
 
 1. `make fmt` — pre-commit hooks (ruff format/check, markdownlint, bandit, actionlint, jsonschema, uv-lock)
-2. `make typecheck` — static type checking with `ty` (being repointed from `src` to `.rhiza/utils`)
+2. `make typecheck` — static type checking with `ty` and `mypy --strict` over `.rhiza/utils`
 3. `make deptry` — unused/missing dependency check
-4. `make docs-coverage` — docstring coverage (being repointed from `src` to `.rhiza/utils`)
+4. `make docs-coverage` — docstring coverage (interrogate) over `.rhiza/utils`
 5. `make test` — full test suite (runs **without** a coverage gate here, since there is no `src/` to measure with `--cov`)
 6. `make security` — pip-audit + bandit scans
 7. `make rhiza-test` — rhiza's own suite under `.rhiza/tests/` (the templates, Makefile-target, sync, and `.rhiza/utils/` tests that travel downstream), distinct from the root `tests/` suite collected by `make test`
 
 Guidelines:
 
+- Run each gate as a single, bare `make <target>` command — one Bash call per
+  gate. Do **not** pipe (`| tee`, `| tail`), redirect (`2>&1 >`), chain
+  (`make fmt && make typecheck`), or prefix with `cd`. Bare `make <target>`
+  invocations match the allow-listed `Bash(make *)` rule and run without a
+  permission prompt; compound or piped commands do not and will prompt on every
+  gate. Read the full output directly from each call rather than capturing it to
+  a file.
 - Run the gates and let earlier failures inform the later ones, but run all of
   them so the user sees the complete picture rather than stopping at the first
   failure.
@@ -33,12 +40,14 @@ Guidelines:
   to run, or specific files/paths to focus the checks on) and adjust accordingly.
 - End with a concise PASS/FAIL summary per gate.
 
-Expected skips are not failures. While `make typecheck` and `make docs-coverage`
-are being repointed from `src` to `.rhiza/utils`, they may still print a
-`[WARN] Source folder src not found, skipping…` and exit clean; once repointed
-they run against `.rhiza/utils`. `make test` runs without a coverage gate (there
-is no `src/` to measure with `--cov`). Report any of these as **SKIP (by design)**
-— do not score them as failures or gaps.
+Expected skips are not failures. `make typecheck` and `make docs-coverage` run
+against `.rhiza/utils` (the repo has no `src/`) and are expected to **pass** —
+`ty` + `mypy --strict` clean, and interrogate at 100% — so score them as PASS,
+not SKIP. `make test` runs without a coverage gate (there is no `src/` to measure
+with `--cov`) and prints a `[WARN] Source folder src not found, running tests
+without coverage` — that one is **SKIP (by design)** for coverage only, not a
+failure or gap. Likewise treat the lone `src`-absent docstring/sync test skip and
+the conditional workflow-hygiene skips as by-design.
 
 Test depth (replaces line-coverage scoring). Since there is no runtime source,
 there is no line-coverage percentage to hit. Judge the test suite by **behavioural
