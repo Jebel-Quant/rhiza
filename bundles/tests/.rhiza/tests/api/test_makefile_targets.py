@@ -226,6 +226,22 @@ class TestMakefile:
         out = proc.stdout
         assert '--fail-on="MIT;Apache"' in out
 
+    def test_semgrep_target_dry_run(self, logger):
+        """Semgrep target should invoke semgrep against SOURCE_FOLDER with the rhiza config."""
+        proc = run_make(logger, ["semgrep"])
+        out = proc.stdout
+        assert "no rule to make target" not in proc.stderr.lower()
+        assert "Running Semgrep" in out
+        assert "semgrep --config .rhiza/semgrep.yml" in out
+
+    def test_todos_target_dry_run(self, logger):
+        """Todos target should grep the codebase for TODO/FIXME/HACK markers."""
+        proc = run_make(logger, ["todos"])
+        out = proc.stdout
+        assert "no rule to make target" not in proc.stderr.lower()
+        assert "(TODO|FIXME|HACK):" in out
+        assert "grep -nHE" in out
+
     def test_serve_target_uses_uv_run_python_http_server(self, logger):
         """Serve target should use uv run instead of directly calling python3."""
         proc = run_make(logger, ["serve"])
