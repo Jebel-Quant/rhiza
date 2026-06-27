@@ -9,11 +9,10 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
+from test_utils import strip_ansi
 
-from tests.util import strip_ansi
 
-
-def _load_module(root: Path, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, yaml_text: str):
+def _load_module(root: Path, monkeypatch, tmp_path: Path, yaml_text: str):
     """Load explain_bundles.py against a temp project whose template-bundles.yml holds yaml_text."""
     module_path = root / ".rhiza" / "utils" / "explain_bundles.py"
     config_dir = tmp_path / ".rhiza"
