@@ -55,6 +55,23 @@ _ROOT_COMMANDS = _root_commands()
 class TestBundleClaudeCommandsSync:
     """Verify dogfooded .claude/commands/ files stay in sync with their bundle sources."""
 
+    def test_root_commands_dir_exists_and_is_nonempty(self) -> None:
+        """Root .claude/commands/ must exist and contain at least one command file.
+
+        Without this guard, the parametrized tests below produce zero cases when the
+        directory is absent or empty, making CI appear green while the sync check
+        never actually ran.
+        """
+        commands_dir = _ROOT / ".claude" / "commands"
+        assert commands_dir.is_dir(), (
+            ".claude/commands/ directory is missing — create it or remove this test "
+            "if the mother repo no longer dogfoods Claude Code commands"
+        )
+        assert _ROOT_COMMANDS, (
+            ".claude/commands/ exists but contains no command files — add at least one "
+            "command or remove this test if the mother repo no longer dogfoods commands"
+        )
+
     @pytest.mark.parametrize("root_file", _ROOT_COMMANDS, ids=[p.name for p in _ROOT_COMMANDS])
     def test_dogfooded_command_has_bundle_source(self, root_file: Path) -> None:
         """Every dogfooded command must be shipped by some bundle .claude/commands/."""
