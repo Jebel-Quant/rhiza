@@ -21,6 +21,8 @@ _TARGET_LINE = re.compile(r"^(?P<names>[^\t#:=][^:=]*?)\s*(?P<colon>::?)(?!=)")
 
 _SECTION_HEADER = re.compile(r"^##@\s*(?P<title>.+?)\s*$")
 
+_PHONY_LINE = re.compile(r"^\.PHONY:\s*(?P<names>.+)$")
+
 
 def _make_fragments(root) -> list[Path]:
     """Return all Makefile fragments auto-included from .rhiza/make.d/."""
@@ -53,6 +55,69 @@ def _single_colon_targets(path: Path) -> set[str]:
                 continue
             targets.add(name)
     return targets
+
+
+def _defined_targets(path: Path) -> set[str]:
+    """Parse every target name (single- and double-colon) defined in one Makefile file.
+
+    Unlike ``_single_colon_targets`` this keeps double-colon targets, because a
+    ``.PHONY`` name is satisfied by a rule of either colour.
+    """
+    targets: set[str] = set()
+    in_define = False
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if in_define:
+            in_define = stripped != "endef"
+            continue
+        if stripped.startswith("define "):
+            in_define = True
+            continue
+        match = _TARGET_LINE.match(line)
+        if not match:
+            continue
+        for name in match.group("names").split():
+            if name.startswith(".") or "$(" in name:
+                continue
+            targets.add(name)
+    return targets
+
+
+def _phony_names(path: Path) -> set[str]:
+    """Return every target name declared on a ``.PHONY:`` line in one Makefile file."""
+    names: set[str] = set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        match = _PHONY_LINE.match(line.strip())
+        if match:
+            names.update(name for name in match.group("names").split() if "$(" not in name)
+    return names
+
+
+def test_no_phony_target_without_recipe(root):
+    """Every ``.PHONY`` name in a fragment must correspond to a real target rule.
+
+    A ``.PHONY`` entry with no matching rule (e.g. a renamed or removed target
+    whose declaration was left behind) silently does nothing — ``make <name>``
+    prints "Nothing to be done". Fail loudly so dead declarations cannot
+    accumulate. Definitions are resolved across all fragments plus rhiza.mk and
+    the root Makefile, since a phony target may be defined outside the fragment
+    that declares it (e.g. a double-colon hook).
+    """
+    sources = [*_make_fragments(root), root / ".rhiza" / "rhiza.mk", root / "Makefile"]
+    defined: set[str] = set()
+    for source in sources:
+        defined |= _defined_targets(source)
+
+    dead: dict[str, str] = {}
+    for fragment in _make_fragments(root):
+        for name in _phony_names(fragment):
+            if name not in defined:
+                dead[name] = fragment.name
+
+    assert not dead, (
+        f".PHONY names declared with no corresponding target rule: {dead}. "
+        "Remove the stale declaration or define the target."
+    )
 
 
 def test_no_duplicate_single_colon_targets_across_fragments(root):
