@@ -90,4 +90,4 @@ def test_clusterfuzzlite_configuration_targets_python(root):
 
     assert project["language"] == "python"
     assert "import atheris" in fuzz_target
-    assert "suppression_audit.py" in fuzz_target
+    assert "suppression_parse" in fuzz_target
