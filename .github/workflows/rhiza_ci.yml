@@ -434,13 +434,14 @@ jobs:
 
   ci-gate:
     name: CI gate
-    # Roll-up gate: a single required status check that aggregates the test and
-    # typecheck matrices. Branch protection requires this context instead of
-    # every per-leg name, so the matrix can change without editing the ruleset.
+    # Roll-up gate: a single required status check that aggregates the test,
+    # typecheck, and lowest-deps jobs. Branch protection requires this context
+    # instead of every per-leg name, so the matrix can change without editing
+    # the ruleset.
     # CI budget: ≤5 min (result aggregation only). Last measured: 2026-06-27.
     timeout-minutes: 5
     if: always()
-    needs: [test, typecheck]
+    needs: [test, typecheck, lowest-deps]
     runs-on: ubuntu-latest
 
     steps:
@@ -449,12 +450,15 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Verify test and typecheck succeeded
+      - name: Verify test, typecheck, and lowest-deps succeeded
         run: |
-          echo "test result:      ${{ needs.test.result }}"
-          echo "typecheck result: ${{ needs.typecheck.result }}"
-          if [[ "${{ needs.test.result }}" != "success" || "${{ needs.typecheck.result }}" != "success" ]]; then
-            echo "::error::test and/or typecheck did not succeed; failing the CI gate."
+          echo "test result:       ${{ needs.test.result }}"
+          echo "typecheck result:  ${{ needs.typecheck.result }}"
+          echo "lowest-deps result: ${{ needs.lowest-deps.result }}"
+          if [[ "${{ needs.test.result }}" != "success" \
+             || "${{ needs.typecheck.result }}" != "success" \
+             || "${{ needs.lowest-deps.result }}" != "success" ]]; then
+            echo "::error::test, typecheck, and/or lowest-deps did not succeed; failing the CI gate."
             exit 1
           fi
-          echo "All required matrix jobs succeeded."
+          echo "All required CI jobs succeeded."
