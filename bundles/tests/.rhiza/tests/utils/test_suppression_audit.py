@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import runpy
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -225,6 +226,21 @@ def test_collect_suppressions_includes_rhiza_dir_in_framework_repo(root, tmp_pat
     assert len(py_files) == 2
 
 
+def test_collect_suppressions_skips_files_in_skip_dirs(root, tmp_path):
+    """Python files inside skip-listed directories (e.g. tests/) are excluded from the scan."""
+    module = _load_module(root)
+
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "app.py").write_text("a = 1  # noqa: E501\n", encoding="utf-8")
+    (tmp_path / "tests" / "test_app.py").write_text("b = 2  # nosec B101\n", encoding="utf-8")
+
+    py_files, suppressions, _total = module._collect_suppressions(tmp_path)
+
+    scanned = {Path(s.file).name for s in suppressions}
+    assert scanned == {"app.py"}
+    assert {p.name for p in py_files} == {"app.py"}
+
+
 def test_collect_suppressions_skips_rhiza_dir_in_consumer_repo(root, tmp_path):
     """In a consumer repo (template.yml present) the .rhiza/ tree is excluded."""
     module = _load_module(root)
@@ -343,3 +359,18 @@ def test_main_with_stale_gate_returns_one(root, monkeypatch, tmp_path, capsys):
 
     assert module.main(["--fail-stale-nosec-cve"]) == 1
     assert "Stale # nosec CVE suppressions detected:" in strip_ansi(capsys.readouterr().out)
+
+
+def test_module_entrypoint_exits_with_main_return_code(root, monkeypatch, tmp_path, capsys):
+    """Running the module as __main__ forwards main()'s return code to sys.exit."""
+    module_path = root / ".rhiza" / "utils" / "suppression_audit.py"
+
+    (tmp_path / "app.py").write_text("a = 1  # noqa: E501\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(sys, "argv", ["suppression_audit.py"])
+
+    with pytest.raises(SystemExit) as excinfo:
+        runpy.run_path(str(module_path), run_name="__main__")
+
+    assert excinfo.value.code == 0
+    assert "Suppression Audit Report" in strip_ansi(capsys.readouterr().out)
