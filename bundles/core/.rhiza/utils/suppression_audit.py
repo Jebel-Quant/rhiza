@@ -32,6 +32,8 @@ import subprocess  # noqa: E402  # nosec B404  # re-exported for callers/tests
 from suppression_parse import (  # noqa: E402
     SUPPRESSION_PATTERNS,
     Suppression,
+    _is_rhiza_repo,
+    _should_skip,
     collect_suppressions,
     compute_grade,
     count_non_empty_lines,
@@ -39,7 +41,9 @@ from suppression_parse import (  # noqa: E402
     scan_file,
 )
 from suppression_report import (  # noqa: E402
+    _BAR_WIDTH,
     _active_pip_audit_ids,
+    _bar,
     check_stale_nosec_cves,
     print_report,
 )
@@ -48,12 +52,15 @@ from suppression_report import (  # noqa: E402
 _nosec_cves = nosec_cves
 _collect_suppressions = collect_suppressions
 _print_report = print_report
-_check_stale_nosec_cves = check_stale_nosec_cves
 
 __all__ = [
     "SUPPRESSION_PATTERNS",
+    "_BAR_WIDTH",
     "Suppression",
     "_active_pip_audit_ids",
+    "_bar",
+    "_is_rhiza_repo",
+    "_should_skip",
     "collect_suppressions",
     "compute_grade",
     "count_non_empty_lines",
@@ -62,6 +69,27 @@ __all__ = [
     "scan_file",
     "subprocess",
 ]
+
+
+def _check_stale_nosec_cves(suppressions: list[Suppression], pip_audit_args: list[str]) -> int:
+    """Run the stale-CVE gate, resolving active CVEs via this module's reference.
+
+    Thin wrapper over :func:`suppression_report.check_stale_nosec_cves` that
+    injects this module's ``_active_pip_audit_ids``. Because the lookup happens
+    in this namespace at call time, tests can monkeypatch
+    ``_active_pip_audit_ids`` here and have it take effect.
+
+    Args:
+        suppressions: Suppression records to inspect for CVE-tagged ``# nosec``
+            comments.
+        pip_audit_args: Extra arguments forwarded to ``pip-audit``.
+
+    Returns:
+        A process exit code: ``0`` when no stale CVE suppressions are found,
+        ``1`` when stale suppressions are detected, or ``2`` when pip-audit
+        fails to run.
+    """
+    return check_stale_nosec_cves(suppressions, pip_audit_args, active_ids=_active_pip_audit_ids)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -103,7 +131,7 @@ def main(argv: list[str] | None = None) -> int:
     print_report(py_files, all_suppressions, total_lines)
 
     if args.fail_stale_nosec_cve:
-        return check_stale_nosec_cves(all_suppressions, pip_audit_args)
+        return _check_stale_nosec_cves(all_suppressions, pip_audit_args)
 
     return 0
 

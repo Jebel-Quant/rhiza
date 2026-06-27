@@ -18,6 +18,7 @@ import shutil
 import subprocess  # nosec B404
 import sys
 from collections import Counter
+from collections.abc import Callable
 from pathlib import Path
 
 from suppression_parse import Suppression, compute_grade, nosec_cves
@@ -157,26 +158,34 @@ def _active_pip_audit_ids(extra_args: list[str]) -> set[str]:
     return ids
 
 
-def check_stale_nosec_cves(suppressions: list[Suppression], pip_audit_args: list[str]) -> int:
+def check_stale_nosec_cves(
+    suppressions: list[Suppression],
+    pip_audit_args: list[str],
+    active_ids: Callable[[list[str]], set[str]] | None = None,
+) -> int:
     """Validate CVE-tagged # nosec suppressions against active pip-audit findings.
 
     Args:
         suppressions: Suppression records to inspect for CVE-tagged ``# nosec``
             comments.
         pip_audit_args: Extra arguments forwarded to ``pip-audit``.
+        active_ids: Resolver returning the set of CVE identifiers pip-audit
+            currently reports. Defaults to :func:`_active_pip_audit_ids`;
+            injectable so the orchestrator can supply a patchable reference.
 
     Returns:
         A process exit code: ``0`` when no stale CVE suppressions are found,
         ``1`` when stale suppressions are detected, or ``2`` when pip-audit
         fails to run.
     """
+    resolve_active_ids = active_ids if active_ids is not None else _active_pip_audit_ids
     suppressed_cves = nosec_cves(suppressions)
     if not suppressed_cves:
         print(f"{_GREEN}[OK]{_RESET} No CVE-tagged # nosec suppressions found.")
         return 0
 
     try:
-        active_cves = _active_pip_audit_ids(pip_audit_args)
+        active_cves = resolve_active_ids(pip_audit_args)
     except RuntimeError as exc:
         print(f"{_RED}[FAIL]{_RESET} {exc}")
         return 2
