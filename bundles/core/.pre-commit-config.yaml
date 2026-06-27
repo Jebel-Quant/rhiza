@@ -71,7 +71,7 @@ repos:
         args: ["--ini", ".bandit", "--exclude", ".venv,tests,.rhiza/tests,.git,.pytest_cache"]
 
   - repo: https://github.com/betterleaks/betterleaks
-    rev: v1.5.0
+    rev: v1.6.0
     hooks:
       - id: betterleaks
 
