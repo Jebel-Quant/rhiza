@@ -119,10 +119,21 @@ class TestWorkflowConcurrency:
 
     @pytest.mark.parametrize("workflow_file", _WORKFLOWS, ids=_IDS)
     def test_cancel_in_progress_policy(self, workflow_file: Path) -> None:
-        """Release/sync workflows queue; other job-running workflows cancel superseded runs."""
+        """Release/sync workflows queue; other job-running workflows cancel superseded runs.
+
+        Reusable-workflow callers carry no concurrency block of their own (the
+        called workflow owns the policy, and a duplicate caller-level group
+        deadlocks the run), so for them this asserts the block stays absent
+        rather than checking a cancel-in-progress value.
+        """
         workflow = _load(workflow_file)
         if _delegates_to_reusable(workflow):
-            pytest.skip("reusable-workflow caller declares no concurrency block")
+            assert workflow.get("concurrency") is None, (
+                f"{workflow_file.name}: reusable-workflow caller must not declare a "
+                f"top-level 'concurrency' block — it shares the called workflow's "
+                f"cancel-in-progress policy and a duplicate group deadlocks the run"
+            )
+            return
         concurrency = workflow.get("concurrency") or {}
         expected = workflow_file.name not in _QUEUE_WORKFLOWS
         assert concurrency.get("cancel-in-progress") is expected, (
