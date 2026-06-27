@@ -5,6 +5,34 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [0.19.7] - 2026-06-27
+
+### Bug Fixes
+- *(deptry)* Widen scan to .rhiza/utils and .rhiza/tests (#1306) (#1312)
+
+### Documentation
+- *(quality)* Refresh stale rhiza_quality prose and harden the skill (#1303)
+
+### Dependencies
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.11.25 (#1305)
+- *(deps)* Update gcr.io/oss-fuzz-base/base-builder-python docker digest to 3b846e1 (#1319)
+- *(deps)* Update dependency packaging to v26 (#1320)
+
+### Maintenance
+- *(rhiza-utils)* Enforce a coverage floor on .rhiza/utils in rhiza-test (#1304)
+- *(bundles)* Hygiene tests for platform-overlay bundle stubs (#1313)
+- *(workflow-hygiene)* Assert reusable-workflow callers carry no concurrency block (#1311)
+- *(rhiza-utils)* Cover last 3 uncovered .rhiza/utils lines (#1314)
+- *(rhiza-utils)* Split suppression_audit into parse vs. report modules (#1315)
+- *(suppression-audit)* Drop orchestrator's private re-export shim (#1318)
+- *(rhiza_ci)* Add CI gate roll-up job for branch protection (#1321)
+- *(rhiza_ci)* Gate lowest-deps in the CI roll-up (#1322)
+- *(docs,presentation)* Gate README bundle list and exercise Marp targets (#1323)
+- *(paper,docker,marimo)* Add dedicated make-target integration tests (#1324)
+- *(quality,releasing)* Smoke-test semgrep, todos, changelog, release-status (#1325)
+- *(test-mk)* Smoke-test benchmark, stress, hypothesis-test, mutation, test-pyproject, all (#1326)
+- *(test-mk)* Drop dead coverage-badge .PHONY entry, guard against recurrence (#1327)
+
 ## [0.19.6] - 2026-06-27
 
 ### New Features
@@ -26,6 +54,9 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - *(gh-aw)* Completely remove the gh-aw bundle (#1293)
 - Chore(deps)(deps): bump jebel-quant/rhiza in the github-actions group (#1295)
 - Chore(deps-dev)(deps-dev): bump the python-dependencies group with 2 updates (#1294)
+
+### Other Changes
+- Bump version 0.19.5 → 0.19.6
 
 ## [0.19.5] - 2026-06-24
 
