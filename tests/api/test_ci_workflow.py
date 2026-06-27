@@ -71,6 +71,7 @@ def test_ci_jobs_define_timeout_budgets(root):
         "validation": 5,
         "security": 10,
         "license": 10,
+        "ci-gate": 5,
     }
 
     for job_name, timeout in expected.items():
