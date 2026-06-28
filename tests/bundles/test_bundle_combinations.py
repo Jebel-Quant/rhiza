@@ -95,21 +95,20 @@ def test_pyproject_declares_uv_dependency_groups(root: Path) -> None:
     groups = pyproject.get("dependency-groups", {})
     assert {"lint", "test", "docs"} <= set(groups)
 
-    assert _group_has_dependency(groups["lint"], "ruff")
-    assert _group_has_dependency(groups["lint"], "interrogate")
-    assert _group_has_dependency(groups["lint"], "pre-commit")
-
+    # The test group declares the dependencies the test suite actually imports.
+    # Tooling-only deps (ruff, interrogate, pre-commit, mutmut, hypothesis) and
+    # mkdocs-material are installed from .rhiza/requirements/*.txt instead.
     assert _group_has_dependency(groups["test"], "pytest")
-    assert _group_has_dependency(groups["test"], "pytest-cov")
-    assert _group_has_dependency(groups["test"], "hypothesis")
-    assert _group_has_dependency(groups["test"], "pytest-timeout")
-    assert _group_has_dependency(groups["test"], "pytest-xdist")
+    assert _group_has_dependency(groups["test"], "python-dotenv")
+    assert _group_has_dependency(groups["test"], "pyyaml")
+    assert _group_has_dependency(groups["test"], "defusedxml")
+    assert _group_has_dependency(groups["test"], "packaging")
 
+    # The docs group declares the notebook imports so deptry can resolve them.
     assert _group_has_dependency(groups["docs"], "marimo")
     assert _group_has_dependency(groups["docs"], "numpy")
     assert _group_has_dependency(groups["docs"], "pandas")
     assert _group_has_dependency(groups["docs"], "plotly")
-    assert _group_has_dependency(groups["docs"], "mkdocs-material")
 
 
 def test_core_bundle_pyproject_declares_uv_dependency_groups(test_data_dir: Path) -> None:
