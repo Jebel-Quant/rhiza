@@ -27,29 +27,25 @@ dependencies = []
 
 [dependency-groups]
 lint = [
-    "ruff>=0.4,<1.0",
-    "interrogate>=1.7,<2.0",
-    "pre-commit>=3.7,<5.0",
+    #"ruff>=0.4,<1.0",
+    #"interrogate>=1.7,<2.0",
+    #"pre-commit>=3.7,<5.0",
 ]
 test = [
     "pytest>=9,<10",
-    "pytest-cov>=7,<8",
-    "hypothesis>=6,<7",
-    "pytest-timeout>=2,<3",
-    "pytest-xdist>=3,<4",
-    "pytest-html>=4,<5",
     "python-dotenv>=1,<2",
     "pyyaml>=6.0.1,<7.0",
     "defusedxml>=0.7,<1",
-    "mutmut>=3.6,<3.7",
     "packaging>=26,<27",
 ]
 docs = [
+    # Declared so deptry can resolve the notebook imports in docs/notebooks/.
+    # The notebook also pins these via its PEP 723 header; mkdocs-material is
+    # installed from .rhiza/requirements/docs.txt, not here.
     "marimo>=0.18.0,<1.0",   # Reactive notebook runtime for book/ examples (v0.18+ for streaming, <1.0 for API stability)
     "numpy>=2.4.0,<3.0",     # Numerical computing for notebook data analysis (v2.4+ includes 2.0 improvements, <3.0 avoids breaking changes)
     "plotly>=6.5.0,<7.0",    # Interactive visualization in notebooks (v6.5+ mature features, <7.0 for API stability)
     "pandas>=3,<3.1",        # Data manipulation for notebook examples (v3+ for modern APIs, <3.1 conservative after major release)
-    "mkdocs-material>=9,<10",
 ]
 
 [project.urls]
@@ -62,21 +58,11 @@ Issues = "https://github.com/jebel-quant/rhiza/issues"
 # package's metadata to resolve the import module name. Declaring the mappings
 # explicitly silences the "Assuming the corresponding module name ..." warnings.
 pyyaml = "yaml"
-ruff = "ruff"
-interrogate = "interrogate"
-pre-commit = "pre_commit"
 pytest = "pytest"
-pytest-cov = "pytest_cov"
-hypothesis = "hypothesis"
-pytest-timeout = "pytest_timeout"
-pytest-xdist = "xdist"
-pytest-html = "pytest_html"
 python-dotenv = "dotenv"
 defusedxml = "defusedxml"
-mutmut = "mutmut"
 packaging = "packaging"
 marimo = "marimo"
 numpy = "numpy"
 plotly = "plotly"
 pandas = "pandas"
-mkdocs-material = "mkdocs_material"
