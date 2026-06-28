@@ -9,7 +9,8 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-from test_utils import strip_ansi
+
+from tests.util import strip_ansi
 
 
 def _load_module(root: Path, monkeypatch, tmp_path: Path, yaml_text: str):
