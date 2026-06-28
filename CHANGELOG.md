@@ -5,6 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [0.19.8] - 2026-06-28
+
+### Maintenance
+- *(deptry)* Exclude .rhiza/utils & .rhiza/tests from deptry; declare deps via PEP 723 (#1328)
+
 ## [0.19.7] - 2026-06-27
 
 ### Bug Fixes
@@ -32,6 +37,9 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - *(quality,releasing)* Smoke-test semgrep, todos, changelog, release-status (#1325)
 - *(test-mk)* Smoke-test benchmark, stress, hypothesis-test, mutation, test-pyproject, all (#1326)
 - *(test-mk)* Drop dead coverage-badge .PHONY entry, guard against recurrence (#1327)
+
+### Other Changes
+- Bump version 0.19.6 → 0.19.7
 
 ## [0.19.6] - 2026-06-27
 
