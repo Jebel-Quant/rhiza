@@ -12,6 +12,7 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 
 ### Other Changes
 - Move explain_bundles to top-level utils; slim pyproject dependency groups (#1330)
+- Bump version 0.19.8 → 0.19.9
 
 ## [0.19.8] - 2026-06-28
 
