@@ -98,7 +98,7 @@ PIP_AUDIT_ARGS ?=
 # 2. Runs bandit to find common security issues in Python source folders that exist.
 security: install ## run security scans (pip-audit and bandit)
 	@printf "${BLUE}[INFO] Running pip-audit for dependency vulnerabilities...${RESET}\n"
-	@${UV_BIN} run python .rhiza/utils/pip_audit_policy.py ${PIP_AUDIT_ARGS}
+	@${UV_BIN} run .rhiza/utils/pip_audit_policy.py ${PIP_AUDIT_ARGS}
 	@bandit_paths=""; \
 	if [ -d "${SOURCE_FOLDER}" ]; then \
 	  bandit_paths="${SOURCE_FOLDER}"; \

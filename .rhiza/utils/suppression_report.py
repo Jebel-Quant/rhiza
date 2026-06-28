@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = []
+# ///
 """Reporting layer for the suppression audit: render output and run pip-audit.
 
 This module owns the *reporting* and *output* concerns of the suppression audit:

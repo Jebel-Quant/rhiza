@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = []
+# ///
 """Suppression audit: scan codebase for inline suppressions of security, coverage, docs, and linting.
 
 Detects and reports on inline suppression comments such as:

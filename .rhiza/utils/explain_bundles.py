@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["pyyaml"]
+# ///
 """Print all Rhiza bundles and profiles with descriptions and dependencies.
 
 Run as a script from a project root that contains ``.rhiza/template-bundles.yml``.
