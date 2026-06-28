@@ -1,3 +1,7 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = []
+# ///
 """Parsing layer for the suppression audit: scan source for inline suppressions.
 
 This module owns the *parsing* concerns of the suppression audit:

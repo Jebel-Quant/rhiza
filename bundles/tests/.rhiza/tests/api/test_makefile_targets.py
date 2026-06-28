@@ -259,8 +259,7 @@ class TestMakefile:
         """Suppression-audit target should invoke the Python audit script via uv run in dry-run output."""
         proc = run_make(logger, ["suppression-audit"])
         out = proc.stdout
-        assert "uv run python" in out
-        assert "suppression_audit.py" in out
+        assert "run .rhiza/utils/suppression_audit.py" in out
 
     def test_license_target_dry_run(self, logger):
         """License target should invoke pip-licenses via uv run --with in dry-run output."""

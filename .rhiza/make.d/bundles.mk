@@ -5,4 +5,4 @@
 
 ##@ Bundles
 explain-bundles: ## print all bundles and profiles with descriptions and dependencies
-	@uv run python .rhiza/utils/explain_bundles.py
+	@uv run .rhiza/utils/explain_bundles.py
