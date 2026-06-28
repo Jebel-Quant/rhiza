@@ -16,7 +16,7 @@ Example:
 
     or run the module directly from the repository root::
 
-        $ python .rhiza/utils/explain_bundles.py
+        $ python utils/explain_bundles.py
 """
 
 import sys
