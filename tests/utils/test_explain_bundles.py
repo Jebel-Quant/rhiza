@@ -9,12 +9,13 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-from test_utils import strip_ansi
+
+from tests.util import strip_ansi
 
 
 def _load_module(root: Path, monkeypatch, tmp_path: Path, yaml_text: str):
     """Load explain_bundles.py against a temp project whose template-bundles.yml holds yaml_text."""
-    module_path = root / ".rhiza" / "utils" / "explain_bundles.py"
+    module_path = root / "utils" / "explain_bundles.py"
     config_dir = tmp_path / ".rhiza"
     config_dir.mkdir()
     (config_dir / "template-bundles.yml").write_text(dedent(yaml_text), encoding="utf-8")
@@ -118,7 +119,7 @@ def test_import_prints_grouped_bundle_and_profile_sections(root, monkeypatch, tm
 
 def test_import_exits_with_install_hint_when_pyyaml_is_missing(root, monkeypatch, tmp_path):
     """A missing PyYAML dependency should surface the install guidance."""
-    module_path = root / ".rhiza" / "utils" / "explain_bundles.py"
+    module_path = root / "utils" / "explain_bundles.py"
     monkeypatch.chdir(tmp_path)
     original_import = builtins.__import__
 
