@@ -5,10 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [0.19.9] - 2026-06-28
+
+### Maintenance
+- *(explain-bundles)* Relocate explain_bundles.py + its test out of the synced bundles (#1329)
+
+### Other Changes
+- Move explain_bundles to top-level utils; slim pyproject dependency groups (#1330)
+
 ## [0.19.8] - 2026-06-28
 
 ### Maintenance
 - *(deptry)* Exclude .rhiza/utils & .rhiza/tests from deptry; declare deps via PEP 723 (#1328)
+
+### Other Changes
+- Bump version 0.19.7 → 0.19.8
 
 ## [0.19.7] - 2026-06-27
 
