@@ -199,6 +199,28 @@ class TestCiWorkflow:
 
         assert step_names.index("Run tests") < step_names.index("Verify clean working tree")
 
+    def test_ci_gate_tolerates_cancelled_results(self, ci_workflow: dict) -> None:
+        """CI gate must accept 'cancelled' alongside 'success' to survive transient runner cancellations.
+
+        When a matrix leg is cancelled mid-run (e.g. by the concurrency group or a
+        transient runner failure), GitHub sets the parent job result to 'cancelled'.
+        The gate must not block the PR in that case; it should only fail on 'failure'
+        or 'skipped' results.
+        """
+        gate_steps = ci_workflow.get("jobs", {}).get("ci-gate", {}).get("steps", [])
+        verify_step = next(
+            (s for s in gate_steps if s.get("name") == "Verify test, typecheck, and lowest-deps succeeded"),
+            None,
+        )
+        assert verify_step is not None, "CI gate must have a verification step"
+
+        run_script = verify_step.get("run", "")
+        # The gate must not simply check `!= "success"` — it must also allow `cancelled`.
+        assert "cancelled" in run_script, (
+            "CI gate must accept 'cancelled' results to tolerate transient runner cancellations; "
+            "see: https://github.com/Jebel-Quant/rhiza/actions/runs/28344335938/job/83965148182"
+        )
+
 
 def _get_workflow_triggers(workflow_doc: dict) -> dict:
     """Extract the 'on' triggers from a parsed workflow document.
