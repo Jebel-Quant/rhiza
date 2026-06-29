@@ -89,5 +89,6 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 
 ### CI/CD
 
-- **GitHub Actions** (primary): `.github/workflows/` — CI, release, docker, CodeQL, weekly, sync
-- **GitLab CI** (parallel): `.gitlab-ci.yml` — mirrors GitHub Actions coverage
+This repo runs on **GitHub Actions only**: `.github/workflows/` — CI, release, docker, CodeQL, weekly, sync. There is no root `.gitlab-ci.yml` here.
+
+GitLab support ships as a **template for downstream consumers**, not as active CI in this repo: the `gitlab` bundle (`bundles/gitlab/`) materializes a `.gitlab-ci.yml` plus `.gitlab/` pipelines into projects that adopt the `gitlab-project` profile, mirroring the GitHub Actions coverage there.
