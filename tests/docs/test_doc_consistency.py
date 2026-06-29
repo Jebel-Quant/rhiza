@@ -186,6 +186,31 @@ class TestBundleDocumentation:
         )
 
 
+_BUNDLE_TAXONOMY = _ROOT / "docs" / "reference" / "BUNDLE_TAXONOMY.md"
+
+
+class TestBundleTaxonomyDoc:
+    """Verify the bundle-taxonomy reference page tracks the authoritative bundle list."""
+
+    @pytest.mark.parametrize("bundle_name", _load_bundle_names())
+    def test_bundle_documented_in_taxonomy(self, bundle_name: str) -> None:
+        """Every bundle defined in template-bundles.yml must appear in BUNDLE_TAXONOMY.md."""
+        taxonomy = _BUNDLE_TAXONOMY.read_text(encoding="utf-8")
+        assert f"`{bundle_name}`" in taxonomy, (
+            f"bundle '{bundle_name}' is defined in .rhiza/template-bundles.yml but not documented in "
+            "docs/reference/BUNDLE_TAXONOMY.md"
+        )
+
+    @pytest.mark.parametrize("profile_name", _load_profile_names())
+    def test_profile_documented_in_taxonomy(self, profile_name: str) -> None:
+        """Every profile defined in template-bundles.yml must appear in BUNDLE_TAXONOMY.md."""
+        taxonomy = _BUNDLE_TAXONOMY.read_text(encoding="utf-8")
+        assert f"`{profile_name}`" in taxonomy, (
+            f"profile '{profile_name}' is defined in .rhiza/template-bundles.yml but not documented in "
+            "docs/reference/BUNDLE_TAXONOMY.md"
+        )
+
+
 class TestReadmeBundleList:
     """Verify the README's bundle/profile tables track the authoritative template-bundles.yml."""
 

@@ -76,6 +76,58 @@ pre-install::
 
 ## ℹ️ Reference
 
+### How the modular Makefile loads
+
+The root `Makefile` is intentionally thin — it only `include`s `.rhiza/rhiza.mk`,
+whose **last line** auto-loads every fragment in this directory:
+
+```makefile
+# In .rhiza/rhiza.mk (last line)
+-include .rhiza/make.d/*.mk
+```
+
+Key consequences:
+
+- **Alphabetical load order.** `make` expands the `*.mk` glob alphabetically, so
+  fragments are included in filename order (`book.mk`, `bootstrap.mk`,
+  `bundles.mk`, …). Don't rely on a later fragment overriding an earlier one — a
+  duplicate **single-colon** target across two fragments is a silent
+  last-definition-wins bug, and CI fails it (see
+  `tests/utils/test_make_structure.py`). Use a hook instead (below).
+- **Drop-in extension.** Adding a feature is just dropping a new `.mk` file here;
+  there is no include list to maintain.
+- **`local.mk`** (project root, not committed) is auto-loaded the same way for
+  developer-only shortcuts.
+
+### The hook contract (double-colon targets)
+
+Lifecycle hooks use GNU Make **double-colon** (`::`) rules. Unlike single-colon
+targets, a double-colon target **may be defined any number of times**, and make
+runs **every** definition in order. That is what lets a fragment, the root
+`Makefile`, and a downstream project all attach behaviour to the same lifecycle
+point without colliding:
+
+```makefile
+# .rhiza/rhiza.mk ships an empty default so the hook always exists:
+post-sync:: ; @:
+
+# Your root Makefile adds to it (this does NOT replace the default):
+post-sync::
+	@echo "Regenerating lockfile after sync..."
+	@uv lock
+```
+
+Both recipes run on `make sync`. Rules of the road:
+
+- Always use `::` for hooks — a single `:` would trigger the duplicate-target
+  gate and silently drop one definition.
+- Where to put what:
+  - **Project-specific hooks / custom targets** → your root `Makefile`, *above*
+    the `include .rhiza/rhiza.mk` line (committed, shared with the team).
+  - **Developer-local, throwaway shortcuts** → `local.mk` (not committed).
+  - **Never** edit files in `.rhiza/make.d/` directly — they are overwritten on
+    the next template sync.
+
 ### File Organization
 - **`.rhiza/make.d/`**: Template-managed files (do not edit)
 - **Root `Makefile`**: Project-specific customizations (variables, hooks, custom targets)
@@ -87,12 +139,15 @@ pre-install::
 |------|---------|
 | `book.mk` | Documentation book generation |
 | `bootstrap.mk` | Installation and environment setup |
+| `bundles.mk` | Bundle inspection (`make explain-bundles`) |
 | `custom-env.mk` | Example environment customizations |
 | `custom-task.mk` | Example custom tasks |
 | `docker.mk` | Docker build and run targets |
+| `doctor.mk` | Environment diagnostics (`make doctor`) |
 | `github.mk` | GitHub CLI integrations |
 | `lfs.mk` | Git LFS management |
 | `marimo.mk` | Marimo notebook support |
+| `paper.mk` | LaTeX paper compilation |
 | `presentation.mk` | Presentation building (Marp) |
 | `quality.mk` | Code quality and formatting |
 | `releasing.mk` | Release and versioning |
