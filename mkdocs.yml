@@ -17,6 +17,7 @@ nav:
     - Extending Rhiza: guides/EXTENDING_RHIZA.md
   - Reference:
     - Architecture: reference/ARCHITECTURE.md
+    - Bundle Taxonomy: reference/BUNDLE_TAXONOMY.md
     - Dependencies: reference/DEPENDENCIES.md
     - Tools Reference: reference/TOOLS_REFERENCE.md
     - Shell Scripts: reference/SHELL_SCRIPTS.md
@@ -30,6 +31,7 @@ nav:
     - Marimo: development/MARIMO.md
     - Presentation: development/PRESENTATION.md
   - Operations:
+    - CI Enforcement Model: operations/CI_ENFORCEMENT.md
     - Global Patch Workflow: ops/GLOBAL_PATCH.md
     - Changelog Guide: ops/CHANGELOG_GUIDE.md
     - Project Board: ops/PROJECT_BOARD.md
