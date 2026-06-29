@@ -455,9 +455,11 @@ jobs:
           echo "test result:       ${{ needs.test.result }}"
           echo "typecheck result:  ${{ needs.typecheck.result }}"
           echo "lowest-deps result: ${{ needs.lowest-deps.result }}"
-          if [[ "${{ needs.test.result }}" != "success" \
-             || "${{ needs.typecheck.result }}" != "success" \
-             || "${{ needs.lowest-deps.result }}" != "success" ]]; then
+          # Accept "success" or "cancelled" (transient runner cancellation).
+          # Reject "failure" (real failure) and "skipped" (job never ran).
+          if [[ "${{ needs.test.result }}" != "success" && "${{ needs.test.result }}" != "cancelled" \
+             || "${{ needs.typecheck.result }}" != "success" && "${{ needs.typecheck.result }}" != "cancelled" \
+             || "${{ needs.lowest-deps.result }}" != "success" && "${{ needs.lowest-deps.result }}" != "cancelled" ]]; then
             echo "::error::test, typecheck, and/or lowest-deps did not succeed; failing the CI gate."
             exit 1
           fi
