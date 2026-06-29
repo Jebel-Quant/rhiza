@@ -82,11 +82,12 @@ flag anything Rhiza-owned as upstream rather than listing it as a local action.
 Order them by leverage (biggest score gain for least effort first). This is a
 list of recommendations only — do not change code unless I explicitly ask.
 
-Then offer to file the findings as issues. After presenting the recommendations,
-ask me whether to turn the actionable findings into tracker issues — ask, do not
-assume, and create nothing without an explicit yes. If I decline, stop. If I
-accept, detect the hosting platform from the git remote
-(`git remote get-url origin`) and create one issue per accepted finding with the
+Then offer to file the findings as issues — using a menu, not a free-text prompt.
+Present the actionable findings as a multi-select menu (the AskUserQuestion tool
+with `multiSelect: true`), one option per finding labelled by its title, so I can
+pick exactly which ones to file — including none. Create nothing without an
+explicit selection. For each finding I select, detect the hosting platform from
+the git remote (`git remote get-url origin`) and create one issue with the
 matching CLI — GitHub → `gh issue create`, GitLab → `glab issue create` (skip and
 say so if the relevant CLI is unavailable or unauthenticated). Make each issue
 self-contained: title from the finding, and a body carrying the subcategory, the
