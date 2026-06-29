@@ -595,3 +595,72 @@ class TestCorePreCommitConfig:
             "'default_language_version.node' must be a non-empty version string to keep markdownlint-cli "
             "installable on odd-numbered current node releases (EBADENGINE guard)"
         )
+
+
+# ---------------------------------------------------------------------------
+# Devcontainer bundle content
+# ---------------------------------------------------------------------------
+
+
+class TestDevcontainerBundleContent:
+    """The devcontainer bundle must ship a coherent, runnable dev-container setup.
+
+    Goes beyond the JSONC non-empty check in TestBundleJsonValidity: it parses
+    devcontainer.json (stripping its // comments) and verifies the config actually
+    wires up the bootstrap script, a pinned base image, and the non-root user the
+    bundle promises — the behaviour a downstream repo relies on after syncing it.
+    """
+
+    @pytest.fixture
+    def devcontainer_dir(self, root: Path) -> Path:
+        """Return the .devcontainer directory inside the devcontainer bundle."""
+        d = root / "bundles" / "devcontainer" / ".devcontainer"
+        if not d.is_dir():
+            pytest.skip("devcontainer bundle not present")
+        return d
+
+    @pytest.fixture
+    def devcontainer_config(self, devcontainer_dir: Path) -> dict:
+        """Parse devcontainer.json, stripping its full-line // comments (JSONC)."""
+        raw = (devcontainer_dir / "devcontainer.json").read_text(encoding="utf-8")
+        stripped = "\n".join(line for line in raw.splitlines() if not line.lstrip().startswith("//"))
+        return json.loads(stripped)
+
+    def test_devcontainer_json_parses(self, devcontainer_config: dict) -> None:
+        """devcontainer.json must parse to a named JSON object once comments are stripped."""
+        assert isinstance(devcontainer_config, dict), "devcontainer.json must be a JSON object"
+        assert devcontainer_config.get("name"), "devcontainer.json must declare a 'name'"
+
+    def test_oncreate_points_to_existing_bootstrap(self, devcontainer_dir: Path, devcontainer_config: dict) -> None:
+        """OnCreateCommand must reference a bootstrap script that actually ships in the bundle."""
+        on_create = devcontainer_config.get("onCreateCommand")
+        assert on_create == ".devcontainer/bootstrap.sh", (
+            f"onCreateCommand should run the bundled bootstrap script, got {on_create!r}"
+        )
+        assert (devcontainer_dir / "bootstrap.sh").exists(), (
+            "bootstrap.sh referenced by onCreateCommand is missing from the bundle"
+        )
+
+    def test_bootstrap_is_a_shell_script(self, devcontainer_dir: Path) -> None:
+        """bootstrap.sh must be a real shell script: a shebang plus the dependency-install step."""
+        content = (devcontainer_dir / "bootstrap.sh").read_text(encoding="utf-8")
+        assert content.startswith("#!"), "bootstrap.sh must start with a shebang line"
+        assert "make install" in content, "bootstrap.sh should install dependencies via 'make install'"
+
+    def test_base_image_is_pinned_python(self, devcontainer_config: dict) -> None:
+        """The container image must be a tag-pinned devcontainers Python image."""
+        image = devcontainer_config.get("image", "")
+        assert "devcontainers/python" in image, f"expected a devcontainers Python base image, got {image!r}"
+        assert ":" in image.rsplit("/", 1)[-1], f"base image should pin a tag, got {image!r}"
+
+    def test_remote_user_is_vscode(self, devcontainer_config: dict) -> None:
+        """The container must run as the non-root 'vscode' user."""
+        assert devcontainer_config.get("remoteUser") == "vscode", "devcontainer should run as the 'vscode' user"
+
+    def test_overlay_ci_triggers_on_devcontainer_changes(self, root: Path) -> None:
+        """The github-devcontainer overlay must rebuild the image when .devcontainer/** changes."""
+        wf = root / "bundles" / "github-devcontainer" / ".github" / "workflows" / "rhiza_devcontainer.yml"
+        if not wf.exists():
+            pytest.skip("github-devcontainer overlay not present")
+        content = wf.read_text(encoding="utf-8")
+        assert ".devcontainer/**" in content, "devcontainer CI overlay should trigger on .devcontainer/** path changes"

@@ -70,6 +70,18 @@ Then analyse the repo and give marks on a scale of 1 to 10 for all relevant subc
 
 Scope. Score everything this repo controls: `bundles/` (the shipped templates), `.rhiza/` (the modular Makefile system in `make.d/*.mk`, `rhiza.mk`, the authoritative bundle list in `template-bundles.yml`, utilities in `utils/`, and the test suite in `tests/`), the root `tests/`, `pyproject.toml`, `pytest.ini`, `ruff.toml`, `.pre-commit-config.yaml`, `Makefile`, `README.md`, `docs/`, and the CI workflows in `.github/workflows/` and `.gitlab-ci.yml`. All of this is authored here — there is nothing "Rhiza-owned but external". If a file is machine-generated (e.g. README sections injected by the `make`-help hook), note that it is generated and score the source, not the artifact.
 
-Then, from the scorecard above, identify actionable issues to improve the score — one per subcategory scoring below 10 (skip any that are maxed). For each, give: a concrete title, the subcategory and current→target score it moves, the specific file(s)/lines or config to change, and a crisp acceptance criterion ("done when…"). Order them by leverage (biggest score gain for least effort first). This is a list of recommendations only — do not create GitHub issues or change code unless I explicitly ask.
+Then, from the scorecard above, identify actionable issues to improve the score — one per subcategory scoring below 10 (skip any that are maxed). For each, give: a concrete title, the subcategory and current→target score it moves, the specific file(s)/lines or config to change, and a crisp acceptance criterion ("done when…"). Order them by leverage (biggest score gain for least effort first). This is a list of recommendations only — do not change code unless I explicitly ask.
+
+Then offer to file the findings as issues — using a menu, not a free-text prompt.
+Present the actionable findings as a multi-select menu (the AskUserQuestion tool
+with `multiSelect: true`), one option per finding labelled by its title, so I can
+pick exactly which ones to file — including none. Create nothing without an
+explicit selection. For each finding I select, detect the hosting platform from
+the git remote (`git remote get-url origin`) and create one issue with the
+matching CLI — GitHub → `gh issue create`, GitLab → `glab issue create` (skip and
+say so if the relevant CLI is unavailable or unauthenticated). Make each issue
+self-contained: title from the finding, and a body carrying the subcategory, the
+current→target score, the specific file(s)/lines or config to change, and the
+"done when…" acceptance criterion. Report back the created issue URLs.
 
 If everything passes, say so plainly — but still produce the 1–10 subcategory marks. Do not fix anything unless I ask — this command only assesses.
