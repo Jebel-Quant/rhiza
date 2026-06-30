@@ -23,7 +23,7 @@ class TestReleasingTargets:
     """Smoke tests for the releasing.mk targets."""
 
     def test_changelog_target_dry_run(self, logger):
-        """Changelog target should generate CHANGELOG.md via git-cliff in dry-run output."""
+        """Changelog target should generate CHANGELOG.md via git-cliff in dry run output."""
         proc = run_make(logger, ["changelog"])
         out = proc.stdout
         assert "no rule to make target" not in proc.stderr.lower()
