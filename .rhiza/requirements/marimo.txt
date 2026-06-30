@@ -1,2 +1,1 @@
-# Marimo dependencies for rhiza
-marimo>=0.18.0
+../../bundles/marimo/.rhiza/requirements/marimo.txt
