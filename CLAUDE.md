@@ -58,7 +58,7 @@ The core abstraction is the **bundle** — a named group of configuration files.
 - `gitlab`: GitLab CI/CD pipeline configuration and core workflows
 - `docker`, `devcontainer`: containerisation
 - `marimo`: interactive notebooks
-- `book`: documentation with MkDocs + zensical
+- `book`: documentation with [MkDocs](https://www.mkdocs.org/) + [zensical](https://pypi.org/project/zensical/)
 - `presentation`: Marp slides
 - `paper`: LaTeX paper compilation
 - `lfs`, `legal`, `renovate`: miscellaneous tooling
