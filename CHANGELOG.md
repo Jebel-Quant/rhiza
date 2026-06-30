@@ -5,6 +5,38 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.0.1] - 2026-06-30
+
+### Bug Fixes
+- *(ci)* Tolerate cancelled matrix legs in CI gate (#1332)
+
+### Documentation
+- *(rhiza_quality)* Offer to file findings as tracker issues (#1337)
+- *(rhiza_quality)* Make the issue-filing prompt a multi-select menu (#1338)
+- Add bundle taxonomy + CI enforcement references, document Makefile loading (#1344)
+- Correct GitLab-CI claim in CLAUDE.md (#1345) (#1346)
+- Add hyperlinks for MkDocs and zensical in CLAUDE.md (#1349)
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1331)
+
+### Maintenance
+- Replace conftest sys.path hack + re-exports with pytest pythonpath (#1352)
+- Chore(deps)(deps): bump the github-actions group with 4 updates (#1356)
+
+### Other Changes
+- Test benchmark + devcontainer bundles; stop install dependency churn (#1336)
+- Potential fixes for 2 code quality findings (#1351)
+- Apply suggested fix to CLAUDE.md from Copilot Autofix (#1353)
+- Potential fixes for 3 code quality findings (#1354)
+- Fix for Commented-out code (#1348)
+- Potential fix for 1 code quality finding (#1355)
+
+## [1.0.0] - 2026-06-28
+
+### Other Changes
+- Bump version 0.19.9 → 1.0.0
+
 ## [0.19.9] - 2026-06-28
 
 ### Maintenance
