@@ -59,7 +59,7 @@ jobs:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.5
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.9
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -122,12 +122,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.5
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.9
         with:
           token: ${{ secrets.GH_PAT }}
 
       - name: Cache uv artifacts
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: ~/.cache/uv
           key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
@@ -182,7 +182,7 @@ jobs:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.5
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.9
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -226,7 +226,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.5
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.9
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -257,7 +257,7 @@ jobs:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.5
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.9
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -279,12 +279,12 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.5
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.9
         with:
           token: ${{ secrets.GH_PAT }}
 
       - name: Cache pre-commit environments
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
           path: ~/.cache/pre-commit
           key: ${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -314,7 +314,7 @@ jobs:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.5
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.9
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -346,7 +346,7 @@ jobs:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.5
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.9
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -375,7 +375,7 @@ jobs:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.5
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.9
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -410,7 +410,7 @@ jobs:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.5
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.9
         with:
           token: ${{ secrets.GH_PAT }}
 
