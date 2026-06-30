@@ -220,7 +220,7 @@ jobs:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.5
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.9
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -285,7 +285,7 @@ jobs:
         # The XML format is provided for compatibility but doesn't need separate attestation.
         id: attest-sbom
         if: hashFiles('pyproject.toml') != '' && github.event.repository.private == false
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
         with:
           subject-path: sbom.cdx.json
           sbom-path: sbom.cdx.json
@@ -312,7 +312,7 @@ jobs:
       - name: Generate SLSA provenance attestations
         id: provenance
         if: steps.buildable.outputs.buildable == 'true' && github.event.repository.private == false
-        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
+        uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
         with:
           subject-path: dist/*
 
