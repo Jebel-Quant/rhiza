@@ -11,11 +11,11 @@ Downstream projects adopt Rhiza by adding a `.rhiza/template.yml` that lists whi
 ## Commands
 
 ```bash
-make install      # Full setup: installs uv, downloads Python 3.13, creates .venv, installs deps
+make install      # Full setup: installs uv, downloads Python version from .python-version, creates .venv, installs deps
 make test         # Run all tests with coverage (90% minimum required)
 make fmt          # Run all pre-commit hooks (ruff format/check, markdownlint, bandit, etc.)
 make deptry       # Check for unused/missing dependencies
-make docs-coverage  # Check docstring coverage (100% required)
+make docs-coverage  # Check docstring coverage with interrogate (100% required)
 make typecheck    # Static type checking with pyright
 make benchmark    # Performance benchmarks
 make hypothesis-test  # Property-based tests only
@@ -82,7 +82,7 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 
 ### Code Quality Requirements
 
-- **Ruff** (`ruff.toml`): line length 120, Google-style docstrings, double quotes; see `ruff.toml` for the authoritative and current enabled rule set (rule-prefix reference: https://docs.astral.sh/ruff/rules/)
+- **Ruff** (`ruff.toml`): see `ruff.toml` for the authoritative and current enabled rule set (rule-prefix reference: https://docs.astral.sh/ruff/rules/)
 - **Docstring coverage**: 100% (interrogate) — all public functions, classes, and modules require docstrings
 - **Test coverage**: 90% minimum
 - **Pre-commit hooks**: `make fmt` runs ruff, markdownlint, bandit, actionlint, interrogate, jsonschema, and uv-lock validation
