@@ -1,5 +1,1 @@
-"""Stress tests for Rhiza framework.
-
-This module contains stress tests that verify system stability and performance
-under heavy load conditions.
-"""
+../../../bundles/tests/.rhiza/tests/stress/__init__.py

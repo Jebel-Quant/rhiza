@@ -1,2 +1,1 @@
-[bandit]
-skips = B101
+bundles/core/.bandit
