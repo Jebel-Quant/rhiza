@@ -16,7 +16,7 @@ make test         # Run all tests with coverage (90% minimum required)
 make fmt          # Run all pre-commit hooks (ruff format/check, markdownlint, bandit, etc.)
 make deptry       # Check for unused/missing dependencies
 make docs-coverage  # Check docstring coverage (100% required)
-make typecheck    # Static type checking with ty
+make typecheck    # Static type checking with ty and mypy
 make benchmark    # Performance benchmarks
 make hypothesis-test  # Property-based tests only
 make stress       # Load/concurrency tests
@@ -82,7 +82,7 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 
 ### Code Quality Requirements
 
-- **Ruff** (`ruff.toml`): line length 120, Google-style docstrings, double quotes, rules D/E/F/I/N/W/UP/B/C4/SIM/PT/RUF/S/TRY/ICN
+- **Ruff** (`ruff.toml`): line length 120, Google-style docstrings, double quotes, rules D/E/F/I/N/W/UP/B/C4/SIM/PT/RUF/S/TRY/ICN (rule-prefix reference: https://docs.astral.sh/ruff/rules/)
 - **Docstring coverage**: 100% (interrogate) — all public functions, classes, and modules require docstrings
 - **Test coverage**: 90% minimum
 - **Pre-commit hooks**: `make fmt` runs ruff, markdownlint, bandit, actionlint, interrogate, jsonschema, and uv-lock validation
