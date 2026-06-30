@@ -15,7 +15,7 @@ make install      # Full setup: installs uv, downloads Python 3.13, creates .ven
 make test         # Run all tests with coverage (90% minimum required)
 make fmt          # Run all pre-commit hooks (ruff format/check, markdownlint, bandit, etc.)
 make deptry       # Check for unused/missing dependencies
-make docs-coverage  # Check docstring coverage (100% required)
+make docs-coverage  # Check docstring coverage with interrogate (100% required)
 make typecheck    # Static type checking with pyright
 make benchmark    # Performance benchmarks
 make hypothesis-test  # Property-based tests only
