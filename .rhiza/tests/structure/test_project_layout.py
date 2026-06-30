@@ -32,9 +32,7 @@ class TestRootFixture:
         if not any((root / ci_dir).exists() for ci_dir in ci_dirs):
             pytest.fail(f"At least one CI directory from {ci_dirs} must exist")
 
-        # for dirname in optional_dirs:
-        #     if not (root / dirname).exists():
-        #         pytest.skip(f"Optional directory {dirname} not present in this project")
+        # Optional directories are not enforced in this shared layout test.
 
     def test_root_contains_expected_files(self, root):
         """Root should contain all expected configuration files."""
