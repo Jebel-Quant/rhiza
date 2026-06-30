@@ -11,7 +11,7 @@ Downstream projects adopt Rhiza by adding a `.rhiza/template.yml` that lists whi
 ## Commands
 
 ```bash
-make install      # Full setup: installs uv, downloads Python 3.13, creates .venv, installs deps
+make install      # Full setup: installs uv, downloads Python version from .python-version, creates .venv, installs deps
 make test         # Run all tests with coverage (90% minimum required)
 make fmt          # Run all pre-commit hooks (ruff format/check, markdownlint, bandit, etc.)
 make deptry       # Check for unused/missing dependencies
