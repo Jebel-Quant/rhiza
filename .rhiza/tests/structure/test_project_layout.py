@@ -50,6 +50,6 @@ class TestRootFixture:
         for filename in required_files:
             assert (root / filename).exists(), f"Required file {filename} not found"
 
-        for filename in optional_files:
-            if not (root / filename).exists():
-                pytest.skip(f"Optional file {filename} not present in this project")
+        missing_optional_files = [filename for filename in optional_files if not (root / filename).exists()]
+        if missing_optional_files:
+            pytest.skip("Optional files not present in this project: " + ", ".join(missing_optional_files))
