@@ -146,6 +146,34 @@ class TestSourceFolderVariable:
         )
 
 
+class TestTypecheckerVariable:
+    """TYPECHECKER selects which type checker(s) 'make typecheck' runs (default: both)."""
+
+    def test_default_runs_both_checkers(self, logger) -> None:
+        """With no override, typecheck must run both ty and mypy."""
+        proc = run_make(logger, ["typecheck"])
+        assert 'case "both" in' in proc.stdout
+        assert "run ty check" in proc.stdout
+        assert "run mypy --strict" in proc.stdout
+
+    def test_ty_only_selects_ty_branch(self, logger) -> None:
+        """TYPECHECKER=ty must select the ty-only case branch."""
+        proc = run_make(logger, ["typecheck", "TYPECHECKER=ty"])
+        assert 'case "ty" in' in proc.stdout
+
+    def test_mypy_only_selects_mypy_branch(self, logger) -> None:
+        """TYPECHECKER=mypy must select the mypy-only case branch."""
+        proc = run_make(logger, ["typecheck", "TYPECHECKER=mypy"])
+        assert 'case "mypy" in' in proc.stdout
+
+    def test_unrecognised_value_is_rejected(self, logger) -> None:
+        """The recipe must define an explicit error branch for unrecognised TYPECHECKER values."""
+        proc = run_make(logger, ["typecheck", "TYPECHECKER=pyright"])
+        assert 'case "pyright" in' in proc.stdout
+        assert "Invalid TYPECHECKER='pyright'" in proc.stdout
+        assert "exit 1" in proc.stdout
+
+
 class TestUvNoModifyPath:
     """UV_NO_MODIFY_PATH must always be exported to 1 to avoid uv touching PATH."""
 
