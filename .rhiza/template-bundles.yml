@@ -67,6 +67,14 @@ bundles:
     requires: []
 
   # ============================================================================
+  # VSCODE - VS Code recommended extensions and workspace settings
+  # ============================================================================
+  vscode:
+    description: "VS Code recommended extensions and workspace settings for local (non-container) editing"
+    standalone: true
+    requires: []
+
+  # ============================================================================
   # DEVCONTAINER - VS Code DevContainer configuration
   # ============================================================================
   devcontainer:

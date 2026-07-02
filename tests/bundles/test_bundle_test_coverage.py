@@ -56,6 +56,9 @@ _EXEMPT: dict[str, str] = {
     "or workflows. Content is guarded by the bundle content-validity tests.",
     "renovate": "Static renovate.json config; validated by the 'Validate Renovate "
     "Config' pre-commit hook and the bundle content-validity tests, no behaviour to drive.",
+    "vscode": "Static .vscode/extensions.json and settings.json; no targets or "
+    "workflows. Covered by TestVscodeBundleSync in test_bundle_combinations.py "
+    "(a generic test module) and the bundle content-validity tests.",
 }
 
 

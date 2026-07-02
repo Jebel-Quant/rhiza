@@ -36,6 +36,7 @@ the source of truth for the exact set. See
 | `paper` | LaTeX paper compilation targets (`make paper`). |
 | `docker` | Docker containerization support. |
 | `devcontainer` | VS Code Dev Container for reproducible environments. |
+| `vscode` | Recommended VS Code extensions and workspace settings for local (non-container) editing. |
 | `lfs` | Git LFS installation and management. |
 | `github` | GitHub repository configuration (actions, dependabot, templates, rulesets, core workflows). |
 | `gitlab` | GitLab CI/CD pipeline configuration and core workflows. |

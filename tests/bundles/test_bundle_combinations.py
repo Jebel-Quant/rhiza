@@ -7,6 +7,7 @@ files the user would expect.
 
 from __future__ import annotations
 
+import json
 import re
 import tomllib
 from pathlib import Path
@@ -320,6 +321,41 @@ class TestDevcontainerBundleSync:
             assert not devcontainer_wf, (
                 f"devcontainer bundle unexpectedly injected: {[f.name for f in devcontainer_wf]}"
             )
+
+
+class TestVscodeBundleSync:
+    """Syncing the vscode bundle provides recommended extensions and workspace settings."""
+
+    @pytest.fixture(autouse=True)
+    def synced(self, tmp_path: Path, root: Path) -> None:
+        """Sync the vscode bundle into a fresh directory."""
+        sync_bundles(root, ["vscode"], tmp_path)
+        self.project = tmp_path
+
+    def test_extensions_json_exists(self) -> None:
+        """.vscode/extensions.json must be present after syncing the vscode bundle."""
+        assert (self.project / ".vscode" / "extensions.json").is_file()
+
+    def test_extensions_json_has_recommendations(self) -> None:
+        """.vscode/extensions.json must declare a non-empty recommendations list."""
+        data = json.loads((self.project / ".vscode" / "extensions.json").read_text())
+        assert isinstance(data.get("recommendations"), list)
+        assert data["recommendations"], "recommendations list must not be empty"
+
+    def test_settings_json_exists(self) -> None:
+        """.vscode/settings.json must be present after syncing the vscode bundle."""
+        assert (self.project / ".vscode" / "settings.json").is_file()
+
+    def test_settings_json_is_valid(self) -> None:
+        """.vscode/settings.json must parse as valid JSON."""
+        data = json.loads((self.project / ".vscode" / "settings.json").read_text())
+        assert isinstance(data, dict)
+
+    def test_no_github_workflows_from_vscode_bundle(self) -> None:
+        """The plain vscode bundle must not inject any GitHub workflows."""
+        workflows = self.project / ".github" / "workflows"
+        if workflows.exists():
+            assert not list(workflows.glob("*.yml")), "vscode bundle unexpectedly injected workflow files"
 
 
 class TestDevcontainerWithGithubOverlaySync:
