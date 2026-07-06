@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.0.2] - 2026-07-06
+
+### Bug Fixes
+- *(tests)* Reword dry-run docstring in test_releasing_targets (#1358)
+- *(release)* Retry grayskull while PyPI metadata propagates (#1363)
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1364)
+- *(deps)* Update pre-commit hook betterleaks/betterleaks to v1.6.1 (#1367)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.11.26 (#1366)
+- *(deps)* Update gcr.io/oss-fuzz-base/base-builder-python docker digest to 6768b69 (#1365)
+- *(deps)* Update pre-commit hook python-jsonschema/check-jsonschema to v0.37.4 (#1368)
+
+### Other Changes
+- Add TYPECHECKER option to run ty or mypy instead of both (#1360)
+- Add vscode bundle for recommended extensions and editor settings (#1362)
+
 ## [1.0.1] - 2026-06-30
 
 ### Bug Fixes
@@ -31,6 +48,7 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - Potential fixes for 3 code quality findings (#1354)
 - Fix for Commented-out code (#1348)
 - Potential fix for 1 code quality finding (#1355)
+- Bump version 1.0.0 → 1.0.1
 
 ## [1.0.0] - 2026-06-28
 
