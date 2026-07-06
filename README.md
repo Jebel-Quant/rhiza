@@ -232,6 +232,7 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 | `benchmarks` | Performance benchmarking with pytest-benchmark and reporting | `tests` |
 | `docker` | Docker containerization support | — |
 | `devcontainer` | VS Code DevContainer configuration | — |
+| `vscode` | VS Code recommended extensions and workspace settings for local editing | — |
 | `presentation` | Presentation building using Marp | — |
 | `paper` | LaTeX paper compilation targets (`make paper`, `make paper-clean`) | — |
 | `lfs` | Git LFS (Large File Storage) support | — |

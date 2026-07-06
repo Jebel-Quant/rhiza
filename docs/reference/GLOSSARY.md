@@ -49,6 +49,7 @@ flowchart LR
         renovate["renovate"]
         legal["legal"]
         devcontainer["devcontainer"]
+        vscode["vscode"]
         docker["docker"]
         lfs["lfs"]
         presentation["presentation"]
