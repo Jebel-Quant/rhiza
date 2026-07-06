@@ -232,7 +232,8 @@ jobs:
 
       - name: Run ty and mypy type checkers (make typecheck)
         # Runs `uv run ty check src/` and `uv run mypy --strict src/`
-        # as defined in .rhiza/make.d/test.mk.
+        # as defined in .rhiza/make.d/test.mk. Set TYPECHECKER=ty or
+        # TYPECHECKER=mypy to run only one of the two checkers.
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: make typecheck
