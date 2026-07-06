@@ -699,6 +699,7 @@ Common environment variables used by Rhiza:
 | `UV_BIN` | Path to uv binary | Auto-detected or `./bin/uv` |
 | `VENV` | Virtual environment path | `.venv` |
 | `COVERAGE_FAIL_UNDER` | Minimum coverage threshold | 90 |
+| `TYPECHECKER` | Which type checker(s) `make typecheck` runs: `ty`, `mypy`, or `both` | `both` |
 | `DRY_RUN` | Preview mode for releases | (unset) |
 | `BUMP` | Version bump type | (prompt) |
 
