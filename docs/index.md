@@ -1,1 +1,1 @@
---8<-- "README.md"
+../bundles/book/docs/index.md
