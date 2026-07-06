@@ -325,6 +325,38 @@ jobs:
         run: |
           make docs-coverage
 
+  dogfood-symlinks:
+    name: Dogfood symlink drift guard
+    # Mother-repo-only: the bundles/ single-source-of-truth tree exists only here, so
+    # this guard fails a PR that adds a bundle file (or lets a copy reappear) without
+    # running `make sync-self`. Downstream projects have no bundles/ dir and never run it.
+    # CI budget: ≤5 min (single dry-run check). Last measured: 2026-07-06.
+    if: github.repository == 'jebel-quant/rhiza'
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.11.16"
+
+      - name: Configure git auth for private packages
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.9
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Check dogfood symlinks are up to date
+        run: make sync-self-check
+
   validation:
     # CI budget: ≤5 min (validation quality gate). Last measured: 2026-05-28.
     timeout-minutes: 5

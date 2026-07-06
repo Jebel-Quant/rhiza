@@ -65,6 +65,32 @@ _EXCLUDE = frozenset(
 _NO_FOLLOW_NAMES = frozenset({".gitignore", ".gitattributes", ".gitmodules", ".mailmap"})
 
 
+def is_dogfood_carveout(rel: str) -> bool:
+    """Report whether root dogfood path ``rel`` must stay a real file, not a symlink.
+
+    A carve-out is a root file that has a bundle counterpart but deliberately is *not*
+    linked into ``bundles/``. Three reasons, all documented in the dogfood section of
+    ``CLAUDE.md``:
+
+    * it is a declared mother-repo override in :data:`_EXCLUDE`;
+    * it lives under ``.github/`` (GitHub reads platform config blobs directly and does
+      not resolve symlinks) or ``.rhiza/utils/`` (the ``make rhiza-test`` coverage target,
+      whose realpath a symlink would move out of ``--cov`` scope); or
+    * git opens it with ``O_NOFOLLOW`` (see :data:`_NO_FOLLOW_NAMES`), so a symlink yields
+      an ELOOP warning and the file's rules are silently ignored.
+
+    Both :func:`relink` and the dogfood-integrity test consult this single predicate so
+    the linker and its guard can never disagree about what is allowed to be a real copy.
+
+    Args:
+        rel: A repository-root-relative path (POSIX form, as ``git ls-files`` reports it).
+
+    Returns:
+        True if ``rel`` must remain a real file; False if it is eligible for symlinking.
+    """
+    return rel in _EXCLUDE or rel.startswith((".github/", ".rhiza/utils/")) or Path(rel).name in _NO_FOLLOW_NAMES
+
+
 def _bundle_index(bundles_dir: Path) -> dict[str, list[Path]]:
     """Map each bundle-relative path to the bundle files that provide it.
 
@@ -103,6 +129,23 @@ def _tracked_files(root: Path) -> list[str]:
     return [line for line in result.stdout.splitlines() if line]
 
 
+def _link_is_current(root: Path, rel: str, source: Path) -> bool:
+    """Report whether ``rel`` is already the correct relative symlink to ``source``.
+
+    Args:
+        root: The repository root.
+        rel: The dogfood file path relative to ``root``.
+        source: The owning bundle file the symlink should target.
+
+    Returns:
+        True if ``rel`` is a symlink already pointing at ``source``, False otherwise
+        (missing symlink, real file, or symlink to a different target).
+    """
+    link = root / rel
+    target = os.path.relpath(source, start=link.parent)
+    return link.is_symlink() and os.readlink(link) == target
+
+
 def _link_one(root: Path, rel: str, source: Path) -> bool:
     """Point the root file ``rel`` at its bundle ``source`` via a relative symlink.
 
@@ -114,27 +157,34 @@ def _link_one(root: Path, rel: str, source: Path) -> bool:
     Returns:
         True if a new symlink was created, False if it was already correct.
     """
+    if _link_is_current(root, rel, source):
+        return False
     link = root / rel
     target = os.path.relpath(source, start=link.parent)
-    if link.is_symlink() and os.readlink(link) == target:
-        return False
     link.unlink()
     link.symlink_to(target)
     return True
 
 
-def relink(root: Path) -> int:
+def relink(root: Path, *, check: bool = False) -> int:
     """Convert every eligible root dogfood copy into a relative symlink.
 
     A root file is eligible when it is tracked by git, not in ``_EXCLUDE``, and
     byte-identical to exactly one bundle source. Ambiguous matches (identical to
     more than one bundle) are skipped with a warning rather than guessed.
 
+    In ``check`` mode nothing is written: the function only reports the copies that
+    *would* be linked and returns non-zero if any are pending. This is the CI drift
+    guard — it fails a build when someone adds a bundle file (or lets a copy reappear)
+    without running ``make sync-self``.
+
     Args:
         root: The repository root containing ``bundles/`` and the dogfood files.
+        check: When True, do not modify anything; only detect and report pending links.
 
     Returns:
-        Process exit code: ``0`` on success, ``1`` if any file was ambiguous.
+        Process exit code: ``0`` on success, ``1`` if any file was ambiguous or (in
+        ``check`` mode) if any eligible copy is not yet linked.
     """
     bundles_dir = root / "bundles"
     if not bundles_dir.is_dir():
@@ -144,17 +194,13 @@ def relink(root: Path) -> int:
     linked = 0
     unchanged = 0
     ambiguous: list[str] = []
+    pending: list[str] = []
 
     for rel in _tracked_files(root):
-        # Skip bundle sources themselves, declared overrides, git-special files that
-        # git opens with O_NOFOLLOW, the .github/ tree (GitHub platform features —
-        # Dependabot, Actions, PR templates, secret scanning, rulesets — read these
-        # blobs directly and do NOT resolve symlinks), and .rhiza/utils/ (the coverage
-        # target of `make rhiza-test`: coverage canonicalises a symlink to its realpath,
-        # so --cov=.rhiza/utils would match nothing). All must stay real files.
-        if rel in _EXCLUDE or rel.startswith(("bundles/", ".github/", ".rhiza/utils/")):
-            continue
-        if Path(rel).name in _NO_FOLLOW_NAMES:
+        # Skip bundle sources themselves and every carve-out (declared overrides,
+        # git O_NOFOLLOW files, the .github/ tree, and .rhiza/utils/) — all must stay
+        # real files. See is_dogfood_carveout for the reasoning behind each case.
+        if rel.startswith("bundles/") or is_dogfood_carveout(rel):
             continue
         owners = index.get(rel)
         if not owners:
@@ -166,19 +212,29 @@ def relink(root: Path) -> int:
         if len(identical) > 1:
             ambiguous.append(rel)
             continue
-        if _link_one(root, rel, identical[0]):
-            print(f"  {GREEN}linked{RESET}    {rel} {DIM}->{RESET} {identical[0].relative_to(root)}")
+        source = identical[0]
+        if check:
+            if not _link_is_current(root, rel, source):
+                print(f"  {YELLOW}would link{RESET} {rel} {DIM}->{RESET} {source.relative_to(root)}")
+                pending.append(rel)
+            else:
+                unchanged += 1
+        elif _link_one(root, rel, source):
+            print(f"  {GREEN}linked{RESET}    {rel} {DIM}->{RESET} {source.relative_to(root)}")
             linked += 1
         else:
             unchanged += 1
 
-    print(f"\n{BLUE}sync-self:{RESET} {linked} linked, {unchanged} already correct, {len(ambiguous)} ambiguous")
+    verb = "would link" if check else "linked"
+    count = len(pending) if check else linked
+    print(f"\n{BLUE}sync-self:{RESET} {count} {verb}, {unchanged} already correct, {len(ambiguous)} ambiguous")
     if ambiguous:
         for rel in ambiguous:
             print(f"  {YELLOW}ambiguous{RESET} {rel} matches multiple bundles — link it by hand")
-        return 1
-    return 0
+    if pending:
+        print(f"{YELLOW}Dogfood symlinks are out of date — run 'make sync-self' and commit the result.{RESET}")
+    return 1 if (ambiguous or pending) else 0
 
 
 if __name__ == "__main__":
-    sys.exit(relink(Path(__file__).resolve().parent.parent))
+    sys.exit(relink(Path(__file__).resolve().parent.parent, check="--check" in sys.argv[1:]))
