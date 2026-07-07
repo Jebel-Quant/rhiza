@@ -84,9 +84,7 @@ jobs:
 
       - name: Review the PR diff (Claude Code)
         if: steps.guard.outputs.enabled == 'true'
-        # TODO(pin): pin anthropics/claude-code-action to a commit SHA to match
-        # this repo's harden-runner SHA-pinning policy once a release SHA is chosen.
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@f87768c6d25f92ae6efa7175e223ef77d4cbf97f # v1.0.166
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
