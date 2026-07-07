@@ -12,7 +12,11 @@
 #          test) — the GitLab quality + CI pipelines already run those. It
 #          focuses only on what a linter cannot judge, scoped to the changed
 #          lines: architecture/design fit, unnecessary complexity, and
-#          test-coverage gaps. The review is written to the job log.
+#          test-coverage gaps.
+#
+#          Output: posts the review as a merge-request note (comment) when a
+#          token with API scope is available, and always echoes it to the job
+#          log as a fallback.
 #
 #          Advisory: `allow_failure: true` so it never blocks the pipeline.
 #
@@ -23,6 +27,12 @@
 #            2. set the CLAUDE_QUALITY_REVIEW_ENABLED CI/CD variable to 'true'
 #               AND provide the ANTHROPIC_API_KEY CI/CD variable (masked).
 #          If ANTHROPIC_API_KEY is absent the job exits early without spending.
+#
+#          MR-note posting needs an API token. It prefers the
+#          CLAUDE_REVIEW_GITLAB_TOKEN CI/CD variable (a project/group access
+#          token with `api` scope), falling back to CI_JOB_TOKEN where the
+#          instance permits it. If neither can post, the review stays in the
+#          job log.
 #
 # Trigger: merge request pipelines only (wired in .gitlab-ci.yml).
 
@@ -49,6 +59,8 @@ quality-review:claude:
     - npm install -g @anthropic-ai/claude-code
     - git fetch --depth=0 origin "${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
     - |
+      echo "### 🤖 Claude design review (advisory)" > review.md
+      echo "" >> review.md
       claude -p "Review this merge request's diff against its target branch (git diff origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}...HEAD).
 
       Do NOT run make/lint/typecheck/test/deptry/security gates — the GitLab CI pipeline already runs those deterministically. If you suspect a gate would fail, defer to CI and do not re-judge it.
@@ -60,4 +72,24 @@ quality-review:claude:
 
       Be concise. If there is nothing material to flag, say so in one line. This is a non-interactive run: do NOT ask any questions and do NOT create issues." \
         --max-turns 15 \
-        --allowedTools "Read,Grep,Glob,Bash(git diff *),Bash(git log *),Bash(git show *),Bash(git status)"
+        --allowedTools "Read,Grep,Glob,Bash(git diff *),Bash(git log *),Bash(git show *),Bash(git status)" \
+        | tee -a review.md
+    - |
+      # Post the review as an MR note when possible; otherwise it stays in the
+      # job log above. Prefer a dedicated API-scoped token; fall back to the
+      # job token where the instance allows it.
+      GL_TOKEN="${CLAUDE_REVIEW_GITLAB_TOKEN:-${CI_JOB_TOKEN:-}}"
+      if [ -n "${CI_MERGE_REQUEST_IID:-}" ] && [ -n "${GL_TOKEN}" ]; then
+        if curl --silent --show-error --fail \
+             --request POST \
+             --header "PRIVATE-TOKEN: ${GL_TOKEN}" \
+             --data-urlencode "body@review.md" \
+             --output /dev/null \
+             "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/notes"; then
+          echo "Posted the review as an MR note."
+        else
+          echo "WARNING: could not post the MR note (token may lack 'api' scope); the review is in the job log above."
+        fi
+      else
+        echo "No MR context or token available; the review is in the job log above."
+      fi

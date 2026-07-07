@@ -191,7 +191,9 @@ bundles:
       only what the deterministic gates cannot: architecture/design fit,
       unnecessary complexity, and test-coverage gaps. It does NOT re-run
       fmt/typecheck/deptry/security/validate/test; the CI + quality pipelines
-      already run those. The review is written to the job log and the job is
+      already run those. The review is posted as a merge-request note when a
+      token with `api` scope is available (CLAUDE_REVIEW_GITLAB_TOKEN, falling
+      back to CI_JOB_TOKEN), and always echoed to the job log. The job is
       allow_failure so it never blocks the MR.
       Cost & privacy: spends Anthropic API tokens per run and sends diff context
       to the Anthropic API. Stays dormant until BOTH the
