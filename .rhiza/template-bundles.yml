@@ -250,15 +250,17 @@ bundles:
   # GITHUB-QUALITY-REVIEW - Advisory agentic quality scorecard (Claude Code)
   # ============================================================================
   github-quality-review:
-    description: "GitHub Actions workflow stub for the advisory Claude quality scorecard (runs /rhiza_quality on PRs)"
+    description: "GitHub Actions workflow stub for an advisory Claude design review of PR diffs (opt-in)"
     standalone: true
     requires: [core, github]
     notes: |
-      Opt-in only, and deliberately NOT part of any profile. This workflow runs
-      the /rhiza_quality command via Claude Code on each pull request and posts
-      the result as an advisory PR comment — it supplements, and never replaces,
-      the deterministic make gates in rhiza_ci.
-      Cost & privacy: it spends Anthropic API tokens on every run and sends repo
+      Opt-in only, and deliberately NOT part of any profile. On each pull
+      request this runs an advisory Claude design review of the diff — covering
+      only what the deterministic gates cannot: architecture/design fit,
+      unnecessary complexity, and test-coverage gaps. It deliberately does NOT
+      re-run fmt/lint/typecheck/test/deptry/security; rhiza_ci already runs those
+      deterministically, so re-running them here would only waste tokens.
+      Cost & privacy: it spends Anthropic API tokens on every run and sends diff
       context to the Anthropic API. It stays dormant until BOTH the
       CLAUDE_QUALITY_REVIEW_ENABLED variable is 'true' AND the ANTHROPIC_API_KEY
       secret is set (an org-level secret is the cleanest distribution).

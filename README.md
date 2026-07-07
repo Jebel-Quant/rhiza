@@ -250,7 +250,7 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 | `github-docker` | GitHub Actions workflow for Docker image building and publishing | `github`, `docker`, `core` |
 | `github-devcontainer` | GitHub Actions workflow for DevContainer image publishing | `github`, `devcontainer`, `core` |
 | `github-paper` | GitHub Actions workflow for LaTeX paper compilation and PDF publishing | `github`, `paper`, `core` |
-| `github-quality-review` | Advisory Claude quality scorecard on PRs (opt-in; runs `/rhiza_quality`) | `github`, `core` |
+| `github-quality-review` | Advisory Claude design review of PR diffs — architecture, complexity, test gaps (opt-in) | `github`, `core` |
 
 **Platform bundles — GitLab**
 

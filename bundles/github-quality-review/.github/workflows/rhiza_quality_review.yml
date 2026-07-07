@@ -3,10 +3,11 @@
 #
 # Workflow: Quality Review (Claude)
 #
-# Purpose: Advisory, agentic code-quality scorecard for pull requests. Runs the
-#          synced `/rhiza_quality` command via Claude Code and posts the result
-#          as a PR comment. SUPPLEMENTS the deterministic make gates in the CI
-#          workflow — it is not a replacement and MUST NOT be a required check.
+# Purpose: Advisory, agentic *design review* of a pull request's diff, posted as
+#          a PR comment. It covers only what the deterministic gates cannot —
+#          architecture/design fit, unnecessary complexity, and test-coverage
+#          gaps. It deliberately does NOT re-run fmt/lint/typecheck/test/deptry/
+#          security; rhiza_ci already runs those. MUST NOT be a required check.
 #
 #          Thin stub: all logic, cost gating, and the enablement gate live in
 #          the reusable workflow in jebel-quant/rhiza; this file only wires up
@@ -16,7 +17,7 @@
 #   1. Set the repository (or org) variable CLAUDE_QUALITY_REVIEW_ENABLED=true.
 #   2. Provide the ANTHROPIC_API_KEY secret — cleanest as an organisation
 #      secret so every opted-in repo inherits it.
-#   NOTE: this workflow spends Anthropic API tokens on every PR and sends repo
+#   NOTE: this workflow spends Anthropic API tokens on every PR and sends diff
 #         context to the Anthropic API. Enable it only where that is acceptable.
 #
 # Trigger: On pull_request (opened / synchronize / reopened).
