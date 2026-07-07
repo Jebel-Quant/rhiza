@@ -68,6 +68,7 @@ flowchart LR
         github_tests["github-tests"]
         github_marimo["github-marimo"]
         github_book["github-book"]
+        github_quality_review["github-quality-review"]
     end
 
     subgraph GitLab["GitLab base and overlays"]
@@ -97,6 +98,8 @@ flowchart LR
     github_marimo --> github
     github_book --> book
     github_book --> github
+    github_quality_review --> core
+    github_quality_review --> github
     gitlab_tests --> tests
     gitlab_tests --> gitlab
     gitlab_marimo --> marimo

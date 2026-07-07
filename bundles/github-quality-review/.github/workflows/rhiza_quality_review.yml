@@ -1,0 +1,37 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Quality Review (Claude)
+#
+# Purpose: Advisory, agentic code-quality scorecard for pull requests. Runs the
+#          synced `/rhiza_quality` command via Claude Code and posts the result
+#          as a PR comment. SUPPLEMENTS the deterministic make gates in the CI
+#          workflow — it is not a replacement and MUST NOT be a required check.
+#
+#          Thin stub: all logic, cost gating, and the enablement gate live in
+#          the reusable workflow in jebel-quant/rhiza; this file only wires up
+#          the pull_request trigger and inherits secrets.
+#
+# Setup (required — the workflow no-ops until both are present):
+#   1. Set the repository (or org) variable CLAUDE_QUALITY_REVIEW_ENABLED=true.
+#   2. Provide the ANTHROPIC_API_KEY secret — cleanest as an organisation
+#      secret so every opted-in repo inherits it.
+#   NOTE: this workflow spends Anthropic API tokens on every PR and sends repo
+#         context to the Anthropic API. Enable it only where that is acceptable.
+#
+# Trigger: On pull_request (opened / synchronize / reopened).
+
+name: "(RHIZA) QUALITY REVIEW"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  quality-review:
+    uses: jebel-quant/rhiza/.github/workflows/rhiza_quality_review.yml@v1.0.2
+    secrets: inherit

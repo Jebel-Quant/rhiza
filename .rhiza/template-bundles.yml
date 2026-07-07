@@ -246,6 +246,24 @@ bundles:
     standalone: true
     requires: [book, github]
 
+  # ============================================================================
+  # GITHUB-QUALITY-REVIEW - Advisory agentic quality scorecard (Claude Code)
+  # ============================================================================
+  github-quality-review:
+    description: "GitHub Actions workflow stub for the advisory Claude quality scorecard (runs /rhiza_quality on PRs)"
+    standalone: true
+    requires: [core, github]
+    notes: |
+      Opt-in only, and deliberately NOT part of any profile. This workflow runs
+      the /rhiza_quality command via Claude Code on each pull request and posts
+      the result as an advisory PR comment — it supplements, and never replaces,
+      the deterministic make gates in rhiza_ci.
+      Cost & privacy: it spends Anthropic API tokens on every run and sends repo
+      context to the Anthropic API. It stays dormant until BOTH the
+      CLAUDE_QUALITY_REVIEW_ENABLED variable is 'true' AND the ANTHROPIC_API_KEY
+      secret is set (an org-level secret is the cleanest distribution).
+      Do not add it to a branch-protection required-checks set — it is advisory.
+
 # ==============================================================================
 # PROFILE DEFINITIONS
 #
