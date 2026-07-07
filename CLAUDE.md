@@ -100,6 +100,17 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 - **Test coverage**: 90% minimum
 - **Pre-commit hooks**: `make fmt` runs ruff, markdownlint, bandit, actionlint, interrogate, jsonschema, and uv-lock validation
 
+> **Coverage in this repo (mother-repo specifics).** Rhiza has no `src/`, so `make test`
+> prints `Source folder src not found, running tests without coverage` and the main
+> `tests/` suite runs *without* a Python coverage number — by design. That suite exercises
+> Make targets, YAML, and bundle invariants behaviourally, where there is no Python module
+> to cover. The one piece of shipped Python — `.rhiza/utils/*.py` (sourced from
+> `bundles/core/.rhiza/utils/`) — **is** coverage-enforced at 100% via `make rhiza-test`
+> (run under `make validate`), which points `--cov=.rhiza/utils` at that tree. So "no
+> coverage on `make test`" is expected here and does not mean the shipped code is unmeasured.
+> Downstream consumers that adopt the `tests` bundle *do* have a `src/` and get the full 90%
+> `make test` gate.
+
 ### CI/CD
 
 This repo runs on **GitHub Actions only**: `.github/workflows/` — CI, release, docker, CodeQL, weekly, sync. There is no root `.gitlab-ci.yml` here.

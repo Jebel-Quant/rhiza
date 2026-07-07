@@ -106,6 +106,31 @@ def _is_rhiza_repo(root: Path) -> bool:
     return not (root / ".rhiza" / "template.yml").exists()
 
 
+def _match_comment(path: Path, line_no: int, comment: str) -> Suppression | None:
+    """Return the :class:`Suppression` for a comment token, or None if it matches none.
+
+    The suppression patterns are tried in order and the first match wins, so each
+    comment line is counted at most once.
+
+    Args:
+        path: The file the comment came from (recorded on the record).
+        line_no: 1-based source line of the comment.
+        comment: The raw comment token text (including the leading ``#``).
+
+    Returns:
+        A :class:`Suppression` for the first matching pattern, or None when the
+        comment carries no recognised suppression.
+    """
+    for kind, pattern in SUPPRESSION_PATTERNS:
+        match = pattern.search(comment)
+        if not match:
+            continue
+        codes_raw = match.group(1) if match.lastindex and match.group(1) else ""
+        codes = [c.strip() for c in codes_raw.split(",") if c.strip()] if codes_raw else []
+        return Suppression(file=str(path), line_no=line_no, kind=kind, codes=codes, raw=comment.strip())
+    return None
+
+
 def scan_file(path: Path) -> list[Suppression]:
     """Scan a single Python file and return all suppressions found.
 
@@ -131,22 +156,9 @@ def scan_file(path: Path) -> list[Suppression]:
         for tok_type, tok_string, tok_start, _tok_end, _line in tokens:
             if tok_type != tokenize.COMMENT:
                 continue
-            line_no = tok_start[0]
-            for kind, pattern in SUPPRESSION_PATTERNS:
-                match = pattern.search(tok_string)
-                if match:
-                    codes_raw = match.group(1) if match.lastindex and match.group(1) else ""
-                    codes = [c.strip() for c in codes_raw.split(",") if c.strip()] if codes_raw else []
-                    suppressions.append(
-                        Suppression(
-                            file=str(path),
-                            line_no=line_no,
-                            kind=kind,
-                            codes=codes,
-                            raw=tok_string.strip(),
-                        )
-                    )
-                    break  # count each comment line once
+            suppression = _match_comment(path, tok_start[0], tok_string)
+            if suppression is not None:
+                suppressions.append(suppression)
     except (tokenize.TokenError, IndentationError):
         pass  # skip files with tokenization errors or bad indentation
 
