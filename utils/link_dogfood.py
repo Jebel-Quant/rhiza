@@ -166,6 +166,68 @@ def _link_one(root: Path, rel: str, source: Path) -> bool:
     return True
 
 
+def _classify_dogfood(root: Path, rel: str, index: dict[str, list[Path]]) -> tuple[str, Path | None]:
+    """Classify a tracked root path for dogfood linking.
+
+    This is the eligibility decision for a single file, factored out of
+    :func:`relink` so the loop there stays a straight-line consumer of the verdict.
+
+    Args:
+        root: The repository root.
+        rel: A repository-root-relative path (POSIX form, as ``git ls-files`` reports it).
+        index: The bundle index from :func:`_bundle_index`.
+
+    Returns:
+        A ``(kind, source)`` verdict:
+
+        * ``("skip", None)`` — not an eligible dogfood copy: a bundle source itself,
+          a carve-out, a path with no bundle owner, or one that diverges from every
+          owner (an undeclared mother-repo override that must stay a real file);
+        * ``("ambiguous", None)`` — byte-identical to more than one bundle source, so
+          the linker refuses to guess an owner;
+        * ``("link", source)`` — should be a relative symlink to the unique bundle
+          file ``source``.
+    """
+    # Skip bundle sources themselves and every carve-out (declared overrides,
+    # git O_NOFOLLOW files, the .github/ tree, and .rhiza/utils/) — all must stay
+    # real files. See is_dogfood_carveout for the reasoning behind each case.
+    if rel.startswith("bundles/") or is_dogfood_carveout(rel):
+        return ("skip", None)
+    owners = index.get(rel)
+    if not owners:
+        return ("skip", None)
+    root_bytes = (root / rel).read_bytes()
+    identical = [o for o in owners if o.read_bytes() == root_bytes]
+    if not identical:
+        return ("skip", None)  # diverges from every owner — an (undeclared) override; leave it real
+    if len(identical) > 1:
+        return ("ambiguous", None)
+    return ("link", identical[0])
+
+
+def _report(*, check: bool, linked: int, unchanged: int, ambiguous: list[str], pending: list[str]) -> int:
+    """Print the run summary and return the process exit code.
+
+    Args:
+        check: Whether the run was a non-writing drift check.
+        linked: Number of symlinks created (write mode).
+        unchanged: Number of files already correct.
+        ambiguous: Paths that matched more than one bundle source.
+        pending: Paths a check-mode run found not yet linked.
+
+    Returns:
+        ``0`` on success, ``1`` if anything was ambiguous or (in check mode) pending.
+    """
+    verb = "would link" if check else "linked"
+    count = len(pending) if check else linked
+    print(f"\n{BLUE}sync-self:{RESET} {count} {verb}, {unchanged} already correct, {len(ambiguous)} ambiguous")
+    for rel in ambiguous:
+        print(f"  {YELLOW}ambiguous{RESET} {rel} matches multiple bundles — link it by hand")
+    if pending:
+        print(f"{YELLOW}Dogfood symlinks are out of date — run 'make sync-self' and commit the result.{RESET}")
+    return 1 if (ambiguous or pending) else 0
+
+
 def relink(root: Path, *, check: bool = False) -> int:
     """Convert every eligible root dogfood copy into a relative symlink.
 
@@ -197,43 +259,25 @@ def relink(root: Path, *, check: bool = False) -> int:
     pending: list[str] = []
 
     for rel in _tracked_files(root):
-        # Skip bundle sources themselves and every carve-out (declared overrides,
-        # git O_NOFOLLOW files, the .github/ tree, and .rhiza/utils/) — all must stay
-        # real files. See is_dogfood_carveout for the reasoning behind each case.
-        if rel.startswith("bundles/") or is_dogfood_carveout(rel):
-            continue
-        owners = index.get(rel)
-        if not owners:
-            continue
-        root_bytes = (root / rel).read_bytes()
-        identical = [o for o in owners if o.read_bytes() == root_bytes]
-        if not identical:
-            continue  # diverges from every owner — an (undeclared) override; leave it real
-        if len(identical) > 1:
+        kind, source = _classify_dogfood(root, rel, index)
+        if kind == "ambiguous":
             ambiguous.append(rel)
             continue
-        source = identical[0]
+        if kind == "skip" or source is None:
+            continue
         if check:
-            if not _link_is_current(root, rel, source):
+            if _link_is_current(root, rel, source):
+                unchanged += 1
+            else:
                 print(f"  {YELLOW}would link{RESET} {rel} {DIM}->{RESET} {source.relative_to(root)}")
                 pending.append(rel)
-            else:
-                unchanged += 1
         elif _link_one(root, rel, source):
             print(f"  {GREEN}linked{RESET}    {rel} {DIM}->{RESET} {source.relative_to(root)}")
             linked += 1
         else:
             unchanged += 1
 
-    verb = "would link" if check else "linked"
-    count = len(pending) if check else linked
-    print(f"\n{BLUE}sync-self:{RESET} {count} {verb}, {unchanged} already correct, {len(ambiguous)} ambiguous")
-    if ambiguous:
-        for rel in ambiguous:
-            print(f"  {YELLOW}ambiguous{RESET} {rel} matches multiple bundles — link it by hand")
-    if pending:
-        print(f"{YELLOW}Dogfood symlinks are out of date — run 'make sync-self' and commit the result.{RESET}")
-    return 1 if (ambiguous or pending) else 0
+    return _report(check=check, linked=linked, unchanged=unchanged, ambiguous=ambiguous, pending=pending)
 
 
 if __name__ == "__main__":

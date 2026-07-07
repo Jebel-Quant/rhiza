@@ -40,6 +40,37 @@ def _vuln_ids(vuln: dict) -> str:  # type: ignore[type-arg]
     return ", ".join(ids)
 
 
+def _partition_vulns(deps: list[dict]) -> tuple[list[dict], list[dict]]:  # type: ignore[type-arg]
+    """Split vulnerable dependencies into ``(tooling, runtime)`` groups.
+
+    Args:
+        deps: The ``dependencies`` list from pip-audit's JSON output.
+
+    Returns:
+        A ``(tooling, runtime)`` pair. ``tooling`` holds entries whose name is in
+        :data:`_TOOLING` (CVEs warn only); ``runtime`` holds every other vulnerable
+        entry (CVEs fail the build). Entries without vulnerabilities are dropped.
+    """
+    vulnerable = [d for d in deps if d.get("vulns")]
+    tooling = [d for d in vulnerable if d["name"].lower() in _TOOLING]
+    runtime = [d for d in vulnerable if d["name"].lower() not in _TOOLING]
+    return tooling, runtime
+
+
+def _print_vulns(deps: list[dict], colour: str, label: str, suffix: str = "") -> None:  # type: ignore[type-arg]
+    """Print one coloured line per vulnerability across ``deps``.
+
+    Args:
+        deps: Dependency entries (each with ``name``, ``version``, and ``vulns``).
+        colour: The ANSI colour escape to wrap each line in.
+        label: The bracketed tag to lead each line with (e.g. ``"WARN"`` or ``"FAIL"``).
+        suffix: Optional trailing note appended before the colour reset.
+    """
+    for dep in deps:
+        for v in dep["vulns"]:
+            print(f"{colour}[{label}] {dep['name']}=={dep['version']}: {_vuln_ids(v)}{suffix}{_RESET}")
+
+
 def main() -> int:
     """Run pip-audit and apply the tiered vulnerability policy.
 
@@ -78,22 +109,14 @@ def main() -> int:
         sys.stderr.write(proc.stderr)
         return proc.returncode
 
-    deps = data.get("dependencies", [])
-    tooling_vulns = [d for d in deps if d.get("vulns") and d["name"].lower() in _TOOLING]
-    runtime_vulns = [d for d in deps if d.get("vulns") and d["name"].lower() not in _TOOLING]
+    tooling_vulns, runtime_vulns = _partition_vulns(data.get("dependencies", []))
 
-    for dep in tooling_vulns:
-        for v in dep["vulns"]:
-            print(
-                f"{_YELLOW}[WARN] {dep['name']}=={dep['version']}: {_vuln_ids(v)} (tooling — not failing build){_RESET}"
-            )
+    _print_vulns(tooling_vulns, _YELLOW, "WARN", suffix=" (tooling — not failing build)")
 
     if not runtime_vulns:
         return 0
 
-    for dep in runtime_vulns:
-        for v in dep["vulns"]:
-            print(f"{_RED}[FAIL] {dep['name']}=={dep['version']}: {_vuln_ids(v)}{_RESET}")
+    _print_vulns(runtime_vulns, _RED, "FAIL")
     return 1
 
 
