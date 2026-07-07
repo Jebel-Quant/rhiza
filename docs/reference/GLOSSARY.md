@@ -76,6 +76,7 @@ flowchart LR
         gitlab_tests["gitlab-tests"]
         gitlab_marimo["gitlab-marimo"]
         gitlab_book["gitlab-book"]
+        gitlab_quality_review["gitlab-quality-review"]
     end
 
     github --> core
@@ -106,6 +107,8 @@ flowchart LR
     gitlab_marimo --> gitlab
     gitlab_book --> book
     gitlab_book --> gitlab
+    gitlab_quality_review --> core
+    gitlab_quality_review --> gitlab
     presentation -.-> marimo
     book -.-> tests
     book -.-> marimo

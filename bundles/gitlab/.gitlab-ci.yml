@@ -55,6 +55,15 @@ include:
       - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       - if: $CI_COMMIT_BRANCH
 
+  # Quality Review - Advisory Claude design review of the MR diff (opt-in).
+  # `exists` keeps this a no-op unless the gitlab-quality-review bundle is
+  # synced; the job itself further gates on CLAUDE_QUALITY_REVIEW_ENABLED.
+  - local: '.gitlab/workflows/rhiza_quality_review.yml'
+    rules:
+      - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+        exists:
+          - '.gitlab/workflows/rhiza_quality_review.yml'
+
   # Marimo Notebooks - Run and publish notebook artefacts
   - local: '.gitlab/workflows/rhiza_marimo.yml'
     rules:

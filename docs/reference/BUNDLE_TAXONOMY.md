@@ -69,6 +69,7 @@ that matches your platform *and* the feature bundle it pairs with.
 | `gitlab-tests` | `tests` → GitLab CI |
 | `gitlab-book` | `book` → GitLab Pages publishing |
 | `gitlab-marimo` | `marimo` → GitLab CI notebook execution |
+| `gitlab-quality-review` | `core` → GitLab CI advisory Claude design review of MR diffs (opt-in) |
 
 ## Profiles (meta-presets)
 

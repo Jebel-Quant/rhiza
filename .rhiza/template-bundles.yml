@@ -178,6 +178,27 @@ bundles:
     requires: [book, gitlab]
 
   # ============================================================================
+  # GITLAB-QUALITY-REVIEW - Advisory agentic design review (Claude Code, GitLab)
+  # ============================================================================
+  gitlab-quality-review:
+    description: "GitLab CI job for an advisory Claude design review of MR diffs (opt-in)"
+    standalone: true
+    requires: [core, gitlab]
+    notes: |
+      GitLab counterpart of github-quality-review. Opt-in only, and deliberately
+      NOT part of any profile. On merge-request pipelines it runs an advisory
+      Claude design review of the diff via the headless claude CLI — covering
+      only what the deterministic gates cannot: architecture/design fit,
+      unnecessary complexity, and test-coverage gaps. It does NOT re-run
+      fmt/typecheck/deptry/security/validate/test; the CI + quality pipelines
+      already run those. The review is written to the job log and the job is
+      allow_failure so it never blocks the MR.
+      Cost & privacy: spends Anthropic API tokens per run and sends diff context
+      to the Anthropic API. Stays dormant until BOTH the
+      CLAUDE_QUALITY_REVIEW_ENABLED CI/CD variable is 'true' AND the
+      ANTHROPIC_API_KEY CI/CD variable is set (masked).
+
+  # ============================================================================
   # TESTS - Testing infrastructure with pytest, coverage, and type checking
   # ============================================================================
   tests:

@@ -57,6 +57,18 @@ def _gitlab_jobs_from_includes(project: Path) -> dict[str, dict]:
         local_path = include.get("local") if isinstance(include, dict) else None
         if not local_path:
             continue
+        # Honour GitLab `exists:` include rules: an include guarded by an
+        # `exists` clause is a no-op when the referenced file is absent (used by
+        # opt-in overlay bundles such as gitlab-quality-review). Skip it here so
+        # the profile-sync assertions match what GitLab would actually run.
+        skip = False
+        for rule in include.get("rules", []) if isinstance(include, dict) else []:
+            exists = rule.get("exists") if isinstance(rule, dict) else None
+            if exists and not any((project / candidate).exists() for candidate in exists):
+                skip = True
+                break
+        if skip:
+            continue
         workflow = _load_yaml(project / local_path)
         for name, job in workflow.items():
             if isinstance(job, dict) and not name.startswith("."):

@@ -131,6 +131,12 @@ _OVERLAYS: tuple[OverlaySpec, ...] = (
         feature="marimo",
         workflows=("rhiza_marimo.yml",),
     ),
+    OverlaySpec(
+        bundle="gitlab-quality-review",
+        platform="gitlab",
+        feature="core",
+        workflows=("rhiza_quality_review.yml",),
+    ),
 )
 
 _OVERLAY_IDS = tuple(spec.bundle for spec in _OVERLAYS)
