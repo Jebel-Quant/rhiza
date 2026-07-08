@@ -1,0 +1,116 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Quality Review (Claude, reusable)
+#
+# Purpose: Advisory, agentic *design review* of a pull request's diff, posted as
+#          a PR comment. It deliberately does NOT re-run the deterministic
+#          quality gates (fmt / lint / typecheck / deptry / docs-coverage /
+#          security / tests) — those are already run for free by rhiza_ci
+#          (and the GitLab quality pipeline). Re-running them here would just
+#          burn Anthropic tokens duplicating a signal CI already gives you.
+#
+#          Instead it focuses only on the judgment a linter cannot produce:
+#            - architecture / design fit of the change
+#            - unnecessary complexity and simpler alternatives
+#            - test-coverage gaps introduced by the diff
+#          If a deterministic gate is red, it defers to CI rather than re-judging.
+#
+#          Advisory: do NOT add it to a branch-protection required-checks set.
+#
+#          Cost & privacy: it spends Anthropic API tokens on every run and sends
+#          diff/context to the Anthropic API. It is therefore STRICTLY OPT-IN,
+#          gated twice:
+#            1. the repo must include the `github-quality-review` bundle
+#               (so the calling stub exists at all), AND
+#            2. the repo (or org) must set the `CLAUDE_QUALITY_REVIEW_ENABLED`
+#               variable to 'true' AND provide the `ANTHROPIC_API_KEY` secret.
+#          If either the variable or the secret is missing, the job no-ops.
+#
+#          Thin-stub consumers live in the `github-quality-review` bundle and
+#          delegate here via `uses:` on pull_request.
+#
+# Trigger: workflow_call (invoked by the downstream stub).
+
+name: "(RHIZA) QUALITY REVIEW"
+
+# Cancel superseded in-progress runs for the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_call:
+    secrets:
+      ANTHROPIC_API_KEY:
+        required: false
+
+permissions:
+  contents: read
+  pull-requests: write   # post the review as a PR comment
+
+jobs:
+  quality-review:
+    # Opt-in gate #2: the repo/org must explicitly enable the review.
+    if: ${{ vars.CLAUDE_QUALITY_REVIEW_ENABLED == 'true' }}
+    name: Claude design review (advisory)
+    # A diff review reads code; it does not build or run gates, so it is quick.
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          # Full history so the review can diff the PR against its base branch.
+          fetch-depth: 0
+
+      - name: Guard on ANTHROPIC_API_KEY presence
+        id: guard
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [[ -z "${ANTHROPIC_API_KEY}" ]]; then
+            echo "::notice::ANTHROPIC_API_KEY not configured; skipping the Claude design review."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Review the PR diff (Claude Code)
+        if: steps.guard.outputs.enabled == 'true'
+        uses: anthropics/claude-code-action@f87768c6d25f92ae6efa7175e223ef77d4cbf97f # v1.0.166
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # Non-interactive design review. Explicitly NOT the /rhiza_quality
+          # command — that re-runs the make gates, which rhiza_ci already covers.
+          prompt: |
+            Review this pull request's diff against its base branch
+            (`git diff origin/${{ github.base_ref }}...HEAD`).
+
+            Do NOT run make/lint/typecheck/test/deptry/security gates — the CI
+            workflow (rhiza_ci) already runs those deterministically. If you
+            suspect a gate would fail, defer to CI and do not re-judge it.
+
+            Focus ONLY on what those gates cannot assess, scoped to the changed
+            lines:
+              1. Architecture & design fit — does the change belong where it is;
+                 does it respect the repo's conventions in CLAUDE.md?
+              2. Unnecessary complexity — call out anything with a materially
+                 simpler equivalent, with a concrete suggestion.
+              3. Test-coverage gaps — new/changed behaviour left unexercised.
+
+            Be concise. If there is nothing material to flag, say so in one line.
+            Post your review as a single PR comment. This is a non-interactive
+            run: do NOT use AskUserQuestion and do NOT create issues.
+          # Read-only inspection plus git history for diffing. No `make`, no
+          # issue-filing tools.
+          claude_args: >-
+            --max-turns 15
+            --allowedTools "Read,Grep,Glob,Bash(git diff *),Bash(git log *),Bash(git show *),Bash(git status)"

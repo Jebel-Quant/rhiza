@@ -250,6 +250,7 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 | `github-docker` | GitHub Actions workflow for Docker image building and publishing | `github`, `docker`, `core` |
 | `github-devcontainer` | GitHub Actions workflow for DevContainer image publishing | `github`, `devcontainer`, `core` |
 | `github-paper` | GitHub Actions workflow for LaTeX paper compilation and PDF publishing | `github`, `paper`, `core` |
+| `github-quality-review` | Advisory Claude design review of PR diffs — architecture, complexity, test gaps (opt-in) | `github`, `core` |
 
 **Platform bundles — GitLab**
 
@@ -259,6 +260,7 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 | `gitlab-tests` | GitLab CI pipeline for test automation | `gitlab`, `tests`, `core` |
 | `gitlab-marimo` | GitLab CI pipeline for Marimo notebook execution | `gitlab`, `marimo`, `book`, `core` |
 | `gitlab-book` | GitLab CI pipeline for documentation publishing to GitLab Pages | `gitlab`, `book`, `core` |
+| `gitlab-quality-review` | Advisory Claude design review of MR diffs — architecture, complexity, test gaps (opt-in) | `gitlab`, `core` |
 
 For a complete reference of every file included in each bundle, see [`.rhiza/template-bundles.yml`](.rhiza/template-bundles.yml).
 

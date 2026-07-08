@@ -107,6 +107,13 @@ _OVERLAYS: tuple[OverlaySpec, ...] = (
         feature_workflows=("rhiza_paper.yml",),
     ),
     OverlaySpec(
+        bundle="github-quality-review",
+        platform="github",
+        feature="core",
+        workflows=("rhiza_quality_review.yml",),
+        feature_workflows=("rhiza_quality_review.yml",),
+    ),
+    OverlaySpec(
         bundle="gitlab-tests",
         platform="gitlab",
         feature="tests",
@@ -123,6 +130,12 @@ _OVERLAYS: tuple[OverlaySpec, ...] = (
         platform="gitlab",
         feature="marimo",
         workflows=("rhiza_marimo.yml",),
+    ),
+    OverlaySpec(
+        bundle="gitlab-quality-review",
+        platform="gitlab",
+        feature="core",
+        workflows=("rhiza_quality_review.yml",),
     ),
 )
 

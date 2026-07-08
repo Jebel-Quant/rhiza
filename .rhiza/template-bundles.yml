@@ -178,6 +178,29 @@ bundles:
     requires: [book, gitlab]
 
   # ============================================================================
+  # GITLAB-QUALITY-REVIEW - Advisory agentic design review (Claude Code, GitLab)
+  # ============================================================================
+  gitlab-quality-review:
+    description: "GitLab CI job for an advisory Claude design review of MR diffs (opt-in)"
+    standalone: true
+    requires: [core, gitlab]
+    notes: |
+      GitLab counterpart of github-quality-review. Opt-in only, and deliberately
+      NOT part of any profile. On merge-request pipelines it runs an advisory
+      Claude design review of the diff via the headless claude CLI — covering
+      only what the deterministic gates cannot: architecture/design fit,
+      unnecessary complexity, and test-coverage gaps. It does NOT re-run
+      fmt/typecheck/deptry/security/validate/test; the CI + quality pipelines
+      already run those. The review is posted as a merge-request note when a
+      token with `api` scope is available (CLAUDE_REVIEW_GITLAB_TOKEN, falling
+      back to CI_JOB_TOKEN), and always echoed to the job log. The job is
+      allow_failure so it never blocks the MR.
+      Cost & privacy: spends Anthropic API tokens per run and sends diff context
+      to the Anthropic API. Stays dormant until BOTH the
+      CLAUDE_QUALITY_REVIEW_ENABLED CI/CD variable is 'true' AND the
+      ANTHROPIC_API_KEY CI/CD variable is set (masked).
+
+  # ============================================================================
   # TESTS - Testing infrastructure with pytest, coverage, and type checking
   # ============================================================================
   tests:
@@ -245,6 +268,26 @@ bundles:
     description: "GitHub Actions workflow stub for book/docs publishing to GitHub Pages"
     standalone: true
     requires: [book, github]
+
+  # ============================================================================
+  # GITHUB-QUALITY-REVIEW - Advisory agentic quality scorecard (Claude Code)
+  # ============================================================================
+  github-quality-review:
+    description: "GitHub Actions workflow stub for an advisory Claude design review of PR diffs (opt-in)"
+    standalone: true
+    requires: [core, github]
+    notes: |
+      Opt-in only, and deliberately NOT part of any profile. On each pull
+      request this runs an advisory Claude design review of the diff — covering
+      only what the deterministic gates cannot: architecture/design fit,
+      unnecessary complexity, and test-coverage gaps. It deliberately does NOT
+      re-run fmt/lint/typecheck/test/deptry/security; rhiza_ci already runs those
+      deterministically, so re-running them here would only waste tokens.
+      Cost & privacy: it spends Anthropic API tokens on every run and sends diff
+      context to the Anthropic API. It stays dormant until BOTH the
+      CLAUDE_QUALITY_REVIEW_ENABLED variable is 'true' AND the ANTHROPIC_API_KEY
+      secret is set (an org-level secret is the cleanest distribution).
+      Do not add it to a branch-protection required-checks set — it is advisory.
 
 # ==============================================================================
 # PROFILE DEFINITIONS

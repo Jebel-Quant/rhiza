@@ -65,9 +65,11 @@ that matches your platform *and* the feature bundle it pairs with.
 | `github-docker` | `docker` → GitHub Actions lint/build/scan |
 | `github-devcontainer` | `devcontainer` → GitHub Actions image build validation |
 | `github-paper` | `paper` → GitHub Actions LaTeX build + PDF publishing |
+| `github-quality-review` | `core` → GitHub Actions advisory Claude design review of PR diffs (opt-in) |
 | `gitlab-tests` | `tests` → GitLab CI |
 | `gitlab-book` | `book` → GitLab Pages publishing |
 | `gitlab-marimo` | `marimo` → GitLab CI notebook execution |
+| `gitlab-quality-review` | `core` → GitLab CI advisory Claude design review of MR diffs (opt-in) |
 
 ## Profiles (meta-presets)
 
