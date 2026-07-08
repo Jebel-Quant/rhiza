@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.0.3] - 2026-07-08
+
+### Maintenance
+- Dogfood bundles via symlinks instead of byte-identical copies (#1357)
+- *(bundles)* Guard dogfood symlink invariant + CI drift check (#1371)
+- Eliminate C-ranked complexity blocks; document mother-repo coverage (#1372, #1373) (#1374)
+- Chore(deps)(deps): bump the github-actions group with 5 updates (#1375)
+
+### Other Changes
+- Add opt-in quality-review bundles: advisory Claude design review on PRs/MRs (GitHub + GitLab) (#1376)
+
 ## [1.0.2] - 2026-07-06
 
 ### Bug Fixes
@@ -21,6 +32,7 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 ### Other Changes
 - Add TYPECHECKER option to run ty or mypy instead of both (#1360)
 - Add vscode bundle for recommended extensions and editor settings (#1362)
+- Bump version 1.0.1 → 1.0.2
 
 ## [1.0.1] - 2026-06-30
 
