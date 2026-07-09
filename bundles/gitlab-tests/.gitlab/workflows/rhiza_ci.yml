@@ -26,8 +26,10 @@ ci:test:
   script:
     - echo "Testing with Python $PYTHON_VERSION"
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-    - uv venv --python ${PYTHON_VERSION}
-    - make -f .rhiza/rhiza.mk test
+    # `make test` bootstraps its own environment via the `install` target, which
+    # creates the venv with PYTHON_VERSION (a `?=` default the matrix env var
+    # overrides) and provisions test tooling on the fly — no explicit `uv venv`.
+    - make test
 
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -40,8 +42,7 @@ ci:docs-coverage:
   image: $UV_IMAGE
   script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-    - uv venv
-    - make -f .rhiza/rhiza.mk docs-coverage
+    - make docs-coverage
 
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -55,7 +56,6 @@ ci:typecheck:
   image: $UV_IMAGE
   script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-    - uv venv
     - make typecheck
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -105,7 +105,6 @@ ci:security:
   image: $UV_IMAGE
   script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-    - uv venv
     - make security
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -119,7 +118,6 @@ ci:license:
   image: $UV_IMAGE
   script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-    - uv venv
     - make license
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"

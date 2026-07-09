@@ -19,7 +19,6 @@ weekly:semgrep:
   image: $UV_IMAGE
   script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-    - uv venv
     - make semgrep
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
