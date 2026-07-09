@@ -123,12 +123,13 @@ class TestMakefile:
         assert_uvx_command_uses_version(out, tmp_path, "deptry src")
 
     def test_typecheck_target_dry_run(self, logger):
-        """Typecheck target should invoke ty and mypy via uv run."""
+        """Typecheck target should invoke ty and mypy via uv run, self-provisioned with --with."""
         proc = run_make(logger, ["typecheck"])
         out = proc.stdout
-        # Both type checkers are invoked
-        assert "uv run ty check" in out
-        assert "uv run mypy --strict" in out
+        # Both type checkers are invoked, each provisioned on the fly so a clean
+        # .venv (lockfile only, no pre-installed ty/mypy) still runs the gate.
+        assert "uv run --with ty ty check" in out
+        assert "uv run --with mypy mypy --strict" in out
 
     def test_test_target_dry_run(self, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
