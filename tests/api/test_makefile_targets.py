@@ -14,11 +14,13 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 from pathlib import Path
 
 import pytest
-from api.conftest import SPLIT_MAKEFILES
-from test_utils import run_make, setup_rhiza_git_repo, strip_ansi
+
+from tests.api.conftest import SPLIT_MAKEFILES
+from tests.util import run_make, setup_rhiza_git_repo, strip_ansi
 
 
 def assert_uvx_command_uses_version(output: str, tmp_path, command_fragment: str):
@@ -60,6 +62,10 @@ class TestMakefile:
         assert "Dev" in out
         assert "doctor" in out
 
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="uses POSIX '#!/usr/bin/env sh' fake-bin scripts on a ':'-separated PATH; unsupported on Windows",
+    )
     def test_doctor_fails_when_minimum_version_is_not_met(self, logger, tmp_path):
         """Doctor should exit non-zero when a prerequisite version is below the minimum."""
         fake_bin = tmp_path / "fake-bin"
@@ -307,13 +313,14 @@ class TestMakefileRootFixture:
     def test_makefile_contains_targets(self, root):
         """Makefile should contain expected targets (including split files)."""
         makefile = root / "Makefile"
-        content = makefile.read_text()
+        content = makefile.read_text(encoding="utf-8")
 
-        # Read split Makefiles as well
+        # Read split Makefiles as well (they contain non-ASCII glyphs, so decode as UTF-8
+        # explicitly — Windows' default cp1252 codec would choke on them).
         for split_file in SPLIT_MAKEFILES:
             split_path = root / split_file
             if split_path.exists():
-                content += "\n" + split_path.read_text()
+                content += "\n" + split_path.read_text(encoding="utf-8")
 
         expected_targets = ["install", "fmt", "test", "deptry", "help"]
         for target in expected_targets:
@@ -355,6 +362,10 @@ class TestMakefileRootFixture:
         assert "sync" in out
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="drives 'make bump' through shebang uv/uvx mocks via a POSIX shell; unsupported on Windows",
+)
 class TestMakeBump:
     """Tests for the 'make bump' target."""
 

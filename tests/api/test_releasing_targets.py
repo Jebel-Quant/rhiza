@@ -16,7 +16,7 @@ asserted by reading the source file rather than by dry-running it.
 
 from __future__ import annotations
 
-from test_utils import run_make, strip_ansi
+from tests.util import run_make, strip_ansi
 
 
 class TestReleasingTargets:

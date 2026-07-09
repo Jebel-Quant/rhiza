@@ -1,1 +1,0 @@
-../../../bundles/tests/.rhiza/tests/shell/test_scripts.sh

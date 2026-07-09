@@ -1,1 +1,0 @@
-../../../bundles/tests/.rhiza/tests/sync/test_docstrings.py

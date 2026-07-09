@@ -1,1 +1,0 @@
-../../../bundles/lfs/.rhiza/tests/integration/test_lfs.py

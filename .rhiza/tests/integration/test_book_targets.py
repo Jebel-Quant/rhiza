@@ -1,1 +1,0 @@
-../../../bundles/tests/.rhiza/tests/integration/test_book_targets.py

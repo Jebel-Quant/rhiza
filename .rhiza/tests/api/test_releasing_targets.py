@@ -1,1 +1,0 @@
-../../../bundles/tests/.rhiza/tests/api/test_releasing_targets.py

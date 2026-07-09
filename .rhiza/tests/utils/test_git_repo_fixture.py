@@ -1,1 +1,0 @@
-../../../bundles/tests/.rhiza/tests/utils/test_git_repo_fixture.py

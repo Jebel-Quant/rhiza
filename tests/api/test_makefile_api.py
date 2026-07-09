@@ -73,13 +73,18 @@ def setup_api_env(logger, root, tmp_path: Path):
     # Configure git user for commits if needed (some rhiza checks might need commits)
     subprocess.run([GIT, "config", "user.email", "you@example.com"], cwd=tmp_path, check=True, capture_output=True)  # nosec
     subprocess.run([GIT, "config", "user.name", "Rhiza Test"], cwd=tmp_path, check=True, capture_output=True)  # nosec
-    # Add origin remote to simulate being in the rhiza repo (triggers the skip logic in rhiza.mk)
-    subprocess.run(
-        [GIT, "remote", "add", "origin", "https://github.com/jebel-quant/rhiza.git"],
-        cwd=tmp_path,
-        check=True,
-        capture_output=True,
-    )  # nosec
+    # Add origin remote to simulate being in the rhiza repo (triggers the skip logic in rhiza.mk).
+    # Idempotent: the autouse setup_tmp_makefile (tests/api/conftest.py) may have already added it.
+    existing_remotes = subprocess.run(  # nosec
+        [GIT, "remote"], cwd=tmp_path, capture_output=True, text=True
+    )
+    if "origin" not in existing_remotes.stdout.split():
+        subprocess.run(
+            [GIT, "remote", "add", "origin", "https://github.com/jebel-quant/rhiza.git"],
+            cwd=tmp_path,
+            check=True,
+            capture_output=True,
+        )  # nosec
 
     # Move to tmp dir
     old_cwd = Path.cwd()
@@ -91,7 +96,7 @@ def setup_api_env(logger, root, tmp_path: Path):
 
 
 # Imported after the module-level fixture above (hence the E402 exemption).
-from test_utils import run_make  # noqa: E402
+from tests.util import run_make  # noqa: E402
 
 
 def test_api_delegation(logger, setup_api_env):

@@ -6,11 +6,21 @@ and emit the expected commands without actually executing them.
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 # setup_tmp_makefile (autouse) comes from the api/ conftest; run_make is a shared
 # helper imported directly from test_utils.
-from test_utils import run_make
+from tests.util import run_make
+
+# The gh helper targets are POSIX shell recipes driven through `make`; they don't
+# run under Windows' make/shell, so skip the module there (matches the repo's
+# other make/POSIX-shell tests, e.g. test_ci_workflow).
+pytestmark = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="exercises POSIX make + gh targets via a shell; unsupported on Windows",
+)
 
 # Every GitHub helper target defined in github.mk; all must appear in `make help`.
 _GH_TARGETS = (
