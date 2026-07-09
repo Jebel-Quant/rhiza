@@ -109,8 +109,9 @@ def test_pyproject_declares_uv_dependency_groups(root: Path) -> None:
     assert {"lint", "test", "docs"} <= set(groups)
 
     # The test group declares the dependencies the test suite actually imports.
-    # Tooling-only deps (ruff, interrogate, pre-commit, mutmut, hypothesis) and
-    # mkdocs-material are installed from .rhiza/requirements/*.txt instead.
+    # Tooling-only deps (ruff, interrogate, pre-commit, mutmut, hypothesis, pytest
+    # plugins, zensical/mkdocs-material) are provisioned on the fly by their make
+    # targets via `uv run --with` / `uvx`, not declared here.
     assert _group_has_dependency(groups["test"], "pytest")
     assert _group_has_dependency(groups["test"], "python-dotenv")
     assert _group_has_dependency(groups["test"], "pyyaml")

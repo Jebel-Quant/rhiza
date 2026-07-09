@@ -15,10 +15,10 @@ all: fmt deptry test docs-coverage security license typecheck rhiza-test ## run 
 # to DEPTRY_IGNORE), so this core target never needs to know which bundles are
 # present. Core itself contributes SOURCE_FOLDER when it exists; see e.g.
 # marimo.mk for a bundle that appends its own folder. Rhiza's own test folder
-# (.rhiza/tests) is deliberately excluded: its dependencies are declared inline
-# via PEP 723 script metadata or shipped in .rhiza/requirements/, not in the
-# project's pyproject, so deptry (which validates against pyproject) would only
-# emit noise for it.
+# (.rhiza/tests) is deliberately excluded: its tooling is provisioned on the fly
+# via `uv run --with` in the individual targets, not declared in the project's
+# pyproject, so deptry (which validates against pyproject) would only emit noise
+# for it.
 DEPTRY_FOLDERS ?=
 DEPTRY_IGNORE ?=
 ifneq ($(wildcard $(SOURCE_FOLDER)),)
