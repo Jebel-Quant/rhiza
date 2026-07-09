@@ -76,7 +76,6 @@ A few files **cannot** be symlinks and stay as **real copies**, kept in sync by 
 
 - `.github/*` platform config (Dependabot, release notes, secret scanning, PR template, rulesets) — GitHub reads these blobs directly and does not resolve symlinks. **Live `.github/workflows/*` are also real** (Actions won't run a symlinked workflow) and differ from the bundle stubs by design.
 - `.rhiza/.gitignore` (and any `.gitignore`/`.gitattributes`) — git opens these with `O_NOFOLLOW`, so a symlink yields an ELOOP warning and the rules are ignored.
-- `.rhiza/utils/*.py` — the coverage target of `make rhiza-test`; coverage canonicalises a symlink to its realpath, so `--cov=.rhiza/utils` would match nothing.
 
 Plus intentional mother-repo overrides that deliberately diverge from their bundle source: `.claude/commands/rhiza_quality.md`, root `.gitignore`, `.pre-commit-config.yaml`, `.python-version`, `SECURITY.md`, `renovate.json`. The exclusion list lives in `utils/link_dogfood.py`. Downstream consumers are unaffected: `rhiza-cli` sparse-checks-out a bundle and dereferences symlinks on copy, so synced projects always receive real files (guarded by `test_no_symlinks_in_*`).
 
@@ -100,16 +99,15 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 - **Test coverage**: 90% minimum
 - **Pre-commit hooks**: `make fmt` runs ruff, markdownlint, bandit, actionlint, interrogate, jsonschema, and uv-lock validation
 
-> **Coverage in this repo (mother-repo specifics).** Rhiza has no `src/`, so `make test`
-> prints `Source folder src not found, running tests without coverage` and the main
-> `tests/` suite runs *without* a Python coverage number — by design. That suite exercises
-> Make targets, YAML, and bundle invariants behaviourally, where there is no Python module
-> to cover. The one piece of shipped Python — `.rhiza/utils/*.py` (sourced from
-> `bundles/core/.rhiza/utils/`) — **is** coverage-enforced at 100% via `make rhiza-test`
-> (run under `make validate`), which points `--cov=.rhiza/utils` at that tree. So "no
-> coverage on `make test`" is expected here and does not mean the shipped code is unmeasured.
-> Downstream consumers that adopt the `tests` bundle *do* have a `src/` and get the full 90%
-> `make test` gate.
+> **Coverage in this repo (mother-repo specifics).** Rhiza has no `src/` and ships no
+> runtime Python, so `make test` prints `Source folder src not found, running tests without
+> coverage` and the main `tests/` suite runs *without* a Python coverage number — by design.
+> Both that suite and `make rhiza-test` (which runs the shipped `.rhiza/tests/` suite) exercise
+> Make targets, YAML, and bundle invariants behaviourally, where there is no Python module to
+> cover. (The former suppression/pip-audit utilities that once lived in `.rhiza/utils/` and were
+> coverage-gated here have moved into the `rhiza-tools` package, which owns their tests.) So "no
+> coverage on `make test`" is expected here and does not mean anything is unmeasured. Downstream
+> consumers that adopt the `tests` bundle *do* have a `src/` and get the full 90% `make test` gate.
 
 ### CI/CD
 

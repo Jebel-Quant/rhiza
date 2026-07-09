@@ -52,7 +52,6 @@ This security policy applies to:
 
 - The Rhiza template system and configuration files
 - GitHub Actions workflows provided by this repository
-- Python utilities in `.rhiza/utils/`
 
 ### Out of Scope
 

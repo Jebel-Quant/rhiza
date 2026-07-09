@@ -136,7 +136,6 @@ class TestWeeklyWorkflowMakeTargets:
         """Make security must not silently pass when the default source folder is missing."""
         result = run_make(logger, ["security"])
         assert result.returncode == 0
-        assert 'if [ -d ".rhiza/utils" ]' in result.stdout
         assert "Running bandit security scan in:" in result.stdout
         assert "No bandit scan folders found" in result.stdout
 

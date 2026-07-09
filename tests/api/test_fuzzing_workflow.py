@@ -8,7 +8,6 @@ import yaml
 
 WORKFLOW_PATH = Path(".github") / "workflows" / "rhiza_fuzzing.yml"
 PROJECT_PATH = Path(".clusterfuzzlite") / "project.yaml"
-FUZZER_PATH = Path("tests") / "fuzz" / "fuzz_suppression_audit.py"
 
 
 def _workflow_triggers(workflow_doc: dict) -> dict:
@@ -82,12 +81,15 @@ def test_fuzzing_steps_skip_when_no_clusterfuzzlite_config(root):
 
 
 def test_clusterfuzzlite_configuration_targets_python(root):
-    """ClusterFuzzLite config must declare Python and a real Atheris harness."""
+    """ClusterFuzzLite config must declare Python.
+
+    The repo ships the fuzzing capability (workflow + .clusterfuzzlite/ config)
+    but no longer bundles a concrete Atheris harness — the suppression parser it
+    used to fuzz now lives in the rhiza-tools package. The build script compiles
+    any ``tests/fuzz/fuzz_*.py`` harness a downstream repo (or a future target)
+    adds; see ``.clusterfuzzlite/build.sh``.
+    """
     with (root / PROJECT_PATH).open(encoding="utf-8") as fh:
         project = yaml.safe_load(fh)
 
-    fuzz_target = (root / FUZZER_PATH).read_text(encoding="utf-8")
-
     assert project["language"] == "python"
-    assert "import atheris" in fuzz_target
-    assert "suppression_parse" in fuzz_target

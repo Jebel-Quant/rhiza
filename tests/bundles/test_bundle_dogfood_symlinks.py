@@ -133,9 +133,9 @@ class TestDogfoodSymlinks:
         """Each documented carve-out must remain a real file, never a symlink.
 
         The carve-outs exist precisely because a symlink breaks them (GitHub does not
-        resolve symlinks for ``.github/`` config, git opens ``O_NOFOLLOW`` files without
-        following links, and coverage would drop a symlinked ``.rhiza/utils/`` target). If
-        one silently became a symlink the breakage would be subtle, so assert it directly.
+        resolve symlinks for ``.github/`` config, and git opens ``O_NOFOLLOW`` files
+        without following links). If one silently became a symlink the breakage would be
+        subtle, so assert it directly.
         """
         assert not (_ROOT / rel).is_symlink(), (
             f"{rel}: is a documented dogfood carve-out and must stay a real file, but it is "
