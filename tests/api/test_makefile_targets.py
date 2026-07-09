@@ -136,8 +136,9 @@ class TestMakefile:
         out = proc.stdout
         # Expect key steps
         assert "mkdir -p _tests/html-coverage _tests/html-report" in out
-        # Check for uv command running pytest
-        assert "uv run pytest" in out
+        # Check for uv command running pytest with its plugins provisioned on the fly
+        assert "uv run --with pytest" in out
+        assert "--with pytest-cov" in out
         # Check for XML coverage report
         assert "--cov-report=xml:_tests/coverage.xml" in out
 
@@ -158,14 +159,14 @@ class TestMakefile:
         # Should see warning about missing source folder
         assert "if [ -d nonexistent_src ]" in out
         # Should still run pytest but without coverage flags
-        assert "uv run pytest" in out
+        assert "uv run --with pytest" in out
         assert "--html=_tests/html-report/report.html" in out
 
     def test_docs_coverage_target_dry_run(self, logger):
         """Docs coverage should run interrogate over the docstring paths."""
         proc = run_make(logger, ["docs-coverage"])
         out = proc.stdout
-        assert "uv run interrogate" in out
+        assert "uv run --with interrogate interrogate" in out
 
     def test_security_target_runs_pip_audit_and_bandit(self, logger):
         """Security target should run pip-audit via rhiza-tools and bandit (or skip warning)."""
@@ -189,7 +190,7 @@ class TestMakefile:
         proc = run_make(logger, ["stress"])
         out = proc.stdout
         assert "no rule to make target" not in proc.stderr.lower()
-        assert "uv run pytest" in out
+        assert "uv run --with pytest" in out
         assert "-m stress" in out
 
     def test_hypothesis_test_target_dry_run(self, logger):
@@ -213,7 +214,7 @@ class TestMakefile:
         proc = run_make(logger, ["test-pyproject"])
         out = proc.stdout
         assert "no rule to make target" not in proc.stderr.lower()
-        assert "uv run pytest .rhiza/tests/structure/test_pyproject.py" in out
+        assert "uv run --with pytest pytest .rhiza/tests/test_pyproject.py" in out
 
     def test_all_target_chains_ci_subtargets(self, logger):
         """The `all` aggregator should chain the CI sub-targets (fmt, test, docs-coverage, security)."""
@@ -222,8 +223,8 @@ class TestMakefile:
         assert "no rule to make target" not in proc.stderr.lower()
         # Markers proving the prerequisite chain expands each sub-target's recipe.
         assert "pre-commit run --all-files" in out  # fmt
-        assert "uv run pytest" in out  # test / rhiza-test
-        assert "uv run interrogate" in out  # docs-coverage
+        assert "uv run --with pytest" in out  # test / rhiza-test
+        assert "uv run --with interrogate interrogate" in out  # docs-coverage
         assert "pip-audit" in out  # security
 
     def test_python_version_defaults_to_3_13_if_missing(self, logger, tmp_path):

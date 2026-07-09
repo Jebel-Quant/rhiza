@@ -66,7 +66,7 @@ test:: install ## run all tests
 	while :; do \
 	  rm -f .coverage .coverage.* _tests/coverage.xml _tests/coverage.json 2>/dev/null || true; \
 	  mkdir -p _tests/html-coverage _tests/html-report; \
-	  ${UV_BIN} run pytest "$$@"; status=$$?; \
+	  ${UV_BIN} run --with pytest --with pytest-cov --with pytest-xdist --with pytest-html --with pytest-timeout --with pytest-mock pytest "$$@"; status=$$?; \
 	  if [ $$status -ne 3 ]; then exit $$status; fi; \
 	  if [ $$attempt -ge $$max_attempts ]; then \
 	    printf "${RED}[ERROR] pytest reported an internal (teardown) error after %s attempts; failing.${RESET}\n" "$$attempt"; \
@@ -139,9 +139,8 @@ security: install ## run security scans (pip-audit and bandit)
 benchmark:: install ## run performance benchmarks
 	@if [ -d "${TESTS_FOLDER}/benchmarks" ]; then \
 	  printf "${BLUE}[INFO] Running performance benchmarks...${RESET}\n"; \
-	  ${UV_BIN} pip install pytest-benchmark==5.2.3 pygal==3.1.0; \
 	  mkdir -p _tests/benchmarks; \
-	  ${UV_BIN} run pytest "${TESTS_FOLDER}/benchmarks/" \
+	  ${UV_BIN} run --with pytest --with pytest-benchmark==5.2.3 --with pygal==3.1.0 pytest "${TESTS_FOLDER}/benchmarks/" \
 	  		--benchmark-only \
 			--benchmark-histogram=_tests/benchmarks/histogram \
 			--benchmark-json=_tests/benchmarks/results.json; \
@@ -166,7 +165,7 @@ docs-coverage: install ## check documentation coverage with interrogate
 	fi; \
 	if [ -n "$${docstring_paths}" ]; then \
 	  printf "${BLUE}[INFO] Checking documentation coverage in:$${docstring_paths}${RESET}\n"; \
-	  ${UV_BIN} run interrogate -vv --fail-under 100 --ignore-init-method --ignore-magic $${docstring_paths}; \
+	  ${UV_BIN} run --with interrogate interrogate -vv --fail-under 100 --ignore-init-method --ignore-magic $${docstring_paths}; \
 	else \
 	  printf "${YELLOW}[WARN] No docs-coverage folders found (SOURCE_FOLDER='${SOURCE_FOLDER}'), skipping docs-coverage${RESET}\n"; \
 	fi
@@ -182,7 +181,7 @@ hypothesis-test:: install ## run property-based tests with Hypothesis
 	fi; \
 	printf "${BLUE}[INFO] Running Hypothesis property-based tests...${RESET}\n"; \
 	mkdir -p _tests/hypothesis; \
-	PYTEST_HTML_TITLE="Hypothesis tests" ${UV_BIN} run pytest \
+	PYTEST_HTML_TITLE="Hypothesis tests" ${UV_BIN} run --with pytest --with hypothesis --with pytest-html pytest \
 	  --ignore=${TESTS_FOLDER}/benchmarks \
 	  -v \
 	  --hypothesis-show-statistics \
@@ -208,7 +207,7 @@ stress:: install ## run stress/load tests
 	fi; \
 	printf "${BLUE}[INFO] Running stress/load tests...${RESET}\n"; \
 	mkdir -p _tests/stress; \
-	${UV_BIN} run pytest \
+	${UV_BIN} run --with pytest --with pytest-html pytest \
 	  -v \
 	  -m stress \
 	  --tb=short \
@@ -222,17 +221,17 @@ mutation: install ## run mutation tests with mutmut
 	printf "${BLUE}[INFO] Running mutation tests on ${SOURCE_FOLDER}...${RESET}\n"; \
 	mkdir -p _tests/mutation; \
 	run_status=0; \
-	${UV_BIN} run mutmut run \
+	${UV_BIN} run --with mutmut mutmut run \
 	  --paths-to-mutate="${SOURCE_FOLDER}" \
 	  --tests-dir="${TESTS_FOLDER}" || run_status=$$?; \
-	${UV_BIN} run mutmut html || exit $$?; \
+	${UV_BIN} run --with mutmut mutmut html || exit $$?; \
 	rm -rf _tests/mutation/html; \
 	mv html _tests/mutation/html || exit $$?; \
-	${UV_BIN} run mutmut results || exit $$?; \
+	${UV_BIN} run --with mutmut mutmut results || exit $$?; \
 	exit $$run_status
 
 test-pyproject: install ## run pyproject.toml structure tests
-	@${UV_BIN} run pytest .rhiza/tests/structure/test_pyproject.py \
+	@${UV_BIN} run --with pytest pytest .rhiza/tests/test_pyproject.py \
 		-v \
 		--tb=long \
 		--showlocals \

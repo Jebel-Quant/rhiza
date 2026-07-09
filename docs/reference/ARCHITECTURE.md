@@ -414,9 +414,10 @@ post-release::   # Runs after make release
    - `sync/` - Template synchronization
    - `deps/` - Dependency validation
 
-3. **Requirements organization** (`.rhiza/requirements/`):
-   - Named by **purpose**: `tests.txt`, `docs.txt`, `marimo.txt`, `tools.txt`
-   - Not by library: ❌ `pytest.txt`, `pdoc.txt`
+3. **Dependency provisioning** (no `.rhiza/requirements/`):
+   - Libraries the test suite imports live in `pyproject.toml` `[dependency-groups]`
+   - Per-target tooling (pytest plugins, interrogate, mutmut, marimo, zensical, …)
+     is installed on the fly by its `make` target via `uv run --with` / `uvx`
 
 ### Template Bundle and Profile Naming
 

@@ -182,7 +182,7 @@ summarise-sync: install-uv ## summarise differences created by sync with templat
 
 rhiza-test: install ## run rhiza's own tests (if any)
 	@if [ -d ".rhiza/tests" ]; then \
-		${UV_BIN} run pytest .rhiza/tests; \
+		${UV_BIN} run --with pytest --with pytest-timeout --with python-dotenv --with packaging pytest .rhiza/tests; \
 	else \
 		printf "${YELLOW}[WARN] No .rhiza/tests directory found, skipping rhiza-tests${RESET}\n"; \
 	fi

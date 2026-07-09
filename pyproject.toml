@@ -40,12 +40,19 @@ test = [
 ]
 docs = [
     # Declared so deptry can resolve the notebook imports in docs/notebooks/.
-    # The notebook also pins these via its PEP 723 header; mkdocs-material is
-    # installed from .rhiza/requirements/docs.txt, not here.
+    # The notebook also pins these via its PEP 723 header.
     "marimo>=0.18.0,<1.0",   # Reactive notebook runtime for book/ examples (v0.18+ for streaming, <1.0 for API stability)
     "numpy>=2.4.0,<3.0",     # Numerical computing for notebook data analysis (v2.4+ includes 2.0 improvements, <3.0 avoids breaking changes)
     "plotly>=6.5.0,<7.0",    # Interactive visualization in notebooks (v6.5+ mature features, <7.0 for API stability)
     "pandas>=3,<3.1",        # Data manipulation for notebook examples (v3+ for modern APIs, <3.1 conservative after major release)
+]
+typecheck = [
+    # Type checkers for `make typecheck` (uv run ty / mypy). Formerly shipped in
+    # .rhiza/requirements/tools.txt; kept here as a group pending migration into the
+    # rhiza-tools package (which will own the type-checking tooling downstream).
+    "ty>=0.0.30",
+    "mypy==2.1.0",
+    "typer==0.21.1",
 ]
 
 [project.urls]
@@ -66,3 +73,6 @@ marimo = "marimo"
 numpy = "numpy"
 plotly = "plotly"
 pandas = "pandas"
+ty = "ty"
+mypy = "mypy"
+typer = "typer"

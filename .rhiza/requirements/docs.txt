@@ -1,1 +1,0 @@
-../../bundles/core/.rhiza/requirements/docs.txt
