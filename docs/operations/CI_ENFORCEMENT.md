@@ -13,8 +13,8 @@ These fail the pull request when they fail. They run on every PR via
 | Check | Workflow / target | Notes |
 |-------|-------------------|-------|
 | Format, lint, hooks | `make fmt` | ruff, markdownlint, bandit, actionlint, shellcheck, jsonschema, uv-lock. |
-| Type checking | `make typecheck` | `ty` + `mypy --strict` over `.rhiza/utils` (set `TYPECHECKER=ty` or `TYPECHECKER=mypy` to run only one). |
-| Tests | `make test`, `make rhiza-test` | Full suites; rhiza-test enforces 90% coverage on `.rhiza/utils`. |
+| Type checking | `make typecheck` | `ty` + `mypy --strict` over the project's Python source (set `TYPECHECKER=ty` or `TYPECHECKER=mypy` to run only one). |
+| Tests | `make test`, `make rhiza-test` | Full suites; `rhiza-test` runs Rhiza's own `.rhiza/tests/` suite. |
 | Dependency hygiene | `make deptry` | Unused/missing dependency scan. |
 | Docstring coverage | `make docs-coverage` | interrogate at 100%. |
 | Security | `make security` | pip-audit + bandit. |

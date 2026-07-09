@@ -117,15 +117,12 @@ class TestMakefile:
         assert_uvx_command_uses_version(out, tmp_path, "deptry src")
 
     def test_typecheck_target_dry_run(self, logger):
-        """Typecheck target should invoke ty and mypy via uv run and include .rhiza/utils."""
+        """Typecheck target should invoke ty and mypy via uv run."""
         proc = run_make(logger, ["typecheck"])
         out = proc.stdout
         # Both type checkers are invoked
         assert "uv run ty check" in out
         assert "uv run mypy --strict" in out
-        # .rhiza/utils is folded into the path list so utility code is type-checked
-        assert 'if [ -d ".rhiza/utils" ]' in out
-        assert ".rhiza/utils" in out
 
     def test_test_target_dry_run(self, logger):
         """Test target should invoke pytest via uv with coverage and HTML outputs in dry-run output."""
@@ -158,21 +155,19 @@ class TestMakefile:
         assert "uv run pytest" in out
         assert "--html=_tests/html-report/report.html" in out
 
-    def test_docs_coverage_includes_rhiza_utils(self, logger):
-        """Docs coverage should include .rhiza/utils so utility docstrings are gated."""
+    def test_docs_coverage_target_dry_run(self, logger):
+        """Docs coverage should run interrogate over the docstring paths."""
         proc = run_make(logger, ["docs-coverage"])
         out = proc.stdout
-        assert 'if [ -d ".rhiza/utils" ]' in out
         assert "uv run interrogate" in out
-        assert ".rhiza/utils" in out
 
-    def test_security_target_includes_rhiza_utils_and_skip_warning(self, logger):
-        """Security target should scan .rhiza/utils or emit an explicit skip warning."""
+    def test_security_target_runs_pip_audit_and_bandit(self, logger):
+        """Security target should run pip-audit via rhiza-tools and bandit (or skip warning)."""
         proc = run_make(logger, ["security"])
         out = proc.stdout
-        assert 'if [ -d ".rhiza/utils" ]' in out
+        assert "rhiza-tools" in out
+        assert "pip-audit" in out
         assert "Running bandit security scan in:" in out
-        assert ".rhiza/utils" in out
         assert "No bandit scan folders found" in out
 
     def test_benchmark_target_dry_run(self, logger):
@@ -223,7 +218,7 @@ class TestMakefile:
         assert "pre-commit run --all-files" in out  # fmt
         assert "uv run pytest" in out  # test / rhiza-test
         assert "uv run interrogate" in out  # docs-coverage
-        assert "pip_audit_policy.py" in out  # security
+        assert "pip-audit" in out  # security
 
     def test_python_version_defaults_to_3_13_if_missing(self, logger, tmp_path):
         """`PYTHON_VERSION` should default to `3.13` if .python-version is missing."""
@@ -257,10 +252,11 @@ class TestMakefile:
         assert "--cov-fail-under=42" in proc_override.stdout
 
     def test_suppression_audit_target_dry_run(self, logger):
-        """Suppression-audit target should invoke the Python audit script via uv run in dry-run output."""
+        """Suppression-audit target should invoke the rhiza-tools CLI in dry-run output."""
         proc = run_make(logger, ["suppression-audit"])
         out = proc.stdout
-        assert "run .rhiza/utils/suppression_audit.py" in out
+        assert "rhiza-tools" in out
+        assert "suppression-audit" in out
 
     def test_license_target_dry_run(self, logger):
         """License target should invoke pip-licenses via uv run --with in dry-run output."""

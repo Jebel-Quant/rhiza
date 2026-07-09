@@ -74,8 +74,7 @@ def is_dogfood_carveout(rel: str) -> bool:
 
     * it is a declared mother-repo override in :data:`_EXCLUDE`;
     * it lives under ``.github/`` (GitHub reads platform config blobs directly and does
-      not resolve symlinks) or ``.rhiza/utils/`` (the ``make rhiza-test`` coverage target,
-      whose realpath a symlink would move out of ``--cov`` scope); or
+      not resolve symlinks); or
     * git opens it with ``O_NOFOLLOW`` (see :data:`_NO_FOLLOW_NAMES`), so a symlink yields
       an ELOOP warning and the file's rules are silently ignored.
 
@@ -88,7 +87,7 @@ def is_dogfood_carveout(rel: str) -> bool:
     Returns:
         True if ``rel`` must remain a real file; False if it is eligible for symlinking.
     """
-    return rel in _EXCLUDE or rel.startswith((".github/", ".rhiza/utils/")) or Path(rel).name in _NO_FOLLOW_NAMES
+    return rel in _EXCLUDE or rel.startswith(".github/") or Path(rel).name in _NO_FOLLOW_NAMES
 
 
 def _bundle_index(bundles_dir: Path) -> dict[str, list[Path]]:
@@ -189,8 +188,8 @@ def _classify_dogfood(root: Path, rel: str, index: dict[str, list[Path]]) -> tup
           file ``source``.
     """
     # Skip bundle sources themselves and every carve-out (declared overrides,
-    # git O_NOFOLLOW files, the .github/ tree, and .rhiza/utils/) — all must stay
-    # real files. See is_dogfood_carveout for the reasoning behind each case.
+    # git O_NOFOLLOW files, and the .github/ tree) — all must stay real files.
+    # See is_dogfood_carveout for the reasoning behind each case.
     if rel.startswith("bundles/") or is_dogfood_carveout(rel):
         return ("skip", None)
     owners = index.get(rel)

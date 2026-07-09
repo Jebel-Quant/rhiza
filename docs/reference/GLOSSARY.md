@@ -129,9 +129,6 @@ Directory for modular Makefile extensions. Files are auto-loaded in numeric orde
 - `20-79`: Task definitions
 - `80-99`: Hook implementations
 
-### `.rhiza/utils/`
-Python utility scripts for Rhiza operations.
-
 ### `.rhiza/template.yml`
 Configuration file defining which files to sync from upstream, include/exclude patterns, and sync behavior.
 
