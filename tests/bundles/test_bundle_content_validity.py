@@ -598,6 +598,102 @@ class TestCorePreCommitConfig:
 
 
 # ---------------------------------------------------------------------------
+# GitLab CI uv-image single-source pinning
+# ---------------------------------------------------------------------------
+
+
+_UV_IMAGE_LITERAL = re.compile(r"ghcr\.io/astral-sh/uv:")
+_IMAGE_LINE = re.compile(r"^\s*image:\s*(\S+)")
+
+
+class TestGitlabImagePinning:
+    """Every GitLab job image must resolve from the single `$UV_IMAGE` variable.
+
+    The uv/Python CI image used to be hardcoded (`ghcr.io/astral-sh/uv:<version>`)
+    in ~20 places across the gitlab* bundles, drifting from the version GitHub
+    Actions pins. `.gitlab-ci.yml` now defines `UV_IMAGE` once and every job
+    references `image: $UV_IMAGE`. These guards stop the literal pin from
+    creeping back in and keep the caching plumbing in place.
+    """
+
+    def _gitlab_ci_yml(self, root: Path) -> Path:
+        """Return the gitlab bundle's `.gitlab-ci.yml`, skipping if the bundle is absent."""
+        ci = root / "bundles" / "gitlab" / ".gitlab-ci.yml"
+        if not ci.exists():
+            pytest.skip("gitlab bundle not present")
+        return ci
+
+    def test_no_hardcoded_uv_image_pin_outside_single_source(self, root: Path) -> None:
+        """The literal `ghcr.io/astral-sh/uv:` tag may appear only in the UV_IMAGE definition."""
+        self._gitlab_ci_yml(root)  # skip if gitlab bundle absent
+        offenders: list[str] = []
+        for bundle in sorted(root.glob("bundles/gitlab*")):
+            for path in _all_files_in_bundle(bundle):
+                if path.suffix not in {".yml", ".yaml", ".jinja"}:
+                    continue
+                for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                    if not _UV_IMAGE_LITERAL.search(line):
+                        continue
+                    # The sole allowed literal: the `UV_IMAGE:` variable value.
+                    if re.match(r"\s*UV_IMAGE:\s*", line):
+                        continue
+                    offenders.append(f"{path.relative_to(root)}:{lineno}: {line.strip()}")
+        assert not offenders, "Hardcoded uv image pin(s) found; reference `$UV_IMAGE` instead:\n" + "\n".join(offenders)
+
+    def test_image_lines_reference_the_variable(self, root: Path) -> None:
+        """Any `image:` value that is a uv image must be exactly `$UV_IMAGE`."""
+        self._gitlab_ci_yml(root)
+        bad: list[str] = []
+        for bundle in sorted(root.glob("bundles/gitlab*")):
+            for path in _all_files_in_bundle(bundle):
+                if path.suffix not in {".yml", ".yaml", ".jinja"}:
+                    continue
+                for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                    m = _IMAGE_LINE.match(line)
+                    if not m:
+                        continue
+                    value = m.group(1)
+                    # Only constrain the uv image; alpine/renovate/etc. are unrelated.
+                    if "uv" in value or _UV_IMAGE_LITERAL.search(line):
+                        assert_msg = f"{path.relative_to(root)}:{lineno}: {line.strip()}"
+                        if value != "$UV_IMAGE":
+                            bad.append(assert_msg)
+        assert not bad, "uv `image:` lines must be `$UV_IMAGE`:\n" + "\n".join(bad)
+
+    def test_single_source_variables_defined_once(self, root: Path) -> None:
+        """`.gitlab-ci.yml` must define UV_IMAGE / UV_CACHE_DIR / UV_PYTHON_INSTALL_DIR exactly once."""
+        ci = self._gitlab_ci_yml(root)
+        parsed = yaml.safe_load(ci.read_text(encoding="utf-8"))
+        variables = parsed.get("variables", {})
+        assert variables.get("UV_IMAGE", "").startswith("ghcr.io/astral-sh/uv:"), (
+            "variables.UV_IMAGE must pin a concrete ghcr.io/astral-sh/uv image"
+        )
+        for key in ("UV_CACHE_DIR", "UV_PYTHON_INSTALL_DIR"):
+            assert key in variables, f"variables.{key} must redirect uv's cache under $CI_PROJECT_DIR"
+            assert "CI_PROJECT_DIR" in variables[key], (
+                f"variables.{key} must live under $CI_PROJECT_DIR so GitLab can cache it"
+            )
+
+    def test_default_cache_covers_uv_dirs(self, root: Path) -> None:
+        """`default.cache` must persist the uv wheel + managed-Python directories."""
+        ci = self._gitlab_ci_yml(root)
+        parsed = yaml.safe_load(ci.read_text(encoding="utf-8"))
+        cache = parsed.get("default", {}).get("cache")
+        assert cache, "default.cache must be defined so uv downloads persist across jobs"
+        paths = cache.get("paths", [])
+        assert ".cache/uv" in paths, f"default.cache.paths must include '.cache/uv', got: {paths}"
+        assert ".cache/uv-python" in paths, f"default.cache.paths must include '.cache/uv-python', got: {paths}"
+
+    def test_orphaned_python_base_template_removed(self, root: Path) -> None:
+        """The unused `.python_base` job template must not reappear."""
+        ci = self._gitlab_ci_yml(root)
+        parsed = yaml.safe_load(ci.read_text(encoding="utf-8"))
+        assert ".python_base" not in parsed, (
+            ".python_base was an orphaned template (nothing extends it); it should stay removed"
+        )
+
+
+# ---------------------------------------------------------------------------
 # Devcontainer bundle content
 # ---------------------------------------------------------------------------
 
