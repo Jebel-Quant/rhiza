@@ -1,1 +1,0 @@
-../../../bundles/github/.rhiza/tests/api/test_github_targets.py

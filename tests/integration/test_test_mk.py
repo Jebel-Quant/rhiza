@@ -7,7 +7,7 @@ stale coverage cleanup) added for issues #1256 and #1257.
 
 from pathlib import Path
 
-from test_utils import run_make
+from tests.util import run_make
 
 # A stand-in for `uv` that records each invocation and exits with the next code
 # from FAKE_EXIT_CODES (space-separated, last value repeats). Lets the tests

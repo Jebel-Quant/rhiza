@@ -42,13 +42,20 @@ def run_make(
 
 
 def setup_rhiza_git_repo() -> None:
-    """Initialize a git repository in cwd and set remote to rhiza."""
+    """Initialize a git repository in cwd and set remote to rhiza.
+
+    Idempotent: safe to call again when an autouse fixture has already created the
+    repo and its ``origin`` remote (as ``tests/api/conftest.py`` does), so migrated
+    tests that call it in their bodies do not fail on a duplicate remote.
+    """
     subprocess.run([_GIT, "init"], check=True, capture_output=True)  # nosec B603
-    subprocess.run(  # nosec B603
-        [_GIT, "remote", "add", "origin", "https://github.com/jebel-quant/rhiza"],
-        check=True,
-        capture_output=True,
-    )
+    existing = subprocess.run([_GIT, "remote"], capture_output=True, text=True)  # nosec B603
+    if "origin" not in existing.stdout.split():
+        subprocess.run(  # nosec B603
+            [_GIT, "remote", "add", "origin", "https://github.com/jebel-quant/rhiza"],
+            check=True,
+            capture_output=True,
+        )
 
 
 def _copy_entry(src: Path, dest: Path) -> None:

@@ -2,7 +2,7 @@
 
 import os
 
-from test_utils import run_make
+from tests.util import run_make
 
 
 def test_virtual_env_not_exported(git_repo, logger):

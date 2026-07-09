@@ -1,1 +1,0 @@
-../../../bundles/tests/.rhiza/tests/integration/test_test_mk.py

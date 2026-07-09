@@ -13,8 +13,10 @@ import subprocess  # nosec
 import pytest
 
 # Skip the entire module when the lfs bundle is not present.
-# pathlib.Path(__file__).parent * 3 = .rhiza/ directory
-_LFS_MK = pathlib.Path(__file__).parent.parent.parent / "make.d" / "lfs.mk"
+# This mother-repo test lives in tests/integration/; parents[2] is the repo root,
+# and lfs.mk is dogfooded at .rhiza/make.d/lfs.mk (a symlink into bundles/lfs/).
+_ROOT = pathlib.Path(__file__).resolve().parents[2]
+_LFS_MK = _ROOT / ".rhiza" / "make.d" / "lfs.mk"
 if not _LFS_MK.exists():
     pytest.skip("lfs bundle not installed (lfs.mk not found)", allow_module_level=True)
 

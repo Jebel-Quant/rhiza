@@ -1,1 +1,0 @@
-../../../bundles/tests/.rhiza/tests/structure/test_project_layout.py

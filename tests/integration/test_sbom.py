@@ -10,7 +10,7 @@ the cyclonedx-bom tool works correctly with uvx.
 import subprocess  # nosec B404
 
 
-def test_sbom_generation_json(git_repo, logger):
+def test_sbom_generation_json(minimal_git_repo, logger):
     """Test that SBOM generation works in JSON format."""
     # Run the SBOM generation command for JSON
     result = subprocess.run(  # nosec B603 B607
@@ -27,7 +27,7 @@ def test_sbom_generation_json(git_repo, logger):
             "-o",
             "sbom.cdx.json",
         ],
-        cwd=git_repo,
+        cwd=minimal_git_repo,
         capture_output=True,
         text=True,
         check=False,
@@ -40,7 +40,7 @@ def test_sbom_generation_json(git_repo, logger):
     assert result.returncode == 0, f"SBOM JSON generation failed: {result.stderr}"
 
     # Verify output file exists
-    sbom_file = git_repo / "sbom.cdx.json"
+    sbom_file = minimal_git_repo / "sbom.cdx.json"
     assert sbom_file.exists(), "SBOM JSON file was not created"
     assert sbom_file.stat().st_size > 0, "SBOM JSON file is empty"
 
@@ -63,7 +63,7 @@ def test_sbom_generation_json(git_repo, logger):
     assert primary.get("version"), "Primary component missing version"
 
 
-def test_sbom_generation_xml(git_repo, logger):
+def test_sbom_generation_xml(minimal_git_repo, logger):
     """Test that SBOM generation works in XML format."""
     # Run the SBOM generation command for XML
     result = subprocess.run(  # nosec B603 B607
@@ -80,7 +80,7 @@ def test_sbom_generation_xml(git_repo, logger):
             "-o",
             "sbom.cdx.xml",
         ],
-        cwd=git_repo,
+        cwd=minimal_git_repo,
         capture_output=True,
         text=True,
         check=False,
@@ -93,7 +93,7 @@ def test_sbom_generation_xml(git_repo, logger):
     assert result.returncode == 0, f"SBOM XML generation failed: {result.stderr}"
 
     # Verify output file exists
-    sbom_file = git_repo / "sbom.cdx.xml"
+    sbom_file = minimal_git_repo / "sbom.cdx.xml"
     assert sbom_file.exists(), "SBOM XML file was not created"
     assert sbom_file.stat().st_size > 0, "SBOM XML file is empty"
 
@@ -110,7 +110,7 @@ def test_sbom_generation_xml(git_repo, logger):
     assert components is not None, "SBOM XML missing components element"
 
 
-def test_sbom_command_syntax(git_repo, logger):
+def test_sbom_command_syntax(minimal_git_repo, logger):
     """Test that the uvx command syntax is correct (no npm-style @^version)."""
     # This test verifies that we're using the correct syntax
     # Bad: uvx cyclonedx-bom@^7.0.0
@@ -127,7 +127,7 @@ def test_sbom_command_syntax(git_repo, logger):
             "-o",
             "sbom.test.json",
         ],
-        cwd=git_repo,
+        cwd=minimal_git_repo,
         capture_output=True,
         text=True,
         check=False,
@@ -154,7 +154,7 @@ def test_sbom_command_syntax(git_repo, logger):
             "-o",
             "sbom.test.json",
         ],
-        cwd=git_repo,
+        cwd=minimal_git_repo,
         capture_output=True,
         text=True,
         check=False,
@@ -167,6 +167,6 @@ def test_sbom_command_syntax(git_repo, logger):
     assert result_good.returncode == 0, f"Correct syntax failed: {result_good.stderr}"
 
     # Cleanup
-    test_file = git_repo / "sbom.test.json"
+    test_file = minimal_git_repo / "sbom.test.json"
     if test_file.exists():
         test_file.unlink()
