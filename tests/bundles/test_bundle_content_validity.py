@@ -617,6 +617,7 @@ class TestGitlabImagePinning:
     """
 
     def _gitlab_ci_yml(self, root: Path) -> Path:
+        """Return the gitlab bundle's `.gitlab-ci.yml`, skipping if the bundle is absent."""
         ci = root / "bundles" / "gitlab" / ".gitlab-ci.yml"
         if not ci.exists():
             pytest.skip("gitlab bundle not present")
