@@ -23,6 +23,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess  # nosec B404
+import sys
 from pathlib import Path
 
 import pytest
@@ -124,7 +125,15 @@ def git_repo(root, tmp_path, monkeypatch) -> Path:
 
     Mock ``uv``/``make`` executables are placed first on ``PATH`` so target logic
     can be exercised without touching the real toolchain.
+
+    These tests drive POSIX ``make`` recipes through a shell and rely on shebang
+    script mocks, so they are skipped on Windows (matching the repo's other
+    make/POSIX-shell tests). They ran Linux-only under ``make rhiza-test`` before
+    being relocated here.
     """
+    if sys.platform == "win32":
+        pytest.skip("git_repo drives POSIX make recipes with shebang mocks; unsupported on Windows")
+
     remote_dir = tmp_path / "remote.git"
     local_dir = tmp_path / "local"
 

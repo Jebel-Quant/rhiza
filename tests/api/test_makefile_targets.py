@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 from pathlib import Path
 
 import pytest
@@ -356,6 +357,10 @@ class TestMakefileRootFixture:
         assert "sync" in out
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="drives 'make bump' through shebang uv/uvx mocks via a POSIX shell; unsupported on Windows",
+)
 class TestMakeBump:
     """Tests for the 'make bump' target."""
 
