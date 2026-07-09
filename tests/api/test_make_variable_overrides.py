@@ -114,10 +114,10 @@ class TestSourceFolderVariable:
         assert 'typecheck_paths="mypackage"' in proc.stdout, (
             "typecheck should include SOURCE_FOLDER in computed path list; got:\n" + proc.stdout[:400]
         )
-        assert " run ty check ${typecheck_paths}" in proc.stdout, (
+        assert " run --with ty ty check ${typecheck_paths}" in proc.stdout, (
             "typecheck should pass computed path list to ty; got:\n" + proc.stdout[:400]
         )
-        assert " run mypy --strict ${typecheck_paths}" in proc.stdout, (
+        assert " run --with mypy mypy --strict ${typecheck_paths}" in proc.stdout, (
             "typecheck should pass computed path list to mypy; got:\n" + proc.stdout[:400]
         )
 
@@ -153,8 +153,8 @@ class TestTypecheckerVariable:
         """With no override, typecheck must run both ty and mypy."""
         proc = run_make(logger, ["typecheck"])
         assert 'case "both" in' in proc.stdout
-        assert "run ty check" in proc.stdout
-        assert "run mypy --strict" in proc.stdout
+        assert "run --with ty ty check" in proc.stdout
+        assert "run --with mypy mypy --strict" in proc.stdout
 
     def test_ty_only_selects_ty_branch(self, logger) -> None:
         """TYPECHECKER=ty must select the ty-only case branch."""
