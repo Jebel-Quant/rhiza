@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.1.0] - 2026-07-09
+
+### Maintenance
+- Remove .rhiza/utils; delegate pip-audit & suppression-audit to rhiza-tools (#1378)
+- Move rhiza-managed template tests out of the shipped bundle into tests/ (#1379)
+- Remove .rhiza/requirements; provision tooling on the fly (#1380)
+
 ## [1.0.3] - 2026-07-08
 
 ### Maintenance
@@ -15,6 +22,7 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 
 ### Other Changes
 - Add opt-in quality-review bundles: advisory Claude design review on PRs/MRs (GitHub + GitLab) (#1376)
+- Bump version 1.0.2 → 1.0.3
 
 ## [1.0.2] - 2026-07-06
 

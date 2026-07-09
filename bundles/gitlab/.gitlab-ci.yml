@@ -34,6 +34,20 @@ default:
       - runner_system_failure
       - stuck_or_timeout_failure
 
+  # Persist uv's wheel cache and managed-Python installs across jobs. GitLab only
+  # caches paths under $CI_PROJECT_DIR, so UV_CACHE_DIR / UV_PYTHON_INSTALL_DIR
+  # (see variables:) redirect them into the already-git-ignored .cache/ dir. The
+  # $PYTHON_VERSION prefix gives the test matrix a per-version cache so its
+  # parallel legs don't race on a shared key (unset → shared cache for the rest).
+  cache:
+    key:
+      prefix: "${PYTHON_VERSION}"
+      files:
+        - uv.lock
+    paths:
+      - .cache/uv
+      - .cache/uv-python
+
 # Include individual workflow files
 # These files are organised by purpose and mirror the GitHub Actions structure
 
@@ -133,16 +147,18 @@ variables:
   # UV package manager configuration
   UV_EXTRA_INDEX_URL: ""
 
+  # Single source of truth for the uv/Python CI image. Every job references
+  # `image: $UV_IMAGE`; bump the tag here to move the whole pipeline. Kept in
+  # step with the uv version GitHub Actions pins in .github/workflows/.
+  UV_IMAGE: "ghcr.io/astral-sh/uv:0.11.16-bookworm"
+
+  # Redirect uv's caches under the git-ignored .cache/ dir so GitLab (which only
+  # caches paths inside $CI_PROJECT_DIR) can persist them — see default: cache:.
+  UV_CACHE_DIR: "${CI_PROJECT_DIR}/.cache/uv"
+  UV_PYTHON_INSTALL_DIR: "${CI_PROJECT_DIR}/.cache/uv-python"
+
   # PyPI configuration
   PYPI_REPOSITORY_URL: ""
 
   # Sync configuration
   CREATE_MR: "true"
-
-# Job templates for reusable configuration
-.python_base:
-  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
-  before_script:
-    - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-    - uv python install $(cat .python-version)
-    - uv sync --all-extras --all-groups --frozen

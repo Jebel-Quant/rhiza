@@ -14,7 +14,7 @@
 quality:deptry:
   stage: test
   needs: []
-  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  image: $UV_IMAGE
   script:
     - make deptry
   rules:
@@ -24,7 +24,7 @@ quality:deptry:
 quality:pre-commit:
   stage: test
   needs: []
-  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  image: $UV_IMAGE
   script:
     - make fmt
   rules:
@@ -34,7 +34,7 @@ quality:pre-commit:
 quality:docs-coverage:
   stage: test
   needs: []
-  image: ghcr.io/astral-sh/uv:0.9.30-bookworm
+  image: $UV_IMAGE
   variables:
     UV_EXTRA_INDEX_URL: "${UV_EXTRA_INDEX_URL}"
   script:
