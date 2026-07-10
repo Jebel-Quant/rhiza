@@ -79,7 +79,7 @@ context and Rhiza expands it to a sensible bundle set.
 
 | Profile | Expands to | Use when |
 |---------|-----------|----------|
-| `local` | `core`, `claude`, `tests`, `book`, `marimo` | Local-first work with no hosted CI (experiments, private/other-host repos). |
+| `local` | `core`, `tests`, `book`, `marimo` | Local-first work with no hosted CI (experiments, private/other-host repos). |
 | `github-project` | the `local` set + `github` and the `github-*` overlays | A standard GitHub-hosted project. |
 | `gitlab-project` | the `local` set + `gitlab` and the `gitlab-*` overlays | A standard GitLab-hosted project. |
 
