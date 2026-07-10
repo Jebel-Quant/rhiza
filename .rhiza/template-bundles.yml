@@ -339,7 +339,6 @@ profiles:
       No .github/workflows/* files are synced.
     bundles:
       - core
-      - claude
       - book
       - marimo
       - tests
@@ -355,7 +354,6 @@ profiles:
       testing tooling, documentation, notebooks, and hosted CI workflows.
     bundles:
       - core
-      - claude
       - github
       - book
       - marimo
@@ -375,7 +373,6 @@ profiles:
       and GitLab CI pipelines. No .github/ files are synced.
     bundles:
       - core
-      - claude
       - gitlab
       - book
       - marimo
