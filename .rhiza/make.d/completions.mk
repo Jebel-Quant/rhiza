@@ -1,0 +1,1 @@
+../../bundles/core/.rhiza/make.d/completions.mk

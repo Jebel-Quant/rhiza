@@ -99,3 +99,38 @@ class TestCompletionScripts:
             ],
         )
         assert "edited:stale" in result.stdout
+
+
+class TestInstallCompletionsTarget:
+    """End-to-end behaviour of the `make install-completions` target."""
+
+    @staticmethod
+    def _make_env(home: Path) -> dict[str, str]:
+        """Return an environment that redirects installs into an isolated HOME."""
+        env = dict(os.environ)
+        env["HOME"] = str(home)
+        env["XDG_DATA_HOME"] = str(home / ".local" / "share")
+        return env
+
+    def _run_target(self, home: Path, *args: str) -> subprocess.CompletedProcess:
+        """Run `make install-completions` (plus *args*) from the repo root under *home*."""
+        make = shutil.which("make")
+        if make is None:
+            pytest.skip("make not available")
+        return _run([make, "install-completions", *args], cwd=_ROOT, env=self._make_env(home))
+
+    def test_installs_both_shells_by_default(self, tmp_path: Path) -> None:
+        """The default run installs byte-identical bash and zsh completion files."""
+        result = self._run_target(tmp_path)
+        assert result.returncode == 0, result.stderr
+        bash_dest = tmp_path / ".local/share/bash-completion/completions/make"
+        zsh_dest = tmp_path / ".local/share/zsh/site-functions/_make"
+        assert bash_dest.read_bytes() == (_COMPLETIONS / "rhiza-completion.bash").read_bytes()
+        assert zsh_dest.read_bytes() == (_COMPLETIONS / "rhiza-completion.zsh").read_bytes()
+
+    def test_shell_kind_narrows_install(self, tmp_path: Path) -> None:
+        """SHELL_KIND=zsh installs only the zsh script, not the bash one."""
+        result = self._run_target(tmp_path, "SHELL_KIND=zsh")
+        assert result.returncode == 0, result.stderr
+        assert (tmp_path / ".local/share/zsh/site-functions/_make").exists()
+        assert not (tmp_path / ".local/share/bash-completion/completions/make").exists()
