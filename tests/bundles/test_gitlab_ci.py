@@ -28,6 +28,7 @@ import os
 import re
 import shutil
 import subprocess  # nosec B404
+import sys
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -57,6 +58,15 @@ GITLAB_CI_LOCAL_VERSION = "4.73.0"
 _NPX = shutil.which("npx")
 _DOCKER = shutil.which("docker")
 _GIT = shutil.which("git") or "/usr/bin/git"
+
+# gitlab-ci-local is a POSIX-oriented tool (bash/Docker semantics); it is not a
+# supported path on native Windows and crashes the xdist worker there. Its
+# behaviour is platform-independent, so validating on Linux/macOS is sufficient.
+# (The pure-network image-existence check stays cross-platform.)
+_skip_on_windows = pytest.mark.skipif(
+    sys.platform.startswith("win"),
+    reason="gitlab-ci-local is unsupported on native Windows; validated on POSIX runners",
+)
 
 _MANIFEST_ACCEPT = ", ".join(
     [
@@ -352,6 +362,7 @@ def test_pipeline_images_exist(gitlab_project: Path, root: Path) -> None:
         pytest.skip(f"no container registry reachable (checked {len(unreachable)} images); skipping")
 
 
+@_skip_on_windows
 @pytest.mark.skipif(_NPX is None, reason="npx (Node.js) not available; gitlab-ci-local cannot run")
 def test_pipeline_schema_validates(gitlab_project: Path) -> None:
     """gitlab-ci-local must resolve every include and validate the merged schema.
@@ -373,6 +384,7 @@ def test_pipeline_schema_validates(gitlab_project: Path) -> None:
 
 
 @pytest.mark.gitlab_exec
+@_skip_on_windows
 @pytest.mark.skipif(_DOCKER is None, reason="docker not available")
 @pytest.mark.skipif(_NPX is None, reason="npx (Node.js) not available")
 @pytest.mark.skipif(
