@@ -287,7 +287,7 @@ def _manifest_status(ref: str, timeout: int = 20) -> int | None:
                 return request(token)
             except urllib.error.HTTPError as exc2:
                 return exc2.code
-    except (urllib.error.URLError, TimeoutError, OSError):
+    except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError):
         return None
 
 
