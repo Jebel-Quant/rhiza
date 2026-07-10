@@ -1,11 +1,12 @@
 """Tests for the git_repo pytest fixture that creates a mock Git repository.
 
-This file and its associated tests flow down via a SYNC action from the jebel-quant/rhiza repository
-(https://github.com/jebel-quant/rhiza).
-
 This module validates the temporary repository structure, git initialization,
 mocked tool executables, environment variables, and basic git configuration the
 fixture is expected to provide for integration-style tests.
+
+The ``git_repo`` fixture lives in ``tests/conftest.py`` and is rhiza-internal:
+it is intentionally not shipped in the ``tests`` bundle, so consumer repos do
+not receive it.
 """
 
 import os
