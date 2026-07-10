@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.1.2] - 2026-07-10
+
+### New Features
+- *(bundles)* Extract Claude Code commands into a dedicated `claude` bundle (#1386)
+
+### Bug Fixes
+- *(tests)* Standardize git_repo fixture on main; stop syncing its self-test downstream (#1390)
+
+### Maintenance
+- Relocate LFS doc into the book + dedup Makefile fragments (#1385)
+- Drop mother-repo-only dogfood symlink guard from reusable CI (#1387)
+- Stop shipping the git_repo fixture in the tests bundle (#1389)
+
 ## [1.1.1] - 2026-07-09
 
 ### Bug Fixes
@@ -12,6 +25,9 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 
 ### Maintenance
 - *(gitlab-ci)* Single-source uv image, cross-job caching, drop dead template (#1383) (#1384)
+
+### Other Changes
+- Bump version 1.1.0 → 1.1.1
 
 ## [1.1.0] - 2026-07-09
 

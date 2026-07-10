@@ -18,7 +18,6 @@ The suite is flat — one file per concern:
 - `test_readme_validation.py` — executes/syntax-checks `README.md` code blocks (see below)
 - `test_docstrings.py` — runs doctests across the modules in your source folder
 - `conftest.py` — shared fixtures (`root`, `logger`)
-- `stress/` — scaffolding for optional load/concurrency tests (see [stress/README.md](stress/README.md))
 
 ### Skipping README code blocks with `+RHIZA_SKIP`
 
@@ -51,13 +50,6 @@ make rhiza-test                                  # run this suite (the usual ent
 uv run pytest .rhiza/tests/                       # equivalent, direct invocation
 uv run pytest .rhiza/tests/test_pyproject.py      # a single file
 uv run pytest .rhiza/tests/ -v                    # verbose
-uv run pytest .rhiza/tests/ -m "not stress"       # skip stress tests
-```
-
-Stress tests accept custom parameters (defaults: 100 iterations, 10 workers):
-
-```bash
-uv run pytest .rhiza/tests/stress/ -v --iterations=10
 ```
 
 ## Fixtures
