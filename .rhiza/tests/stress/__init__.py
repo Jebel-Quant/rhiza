@@ -1,1 +1,0 @@
-../../../bundles/tests/.rhiza/tests/stress/__init__.py
