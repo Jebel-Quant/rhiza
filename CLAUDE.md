@@ -58,6 +58,7 @@ The core abstraction is the **bundle** — a named group of configuration files.
 - `gitlab`: GitLab CI/CD pipeline configuration and core workflows
 - `docker`, `devcontainer`: containerisation
 - `vscode`: recommended VS Code extensions and workspace settings for local (non-container) editing
+- `claude`: Claude Code slash commands (`/rhiza_quality`, `/rhiza_release`, `/rhiza_update`, `/rhiza_book`) under `.claude/commands/`
 - `marimo`: interactive notebooks
 - `book`: documentation with [MkDocs](https://www.mkdocs.org/) + [zensical](https://pypi.org/project/zensical/)
 - `presentation`: Marp slides
