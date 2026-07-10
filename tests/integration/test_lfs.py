@@ -44,7 +44,8 @@ def lfs_install_dry_run(git_repo, lfs_makefile):
 def test_lfs_files_exist():
     """lfs.mk and LFS.md must be present in the bundle."""
     assert _LFS_MK.exists()
-    assert (_LFS_MK.parent.parent / "docs" / "LFS.md").exists()
+    # lfs.mk lives at bundles/lfs/.rhiza/make.d/lfs.mk; parents[2] is the bundle root.
+    assert (_LFS_MK.parents[2] / "docs" / "lfs" / "LFS.md").exists()
 
 
 def test_lfs_targets_exist(git_repo, logger, lfs_makefile):

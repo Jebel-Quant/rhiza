@@ -72,6 +72,30 @@ flowchart TD
     rhizamk -.->|optional| localmk
 ```
 
+`rhiza.mk` auto-loads every `.rhiza/make.d/*.mk` alphabetically. Each fragment is
+owned by exactly one bundle and is synced (as a dogfood symlink into
+`bundles/<owner>/.rhiza/make.d/`) only when that bundle is adopted — so the number of
+fragments tracks the bundle model rather than growing arbitrarily. Edit the bundle
+source, not the root symlink.
+
+| `.rhiza/make.d/` fragment | Owner bundle | Provides |
+| --- | --- | --- |
+| `bootstrap.mk` | core | `install` / `uv` bootstrap |
+| `doctor.mk` | core | `make doctor` environment checks |
+| `quality.mk` | core | `fmt`, lint, pre-commit gates |
+| `releasing.mk` | core | `bump` / `release` targets |
+| `custom-env.mk` | core | Example stub: project variables |
+| `custom-task.mk` | core | Example stub: project targets / hooks |
+| `test.mk` | tests | `test`, coverage, typecheck, stress, mutation |
+| `book.mk` | book | `make book` documentation build |
+| `docker.mk` | docker | Container build / run |
+| `marimo.mk` | marimo | `make marimo` notebooks |
+| `presentation.mk` | presentation | Marp slide build |
+| `paper.mk` | paper | LaTeX paper compilation |
+| `lfs.mk` | lfs | Git LFS install / track / status |
+| `github.mk` | github | GitHub repo / workflow helpers |
+| `bundles.mk` | *(mother-repo only — no bundle ships it)* | `explain-bundles`, `sync-self`, `sync-self-check` |
+
 ## Hook System
 
 ```mermaid
