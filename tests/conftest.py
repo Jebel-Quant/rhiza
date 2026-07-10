@@ -19,6 +19,15 @@ import pytest
 # Get absolute path for git to avoid S607 warnings
 GIT = shutil.which("git") or "/usr/bin/git"
 
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Register mother-repo-only markers not shipped in the tests bundle's pytest.ini."""
+    config.addinivalue_line(
+        "markers",
+        "gitlab_exec: GitLab tests that execute a job in Docker (opt-in via RHIZA_GITLAB_DOCKER=1)",
+    )
+
+
 MOCK_MAKE_SCRIPT = """#!/usr/bin/env python3
 import sys
 
