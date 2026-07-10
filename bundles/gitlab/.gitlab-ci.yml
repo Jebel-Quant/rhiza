@@ -150,7 +150,7 @@ variables:
   # Single source of truth for the uv/Python CI image. Every job references
   # `image: $UV_IMAGE`; bump the tag here to move the whole pipeline. Kept in
   # step with the uv version GitHub Actions pins in .github/workflows/.
-  UV_IMAGE: "ghcr.io/astral-sh/uv:0.11.16-bookworm"
+  UV_IMAGE: "ghcr.io/astral-sh/uv:0.11.16-debian"
 
   # Redirect uv's caches under the git-ignored .cache/ dir so GitLab (which only
   # caches paths inside $CI_PROJECT_DIR) can persist them — see default: cache:.
