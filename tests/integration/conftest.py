@@ -140,14 +140,14 @@ def git_repo(root, tmp_path, monkeypatch) -> Path:
     # 1. Create bare remote
     remote_dir.mkdir()
     subprocess.run([GIT, "init", "--bare", str(remote_dir)], check=True)  # nosec B603
-    subprocess.run([GIT, "symbolic-ref", "HEAD", "refs/heads/master"], cwd=remote_dir, check=True)  # nosec B603
+    subprocess.run([GIT, "symbolic-ref", "HEAD", "refs/heads/main"], cwd=remote_dir, check=True)  # nosec B603
 
     # 2. Clone to local
     subprocess.run([GIT, "clone", str(remote_dir), str(local_dir)], check=True)  # nosec B603
 
     monkeypatch.chdir(local_dir)
 
-    subprocess.run([GIT, "checkout", "-b", "master"], check=True)  # nosec B603
+    subprocess.run([GIT, "checkout", "-b", "main"], check=True)  # nosec B603
 
     with open("pyproject.toml", "w") as f:
         f.write('[project]\nname = "test-project"\nversion = "0.1.0"\n')
@@ -189,7 +189,7 @@ def git_repo(root, tmp_path, monkeypatch) -> Path:
     subprocess.run([GIT, "config", "user.name", "Test User"], check=True)  # nosec B603
     subprocess.run([GIT, "add", "."], check=True)  # nosec B603
     subprocess.run([GIT, "commit", "-m", "Initial commit"], check=True)  # nosec B603
-    subprocess.run([GIT, "push", "origin", "master"], check=True)  # nosec B603
+    subprocess.run([GIT, "push", "origin", "main"], check=True)  # nosec B603
 
     return local_dir
 

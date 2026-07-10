@@ -1,11 +1,10 @@
-"""Tests for the git_repo pytest fixture that creates a mock Git repository.
+"""Self-test for the shared ``git_repo`` fixture.
 
-This file and its associated tests flow down via a SYNC action from the jebel-quant/rhiza repository
-(https://github.com/jebel-quant/rhiza).
-
-This module validates the temporary repository structure, git initialization,
-mocked tool executables, environment variables, and basic git configuration the
-fixture is expected to provide for integration-style tests.
+This exercises Rhiza's own test infrastructure (the ``git_repo`` fixture defined in
+``tests/integration/conftest.py``), so it lives in the mother-repo ``tests/`` suite and
+does **not** sync downstream: it would be byte-identical in every consumer and can't be
+changed there. The fixture itself still ships to consumers via the ``tests`` bundle for
+use in their own tests; this file just guards that the fixture keeps its contract.
 """
 
 import os
@@ -60,8 +59,8 @@ class TestGitRepoFixture:
         assert result.returncode == 0
         assert ".git" in result.stdout
 
-    def test_git_repo_has_master_branch(self, git_repo):
-        """Git repo should be on master branch."""
+    def test_git_repo_has_main_branch(self, git_repo):
+        """Git repo should be on the main branch (Rhiza standardizes on 'main')."""
         result = subprocess.run(  # nosec B603
             [GIT, "branch", "--show-current"],
             cwd=git_repo,
@@ -69,7 +68,7 @@ class TestGitRepoFixture:
             text=True,
         )
         assert result.returncode == 0
-        assert result.stdout.strip() == "master"
+        assert result.stdout.strip() == "main"
 
     def test_git_repo_has_initial_commit(self, git_repo):
         """Git repo should have an initial commit."""

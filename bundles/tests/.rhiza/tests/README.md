@@ -17,7 +17,6 @@ The suite is flat — one file per concern:
 - `test_pyproject.py` — validates `pyproject.toml` structure and required fields
 - `test_readme_validation.py` — executes/syntax-checks `README.md` code blocks (see below)
 - `test_docstrings.py` — runs doctests across the modules in your source folder
-- `test_git_repo_fixture.py` — self-test for the shared `git_repo` fixture
 - `conftest.py` — shared fixtures (`root`, `logger`, `git_repo`)
 - `test_utils.py` — shared helpers (`run_make`, `setup_rhiza_git_repo`, `strip_ansi`)
 - `stress/` — scaffolding for optional load/concurrency tests (see [stress/README.md](stress/README.md))
