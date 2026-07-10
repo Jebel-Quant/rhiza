@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.1.3] - 2026-07-10
+
+### New Features
+- *(make)* Add install-completions target (#1391)
+- *(bundles)* Drop claude bundle from local/github-project/gitlab-project profiles (#1392)
+
+### Bug Fixes
+- Repair stale uv Docker image tags (gitlab + docker bundles) (#1393)
+
+### Maintenance
+- *(gitlab)* Validate GitLab CI templates without a GitLab host (#1394)
+
 ## [1.1.2] - 2026-07-10
 
 ### New Features
@@ -17,6 +29,9 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - Relocate LFS doc into the book + dedup Makefile fragments (#1385)
 - Drop mother-repo-only dogfood symlink guard from reusable CI (#1387)
 - Stop shipping the git_repo fixture in the tests bundle (#1389)
+
+### Other Changes
+- Bump version 1.1.1 → 1.1.2
 
 ## [1.1.1] - 2026-07-09
 
