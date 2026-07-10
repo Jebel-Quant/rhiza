@@ -184,7 +184,6 @@ Dependencies are monitored for:
 
 - **uv Documentation**: [https://docs.astral.sh/uv/](https://docs.astral.sh/uv/)
 - **Renovate Configuration**: See `renovate.json` in repository root
-- **Dependency Workflows**: See `.rhiza/docs/WORKFLOWS.md`
 - **Package Homepages**:
   - marimo: [https://marimo.io/](https://marimo.io/)
   - numpy: [https://numpy.org/](https://numpy.org/)
