@@ -84,6 +84,26 @@ Plus intentional mother-repo overrides that deliberately diverge from their bund
 
 The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiza/rhiza.mk`. That file auto-loads everything in `.rhiza/make.d/*.mk` alphabetically.
 
+**Each `*.mk` is owned by exactly one bundle** and syncs only when that bundle is adopted — so the file count reflects the bundle model, not accidental sprawl (a project without Docker never receives `docker.mk`). Edit the bundle source (`bundles/<owner>/.rhiza/make.d/<file>`); the root file is a dogfood symlink into it. Mapping:
+
+| `.rhiza/make.d/` file | owner bundle | provides |
+| --- | --- | --- |
+| `bootstrap.mk` | core | `install`/`uv` bootstrap |
+| `doctor.mk` | core | `make doctor` environment checks |
+| `quality.mk` | core | `fmt`, lint, pre-commit gates |
+| `releasing.mk` | core | `bump`/`release` targets |
+| `custom-env.mk` | core | example stub: project variables |
+| `custom-task.mk` | core | example stub: project targets/hooks |
+| `test.mk` | tests | `test`, coverage, typecheck, stress, mutation |
+| `book.mk` | book | `make book` docs build |
+| `docker.mk` | docker | container build/run |
+| `marimo.mk` | marimo | `make marimo` notebooks |
+| `presentation.mk` | presentation | Marp slide build |
+| `paper.mk` | paper | LaTeX paper compilation |
+| `lfs.mk` | lfs | Git LFS install/track/status |
+| `github.mk` | github | GitHub repo/workflow helpers |
+| `bundles.mk` | *(mother-repo only — no bundle ships it)* | `explain-bundles`, `sync-self`, `sync-self-check` |
+
 Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can be defined multiple times to chain behaviour. Add project-specific hooks directly in the root `Makefile` above the include line. Developer-local shortcuts go in `local.mk` (not committed).
 
 ### Dependency Management

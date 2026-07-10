@@ -30,6 +30,7 @@ nav:
     - VSCode Extensions: development/VSCODE_EXTENSIONS.md
     - Marimo: development/MARIMO.md
     - Presentation: development/PRESENTATION.md
+    - Git LFS: lfs/LFS.md
   - Operations:
     - CI Enforcement Model: operations/CI_ENFORCEMENT.md
     - Global Patch Workflow: ops/GLOBAL_PATCH.md
