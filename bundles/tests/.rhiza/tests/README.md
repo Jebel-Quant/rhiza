@@ -17,8 +17,7 @@ The suite is flat — one file per concern:
 - `test_pyproject.py` — validates `pyproject.toml` structure and required fields
 - `test_readme_validation.py` — executes/syntax-checks `README.md` code blocks (see below)
 - `test_docstrings.py` — runs doctests across the modules in your source folder
-- `conftest.py` — shared fixtures (`root`, `logger`, `git_repo`)
-- `test_utils.py` — shared helpers (`run_make`, `setup_rhiza_git_repo`, `strip_ansi`)
+- `conftest.py` — shared fixtures (`root`, `logger`)
 - `stress/` — scaffolding for optional load/concurrency tests (see [stress/README.md](stress/README.md))
 
 ### Skipping README code blocks with `+RHIZA_SKIP`
@@ -67,15 +66,8 @@ Defined in `conftest.py` and available to every test without import:
 
 - `root` — repository root path (session-scoped)
 - `logger` — configured logger instance (session-scoped)
-- `git_repo` — sandboxed git repository (function-scoped)
 
-Shared helpers live in `test_utils.py` and are imported directly:
-
-```python
-from test_utils import strip_ansi, run_make, setup_rhiza_git_repo
-```
-
-`.rhiza/tests` is on `pythonpath` (see `pytest.ini`), so `test_utils` imports resolve
+`.rhiza/tests` is on `pythonpath` (see `pytest.ini`), so intra-suite imports resolve
 without any `sys.path` manipulation.
 
 ## Writing Tests
@@ -84,4 +76,3 @@ without any `sys.path` manipulation.
 - Group related tests in classes when appropriate
 - Add docstrings to test modules and complex test functions
 - Use `pytest.mark.skip` for tests that depend on optional features
-- Prefer the `git_repo` fixture over touching the working tree
