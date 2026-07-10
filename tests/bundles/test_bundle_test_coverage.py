@@ -52,6 +52,9 @@ _GENERIC_TESTS = {
 # by test_bundle_content_validity.py and the byte-identity sync tests, so a
 # dedicated behavioural test would have nothing to assert. Keyed to the reason.
 _EXEMPT: dict[str, str] = {
+    "claude": "Static .claude/commands/*.md slash-command prose; no make targets or "
+    "workflows to drive. Byte-identity with the dogfooded copies is guarded by "
+    "test_bundle_claude_commands_sync.py (a generic module).",
     "legal": "Static community files (LICENSE, CODE_OF_CONDUCT, ...); no targets "
     "or workflows. Content is guarded by the bundle content-validity tests.",
     "renovate": "Static renovate.json config; validated by the 'Validate Renovate "

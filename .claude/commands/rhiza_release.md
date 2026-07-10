@@ -1,1 +1,1 @@
-../../bundles/core/.claude/commands/rhiza_release.md
+../../bundles/claude/.claude/commands/rhiza_release.md

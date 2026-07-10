@@ -37,6 +37,7 @@ the source of truth for the exact set. See
 | `docker` | Docker containerization support. |
 | `devcontainer` | VS Code Dev Container for reproducible environments. |
 | `vscode` | Recommended VS Code extensions and workspace settings for local (non-container) editing. |
+| `claude` | Claude Code slash commands (`/rhiza_quality`, `/rhiza_release`, `/rhiza_update`, `/rhiza_book`) under `.claude/commands/`. |
 | `lfs` | Git LFS installation and management. |
 | `github` | GitHub repository configuration (actions, dependabot, templates, rulesets, core workflows). |
 | `gitlab` | GitLab CI/CD pipeline configuration and core workflows. |
@@ -78,7 +79,7 @@ context and Rhiza expands it to a sensible bundle set.
 
 | Profile | Expands to | Use when |
 |---------|-----------|----------|
-| `local` | `core`, `tests`, `book`, `marimo` | Local-first work with no hosted CI (experiments, private/other-host repos). |
+| `local` | `core`, `claude`, `tests`, `book`, `marimo` | Local-first work with no hosted CI (experiments, private/other-host repos). |
 | `github-project` | the `local` set + `github` and the `github-*` overlays | A standard GitHub-hosted project. |
 | `gitlab-project` | the `local` set + `gitlab` and the `gitlab-*` overlays | A standard GitLab-hosted project. |
 

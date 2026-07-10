@@ -50,6 +50,7 @@ flowchart LR
         legal["legal"]
         devcontainer["devcontainer"]
         vscode["vscode"]
+        claude["claude"]
         docker["docker"]
         lfs["lfs"]
         presentation["presentation"]
@@ -109,7 +110,9 @@ flowchart LR
     gitlab_book --> gitlab
     gitlab_quality_review --> core
     gitlab_quality_review --> gitlab
+    claude --> core
     presentation -.-> marimo
+    claude -.-> book
     book -.-> tests
     book -.-> marimo
 ```

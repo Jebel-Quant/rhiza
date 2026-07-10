@@ -189,9 +189,9 @@ Rhiza provides **profiles** — named presets that select a sensible set of bund
 
 | Profile | Description | Includes |
 |---------|-------------|---------|
-| `local` | Local-first development with no hosted CI/CD workflow files | `core`, `book`, `marimo`, `tests` |
-| `github-project` | GitHub-hosted project with CI/CD and release automation | `core`, `github`, `book`, `marimo`, `tests`, `github-book`, `github-marimo`, `github-tests` |
-| `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `core`, `gitlab`, `book`, `marimo`, `tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-tests` |
+| `local` | Local-first development with no hosted CI/CD workflow files | `core`, `claude`, `book`, `marimo`, `tests` |
+| `github-project` | GitHub-hosted project with CI/CD and release automation | `core`, `claude`, `github`, `book`, `marimo`, `tests`, `github-book`, `github-marimo`, `github-tests` |
+| `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `core`, `claude`, `gitlab`, `book`, `marimo`, `tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-tests` |
 
 Declare a profile in `.rhiza/template.yml`:
 
@@ -233,6 +233,7 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 | `docker` | Docker containerization support | — |
 | `devcontainer` | VS Code DevContainer configuration | — |
 | `vscode` | VS Code recommended extensions and workspace settings for local editing | — |
+| `claude` | Claude Code slash commands (`/rhiza_quality`, `/rhiza_release`, `/rhiza_update`, `/rhiza_book`) | `core` |
 | `presentation` | Presentation building using Marp | — |
 | `paper` | LaTeX paper compilation targets (`make paper`, `make paper-clean`) | — |
 | `lfs` | Git LFS (Large File Storage) support | — |
