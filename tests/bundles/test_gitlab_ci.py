@@ -341,8 +341,10 @@ def test_pipeline_images_exist(gitlab_project: Path, root: Path) -> None:
             unreachable.append(ref)
         elif status == 200:
             reachable += 1
-        else:
+        elif status == 404:
             missing.append(f"{ref} -> HTTP {status}")
+        else:
+            unreachable.append(f"{ref} -> HTTP {status}")
 
     if missing:
         pytest.fail("Container image(s) do not exist on their registry:\n  " + "\n  ".join(missing))
