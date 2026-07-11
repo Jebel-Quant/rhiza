@@ -557,7 +557,6 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - Add 75 new tests across bundle content, combinations, and sync
 
 ### Other Changes
-- Bump version 0.15.0 → 0.16.1
 - Bump version 0.15.0 → 0.15.1
 
 ## [0.15.0] - 2026-05-26

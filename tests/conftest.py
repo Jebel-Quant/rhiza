@@ -36,7 +36,7 @@ if len(sys.argv) > 1 and sys.argv[1] == "help":
     print("target: ## Description")
 """
 
-MOCK_UV_SCRIPT = """#!/usr/bin/env python3
+MOCK_UV_SCRIPT = r"""#!/usr/bin/env python3
 import sys
 import re
 
@@ -111,7 +111,7 @@ def main():
                 sys.exit(1)
         else:
             # Simple validation: must start with a digit
-            if not re.match(r"^\\d", version):
+            if not re.match(r"^\d", version):
                 sys.exit(1)
         # Just exit 0 if valid
         return
