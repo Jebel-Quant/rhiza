@@ -450,8 +450,6 @@ class TestRenovateBundleSync:
 
     def test_renovate_json_has_extends(self) -> None:
         """renovate.json must declare 'extends' with at least one Renovate preset."""
-        import json
-
         parsed = json.loads((self.project / "renovate.json").read_text(encoding="utf-8"))
         assert "extends" in parsed, "renovate.json missing 'extends' key"
         assert isinstance(parsed["extends"], list), "renovate.json 'extends' must be a list"
