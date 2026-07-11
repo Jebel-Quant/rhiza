@@ -62,3 +62,31 @@ def test_classify_dogfood_skips_without_reading_mismatched_sizes(root, tmp_path,
     monkeypatch.setattr(Path, "read_bytes", _fail_read_bytes)
 
     assert module._classify_dogfood(tmp_path, rel, index) == ("skip", None)
+
+
+def test_relink_check_mode_reports_pending_and_exits_nonzero(root, tmp_path) -> None:
+    """Check mode should accumulate pending links and exit non-zero when any are pending."""
+    module = _load_module(root)
+
+    rel_pending = "pending.txt"
+    rel_unchanged = "unchanged.txt"
+
+    src_pending = tmp_path / "src_pending.txt"
+    src_pending.write_text("pending-source", encoding="utf-8")
+    dst_pending = tmp_path / rel_pending
+    dst_pending.write_text("stale-content", encoding="utf-8")
+
+    src_unchanged = tmp_path / "src_unchanged.txt"
+    src_unchanged.write_text("unchanged-source", encoding="utf-8")
+    dst_unchanged = tmp_path / rel_unchanged
+    dst_unchanged.symlink_to(src_unchanged)
+
+    index = {
+        rel_pending: [src_pending],
+        rel_unchanged: [src_unchanged],
+    }
+
+    with pytest.raises(SystemExit) as excinfo:
+        module.relink(tmp_path, index, check=True)
+
+    assert excinfo.value.code != 0
