@@ -538,7 +538,7 @@ class TestGithubProjectProfileSync:
                 errors.append(f"  {wf.name}: not a YAML mapping")
                 continue
             # pyyaml parses 'on:' as True; check both forms
-            has_on = "on" in doc or True in doc
+            has_on = "on" in doc or any(k is True for k in doc)
             if not has_on:
                 errors.append(f"  {wf.name}: missing 'on' trigger")
             if "jobs" not in doc:
