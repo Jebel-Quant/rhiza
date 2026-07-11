@@ -30,7 +30,8 @@ def test_link_one_keeps_original_file_when_temp_symlink_creation_fails(root, tmp
     link = tmp_path / rel
     link.write_text("original", encoding="utf-8")
 
-    def _raise_symlink(self: Path, target: str, target_is_directory: bool = False) -> None:  # noqa: ARG001
+    def _raise_symlink(self: Path, target: str, target_is_directory: bool = False) -> None:
+        """Stand-in for ``Path.symlink_to`` that always fails."""
         raise OSError("boom")
 
     monkeypatch.setattr(Path, "symlink_to", _raise_symlink)
@@ -54,7 +55,9 @@ def test_classify_dogfood_skips_without_reading_mismatched_sizes(root, tmp_path,
     index = {rel: [owner]}
 
     def _fail_read_bytes(self: Path) -> bytes:
-        raise AssertionError("read_bytes should not be called for mismatched file sizes")
+        """Stand-in for ``Path.read_bytes`` that must never be invoked here."""
+        msg = "read_bytes should not be called for mismatched file sizes"
+        raise AssertionError(msg)
 
     monkeypatch.setattr(Path, "read_bytes", _fail_read_bytes)
 
