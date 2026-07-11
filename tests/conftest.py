@@ -111,7 +111,7 @@ def main():
                 sys.exit(1)
         else:
             # Simple validation: must start with a digit
-            if not re.match(r"^\\d", version):
+            if not re.match(r"^\d", version):
                 sys.exit(1)
         # Just exit 0 if valid
         return

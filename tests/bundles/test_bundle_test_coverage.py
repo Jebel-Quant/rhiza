@@ -84,8 +84,20 @@ def _behavioural_test_files() -> list[Path]:
     return files
 
 
-# Read each behavioural test file once; the scan runs against the cached text.
-_TEST_SOURCES: dict[Path, str] = {p: p.read_text(encoding="utf-8", errors="replace") for p in _behavioural_test_files()}
+# Read behavioural test files lazily and cache their text for repeated scans.
+_TEST_SOURCES: dict[Path, str] = {}
+
+
+def _test_sources() -> dict[Path, str]:
+    """Return cached behavioural test sources, loading them on first use."""
+    if not _TEST_SOURCES:
+        _TEST_SOURCES.update(
+            {
+                p: p.read_text(encoding="utf-8", errors="replace")
+                for p in _behavioural_test_files()
+            }
+        )
+    return _TEST_SOURCES
 
 
 def _bundle_patterns(bundle: str) -> list[str]:
@@ -106,15 +118,18 @@ def _covering_tests(bundle: str) -> list[str]:
     patterns = [re.compile(p) for p in _bundle_patterns(bundle)]
     return [
         path.relative_to(_ROOT).as_posix()
-        for path, text in _TEST_SOURCES.items()
+        for path, text in _test_sources().items()
         if any(p.search(text) for p in patterns)
     ]
+
+
+_BUNDLE_NAMES = _bundle_names()
 
 
 class TestBundleTestCoverage:
     """Every declared bundle must have a behavioural test or a documented exemption."""
 
-    @pytest.mark.parametrize("bundle", _bundle_names())
+    @pytest.mark.parametrize("bundle", _BUNDLE_NAMES)
     def test_bundle_has_behavioural_test(self, bundle: str) -> None:
         """A bundle is covered by a behavioural test, or is explicitly exempt."""
         if bundle in _EXEMPT:
@@ -129,7 +144,7 @@ class TestBundleTestCoverage:
     @pytest.mark.parametrize("bundle", sorted(_EXEMPT))
     def test_exemptions_are_real_bundles(self, bundle: str) -> None:
         """Every _EXEMPT key must name a bundle that actually exists (no stale exemptions)."""
-        assert bundle in _bundle_names(), (
+        assert bundle in _BUNDLE_NAMES, (
             f"_EXEMPT lists '{bundle}', which is not a bundle in .rhiza/template-bundles.yml — remove the stale entry"
         )
 

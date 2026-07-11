@@ -80,3 +80,6 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Switch to non-root
 USER app_user
 
+# Default application start command (replace module/script as appropriate)
+CMD ["python", "-m", "src"]
+
