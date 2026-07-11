@@ -37,7 +37,6 @@ the source of truth for the exact set. See
 | `docker` | Docker containerization support. |
 | `devcontainer` | VS Code Dev Container for reproducible environments. |
 | `vscode` | Recommended VS Code extensions and workspace settings for local (non-container) editing. |
-| `claude` | Claude Code slash commands (`/rhiza_quality`, `/rhiza_release`, `/rhiza_update`, `/rhiza_book`) under `.claude/commands/`. |
 | `lfs` | Git LFS installation and management. |
 | `github` | GitHub repository configuration (actions, dependabot, templates, rulesets, core workflows). |
 | `gitlab` | GitLab CI/CD pipeline configuration and core workflows. |

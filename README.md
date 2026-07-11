@@ -1,6 +1,6 @@
 <div align="center" markdown>
 
-# <img src="https://raw.githubusercontent.com/Jebel-Quant/rhiza/main/.rhiza/assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza
+# <img src="https://raw.githubusercontent.com/Jebel-Quant/rhiza/main/bundles/core/.rhiza/assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza
 ![GitHub Release](https://img.shields.io/github/v/release/jebel-quant/rhiza?sort=semver&color=2FA4A9&label=rhiza)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -233,7 +233,6 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 | `docker` | Docker containerization support | — |
 | `devcontainer` | VS Code DevContainer configuration | — |
 | `vscode` | VS Code recommended extensions and workspace settings for local editing | — |
-| `claude` | Claude Code slash commands (`/rhiza_quality`, `/rhiza_release`, `/rhiza_update`, `/rhiza_book`) | `core` |
 | `presentation` | Presentation building using Marp | — |
 | `paper` | LaTeX paper compilation targets (`make paper`, `make paper-clean`) | — |
 | `lfs` | Git LFS (Large File Storage) support | — |
