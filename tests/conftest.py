@@ -36,7 +36,7 @@ if len(sys.argv) > 1 and sys.argv[1] == "help":
     print("target: ## Description")
 """
 
-MOCK_UV_SCRIPT = """#!/usr/bin/env python3
+MOCK_UV_SCRIPT = r"""#!/usr/bin/env python3
 import sys
 import re
 

@@ -91,12 +91,7 @@ _TEST_SOURCES: dict[Path, str] = {}
 def _test_sources() -> dict[Path, str]:
     """Return cached behavioural test sources, loading them on first use."""
     if not _TEST_SOURCES:
-        _TEST_SOURCES.update(
-            {
-                p: p.read_text(encoding="utf-8", errors="replace")
-                for p in _behavioural_test_files()
-            }
-        )
+        _TEST_SOURCES.update({p: p.read_text(encoding="utf-8", errors="replace") for p in _behavioural_test_files()})
     return _TEST_SOURCES
 
 
