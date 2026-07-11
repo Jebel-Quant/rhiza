@@ -62,3 +62,33 @@ def test_classify_dogfood_skips_without_reading_mismatched_sizes(root, tmp_path,
     monkeypatch.setattr(Path, "read_bytes", _fail_read_bytes)
 
     assert module._classify_dogfood(tmp_path, rel, index) == ("skip", None)
+
+
+def test_relink_check_mode_reports_pending_and_exits_nonzero(root, tmp_path) -> None:
+    """Check mode should accumulate pending links and exit non-zero when any are pending."""
+    module = _load_module(root)
+
+    rel_pending = "pending.txt"
+    rel_unchanged = "unchanged.txt"
+
+    # dst_pending is a real file (not a symlink) with the same content as src_pending —
+    # it looks like an unlinked dogfood copy and should be flagged as pending.
+    src_pending = tmp_path / "src_pending.txt"
+    src_pending.write_text("pending-source", encoding="utf-8")
+    dst_pending = tmp_path / rel_pending
+    dst_pending.write_text("pending-source", encoding="utf-8")
+
+    # dst_unchanged is already a correct *relative* symlink pointing at src_unchanged —
+    # _link_is_current requires a relative target, so symlink_to must receive a str.
+    src_unchanged = tmp_path / "src_unchanged.txt"
+    src_unchanged.write_text("unchanged-source", encoding="utf-8")
+    dst_unchanged = tmp_path / rel_unchanged
+    dst_unchanged.symlink_to("src_unchanged.txt")  # relative symlink
+
+    index = {
+        rel_pending: [src_pending],
+        rel_unchanged: [src_unchanged],
+    }
+
+    rc = module.relink(tmp_path, index, check=True)
+    assert rc != 0
