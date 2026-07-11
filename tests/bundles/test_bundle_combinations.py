@@ -442,8 +442,6 @@ class TestRenovateBundleSync:
 
     def test_renovate_json_is_valid(self) -> None:
         """renovate.json must be valid JSON."""
-        import json
-
         content = (self.project / "renovate.json").read_text(encoding="utf-8")
         parsed = json.loads(content)
         assert isinstance(parsed, dict), "renovate.json must be a JSON object"
