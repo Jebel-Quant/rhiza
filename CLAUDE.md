@@ -58,7 +58,6 @@ The core abstraction is the **bundle** — a named group of configuration files.
 - `gitlab`: GitLab CI/CD pipeline configuration and core workflows
 - `docker`, `devcontainer`: containerisation
 - `vscode`: recommended VS Code extensions and workspace settings for local (non-container) editing
-- `claude`: Claude Code slash commands (`/rhiza_quality`, `/rhiza_release`, `/rhiza_update`, `/rhiza_book`) under `.claude/commands/`
 - `marimo`: interactive notebooks
 - `book`: documentation with [MkDocs](https://www.mkdocs.org/) + [zensical](https://pypi.org/project/zensical/)
 - `presentation`: Marp slides
@@ -78,7 +77,7 @@ A few files **cannot** be symlinks and stay as **real copies**, kept in sync by 
 - `.github/*` platform config (Dependabot, release notes, secret scanning, PR template, rulesets) — GitHub reads these blobs directly and does not resolve symlinks. **Live `.github/workflows/*` are also real** (Actions won't run a symlinked workflow) and differ from the bundle stubs by design.
 - `.rhiza/.gitignore` (and any `.gitignore`/`.gitattributes`) — git opens these with `O_NOFOLLOW`, so a symlink yields an ELOOP warning and the rules are ignored.
 
-Plus intentional mother-repo overrides that deliberately diverge from their bundle source: `.claude/commands/rhiza_quality.md`, root `.gitignore`, `.pre-commit-config.yaml`, `.python-version`, `SECURITY.md`, `renovate.json`. The exclusion list lives in `utils/link_dogfood.py`. Downstream consumers are unaffected: `rhiza-cli` sparse-checks-out a bundle and dereferences symlinks on copy, so synced projects always receive real files (guarded by `test_no_symlinks_in_*`).
+Plus intentional mother-repo overrides that deliberately diverge from their bundle source: root `.gitignore`, `.pre-commit-config.yaml`, `.python-version`, `SECURITY.md`, `renovate.json`. The exclusion list lives in `utils/link_dogfood.py`. Downstream consumers are unaffected: `rhiza-cli` sparse-checks-out a bundle and dereferences symlinks on copy, so synced projects always receive real files (guarded by `test_no_symlinks_in_*`).
 
 ### Modular Makefile System
 
