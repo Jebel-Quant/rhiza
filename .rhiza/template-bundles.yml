@@ -9,7 +9,7 @@
 #    jebel-quant/rhiza) live in dedicated github-<feature> overlay bundles.
 #
 #    File ownership is expressed through the filesystem: each bundle has a
-#    corresponding directory under bundles/<name>/ in this repository (24 bundles).
+#    corresponding directory under bundles/<name>/ in this repository (26 bundles).
 #    Symlinks point to the real files; overlay bundles (github-*, gitlab-*)
 #    contain the actual injection files directly.
 #
@@ -65,16 +65,6 @@ bundles:
     description: "Legal and community documentation files"
     standalone: true
     requires: []
-
-  # ============================================================================
-  # CLAUDE - Claude Code slash commands
-  # ============================================================================
-  claude:
-    description: "Claude Code slash commands (/rhiza_quality, /rhiza_release, /rhiza_update, /rhiza_book) under .claude/commands/"
-    standalone: true
-    requires: [core]
-    recommends:
-      - book  # /rhiza_book drives `make book`, which the book bundle provides
 
   # ============================================================================
   # VSCODE - VS Code recommended extensions and workspace settings

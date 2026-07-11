@@ -1,1 +1,0 @@
-../../bundles/claude/.claude/commands/rhiza_book.md

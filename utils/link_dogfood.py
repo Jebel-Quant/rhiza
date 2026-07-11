@@ -50,7 +50,6 @@ RESET = "\033[0m"
 # Keep this list in sync with the dogfood section of CLAUDE.md.
 _EXCLUDE = frozenset(
     {
-        ".claude/commands/rhiza_quality.md",  # mother-repo variant (no src/, rhiza-test gate)
         ".gitignore",  # mother-repo additions
         ".pre-commit-config.yaml",  # mother-repo additions
         ".python-version",  # mother-repo pinned version
