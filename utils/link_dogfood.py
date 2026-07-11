@@ -240,7 +240,12 @@ def _report(*, check: bool, linked: int, unchanged: int, ambiguous: list[str], p
     return 1 if (ambiguous or pending) else 0
 
 
-def relink(root: Path, *, check: bool = False) -> int:
+def relink(
+    root: Path,
+    index: dict[str, list[Path]] | None = None,
+    *,
+    check: bool = False,
+) -> int:
     """Convert every eligible root dogfood copy into a relative symlink.
 
     A root file is eligible when it is tracked by git, not in ``_EXCLUDE``, and
@@ -254,23 +259,33 @@ def relink(root: Path, *, check: bool = False) -> int:
 
     Args:
         root: The repository root containing ``bundles/`` and the dogfood files.
+        index: Optional pre-built bundle index mapping relative paths to their bundle
+            source files.  When *None* (the default) the index is computed from the
+            ``bundles/`` subdirectory of ``root`` and the candidate files are read from
+            ``git ls-files``.  Pass an explicit mapping to skip the filesystem scan —
+            primarily useful in unit tests that need to exercise the function in
+            isolation without a real ``bundles/`` tree or git repository.
         check: When True, do not modify anything; only detect and report pending links.
 
     Returns:
         Process exit code: ``0`` on success, ``1`` if any file was ambiguous or (in
         ``check`` mode) if any eligible copy is not yet linked.
     """
-    bundles_dir = root / "bundles"
-    if not bundles_dir.is_dir():
-        sys.exit(f"{YELLOW}No bundles/ directory found at {root} — run from the rhiza repo root.{RESET}")
+    if index is None:
+        bundles_dir = root / "bundles"
+        if not bundles_dir.is_dir():
+            sys.exit(f"{YELLOW}No bundles/ directory found at {root} — run from the rhiza repo root.{RESET}")
+        index = _bundle_index(bundles_dir)
+        files: list[str] = _tracked_files(root)
+    else:
+        files = list(index.keys())
 
-    index = _bundle_index(bundles_dir)
     linked = 0
     unchanged = 0
     ambiguous: list[str] = []
     pending: list[str] = []
 
-    for rel in _tracked_files(root):
+    for rel in files:
         kind, source = _classify_dogfood(root, rel, index)
         if kind == "ambiguous":
             ambiguous.append(rel)

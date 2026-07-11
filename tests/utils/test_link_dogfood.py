@@ -71,22 +71,24 @@ def test_relink_check_mode_reports_pending_and_exits_nonzero(root, tmp_path) -> 
     rel_pending = "pending.txt"
     rel_unchanged = "unchanged.txt"
 
+    # dst_pending is a real file (not a symlink) with the same content as src_pending —
+    # it looks like an unlinked dogfood copy and should be flagged as pending.
     src_pending = tmp_path / "src_pending.txt"
     src_pending.write_text("pending-source", encoding="utf-8")
     dst_pending = tmp_path / rel_pending
-    dst_pending.write_text("stale-content", encoding="utf-8")
+    dst_pending.write_text("pending-source", encoding="utf-8")
 
+    # dst_unchanged is already a correct *relative* symlink pointing at src_unchanged —
+    # _link_is_current requires a relative target, so symlink_to must receive a str.
     src_unchanged = tmp_path / "src_unchanged.txt"
     src_unchanged.write_text("unchanged-source", encoding="utf-8")
     dst_unchanged = tmp_path / rel_unchanged
-    dst_unchanged.symlink_to(src_unchanged)
+    dst_unchanged.symlink_to("src_unchanged.txt")  # relative symlink
 
     index = {
         rel_pending: [src_pending],
         rel_unchanged: [src_unchanged],
     }
 
-    with pytest.raises(SystemExit) as excinfo:
-        module.relink(tmp_path, index, check=True)
-
-    assert excinfo.value.code != 0
+    rc = module.relink(tmp_path, index, check=True)
+    assert rc != 0
