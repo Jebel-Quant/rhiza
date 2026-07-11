@@ -315,6 +315,7 @@ def gitlab_project(root: Path, tmp_path_factory: pytest.TempPathFactory) -> Path
 
 def _run_gitlab_ci_local(project: Path, *args: str) -> subprocess.CompletedProcess:
     """Invoke a pinned gitlab-ci-local against the assembled project."""
+    assert _NPX is not None, "npx is required to run gitlab-ci-local"
     return subprocess.run(  # nosec B603
         [_NPX, "--yes", f"gitlab-ci-local@{GITLAB_CI_LOCAL_VERSION}", *args],
         cwd=project,
@@ -407,6 +408,10 @@ def test_pinned_uv_image_runs_in_docker(root: Path, tmp_path: Path) -> None:
         encoding="utf-8",
     )
     subprocess.run([_GIT, "init", "-q", "-b", "main"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
+    subprocess.run([_GIT, "config", "user.email", "ci@example.invalid"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
+    subprocess.run([_GIT, "config", "user.name", "CI Smoke Test"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
+    subprocess.run([_GIT, "add", ".gitlab-ci.yml"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
+    subprocess.run([_GIT, "commit", "-q", "-m", "Initial commit"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
 
     result = _run_gitlab_ci_local(tmp_path, "smoke")
     combined = result.stdout + result.stderr
