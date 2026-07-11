@@ -163,7 +163,7 @@ def git_repo(root, tmp_path, monkeypatch):
     monkeypatch.chdir(local_dir)
 
     # Ensure local default branch is 'master' to match test expectations
-    subprocess.run([GIT, "checkout", "-b", "master"], check=True)  # nosec B603
+    subprocess.run([GIT, "checkout", "-B", "master"], check=True)  # nosec B603
 
     # Create pyproject.toml
     with open("pyproject.toml", "w") as f:

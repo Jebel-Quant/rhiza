@@ -262,7 +262,7 @@ def _manifest_status(ref: str, timeout: int = 20) -> int | None:
     registry, repository, reference = _parse_ref(ref)
     url = f"https://{registry}/v2/{repository}/manifests/{urllib.parse.quote(reference, safe=':@')}"
 
-    def request(token: str | None) -> int:
+    def fetch_manifest_status(token: str | None) -> int:
         """Fetch the manifest (optionally with a bearer token) and return the HTTP status."""
         req = urllib.request.Request(url, method="GET")  # noqa: S310 - https only, host from repo config
         req.add_header("Accept", _MANIFEST_ACCEPT)
@@ -273,7 +273,7 @@ def _manifest_status(ref: str, timeout: int = 20) -> int | None:
 
     try:
         try:
-            return request(None)
+            return fetch_manifest_status(None)
         except urllib.error.HTTPError as exc:
             if exc.code != 401:
                 return exc.code
@@ -294,7 +294,7 @@ def _manifest_status(ref: str, timeout: int = 20) -> int | None:
                 payload = json.load(tok_resp)
             token = payload.get("token") or payload.get("access_token")
             try:
-                return request(token)
+                return fetch_manifest_status(token)
             except urllib.error.HTTPError as exc2:
                 return exc2.code
     except (urllib.error.URLError, TimeoutError, OSError, json.JSONDecodeError):
