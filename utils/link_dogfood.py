@@ -35,6 +35,7 @@ import os
 import shutil
 import subprocess  # nosec B404 - git is invoked with a fixed, non-user argument list
 import sys
+import tempfile
 from pathlib import Path
 
 _GIT = shutil.which("git") or "/usr/bin/git"
@@ -159,8 +160,16 @@ def _link_one(root: Path, rel: str, source: Path) -> bool:
         return False
     link = root / rel
     target = os.path.relpath(source, start=link.parent)
-    link.unlink()
-    link.symlink_to(target)
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{link.name}.", dir=link.parent)
+    os.close(fd)
+    tmp_link = Path(tmp_name)
+    tmp_link.unlink()
+    try:
+        tmp_link.symlink_to(target)
+        tmp_link.replace(link)
+    finally:
+        if tmp_link.exists() or tmp_link.is_symlink():
+            tmp_link.unlink()
     return True
 
 
@@ -194,8 +203,13 @@ def _classify_dogfood(root: Path, rel: str, index: dict[str, list[Path]]) -> tup
     owners = index.get(rel)
     if not owners:
         return ("skip", None)
-    root_bytes = (root / rel).read_bytes()
-    identical = [o for o in owners if o.read_bytes() == root_bytes]
+    root_path = root / rel
+    root_size = root_path.stat().st_size
+    same_size_owners = [o for o in owners if o.stat().st_size == root_size]
+    if not same_size_owners:
+        return ("skip", None)  # diverges from every owner — an (undeclared) override; leave it real
+    root_bytes = root_path.read_bytes()
+    identical = [o for o in same_size_owners if o.read_bytes() == root_bytes]
     if not identical:
         return ("skip", None)  # diverges from every owner — an (undeclared) override; leave it real
     if len(identical) > 1:
