@@ -52,7 +52,7 @@ typecheck = [
     # rhiza-tools package (which will own the type-checking tooling downstream).
     "ty>=0.0.30",
     "mypy==2.1.0",
-    "typer==0.21.1",
+    "typer==0.26.8",
 ]
 
 [project.urls]
