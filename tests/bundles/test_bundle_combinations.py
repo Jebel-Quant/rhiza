@@ -519,10 +519,6 @@ class TestGithubProjectProfileSync:
         """rhiza_marimo.yml notebook workflow must be present."""
         assert (self.project / ".github" / "workflows" / "rhiza_marimo.yml").is_file()
 
-    def test_sync_workflow_present(self) -> None:
-        """rhiza_sync.yml sync workflow must be present."""
-        assert (self.project / ".github" / "workflows" / "rhiza_sync.yml").is_file()
-
     def test_all_injected_workflows_are_valid_yaml(self) -> None:
         """Every injected workflow must be valid YAML with required fields.
 

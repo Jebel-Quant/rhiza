@@ -11,7 +11,6 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 │   ├── rhiza_quality.yml      # Quality checks (deptry, pre-commit, docs coverage, link check)
 │   ├── rhiza_marimo.yml       # Marimo notebook execution and artefact publishing
 │   ├── rhiza_book.yml         # Documentation building (GitLab Pages)
-│   ├── rhiza_sync.yml         # Template synchronization
 │   └── rhiza_release.yml      # Release workflow
 ├── template/                  # GitLab CI job templates
 │   └── marimo_job_template.yml.jinja
@@ -137,25 +136,6 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 **Equivalent GitHub Action:** `.github/workflows/rhiza_book.yml`
 
 **GitLab-specific:** Outputs to `public/` directory for GitLab Pages.
-
----
-
-### 8. Sync (`rhiza_sync.yml`)
-**Purpose:** Synchronize repository with its template.
-
-**Trigger:**
-- Scheduled (can be set in GitLab)
-- Manual trigger
-- Web pipeline trigger
-
-**Key Features:**
-- Template materialization with rhiza
-- Automatic branch creation
-- Manual merge request creation
-
-**Equivalent GitHub Action:** `.github/workflows/rhiza_sync.yml`
-
-**GitLab-specific:** Requires Project/Group Access Token (PAT_TOKEN) for workflow modifications.
 
 ---
 
