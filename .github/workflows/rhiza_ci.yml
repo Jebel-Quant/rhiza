@@ -321,37 +321,6 @@ jobs:
         run: |
           make docs-coverage
 
-  validation:
-    # CI budget: ≤5 min (validation quality gate). Last measured: 2026-05-28.
-    timeout-minutes: 5
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
-        with:
-          egress-policy: audit
-
-      - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          lfs: true
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
-        with:
-          version: "0.11.16"
-
-      - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.19.9
-        with:
-          token: ${{ secrets.GH_PAT }}
-
-      - name: Validate
-        shell: bash
-        run: |
-          make validate
-
   security:
     name: Security scanning
     # CI budget: ≤10 min (security scanning and suppression audit). Last measured: 2026-05-28.

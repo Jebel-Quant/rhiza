@@ -68,7 +68,6 @@ def test_ci_jobs_define_timeout_budgets(root):
         "deptry": 5,
         "pre-commit": 5,
         "docs-coverage": 10,
-        "validation": 5,
         "security": 10,
         "license": 10,
         "ci-gate": 5,

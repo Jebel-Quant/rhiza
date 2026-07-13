@@ -58,17 +58,11 @@ RESET := \033[0m
 	post-bump \
 	post-install \
 	post-release \
-	post-sync \
-	post-validate \
 	pre-bump \
 	pre-install \
 	pre-release \
-	pre-sync \
-	pre-validate \
 	print-logo \
 	readme \
-	sync \
-	validate \
 	version-matrix \
 	ci-os-matrix
 
@@ -81,11 +75,6 @@ VENV ?= .venv
 # Read Python version from .python-version (single source of truth)
 PYTHON_VERSION ?= $(strip $(shell cat .python-version 2>/dev/null || echo "3.13"))
 export PYTHON_VERSION
-
-# Pinned rhiza-claude release providing the stdlib sync/validate scripts.
-RHIZA_CLAUDE_REF ?= v0.4.0
-RHIZA_CLAUDE_REPO ?= https://github.com/Jebel-Quant/rhiza-claude
-_RHIZA_CACHE := $(HOME)/.cache/rhiza-claude/$(RHIZA_CLAUDE_REF)
 
 export UV_NO_MODIFY_PATH := 1
 export UV_VENV_CLEAR := 1
@@ -130,21 +119,7 @@ endef
 export RHIZA_LOGO
 
 # Declare phony targets for Rhiza Core
-.PHONY: print-logo sync sync-experimental materialize validate readme pre-sync post-sync pre-validate post-validate _fetch-rhiza-scripts
-
-# Hook targets (double-colon rules allow multiple definitions)
-# Note: pre-install/post-install are defined in bootstrap.mk
-# Note: pre-bump/post-bump/pre-release/post-release are defined in releasing.mk
-pre-sync:: ; @:
-post-sync:: ; @:
-pre-validate:: ; @:
-post-validate:: ; @:
-
-# Detected once at parse time: non-empty when origin is the jebel-quant/rhiza
-# mother repository, which by design has no template.yml. The sync/summarise/
-# validate targets are no-ops there. Evaluated a single time and reused so the
-# origin regex lives in exactly one place.
-IS_MOTHER_REPO := $(shell git remote get-url origin 2>/dev/null | grep -iqE 'jebel-quant/rhiza(\.git)?$$' && echo 1)
+.PHONY: print-logo readme
 
 ##@ Rhiza Workflows
 
@@ -152,43 +127,12 @@ print-logo:
 	@printf "${BLUE}$$RHIZA_LOGO${RESET}\n"
 
 
-sync: pre-sync ## sync with template repository as defined in .rhiza/template.yml
-	@if [ -n "$(IS_MOTHER_REPO)" ]; then \
-		printf "${BLUE}[INFO] Skipping sync in rhiza repository (no template.yml by design)${RESET}\n"; \
-	else \
-		$(MAKE) _fetch-rhiza-scripts && \
-		python3 "$(_RHIZA_CACHE)/scripts/sync.py" .; \
-	fi
-	@$(MAKE) post-sync
-
-_fetch-rhiza-scripts: ## (internal) fetch the pinned stdlib scripts from rhiza-claude
-	@if [ ! -d "$(_RHIZA_CACHE)/scripts" ]; then \
-		printf "${BLUE}[INFO] Fetching rhiza-claude $(RHIZA_CLAUDE_REF) scripts${RESET}\n"; \
-		rm -rf "$(_RHIZA_CACHE)"; \
-		git clone --depth 1 --filter=blob:none --sparse --branch "$(RHIZA_CLAUDE_REF)" "$(RHIZA_CLAUDE_REPO)" "$(_RHIZA_CACHE)" >/dev/null 2>&1; \
-		git -C "$(_RHIZA_CACHE)" sparse-checkout set scripts >/dev/null 2>&1; \
-	fi
-
-materialize: ## [DEPRECATED] use 'make sync' instead — materialize --force is now sync
-	@printf "${YELLOW}[WARN] 'make materialize' is deprecated and will be removed in a future release.${RESET}\n"
-	@printf "${YELLOW}[WARN] Please use 'make sync' instead (e.g. 'materialize --force' is now 'make sync').${RESET}\n"
-	@$(MAKE) sync
-
 rhiza-test: install ## run rhiza's own tests (if any)
 	@if [ -d ".rhiza/tests" ]; then \
 		${UV_BIN} run --with pytest --with pytest-timeout --with python-dotenv --with packaging pytest .rhiza/tests; \
 	else \
 		printf "${YELLOW}[WARN] No .rhiza/tests directory found, skipping rhiza-tests${RESET}\n"; \
 	fi
-
-validate: pre-validate rhiza-test ## validate project structure against template repository as defined in .rhiza/template.yml
-	@if [ -n "$(IS_MOTHER_REPO)" ]; then \
-		printf "${BLUE}[INFO] Skipping validate in rhiza repository (no template.yml by design)${RESET}\n"; \
-	else \
-		$(MAKE) _fetch-rhiza-scripts && \
-		python3 "$(_RHIZA_CACHE)/scripts/validate.py" .; \
-	fi
-	@$(MAKE) post-validate
 
 readme: install-uv ## update README.md with current Makefile help output
 	@${UVX_BIN} "rhiza-tools>=0.2.0" update-readme

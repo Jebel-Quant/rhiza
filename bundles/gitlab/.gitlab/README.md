@@ -38,25 +38,6 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 
 ---
 
-### 2. Validate (`rhiza_validate.yml`)
-**Purpose:** Validate Rhiza configuration against template, run security scans and type checking.
-
-**Trigger:**
-- On push to any branch
-- On merge requests to main/master
-- `pip-audit` job only runs on scheduled pipelines
-
-**Key Features:**
-- Runs `make validate`, which fires the full hook chain (`pre-validate`, `rhiza-test`, the stdlib validator, `post-validate`)
-- Skips validation in the rhiza repository itself (handled internally by `make validate`)
-- Runs `make security` (pip-audit + bandit) on push/MR
-- Runs `uvx pip-audit` on scheduled pipelines for dependency vulnerability scanning
-- Runs `make typecheck` (ty type checker) on push/MR
-
-**Equivalent GitHub Action:** `.github/workflows/rhiza_validate.yml`
-
----
-
 ### 3. Quality (`rhiza_quality.yml`)
 **Purpose:** Run quality checks including dependency validation, pre-commit hooks, documentation coverage, and link checking.
 

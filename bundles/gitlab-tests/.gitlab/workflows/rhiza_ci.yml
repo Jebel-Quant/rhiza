@@ -85,18 +85,6 @@ ci:pre-commit:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
 
-ci:validate:
-  # CI budget: ≤5 min (validation quality gate). Last measured: 2026-05-28.
-  timeout: 5m
-  stage: test
-  needs: []
-  image: $UV_IMAGE
-  script:
-    - make validate
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH
-
 ci:security:
   # CI budget: ≤10 min (security scanning). Last measured: 2026-05-28.
   timeout: 10m
