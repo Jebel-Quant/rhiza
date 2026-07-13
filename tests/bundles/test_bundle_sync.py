@@ -143,10 +143,6 @@ class TestGithubOverlaySync:
         content = (self.project / ".github" / "workflows" / "rhiza_ci.yml").read_text()
         assert "uses: jebel-quant/rhiza/.github/workflows/rhiza_ci.yml" in content
 
-    def test_sync_workflow_exists(self):
-        """Sync workflow stub is injected."""
-        assert (self.project / ".github" / "workflows" / "rhiza_sync.yml").is_file()
-
     def test_dependabot_config_exists(self):
         """Dependabot config is present."""
         assert (self.project / ".github" / "dependabot.yml").is_file()

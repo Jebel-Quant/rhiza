@@ -507,7 +507,6 @@ GitHub Actions workflows use the pattern `rhiza_<feature>.yml`:
 - `rhiza_ci.yml` - Continuous integration
 - `rhiza_release.yml` - Release automation
 - `rhiza_security.yml` - Security scanning
-- `rhiza_sync.yml` - Template synchronization
 - `rhiza_deptry.yml` - Dependency checking
 
 **Rationale**: The `rhiza_` prefix clearly identifies template-managed workflows, distinguishing them from user-defined workflows.

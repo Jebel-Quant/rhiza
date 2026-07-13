@@ -32,7 +32,7 @@ import yaml
 _ROOT = Path(__file__).resolve().parents[2]
 
 # Workflows that must queue rather than cancel in-progress runs.
-_QUEUE_WORKFLOWS = {"rhiza_release.yml", "rhiza_sync.yml"}
+_QUEUE_WORKFLOWS = {"rhiza_release.yml"}
 
 # Exact tag (v1.2.3, optionally deeper like v0.3.1900000450) or full commit SHA.
 _PRECISE_REF_RE = re.compile(r"@(v?\d+(\.\d+){2,}|[0-9a-f]{40})$")

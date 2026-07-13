@@ -16,7 +16,6 @@ This document provides a side-by-side comparison of GitHub Actions and GitLab CI
 | License | `rhiza_validate.yml` (license job) | `rhiza_license.yml` | ✅ Complete |
 | Pre-commit | `rhiza_pre-commit.yml` | `rhiza_pre-commit.yml` | ✅ Complete |
 | Documentation | `rhiza_book.yml` | `rhiza_book.yml` | ✅ Complete |
-| Sync | `rhiza_sync.yml` | `rhiza_sync.yml` | ✅ Complete |
 | Release | `rhiza_release.yml` | `rhiza_release.yml` | ✅ Complete |
 
 ## Syntax Differences

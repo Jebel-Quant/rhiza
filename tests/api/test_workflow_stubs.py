@@ -231,30 +231,6 @@ def _get_workflow_triggers(workflow_doc: dict) -> dict:
     return workflow_doc.get(True, workflow_doc.get("on", {})) or {}
 
 
-class TestSyncWorkflow:
-    """Tests specific to the sync workflow (rhiza_sync.yml)."""
-
-    @pytest.fixture
-    def sync_workflow(self, workflows_dir: Path) -> dict:
-        """Load and return the sync workflow YAML."""
-        sync_path = workflows_dir / "rhiza_sync.yml"
-        if not sync_path.exists():
-            pytest.skip("rhiza_sync.yml not found")
-        return _load_workflow(sync_path)
-
-    def test_sync_workflow_has_schedule_trigger(self, sync_workflow: dict) -> None:
-        """Sync workflow must run on a schedule to automatically pull template updates."""
-        triggers = _get_workflow_triggers(sync_workflow)
-        assert "schedule" in triggers or "schedule" in str(triggers), "sync workflow should run on a schedule"
-
-    def test_sync_workflow_has_workflow_dispatch(self, sync_workflow: dict) -> None:
-        """Sync workflow should support manual dispatch for on-demand syncing."""
-        triggers = _get_workflow_triggers(sync_workflow)
-        assert "workflow_dispatch" in triggers or "workflow_dispatch" in str(triggers), (
-            "sync workflow should support manual workflow_dispatch trigger"
-        )
-
-
 class TestReleaseWorkflow:
     """Tests specific to the release workflow (rhiza_release.yml)."""
 

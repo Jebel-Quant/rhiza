@@ -160,33 +160,6 @@ ls -la _book/
 
 ---
 
-### 6. Sync Workflow (`rhiza_sync.yml`)
-
-**Test trigger:** Manual pipeline, scheduled pipeline, or web trigger
-
-**Expected behavior:**
-- Syncs repository with template
-- Creates a new branch
-- Commits changes
-- Optionally creates merge request
-
-**Manual test:**
-```bash
-# Trigger manually from GitLab UI
-# CI/CD > Pipelines > Run pipeline
-```
-
-**Success criteria:**
-- Template synchronization completes
-- New branch created if changes detected
-- No changes if already in sync
-
-**Configuration needed:**
-- Set `PAT_TOKEN` for workflow modifications
-- Set `CREATE_MR=true` to auto-create merge requests
-
----
-
 ### 7. Release Workflow (`rhiza_release.yml`)
 
 **Test trigger:** Push a version tag (e.g., `v1.0.0`)

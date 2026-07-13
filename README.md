@@ -296,15 +296,11 @@ uvx rhiza sync
 
 For a full step-by-step tutorial covering init, bundle selection, first materialise, and the sync lifecycle, see **[rhiza-education Lessons 6–8](https://github.com/Jebel-Quant/rhiza-education)**.
 
-### Automated Sync (Continuous Updates)
+### Keeping Templates Up To Date
 
-Keep your templates up-to-date with automated sync workflows:
-
-- Configure `.rhiza/template.yml` to define which templates to include/exclude
-- The `.github/workflows/rhiza_sync.yml` workflow runs on schedule or manually
-- Creates pull requests with template updates
-
-For GitHub Token configuration and details, see the [GitHub Actions documentation](bundles/github/.github/CONFIG.md).
+Run `make sync` (equivalently `rhiza sync .`) to pull the latest template
+changes into your repository, then review and commit the result. Configure
+`.rhiza/template.yml` to control which templates are included/excluded.
 
 ### What to Expect After Integration
 
