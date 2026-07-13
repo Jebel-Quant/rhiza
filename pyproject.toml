@@ -51,7 +51,7 @@ typecheck = [
     # .rhiza/requirements/tools.txt; kept here as a group pending migration into the
     # rhiza-tools package (which will own the type-checking tooling downstream).
     "ty>=0.0.30",
-    "mypy==2.1.0",
+    "mypy==2.3.0",
     "typer==0.26.8",
 ]
 
