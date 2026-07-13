@@ -217,7 +217,6 @@ class TestDownstreamRepoEndToEndSync:
 
         shutil.copy2(root / "Makefile", downstream / "Makefile")
         shutil.copy2(root / ".rhiza" / "rhiza.mk", downstream / ".rhiza" / "rhiza.mk")
-        shutil.copy2(root / ".rhiza" / ".rhiza-version", downstream / ".rhiza" / ".rhiza-version")
         shutil.copy2(root / ".rhiza" / "make.d" / "bootstrap.mk", downstream / ".rhiza" / "make.d" / "bootstrap.mk")
 
         (downstream / ".rhiza" / "template.yml").write_text(

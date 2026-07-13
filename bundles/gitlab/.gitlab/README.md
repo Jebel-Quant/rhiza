@@ -47,7 +47,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 - `pip-audit` job only runs on scheduled pipelines
 
 **Key Features:**
-- Runs `make validate`, which fires the full hook chain (`pre-validate`, `rhiza-test`, `uvx rhiza validate .`, `post-validate`)
+- Runs `make validate`, which fires the full hook chain (`pre-validate`, `rhiza-test`, the stdlib validator, `post-validate`)
 - Skips validation in the rhiza repository itself (handled internally by `make validate`)
 - Runs `make security` (pip-audit + bandit) on push/MR
 - Runs `uvx pip-audit` on scheduled pipelines for dependency vulnerability scanning

@@ -226,7 +226,6 @@ flowchart TB
             rhizamk[rhiza.mk<br/>Core Logic - 153 lines]
             cfg[.cfg.toml<br/>Configuration]
             env[.env<br/>Environment]
-            version[.rhiza-version<br/>Version]
             bundles[template-bundles.yml<br/>Bundle Definitions]
         end
         
@@ -484,7 +483,7 @@ Makefile variables follow these patterns:
 2. **Suffix patterns**:
    - `_BIN` - Executable paths: `UV_BIN`, `UVX_BIN`, `COPILOT_BIN`
    - `_DIR` - Directory paths: `INSTALL_DIR`, `DOCKER_FOLDER`
-   - `_VERSION` - Version strings: `PYTHON_VERSION`, `RHIZA_VERSION`
+   - `_VERSION` - Version strings: `PYTHON_VERSION`
 
 3. **Namespace prefixes**: Related variables share prefixes
    - UV tooling: `UV_BIN`, `UVX_BIN`, `UV_LINK_MODE`
@@ -516,7 +515,6 @@ GitHub Actions workflows use the pattern `rhiza_<feature>.yml`:
 ### 1. Single Source of Truth
 
 - **Python version**: `.python-version` file (not hardcoded)
-- **Rhiza version**: `.rhiza/.rhiza-version` file
 - **Dependencies**: `pyproject.toml` (not duplicated in makefiles)
 - **Bundle definitions**: `template-bundles.yml` (not scattered)
 
