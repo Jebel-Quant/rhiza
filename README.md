@@ -296,12 +296,6 @@ uvx rhiza sync
 
 For a full step-by-step tutorial covering init, bundle selection, first materialise, and the sync lifecycle, see **[rhiza-education Lessons 6–8](https://github.com/Jebel-Quant/rhiza-education)**.
 
-### Keeping Templates Up To Date
-
-Run `make sync` (equivalently `rhiza sync .`) to pull the latest template
-changes into your repository, then review and commit the result. Configure
-`.rhiza/template.yml` to control which templates are included/excluded.
-
 ### What to Expect After Integration
 
 - **Automated CI/CD** - GitHub Actions workflows for testing, linting, and releases
@@ -371,7 +365,6 @@ make install         # Install dependencies and setup environment
 make test            # Run test suite with coverage
 make fmt             # Format and lint code
 make todos           # Scan for TODO/FIXME/HACK comments
-make sync            # Sync with template repository
 make release         # Bump version, tag, and push to publish a new release
 make marimo          # Start Marimo notebook server
 make book            # Build documentation

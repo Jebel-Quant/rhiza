@@ -73,7 +73,6 @@ These are the commands you'll use most frequently:
 | Command | Description |
 |---------|-------------|
 | `make sync` | Sync with upstream template |
-| `make summarise-sync` | Preview sync changes without applying |
 | `make validate` | Validate project structure |
 | `make readme` | Update README.md with current help output |
 
@@ -695,7 +694,6 @@ Common environment variables used by Rhiza:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `PYTHON_VERSION` | Python version to use | From `.python-version` |
-| `RHIZA_VERSION` | Rhiza version | From `.rhiza/.rhiza-version` |
 | `UV_BIN` | Path to uv binary | Auto-detected or `./bin/uv` |
 | `VENV` | Virtual environment path | `.venv` |
 | `COVERAGE_FAIL_UNDER` | Minimum coverage threshold | 90 |

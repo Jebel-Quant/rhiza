@@ -53,9 +53,6 @@ def setup_tmp_makefile(logger, root: Path, tmp_path: Path):
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(src, dst)
 
-    if (root / ".rhiza" / ".rhiza-version").exists():
-        shutil.copy(root / ".rhiza" / ".rhiza-version", tmp_path / ".rhiza" / ".rhiza-version")
-
     (tmp_path / ".rhiza" / "template.yml").write_text("repository: Jebel-Quant/rhiza\nref: v0.7.1\n")
     (tmp_path / "pyproject.toml").write_text('[project]\nname = "test-project"\nversion = "0.1.0"\n')
 

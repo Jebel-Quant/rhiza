@@ -24,7 +24,6 @@ PARITY_JOB_COMMANDS = {
     "typecheck": "make typecheck",
     "deptry": "make deptry",
     "pre-commit": "make fmt",
-    "validate": "make validate",
     "security": "make security",
     "license": "make license",
 }
@@ -38,8 +37,7 @@ def _load_yaml(path: Path) -> dict:
 
 def _normalise_job_name(name: str) -> str:
     """Collapse forge-specific job namespaces to a shared parity key."""
-    job_name = name.split(":", 1)[-1]
-    return "validate" if job_name == "validation" else job_name
+    return name.split(":", 1)[-1]
 
 
 def _supported_python_versions(root: Path) -> list[str]:
@@ -246,7 +244,6 @@ class TestGitlabProjectProfileSync:
             "ci:typecheck": "5m",
             "ci:deptry": "5m",
             "ci:pre-commit": "5m",
-            "ci:validate": "5m",
             "ci:security": "10m",
             "ci:license": "10m",
         }

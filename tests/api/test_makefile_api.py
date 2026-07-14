@@ -127,7 +127,7 @@ def test_minimal_setup_works(logger, setup_api_env):
 
     # Check that core rhiza targets exist
     assert "Rhiza Workflows" in result.stdout
-    assert "sync" in result.stdout
+    assert "readme" in result.stdout
 
     # Note: docker-build and other targets from .rhiza/make.d/ are always present
     # but they gracefully skip if their respective folders/files don't exist.
@@ -170,27 +170,18 @@ local-target:
 
 
 def test_local_override_pre_hook(logger, setup_api_env):
-    """Test using local.mk to override a pre-hook."""
+    """Test using local.mk to add a pre-hook via a double-colon rule."""
     local_file = setup_api_env / "local.mk"
-    # We override pre-sync to print a marker (using double-colon to match rhiza.mk)
+    # Add a pre-install marker (double-colon accumulates with rhiza.mk's empty rule)
     local_file.write_text("""
-pre-sync::
-	@echo "[[LOCAL_PRE_SYNC]]"
+pre-install::
+	@echo "[[LOCAL_PRE_INSTALL]]"
 """)
 
-    # Run sync in dry-run.
-    # Note: Makefile.rhiza defines pre-sync as empty rule (or with @:).
-    # Make warns if we redefine a target unless it's a double-colon rule or we are careful.
-    # But usually the last one loaded wins or they merge if double-colon.
-    # The current definition in Makefile.rhiza is `pre-sync: ; @echo ...` or similar.
-    # Wait, I defined it as `pre-sync: ; @:` (single colon).
-    # So redefining it in local.mk (which is included AFTER) might trigger a warning but should work.
+    # Run install in dry-run so the marker is printed without doing real work.
+    result = run_make(logger, ["install"], dry_run=True)
 
-    result = run_make(logger, ["sync"], dry_run=False)
-    # We might expect a warning about overriding commands for target `pre-sync`
-    # checking stdout/stderr for the marker
-
-    assert "[[LOCAL_PRE_SYNC]]" in result.stdout
+    assert "[[LOCAL_PRE_INSTALL]]" in result.stdout
 
 
 def test_hook_execution_order(logger, setup_api_env):
@@ -199,28 +190,28 @@ def test_hook_execution_order(logger, setup_api_env):
     makefile = setup_api_env / "Makefile"
     original = makefile.read_text()
     new_content = (
-        """pre-sync::
-	@echo "STARTING_SYNC"
+        """pre-install::
+	@echo "STARTING_INSTALL"
 
-post-sync::
-	@echo "FINISHED_SYNC"
+post-install::
+	@echo "FINISHED_INSTALL"
 
 """
         + original
     )
     makefile.write_text(new_content)
 
-    result = run_make(logger, ["sync"], dry_run=False)
+    result = run_make(logger, ["install"], dry_run=True)
     assert result.returncode == 0
     output = result.stdout
 
     # Check that markers are present
-    assert "STARTING_SYNC" in output
-    assert "FINISHED_SYNC" in output
+    assert "STARTING_INSTALL" in output
+    assert "FINISHED_INSTALL" in output
 
-    # Check order: STARTING_SYNC comes before FINISHED_SYNC
-    start_index = output.find("STARTING_SYNC")
-    finish_index = output.find("FINISHED_SYNC")
+    # Check order: STARTING_INSTALL comes before FINISHED_INSTALL
+    start_index = output.find("STARTING_INSTALL")
+    finish_index = output.find("FINISHED_INSTALL")
     assert start_index < finish_index
 
 
@@ -329,7 +320,7 @@ def test_multiple_hooks_accumulate(logger, setup_api_env):
     makefile = setup_api_env / "Makefile"
     original = makefile.read_text()
     new_content = (
-        """pre-sync::
+        """pre-install::
 	@echo "[[HOOK_A]]"
 
 """
@@ -338,11 +329,11 @@ def test_multiple_hooks_accumulate(logger, setup_api_env):
     makefile.write_text(new_content)
 
     # Add another hook in local.mk
-    (setup_api_env / "local.mk").write_text("""pre-sync::
+    (setup_api_env / "local.mk").write_text("""pre-install::
 	@echo "[[HOOK_B]]"
 """)
 
-    result = run_make(logger, ["sync"], dry_run=False)
+    result = run_make(logger, ["install"], dry_run=True)
     assert result.returncode == 0
     # Both hooks should be present
     assert "[[HOOK_A]]" in result.stdout

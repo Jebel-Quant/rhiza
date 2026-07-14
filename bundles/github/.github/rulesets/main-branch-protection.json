@@ -28,11 +28,11 @@
         "strict_required_status_checks_policy": false,
         "required_status_checks": [
           { "context": "Pre-commit hooks" },
-          { "context": "validation" },
           { "context": "Check dependencies with deptry" },
           { "context": "docs-coverage" },
           { "context": "Security scanning" },
-          { "context": "License compliance scan" }
+          { "context": "License compliance scan" },
+          { "context": "CI gate" }
         ]
       }
     }
