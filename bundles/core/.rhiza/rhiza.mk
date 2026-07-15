@@ -55,12 +55,8 @@ RESET := \033[0m
 # Declare phony targets (they don't produce files)
 .PHONY: \
 	help \
-	post-bump \
 	post-install \
-	post-release \
-	pre-bump \
 	pre-install \
-	pre-release \
 	print-logo \
 	readme \
 	version-matrix \

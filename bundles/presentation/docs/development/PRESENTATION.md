@@ -200,9 +200,9 @@ make docs         # Generate API documentation
 make book         # Build companion book
 make presentation # Generate slides from PRESENTATION.md
 make marimo       # Launch Marimo notebook server
-make bump         # Interactive version bump
-make release      # Tag and release
 ```
+
+**Note**: Releasing is driven by the rhiza-claude `/release` command, which bumps the version, regenerates the changelog, and creates the tag.
 
 **Tip**: Run `make help` to see all available targets
 
@@ -229,25 +229,17 @@ Notebooks stored in `docs/notebooks/` with inline dependency management.
 
 ## 🚀 Release Workflow
 
-### Release (bump + tag + push)
+### Release (via rhiza-claude `/release`)
 
-```bash
-make release
-# → Interactive prompt for patch/minor/major
-# → Bumps version (and folds CHANGELOG.md into the bump commit)
-# → Creates and pushes the git tag
-# → Triggers release workflow
+```text
+/release
+# → Derives the next version
+# → Bumps pyproject.toml
+# → Regenerates CHANGELOG.md
+# → Creates the git tag locally
 ```
 
-A release always bumps the version — there is no tag-only release.
-
-### Bump Without Releasing
-
-```bash
-make bump
-# → Interactive prompt for patch/minor/major
-# → Updates pyproject.toml (and CHANGELOG.md), commits — no tag/push
-```
+Pushing the tag triggers the release workflow. Releasing is not a `make` target.
 
 ### Check Status
 
@@ -567,9 +559,8 @@ make docs                      # API documentation
 make book                      # Companion book
 make presentation              # Generate slides
 
-# Release
-make bump                      # Bump version
-make release                   # Create release
+# Release (driven by the rhiza-claude /release command)
+make release-status            # Show release workflow status
 
 # Notebooks
 make marimo                    # Interactive notebooks
