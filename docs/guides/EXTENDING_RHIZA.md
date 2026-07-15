@@ -167,10 +167,6 @@ Hooks allow you to inject custom logic into standard workflows using double-colo
 | `post-sync` | After template sync | Regenerate files, apply local patches |
 | `pre-validate` | Before project validation | Custom checks, pre-validation setup |
 | `post-validate` | After project validation | Additional validation steps |
-| `pre-bump` | Before version bump | Update version in additional files |
-| `post-bump` | After version bump | Generate changelogs, update documentation |
-| `pre-release` | Before creating release | Final checks, build artifacts |
-| `post-release` | After creating release | Deploy, notify team, update external systems |
 
 #### Hook Syntax
 

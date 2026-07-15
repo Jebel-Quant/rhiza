@@ -80,9 +80,9 @@ These are the commands you'll use most frequently:
 
 | Command | Description | Options |
 |---------|-------------|---------|
-| `make release` | Bump version, tag, and push to trigger the release workflow (prompts for level) | `DRY_RUN=1` for preview |
-| `make bump` | Bump version only, without releasing (prompts for level) | `BUMP=major/minor/patch` |
 | `make release-status` | Show release workflow status | |
+
+> Releasing is driven by the rhiza-claude `/release` command, which derives the next version, bumps `pyproject.toml`, regenerates `CHANGELOG.md`, and creates the git tag locally. Pushing that tag triggers the release workflow.
 
 ### Docker
 
@@ -395,34 +395,13 @@ interrogate src/ --fail-under 80
 
 ## Release Management
 
-### Version Bumping
-
-```bash
-# Bump version (interactive prompt)
-make bump
-
-# Bump patch version (0.0.X)
-make bump BUMP=patch
-
-# Bump minor version (0.X.0)
-make bump BUMP=minor
-
-# Bump major version (X.0.0)
-make bump BUMP=major
-
-# Preview without making changes
-make bump DRY_RUN=1
-```
-
 ### Creating Releases
 
+Releasing is driven by the rhiza-claude `/release` command: it derives the next
+version, bumps `pyproject.toml`, regenerates `CHANGELOG.md`, and creates the git
+tag locally. Pushing that tag triggers the release workflow (`rhiza_release.yml`).
+
 ```bash
-# Full release: bump + tag + push (interactive bump-level prompt)
-make release
-
-# Preview release
-make release DRY_RUN=1
-
 # Check release status
 make release-status
 
@@ -636,8 +615,10 @@ make all          # Run all CI checks
 ```bash
 make test         # Verify tests pass
 make all          # Run all CI checks
-make release      # Bump, tag, and push
 ```
+
+Then run the rhiza-claude `/release` command to bump the version, regenerate the
+changelog, and create the tag; pushing the tag triggers the release workflow.
 
 ### Adding Dependencies
 

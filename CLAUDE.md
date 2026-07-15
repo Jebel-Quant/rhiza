@@ -90,7 +90,7 @@ The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiz
 | `bootstrap.mk` | core | `install`/`uv` bootstrap |
 | `doctor.mk` | core | `make doctor` environment checks |
 | `quality.mk` | core | `fmt`, lint, pre-commit gates |
-| `releasing.mk` | core | `bump`/`release` targets |
+| `releasing.mk` | core | `changelog`/`release-status` helpers |
 | `custom-env.mk` | core | example stub: project variables |
 | `custom-task.mk` | core | example stub: project targets/hooks |
 | `test.mk` | tests | `test`, coverage, typecheck, stress, mutation |

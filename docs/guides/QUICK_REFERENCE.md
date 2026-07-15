@@ -16,12 +16,9 @@ A concise reference for common Rhiza operations.
 
 | Command | Description |
 |---------|-------------|
-| `make release` | Bump version, create tag and push to trigger the release workflow (prompts for major/minor/patch) |
-| `make bump` | Bump version only, without releasing (prompts for major/minor/patch) |
-| `make bump BUMP=patch` | Bump patch version directly |
-| `make bump BUMP=minor` | Bump minor version directly |
-| `make bump BUMP=major` | Bump major version directly |
 | `make release-status` | Show release workflow status and latest release |
+
+> Releasing is driven by the rhiza-claude `/release` command, which derives the next version, bumps `pyproject.toml`, regenerates `CHANGELOG.md`, and creates the git tag locally. Pushing that tag triggers the release workflow.
 
 ## Code Quality
 
@@ -102,10 +99,6 @@ Extend these with `::` syntax in `local.mk` or `.rhiza/make.d/`:
 | `post-sync::` | After template sync |
 | `pre-validate::` | Before project validation |
 | `post-validate::` | After project validation |
-| `pre-release::` | Before release creation |
-| `post-release::` | After release creation |
-| `pre-bump::` | Before version bump |
-| `post-bump::` | After version bump |
 
 ## Key Files
 

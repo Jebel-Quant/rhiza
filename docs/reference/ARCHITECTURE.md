@@ -105,23 +105,15 @@ flowchart LR
         post_install[post-install::]
         pre_sync[pre-sync::]
         post_sync[post-sync::]
-        pre_release[pre-release::]
-        post_release[post-release::]
-        pre_bump[pre-bump::]
-        post_bump[post-bump::]
     end
 
     subgraph Targets["Main Targets"]
         install[make install]
         sync[make sync]
-        release[make release]
-        bump[make bump]
     end
 
     pre_install --> install --> post_install
     pre_sync --> sync --> post_sync
-    pre_release --> release --> post_release
-    pre_bump --> bump --> post_bump
 ```
 
 ## Release Pipeline
@@ -414,8 +406,6 @@ pre-install::    # Runs before make install
 post-install::   # Runs after make install
 pre-sync::       # Runs before make sync
 post-sync::      # Runs after make sync
-pre-release::    # Runs before make release
-post-release::   # Runs after make release
 ```
 
 **Key principles**:

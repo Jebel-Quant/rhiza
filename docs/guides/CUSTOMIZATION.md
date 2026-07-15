@@ -38,8 +38,6 @@ You can hook into standard workflows using double-colon syntax (`::`) in your ro
 - `pre-install / post-install` - Runs around `make install`
 - `pre-sync / post-sync` - Runs around repository synchronization
 - `pre-validate / post-validate` - Runs around validation checks
-- `pre-release / post-release` - Runs around release process
-- `pre-bump / post-bump` - Runs around version bumping
 
 ### Example: Installing System Dependencies
 
@@ -55,18 +53,21 @@ pre-install::
 
 This hook runs automatically before `make install`, ensuring graphviz is available.
 
-### Example: Post-Release Tasks
+### Example: Post-Sync Tasks
 
 Add to your root `Makefile`:
 
 ```makefile
-post-release::
-	@echo "Running post-release tasks..."
+post-sync::
+	@echo "Running post-sync tasks..."
 	@./scripts/notify-team.sh
-	@./scripts/update-changelog.sh
 ```
 
-This runs automatically after `make release` completes.
+This runs automatically after repository synchronization completes.
+
+> Releasing is not a `make` hook. Releases are driven by the rhiza-claude
+> `/release` command, which bumps the version, regenerates `CHANGELOG.md`, and
+> creates the tag locally; pushing the tag triggers the release workflow.
 
 ### Example: Custom Build Steps
 

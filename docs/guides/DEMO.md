@@ -49,8 +49,8 @@ make fmt
 # 5. Check dependencies
 make deptry
 
-# 6. Show version bump options
-make bump BUMP=patch --dry-run
+# 6. Check release status (releasing itself is driven by the rhiza-claude /release command)
+make release-status
 
 # 7. Validate project structure
 make validate

@@ -173,5 +173,3 @@ Add these to your root `Makefile` using double-colon syntax (`::`):
 - `pre-install` / `post-install`: Runs around `make install`.
 - `pre-sync` / `post-sync`: Runs around repository synchronization.
 - `pre-validate` / `post-validate`: Runs around validation checks.
-- `pre-release` / `post-release`: Runs around release process.
-- `pre-bump` / `post-bump`: Runs around version bumping.
