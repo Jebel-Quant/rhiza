@@ -121,3 +121,19 @@ def test_ci_workflow_header_documents_classifier_driven_matrix(root):
     content = (root / WORKFLOW_PATH).read_text(encoding="utf-8")
     assert "Programming Language :: Python :: 3.x" in content
     assert "Adding/removing classifiers updates CI Python coverage automatically" in content
+
+
+def test_ci_workflow_generate_matrix_uses_baipp_classifier_output(root):
+    """CI matrix generation must use BAIPP classifier output instead of rhiza-tools."""
+    with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
+        workflow = yaml.safe_load(fh)
+
+    generate_matrix = workflow["jobs"]["generate-matrix"]
+    steps = generate_matrix["steps"]
+    versions_step = next(step for step in steps if step.get("id") == "versions")
+    versions_output_step = next(step for step in steps if step.get("id") == "versions-output")
+
+    assert "hynek/build-and-inspect-python-package@" in versions_step["uses"]
+    assert "supported_python_classifiers_json_array" in versions_output_step["run"]
+    assert generate_matrix["outputs"]["matrix"] == "${{ steps.versions-output.outputs.list }}"
+    assert "make -f .rhiza/rhiza.mk -s version-matrix" not in versions_output_step["run"]
