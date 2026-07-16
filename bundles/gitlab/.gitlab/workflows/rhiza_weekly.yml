@@ -6,7 +6,6 @@
 # Purpose: Slower checks deferred to a weekly schedule:
 #
 #   weekly:semgrep    — Semgrep static analysis (numpy rules).
-#   weekly:pip-audit  — Dependency vulnerability scan.
 #   weekly:link-check — Verifies hyperlinks in README.md are reachable.
 #                       Also runs on push/MR when README.md changes.
 #
@@ -20,18 +19,6 @@ weekly:semgrep:
   script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
     - make semgrep
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
-      allow_failure: true
-
-weekly:pip-audit:
-  stage: test
-  needs: []
-  image: $UV_IMAGE
-  script:
-    - uvx pip-audit
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "web"

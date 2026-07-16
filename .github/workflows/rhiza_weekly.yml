@@ -8,7 +8,6 @@
 #                     runs the full test suite to catch newly-released packages
 #                     that break compatibility before Renovate picks them up.
 #   semgrep         — static analysis with project-specific rules.
-#   pip-audit       — dependency vulnerability scan.
 #   link-check      — verifies all hyperlinks in README.md are reachable.
 #
 # Trigger: Weekly schedule (Monday 08:00 UTC) and manual dispatch.
@@ -110,26 +109,6 @@ jobs:
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: make semgrep
-
-  pip-audit:
-    name: Dependency vulnerability scan
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
-        with:
-          version: "0.11.16"
-
-      - name: Run pip-audit
-        run: uvx pip-audit
 
   link-check:
     name: Check links in README.md

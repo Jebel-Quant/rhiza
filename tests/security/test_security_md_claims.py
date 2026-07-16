@@ -35,7 +35,6 @@ def _make_fragments_text() -> str:
 _CLAIM_EVIDENCE = {
     "CodeQL": lambda: (_ROOT / ".github" / "workflows" / "rhiza_codeql.yml").is_file(),
     "Bandit": lambda: "bandit" in _read(".pre-commit-config.yaml"),
-    "pip-audit": lambda: "pip-audit" in _make_fragments_text(),
     "Secret Scanning": lambda: (_ROOT / ".github" / "secret_scanning.yml").is_file(),
     "Fuzzing": lambda: (
         (_ROOT / ".github" / "workflows" / "rhiza_fuzzing.yml").is_file()

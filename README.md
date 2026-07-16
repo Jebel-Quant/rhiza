@@ -146,7 +146,7 @@ Adopt a Rhiza bundle and your project immediately gains:
 - **pytest** with coverage, benchmarks, and property-based testing via Hypothesis
 - **Documentation** via MkDocs + zensical, with optional Marimo notebook exports
 - **Release automation** — version bumping, OIDC PyPI publishing, optional grayskull conda recipe generation (`vars.PUBLISH_CONDA`, defaults to `true`), SLSA provenance
-- **Security scanning** — CodeQL, pip-audit, bandit, secret scanning, Dependabot
+- **Security scanning** — CodeQL, bandit, secret scanning, Dependabot
 - **Shell completions** for bash and zsh (tab-complete all `make` targets)
 
 ## 📝 Architecture Decision Records
@@ -390,7 +390,6 @@ Targets:
 Rhiza Workflows
   sync                  sync with template repository as defined in .rhiza/template.yml
   validate              validate project structure against template repository as defined in .rhiza/template.yml
-  readme                update README.md with current Makefile help output
 
 Bootstrap
   install-uv            ensure uv/uvx is installed
@@ -407,7 +406,6 @@ Releasing and Versioning
 
 Meta
   help                  Display this help message
-  version-matrix        Emit the list of supported Python versions from pyproject.toml
 
 Development and Testing
   test                  run all tests
