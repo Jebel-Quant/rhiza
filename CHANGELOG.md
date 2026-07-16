@@ -5,6 +5,38 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.2.0] - 2026-07-16
+
+### New Features
+- *(bundles)* Remove the claude bundle and its slash commands (#1396)
+
+### Bug Fixes
+- Dockerfile CMD, CHANGELOG duplicate, lazy test sources, NPX guard, git init commit, regex escape (#1395)
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1402)
+- *(deps)* Update dependency typer to v0.26.8 (#1407)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.11.28 (#1405)
+- *(deps)* Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.21 (#1404)
+- *(deps)* Update dependency mypy to v2.3.0 (#1406)
+
+### Maintenance
+- Remove the automated rhiza_sync feature (sync is now manual) (#1403)
+- Chore(deps)(deps): bump the github-actions group with 6 updates (#1409)
+- De-CLI make sync/validate — drop the rhiza-cli dependency (#1408)
+- Drop make bump/release targets — releasing moves to rhiza-claude /release (#1411)
+- Derive reusable Python matrix from BAIPP classifiers (#1414)
+- Remove rhiza-tools usage from make.d (suppression-audit, pip-audit, analyze-benchmarks) (#1416)
+- Remove all rhiza-tools usage from the template (#1415)
+
+### Other Changes
+- Fix for Module is imported more than once (#1397)
+- Fix for Module is imported more than once (#1398)
+- Fix latent helper hazards and harden dogfood linking path (#1399)
+- Apply suggested fix to tests/bundles/test_bundle_combinations.py from Copilot Autofix (#1400)
+- Potential fix for 1 code quality finding (#1401)
+- Pin required checks to GitHub Actions and protect v* tags (#1410)
+
 ## [1.1.3] - 2026-07-10
 
 ### New Features
