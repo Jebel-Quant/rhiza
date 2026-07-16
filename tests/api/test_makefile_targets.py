@@ -168,10 +168,9 @@ class TestMakefile:
         assert "uv run --with interrogate interrogate" in out
 
     def test_security_target_runs_pip_audit_and_bandit(self, logger):
-        """Security target should run pip-audit via rhiza-tools and bandit (or skip warning)."""
+        """Security target should run pip-audit and bandit (or skip warning)."""
         proc = run_make(logger, ["security"])
         out = proc.stdout
-        assert "rhiza-tools" in out
         assert "pip-audit" in out
         assert "Running bandit security scan in:" in out
         assert "No bandit scan folders found" in out

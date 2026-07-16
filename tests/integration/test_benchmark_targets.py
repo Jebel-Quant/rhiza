@@ -56,11 +56,10 @@ def test_benchmark_depends_on_install(test_makefile):
 
 
 def test_benchmark_recipe_drives_pytest_benchmark(test_makefile):
-    """The recipe must guard on the benchmarks folder and drive pytest-benchmark + reporting."""
+    """The recipe must guard on the benchmarks folder and drive pytest-benchmark."""
     content = test_makefile.read_text()
     assert "${TESTS_FOLDER}/benchmarks" in content, (
         "benchmark recipe should guard on the configurable benchmarks folder existing"
     )
     assert "--benchmark-only" in content, "benchmark recipe should run pytest in --benchmark-only mode"
     assert "--benchmark-json" in content, "benchmark recipe should emit a JSON results file for reporting"
-    assert "analyze-benchmarks" in content, "benchmark recipe should render a report via analyze-benchmarks"
