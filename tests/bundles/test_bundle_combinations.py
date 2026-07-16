@@ -208,10 +208,12 @@ class TestGitlabProjectProfileSync:
         github_matrix_source = "\n".join(
             step["run"] for step in github_generate_steps if isinstance(step, dict) and "run" in step
         )
+        versions_step = next(step for step in github_generate_steps if step.get("id") == "versions")
         gitlab_test_job = _gitlab_jobs_from_includes(self.project)["ci:test"]
         gitlab_matrix = gitlab_test_job["parallel"]["matrix"][0]["PYTHON_VERSION"]
 
-        assert "make -f .rhiza/rhiza.mk -s version-matrix" in github_matrix_source
+        assert "hynek/build-and-inspect-python-package" in versions_step["uses"]
+        assert "supported_python_classifiers_json_array" in github_matrix_source
         assert github_workflow["jobs"]["test"]["strategy"]["matrix"]["python-version"] == (
             "${{ fromJson(needs.generate-matrix.outputs.matrix) }}"
         )
