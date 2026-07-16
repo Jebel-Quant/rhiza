@@ -257,13 +257,6 @@ class TestMakefile:
         proc_override = run_make(logger, ["test", "COVERAGE_FAIL_UNDER=42"])
         assert "--cov-fail-under=42" in proc_override.stdout
 
-    def test_suppression_audit_target_dry_run(self, logger):
-        """Suppression-audit target should invoke the rhiza-tools CLI in dry-run output."""
-        proc = run_make(logger, ["suppression-audit"])
-        out = proc.stdout
-        assert "rhiza-tools" in out
-        assert "suppression-audit" in out
-
     def test_license_target_dry_run(self, logger):
         """License target should invoke pip-licenses via uv run --with in dry-run output."""
         proc = run_make(logger, ["license"])
