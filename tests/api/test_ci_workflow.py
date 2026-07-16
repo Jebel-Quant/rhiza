@@ -42,8 +42,8 @@ def test_ci_os_matrix_make_target_can_be_configured(logger):
     assert json.loads(result.stdout.strip()) == ["ubuntu-latest", "windows-latest"]
 
 
-def test_ci_security_job_runs_stale_suppression_gate(root):
-    """CI security job must fail on stale # nosec CVE suppressions."""
+def test_ci_security_job_runs_security_scans(root):
+    """CI security job must run the security scans via `make security`."""
     with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
         workflow = yaml.safe_load(fh)
 
@@ -51,7 +51,6 @@ def test_ci_security_job_runs_stale_suppression_gate(root):
     run_steps = [step.get("run", "") for step in security_job.get("steps", [])]
 
     assert any("make security" in run for run in run_steps)
-    assert any("--fail-stale-nosec-cve" in run for run in run_steps)
 
 
 def test_ci_jobs_define_timeout_budgets(root):

@@ -74,7 +74,6 @@ These are the commands you'll use most frequently:
 |---------|-------------|
 | `make sync` | Sync with upstream template |
 | `make validate` | Validate project structure |
-| `make readme` | Update README.md with current help output |
 
 ### Release Management
 
@@ -732,7 +731,7 @@ PYTHON_VERSION = 3.12
 ### Documentation
 
 - Document functions with docstrings
-- Keep README.md updated with `make readme`
+- README.md's help section is kept in sync by the `update-readme-help` pre-commit hook
 - Generate API docs with `make docs`
 - Check documentation coverage with `make docs-coverage`
 

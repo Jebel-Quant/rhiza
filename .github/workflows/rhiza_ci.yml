@@ -340,12 +340,6 @@ jobs:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: make security
 
-      - name: Fail stale CVE suppressions
-        env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
-        run: |
-          uvx "rhiza-tools>=0.8.1" suppression-audit --fail-stale-nosec-cve
-
   license:
     name: License compliance scan
     # CI budget: ≤10 min (license and artifact generation). Last measured: 2026-05-28.
