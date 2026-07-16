@@ -139,9 +139,6 @@ help: print-logo ## Display this help message
 	+@awk 'BEGIN {FS = ":.*##"; printf ""} /^[a-zA-Z_-]+:.*?##/ { printf "  $(BLUE)%-20s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BOLD)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)
 	+@printf "\n"
 
-version-matrix: install-uv ## Emit the list of supported Python versions from pyproject.toml
-	@${UVX_BIN} "rhiza-tools>=0.2.2" version-matrix
-
 ci-os-matrix: ## Emit GitHub CI OSes (RHIZA_CI_OS_MATRIX as JSON array, default ["ubuntu-latest"])
 	@$(info $(or $(RHIZA_CI_OS_MATRIX),["ubuntu-latest"]))
 

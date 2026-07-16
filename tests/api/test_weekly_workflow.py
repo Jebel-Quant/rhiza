@@ -18,7 +18,7 @@ import yaml
 from tests.util import run_make
 
 WORKFLOW_PATH = Path(".github") / "workflows" / "rhiza_weekly.yml"
-EXPECTED_JOBS = {"dep-compat-test", "semgrep", "pip-audit", "link-check"}
+EXPECTED_JOBS = {"dep-compat-test", "semgrep", "link-check"}
 
 
 # ---------------------------------------------------------------------------
@@ -126,24 +126,12 @@ class TestWeeklyWorkflowMakeTargets:
         result = run_make(logger, ["test"])
         assert result.returncode == 0
 
-    def test_security_target_invokes_pip_audit(self, logger):
-        """Make security dry-run must include a pip-audit invocation."""
-        result = run_make(logger, ["security"])
-        assert result.returncode == 0
-        assert "pip-audit" in result.stdout
-
     def test_security_target_scans_existing_python_or_warns(self, logger):
         """Make security must not silently pass when the default source folder is missing."""
         result = run_make(logger, ["security"])
         assert result.returncode == 0
         assert "Running bandit security scan in:" in result.stdout
         assert "No bandit scan folders found" in result.stdout
-
-    def test_pip_audit_args_forwarded(self, logger):
-        """PIP_AUDIT_ARGS variable must be forwarded to the pip-audit call."""
-        result = run_make(logger, ["security", "PIP_AUDIT_ARGS=--ignore-vuln TEST-0001"])
-        assert result.returncode == 0
-        assert "--ignore-vuln TEST-0001" in result.stdout
 
     def test_semgrep_target_in_help(self, logger):
         """Semgrep target must appear in make help output."""

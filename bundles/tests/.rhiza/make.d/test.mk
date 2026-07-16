@@ -110,15 +110,9 @@ typecheck: install ## run ty and/or mypy type checking (TYPECHECKER=ty|mypy|both
 	    ;; \
 	esac
 
-# Extra flags forwarded to pip-audit (e.g. --ignore-vuln CVE-XXXX-YYYY)
-PIP_AUDIT_ARGS ?=
-
-# The 'security' target performs security vulnerability scans.
-# 1. Runs pip-audit to scan installed dependencies for known vulnerabilities.
-# 2. Runs bandit to find common security issues in Python source folders that exist.
-security: install ## run security scans (pip-audit and bandit)
-	@printf "${BLUE}[INFO] Running pip-audit for dependency vulnerabilities...${RESET}\n"
-	@${UVX_BIN} pip-audit ${PIP_AUDIT_ARGS}
+# The 'security' target runs bandit to find common security issues in the
+# Python source folders that exist.
+security: install ## run security scans (bandit)
 	@bandit_paths=""; \
 	if [ -d "${SOURCE_FOLDER}" ]; then \
 	  bandit_paths="${SOURCE_FOLDER}"; \

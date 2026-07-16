@@ -1,9 +1,9 @@
 """Tests for the rhiza_release.yml workflow configuration.
 
 Validates that the release workflow is correctly defined. CHANGELOG.md is
-folded into the version-bump commit by the rhiza-tools ``bump`` command (via a
-git-cliff pre-commit hook), so the tagged commit already carries the changelog
-and the workflow no longer commits it separately.
+folded into the version-bump commit by the release process (rhiza-claude
+``/release``) before the tag is pushed, so the tagged commit already carries
+the changelog and the workflow no longer commits it separately.
 """
 
 from __future__ import annotations

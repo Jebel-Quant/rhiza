@@ -167,11 +167,12 @@ class TestMakefile:
         out = proc.stdout
         assert "uv run --with interrogate interrogate" in out
 
-    def test_security_target_runs_pip_audit_and_bandit(self, logger):
-        """Security target should run pip-audit and bandit (or skip warning)."""
+    def test_security_target_runs_bandit(self, logger):
+        """Security target should run bandit (or skip with a warning)."""
         proc = run_make(logger, ["security"])
         out = proc.stdout
-        assert "pip-audit" in out
+        assert "rhiza-tools" not in out
+        assert "pip-audit" not in out
         assert "Running bandit security scan in:" in out
         assert "No bandit scan folders found" in out
 
@@ -223,7 +224,7 @@ class TestMakefile:
         assert "pre-commit run --all-files" in out  # fmt
         assert "uv run --with pytest" in out  # test / rhiza-test
         assert "uv run --with interrogate interrogate" in out  # docs-coverage
-        assert "pip-audit" in out  # security
+        assert "Running bandit security scan in:" in out  # security
 
     def test_python_version_defaults_to_3_13_if_missing(self, logger, tmp_path):
         """`PYTHON_VERSION` should default to `3.13` if .python-version is missing."""

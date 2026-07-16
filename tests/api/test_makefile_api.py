@@ -127,6 +127,7 @@ def test_minimal_setup_works(logger, setup_api_env):
 
     # Check that core rhiza targets exist
     assert "Rhiza Workflows" in result.stdout
+    assert "rhiza-test" in result.stdout
 
     # Note: docker-build and other targets from .rhiza/make.d/ are always present
     # but they gracefully skip if their respective folders/files don't exist.
