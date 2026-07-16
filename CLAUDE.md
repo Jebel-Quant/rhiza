@@ -124,9 +124,8 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 > coverage` and the main `tests/` suite runs *without* a Python coverage number — by design.
 > Both that suite and `make rhiza-test` (which runs the shipped `.rhiza/tests/` suite) exercise
 > Make targets, YAML, and bundle invariants behaviourally, where there is no Python module to
-> cover. (The former suppression/pip-audit utilities that once lived in `.rhiza/utils/` and were
-> coverage-gated here have moved into the `rhiza-tools` package, which owns their tests.) So "no
-> coverage on `make test`" is expected here and does not mean anything is unmeasured. Downstream
+> cover. So "no coverage on `make test`" is expected here and does not mean anything is
+> unmeasured. Downstream
 > consumers that adopt the `tests` bundle *do* have a `src/` and get the full 90% `make test` gate.
 
 ### CI/CD
