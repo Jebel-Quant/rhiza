@@ -448,8 +448,8 @@ Custom Tasks
 </details>
 
 > **Note:** The help output is automatically generated from the Makefile.
-> When you modify Makefile targets, run `make readme` to update this section,
-> or the pre-commit hook will update it automatically.
+> When you modify Makefile targets, the `update-readme-help` pre-commit hook
+> updates this section automatically.
 
 ## 🎯 Advanced Topics
 

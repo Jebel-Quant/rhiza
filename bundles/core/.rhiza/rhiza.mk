@@ -115,7 +115,7 @@ endef
 export RHIZA_LOGO
 
 # Declare phony targets for Rhiza Core
-.PHONY: print-logo readme
+.PHONY: print-logo
 
 ##@ Rhiza Workflows
 
@@ -129,9 +129,6 @@ rhiza-test: install ## run rhiza's own tests (if any)
 	else \
 		printf "${YELLOW}[WARN] No .rhiza/tests directory found, skipping rhiza-tests${RESET}\n"; \
 	fi
-
-readme: install-uv ## update README.md with current Makefile help output
-	@${UVX_BIN} "rhiza-tools>=0.2.0" update-readme
 
 ##@ Meta
 
