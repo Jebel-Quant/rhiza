@@ -8,7 +8,7 @@ Add this step before installing dependencies that include private GitHub package
 
 ```yaml
 - name: Configure git auth for private packages
-  uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.6
+  uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.1
   with:
     token: ${{ secrets.GH_PAT }}
 ```
@@ -63,7 +63,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v0.18.6
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.1
         with:
           token: ${{ secrets.GH_PAT }}
 
