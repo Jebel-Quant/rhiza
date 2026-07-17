@@ -1,1 +1,0 @@
-../../bundles/core/.rhiza/make.d/releasing.mk

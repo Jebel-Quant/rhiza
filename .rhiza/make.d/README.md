@@ -150,7 +150,6 @@ Both recipes run on `make sync`. Rules of the road:
 | `paper.mk` | LaTeX paper compilation |
 | `presentation.mk` | Presentation building (Marp) |
 | `quality.mk` | Code quality and formatting |
-| `releasing.mk` | Release and versioning |
 | `test.mk` | Testing infrastructure |
 
 Files prefixed with `custom-` are **examples** showing how to customize Rhiza. Don't edit them directly; instead, add your customizations to the root `Makefile`.
