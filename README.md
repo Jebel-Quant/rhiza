@@ -365,7 +365,6 @@ make install         # Install dependencies and setup environment
 make test            # Run test suite with coverage
 make fmt             # Format and lint code
 make todos           # Scan for TODO/FIXME/HACK comments
-make release-status  # Show release workflow status and latest release
 make marimo          # Start Marimo notebook server
 make book            # Build documentation
 ```
