@@ -5,6 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.2.1] - 2026-07-17
+
+### Maintenance
+- Bump rhiza self-reference workflow and action pins to v1.2.1
+
 ## [1.2.0] - 2026-07-16
 
 ### New Features
@@ -48,6 +53,9 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 
 ### Maintenance
 - *(gitlab)* Validate GitLab CI templates without a GitLab host (#1394)
+
+### Other Changes
+- Bump version 1.1.2 → 1.1.3
 
 ## [1.1.2] - 2026-07-10
 
@@ -589,6 +597,7 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - Add 75 new tests across bundle content, combinations, and sync
 
 ### Other Changes
+- Bump version 0.15.0 → 0.16.1
 - Bump version 0.15.0 → 0.15.1
 
 ## [0.15.0] - 2026-05-26
