@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jebel-Quant/rhiza — stats</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1a1a1a; --muted: #6b7280; --card: #f6f7f9;
+    --border: #e5e7eb; --accent: #11d48e; --th: #f0f1f3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --fg: #e6edf3; --muted: #8b949e; --card: #161b22;
+      --border: #30363d; --accent: #11d48e; --th: #1c2128;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  header h1 { margin: 0 0 .25rem; font-size: 1.6rem; }
+  header .meta { color: var(--muted); font-size: .9rem; }
+  .summary { margin: 1rem 0 1.5rem; padding: .75rem 1rem; background: var(--card);
+    border-left: 3px solid var(--accent); border-radius: 4px; font-size: .95rem; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: .75rem; margin-bottom: 2rem; }
+  .tile { background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem; text-align: center; }
+  .tile .num { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+  .tile .lbl { color: var(--muted); font-size: .8rem; margin-top: .25rem; }
+  section { margin-bottom: 2rem; }
+  h2 { font-size: 1.15rem; border-bottom: 1px solid var(--border); padding-bottom: .3rem; }
+  table { border-collapse: collapse; width: 100%; }
+  table.kv th { text-align: left; color: var(--muted); font-weight: 500; width: 240px;
+    vertical-align: top; padding: .3rem .5rem; }
+  table.kv td { padding: .3rem .5rem; }
+  .caption { color: var(--muted); font-size: .85rem; margin: .75rem 0 .25rem; }
+  .scroll { overflow-x: auto; }
+  table.data { font-size: .9rem; }
+  table.data th, table.data td { text-align: left; padding: .35rem .6rem;
+    border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.data thead th { background: var(--th); }
+  footer { color: var(--muted); font-size: .8rem; margin-top: 3rem;
+    border-top: 1px solid var(--border); padding-top: 1rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Jebel-Quant/rhiza</h1>
+    <div class="meta">Generated 2026-07-18 · point-in-time snapshot</div>
+  </header>
+  <div class="summary">Jebel-Quant/rhiza — — LOC / 9466 test LOC (ratio n/a), 13★, 3 open issues, 57 branches, 1827 commits, rhiza n/a</div>
+  <div class="tiles"><div class="tile"><div class="num">n/a</div><div class="lbl">Source LOC</div></div><div class="tile"><div class="num">9466</div><div class="lbl">Test LOC</div></div><div class="tile"><div class="num">n/a</div><div class="lbl">Test:code ratio</div></div><div class="tile"><div class="num">13</div><div class="lbl">Stars</div></div><div class="tile"><div class="num">3</div><div class="lbl">Open issues</div></div><div class="tile"><div class="num">57</div><div class="lbl">Branches</div></div><div class="tile"><div class="num">1827</div><div class="lbl">Commits</div></div></div>
+  <section><h2>Repo identity</h2><table class='kv'><tr><th>Root</th><td>/Users/thomasschmelzer/repos/jebel-quant/rhiza</td></tr><tr><th>Branch</th><td>main</td></tr><tr><th>Default branch</th><td>main</td></tr><tr><th>Platform</th><td>GitHub — Jebel-Quant/rhiza</td></tr><tr><th>Project</th><td>non-Python (dominant .py)</td></tr><tr><th>License</th><td>MIT License</td></tr><tr><th>Tracked-tree size</th><td>2.1M</td></tr><tr><th>`.git` size</th><td>8.3M</td></tr><tr><th>Stars</th><td>13</td></tr><tr><th>Forks</th><td>5</td></tr><tr><th>Watchers</th><td>1</td></tr><tr><th>Archived</th><td>False</td></tr></table></section><section><h2>Code size &amp; language mix</h2><table class='kv'><tr><th>Code / comment / blank</th><td>n/a (scc/tokei not on PATH — raw line counts only)</td></tr><tr><th>Source LOC</th><td>n/a (no src/ tree)</td></tr><tr><th>Test LOC</th><td>9466</td></tr><tr><th>Total tracked LOC</th><td>40138</td></tr><tr><th>Test-to-code ratio</th><td>n/a (needs both src/ and tests/)</td></tr><tr><th>Files in tests/</th><td>66</td></tr><tr><th>Files in docs/</th><td>46</td></tr><tr><th>TODO/FIXME markers</th><td>13</td></tr></table><div class='caption'>Extension mix (file counts)</div><div class='scroll'><table class='data'><thead><tr><th>ext</th><th>files</th></tr></thead><tbody><tr><td>py</td><td>77</td></tr><tr><td>md</td><td>72</td></tr><tr><td>yml</td><td>57</td></tr><tr><td>mk</td><td>31</td></tr><tr><td>json</td><td>10</td></tr><tr><td>toml</td><td>8</td></tr><tr><td>(none)</td><td>5</td></tr><tr><td>gitignore</td><td>4</td></tr><tr><td>svg</td><td>4</td></tr><tr><td>sh</td><td>3</td></tr></tbody></table></div><div class='caption'>Largest files (by line count)</div><div class='scroll'><table class='data'><thead><tr><th>lines</th><th>file</th></tr></thead><tbody><tr><td>2598</td><td>CHANGELOG.md</td></tr><tr><td>1348</td><td>uv.lock</td></tr><tr><td>1093</td><td>docs/guides/EXTENDING_RHIZA.md</td></tr><tr><td>762</td><td>tests/bundles/test_bundle_content_validity.py</td></tr><tr><td>745</td><td>docs/reference/TOOLS_REFERENCE.md</td></tr><tr><td>724</td><td>.github/workflows/rhiza_release.yml</td></tr><tr><td>707</td><td>bundles/github/.github/workflows/rhiza_release.yml</td></tr><tr><td>657</td><td>docs/notebooks/rhiza.py</td></tr><tr><td>631</td><td>README.md</td></tr><tr><td>577</td><td>docs/development/PRESENTATION.md</td></tr></tbody></table></div></section><section><h2>Tests &amp; coverage</h2><table class='kv'><tr><th>Tests</th><td>429 test functions in 49 files</td></tr><tr><th>Coverage threshold</th><td>n/a (no fail_under in pyproject)</td></tr><tr><th>Coverage (cached)</th><td>n/a (no coverage.xml (not re-running suite))</td></tr><tr><th>Docstring coverage</th><td>n/a (interrogate not on PATH (use --slow for uvx))</td></tr></table></section><section><h2>Complexity (Python)</h2><table class='kv'><tr><th>Complexity</th><td>n/a (no src/ tree)</td></tr></table></section><section><h2>Dependencies</h2><table class='kv'><tr><th>Dependencies</th><td>n/a (no pyproject.toml)</td></tr></table></section><section><h2>Git activity</h2><table class='kv'><tr><th>Commits</th><td>1827 total  (30d: 129, 90d: 429)</td></tr><tr><th>Contributors</th><td>13</td></tr><tr><th>Age</th><td>366 days (first commit 2025-07-17)</td></tr><tr><th>Last commit</th><td>2026-07-17</td></tr><tr><th>Ahead of main</th><td>0</td></tr><tr><th>Tags</th><td>107</td></tr><tr><th>Latest release</th><td>v1.2.1 (2026-07-17)</td></tr><tr><th>Open PRs</th><td>0</td></tr><tr><th>Latest CI</th><td>success</td></tr><tr><th>Open issues</th><td>3 (issues only; 3 incl. PRs)</td></tr><tr><th>Remote branches</th><td>57</td></tr></table><div class='caption'>Top contributors</div><div class='scroll'><table class='data'><thead><tr><th>commits</th><th>author</th></tr></thead><tbody><tr><td>1021</td><td>Thomas Schmelzer</td></tr><tr><td>322</td><td>renovate[bot]</td></tr><tr><td>227</td><td>Copilot</td></tr><tr><td>126</td><td>HarryCampion</td></tr><tr><td>24</td><td>dependabot[bot]</td></tr></tbody></table></div><div class='caption'>Most-changed files (90d)</div><div class='scroll'><table class='data'><thead><tr><th>changes</th><th>file</th></tr></thead><tbody><tr><td>84</td><td>uv.lock</td></tr><tr><td>66</td><td>pyproject.toml</td></tr><tr><td>49</td><td>.github/workflows/rhiza_ci.yml</td></tr><tr><td>45</td><td>CHANGELOG.md</td></tr><tr><td>40</td><td>.pre-commit-config.yaml</td></tr><tr><td>34</td><td>.github/workflows/rhiza_release.yml</td></tr><tr><td>33</td><td>bundles/github/.github/workflows/rhiza_release.yml</td></tr><tr><td>30</td><td>bundles/github-book/.github/workflows/rhiza_book.yml</td></tr></tbody></table></div></section><section><h2>Rhiza template status</h2><table class='kv'><tr><th>Rhiza</th><td>n/a (not a rhiza-managed repo (.rhiza/template.yml missing))</td></tr></table></section>
+  <footer>Generated by <code>scripts/stats.py</code> — descriptive only, no scoring.
+    Run <code>/quality</code> for an assessment.</footer>
+</div>
+</body>
+</html>
