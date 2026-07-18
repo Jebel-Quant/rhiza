@@ -51,7 +51,7 @@ typecheck = [
     # .rhiza/requirements/tools.txt; kept here as a dependency group.
     "ty>=0.0.30",
     "mypy==2.3.0",
-    "typer==0.26.8",
+    "typer==0.27.0",
 ]
 
 [project.urls]
