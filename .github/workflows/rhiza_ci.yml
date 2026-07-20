@@ -112,7 +112,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.1
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.2
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -172,7 +172,7 @@ jobs:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.1
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.2
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -212,7 +212,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.1
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.2
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -244,7 +244,7 @@ jobs:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.1
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.2
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -266,7 +266,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.1
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.2
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -301,7 +301,7 @@ jobs:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.1
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.2
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -331,7 +331,7 @@ jobs:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.1
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.2
         with:
           token: ${{ secrets.GH_PAT }}
 
@@ -360,7 +360,7 @@ jobs:
           version: "0.11.16"
 
       - name: Configure git auth for private packages
-        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.1
+        uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.2
         with:
           token: ${{ secrets.GH_PAT }}
 

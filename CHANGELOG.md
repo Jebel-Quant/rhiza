@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.2.2] - 2026-07-20
+
+### Documentation
+- Add generated stats dashboard (#1427)
+
+### Dependencies
+- *(deps)* Update gcr.io/oss-fuzz-base/base-builder-python docker digest to 5a4612c (#1421)
+- *(deps)* Update pre-commit hook astral-sh/ruff-pre-commit to v0.15.22 (#1422)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.11.29 (#1423)
+- *(deps)* Update dependency typer to v0.27.0 (#1425)
+- *(deps)* Lock file maintenance (#1426)
+- *(deps)* Lock file maintenance (#1428)
+
+### Maintenance
+- Stop requiring deprecated License classifier (#1429)
+- Forbid deprecated License classifier in pyproject (#1430)
+
+### Other Changes
+- Delete .rhiza/make.d/releasing.mk (#1419)
+
 ## [1.2.1] - 2026-07-17
 
 ### Maintenance
