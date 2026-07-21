@@ -65,7 +65,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           # Full history so the review can diff the PR against its base branch.
           fetch-depth: 0
@@ -84,7 +84,7 @@ jobs:
 
       - name: Review the PR diff (Claude Code)
         if: steps.guard.outputs.enabled == 'true'
-        uses: anthropics/claude-code-action@a08f8913d58013599003b37d3a9174d27e99ac90 # v1.0.172
+        uses: anthropics/claude-code-action@b76a0776ae74036e77cd11018083743453d7ad35 # v1.0.179
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}

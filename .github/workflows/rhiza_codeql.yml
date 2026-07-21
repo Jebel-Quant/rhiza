@@ -82,7 +82,7 @@ jobs:
         egress-policy: audit
 
     - name: Checkout repository
-      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
     - name: Configure git auth for private packages
       uses: jebel-quant/rhiza/.github/actions/configure-git-auth@v1.2.2
@@ -97,7 +97,7 @@ jobs:
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
+      uses: github/codeql-action/init@7188fc363630916deb702c7fdcf4e481b751f97a # v4.37.1
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
@@ -126,6 +126,6 @@ jobs:
         exit 1
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
+      uses: github/codeql-action/analyze@7188fc363630916deb702c7fdcf4e481b751f97a # v4.37.1
       with:
         category: "/language:${{matrix.language}}"
