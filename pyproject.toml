@@ -13,8 +13,6 @@ classifiers = [
     # Deliberate PyPI kill-switch: rhiza_release.yml skips publish when this classifier is present.
     # Remove it to enable publishing (after configuring PyPI Trusted Publisher for the repository).
     "Private :: Do Not Upload",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
