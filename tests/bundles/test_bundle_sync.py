@@ -49,6 +49,11 @@ class TestCoreBundleSync:
         """Ruff linting configuration is present."""
         assert (self.project / "ruff.toml").is_file()
 
+    def test_ruff_config_does_not_pin_target_version(self):
+        """Ruff config should infer target version from project metadata."""
+        content = (self.project / "ruff.toml").read_text(encoding="utf-8")
+        assert "target-version =" not in content
+
     def test_cliff_config_exists(self):
         """git-cliff config is synced by the core bundle."""
         assert (self.project / "cliff.toml").is_file()
