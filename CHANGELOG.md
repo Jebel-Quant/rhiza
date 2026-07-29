@@ -5,6 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.2.4] - 2026-07-29
+
+### Bug Fixes
+- *(github)* Reference own composite action by local path (#1446)
+
 ## [1.2.3] - 2026-07-29
 
 ### Dependencies
