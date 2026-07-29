@@ -88,19 +88,17 @@ regex = true
 search = '(?ms)^\[project\]((?:(?!^\[)[\s\S])*?)^version = "{current_version}"'
 replace = '[project]\1version = "{new_version}"'
 
-# Self-references: the live workflows call this repo's OWN composite action, so
-# the pin must move with the release or the published tag ships workflows that
-# invoke the previous version. The search matches ANY prior version (not just
-# {current_version}) so a stub left behind in an earlier release is repaired
-# rather than silently drifting. Third-party pins (actions/checkout@v5) and
-# floating refs (@main) do not match and are never rewritten.
-[[tool.bumpversion.files]]
-glob = ".github/workflows/*.yml"
-regex = true
-search = '(jebel-quant/rhiza/[^@\s]+)@v\d+\.\d+\.\d+'
-replace = '\1@v{new_version}'
-ignore_missing_version = true
-
+# The live workflows under .github/workflows/ are deliberately NOT listed. They
+# reference this repo's own composite action by local path (./.github/actions/...),
+# which needs no version and cannot go stale. Pinning them to a tag of this same
+# repo made every release self-blocking: the branch push published workflows
+# referencing a tag that did not exist yet, so they failed at `Set up job`, and a
+# release PR could never turn its required checks green.
+#
+# The versioned example in the action's README is documentation for downstream
+# consumers, who DO need a cross-repo pin, so it moves with the release. The
+# search matches ANY prior version (not just {current_version}) so a reference
+# left behind by an earlier release is repaired rather than drifting further.
 [[tool.bumpversion.files]]
 filename = ".github/actions/configure-git-auth/README.md"
 regex = true
