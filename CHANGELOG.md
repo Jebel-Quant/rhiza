@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.2.3] - 2026-07-29
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1435)
+- *(deps)* Update pre-commit hook betterleaks/betterleaks to v1.7.2 (#1444)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.12.0 (#1443)
+- *(deps)* Lock file maintenance (#1445)
+- *(deps)* Update gcr.io/oss-fuzz-base/base-builder-python docker digest to 485af05 (#1441)
+- *(deps)* Update pre-commit hook astral-sh/ruff-pre-commit to v0.16.0 (#1442)
+
+### Maintenance
+- Chore(deps)(deps): bump the github-actions group with 7 updates (#1431)
+- *(pyproject)* Declare explicit Python version classifiers (#1434)
+- Chore(deps-dev)(deps-dev): bump ty in the python-dependencies group (#1436)
+- Chore(deps)(deps): bump the github-actions group with 6 updates (#1437)
+- Declare every version location for bump-my-version
+
+### Other Changes
+- Stop pinning Ruff target-version to py311 in synced template (#1439)
+
 ## [1.2.2] - 2026-07-20
 
 ### Documentation
