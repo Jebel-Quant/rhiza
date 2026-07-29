@@ -264,7 +264,7 @@ def _manifest_status(ref: str, timeout: int = 20) -> int | None:
 
     def fetch_manifest_status(token: str | None) -> int:
         """Fetch the manifest (optionally with a bearer token) and return the HTTP status."""
-        req = urllib.request.Request(url, method="GET")  # noqa: S310 - https only, host from repo config
+        req = urllib.request.Request(url, method="GET")
         req.add_header("Accept", _MANIFEST_ACCEPT)
         if token:
             req.add_header("Authorization", f"Bearer {token}")
