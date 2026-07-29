@@ -56,6 +56,70 @@ Homepage = "https://github.com/jebel-quant/rhiza"
 Repository = "https://github.com/jebel-quant/rhiza"
 Issues = "https://github.com/jebel-quant/rhiza/issues"
 
+[tool.bumpversion]
+# Authoritative list of every location this repo's own version is written.
+# bump-my-version rewrites ONLY the patterns declared here, so a dependency that
+# happens to share the version number is never touched. Kept in pyproject.toml
+# because that is a location bump-my-version auto-discovers; the copy in
+# .rhiza/.cfg.toml is the downstream template and is not discovered here.
+current_version = "1.2.2"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:[-]?(?P<release>[a-z]+)[\\.]?(?P<pre_n>\\d+))?(?:\\+build\\.(?P<build_n>\\d+))?"
+serialize = [
+    "{major}.{minor}.{patch}-{release}.{pre_n}+build.{build_n}",
+    "{major}.{minor}.{patch}+build.{build_n}",
+    "{major}.{minor}.{patch}-{release}.{pre_n}",
+    "{major}.{minor}.{patch}",
+]
+allow_dirty = false
+# The release flow commits and tags itself (so the changelog lands in the same
+# commit as the bump), so bump-my-version must not do either.
+commit = false
+tag = false
+
+[tool.bumpversion.parts.release]
+optional_value = "prod"
+values = ["dev", "alpha", "a", "beta", "b", "rc", "prod"]
+
+# Anchored to the [project] table: an unanchored `version = "..."` search would
+# also rewrite any [tool.*] table that happens to share the current number.
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+regex = true
+search = '(?ms)^\[project\]((?:(?!^\[)[\s\S])*?)^version = "{current_version}"'
+replace = '[project]\1version = "{new_version}"'
+
+# Self-references: the live workflows call this repo's OWN composite action, so
+# the pin must move with the release or the published tag ships workflows that
+# invoke the previous version. The search matches ANY prior version (not just
+# {current_version}) so a stub left behind in an earlier release is repaired
+# rather than silently drifting. Third-party pins (actions/checkout@v5) and
+# floating refs (@main) do not match and are never rewritten.
+[[tool.bumpversion.files]]
+glob = ".github/workflows/*.yml"
+regex = true
+search = '(jebel-quant/rhiza/[^@\s]+)@v\d+\.\d+\.\d+'
+replace = '\1@v{new_version}'
+ignore_missing_version = true
+
+[[tool.bumpversion.files]]
+filename = ".github/actions/configure-git-auth/README.md"
+regex = true
+search = '(jebel-quant/rhiza/[^@\s]+)@v\d+\.\d+\.\d+'
+replace = '\1@v{new_version}'
+ignore_missing_version = true
+
+# The bundle stubs synced into downstream repos must reference an existing tag.
+[[tool.bumpversion.files]]
+glob = "bundles/**/.github/workflows/*.yml"
+regex = true
+search = '(jebel-quant/rhiza/[^@\s]+)@v\d+\.\d+\.\d+'
+replace = '\1@v{new_version}'
+ignore_missing_version = true
+
+# uv.lock is deliberately absent: its `name = "rhiza"` entry is regenerated with
+# `uv lock` after the bump. A search on the bare version string would also
+# rewrite any dependency pinned at the same number (python-dotenv is at 1.2.2).
+
 [tool.deptry.package_module_name_map]
 # uvx runs deptry without the project deps installed, so it cannot read each
 # package's metadata to resolve the import module name. Declaring the mappings
