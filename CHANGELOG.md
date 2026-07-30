@@ -5,6 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.2.5] - 2026-07-30
+
+### Maintenance
+- *(github)* Consume configure-git-auth from jebel-quant/actions (#1447)
+
 ## [1.2.4] - 2026-07-29
 
 ### Bug Fixes
