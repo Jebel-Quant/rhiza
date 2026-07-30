@@ -88,24 +88,18 @@ regex = true
 search = '(?ms)^\[project\]((?:(?!^\[)[\s\S])*?)^version = "{current_version}"'
 replace = '[project]\1version = "{new_version}"'
 
-# The live workflows under .github/workflows/ are deliberately NOT listed. They
-# reference this repo's own composite action by local path (./.github/actions/...),
-# which needs no version and cannot go stale. Pinning them to a tag of this same
-# repo made every release self-blocking: the branch push published workflows
-# referencing a tag that did not exist yet, so they failed at `Set up job`, and a
-# release PR could never turn its required checks green.
+# The live workflows under .github/workflows/ are deliberately NOT listed, and
+# neither is any pin of jebel-quant/actions. configure-git-auth lives in that
+# separate repo now, pinned by commit SHA, so it carries ITS version, not this
+# repo's — a glob here would rewrite an unrelated project's SHA on every bump.
 #
-# The versioned example in the action's README is documentation for downstream
-# consumers, who DO need a cross-repo pin, so it moves with the release. The
-# search matches ANY prior version (not just {current_version}) so a reference
-# left behind by an earlier release is repaired rather than drifting further.
-[[tool.bumpversion.files]]
-filename = ".github/actions/configure-git-auth/README.md"
-regex = true
-search = '(jebel-quant/rhiza/[^@\s]+)@v\d+\.\d+\.\d+'
-replace = '\1@v{new_version}'
-ignore_missing_version = true
-
+# A self-referential pin is what made releases self-blocking before: the branch
+# push published workflows referencing a tag of THIS repo that did not exist yet,
+# so they failed at `Set up job` and a release PR could never turn its required
+# checks green. Pointing at a different repo removes that circularity — the SHA
+# already exists when the release commit lands — but only as long as nothing
+# below rewrites it.
+#
 # The bundle stubs synced into downstream repos must reference an existing tag.
 [[tool.bumpversion.files]]
 glob = "bundles/**/.github/workflows/*.yml"
