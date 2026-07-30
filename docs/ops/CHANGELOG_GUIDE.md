@@ -225,7 +225,6 @@ ci:
     - any-glob-to-any-file:
       - '.github/workflows/**/*'
       - '.gitlab-ci.yml'
-      - '.github/actions/**/*'
 
 infrastructure:
   - changed-files:
