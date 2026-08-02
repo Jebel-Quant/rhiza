@@ -1,0 +1,32 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# golangci-lint drives `make typecheck` (alongside `go vet`), the Go counterpart
+# of ruff on the Python side and clippy on the Rust side. Linting and formatting
+# stay separate the way they do in the other layers: `make fmt` runs pre-commit,
+# whose hook is plain `gofmt` because that ships with the toolchain and needs no
+# install step. The stricter formatters declared below are opt-in — run
+# `golangci-lint fmt` for them; `golangci-lint run` (the typecheck gate) does not
+# rewrite files.
+#
+# Kept close to the standard set on purpose — a template that ships opinionated
+# linting is a template downstream projects start by fighting. Add project rules
+# in your own repo; this is the floor, not the ceiling.
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    # Correctness first: the linters that find bugs rather than style.
+    - bodyclose # an unclosed HTTP response body leaks a connection
+    - errorlint # %v on an error breaks errors.Is/As downstream
+    - unconvert # a redundant conversion usually means a type changed under you
+    - misspell
+  settings:
+    misspell:
+      locale: US
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports

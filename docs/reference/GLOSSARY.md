@@ -45,6 +45,7 @@ flowchart LR
         core["core"]
         python_core["python-core"]
         rust_core["rust-core"]
+        go_core["go-core"]
     end
 
     subgraph Local["Local-first bundles"]

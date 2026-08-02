@@ -169,6 +169,128 @@ class TestRustLayerKeepsTheSameContract:
         )
 
 
+class TestGoLayerKeepsTheSameContract:
+    """`go-core` is the third peer, assembled into a temp dir like the Rust one.
+
+    No cargo, no go: these assert the layer *declares* the contract and maps each
+    gate to its Go equivalent, which is what lets book.mk and the CI workflows stay
+    language-agnostic. There is no Go toolchain in this repo to run them against.
+    """
+
+    @pytest.fixture(autouse=True)
+    def go_project(self, root: Path, tmp_path: Path, monkeypatch):
+        """Assemble core + go-core into a project, standing in for a sync."""
+        project = tmp_path / "go-project"
+        (project / ".rhiza" / "make.d").mkdir(parents=True)
+        shutil.copy(root / "Makefile", project / "Makefile")
+        shutil.copy(root / ".rhiza" / "rhiza.mk", project / ".rhiza" / "rhiza.mk")
+        for fragment in (root / "bundles" / "core" / ".rhiza" / "make.d").iterdir():
+            shutil.copy(fragment, project / ".rhiza" / "make.d" / fragment.name)
+        shutil.copy(
+            root / "bundles" / "go-core" / ".rhiza" / "make.d" / "go.mk",
+            project / ".rhiza" / "make.d" / "go.mk",
+        )
+        (project / "go.mod").write_text("module example.com/demo\n\ngo 1.24\n")
+        monkeypatch.chdir(project)
+        setup_rhiza_git_repo()
+        self.project = project
+
+    @pytest.mark.parametrize("target", LANGUAGE_LAYER_TARGETS)
+    def test_every_contract_target_resolves(self, logger, target):
+        """The same names the other layers provide, so callers need not branch."""
+        proc = run_make(logger, [target], check=False)
+        assert "no rule to make target" not in proc.stderr.lower()
+
+    @pytest.mark.parametrize(
+        ("target", "expected"),
+        [
+            ("typecheck", "go vet"),
+            ("security", "govulncheck"),
+            ("license", "go-licenses check"),
+            ("deps", "go mod tidy -diff"),
+            ("test", "go test ./..."),
+            ("docs-coverage", "revive"),
+        ],
+    )
+    def test_gate_maps_to_its_go_equivalent(self, logger, target, expected):
+        """Each gate has a Go counterpart under the same target name."""
+        out = strip_ansi(run_make(logger, [target], check=False).stdout)
+        assert expected in out, f"`make {target}` should run {expected}"
+
+    def test_coverage_writes_the_report_book_mk_reads(self, logger):
+        """book.mk badges `_tests/coverage.xml`; go emits a profile, so it must be converted."""
+        out = strip_ansi(run_make(logger, ["coverage"], check=False).stdout)
+        assert "-coverprofile=_tests/coverage.out" in out
+        assert "gocover-cobertura" in out
+        assert "_tests/coverage.xml" in out
+
+    def test_coverage_enforces_the_floor_go_test_will_not(self, logger):
+        """`go test` has no --fail-under, so dropping the awk check silently drops the gate."""
+        out = strip_ansi(run_make(logger, ["coverage"], check=False).stdout)
+        assert "go tool cover -func" in out
+        assert "floor" in out
+
+    def test_coverage_is_atomic_because_the_test_run_is_a_race_build(self, logger):
+        """The default `set` covermode is not race-safe; mixing them corrupts counts."""
+        assert "-covermode=atomic" in strip_ansi(run_make(logger, ["coverage"], check=False).stdout)
+
+    def test_install_is_the_thinnest_of_the_three_layers(self, logger):
+        """go.mod's toolchain directive replaces rustup; uv stays a tool runner only."""
+        out = strip_ansi(run_make(logger, ["install"], check=False).stdout)
+        assert "go mod download" in out
+        assert "uv sync" not in out
+        # The command, not the word: go.mk's recipe comments mention rustup to explain
+        # its absence, and `make -n` prints recipe comments.
+        assert "rustup show" not in out
+
+    def test_license_gate_ignores_the_projects_own_module(self, logger):
+        """go-licenses walks the project's own packages, not just its dependencies.
+
+        Found by running the gate on a real synced project: without
+        `--ignore <module path>` it fails on the project itself for having no LICENSE
+        file, which every freshly synced repo lacks — the profile would ship a gate
+        that is red on the first run. The path must come from `go list -m` rather than
+        be hard-coded, or it only works for one module.
+        """
+        out = strip_ansi(run_make(logger, ["license"], check=False).stdout)
+        assert "go-licenses check ./..." in out
+        assert "--ignore" in out, "the gate fails on a project with no LICENSE without this"
+        assert "go list -m" in out, "the ignored path must be read from go.mod, not hard-coded"
+
+    def test_go_tools_bootstraps_every_binary_the_gates_call(self, logger):
+        """A gate whose binary is missing fails with a bare 'no such file'."""
+        out = strip_ansi(run_make(logger, ["go-tools"], check=False).stdout)
+        for tool in ("golangci-lint", "govulncheck", "go-licenses", "gocover-cobertura", "revive"):
+            assert tool in out, f"`go-tools` does not install {tool}, which a gate below calls"
+
+    def test_all_chains_the_go_gates(self, logger):
+        """The mirror of the Python and Rust `all` tests — a dropped gate shows up here."""
+        out = strip_ansi(run_make(logger, ["all"], check=False).stdout)
+        assert "pre-commit run --all-files" in out  # fmt, from core
+        for gate, command in (
+            ("test", "go test ./..."),
+            ("docs-coverage", "revive"),
+            ("security", "govulncheck"),
+            ("deps", "go mod tidy -diff"),
+            ("license", "go-licenses check"),
+            ("typecheck", "go vet"),
+        ):
+            assert command in out, f"`make all` no longer runs the {gate} gate ({command})"
+
+    def test_rhiza_test_still_runs_the_python_self_tests(self, logger):
+        """The template's own suite validates YAML and READMEs, so it stays Python under uv."""
+        out = strip_ansi(run_make(logger, ["rhiza-test"], check=False).stdout)
+        assert "pytest .rhiza/tests" in out
+
+    def test_neutral_tooling_works_without_a_python_version_file(self, logger):
+        """As with Rust: no `.python-version`, so `fmt` rests on the rhiza.mk fallback."""
+        out = strip_ansi(run_make(logger, ["fmt"], check=False).stdout)
+        assert not (self.project / ".python-version").exists(), "fixture drifted: this asserts the fallback path"
+        assert re.search(r"-p \d+\.\d+ pre-commit run --all-files", out), (
+            f"`make fmt` did not resolve PYTHON_VERSION to a usable value:\n{out}"
+        )
+
+
 class TestCoreAloneHasNoLanguageLayer:
     """Without a layer, core is inert on exactly the targets a layer owns."""
 

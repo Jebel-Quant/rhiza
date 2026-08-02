@@ -1,0 +1,25 @@
+# revive configuration — the `docs-coverage` gate, and only that.
+#
+# golangci-lint (see .golangci.yml) is the general linter and runs revive's
+# default rule set as part of `make typecheck`. This file exists for a narrower
+# job: `make docs-coverage` runs revive standalone against it, and revive enables
+# exactly the rules a config declares — so listing only `exported` here makes the
+# gate about doc comments and nothing else.
+#
+# That is the Go analogue of interrogate on the Python side and
+# RUSTDOCFLAGS="-D missing_docs" on the Rust side: pass/fail rather than a
+# percentage, because neither Go nor Rust has a documentation-coverage number.
+
+ignoreGeneratedHeader = true
+severity = "error"
+confidence = 0.8
+errorCode = 1
+warningCode = 1
+
+# Every exported identifier needs a doc comment that starts with its name.
+#   - checkPrivateReceivers: an exported method on an unexported type is still
+#     part of the API surface when the type is returned by an exported function.
+#   - disableStutteringCheck: `version.Version` reads fine; stutter is a naming
+#     opinion, not a documentation gap, and this gate is about the latter.
+[rule.exported]
+arguments = ["checkPrivateReceivers", "disableStutteringCheck"]

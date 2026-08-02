@@ -1,0 +1,99 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# The Go counterpart of python-core's and rust-core's configs. Same path on
+# purpose — pre-commit hard-codes `.pre-commit-config.yaml`, so the language
+# layers are alternatives rather than files that could coexist.
+#
+# The neutral hooks (markdownlint, actionlint, schema validation, secret scanning,
+# the rhiza hooks) are identical in all three, down to the pinned revs — a test in
+# the mother repo fails when they drift apart. What differs: ruff/bandit/interrogate
+# and the uv lock check are replaced by gofmt, go vet and a go.mod tidiness check.
+#
+# Pin node so pre-commit provisions a compatible runtime instead of using the
+# system node. Some npm-based hooks (markdownlint-cli) pull transitive deps that
+# reject odd-numbered current node releases (e.g. v25), failing on EBADENGINE.
+default_language_version:
+  node: "24.12.0"
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-toml
+      - id: check-yaml
+        args: ['--unsafe']
+
+  - repo: local
+    hooks:
+      - id: no-rej-files
+        name: Reject .rej files
+        entry: "bash -c 'find . -type f -name \"*.rej\" | grep -q . && { echo \"ERROR: .rej files detected\"; find . -type f -name \"*.rej\"; exit 1; } || exit 0'"
+        language: system
+        pass_filenames: false
+
+      # `language: system` rather than pre-commit's built-in golang support: the
+      # toolchain is already pinned by go.mod's `go`/`toolchain` directives, and
+      # letting pre-commit provision a second one would let the hook and
+      # `make typecheck` disagree.
+      #
+      # gofmt rather than gofumpt because it ships with the toolchain — no hook
+      # that installs a binary behind the developer's back. `golangci-lint fmt`
+      # applies the stricter set for projects that want it.
+      - id: go-fmt
+        name: gofmt
+        entry: gofmt -l -w
+        language: system
+        types: [go]
+
+      - id: go-vet
+        name: go vet
+        entry: go vet ./...
+        language: system
+        types: [go]
+        pass_filenames: false
+
+      # The analogue of python-core's uv-lock hook and rust-core's Cargo.lock
+      # check: `-diff` reports what tidy would change and exits non-zero instead
+      # of rewriting the files mid-commit.
+      - id: go-mod-tidy
+        name: go.mod and go.sum are tidy
+        entry: go mod tidy -diff
+        language: system
+        files: ^(go\.mod|go\.sum)$
+        pass_filenames: false
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.49.0
+    hooks:
+      - id: markdownlint
+        args: ["--disable", "MD013"]
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.37.4
+    hooks:
+      - id: check-renovate
+        args: [ "--verbose" ]
+
+      - id: check-github-workflows
+        args: ["--verbose"]
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+
+  - repo: https://github.com/betterleaks/betterleaks
+    rev: v1.7.2
+    hooks:
+      - id: betterleaks
+
+  - repo: https://github.com/Jebel-Quant/rhiza-hooks
+    rev: v0.7.0  # Use the latest release
+    hooks:
+      - id: check-rhiza-workflow-names
+      - id: update-readme-help
+      - id: check-rhiza-config
+      - id: check-makefile-targets
+      # check-python-version-consistency is deliberately absent: there is no
+      # .python-version in a Go repo for it to reconcile.
