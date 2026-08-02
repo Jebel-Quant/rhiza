@@ -243,6 +243,20 @@ class TestGoLayerKeepsTheSameContract:
         # its absence, and `make -n` prints recipe comments.
         assert "rustup show" not in out
 
+    def test_license_gate_ignores_the_projects_own_module(self, logger):
+        """go-licenses walks the project's own packages, not just its dependencies.
+
+        Found by running the gate on a real synced project: without
+        `--ignore <module path>` it fails on the project itself for having no LICENSE
+        file, which every freshly synced repo lacks — the profile would ship a gate
+        that is red on the first run. The path must come from `go list -m` rather than
+        be hard-coded, or it only works for one module.
+        """
+        out = strip_ansi(run_make(logger, ["license"], check=False).stdout)
+        assert "go-licenses check ./..." in out
+        assert "--ignore" in out, "the gate fails on a project with no LICENSE without this"
+        assert "go list -m" in out, "the ignored path must be read from go.mod, not hard-coded"
+
     def test_go_tools_bootstraps_every_binary_the_gates_call(self, logger):
         """A gate whose binary is missing fails with a bare 'no such file'."""
         out = strip_ansi(run_make(logger, ["go-tools"], check=False).stdout)

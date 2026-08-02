@@ -150,8 +150,12 @@ deps: install ## report dependency drift (the deptry analogue)
 	@$(GO) mod tidy -diff
 
 license: install go-tools ## run license compliance scan
+	# `--ignore <module path>`: go-licenses walks the project's own packages as well
+	# as its dependencies, so without this a repo with no LICENSE file fails the gate
+	# on itself rather than on a dependency — which every freshly synced project is.
+	# The module path comes from go.mod, so this holds in any project.
 	@printf "${BLUE}[INFO] Running license compliance scan${RESET}\n"
-	@$(GO_BIN_DIR)/go-licenses check ./...
+	@$(GO_BIN_DIR)/go-licenses check ./... --ignore "$$($(GO) list -m)"
 
 rhiza-test: install ## run rhiza's own tests (if any)
 	# The template's self-tests validate READMEs and YAML, not Go code, so they
