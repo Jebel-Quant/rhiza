@@ -1,7 +1,7 @@
 """Content validity tests for bundle files.
 
 Validates the substance of files inside every bundle directory:
-- YAML and JSON files parse without error
+- YAML, JSON and TOML files parse without error
 - GitHub workflow stubs delegate to the canonical reusable workflow in jebel-quant/rhiza
 - Shell completion scripts are non-trivial
 - Makefile fragments expose at least one documented target (## help comment)
@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -45,6 +46,21 @@ def _load_bundle_names(root: Path) -> list[str]:
     with bundles_file.open() as f:
         data = yaml.safe_load(f)
     return list(data.get("bundles", {}).keys())
+
+
+def _language_layer_bundles(root: Path) -> list[str]:
+    """Return the bundles declaring ``layer: language`` (python-core, rust-core, ...).
+
+    Derived from the YAML rather than hard-coded, so a third language layer is
+    covered by the layer-wide guards below the moment it is declared.
+    """
+    bundles_file = root / ".rhiza" / "template-bundles.yml"
+    with bundles_file.open() as f:
+        data = yaml.safe_load(f)
+    return sorted(name for name, config in data.get("bundles", {}).items() if (config or {}).get("layer") == "language")
+
+
+_LAYER_BUNDLES = _language_layer_bundles(Path(__file__).resolve().parents[2])
 
 
 # ---------------------------------------------------------------------------
@@ -183,6 +199,61 @@ class TestBundleJsonValidity:
                     content = f.read_text(encoding="utf-8").strip()
                     rel = f.relative_to(root / "bundles")
                     assert content, f"JSONC file is empty: [{name}] {rel}"
+
+
+# ---------------------------------------------------------------------------
+# TOML validity
+# ---------------------------------------------------------------------------
+
+
+class TestBundleTomlValidity:
+    """Every TOML file in every bundle directory must parse without error.
+
+    TOML carries as much shipped configuration as YAML does — cliff.toml, ruff.toml,
+    the bump-my-version `.rhiza/.cfg.toml` of each language layer, and the whole
+    rust-core toolchain set (rust-toolchain, rustfmt, clippy, deny). None of it is
+    exercised by the mother repo's own gates when it belongs to a bundle rhiza does
+    not dogfood, so a syntax error there would otherwise reach downstream projects.
+    """
+
+    def test_all_toml_files_are_parseable(self, root: Path, bundle_names: list[str]) -> None:
+        """Walk every bundle and assert every .toml file loads cleanly."""
+        errors: list[str] = []
+        for name in bundle_names:
+            bundle_dir = root / "bundles" / name
+            if not bundle_dir.is_dir():
+                continue
+            for f in _all_files_in_bundle(bundle_dir):
+                if f.suffix != ".toml":
+                    continue
+                try:
+                    with f.open("rb") as fh:
+                        tomllib.load(fh)
+                except tomllib.TOMLDecodeError as exc:
+                    rel = f.relative_to(root / "bundles")
+                    errors.append(f"  [{name}] {rel}: {exc}")
+        if errors:
+            pytest.fail("TOML parse errors in bundle files:\n" + "\n".join(errors))
+
+    def test_no_toml_file_is_empty(self, root: Path, bundle_names: list[str]) -> None:
+        """A TOML file that parses to an empty table is almost certainly a truncated sync."""
+        for name in bundle_names:
+            bundle_dir = root / "bundles" / name
+            if not bundle_dir.is_dir():
+                continue
+            for f in _all_files_in_bundle(bundle_dir):
+                if f.suffix != ".toml":
+                    continue
+                with f.open("rb") as fh:
+                    doc = tomllib.load(fh)
+                rel = f.relative_to(root / "bundles")
+                assert doc, f"TOML file has no content: [{name}] {rel}"
+
+    def test_the_scan_reaches_every_language_layer(self, root: Path) -> None:
+        """Guard against a scan that silently covers nothing: each layer ships TOML."""
+        for layer in _LAYER_BUNDLES:
+            tomls = [f for f in _all_files_in_bundle(root / "bundles" / layer) if f.suffix == ".toml"]
+            assert tomls, f"layer '{layer}' ships no .toml file — has the scan gone stale?"
 
 
 # ---------------------------------------------------------------------------
@@ -558,12 +629,23 @@ class TestRenovateBundleContent:
 
 
 # ---------------------------------------------------------------------------
-# Core pre-commit configuration
+# Language-layer pre-commit configuration
 # ---------------------------------------------------------------------------
 
 
-class TestCorePreCommitConfig:
-    """The core bundle's .pre-commit-config.yaml must pin node for npm-based hooks.
+def _layer_precommit(root: Path, layer: str) -> dict:
+    """Load the .pre-commit-config.yaml shipped by a language-layer bundle."""
+    cfg = root / "bundles" / layer / ".pre-commit-config.yaml"
+    assert cfg.is_file(), (
+        f"layer '{layer}' ships no .pre-commit-config.yaml. Every language layer owns that "
+        "path — pre-commit hard-codes it, which is why the layers are alternatives."
+    )
+    with cfg.open(encoding="utf-8") as fh:
+        return yaml.safe_load(fh)
+
+
+class TestLayerPreCommitConfig:
+    """Every language layer's .pre-commit-config.yaml must pin node for npm-based hooks.
 
     markdownlint-cli pulls a transitive dependency (ava) whose engines field is
     ``^22.20 || ^24.12 || >=26``.  Odd-numbered current node releases such as v25
@@ -571,22 +653,19 @@ class TestCorePreCommitConfig:
     and the hook fails to install.  Pinning ``default_language_version.node`` makes
     pre-commit provision a compatible node via nodeenv instead of relying on the
     system runtime.  This guard stops the pin from silently disappearing downstream.
+
+    The config used to live in ``core`` and this guard read it from there; the
+    language-layer split moved it into ``python-core`` and gave ``rust-core`` a
+    sibling, so the check now runs once per layer — and asserts the file exists
+    rather than skipping, which is how the earlier version went quietly dead.
     """
 
-    @pytest.fixture
-    def precommit_config(self, root: Path) -> dict:
-        """Load and return the parsed core-bundle .pre-commit-config.yaml."""
-        cfg = root / "bundles" / "core" / ".pre-commit-config.yaml"
-        if not cfg.exists():
-            pytest.skip("core bundle .pre-commit-config.yaml not present")
-        with cfg.open(encoding="utf-8") as fh:
-            return yaml.safe_load(fh)
-
-    def test_default_language_version_pins_node(self, precommit_config: dict) -> None:
+    @pytest.mark.parametrize("layer", _LAYER_BUNDLES)
+    def test_default_language_version_pins_node(self, root: Path, layer: str) -> None:
         """default_language_version.node must be a non-empty pin so npm hooks get a compatible runtime."""
-        versions = precommit_config.get("default_language_version")
+        versions = _layer_precommit(root, layer).get("default_language_version")
         assert isinstance(versions, dict), (
-            "core .pre-commit-config.yaml must declare a 'default_language_version' table "
+            f"{layer} .pre-commit-config.yaml must declare a 'default_language_version' table "
             "pinning node for npm-based hooks (markdownlint-cli)"
         )
         node = versions.get("node")
@@ -594,6 +673,29 @@ class TestCorePreCommitConfig:
         assert node.strip(), (
             "'default_language_version.node' must be a non-empty version string to keep markdownlint-cli "
             "installable on odd-numbered current node releases (EBADENGINE guard)"
+        )
+
+    def test_layers_agree_on_shared_hook_revisions(self, root: Path) -> None:
+        """A repo shared by two layers must be pinned to one rev in both.
+
+        The layers differ by design in *which* hooks they run — ruff/bandit versus
+        rustfmt/clippy. The neutral half (markdownlint, actionlint, schema checks,
+        secret scanning, the rhiza hooks) is the same set of upstream repos, and
+        nothing keeps them in step: Renovate bumps each config file separately, so
+        the two layers drift apart one PR at a time until a Rust project is running
+        a year-old actionlint. This fails the moment they diverge.
+        """
+        revs: dict[str, dict[str, str]] = {}
+        for layer in _LAYER_BUNDLES:
+            for repo in _layer_precommit(root, layer)["repos"]:
+                if repo["repo"] == "local":  # no rev to compare; recipes are language-specific
+                    continue
+                revs.setdefault(repo["repo"], {})[layer] = repo["rev"]
+
+        drifted = {repo: pins for repo, pins in revs.items() if len(pins) > 1 and len(set(pins.values())) > 1}
+        assert not drifted, "language layers pin the same pre-commit repo at different revs:\n" + "\n".join(
+            f"  {repo}: " + ", ".join(f"{layer}={rev}" for layer, rev in sorted(pins.items()))
+            for repo, pins in sorted(drifted.items())
         )
 
 
