@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.3.0] - 2026-08-02
+
+### New Features
+- *(rust)* Add the rust-core language layer and a rust-local profile (#1450)
+- *(go)* Add the go-core language layer and a go-local profile (#1452)
+
+### Bug Fixes
+- *(release)* Guard the release path and fix the downstream ruleset (#1461)
+
+### Dependencies
+- *(deps)* Update pre-commit hook astral-sh/ruff-pre-commit to v0.16.1 (#1457)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.12.1 (#1458)
+- *(deps)* Update pre-commit hook jebel-quant/rhiza-hooks to v0.7.1 (#1460)
+- *(deps)* Update gcr.io/oss-fuzz-base/base-builder-python docker digest to 6b2b3a7 (#1456)
+- *(deps)* Update pre-commit hook betterleaks/betterleaks to v1.7.3 (#1459)
+
+### Maintenance
+- *(core)* Split the language layer out of core (#1449)
+- *(rust)* Cover the rust-core layer and revive the pre-commit guard (#1451)
+- *(e2e)* Run every language layer's gates against a real project (#1455)
+
 ## [1.2.5] - 2026-07-30
 
 ### Maintenance
