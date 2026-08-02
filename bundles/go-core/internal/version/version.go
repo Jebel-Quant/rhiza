@@ -5,7 +5,7 @@
 // module's version *is* its git tag — nothing in the source tree carries it, and
 // nothing carries it into a built binary either.
 //
-// So this file is that carrier. `.rhiza/.cfg.toml` points bump-my-version at the
+// So this file is that carrier. `.bumpversion.toml` points bump-my-version at the
 // constant below, which means the release flow rewrites it and creates the
 // matching tag in one commit: the two can never disagree. Print it from a
 // `--version` flag, stamp it into a build, or ignore it — but do not delete it,

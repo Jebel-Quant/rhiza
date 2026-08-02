@@ -83,7 +83,7 @@ repos:
       - id: betterleaks
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v0.7.0  # Use the latest release
+    rev: v0.7.1  # Use the latest release
     hooks:
       - id: check-rhiza-workflow-names
       - id: update-readme-help

@@ -210,7 +210,7 @@ class TestBundleTomlValidity:
     """Every TOML file in every bundle directory must parse without error.
 
     TOML carries as much shipped configuration as YAML does — cliff.toml, ruff.toml,
-    the bump-my-version `.rhiza/.cfg.toml` of each language layer, and the whole
+    the bump-my-version `.bumpversion.toml` of the Rust and Go layers, and the whole
     rust-core toolchain set (rust-toolchain, rustfmt, clippy, deny). None of it is
     exercised by the mother repo's own gates when it belongs to a bundle rhiza does
     not dogfood, so a syntax error there would otherwise reach downstream projects.

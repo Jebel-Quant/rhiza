@@ -140,10 +140,26 @@ class TestPythonCoreBundleSync:
         for target in ("install:", "all:", "deptry:", "license:", "rhiza-test:"):
             assert target in python_mk, f"python.mk is missing {target}"
 
-    def test_bumpversion_config_targets_pyproject(self):
-        """The bump-my-version config points at pyproject.toml, so it is Python's."""
-        cfg = (self.project / ".rhiza" / ".cfg.toml").read_text(encoding="utf-8")
-        assert 'filename = "pyproject.toml"' in cfg
+    @pytest.mark.parametrize("name", [".bumpversion.toml", ".bumpversion.cfg", "setup.cfg", ".rhiza/.cfg.toml"])
+    def test_no_bumpversion_config_is_shipped(self, name):
+        """Python's version config belongs in the repo's own pyproject.toml (#1453).
+
+        bump-my-version searches four filenames and stops at the first with a
+        bumpversion section. pyproject.toml is one of them and is last, so a block
+        there rewrites PEP 621 ``[project].version`` natively — while a synced
+        ``.bumpversion.toml`` would *shadow* it, and the ``.rhiza/.cfg.toml`` this
+        layer used to ship was never searched at all and so did nothing. Either way a
+        rhiza-owned file is the wrong home: it cannot carry ``current_version``,
+        because the next sync would overwrite the consuming repo's version with the
+        template's.
+
+        Rust and Go are the opposite case — no discoverable file exists in those
+        languages, so their layers do ship a root ``.bumpversion.toml``.
+        """
+        assert not (self.project / name).exists(), (
+            f"{name} would take precedence over (or silently replace) the repo's own "
+            f"pyproject.toml [tool.bumpversion] table"
+        )
 
 
 class TestRustCoreBundleSync:
@@ -191,8 +207,64 @@ class TestRustCoreBundleSync:
                 assert not path.is_symlink(), f"Unexpected symlink in synced project: {path.relative_to(self.project)}"
 
 
+class TestNonPythonLayersShipADiscoverableBumpversionConfig:
+    """Rust and Go must land their version config where bump-my-version looks (#1453).
+
+    A Rust or Go repo has none of the four filenames bump-my-version searches, so
+    unlike Python it cannot be told to put the block in a file it already owns — the
+    layer has to ship one. That makes the placement load-bearing: the same config at
+    ``.rhiza/.cfg.toml`` (where these layers used to put it) is never read, and the
+    tool responds to finding no config by falling back to ``git describe`` instead of
+    failing. A release then gets cut against whatever the last reachable tag says.
+    """
+
+    LAYERS = ("rust-core", "go-core")
+
+    @pytest.fixture(params=LAYERS)
+    def synced(self, request, tmp_path, root):
+        """Sync one non-Python language layer and return (name, project dir)."""
+        sync_bundles(root, ["core", request.param], tmp_path)
+        return request.param, tmp_path
+
+    def test_the_config_is_at_a_discovered_path(self, synced):
+        """`.bumpversion.toml` is searched first; `.rhiza/.cfg.toml` is never searched."""
+        layer, project = synced
+        assert (project / ".bumpversion.toml").is_file(), f"{layer} ships no discoverable bumpversion config"
+        assert not (project / ".rhiza" / ".cfg.toml").exists(), (
+            f"{layer} still ships the inert .rhiza/.cfg.toml copy — bump-my-version never reads it"
+        )
+
+    def test_the_config_carries_no_current_version(self, synced):
+        """A synced file must not own a value only the consuming repo can maintain.
+
+        ``current_version`` would be reset to the template's number by every
+        ``/rhiza:update``. Leaving it out makes bump-my-version read the version from
+        the newest tag matching ``tag_name`` instead, which is what these layers want:
+        a Go module's version *is* its tag, and a Rust crate's Cargo.toml is expected
+        to agree with it.
+        """
+        layer, project = synced
+        with (project / ".bumpversion.toml").open("rb") as fh:
+            cfg = tomllib.load(fh)["tool"]["bumpversion"]
+        assert "current_version" not in cfg, f"{layer}: a synced config cannot own the repo's version"
+        assert cfg["tag_name"] == "v{new_version}", (
+            f"{layer}: tag_name is also the pattern the current version is read from, so it must "
+            f"match the tags the release flow creates"
+        )
+
+    @pytest.mark.parametrize("key", ["commit", "tag"])
+    def test_the_release_flow_owns_the_commit_and_the_tag(self, synced, key):
+        """`/rhiza:release` folds the changelog into the bump commit and tags it itself."""
+        layer, project = synced
+        with (project / ".bumpversion.toml").open("rb") as fh:
+            cfg = tomllib.load(fh)["tool"]["bumpversion"]
+        assert cfg[key] is False, (
+            f"{layer}: {key} = true makes a bare `bump-my-version bump` duplicate what the release flow already does"
+        )
+
+
 class TestRustBumpversionConfig:
-    """The Rust `.rhiza/.cfg.toml` must rewrite the crate version and nothing else.
+    """The Rust `.bumpversion.toml` must rewrite the crate version and nothing else.
 
     This is the subtlest file rust-core ships. bump-my-version applies ``search`` to
     *every* occurrence in a file, so the config anchors its pattern to the
@@ -223,7 +295,7 @@ features = ["std"]
     def config(self, tmp_path, root):
         """Sync rust-core and load its bump-my-version configuration."""
         sync_bundles(root, ["core", "rust-core"], tmp_path)
-        with (tmp_path / ".rhiza" / ".cfg.toml").open("rb") as fh:
+        with (tmp_path / ".bumpversion.toml").open("rb") as fh:
             self.cfg = tomllib.load(fh)["tool"]["bumpversion"]
         self.project = tmp_path
 
@@ -381,7 +453,7 @@ class TestGoCoreBundleSync:
 
 
 class TestGoBumpversionConfig:
-    """The Go `.rhiza/.cfg.toml` must write the one version location a Go module has.
+    """The Go `.bumpversion.toml` must write the one version location a Go module has.
 
     Go is the odd layer out: pyproject.toml and Cargo.toml carry a version, a Go
     module does not — its version is the git tag. The layer ships a `Version`
@@ -398,7 +470,7 @@ class TestGoBumpversionConfig:
     def config(self, tmp_path, root):
         """Sync go-core and load its bump-my-version configuration."""
         sync_bundles(root, ["core", "go-core"], tmp_path)
-        with (tmp_path / ".rhiza" / ".cfg.toml").open("rb") as fh:
+        with (tmp_path / ".bumpversion.toml").open("rb") as fh:
             self.cfg = tomllib.load(fh)["tool"]["bumpversion"]
         self.project = tmp_path
 
@@ -410,7 +482,7 @@ class TestGoBumpversionConfig:
         assert (self.project / filenames[0]).is_file(), "the config points at a file the layer does not ship"
 
     def test_the_search_matches_the_shipped_constant(self):
-        """The declaration in version.go and the pattern in .cfg.toml must stay in step."""
+        """The declaration in version.go and the pattern in .bumpversion.toml must stay in step."""
         spec = self.cfg["files"][0]
         source = (self.project / spec["filename"]).read_text(encoding="utf-8")
         # Version numbers are literal here; substitute the shipped 0.0.0 to match.
