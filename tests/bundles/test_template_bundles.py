@@ -196,6 +196,7 @@ class TestTemplateBundles:
         requires = {name: (cfg or {}).get("requires", []) for name, cfg in bundles_data["bundles"].items()}
 
         def closure(seeds: list[str]) -> set[str]:
+            """Resolve the transitive bundle closure for the seeds."""
             seen: set[str] = set()
             stack = list(seeds)
             while stack:
