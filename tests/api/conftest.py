@@ -18,6 +18,7 @@ from tests.util import setup_rhiza_git_repo
 SPLIT_MAKEFILES = [
     ".rhiza/rhiza.mk",
     ".rhiza/make.d/bootstrap.mk",
+    ".rhiza/make.d/python.mk",
     ".rhiza/make.d/quality.mk",
     ".rhiza/make.d/releasing.mk",
     ".rhiza/make.d/doctor.mk",

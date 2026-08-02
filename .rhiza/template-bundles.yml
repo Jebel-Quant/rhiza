@@ -9,7 +9,7 @@
 #    jebel-quant/rhiza) live in dedicated github-<feature> overlay bundles.
 #
 #    File ownership is expressed through the filesystem: each bundle has a
-#    corresponding directory under bundles/<name>/ in this repository (26 bundles).
+#    corresponding directory under bundles/<name>/ in this repository (27 bundles).
 #    Symlinks point to the real files; overlay bundles (github-*, gitlab-*)
 #    contain the actual injection files directly.
 #
@@ -41,9 +41,34 @@ bundles:
   # CORE - Required infrastructure
   # ============================================================================
   core:
-    description: "Core Rhiza infrastructure"
+    description: "Core Rhiza infrastructure (language-neutral)"
     required: true
     standalone: true
+    notes: |
+      The make framework, help/logo machinery, shell and GNU-make guards, editor
+      config, changelog config, and uv/uvx as a *tool runner* (rhiza runs
+      pre-commit, mkdocs and semgrep through uvx whatever the project is written
+      in). It is deliberately not a working repo on its own: `install` and `all`
+      come from a language layer, and every profile pairs core with exactly one.
+
+  # ============================================================================
+  # LANGUAGE LAYERS - exactly one per repo
+  # ============================================================================
+  python-core:
+    description: "Python toolchain layer: virtualenv, uv sync, ruff/bandit config, deptry"
+    standalone: true
+    requires: [core]
+    notes: |
+      The Python half of what used to be `core`: `.python-version`, `ruff.toml`,
+      `.bandit`, the pre-commit config, the bump-my-version config that points at
+      `pyproject.toml`, and `.rhiza/make.d/python.mk` (the `install`, `all`,
+      `deptry`, `license` and `rhiza-test` targets).
+
+      A language layer owns the target *names* the rest of the template calls —
+      `install`, `all` — so book.mk, test.mk and the CI workflows never need to
+      know the language. Sibling layers claim the same deployment paths on
+      purpose: selecting two at once is a file-ownership conflict, which is the
+      intended way for "one language per repo" to fail loudly.
 
   github:
     description: "GitHub repository configuration (actions, dependabot, templates, rulesets, core workflows)"
@@ -209,6 +234,7 @@ bundles:
     requires:
       - book
       - core
+      - python-core   # pytest.ini, the .rhiza/tests suite and test.mk are Python
 
   # ============================================================================
   # GITHUB-TESTS - GitHub Actions workflows for CI
@@ -225,7 +251,7 @@ bundles:
     description: "Performance benchmarking infrastructure with pytest-benchmark and reporting"
     standalone: false
     requires:
-      - tests  # Required: benchmarks depend on the test infrastructure
+      - tests  # Required: benchmarks depend on the test infrastructure (and, through it, python-core)
 
   # ============================================================================
   # MARIMO - Interactive Marimo notebooks
@@ -236,6 +262,7 @@ bundles:
     requires:
       - book
       - core
+      - python-core   # marimo is a Python package
 
   # ============================================================================
   # GITHUB-MARIMO - GitHub Actions workflow for Marimo notebooks
@@ -329,6 +356,7 @@ profiles:
       No .github/workflows/* files are synced.
     bundles:
       - core
+      - python-core
       - book
       - marimo
       - tests
@@ -344,6 +372,7 @@ profiles:
       testing tooling, documentation, notebooks, and hosted CI workflows.
     bundles:
       - core
+      - python-core
       - github
       - book
       - marimo
@@ -363,6 +392,7 @@ profiles:
       and GitLab CI pipelines. No .github/ files are synced.
     bundles:
       - core
+      - python-core
       - gitlab
       - book
       - marimo

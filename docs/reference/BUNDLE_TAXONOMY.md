@@ -27,7 +27,8 @@ the source of truth for the exact set. See
 
 | Bundle | Purpose |
 |--------|---------|
-| `core` | Required base: thin Makefile, `.rhiza/` modular make system, linting, bootstrap. |
+| `core` | Required base, and language-neutral: thin Makefile, `.rhiza/` modular make system, help/logo machinery, and uv/uvx as a tool runner. Not a working repo on its own. |
+| `python-core` | The Python language layer: virtualenv and `uv sync` (`install`), `.python-version`, `ruff.toml`, `.bandit`, pre-commit config, `deptry` and licence scans, and the `all` aggregate. Exactly one language layer per repo. |
 | `tests` | Local testing: pytest, coverage, and type checking. |
 | `benchmarks` | Performance benchmarking with `pytest-benchmark` and reporting (builds on `tests`). |
 | `book` | Documentation site with MkDocs + zensical. |
@@ -78,7 +79,7 @@ context and Rhiza expands it to a sensible bundle set.
 
 | Profile | Expands to | Use when |
 |---------|-----------|----------|
-| `local` | `core`, `tests`, `book`, `marimo` | Local-first work with no hosted CI (experiments, private/other-host repos). |
+| `local` | `core`, `python-core`, `tests`, `book`, `marimo` | Local-first work with no hosted CI (experiments, private/other-host repos). |
 | `github-project` | the `local` set + `github` and the `github-*` overlays | A standard GitHub-hosted project. |
 | `gitlab-project` | the `local` set + `gitlab` and the `gitlab-*` overlays | A standard GitLab-hosted project. |
 
@@ -110,3 +111,9 @@ templates:
 Then run `make sync` to materialise the selected files. Required bundles
 (`core`) and any `requires` dependencies are pulled in automatically, so you only
 list the capabilities you care about.
+
+**Pick exactly one language layer.** `core` deliberately defines no `install` and no
+`all` — those names belong to a layer, so that `book.mk`, `test.mk` and the CI
+workflows can call `make install` without knowing the language. Every profile pairs
+`core` with `python-core`; a bundles-only config must name a layer itself, and naming
+two is a file-ownership conflict the sync rejects.

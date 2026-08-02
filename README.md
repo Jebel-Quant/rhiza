@@ -189,9 +189,9 @@ Rhiza provides **profiles** — named presets that select a sensible set of bund
 
 | Profile | Description | Includes |
 |---------|-------------|---------|
-| `local` | Local-first development with no hosted CI/CD workflow files | `core`, `book`, `marimo`, `tests` |
-| `github-project` | GitHub-hosted project with CI/CD and release automation | `core`, `github`, `book`, `marimo`, `tests`, `github-book`, `github-marimo`, `github-tests` |
-| `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `core`, `gitlab`, `book`, `marimo`, `tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-tests` |
+| `local` | Local-first development with no hosted CI/CD workflow files | `core`, `python-core`, `book`, `marimo`, `tests` |
+| `github-project` | GitHub-hosted project with CI/CD and release automation | `core`, `python-core`, `github`, `book`, `marimo`, `tests`, `github-book`, `github-marimo`, `github-tests` |
+| `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `core`, `python-core`, `gitlab`, `book`, `marimo`, `tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-tests` |
 
 Declare a profile in `.rhiza/template.yml`:
 
@@ -225,10 +225,11 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 
 | Bundle | Description | Auto-installs |
 |--------|-------------|---------------|
-| `core` | Core Rhiza infrastructure (Makefile, linting, docs) | — |
-| `tests` | Local testing infrastructure with pytest, coverage, and type checking | `book`, `core` |
+| `core` | Core Rhiza infrastructure, language-neutral (Makefile, help, uv as tool runner) | — |
+| `python-core` | Python language layer (`install`/`all`, virtualenv, ruff, bandit, deptry) | `core` |
+| `tests` | Local testing infrastructure with pytest, coverage, and type checking | `book`, `core`, `python-core` |
 | `book` | Comprehensive documentation book (API docs, coverage, notebooks) | `core` |
-| `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book`, `core` |
+| `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book`, `core`, `python-core` |
 | `benchmarks` | Performance benchmarking with pytest-benchmark and reporting | `tests` |
 | `docker` | Docker containerization support | — |
 | `devcontainer` | VS Code DevContainer configuration | — |

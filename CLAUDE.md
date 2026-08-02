@@ -51,7 +51,12 @@ The core abstraction is the **bundle** — a named group of configuration files.
 
 **Feature bundles** — one per capability:
 
-- `core` (required): Makefiles, linting, base infrastructure
+- `core` (required, **language-neutral**): the thin Makefile, the `.rhiza/make.d` system,
+  help/logo machinery, and uv/uvx as a *tool runner*. It deliberately defines no
+  `install` and no `all` — see **Language layers** below.
+- `python-core` (the Python **language layer**): `.python-version`, `ruff.toml`,
+  `.bandit`, the pre-commit config, the bump-my-version config, and
+  `.rhiza/make.d/python.mk` (`install`, `all`, `deptry`, `license`, `rhiza-test`)
 - `tests`: pytest, coverage, type checking
 - `benchmarks`: pytest-benchmark infrastructure and reporting
 - `github`: GitHub repository configuration (actions, dependabot, core workflows)
@@ -79,6 +84,32 @@ A few files **cannot** be symlinks and stay as **real copies**, kept in sync by 
 
 Plus intentional mother-repo overrides that deliberately diverge from their bundle source: root `.gitignore`, `.pre-commit-config.yaml`, `.python-version`, `SECURITY.md`, `renovate.json`. The exclusion list lives in `utils/link_dogfood.py`. Downstream consumers are unaffected: `rhiza-cli` sparse-checks-out a bundle and dereferences symlinks on copy, so synced projects always receive real files (guarded by `test_no_symlinks_in_*`).
 
+### Language layers
+
+`core` used to be a Python project in disguise: it created a virtualenv, ran `uv sync`
+and named Python gates in `all`. That half now lives in a **language layer** bundle,
+and every profile pairs `core` with exactly one — today only `python-core`.
+
+The contract between them is a set of **target names**. `book.mk`, `test.mk`, the CI
+workflows and the release pipeline all call `make install` without knowing what the
+project is written in, so a layer must define:
+
+| target | owned by | means |
+| --- | --- | --- |
+| `install` | the layer | make the project's dependencies available |
+| `all` | the layer | run the language's full gate set locally |
+| `install-uv`, `fmt`, `todos`, `semgrep`, `doctor`, `clean` | core | language-neutral, whatever the project is |
+
+Two rules follow. **Core must never define `install` or `all`** — `tests/api/test_language_layer.py`
+asserts both halves behaviourally. And **layers claim the same deployment paths on
+purpose**: a second layer shipping `.rhiza/make.d/rust.mk` is fine, but two layers in
+one repo is a file-ownership conflict the bundle tests reject, which is how "one
+language per repo" fails loudly rather than silently.
+
+`uv` sits in core, not in the Python layer, because rhiza runs pre-commit, mkdocs and
+semgrep through `uvx` regardless of the project's language. What moved is the
+*project* virtualenv and the `uv sync` of its declared dependencies.
+
 ### Modular Makefile System
 
 The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiza/rhiza.mk`. That file auto-loads everything in `.rhiza/make.d/*.mk` alphabetically.
@@ -87,9 +118,10 @@ The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiz
 
 | `.rhiza/make.d/` file | owner bundle | provides |
 | --- | --- | --- |
-| `bootstrap.mk` | core | `install`/`uv` bootstrap |
+| `bootstrap.mk` | core | `install-uv` tool bootstrap, install hooks, `clean` |
+| `python.mk` | python-core | `install`, `all`, `deptry`, `license`, `rhiza-test` |
 | `doctor.mk` | core | `make doctor` environment checks |
-| `quality.mk` | core | `fmt`, lint, pre-commit gates |
+| `quality.mk` | core | `fmt`, `todos`, `semgrep` — the language-neutral gates |
 | `custom-env.mk` | core | example stub: project variables |
 | `custom-task.mk` | core | example stub: project targets/hooks |
 | `test.mk` | tests | `test`, coverage, typecheck, stress, mutation |

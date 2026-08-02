@@ -45,15 +45,6 @@ class TestCoreBundleSync:
         for name in ("bootstrap.mk", "doctor.mk", "quality.mk", "custom-env.mk", "custom-task.mk"):
             assert (make_d / name).is_file(), f"Missing make.d fragment: {name}"
 
-    def test_ruff_config_exists(self):
-        """Ruff linting configuration is present."""
-        assert (self.project / "ruff.toml").is_file()
-
-    def test_ruff_config_does_not_pin_target_version(self):
-        """Ruff config should infer target version from project metadata."""
-        content = (self.project / "ruff.toml").read_text(encoding="utf-8")
-        assert "target-version =" not in content
-
     def test_cliff_config_exists(self):
         """git-cliff config is synced by the core bundle."""
         assert (self.project / "cliff.toml").is_file()
@@ -92,6 +83,66 @@ class TestCoreBundleSync:
         for path in self.project.rglob("*"):
             if path.is_file():
                 assert not path.is_symlink(), f"Unexpected symlink in synced project: {path.relative_to(self.project)}"
+
+
+class TestCoreIsLanguageNeutral:
+    """Core alone ships no language toolchain — that is the language layer's job."""
+
+    @pytest.fixture(autouse=True)
+    def synced(self, tmp_path, root):
+        """Sync only the core bundle into a fresh directory."""
+        sync_bundles(root, ["core"], tmp_path)
+        self.project = tmp_path
+
+    @pytest.mark.parametrize("name", ["ruff.toml", ".bandit", ".python-version", ".pre-commit-config.yaml"])
+    def test_python_tooling_is_not_in_core(self, name):
+        """Python-only config moved to python-core and must not come back."""
+        assert not (self.project / name).exists(), f"{name} belongs to python-core, not core"
+
+    def test_core_defines_no_install_or_all_target(self):
+        """`install` and `all` are the language layer's contract, not core's."""
+        fragments = list((self.project / ".rhiza").rglob("*.mk"))
+        assert fragments, "core ships no make fragments at all"
+        for fragment in fragments:
+            for line in fragment.read_text(encoding="utf-8").splitlines():
+                assert not line.startswith("install:"), f"{fragment.name} defines install"
+                assert not line.startswith("all:"), f"{fragment.name} defines all"
+
+    def test_core_still_provisions_uv_as_a_tool_runner(self):
+        """Uvx runs pre-commit/mkdocs/semgrep whatever the language, so core keeps it."""
+        bootstrap = (self.project / ".rhiza" / "make.d" / "bootstrap.mk").read_text(encoding="utf-8")
+        assert "install-uv:" in bootstrap
+
+
+class TestPythonCoreBundleSync:
+    """Syncing core + python-core produces a working Python project layer."""
+
+    @pytest.fixture(autouse=True)
+    def synced(self, tmp_path, root):
+        """Sync the core and python-core bundles into a fresh directory."""
+        sync_bundles(root, ["core", "python-core"], tmp_path)
+        self.project = tmp_path
+
+    @pytest.mark.parametrize("name", ["ruff.toml", ".bandit", ".python-version", ".pre-commit-config.yaml"])
+    def test_python_tooling_is_present(self, name):
+        """The Python toolchain config the old core used to ship still arrives."""
+        assert (self.project / name).is_file(), f"Missing Python toolchain file: {name}"
+
+    def test_ruff_config_does_not_pin_target_version(self):
+        """Ruff config should infer target version from project metadata."""
+        content = (self.project / "ruff.toml").read_text(encoding="utf-8")
+        assert "target-version =" not in content
+
+    def test_python_mk_provides_the_language_contract(self):
+        """python.mk owns the target names the rest of the template calls."""
+        python_mk = (self.project / ".rhiza" / "make.d" / "python.mk").read_text(encoding="utf-8")
+        for target in ("install:", "all:", "deptry:", "license:", "rhiza-test:"):
+            assert target in python_mk, f"python.mk is missing {target}"
+
+    def test_bumpversion_config_targets_pyproject(self):
+        """The bump-my-version config points at pyproject.toml, so it is Python's."""
+        cfg = (self.project / ".rhiza" / ".cfg.toml").read_text(encoding="utf-8")
+        assert 'filename = "pyproject.toml"' in cfg
 
 
 class TestCoreAndTestsBundleSync:

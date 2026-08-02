@@ -204,6 +204,11 @@ def _classify_dogfood(root: Path, rel: str, index: dict[str, list[Path]]) -> tup
     if not owners:
         return ("skip", None)
     root_path = root / rel
+    # A dangling link is what moving a bundle file between bundles leaves behind: the
+    # root symlink still points at the old bundle path. There are no bytes to compare,
+    # so the sole owner is the answer — and with several, the linker must not guess.
+    if root_path.is_symlink() and not root_path.exists():
+        return ("link", owners[0]) if len(owners) == 1 else ("ambiguous", None)
     root_size = root_path.stat().st_size
     same_size_owners = [o for o in owners if o.stat().st_size == root_size]
     if not same_size_owners:
