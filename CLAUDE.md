@@ -56,14 +56,16 @@ The core abstraction is the **bundle** — a named group of configuration files.
   help/logo machinery, and uv/uvx as a *tool runner*. It deliberately defines no
   `install` and no `all` — see **Language layers** below.
 - `python-core` (the Python **language layer**): `.python-version`, `ruff.toml`,
-  `.bandit`, the pre-commit config, the bump-my-version config, and
-  `.rhiza/make.d/python.mk` (`install`, `all`, `deptry`, `license`, `rhiza-test`)
+  `.bandit`, the pre-commit config, and `.rhiza/make.d/python.mk` (`install`, `all`,
+  `deptry`, `license`, `rhiza-test`). Ships no bump-my-version config — see
+  **Where the version config lives**.
 - `rust-core` (the Rust **language layer**): `rust-toolchain.toml`, `rustfmt.toml`,
-  `clippy.toml`, `deny.toml`, a Rust pre-commit config, and `.rhiza/make.d/rust.mk`.
-  Carries its own test targets, unlike Python — see **Language layers**.
+  `clippy.toml`, `deny.toml`, a Rust pre-commit config, `.bumpversion.toml`, and
+  `.rhiza/make.d/rust.mk`. Carries its own test targets, unlike Python — see
+  **Language layers**.
 - `go-core` (the Go **language layer**): `.golangci.yml`, `revive.toml`, a Go
-  pre-commit config, a starter `internal/version/version.go`, and
-  `.rhiza/make.d/go.mk`. Carries its own test targets, like Rust.
+  pre-commit config, `.bumpversion.toml`, a starter `internal/version/version.go`,
+  and `.rhiza/make.d/go.mk`. Carries its own test targets, like Rust.
 - `tests`: pytest, coverage, type checking (Python; requires `python-core`)
 - `benchmarks`: pytest-benchmark infrastructure and reporting
 - `github`: GitHub repository configuration (actions, dependabot, core workflows)
@@ -86,7 +88,7 @@ Rhiza dogfoods its own templates: the files it ships in `bundles/<name>/...` als
 
 A few files **cannot** be symlinks and stay as **real copies**, kept in sync by tests (`tests/bundles/test_bundle_*_sync.py`) rather than by symlink:
 
-- `.github/*` platform config (Dependabot, release notes, secret scanning, PR template, rulesets) — GitHub reads these blobs directly and does not resolve symlinks. **Live `.github/workflows/*` are also real** (Actions won't run a symlinked workflow) and differ from the bundle stubs by design.
+- `.github/*` platform config (Dependabot, release notes, secret scanning, PR template, rulesets) — GitHub reads these blobs directly and does not resolve symlinks. **Live `.github/workflows/*` are also real** (Actions won't run a symlinked workflow) and differ from the bundle stubs by design. So does **`rulesets/main-branch-protection.json`**, and for a subtler reason (#1448): here `rhiza_ci.yml` has `push:`/`pull_request:` triggers, so its jobs run top-level and report bare check-run names, while downstream the `github-tests` stub delegates via `jobs.ci` and GitHub reports them as `ci / <job name>`. The bundle copy therefore prefixes all six required contexts; `tests/bundles/test_bundle_github_sync.py` pins that relationship, including the coupling to the stub's job id.
 - `.rhiza/.gitignore` (and any `.gitignore`/`.gitattributes`) — git opens these with `O_NOFOLLOW`, so a symlink yields an ELOOP warning and the rules are ignored.
 
 Plus intentional mother-repo overrides that deliberately diverge from their bundle source: root `.gitignore`, `.pre-commit-config.yaml`, `.python-version`, `SECURITY.md`, `renovate.json`. The exclusion list lives in `utils/link_dogfood.py`. Downstream consumers are unaffected: `rhiza-cli` sparse-checks-out a bundle and dereferences symlinks on copy, so synced projects always receive real files (guarded by `test_no_symlinks_in_*`).
@@ -110,11 +112,35 @@ project is written in, so a layer must define:
 
 Two rules follow. **Core must never define `install` or `all`** — `tests/api/test_language_layer.py`
 asserts both halves behaviourally, for every layer. And **layers claim the same
-deployment paths on purpose**: `.pre-commit-config.yaml` and `.rhiza/.cfg.toml` exist
-in all of them, because those paths are fixed by the tools that read them. A bundle declares
+deployment paths on purpose**: `.pre-commit-config.yaml` exists in all of them, and
+`.bumpversion.toml` in the two non-Python ones, because those paths are fixed by the tools
+that read them. A bundle declares
 `layer: language` in `template-bundles.yml` to say so; the ownership tests then permit
 overlap *within* a layer and still reject it everywhere else, and a separate test
 fails any profile that selects two layers at once.
+
+**Where the version config lives.** bump-my-version auto-discovers exactly four
+filenames — `.bumpversion.toml`, `.bumpversion.cfg`, `setup.cfg`, `pyproject.toml` — and
+reads nothing else without an explicit `--config-file`. Finding none it does not fail: it
+falls back to `git describe`, so a release gets cut against the last reachable tag instead
+of the project's version. That is why the block rhiza used to ship at `.rhiza/.cfg.toml`
+was inert in every downstream repo (#1453), and the placement now differs by layer:
+
+- **python-core ships nothing.** A Python project already owns `pyproject.toml`, where a
+  `[tool.bumpversion]` table rewrites PEP 621 `[project].version` natively — no
+  `current_version`, no `[[files]]` entry for pyproject itself. A synced
+  `.bumpversion.toml` would *shadow* that table, so the repo declares its own block and
+  the shipped `.rhiza/tests/test_pyproject.py` fails when it is missing or when it sets
+  `commit`/`tag` to true.
+- **rust-core and go-core ship a root `.bumpversion.toml`.** Neither language owns a
+  discoverable file, so the layer must provide one. It deliberately omits
+  `current_version` — a synced file cannot hold a value only the consuming repo can
+  maintain — which makes bump-my-version read the version from the newest tag matching
+  `tag_name`. For Go that is not a fallback but the definition; for Rust it is the
+  invariant `Cargo.toml` is expected to satisfy anyway.
+
+Both non-Python configs set `commit = false` and `tag = false`: `/rhiza:release` commits
+and tags itself so the changelog lands in the bump commit.
 
 **Gate parity between layers.** Same target names, different engines:
 
@@ -231,6 +257,8 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 ### CI/CD
 
 This repo runs on **GitHub Actions only**: `.github/workflows/` — CI, e2e, release, docker, CodeQL, weekly, sync. There is no root `.gitlab-ci.yml` here.
+
+`rhiza_release.yml`'s `Validate Tag` job is the only gate the release path has, so all three of its checks are behavioural, not advisory: the release must not already exist, the version must be strictly newer than every published tag (#1126), and the tagged commit must be reachable from a branch (#1454). The last one exists because a release cut on a branch that is then squash-merged leaves its tag on the pre-squash commit, which nothing contains — `git describe` skips the release and a git-cliff regeneration *deletes* that version's CHANGELOG section, silently. A tag on a non-default branch (a maintenance release) warns rather than fails; only a genuinely orphaned commit is refused. `tests/api/test_release_tag_reachability.py` lifts that guard's shell out of the YAML and runs it against purpose-built repositories, so the logic is tested rather than the step name.
 
 `rhiza_e2e.yml` is separate from `rhiza_ci.yml` rather than more jobs inside it: it installs three toolchains CI does not otherwise need, costs minutes per layer against CI's ≤20 min test budget, and is the only place the Rust and Go layers execute at all (see **Language layers** above).
 

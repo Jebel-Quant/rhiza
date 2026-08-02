@@ -89,6 +89,39 @@ variables:
       print(f"✅ v{new_v} is newer than the latest released version v{latest}" if latest else f"✅ v{new_v} is the first release")
       ' "$TAG"
 
+      # Backstop for issue #1454: a release cut on a branch that is then squash-merged
+      # leaves the tag on the pre-squash commit, which no branch contains. Such a tag is
+      # permanently orphaned — `git describe` skips the release, and a git-cliff
+      # regeneration silently deletes that version's CHANGELOG section because it cannot
+      # place a boundary at an unreachable tag.
+      # GitLab clones shallow by default, so the full graph has to be fetched first.
+      git fetch --unshallow >/dev/null 2>&1 || true
+      git fetch --no-tags origin "+refs/heads/*:refs/remotes/origin/*" >/dev/null 2>&1 || true
+
+      if ! git rev-parse --verify --quiet "refs/remotes/origin/$CI_DEFAULT_BRANCH" >/dev/null; then
+        echo "❌ Cannot resolve the default branch 'origin/$CI_DEFAULT_BRANCH' — refusing to"
+        echo "   release without a reachability check."
+        exit 1
+      fi
+
+      COMMIT=$(git rev-parse "$TAG^{commit}")
+      if git merge-base --is-ancestor "$COMMIT" "refs/remotes/origin/$CI_DEFAULT_BRANCH"; then
+        echo "✅ $TAG ($COMMIT) is an ancestor of $CI_DEFAULT_BRANCH"
+      else
+        # Reachable from some other branch: a maintenance/hotfix release. Legitimate,
+        # but a changelog regenerated from the default branch still cannot see it.
+        BRANCHES=$(git branch -r --contains "$COMMIT" --format='%(refname:short)')
+        if [ -n "$BRANCHES" ]; then
+          echo "⚠️  Tag $TAG is not an ancestor of $CI_DEFAULT_BRANCH; it is contained in: $(echo "$BRANCHES" | tr '\n' ' ')"
+          echo "⚠️  A CHANGELOG regenerated from $CI_DEFAULT_BRANCH will not include this release."
+        else
+          echo "❌ Tag $TAG points at $COMMIT, which no branch contains. It is most likely a"
+          echo "   pre-squash commit from a squash-merged release branch: re-tag the merged"
+          echo "   commit on $CI_DEFAULT_BRANCH and delete this tag (issue #1454)."
+          exit 1
+        fi
+      fi
+
       echo "✅ Tag validation passed"
   artifacts:
     reports:

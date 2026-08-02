@@ -1,3 +1,23 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# bump-my-version configuration for a Go project.
+#
+# WHY IT LIVES AT THE ROOT (issue #1453). bump-my-version auto-discovers exactly
+# four filenames — .bumpversion.toml, .bumpversion.cfg, setup.cfg, pyproject.toml —
+# and reads nothing else unless it is handed --config-file explicitly. This config
+# used to ship as `.rhiza/.cfg.toml`, which is not one of them, so it never took
+# effect. That failure is silent by construction: finding no config, the tool does
+# not error, it falls back to `git describe` and reports the last reachable tag as
+# the current version.
+#
+# WHY THERE IS NO `current_version`. This file is synced from rhiza, so it must not
+# carry a value only the consuming repo can own — the next `/rhiza:update` would
+# reset it. Omitting the key makes bump-my-version derive the current version from
+# the newest tag matching `tag_name` below. For a Go module that is not a fallback
+# but the truth: the module version *is* the git tag, and the `Version` constant
+# below exists only so a built binary can report it.
+
 [tool.bumpversion]
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:-(?P<release>[a-z]+)\\.(?P<pre_n>\\d+))?"
 serialize = ["{major}.{minor}.{patch}-{release}.{pre_n}", "{major}.{minor}.{patch}"]
@@ -6,14 +26,21 @@ replace = "{new_version}"
 regex = false
 ignore_missing_version = false
 ignore_missing_files = false
-tag = true
 sign_tags = false
+# Load-bearing even with `tag = false`: with no `current_version` key above, this is
+# also the pattern bump-my-version matches tags against when it reads the current
+# version from git.
 tag_name = "v{new_version}"
 tag_message = "Bump version: {current_version} → {new_version}"
 allow_dirty = false
-commit = true
 message = "Chore: bump version {current_version} → {new_version}"
 commit_args = ""
+# The release flow commits and tags itself, so the changelog lands in the same commit
+# as the bump; bump-my-version must do neither. `/rhiza:release` passes
+# --no-commit --no-tag anyway, but a bare `bump-my-version bump patch` would
+# otherwise produce a second commit and a duplicate tag.
+tag = false
+commit = false
 # No pre-commit hooks, unlike the Rust layer: go.sum records the checksums of
 # *dependencies* only, never the module's own version, so nothing needs
 # refreshing after a bump.

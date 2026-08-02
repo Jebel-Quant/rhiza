@@ -216,7 +216,6 @@ flowchart TB
         
         subgraph core["Core Files"]
             rhizamk[rhiza.mk<br/>Core Logic - 153 lines]
-            cfg[.cfg.toml<br/>Configuration]
             env[.env<br/>Environment]
             bundles[template-bundles.yml<br/>Bundle Definitions]
         end

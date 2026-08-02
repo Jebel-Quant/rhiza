@@ -108,4 +108,9 @@ repos:
       - id: check-rhiza-config
       - id: check-makefile-targets
       - id: check-python-version-consistency
+      # check-bumpversion-config asserts that bump-my-version can actually discover
+      # this repo's version config (issue #1453). Enable it once rhiza-hooks ships a
+      # release containing it — v0.7.1 does not. Until then .rhiza/tests/test_pyproject.py
+      # enforces the same invariant, one gate later.
+      # - id: check-bumpversion-config
       # - id: check-template-bundles

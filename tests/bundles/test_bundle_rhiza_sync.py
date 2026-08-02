@@ -6,8 +6,8 @@ every bundle file must byte-for-byte match its root counterpart.
 
 With one unavoidable exception: the mother repo can only dogfood **one** language
 layer. It is a Python project, so it runs `python-core`; `rust-core` and `go-core`
-claim the same `.rhiza/.cfg.toml` path and would each add a second `install` target,
-so their files have no root counterpart by design. They are covered instead by the
+would each add a second `install` target under `.rhiza/make.d/`, so their files have
+no root counterpart by design. They are covered instead by the
 synced-project tests in `tests/api/test_language_layer.py`, which materialise a layer
 into a temp dir.
 """

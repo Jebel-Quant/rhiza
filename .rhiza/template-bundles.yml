@@ -61,15 +61,25 @@ bundles:
     requires: [core]
     notes: |
       The Python half of what used to be `core`: `.python-version`, `ruff.toml`,
-      `.bandit`, the pre-commit config, the bump-my-version config that points at
-      `pyproject.toml`, and `.rhiza/make.d/python.mk` (the `install`, `all`,
-      `deptry`, `license` and `rhiza-test` targets).
+      `.bandit`, the pre-commit config, and `.rhiza/make.d/python.mk` (the
+      `install`, `all`, `deptry`, `license` and `rhiza-test` targets).
 
       A language layer owns the target *names* the rest of the template calls —
       `install`, `all` — so book.mk, test.mk and the CI workflows never need to
       know the language. Sibling layers claim the same deployment paths on
       purpose: selecting two at once is a file-ownership conflict, which is the
       intended way for "one language per repo" to fail loudly.
+
+      Unlike the Rust and Go layers it ships **no** bump-my-version config, and
+      that is deliberate (issue #1453). bump-my-version auto-discovers exactly four
+      filenames — `.bumpversion.toml`, `.bumpversion.cfg`, `setup.cfg`,
+      `pyproject.toml` — and a Python project already owns the last one, where a
+      `[tool.bumpversion]` table rewrites PEP 621 `[project].version` natively. A
+      synced `.bumpversion.toml` would *shadow* that table, and the
+      `.rhiza/.cfg.toml` this layer used to ship was never read at all: with no
+      config found bump-my-version does not fail, it falls back to `git describe`.
+      Each repo therefore declares its own three-line block, and the `tests` bundle's
+      `.rhiza/tests/test_pyproject.py` fails when it is missing.
 
   rust-core:
     description: "Rust toolchain layer: rustup/cargo, clippy, nextest, llvm-cov, cargo-deny"
@@ -79,8 +89,14 @@ bundles:
     notes: |
       The Rust sibling of `python-core`. Ships `rust-toolchain.toml`,
       `rustfmt.toml`, `clippy.toml`, `deny.toml`, a Rust pre-commit config, a
-      bump-my-version config pointing at `Cargo.toml`/`Cargo.lock`, and
+      `.bumpversion.toml` pointing at `Cargo.toml`/`Cargo.lock`, and
       `.rhiza/make.d/rust.mk`.
+
+      The bump-my-version config sits at the repo root, not in `.rhiza/`, because
+      those are the only paths the tool searches (issue #1453) — and unlike Python,
+      Rust owns none of them, so the layer has to ship one. It carries no
+      `current_version`: a synced file must not own a value only the consuming repo
+      can maintain, so the version is read from the newest `v*` tag instead.
 
       It carries the test targets too, unlike Python — where pytest, coverage and
       type checking need their own configuration and get a `tests` bundle. In Rust
@@ -99,7 +115,8 @@ bundles:
     requires: [core]
     notes: |
       The Go sibling of `python-core` and `rust-core`. Ships `.golangci.yml`,
-      `revive.toml`, a Go pre-commit config, a bump-my-version config, a starter
+      `revive.toml`, a Go pre-commit config, a root `.bumpversion.toml` (see
+      `rust-core` for why it is not in `.rhiza/`), a starter
       `internal/version/version.go`, and `.rhiza/make.d/go.mk`.
 
       Like Rust it carries its own test targets: `go test` and `go tool cover`

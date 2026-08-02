@@ -128,6 +128,18 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/demo"]
+
+# The version config a synced Python repo has to declare for itself (#1453). The
+# python-core layer ships none: pyproject.toml is one of the four filenames
+# bump-my-version searches, so a table here rewrites [project].version natively,
+# whereas a synced .bumpversion.toml would shadow it and a block in .rhiza/ would
+# never be read at all. Three keys and no current_version is the whole config —
+# `make rhiza-test` fails without it.
+[tool.bumpversion]
+allow_dirty = false
+# /rhiza:release commits and tags itself so the changelog lands in the bump commit.
+commit = false
+tag = false
 """
 
 _PYTHON_INIT = '"""A minimal package whose public surface is one greeting helper."""\n'
