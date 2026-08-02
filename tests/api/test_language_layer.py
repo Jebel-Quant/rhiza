@@ -14,6 +14,7 @@ them, and that the Python layer does — behaviourally, by expanding the recipes
 
 from __future__ import annotations
 
+import re
 import shutil
 from pathlib import Path
 
@@ -21,8 +22,8 @@ import pytest
 
 from tests.util import run_make, setup_rhiza_git_repo, strip_ansi
 
-# The names every language layer owns. Adding a name here is a promise a future
-# `rust-core` must also keep.
+# The names every language layer owns. Adding a name here is a promise every layer
+# must keep — the classes below assert it for `python-core` and `rust-core` alike.
 LANGUAGE_LAYER_TARGETS = ("install", "all")
 
 
@@ -108,11 +109,64 @@ class TestRustLayerKeepsTheSameContract:
         assert "_tests/coverage.xml" in out
         assert "--cobertura" in out
 
+    def test_docs_coverage_denies_undocumented_items(self, logger):
+        """Rust's answer to interrogate: pass/fail on `missing_docs` rather than a percentage."""
+        out = strip_ansi(run_make(logger, ["docs-coverage"], check=False).stdout)
+        assert "-D missing_docs" in out
+        assert "cargo doc" in out
+
     def test_install_does_not_reach_for_uv_sync(self, logger):
         """A Rust `install` is rustup + cargo fetch; uv is only the tool runner."""
         out = strip_ansi(run_make(logger, ["install"], check=False).stdout)
         assert "cargo fetch" in out
         assert "uv sync" not in out
+
+    def test_cargo_tools_bootstraps_every_subcommand_the_gates_call(self, logger):
+        """A gate whose cargo subcommand is not installed fails with a bare 'no such command'."""
+        out = strip_ansi(run_make(logger, ["cargo-tools"], check=False).stdout)
+        assert "cargo-binstall" in out, "prebuilt binaries are what keep this from being a multi-minute build"
+        for tool in ("cargo-nextest", "cargo-llvm-cov", "cargo-deny", "cargo-machete"):
+            assert tool in out, f"`cargo-tools` does not install {tool}, which a gate below calls"
+
+    def test_all_chains_the_rust_gates(self, logger):
+        """The mirror of `test_all_chains_the_python_gates` — a dropped gate shows up here.
+
+        Asserted on the expanded recipes rather than the prerequisite list, so a gate
+        that is named but whose recipe has been gutted still fails.
+        """
+        out = strip_ansi(run_make(logger, ["all"], check=False).stdout)
+        assert "pre-commit run --all-files" in out  # fmt, from core
+        for gate, command in (
+            ("test", "cargo nextest run"),
+            ("docs-coverage", "-D missing_docs"),
+            ("security", "cargo deny check advisories"),
+            ("deps", "cargo machete"),
+            ("license", "cargo deny check licenses"),
+            ("typecheck", "cargo clippy"),
+        ):
+            assert command in out, f"`make all` no longer runs the {gate} gate ({command})"
+
+    def test_all_runs_the_doctests_nextest_skips(self, logger):
+        """Nextest ignores doctests; dropping the `cargo test --doc` line silently stops testing them."""
+        assert "cargo test --doc" in strip_ansi(run_make(logger, ["all"], check=False).stdout)
+
+    def test_rhiza_test_still_runs_the_python_self_tests(self, logger):
+        """The template's own suite validates YAML and READMEs, so it stays Python under uv."""
+        out = strip_ansi(run_make(logger, ["rhiza-test"], check=False).stdout)
+        assert "pytest .rhiza/tests" in out
+
+    def test_neutral_tooling_works_without_a_python_version_file(self, logger):
+        """`fmt` runs pre-commit through `uvx -p $(PYTHON_VERSION)` whatever the language.
+
+        A Rust repo ships no `.python-version`, so the whole language-neutral half of
+        the template rests on the fallback in rhiza.mk resolving to a real version —
+        an empty `-p` would break `fmt` on every Rust project at once.
+        """
+        out = strip_ansi(run_make(logger, ["fmt"], check=False).stdout)
+        assert not (self.project / ".python-version").exists(), "fixture drifted: this asserts the fallback path"
+        assert re.search(r"-p \d+\.\d+ pre-commit run --all-files", out), (
+            f"`make fmt` did not resolve PYTHON_VERSION to a usable value:\n{out}"
+        )
 
 
 class TestCoreAloneHasNoLanguageLayer:
