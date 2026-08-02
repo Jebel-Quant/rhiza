@@ -92,6 +92,32 @@ bundles:
       `-D missing_docs`, which is pass/fail rather than a percentage — there is no
       Rust interrogate, so COVERAGE-style thresholds do not apply.
 
+  go-core:
+    description: "Go toolchain layer: go mod, go test, golangci-lint, govulncheck, revive"
+    standalone: true
+    layer: language
+    requires: [core]
+    notes: |
+      The Go sibling of `python-core` and `rust-core`. Ships `.golangci.yml`,
+      `revive.toml`, a Go pre-commit config, a bump-my-version config, a starter
+      `internal/version/version.go`, and `.rhiza/make.d/go.mk`.
+
+      Like Rust it carries its own test targets: `go test` and `go tool cover`
+      need no configuration files, so a `go-tests` bundle would own nothing.
+
+      `install` is only `go mod download` — go.mod's `go`/`toolchain` directives
+      make the go command fetch a matching compiler itself, so there is no rustup
+      step to mirror. `typecheck` is `go vet` plus golangci-lint, since the
+      compiler already type-checks. `docs-coverage` is revive's `exported` rule:
+      pass/fail on missing doc comments, like Rust's `-D missing_docs` and unlike
+      interrogate's percentage.
+
+      The version location is the one real difference between Go and its
+      siblings. A Go module's version is its git tag — pyproject.toml and
+      Cargo.toml have no equivalent in the source tree — so the layer ships a
+      `version.Version` constant for bump-my-version to write to, and the
+      release commit and its tag move together.
+
   github:
     description: "GitHub repository configuration (actions, dependabot, templates, rulesets, core workflows)"
     standalone: true
@@ -401,6 +427,25 @@ profiles:
     bundles:
       - core
       - rust-core
+      - book
+
+  # ============================================================================
+  # GO-LOCAL - Local-first Go development
+  # ============================================================================
+  go-local:
+    description: |
+      Local-first Go setup with no hosted CI/CD workflow files.
+      The Go counterpart of `local`: core infrastructure, the Go toolchain layer
+      (go test, golangci-lint, govulncheck, revive) and documentation.
+
+      As with `rust-local`, there is deliberately no `go-github-project` or
+      `go-gitlab-project` yet: those profiles are made almost entirely of CI
+      workflows, and the `github`/`gitlab` bundles currently ship Python ones —
+      a release job that runs `uv build` and publishes to PyPI, and a Dependabot
+      config declaring the `uv` ecosystem. They arrive with the Go workflows.
+    bundles:
+      - core
+      - go-core
       - book
 
   # ============================================================================

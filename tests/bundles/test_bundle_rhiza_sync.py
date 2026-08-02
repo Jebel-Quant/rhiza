@@ -5,10 +5,11 @@ files. The root .rhiza/ directory is the union of all those bundle-owned files, 
 every bundle file must byte-for-byte match its root counterpart.
 
 With one unavoidable exception: the mother repo can only dogfood **one** language
-layer. It is a Python project, so it runs `python-core`; `rust-core` claims the same
-`.rhiza/.cfg.toml` path and would add a second `install` target, so its files have no
-root counterpart by design. They are covered instead by the synced-project tests in
-`tests/api/test_language_layer.py`, which materialise the layer into a temp dir.
+layer. It is a Python project, so it runs `python-core`; `rust-core` and `go-core`
+claim the same `.rhiza/.cfg.toml` path and would each add a second `install` target,
+so their files have no root counterpart by design. They are covered instead by the
+synced-project tests in `tests/api/test_language_layer.py`, which materialise a layer
+into a temp dir.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ _ROOT = Path(__file__).resolve().parents[2]
 # Language layers the mother repo does not run on. Exactly one language layer can be
 # dogfooded at a time — rhiza is a Python project — and a sibling layer's files
 # deliberately collide with the active one's.
-_NOT_DOGFOODED = {"rust-core"}
+_NOT_DOGFOODED = {"rust-core", "go-core"}
 
 
 def _bundle_rhiza_pairs() -> list[tuple[str, Path, Path]]:

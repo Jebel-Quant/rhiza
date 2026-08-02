@@ -60,6 +60,9 @@ The core abstraction is the **bundle** — a named group of configuration files.
 - `rust-core` (the Rust **language layer**): `rust-toolchain.toml`, `rustfmt.toml`,
   `clippy.toml`, `deny.toml`, a Rust pre-commit config, and `.rhiza/make.d/rust.mk`.
   Carries its own test targets, unlike Python — see **Language layers**.
+- `go-core` (the Go **language layer**): `.golangci.yml`, `revive.toml`, a Go
+  pre-commit config, a starter `internal/version/version.go`, and
+  `.rhiza/make.d/go.mk`. Carries its own test targets, like Rust.
 - `tests`: pytest, coverage, type checking (Python; requires `python-core`)
 - `benchmarks`: pytest-benchmark infrastructure and reporting
 - `github`: GitHub repository configuration (actions, dependabot, core workflows)
@@ -74,7 +77,7 @@ The core abstraction is the **bundle** — a named group of configuration files.
 
 **Platform overlay bundles** — CI workflow stubs that pair a feature with a platform: `github-tests`, `github-book`, `github-marimo`, `github-docker`, `github-devcontainer`, `github-paper`, `github-quality-review`, `gitlab-tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-quality-review`.
 
-**Meta-bundles** — curated compositions of other bundles: `github-project`, `gitlab-project`, `local` (no hosted CI).
+**Meta-bundles** — curated compositions of other bundles: `github-project`, `gitlab-project`, `local` (no hosted CI), and the single-language local profiles `rust-local` and `go-local`.
 
 ### Dogfooding (root files ↔ bundle sources)
 
@@ -91,7 +94,8 @@ Plus intentional mother-repo overrides that deliberately diverge from their bund
 
 `core` used to be a Python project in disguise: it created a virtualenv, ran `uv sync`
 and named Python gates in `all`. That half now lives in a **language layer** bundle,
-and every profile pairs `core` with exactly one: `python-core` or `rust-core`.
+and every profile pairs `core` with exactly one: `python-core`, `rust-core` or
+`go-core`.
 
 The contract between them is a set of **target names**. `book.mk`, `test.mk`, the CI
 workflows and the release pipeline all call `make install` without knowing what the
@@ -104,30 +108,39 @@ project is written in, so a layer must define:
 | `install-uv`, `fmt`, `todos`, `semgrep`, `doctor`, `clean` | core | language-neutral, whatever the project is |
 
 Two rules follow. **Core must never define `install` or `all`** — `tests/api/test_language_layer.py`
-asserts both halves behaviourally, for both layers. And **layers claim the same
+asserts both halves behaviourally, for every layer. And **layers claim the same
 deployment paths on purpose**: `.pre-commit-config.yaml` and `.rhiza/.cfg.toml` exist
-in both, because those paths are fixed by the tools that read them. A bundle declares
+in all of them, because those paths are fixed by the tools that read them. A bundle declares
 `layer: language` in `template-bundles.yml` to say so; the ownership tests then permit
 overlap *within* a layer and still reject it everywhere else, and a separate test
 fails any profile that selects two layers at once.
 
 **Gate parity between layers.** Same target names, different engines:
 
-| target | python-core | rust-core |
-| --- | --- | --- |
-| `install` | `uv venv` + `uv sync` | `rustup show` + `cargo fetch` |
-| `test` | pytest | `cargo nextest` + doctests |
-| `coverage` | pytest-cov | `cargo llvm-cov` (same `_tests/coverage.xml` path) |
-| `typecheck` | ty / mypy | `cargo clippy -D warnings` (rustc already type-checks) |
-| `docs-coverage` | interrogate (%) | `RUSTDOCFLAGS=-D missing_docs` (pass/fail) |
-| `security` | bandit + pip-audit | `cargo deny check advisories` |
-| `license` | pip-licenses | `cargo deny check licenses` |
-| unused deps | `deptry` | `deps` → `cargo machete` |
+| target | python-core | rust-core | go-core |
+| --- | --- | --- | --- |
+| `install` | `uv venv` + `uv sync` | `rustup show` + `cargo fetch` | `go mod download` |
+| `test` | pytest | `cargo nextest` + doctests | `go test ./...` |
+| `coverage` | pytest-cov | `cargo llvm-cov` (same `_tests/coverage.xml` path) | `go test -coverprofile` + `gocover-cobertura` (same path) |
+| `typecheck` | ty / mypy | `cargo clippy -D warnings` (rustc already type-checks) | `go vet` + golangci-lint (the compiler already type-checks) |
+| `docs-coverage` | interrogate (%) | `RUSTDOCFLAGS=-D missing_docs` (pass/fail) | revive `exported` rule (pass/fail) |
+| `security` | bandit + pip-audit | `cargo deny check advisories` | `govulncheck` |
+| `license` | pip-licenses | `cargo deny check licenses` | `go-licenses check` |
+| unused deps | `deptry` | `deps` → `cargo machete` | `deps` → `go mod tidy -diff` |
 
-The Rust layer also carries `test`/`coverage`/`typecheck`, which on the Python side
+The Rust and Go layers also carry `test`/`coverage`/`typecheck`, which on the Python side
 live in the separate `tests` bundle. That is not an inconsistency: pytest, coverage
-and mypy each need configuration files worth bundling, while their cargo counterparts
-need none, so a `rust-tests` bundle would own no files.
+and mypy each need configuration files worth bundling, while `cargo nextest` and
+`go test` need none, so a `rust-tests` or `go-tests` bundle would own no files.
+
+**Where Go differs from both.** A Go module has no manifest: its version *is* the git
+tag, so unlike `pyproject.toml` and `Cargo.toml` there is no file in the tree for
+bump-my-version to write to. `go-core` therefore ships a starter
+`internal/version/version.go` holding a `Version` constant and anchors the release
+config to it, which keeps the release commit and its tag in step. Delete that file and
+the `/rhiza:release` flow has no version location to write to. Its `install` is also the thinnest of the
+three — go.mod's `go`/`toolchain` directives make the go command fetch a matching
+compiler on demand, so there is no rustup step to mirror.
 
 `uv` sits in core, not in the Python layer, because rhiza runs pre-commit, mkdocs and
 semgrep through `uvx` regardless of the project's language. What moved is the
@@ -144,6 +157,7 @@ The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiz
 | `bootstrap.mk` | core | `install-uv` tool bootstrap, install hooks, `clean` |
 | `python.mk` | python-core | `install`, `all`, `deptry`, `license`, `rhiza-test` |
 | `rust.mk` | rust-core | `install`, `all`, and the cargo-backed gates |
+| `go.mk` | go-core | `install`, `all`, and the go-backed gates |
 | `doctor.mk` | core | `make doctor` environment checks |
 | `quality.mk` | core | `fmt`, `todos`, `semgrep` — the language-neutral gates |
 | `custom-env.mk` | core | example stub: project variables |
