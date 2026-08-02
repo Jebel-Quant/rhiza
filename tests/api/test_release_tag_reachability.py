@@ -17,8 +17,10 @@ than on the exit code alone keeps the operator-facing message part of the contra
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess  # nosec B404 - building throwaway git repos for the guard to inspect
+import sys
 from pathlib import Path
 
 import pytest
@@ -26,7 +28,18 @@ import yaml
 
 _ROOT = Path(__file__).resolve().parents[2]
 _GIT = shutil.which("git") or "/usr/bin/git"
-_BASH = shutil.which("bash") or "/bin/bash"
+_BASH = shutil.which("bash")
+
+# Deterministic authorship, so the fixtures never depend on a configured git user.
+# Everything else is inherited: pinning PATH would strip `git` from the Git Bash
+# environment used on Windows runners, where the interpreter and the tools it calls
+# live outside the POSIX prefixes.
+_GIT_IDENTITY = {
+    "GIT_AUTHOR_NAME": "rhiza-test",
+    "GIT_AUTHOR_EMAIL": "test@example.com",
+    "GIT_COMMITTER_NAME": "rhiza-test",
+    "GIT_COMMITTER_EMAIL": "test@example.com",
+}
 
 _STEP_NAME = "Ensure the tagged commit is reachable from a branch"
 _LIVE_WORKFLOW = _ROOT / ".github" / "workflows" / "rhiza_release.yml"
@@ -47,9 +60,8 @@ def _guard_script(workflow: Path) -> str:
 
 def _git(*args: str, cwd: Path) -> str:
     """Run a git command in ``cwd`` and return its stdout."""
-    env = {"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@e", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@e"}
     result = subprocess.run(  # nosec B603
-        [_GIT, *args], cwd=cwd, capture_output=True, text=True, check=True, env={"PATH": "/usr/bin:/bin", **env}
+        [_GIT, *args], cwd=cwd, capture_output=True, text=True, check=True, env={**os.environ, **_GIT_IDENTITY}
     )
     return result.stdout
 
@@ -63,12 +75,13 @@ def _commit(repo: Path, message: str, content: str) -> None:
 
 def _run_guard(script: str, repo: Path, tag: str, default_branch: str = "main") -> subprocess.CompletedProcess:
     """Execute the guard script against ``repo`` the way the workflow would."""
+    assert _BASH is not None  # guarded by the skipif on the class
     return subprocess.run(  # nosec B603
         [_BASH, "-c", script],
         cwd=repo,
         capture_output=True,
         text=True,
-        env={"PATH": "/usr/bin:/bin:/usr/local/bin", "TAG": tag, "DEFAULT_BRANCH": default_branch},
+        env={**os.environ, **_GIT_IDENTITY, "TAG": tag, "DEFAULT_BRANCH": default_branch},
     )
 
 
@@ -124,6 +137,15 @@ class TestGuardIsWiredIntoBothWorkflows:
             assert needs, f"job '{name}' has no needs — it would run even if tag validation failed"
 
 
+@pytest.mark.skipif(
+    _BASH is None or sys.platform == "win32",
+    reason=(
+        "the guard is a GitHub Actions `run:` step, and the release job it belongs to runs on "
+        "ubuntu-latest only — executing its shell through Git Bash would exercise the MSYS "
+        "argument-translation layer rather than the guard. The structural tests above still run "
+        "on every platform."
+    ),
+)
 class TestTagReachability:
     """Run the guard against the three histories a release tag can have."""
 
