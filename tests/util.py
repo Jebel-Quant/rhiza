@@ -27,14 +27,21 @@ def run_make(
     check: bool = True,
     dry_run: bool = True,
     env: dict[str, str] | None = None,
+    cwd: Path | None = None,
 ) -> subprocess.CompletedProcess:
-    """Run make with optional arguments and return the completed process."""
+    """Run make with optional arguments and return the completed process.
+
+    ``cwd`` defaults to the process working directory, which is what the tests
+    that chdir into a temp project rely on. The end-to-end suite passes it
+    explicitly instead: its projects are built per module and outlive a single
+    test, so chdir-ing would make the tests order- and worker-dependent.
+    """
     cmd = [_MAKE]
     if args:
         cmd.extend(args)
     cmd.insert(1, "-sn" if dry_run else "-s")
-    logger.info("Running command: %s", " ".join(cmd))
-    result = subprocess.run(cmd, capture_output=True, text=True, env=env)  # nosec B603
+    logger.info("Running command: %s (cwd=%s)", " ".join(cmd), cwd or Path.cwd())
+    result = subprocess.run(cmd, capture_output=True, text=True, env=env, cwd=cwd)  # nosec B603
     if check and result.returncode != 0:
         msg = f"make failed with code {result.returncode}:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
         raise AssertionError(msg)

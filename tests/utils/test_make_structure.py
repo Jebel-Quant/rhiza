@@ -14,12 +14,19 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
+from tests.util import run_make
+
 # A target definition line: one or more target names, then `:` or `::`, at the
 # start of a line (recipe lines start with a tab). `(?!=)` keeps `VAR := x`
 # assignments out. Names containing `$(` (computed targets) are skipped later.
 _TARGET_LINE = re.compile(r"^(?P<names>[^\t#:=][^:=]*?)\s*(?P<colon>::?)(?!=)")
 
 _SECTION_HEADER = re.compile(r"^##@\s*(?P<title>.+?)\s*$")
+
+# A target that documents itself with a trailing `##` comment, i.e. one that is meant
+# to appear in `make help`. `%` is excluded so the `print-%` pattern rule is skipped:
+# it has a `##` comment but no fixed name to look for in the output.
+_DOCUMENTED_TARGET = re.compile(r"^(?P<name>[A-Za-z0-9_-]+)\s*::?(?!=)[^#\n]*##")
 
 _PHONY_LINE = re.compile(r"^\.PHONY:\s*(?P<names>.+)$")
 
@@ -165,6 +172,29 @@ def test_parser_sees_known_targets(root):
     expected = {"install", "clean", "doctor", "explain-bundles"}
     missing = expected - all_targets
     assert not missing, f"parser failed to find known single-colon targets: {missing}"
+
+
+def test_every_documented_target_appears_in_help(root, logger):
+    """A target carrying a `##` comment must show up in `make help`.
+
+    The help text is produced by an awk pattern in rhiza.mk, and a target whose name
+    that pattern does not match is *silently* absent — the `##` comment is written,
+    reviewed, and never displayed. `e2e` was exactly that: the pattern accepted only
+    `[a-zA-Z_-]`, so any digit in a target name made it invisible, while every other
+    target regex in this repo (and in the rhiza-hooks Makefile checks) allows digits.
+    """
+    documented: set[str] = set()
+    for source in [root / "Makefile", root / ".rhiza" / "rhiza.mk", *_make_fragments(root)]:
+        for line in source.read_text(encoding="utf-8").splitlines():
+            match = _DOCUMENTED_TARGET.match(line)
+            if match:
+                documented.add(match.group("name"))
+
+    assert "e2e" in documented, "expected to find the digit-bearing target this test was written for"
+
+    out = run_make(logger, ["help"], dry_run=False, cwd=root).stdout
+    missing = sorted(name for name in documented if name not in out)
+    assert not missing, f"targets documented with `##` but absent from `make help`: {missing}"
 
 
 def _colon_styles(path: Path) -> dict[str, str]:

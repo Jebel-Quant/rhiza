@@ -139,7 +139,7 @@ help: print-logo ## Display this help message
 	+@printf "$(BOLD)Usage:$(RESET)\n"
 	+@printf "  make $(BLUE)<target>$(RESET)\n\n"
 	+@printf "$(BOLD)Targets:$(RESET)\n"
-	+@awk 'BEGIN {FS = ":.*##"; printf ""} /^[a-zA-Z_-]+:.*?##/ { printf "  $(BLUE)%-20s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BOLD)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)
+	+@awk 'BEGIN {FS = ":.*##"; printf ""} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  $(BLUE)%-20s$(RESET) %s\n", $$1, $$2 } /^##@/ { printf "\n$(BOLD)%s$(RESET)\n", substr($$0, 5) }' $(MAKEFILE_LIST)
 	+@printf "\n"
 
 ci-os-matrix: ## Emit GitHub CI OSes (RHIZA_CI_OS_MATRIX as JSON array, default ["ubuntu-latest"])

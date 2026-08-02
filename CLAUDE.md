@@ -21,6 +21,7 @@ make benchmark    # Performance benchmarks
 make hypothesis-test  # Property-based tests only
 make stress       # Load/concurrency tests
 make security     # pip-audit + bandit security scans
+make e2e          # Language-layer end-to-end suite (opt-in, real toolchains; see below)
 make book         # Build documentation
 make marimo       # Start Marimo notebook server
 make clean        # Remove build artifacts and stale branches
@@ -146,6 +147,36 @@ compiler on demand, so there is no rustup step to mirror.
 semgrep through `uvx` regardless of the project's language. What moved is the
 *project* virtualenv and the `uv sync` of its declared dependencies.
 
+**How a layer is tested — two suites, on purpose.** `tests/api/test_language_layer.py`
+asserts the *contract* from `make -n` output: that a layer defines `install` and `all`,
+that core defines neither, and that each gate name expands to the intended command.
+That is fast, runs everywhere, and catches a renamed target or a gate dropped from
+`all` — but it never invokes cargo, go or uv, so a recipe whose flags are wrong passes
+it happily.
+
+`tests/e2e/` closes that gap. For each layer it copies the bundles into a temp
+directory (standing in for a `rhiza-cli` sync), writes the smallest project the layer
+should be green on (`tests/e2e/scaffolds.py`), commits it, and runs every gate for
+real — `install`, `test`, `coverage`, `typecheck`, `docs-coverage`, `security`,
+`license`, `deps`, `fmt` and the `all` aggregate. The failure mode it exists for is
+already on record: go-core's licence gate needs `--ignore $(go list -m)` because
+go-licenses otherwise fails a freshly synced project *for having no LICENSE of its
+own*, which no dry-run assertion could have found.
+
+Two properties keep it from being merely expensive:
+
+- **Opt-in.** Nothing runs without `RHIZA_E2E=1`; `make e2e` sets it. `make test` stays
+  fast and green offline, and the whole matrix does not pay for it on every OS and
+  Python version.
+- **Toolchain-gated.** A layer whose compiler is absent skips with a reason rather than
+  failing, so a developer with no Rust installed is not blocked by the Rust layer. The
+  corollary matters: a green local run proves nothing on its own —
+  `.github/workflows/rhiza_e2e.yml` (one job per layer, each installing only its own
+  toolchain) is the only place all three actually execute.
+
+Narrow the run with `make e2e E2E_ARGS=tests/e2e/test_go_layer_e2e.py`, which is how
+each CI job selects its layer.
+
 ### Modular Makefile System
 
 The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiza/rhiza.mk`. That file auto-loads everything in `.rhiza/make.d/*.mk` alphabetically.
@@ -170,7 +201,7 @@ The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiz
 | `paper.mk` | paper | LaTeX paper compilation |
 | `lfs.mk` | lfs | Git LFS install/track/status |
 | `github.mk` | github | GitHub repo/workflow helpers |
-| `bundles.mk` | *(mother-repo only — no bundle ships it)* | `explain-bundles`, `sync-self`, `sync-self-check` |
+| `bundles.mk` | *(mother-repo only — no bundle ships it)* | `explain-bundles`, `sync-self`, `sync-self-check`, `e2e` |
 
 Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can be defined multiple times to chain behaviour. Add project-specific hooks directly in the root `Makefile` above the include line. Developer-local shortcuts go in `local.mk` (not committed).
 
@@ -199,7 +230,9 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 
 ### CI/CD
 
-This repo runs on **GitHub Actions only**: `.github/workflows/` — CI, release, docker, CodeQL, weekly, sync. There is no root `.gitlab-ci.yml` here.
+This repo runs on **GitHub Actions only**: `.github/workflows/` — CI, e2e, release, docker, CodeQL, weekly, sync. There is no root `.gitlab-ci.yml` here.
+
+`rhiza_e2e.yml` is separate from `rhiza_ci.yml` rather than more jobs inside it: it installs three toolchains CI does not otherwise need, costs minutes per layer against CI's ≤20 min test budget, and is the only place the Rust and Go layers execute at all (see **Language layers** above).
 
 GitLab support ships as a **template for downstream consumers**, not as active CI in this repo: the `gitlab` bundle (`bundles/gitlab/`) materializes a `.gitlab-ci.yml` plus `.gitlab/` pipelines into projects that adopt the `gitlab-project` profile, mirroring the GitHub Actions coverage there.
 

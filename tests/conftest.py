@@ -26,6 +26,10 @@ def pytest_configure(config: pytest.Config) -> None:
         "markers",
         "gitlab_exec: GitLab tests that execute a job in Docker (opt-in via RHIZA_GITLAB_DOCKER=1)",
     )
+    config.addinivalue_line(
+        "markers",
+        "e2e: language-layer tests that run real toolchains (opt-in via RHIZA_E2E=1, or `make e2e`)",
+    )
 
 
 MOCK_MAKE_SCRIPT = """#!/usr/bin/env python3
