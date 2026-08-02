@@ -54,6 +54,67 @@ class TestPythonLayerProvidesTheContract:
         assert "no rule to make target" not in proc.stderr.lower()
 
 
+class TestRustLayerKeepsTheSameContract:
+    """`rust-core` is a peer of `python-core`, not a special case.
+
+    The mother repo is a Python project, so the Rust layer cannot be dogfooded at the
+    root — these assemble it into a temp dir instead. They deliberately do not invoke
+    cargo: what matters here is that the layer *declares* the same contract, which is
+    what lets book.mk and the CI workflows stay language-agnostic.
+    """
+
+    @pytest.fixture(autouse=True)
+    def rust_project(self, root: Path, tmp_path: Path, monkeypatch):
+        """Assemble core + rust-core into a project, standing in for a sync."""
+        project = tmp_path / "rust-project"
+        (project / ".rhiza" / "make.d").mkdir(parents=True)
+        shutil.copy(root / "Makefile", project / "Makefile")
+        shutil.copy(root / ".rhiza" / "rhiza.mk", project / ".rhiza" / "rhiza.mk")
+        for fragment in (root / "bundles" / "core" / ".rhiza" / "make.d").iterdir():
+            shutil.copy(fragment, project / ".rhiza" / "make.d" / fragment.name)
+        shutil.copy(
+            root / "bundles" / "rust-core" / ".rhiza" / "make.d" / "rust.mk",
+            project / ".rhiza" / "make.d" / "rust.mk",
+        )
+        (project / "Cargo.toml").write_text('[package]\nname = "demo"\nversion = "0.1.0"\n')
+        monkeypatch.chdir(project)
+        setup_rhiza_git_repo()
+        self.project = project
+
+    @pytest.mark.parametrize("target", LANGUAGE_LAYER_TARGETS)
+    def test_every_contract_target_resolves(self, logger, target):
+        """The same names python-core provides, so callers need not branch."""
+        proc = run_make(logger, [target], check=False)
+        assert "no rule to make target" not in proc.stderr.lower()
+
+    @pytest.mark.parametrize(
+        ("target", "expected"),
+        [
+            ("typecheck", "clippy"),
+            ("security", "deny check advisories"),
+            ("license", "deny check licenses"),
+            ("deps", "machete"),
+            ("test", "nextest"),
+        ],
+    )
+    def test_gate_maps_to_its_cargo_equivalent(self, logger, target, expected):
+        """Each Python gate has a Rust counterpart under the same target name."""
+        out = strip_ansi(run_make(logger, [target], check=False).stdout)
+        assert expected in out, f"`make {target}` should run {expected}"
+
+    def test_coverage_writes_the_report_book_mk_reads(self, logger):
+        """book.mk badges `_tests/coverage.xml`; llvm-cov must write exactly that path."""
+        out = strip_ansi(run_make(logger, ["coverage"], check=False).stdout)
+        assert "_tests/coverage.xml" in out
+        assert "--cobertura" in out
+
+    def test_install_does_not_reach_for_uv_sync(self, logger):
+        """A Rust `install` is rustup + cargo fetch; uv is only the tool runner."""
+        out = strip_ansi(run_make(logger, ["install"], check=False).stdout)
+        assert "cargo fetch" in out
+        assert "uv sync" not in out
+
+
 class TestCoreAloneHasNoLanguageLayer:
     """Without a layer, core is inert on exactly the targets a layer owns."""
 

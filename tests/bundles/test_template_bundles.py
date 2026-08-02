@@ -29,6 +29,19 @@ import pytest
 import yaml
 
 
+def _layers(bundles_data: dict) -> dict[str, str]:
+    """Map bundle name -> its ``layer`` group, for bundles that declare one."""
+    return {
+        name: (config or {})["layer"] for name, config in bundles_data["bundles"].items() if (config or {}).get("layer")
+    }
+
+
+def _all_in_one_layer(owners: list[str], layers: dict[str, str]) -> bool:
+    """Are all *owners* declared members of the same (single) layer group?"""
+    groups = {layers.get(owner) for owner in owners}
+    return len(groups) == 1 and None not in groups
+
+
 def _bundle_dependency_graph(bundles: dict) -> dict[str, set[str]]:
     """Return the bundle dependency graph in TopologicalSorter input format."""
     return {name: set(config.get("requires", [])) for name, config in bundles.items()}
@@ -151,7 +164,15 @@ class TestTemplateBundles:
             pytest.fail("\nBroken symlinks found in bundle dirs:\n" + "\n".join(errors))
 
     def test_no_file_ownership_conflicts(self, bundles_data, bundles_root):
-        """Test that no deployment path is claimed by more than one bundle."""
+        """Test that no deployment path is claimed by more than one bundle.
+
+        Bundles in the same ``layer`` are the one exception. A layer names a set of
+        mutually-exclusive alternatives — the language layers ``python-core`` and
+        ``rust-core`` both have to ship ``.pre-commit-config.yaml``, because that path
+        is fixed by the tool. Overlap *within* one layer is the design; overlap with
+        anything outside it is still a conflict.
+        """
+        layers = _layers(bundles_data)
         dest_owners: dict[str, list[str]] = {}
         for name in bundles_data["bundles"]:
             bundle_dir = bundles_root / name
@@ -160,10 +181,56 @@ class TestTemplateBundles:
             for dep_path in _deployment_paths(bundle_dir):
                 dest_owners.setdefault(dep_path, []).append(name)
 
-        conflicts = {dest: owners for dest, owners in dest_owners.items() if len(owners) > 1}
+        conflicts = {
+            dest: owners
+            for dest, owners in dest_owners.items()
+            if len(owners) > 1 and not _all_in_one_layer(owners, layers)
+        }
         if conflicts:
             lines = [f"  {dest}: {owners}" for dest, owners in sorted(conflicts.items())]
             pytest.fail("\nFile ownership conflicts (same deployment path in multiple bundles):\n" + "\n".join(lines))
+
+    def test_a_profile_never_selects_two_bundles_from_one_layer(self, bundles_data):
+        """Two language layers in one profile would be last-write-wins on shared paths."""
+        layers = _layers(bundles_data)
+        requires = {name: (cfg or {}).get("requires", []) for name, cfg in bundles_data["bundles"].items()}
+
+        def closure(seeds: list[str]) -> set[str]:
+            """Resolve the transitive bundle closure for the seeds."""
+            seen: set[str] = set()
+            stack = list(seeds)
+            while stack:
+                name = stack.pop()
+                if name in seen:
+                    continue
+                seen.add(name)
+                stack.extend(requires.get(name, []))
+            return seen
+
+        for profile, cfg in (bundles_data.get("profiles") or {}).items():
+            chosen: dict[str, list[str]] = {}
+            for bundle in closure(cfg["bundles"]):
+                if bundle in layers:
+                    chosen.setdefault(layers[bundle], []).append(bundle)
+            for layer, members in chosen.items():
+                assert len(members) == 1, (
+                    f"profile '{profile}' selects {sorted(members)} — two bundles from the "
+                    f"'{layer}' layer, which claim the same deployment paths"
+                )
+
+    def test_every_profile_selects_a_language_layer(self, bundles_data):
+        """`core` defines no `install`/`all`, so a profile without a layer is unusable."""
+        layers = _layers(bundles_data)
+        language_bundles = {name for name, layer in layers.items() if layer == "language"}
+        requires = {name: (cfg or {}).get("requires", []) for name, cfg in bundles_data["bundles"].items()}
+
+        for profile, cfg in (bundles_data.get("profiles") or {}).items():
+            selected = set(cfg["bundles"])
+            for bundle in list(selected):
+                selected.update(requires.get(bundle, []))
+            assert selected & language_bundles, (
+                f"profile '{profile}' selects no language layer — `make install` would not exist"
+            )
 
     def test_no_source_file_is_shared_between_bundles(self, bundles_data, bundles_root):
         """Test that a single source file is not included by more than one bundle."""

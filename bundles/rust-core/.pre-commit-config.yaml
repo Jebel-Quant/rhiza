@@ -1,0 +1,93 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# The Rust counterpart of python-core's config. Same path on purpose — pre-commit
+# hard-codes `.pre-commit-config.yaml`, so the two language layers are alternatives
+# rather than files that could coexist.
+#
+# The neutral hooks (markdownlint, actionlint, schema validation, secret scanning,
+# the rhiza hooks) are identical in both. What differs: ruff/bandit/interrogate and
+# the uv lock check are replaced by rustfmt, clippy and a Cargo.lock check.
+#
+# Pin node so pre-commit provisions a compatible runtime instead of using the
+# system node. Some npm-based hooks (markdownlint-cli) pull transitive deps that
+# reject odd-numbered current node releases (e.g. v25), failing on EBADENGINE.
+default_language_version:
+  node: "24.12.0"
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-toml
+      - id: check-yaml
+        args: ['--unsafe']
+
+  - repo: local
+    hooks:
+      - id: no-rej-files
+        name: Reject .rej files
+        entry: "bash -c 'find . -type f -name \"*.rej\" | grep -q . && { echo \"ERROR: .rej files detected\"; find . -type f -name \"*.rej\"; exit 1; } || exit 0'"
+        language: system
+        pass_filenames: false
+
+      # `language: system` rather than pre-commit's built-in rust support: the
+      # toolchain is already pinned by rust-toolchain.toml, and letting pre-commit
+      # provision a second one would let the hook and `make typecheck` disagree.
+      - id: cargo-fmt
+        name: cargo fmt
+        entry: cargo fmt --all --
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      - id: cargo-clippy
+        name: cargo clippy (warnings as errors)
+        entry: cargo clippy --all-targets -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      # The analogue of python-core's uv-lock hook: a Cargo.toml change that does
+      # not update Cargo.lock leaves a tree that dirties itself on the next build.
+      - id: cargo-lock-is-current
+        name: Cargo.lock is up to date
+        entry: cargo metadata --locked --format-version 1
+        language: system
+        files: ^(Cargo\.toml|Cargo\.lock)$
+        pass_filenames: false
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.49.0
+    hooks:
+      - id: markdownlint
+        args: ["--disable", "MD013"]
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.37.4
+    hooks:
+      - id: check-renovate
+        args: [ "--verbose" ]
+
+      - id: check-github-workflows
+        args: ["--verbose"]
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+
+  - repo: https://github.com/betterleaks/betterleaks
+    rev: v1.7.2
+    hooks:
+      - id: betterleaks
+
+  - repo: https://github.com/Jebel-Quant/rhiza-hooks
+    rev: v0.7.0  # Use the latest release
+    hooks:
+      - id: check-rhiza-workflow-names
+      - id: update-readme-help
+      - id: check-rhiza-config
+      - id: check-makefile-targets
+      # check-python-version-consistency is deliberately absent: there is no
+      # .python-version in a Rust repo for it to reconcile.

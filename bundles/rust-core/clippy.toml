@@ -1,0 +1,18 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Thresholds only. Which *lints* run is a crate-level decision — put
+# `[lints.clippy]` in your Cargo.toml for that — because a lint set is about the
+# code being written, not about the infrastructure the template provides.
+# `make typecheck` runs `cargo clippy --all-targets -- -D warnings`, so whatever
+# you enable there is enforced.
+
+# Clippy reads the MSRV to avoid suggesting APIs older toolchains lack. Left
+# commented because the template cannot know yours: uncomment and match
+# `[package].rust-version` if you declare one.
+# msrv = "1.85.0"
+
+# A published crate should not have its signatures churned by a lint suggestion.
+# Set to true in a library whose API is stable; false is the safer default while
+# a crate is pre-1.0.
+avoid-breaking-exported-api = false

@@ -26,6 +26,11 @@
           "standalone": {
             "type": "boolean"
           },
+          "layer": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Names a mutually-exclusive group (e.g. 'language'). Bundles sharing a layer are alternatives: they may claim the same deployment paths, and a profile must select at most one of them."
+          },
           "requires": {
             "type": "array",
             "items": {"type": "string"},

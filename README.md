@@ -190,6 +190,7 @@ Rhiza provides **profiles** — named presets that select a sensible set of bund
 | Profile | Description | Includes |
 |---------|-------------|---------|
 | `local` | Local-first development with no hosted CI/CD workflow files | `core`, `python-core`, `book`, `marimo`, `tests` |
+| `rust-local` | Local-first Rust development, no hosted CI/CD (hosted profiles arrive with the Rust workflows) | `core`, `rust-core`, `book` |
 | `github-project` | GitHub-hosted project with CI/CD and release automation | `core`, `python-core`, `github`, `book`, `marimo`, `tests`, `github-book`, `github-marimo`, `github-tests` |
 | `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `core`, `python-core`, `gitlab`, `book`, `marimo`, `tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-tests` |
 
@@ -227,6 +228,7 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 |--------|-------------|---------------|
 | `core` | Core Rhiza infrastructure, language-neutral (Makefile, help, uv as tool runner) | — |
 | `python-core` | Python language layer (`install`/`all`, virtualenv, ruff, bandit, deptry) | `core` |
+| `rust-core` | Rust language layer (`install`/`all`, cargo, clippy, nextest, llvm-cov, cargo-deny) | `core` |
 | `tests` | Local testing infrastructure with pytest, coverage, and type checking | `book`, `core`, `python-core` |
 | `book` | Comprehensive documentation book (API docs, coverage, notebooks) | `core` |
 | `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book`, `core`, `python-core` |

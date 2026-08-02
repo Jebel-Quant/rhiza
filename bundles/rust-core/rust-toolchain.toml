@@ -1,0 +1,20 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# The single source of truth for the toolchain, the way `.python-version` is for
+# Python. rustup reads it automatically, so `cargo` inside this directory always
+# uses the channel below — no activation step, and CI needs no separate pin.
+
+[toolchain]
+# `stable` rather than a pinned "1.xx": rustup resolves it at install time, and a
+# template cannot know which release a consuming project wants. Pin a concrete
+# version here in your own repo if you need reproducible builds — and note that
+# `[package].rust-version` (MSRV) in Cargo.toml is a *different* promise: the
+# oldest toolchain your crate supports, not the one you develop on.
+channel = "stable"
+
+# rustfmt and clippy back `make fmt` and `make typecheck`; llvm-tools-preview is
+# what cargo-llvm-cov instruments with, so `make coverage` fails without it.
+components = ["rustfmt", "clippy", "llvm-tools-preview"]
+
+profile = "minimal"

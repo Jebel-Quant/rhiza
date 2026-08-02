@@ -165,3 +165,49 @@ def test_parser_sees_known_targets(root):
     expected = {"install", "clean", "doctor", "explain-bundles"}
     missing = expected - all_targets
     assert not missing, f"parser failed to find known single-colon targets: {missing}"
+
+
+def _colon_styles(path: Path) -> dict[str, str]:
+    """Map target name -> ':' or '::' for the rules defined in one fragment."""
+    styles: dict[str, str] = {}
+    in_define = False
+    for line in path.read_text(encoding="utf-8").splitlines():
+        stripped = line.strip()
+        if in_define:
+            in_define = stripped != "endef"
+            continue
+        if stripped.startswith("define "):
+            in_define = True
+            continue
+        match = _TARGET_LINE.match(line)
+        if not match:
+            continue
+        for name in match.group("names").split():
+            if name.startswith(".") or "$(" in name:
+                continue
+            styles[name] = match.group("colon")
+    return styles
+
+
+def test_no_target_mixes_single_and_double_colon_across_bundles(root):
+    """A target must be `:` everywhere or `::` everywhere, across *all* bundle fragments.
+
+    Make refuses a target that has both ("target file `test' has both : and :: entries"),
+    and the failure only appears once two bundles are synced together — so scanning the
+    mother repo's own .rhiza/make.d is not enough. It runs one language layer, while the
+    bundles/ tree holds them all.
+
+    This is a real bug caught late: rust.mk defined `test:` while book.mk declares
+    `test:: ; @:` as its no-op default, and every Rust project would have died on the
+    first `make` invocation.
+    """
+    styles: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+    fragments = sorted((root / "bundles").glob("*/.rhiza/make.d/*.mk"))
+    assert fragments, "no bundle make fragments found — layout changed?"
+    for fragment in fragments:
+        owner = fragment.relative_to(root / "bundles").parts[0]
+        for target, colon in _colon_styles(fragment).items():
+            styles[target][colon].append(f"{owner}/{fragment.name}")
+
+    mixed = {target: dict(kinds) for target, kinds in styles.items() if len(kinds) > 1}
+    assert not mixed, f"targets defined with both ':' and '::' across bundles: {mixed}"
