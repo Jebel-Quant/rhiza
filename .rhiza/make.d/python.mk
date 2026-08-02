@@ -1,0 +1,1 @@
+../../bundles/python-core/.rhiza/make.d/python.mk

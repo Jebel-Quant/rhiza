@@ -43,6 +43,7 @@ Solid arrows show `requires` dependencies; dotted arrows show `recommends` relat
 flowchart LR
     subgraph Foundation["Foundation"]
         core["core"]
+        python_core["python-core"]
     end
 
     subgraph Local["Local-first bundles"]
@@ -79,14 +80,17 @@ flowchart LR
         gitlab_quality_review["gitlab-quality-review"]
     end
 
+    python_core --> core
     github --> core
     gitlab --> core
     book --> core
     tests --> book
     tests --> core
+    tests --> python_core
     benchmarks --> tests
     marimo --> book
     marimo --> core
+    marimo --> python_core
     github_devcontainer --> devcontainer
     github_devcontainer --> github
     github_docker --> docker

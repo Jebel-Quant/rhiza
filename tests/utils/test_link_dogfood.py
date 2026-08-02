@@ -92,3 +92,33 @@ def test_relink_check_mode_reports_pending_and_exits_nonzero(root, tmp_path) -> 
 
     rc = module.relink(tmp_path, index, check=True)
     assert rc != 0
+
+
+def test_classify_dogfood_relinks_a_dangling_symlink(root, tmp_path) -> None:
+    """Moving a bundle file between bundles leaves the root symlink pointing at nothing.
+
+    Before, `_classify_dogfood` stat'd the link and died with FileNotFoundError, so
+    `make sync-self` — the very command that repairs the link — could not run. With no
+    bytes to compare, the sole owner is the answer.
+    """
+    module = _load_module(root)
+    rel = "file.txt"
+    (tmp_path / rel).symlink_to(tmp_path / "gone" / "file.txt")
+    owner = tmp_path / "owner.txt"
+    owner.write_text("content", encoding="utf-8")
+
+    assert module._classify_dogfood(tmp_path, rel, {rel: [owner]}) == ("link", owner)
+
+
+def test_classify_dogfood_refuses_to_guess_a_dangling_symlink_with_two_owners(root, tmp_path) -> None:
+    """Two candidate bundles and no bytes to compare — the linker must not pick one."""
+    module = _load_module(root)
+    rel = "file.txt"
+    (tmp_path / rel).symlink_to(tmp_path / "gone" / "file.txt")
+    owners = []
+    for name in ("a.txt", "b.txt"):
+        owner = tmp_path / name
+        owner.write_text("content", encoding="utf-8")
+        owners.append(owner)
+
+    assert module._classify_dogfood(tmp_path, rel, {rel: owners}) == ("ambiguous", None)
