@@ -57,7 +57,10 @@ The core abstraction is the **bundle** — a named group of configuration files.
 - `python-core` (the Python **language layer**): `.python-version`, `ruff.toml`,
   `.bandit`, the pre-commit config, the bump-my-version config, and
   `.rhiza/make.d/python.mk` (`install`, `all`, `deptry`, `license`, `rhiza-test`)
-- `tests`: pytest, coverage, type checking
+- `rust-core` (the Rust **language layer**): `rust-toolchain.toml`, `rustfmt.toml`,
+  `clippy.toml`, `deny.toml`, a Rust pre-commit config, and `.rhiza/make.d/rust.mk`.
+  Carries its own test targets, unlike Python — see **Language layers**.
+- `tests`: pytest, coverage, type checking (Python; requires `python-core`)
 - `benchmarks`: pytest-benchmark infrastructure and reporting
 - `github`: GitHub repository configuration (actions, dependabot, core workflows)
 - `gitlab`: GitLab CI/CD pipeline configuration and core workflows
@@ -88,7 +91,7 @@ Plus intentional mother-repo overrides that deliberately diverge from their bund
 
 `core` used to be a Python project in disguise: it created a virtualenv, ran `uv sync`
 and named Python gates in `all`. That half now lives in a **language layer** bundle,
-and every profile pairs `core` with exactly one — today only `python-core`.
+and every profile pairs `core` with exactly one: `python-core` or `rust-core`.
 
 The contract between them is a set of **target names**. `book.mk`, `test.mk`, the CI
 workflows and the release pipeline all call `make install` without knowing what the
@@ -101,10 +104,30 @@ project is written in, so a layer must define:
 | `install-uv`, `fmt`, `todos`, `semgrep`, `doctor`, `clean` | core | language-neutral, whatever the project is |
 
 Two rules follow. **Core must never define `install` or `all`** — `tests/api/test_language_layer.py`
-asserts both halves behaviourally. And **layers claim the same deployment paths on
-purpose**: a second layer shipping `.rhiza/make.d/rust.mk` is fine, but two layers in
-one repo is a file-ownership conflict the bundle tests reject, which is how "one
-language per repo" fails loudly rather than silently.
+asserts both halves behaviourally, for both layers. And **layers claim the same
+deployment paths on purpose**: `.pre-commit-config.yaml` and `.rhiza/.cfg.toml` exist
+in both, because those paths are fixed by the tools that read them. A bundle declares
+`layer: language` in `template-bundles.yml` to say so; the ownership tests then permit
+overlap *within* a layer and still reject it everywhere else, and a separate test
+fails any profile that selects two layers at once.
+
+**Gate parity between layers.** Same target names, different engines:
+
+| target | python-core | rust-core |
+| --- | --- | --- |
+| `install` | `uv venv` + `uv sync` | `rustup show` + `cargo fetch` |
+| `test` | pytest | `cargo nextest` + doctests |
+| `coverage` | pytest-cov | `cargo llvm-cov` (same `_tests/coverage.xml` path) |
+| `typecheck` | ty / mypy | `cargo clippy -D warnings` (rustc already type-checks) |
+| `docs-coverage` | interrogate (%) | `RUSTDOCFLAGS=-D missing_docs` (pass/fail) |
+| `security` | bandit + pip-audit | `cargo deny check advisories` |
+| `license` | pip-licenses | `cargo deny check licenses` |
+| unused deps | `deptry` | `deps` → `cargo machete` |
+
+The Rust layer also carries `test`/`coverage`/`typecheck`, which on the Python side
+live in the separate `tests` bundle. That is not an inconsistency: pytest, coverage
+and mypy each need configuration files worth bundling, while their cargo counterparts
+need none, so a `rust-tests` bundle would own no files.
 
 `uv` sits in core, not in the Python layer, because rhiza runs pre-commit, mkdocs and
 semgrep through `uvx` regardless of the project's language. What moved is the
@@ -120,6 +143,7 @@ The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiz
 | --- | --- | --- |
 | `bootstrap.mk` | core | `install-uv` tool bootstrap, install hooks, `clean` |
 | `python.mk` | python-core | `install`, `all`, `deptry`, `license`, `rhiza-test` |
+| `rust.mk` | rust-core | `install`, `all`, and the cargo-backed gates |
 | `doctor.mk` | core | `make doctor` environment checks |
 | `quality.mk` | core | `fmt`, `todos`, `semgrep` — the language-neutral gates |
 | `custom-env.mk` | core | example stub: project variables |

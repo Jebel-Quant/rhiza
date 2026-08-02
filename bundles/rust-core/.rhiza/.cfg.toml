@@ -1,0 +1,47 @@
+[tool.bumpversion]
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:-(?P<release>[a-z]+)\\.(?P<pre_n>\\d+))?"
+serialize = ["{major}.{minor}.{patch}-{release}.{pre_n}", "{major}.{minor}.{patch}"]
+search = "{current_version}"
+replace = "{new_version}"
+regex = false
+ignore_missing_version = false
+ignore_missing_files = false
+tag = true
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "Bump version: {current_version} → {new_version}"
+allow_dirty = false
+commit = true
+message = "Chore: bump version {current_version} → {new_version}"
+commit_args = ""
+# Cargo.lock records the crate's own version, so bumping only Cargo.toml leaves a
+# stale lockfile and the next `cargo build` dirties the tree. `--offline` keeps the
+# hook from hitting the network just to rewrite one line.
+pre_commit_hooks = ["cargo update --workspace --offline", "git add Cargo.lock"]
+
+# SemVer pre-releases, not PEP 440: Cargo rejects "1.2.3-a.1" style short forms,
+# so the value list is the spelled-out set only.
+[tool.bumpversion.parts.release]
+optional_value = "prod"
+values = [
+    "dev",
+    "alpha",
+    "beta",
+    "rc",
+    "prod"
+]
+
+# Anchored to the [package] table on purpose. `search`/`replace` are applied to
+# EVERY occurrence in the file, so an unanchored `version = "{current_version}"`
+# would also rewrite a [dependencies] entry that happens to share the number.
+[[tool.bumpversion.files]]
+filename = "Cargo.toml"
+regex = true
+search = '(?ms)^\[package\]((?:(?!^\[)[\s\S])*?)^version = "{current_version}"'
+replace = '[package]\1version = "{new_version}"'
+
+# Cargo.lock is deliberately NOT listed as a file here. It records the crate's own
+# version *and* every dependency's, and bump-my-version applies `search` to every
+# occurrence in a file — so an entry for it would rewrite any dependency pinned at
+# the same number as the crate. The `cargo update --workspace` pre-commit hook
+# above is the safe way to refresh it: cargo knows which entry is ours.

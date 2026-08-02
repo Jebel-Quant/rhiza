@@ -44,6 +44,7 @@ flowchart LR
     subgraph Foundation["Foundation"]
         core["core"]
         python_core["python-core"]
+        rust_core["rust-core"]
     end
 
     subgraph Local["Local-first bundles"]
@@ -81,6 +82,7 @@ flowchart LR
     end
 
     python_core --> core
+    rust_core --> core
     github --> core
     gitlab --> core
     book --> core

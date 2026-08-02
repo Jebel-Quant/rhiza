@@ -9,7 +9,7 @@
 #    jebel-quant/rhiza) live in dedicated github-<feature> overlay bundles.
 #
 #    File ownership is expressed through the filesystem: each bundle has a
-#    corresponding directory under bundles/<name>/ in this repository (27 bundles).
+#    corresponding directory under bundles/<name>/ in this repository (28 bundles).
 #    Symlinks point to the real files; overlay bundles (github-*, gitlab-*)
 #    contain the actual injection files directly.
 #
@@ -57,6 +57,7 @@ bundles:
   python-core:
     description: "Python toolchain layer: virtualenv, uv sync, ruff/bandit config, deptry"
     standalone: true
+    layer: language
     requires: [core]
     notes: |
       The Python half of what used to be `core`: `.python-version`, `ruff.toml`,
@@ -69,6 +70,27 @@ bundles:
       know the language. Sibling layers claim the same deployment paths on
       purpose: selecting two at once is a file-ownership conflict, which is the
       intended way for "one language per repo" to fail loudly.
+
+  rust-core:
+    description: "Rust toolchain layer: rustup/cargo, clippy, nextest, llvm-cov, cargo-deny"
+    standalone: true
+    layer: language
+    requires: [core]
+    notes: |
+      The Rust sibling of `python-core`. Ships `rust-toolchain.toml`,
+      `rustfmt.toml`, `clippy.toml`, `deny.toml`, a Rust pre-commit config, a
+      bump-my-version config pointing at `Cargo.toml`/`Cargo.lock`, and
+      `.rhiza/make.d/rust.mk`.
+
+      It carries the test targets too, unlike Python — where pytest, coverage and
+      type checking need their own configuration and get a `tests` bundle. In Rust
+      all four are cargo subcommands with nothing to configure, so splitting them
+      out would create a bundle with no files of its own.
+
+      `typecheck` is clippy: rustc already type-checks, so the analogous gate is
+      the lint pass that runs after it. `docs-coverage` is `RUSTDOCFLAGS`
+      `-D missing_docs`, which is pass/fail rather than a percentage — there is no
+      Rust interrogate, so COVERAGE-style thresholds do not apply.
 
   github:
     description: "GitHub repository configuration (actions, dependabot, templates, rulesets, core workflows)"
@@ -360,6 +382,26 @@ profiles:
       - book
       - marimo
       - tests
+
+  # ============================================================================
+  # RUST-LOCAL - Local-first Rust development
+  # ============================================================================
+  rust-local:
+    description: |
+      Local-first Rust setup with no hosted CI/CD workflow files.
+      The Rust counterpart of `local`: core infrastructure, the Rust toolchain
+      layer (cargo, clippy, nextest, llvm-cov, cargo-deny) and documentation.
+
+      There is deliberately no `rust-github-project` or `rust-gitlab-project`
+      yet. Those profiles are made almost entirely of CI workflows, and the
+      `github`/`gitlab` bundles currently ship Python ones — a release job that
+      runs `uv build` and publishes to PyPI, and a Dependabot config declaring
+      the `uv` ecosystem. Adding them to a Rust profile would deliver CI that
+      fails on the first run, so they arrive together with the Rust workflows.
+    bundles:
+      - core
+      - rust-core
+      - book
 
   # ============================================================================
   # GITHUB-PROJECT - Standard GitHub-hosted project
