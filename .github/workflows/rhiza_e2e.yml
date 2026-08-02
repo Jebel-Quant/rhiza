@@ -1,0 +1,224 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Language-layer end-to-end tests
+#
+# Purpose: Assemble each language layer's profile into a temp directory, scaffold
+#          the smallest project the layer should be green on, and run every gate
+#          for real — install, test, coverage, typecheck, docs-coverage, security,
+#          license, deps, fmt and the `all` aggregate.
+#
+# Why it is a separate workflow rather than jobs in rhiza_ci.yml:
+#   - it needs three toolchains CI does not otherwise install (uv, cargo, go)
+#   - a run costs minutes per layer, against rhiza_ci's <=20 min test budget
+#   - it is the only place the Rust and Go layers execute at all: the suite skips
+#     when a compiler is absent, so a developer's green local run proves nothing
+#     about the two layers they have no toolchain for
+#
+# The suite is opt-in via RHIZA_E2E=1, which `make e2e` sets. E2E_ARGS narrows the
+# run to one layer so each job installs only the toolchain it needs.
+#
+# Trigger: On pull_request, on push to main, and manually.
+
+name: "(RHIZA) E2E"
+
+# Cancel superseded in-progress runs of this workflow for the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  python:
+    name: Python layer
+    # CI budget: <=30 min (uv sync, pytest, ty/mypy, and pre-commit provisioning
+    # every hook environment from scratch on the first `fmt`).
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      # Matches bundles/python-core/.python-version, which the scaffold's
+      # requires-python tracks: the check-python-version-consistency pre-commit
+      # hook reconciles the two, so a mismatch here would fail `make fmt`.
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.11.16"
+          python-version: "3.12"
+
+      - name: Cache uv artifacts
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-e2e-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-e2e-
+            ${{ runner.os }}-uv-
+
+      # Keyed on the shipped config, not on the repo's own: the hooks that run are
+      # the scaffolded project's, from bundles/python-core/.pre-commit-config.yaml.
+      - name: Cache pre-commit environments
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-e2e-python-${{ hashFiles('bundles/python-core/.pre-commit-config.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pre-commit-e2e-python-
+
+      - name: Run the Python layer end to end
+        run: make e2e E2E_ARGS=tests/e2e/test_python_layer_e2e.py
+
+  rust:
+    name: Rust layer
+    # CI budget: <=40 min (the crate is compiled several times over — nextest, an
+    # instrumented coverage build, clippy and rustdoc each build it).
+    timeout-minutes: 40
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      # uv is still needed on a Rust project: the language-neutral half of the
+      # template (pre-commit, mkdocs, semgrep) runs through uvx whatever the
+      # language, and the layer's `fmt` gate is exactly that path.
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.11.16"
+
+      # cache: false — rust-cache wants a Cargo.lock, and this repository has none
+      # (the crate under test is scaffolded into a temp directory at run time).
+      # llvm-tools-preview mirrors rust-toolchain.toml's components; `make install`
+      # would materialise them itself through `rustup show`, and asking for them
+      # here just moves the download into a cached step.
+      - name: Install the Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+        with:
+          toolchain: stable
+          components: rustfmt, clippy, llvm-tools-preview
+          cache: false
+
+      # `make cargo-tools` installs these itself, but from source via a
+      # cargo-binstall it first builds from source — minutes of CI for tools the
+      # runner can fetch prebuilt in seconds. cargo-binstall is in the list because
+      # the recipe bootstraps it whenever it is absent, even when nothing is missing.
+      - name: Install the cargo subcommands the gates call
+        uses: taiki-e/install-action@67729d5c413db75907f0ad1e39bb04b9c868ff60 # v2.85.7
+        with:
+          tool: cargo-binstall,cargo-nextest,cargo-llvm-cov,cargo-deny,cargo-machete
+
+      - name: Cache pre-commit environments
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-e2e-rust-${{ hashFiles('bundles/rust-core/.pre-commit-config.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pre-commit-e2e-rust-
+
+      - name: Run the Rust layer end to end
+        run: make e2e E2E_ARGS=tests/e2e/test_rust_layer_e2e.py
+
+  go:
+    name: Go layer
+    # CI budget: <=40 min (`go-tools` builds five binaries from source, golangci-lint
+    # being the expensive one, before any gate runs).
+    timeout-minutes: 40
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.11.16"
+
+      # cache: false — setup-go's cache keys off a go.sum, and this repository has
+      # none (the module under test is scaffolded into a temp directory at run
+      # time). The build/module cache below is keyed by hand instead.
+      - name: Install Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "stable"
+          cache: false
+
+      - name: Cache the Go build and module caches
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-e2e-${{ hashFiles('bundles/go-core/.rhiza/make.d/go.mk') }}
+          restore-keys: |
+            ${{ runner.os }}-go-e2e-
+
+      - name: Cache pre-commit environments
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-e2e-go-${{ hashFiles('bundles/go-core/.pre-commit-config.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pre-commit-e2e-go-
+
+      - name: Run the Go layer end to end
+        run: make e2e E2E_ARGS=tests/e2e/test_go_layer_e2e.py
+
+  e2e-gate:
+    name: E2E gate
+    # Roll-up gate: one status check aggregating all three layers, so a ruleset can
+    # require this context instead of every per-language name.
+    # CI budget: <=5 min (result aggregation only).
+    timeout-minutes: 5
+    if: always()
+    needs: [python, rust, go]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Verify every language layer succeeded
+        run: |
+          echo "python result: ${{ needs.python.result }}"
+          echo "rust result:   ${{ needs.rust.result }}"
+          echo "go result:     ${{ needs.go.result }}"
+          # Accept "success" or "cancelled" (transient runner cancellation).
+          # Reject "failure" (real failure) and "skipped" (job never ran).
+          for result in "${{ needs.python.result }}" "${{ needs.rust.result }}" "${{ needs.go.result }}"; do
+            if [[ "$result" != "success" && "$result" != "cancelled" ]]; then
+              echo "::error::a language layer did not succeed ($result); failing the E2E gate."
+              exit 1
+            fi
+          done
+          echo "All language layers succeeded."
