@@ -39,11 +39,18 @@ profiles:
   - {profile}
 """
 
-# Prose only, no fenced code blocks: `rhiza-test` runs the shipped
-# test_readme_validation.py, which executes every ```python block in the README
-# and diffs it against the following ```result block. An empty set of blocks
-# passes that trivially, which keeps the README about the scaffold rather than
-# about satisfying a test.
+# No ```python fence, and one ```bash fence, for two different reasons.
+#
+# No Python: `rhiza-test` runs the shipped test_readme_validation.py, which executes
+# every ```python block and diffs it against the following ```result block. An empty
+# set of blocks passes that trivially, which keeps the README about the scaffold
+# rather than about satisfying a test — and on a Rust or Go scaffold there is no
+# Python to demonstrate anyway.
+#
+# One bash fence, because core's test_readme.py syntax-checks them with `bash -n` for
+# every layer (#1472), and a README with no fence at all would pass that trivially too
+# — the exact vacuum #1469 was about. The block is never executed, so naming real
+# targets here costs nothing and keeps the check honest.
 _README = """\
 # demo
 
@@ -51,6 +58,11 @@ A minimal {language} project assembled by rhiza's end-to-end suite.
 
 It exists to prove that a freshly synced project passes every gate the
 `{layer}` language layer ships, with no hand-holding beyond the code below.
+
+```bash
+make install
+make all
+```
 """
 
 
