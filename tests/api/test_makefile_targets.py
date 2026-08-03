@@ -97,7 +97,7 @@ class TestMakefile:
 
         proc = run_make(logger, ["fmt"], env=env)
         out = proc.stdout
-        assert_uvx_command_uses_version(out, tmp_path, "pre-commit run --all-files")
+        assert "prek run --all-files" in out, "fmt should run prek over every file"
 
     def test_deptry_target_dry_run(self, logger, tmp_path):
         """Deptry target should invoke deptry via uvx with Python version in dry-run output."""
@@ -221,7 +221,7 @@ class TestMakefile:
         out = proc.stdout
         assert "no rule to make target" not in proc.stderr.lower()
         # Markers proving the prerequisite chain expands each sub-target's recipe.
-        assert "pre-commit run --all-files" in out  # fmt
+        assert "prek run --all-files" in out  # fmt
         assert "uv run --with pytest" in out  # test / rhiza-test
         assert "uv run --with interrogate interrogate" in out  # docs-coverage
         assert "Running bandit security scan in:" in out  # security

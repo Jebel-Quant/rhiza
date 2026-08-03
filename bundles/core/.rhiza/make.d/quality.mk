@@ -9,8 +9,28 @@
 .PHONY: fmt todos semgrep rhiza-test
 
 ##@ Quality and Formatting
+# prek rather than pre-commit: a Rust reimplementation that reads the same
+# `.pre-commit-config.yaml` and needs no Python of its own. Two consequences, one
+# gained and one that has to be asked for.
+#
+# Gained: the `-p ${PYTHON_VERSION}` this recipe used to carry is gone. That flag
+# existed because `uvx pre-commit` had to choose an interpreter to run pre-commit
+# *itself* on, and a Rust or Go project ships no `.python-version` — so the whole
+# language-neutral half of the template rested on rhiza.mk's fallback resolving to
+# something real. prek is a binary and provisions each hook's toolchain itself, so the
+# coupling is removed rather than merely satisfied.
+#
+# Asked for: `--config`. By default prek treats every directory below the root that
+# holds a `.pre-commit-config.yaml` as a separate *project* and runs each one's hooks —
+# useful in a monorepo, surprising anywhere else, and wrong in rhiza's own repo, where
+# `bundles/{python,rust,go}-core` each ship one as template content. (go-core's hooks
+# then run `go vet ./...` in a directory with no `go.mod` and fail.) Naming the config
+# explicitly disables that discovery, so `make fmt` means exactly what it meant under
+# pre-commit: this repo's config, once. A consumer who wants the monorepo behaviour
+# drops the flag. `.prekignore` is documented for the same job but is not honoured by
+# prek 0.4.12, so it is not what this relies on.
 fmt: install-uv ## check the pre-commit hooks and the linting
-	@${UVX_BIN} -p ${PYTHON_VERSION} pre-commit run --all-files
+	@${UVX_BIN} prek run --all-files --config .pre-commit-config.yaml
 
 todos: ## search and report all TODO/FIXME/HACK comments in the codebase
 	@printf "${BLUE}[INFO] Searching for TODO, FIXME, and HACK comments...${RESET}\n"

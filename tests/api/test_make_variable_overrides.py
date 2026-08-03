@@ -89,13 +89,20 @@ class TestPythonVersionVariable:
         out = strip_ansi(proc.stdout)
         assert "3.13" in out, f"Expected default 3.13; got: {out}"
 
-    def test_python_version_used_in_fmt_target(self, logger, tmp_path) -> None:
-        """The fmt target must pass -p <PYTHON_VERSION> to uvx."""
+    def test_fmt_target_no_longer_needs_python_version(self, logger, tmp_path) -> None:
+        """`fmt` must not pin an interpreter: prek is a binary and needs none.
+
+        The inverse of what this asserted under pre-commit, which `uvx` had to run on
+        some interpreter. Kept rather than deleted because the coupling is worth
+        pinning in its absence — reintroducing `-p` here would quietly make the
+        language-neutral half of the template depend on PYTHON_VERSION again.
+        """
         env = os.environ.copy()
         env.pop("PYTHON_VERSION", None)
 
         proc = run_make(logger, ["fmt"], env=env)
-        assert "uvx -p" in proc.stdout, "fmt target should use uvx -p <version>"
+        assert "prek run --all-files" in proc.stdout, "fmt target should run prek"
+        assert "uvx -p" not in proc.stdout, "fmt should not pin an interpreter for prek"
 
 
 class TestSourceFolderVariable:

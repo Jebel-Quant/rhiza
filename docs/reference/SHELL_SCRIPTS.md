@@ -212,7 +212,7 @@ No external dependencies required (no bats-core needed).
 
 **Solutions**:
 1. This is non-critical; bootstrap continues
-2. Install manually later: `uvx pre-commit install`
+2. Install manually later: `uvx prek install`
 3. Ensure `.pre-commit-config.yaml` exists
 
 ## Advanced Usage

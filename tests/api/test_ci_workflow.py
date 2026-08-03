@@ -85,13 +85,18 @@ def test_ci_cache_keys_match_audit_policy(root):
     uv_cache_step = next(step for step in test_steps if step.get("name") == "Cache uv artifacts")
     assert uv_cache_step["with"]["key"] == "${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}"
 
+    # The job id stays `pre-commit` and its display name stays "Pre-commit hooks": that
+    # name is a required status check in .github/rulesets/main-branch-protection.json,
+    # so renaming it would leave every PR waiting on a context that never reports.
+    # What the hook runner is called is a detail of the recipe; what the check is called
+    # is a contract with branch protection.
     pre_commit_steps = workflow["jobs"]["pre-commit"]["steps"]
-    pre_commit_cache_step = next(
-        step for step in pre_commit_steps if step.get("name") == "Cache pre-commit environments"
+    prek_cache_step = next(step for step in pre_commit_steps if step.get("name") == "Cache prek environments")
+    assert prek_cache_step["with"]["path"] == "~/.cache/prek", (
+        "prek caches under ~/.cache/prek, not pre-commit's directory"
     )
-    assert (
-        pre_commit_cache_step["with"]["key"]
-        == "${{ runner.os }}-pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}"
+    assert prek_cache_step["with"]["key"] == "${{ runner.os }}-prek-${{ hashFiles('.pre-commit-config.yaml') }}", (
+        "the key still hashes .pre-commit-config.yaml — prek reads the same file"
     )
 
 

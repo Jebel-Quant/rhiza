@@ -33,7 +33,7 @@ file is read automatically by both bandit and CodeFactor, making it the single s
 **Running Bandit**:
 ```bash
 # Run via pre-commit
-pre-commit run bandit --all-files
+uvx prek run bandit --all-files
 
 # Or directly with uv (reads .bandit automatically)
 uv tool run bandit -r . --ini .bandit

@@ -107,7 +107,7 @@ uvx deptry src/
 **Manual test:**
 ```bash
 # Run pre-commit locally
-uv run pre-commit run --all-files
+uvx prek run --all-files
 ```
 
 **Success criteria:**
