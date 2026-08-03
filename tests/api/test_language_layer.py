@@ -128,6 +128,25 @@ class TestRustLayerKeepsTheSameContract:
         for tool in ("cargo-nextest", "cargo-llvm-cov", "cargo-deny", "cargo-machete"):
             assert tool in out, f"`cargo-tools` does not install {tool}, which a gate below calls"
 
+    def test_cargo_tools_never_assumes_the_cargo_bin_dir_is_on_path(self, logger):
+        """`cargo install` writes to $(CARGO_BIN_DIR), which PATH need not contain.
+
+        `brew install rustup` — the install target's own suggestion — puts the shims in
+        Homebrew's bin and leaves ~/.cargo/bin unlinked; `cargo install` warns and
+        carries on. So the recipe may not reach a freshly installed tool by name: it has
+        to go through cargo, which searches its own bin directory too. Both halves are
+        asserted because either one alone still breaks — a `command -v` probe that misses
+        the directory reinstalls the whole tool list on every gate.
+        """
+        out = strip_ansi(run_make(logger, ["cargo-tools"], check=False).stdout)
+        assert "cargo binstall --no-confirm" in out, "binstall must be invoked as a cargo subcommand"
+        assert not re.search(r"(?<![\w./-])cargo-binstall --no-confirm", out), (
+            "a bare `cargo-binstall` resolves only through PATH: 'command not found' wherever "
+            "cargo's bin dir is unlinked"
+        )
+        assert re.search(r'-x "\S*/bin/cargo-binstall"', out), "the binstall probe must also look in the cargo bin dir"
+        assert re.search(r'-x "\S*/bin/\$tool"', out), "the per-tool probe must also look in the cargo bin dir"
+
     def test_all_chains_the_rust_gates(self, logger):
         """The mirror of `test_all_chains_the_python_gates` — a dropped gate shows up here.
 

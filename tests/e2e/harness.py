@@ -260,7 +260,7 @@ def _report(layer: Layer, target: str, proc: subprocess.CompletedProcess) -> str
     )
 
 
-def gate(project: Project, target: str, logger) -> str:
+def gate(project: Project, target: str, logger, env: dict[str, str] | None = None) -> str:
     """Run one gate for real and fail the test with its output if it is red.
 
     Both streams are returned joined, because which one a gate writes to is not a
@@ -273,11 +273,14 @@ def gate(project: Project, target: str, logger) -> str:
         project: The assembled project.
         target: The make target to run.
         logger: Test logger.
+        env: Environment for the run, defaulting to `gate_env()`. Passed by tests
+            that need a gate to face a different machine than the one running them —
+            a PATH without the cargo bin directory, say.
 
     Returns:
         The gate's combined output, ANSI-stripped, for tests that assert on what ran.
     """
-    proc = run_make(logger, [target], check=False, dry_run=False, env=gate_env(), cwd=project.path)
+    proc = run_make(logger, [target], check=False, dry_run=False, env=env or gate_env(), cwd=project.path)
     if proc.returncode != 0:
         pytest.fail(_report(project.layer, target, proc))
     return strip_ansi(proc.stdout) + strip_ansi(proc.stderr)

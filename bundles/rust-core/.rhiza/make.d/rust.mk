@@ -29,6 +29,16 @@ COVERAGE_FAIL_UNDER ?= 90
 # turns a multi-minute `cargo install` into seconds on CI.
 CARGO_TOOLS ?= cargo-nextest cargo-llvm-cov cargo-deny cargo-machete
 
+# Where `cargo install` puts a subcommand's binary — and it is *not* necessarily on
+# PATH. `brew install rustup` (which install's error above suggests) leaves the
+# shims in Homebrew's bin and never links ~/.cargo/bin, and `cargo install` only
+# warns about that rather than failing. Cargo resolves `cargo <sub>` by searching
+# this directory as well as PATH, so every gate below is fine either way; what is
+# not fine is `command -v cargo-nextest` or a bare `cargo-binstall`, which see only
+# PATH. So `cargo-tools` probes both, and invokes binstall as a cargo subcommand.
+# Honours the two variables cargo itself reads, in the order cargo reads them.
+CARGO_BIN_DIR ?= $(if $(CARGO_INSTALL_ROOT),$(CARGO_INSTALL_ROOT),$(if $(CARGO_HOME),$(CARGO_HOME),$(HOME)/.cargo))/bin
+
 ##@ Rust
 install: pre-install ## install the toolchain and fetch dependencies
 	@if ! command -v $(RUSTUP) >/dev/null 2>&1; then \
@@ -70,17 +80,17 @@ install: pre-install ## install the toolchain and fetch dependencies
 	@printf "\n${GREEN}[SUCCESS] Installation complete!${RESET}\n\n"
 
 cargo-tools: ## install the cargo subcommands the gates need (idempotent)
-	@if ! command -v cargo-binstall >/dev/null 2>&1; then \
+	@if ! command -v cargo-binstall >/dev/null 2>&1 && [ ! -x "$(CARGO_BIN_DIR)/cargo-binstall" ]; then \
 	  printf "${BLUE}[INFO] Installing cargo-binstall${RESET}\n"; \
 	  $(CARGO) install cargo-binstall --locked || { printf "${RED}[ERROR] Failed to install cargo-binstall${RESET}\n"; exit 1; }; \
 	fi
 	@missing=""; \
 	for tool in $(CARGO_TOOLS); do \
-	  command -v $$tool >/dev/null 2>&1 || missing="$$missing $$tool"; \
+	  command -v $$tool >/dev/null 2>&1 || [ -x "$(CARGO_BIN_DIR)/$$tool" ] || missing="$$missing $$tool"; \
 	done; \
 	if [ -n "$$missing" ]; then \
 	  printf "${BLUE}[INFO] Installing:${RESET}$$missing\n"; \
-	  cargo-binstall --no-confirm --locked $$missing || { printf "${RED}[ERROR] Failed to install cargo tools${RESET}\n"; exit 1; }; \
+	  $(CARGO) binstall --no-confirm --locked $$missing || { printf "${RED}[ERROR] Failed to install cargo tools${RESET}\n"; exit 1; }; \
 	else \
 	  printf "${BLUE}[INFO] All cargo tools already installed${RESET}\n"; \
 	fi
