@@ -55,23 +55,62 @@ def test_install_wires_up_the_pre_commit_hook(project: Project):
 
 
 def test_test_gate_runs_pytest_and_writes_the_reports_book_mk_reads(project: Project, logger):
-    """The scaffold's one test runs, and coverage lands where the docs badge looks.
+    """The scaffold's test runs, and coverage lands where the docs badge looks.
 
     Also the check that book.mk's no-op `test::` default has not swallowed the
     real one: both rules are defined here (book is synced), so an accidental
     single-colon rule in either file would make this fail rather than run nothing.
     """
     out = gate(project, "test", logger)
-    # `[1 item]` rather than "collected 1 item": test.mk runs pytest under xdist,
-    # which replaces the collection line with "N workers [1 item]".
-    assert "[1 item]" in out, f"pytest did not collect the scaffold's test:\n{out}"
-    assert "1 passed" in out, f"pytest did not report a passing test:\n{out}"
+    # Two items: the scaffold's own test plus the starter the layer ships (#1476).
+    # `[2 items]` rather than "collected 2 items": test.mk runs pytest under xdist,
+    # which replaces the collection line with "N workers [2 items]".
+    assert "[2 items]" in out, f"pytest did not collect both tests:\n{out}"
+    assert "2 passed" in out, f"pytest did not report both tests passing:\n{out}"
 
     coverage_xml = project.path / "_tests" / "coverage.xml"
     assert coverage_xml.is_file(), "`make test` did not write _tests/coverage.xml"
     assert line_rate(coverage_xml) == pytest.approx(1.0), "the scaffold is meant to be fully covered"
     assert (project.path / "_tests" / "html-coverage").is_dir()
     assert (project.path / "_tests" / "html-report" / "report.html").is_file()
+
+
+def test_the_layer_brings_its_own_test_so_a_fresh_repo_tests_something(project: Project, logger):
+    """The layer's own starter test runs — not just the scaffold's (#1476).
+
+    This is the gate's vacuity check, and it has to name the *shipped* file. `make test`
+    short-circuits on an empty `tests/` with a warning and exit 0, so a fresh Python repo
+    passed `make test` — and `make all` — while measuring nothing. The scaffold writes its
+    own `tests/test_greeting.py`, which means the sibling test above would stay green even
+    if python-core shipped no starter at all.
+
+    That is exactly how the Go instance of this survived until #1467: the scaffold's
+    `greeting_test.go` masked it until the assertion was repointed at the bundle's own
+    `internal/version` package. Asserting on `test_rhiza_packaging.py` is the Python
+    equivalent — drop it from the layer and this fails.
+
+    Read from the HTML report rather than from stdout, because `test` runs pytest under
+    xdist (`-n auto`), which replaces per-file output with a bare progress line: the
+    filename never appears in the console at all. The report is written by the same gate
+    and records each test id with its outcome, so this can require **Passed** rather than
+    merely collected — a starter that silently skipped would satisfy the item count and
+    still measure nothing.
+    """
+    gate(project, "test", logger)
+
+    assert (project.path / "tests" / "test_rhiza_packaging.py").is_file(), (
+        "python-core no longer ships a starter test, so a fresh repo's `tests/` is empty "
+        "and `make test` short-circuits with a warning and exit 0"
+    )
+
+    report = (project.path / "_tests" / "html-report" / "report.html").read_text(encoding="utf-8")
+    assert "test_rhiza_packaging.py::test_the_installed_version_matches_pyproject" in report, (
+        "the starter test was not collected by `make test`"
+    )
+    # The report embeds its data as HTML-escaped JSON, hence the entity-quoted needle.
+    assert "&#34;result&#34;: &#34;Passed&#34;, &#34;testId&#34;: &#34;tests/test_rhiza_packaging.py" in report, (
+        "the starter test did not pass — a skip here means it measured nothing, which is the vacuum #1476 was about"
+    )
 
 
 def test_docs_coverage_gate_reaches_100_percent(project: Project, logger):
@@ -101,7 +140,7 @@ def test_license_gate_accepts_a_permissive_dependency_set(project: Project, logg
 
 def test_deptry_gate_finds_no_dependency_problems(project: Project, logger):
     """Deptry runs on the folders the synced bundles contribute, and is clean."""
-    out = gate(project, "deptry", logger)
+    out = gate(project, "deps", logger)
     assert "Running deptry on:" in out
 
 
@@ -144,8 +183,8 @@ def test_all_runs_the_whole_gate_set(project: Project, logger):
     # so the evidence is a line only one of them emits.
     for gate_name, evidence in (
         ("fmt", "ruff format"),
-        ("deptry", "Running deptry on:"),
-        ("test", "[1 item]"),
+        ("deps", "Running deptry on:"),
+        ("test", "[2 items]"),  # the scaffold's test plus the layer's starter (#1476)
         ("docs-coverage", "Checking documentation coverage in:"),
         ("security", "Running bandit security scan"),
         ("license", "Running license compliance scan"),

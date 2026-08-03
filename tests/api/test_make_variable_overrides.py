@@ -133,7 +133,7 @@ class TestSourceFolderVariable:
         src_dir = tmp_path / "mypackage"
         src_dir.mkdir(exist_ok=True)
 
-        proc = run_make(logger, ["deptry", "SOURCE_FOLDER=mypackage"])
+        proc = run_make(logger, ["deps", "SOURCE_FOLDER=mypackage"])
         assert "mypackage" in proc.stdout, "deptry should reference SOURCE_FOLDER; got:\n" + proc.stdout[:400]
 
     def test_deptry_accumulates_marimo_and_source_in_one_call(self, logger, tmp_path) -> None:
@@ -145,7 +145,7 @@ class TestSourceFolderVariable:
         (tmp_path / "mypackage").mkdir(exist_ok=True)
         (tmp_path / "notebooks").mkdir(exist_ok=True)
 
-        proc = run_make(logger, ["deptry", "SOURCE_FOLDER=mypackage", "MARIMO_FOLDER=notebooks"])
+        proc = run_make(logger, ["deps", "SOURCE_FOLDER=mypackage", "MARIMO_FOLDER=notebooks"])
         out = strip_ansi(proc.stdout)
         # marimo.mk is included before quality.mk, so its folder is appended first.
         assert "deptry notebooks mypackage --ignore DEP004" in out, (
