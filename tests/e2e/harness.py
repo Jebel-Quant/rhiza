@@ -82,7 +82,7 @@ class Layer:
 #
 # marimo is left out of the Python set even though the `local` profile includes it:
 # the bundle ships marimo.mk but no notebooks, and marimo.mk appends
-# $(MARIMO_FOLDER) to DEPTRY_FOLDERS, so `make deptry` would be pointed at a
+# $(MARIMO_FOLDER) to DEPTRY_FOLDERS, so `make deps` would be pointed at a
 # folder no sync creates. A real consumer writes notebooks there; a scaffold has
 # none, and inventing some would test marimo rather than the language layer.
 PYTHON = Layer(

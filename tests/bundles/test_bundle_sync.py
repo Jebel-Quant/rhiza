@@ -155,7 +155,7 @@ class TestPythonCoreBundleSync:
         to core's quality.mk in #1471 rather than existing identically in all three layers.
         """
         python_mk = (self.project / ".rhiza" / "make.d" / "python.mk").read_text(encoding="utf-8")
-        for target in ("install:", "all:", "deptry:", "license:"):
+        for target in ("install:", "all:", "deps:", "license:"):
             assert target in python_mk, f"python.mk is missing {target}"
         assert "rhiza-test:" not in python_mk, (
             "python.mk redefines rhiza-test, which core now owns — two recipes for one "
@@ -794,4 +794,45 @@ class TestALayersAllIsSatisfiableOnItsOwn:
             f"`make all` on core + {layer} names {missing}, which no synced fragment defines. "
             f"Either the layer must define them or they belong in core — a gate that only "
             f"resolves once another bundle happens to be selected is not part of the contract."
+        )
+
+
+class TestEveryLayerDefinesTheSameGateNames:
+    """The layers must agree on gate *names*, whatever engine backs each one.
+
+    The whole claim of the language-layer split is "same target names, different
+    recipes" — that is what lets book.mk, the CI workflows and the docs call a gate
+    without knowing the language. `deptry` was the one row that broke it (#1474):
+    python-core named the unused-dependency gate after the tool while rust-core and
+    go-core called it `deps`, so `make deps` failed on Python and `make deptry` on the
+    other two, and no language-neutral caller could invoke it at all.
+
+    CLAUDE.md documented the divergence, which is not the same as it being intended.
+    This test is why the next one fails instead of getting written down.
+    """
+
+    # Deliberately not `install`/`all` — `tests/api/test_language_layer.py` covers those
+    # behaviourally. These are the gates a caller reaches for by name.
+    GATES = ("test", "typecheck", "security", "docs-coverage", "license", "deps")
+
+    @pytest.mark.parametrize("gate", GATES)
+    def test_all_three_layers_define_the_gate(self, tmp_path, root, gate):
+        """Each gate name must be defined by every language layer."""
+        missing = []
+        for layer in ("python-core", "rust-core", "go-core"):
+            project = tmp_path / layer
+            sync_bundles(root, ["core", layer], project)
+            defined = {
+                line.split(":", 1)[0]
+                for fragment in (project / ".rhiza").rglob("*.mk")
+                for line in fragment.read_text(encoding="utf-8").splitlines()
+                if re.match(r"^[a-z][a-z0-9-]*::? ", line)
+            }
+            if gate not in defined:
+                missing.append(layer)
+
+        assert not missing, (
+            f"`{gate}` is not defined by {missing}. A gate the other layers provide under "
+            f"this name makes the contract language-specific: a caller has to know what the "
+            f"project is written in before it can run the gate."
         )
