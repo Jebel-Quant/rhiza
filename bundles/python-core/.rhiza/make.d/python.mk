@@ -12,7 +12,7 @@
 # knowing the language. Only one language layer is ever synced into a repo.
 
 # Declare phony targets (they don't produce files)
-.PHONY: all deptry install license rhiza-test
+.PHONY: all deptry install license
 
 # The project virtualenv, and the interpreter that fills it. PYTHON_VERSION is
 # declared in rhiza.mk (core needs a Python to run its own tooling on); here
@@ -104,9 +104,3 @@ license: install ## run license compliance scan (fail on GPL, LGPL, AGPL)
 	@printf "${BLUE}[INFO] Running license compliance scan...${RESET}\n"
 	@${UV_BIN} run --with pip-licenses pip-licenses --fail-on="${LICENSE_FAIL_ON}"
 
-rhiza-test: install ## run rhiza's own tests (if any)
-	@if [ -d ".rhiza/tests" ]; then \
-		${UV_BIN} run --with pytest --with pytest-timeout --with python-dotenv --with packaging pytest .rhiza/tests; \
-	else \
-		printf "${YELLOW}[WARN] No .rhiza/tests directory found, skipping rhiza-tests${RESET}\n"; \
-	fi

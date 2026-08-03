@@ -173,6 +173,8 @@ def test_rhiza_test_gate_actually_runs_the_shipped_suite(project: Project, logge
     out = gate(project, "rhiza-test", logger)
     assert "No .rhiza/tests directory found" not in out, "the self-test suite was not delivered to a Go project"
     assert "test_go_module.py" in out, f"the Go layer's own self-tests did not run:\n{out}"
+    # core's neutral half must arrive too, not just the layer's own module (#1472):
+    assert "test_readme.py" in out, f"core's language-neutral README tests did not run:\n{out}"
     assert re.search(r"\d+ passed", out), f"rhiza-test collected nothing:\n{out}"
     # Nothing in the Go suite has a legitimate reason to skip on this scaffold, and the
     # ones that would — every test reconciling the Version constant with the newest tag —

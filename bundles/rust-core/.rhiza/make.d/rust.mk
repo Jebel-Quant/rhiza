@@ -13,7 +13,7 @@
 # their Rust counterparts are cargo subcommands with nothing to configure.
 
 # Declare phony targets (they don't produce files)
-.PHONY: all cargo-tools coverage deps docs-coverage install license rhiza-test security test typecheck
+.PHONY: all cargo-tools coverage deps docs-coverage install license security test typecheck
 
 CARGO ?= cargo
 RUSTUP ?= rustup
@@ -141,11 +141,3 @@ license: install cargo-tools ## run license compliance scan (allow-list in deny.
 	@printf "${BLUE}[INFO] Running license compliance scan${RESET}\n"
 	@$(CARGO) deny check licenses
 
-rhiza-test: install ## run rhiza's own tests (if any)
-	# The template's self-tests validate READMEs and YAML, not Python code, so they
-	# stay Python and run through uvx here rather than being ported to Rust.
-	@if [ -d ".rhiza/tests" ]; then \
-		${UV_BIN} run --with pytest --with pytest-timeout --with python-dotenv --with packaging pytest .rhiza/tests; \
-	else \
-		printf "${YELLOW}[WARN] No .rhiza/tests directory found, skipping rhiza-tests${RESET}\n"; \
-	fi

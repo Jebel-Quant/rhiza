@@ -135,10 +135,18 @@ class TestPythonCoreBundleSync:
         assert "target-version =" not in content
 
     def test_python_mk_provides_the_language_contract(self):
-        """python.mk owns the target names the rest of the template calls."""
+        """python.mk owns the target names the rest of the template calls.
+
+        ``rhiza-test`` is deliberately absent: its recipe is language-neutral, so it moved
+        to core's quality.mk in #1471 rather than existing identically in all three layers.
+        """
         python_mk = (self.project / ".rhiza" / "make.d" / "python.mk").read_text(encoding="utf-8")
-        for target in ("install:", "all:", "deptry:", "license:", "rhiza-test:"):
+        for target in ("install:", "all:", "deptry:", "license:"):
             assert target in python_mk, f"python.mk is missing {target}"
+        assert "rhiza-test:" not in python_mk, (
+            "python.mk redefines rhiza-test, which core now owns — two recipes for one "
+            "target name is exactly what #1471 removed"
+        )
 
     @pytest.mark.parametrize("name", [".bumpversion.toml", ".bumpversion.cfg", "setup.cfg", ".rhiza/.cfg.toml"])
     def test_no_bumpversion_config_is_shipped(self, name):
@@ -189,10 +197,18 @@ class TestRustCoreBundleSync:
         assert not (self.project / name).exists(), f"{name} belongs to python-core, not rust-core"
 
     def test_rust_mk_provides_the_language_contract(self):
-        """rust.mk owns the same target names python.mk does, plus the cargo-backed gates."""
+        """rust.mk owns the same target names python.mk does, plus the cargo-backed gates.
+
+        ``rhiza-test`` is deliberately absent: its recipe is language-neutral, so it moved
+        to core's quality.mk in #1471 rather than existing identically in all three layers.
+        """
         rust_mk = (self.project / ".rhiza" / "make.d" / "rust.mk").read_text(encoding="utf-8")
-        for target in ("install:", "all:", "test::", "coverage:", "typecheck:", "docs-coverage:", "rhiza-test:"):
+        for target in ("install:", "all:", "test::", "coverage:", "typecheck:", "docs-coverage:"):
             assert target in rust_mk, f"rust.mk is missing {target}"
+        assert "rhiza-test:" not in rust_mk, (
+            "rust.mk redefines rhiza-test, which core now owns — two recipes for one "
+            "target name is exactly what #1471 removed"
+        )
 
     def test_only_one_language_fragment_is_synced(self):
         """python.mk and rust.mk both define `install` — receiving both would be a clash."""
@@ -422,10 +438,18 @@ class TestGoCoreBundleSync:
         assert not (self.project / name).exists(), f"{name} belongs to another language layer"
 
     def test_go_mk_provides_the_language_contract(self):
-        """go.mk owns the same target names its siblings do, plus the go-backed gates."""
+        """go.mk owns the same target names its siblings do, plus the go-backed gates.
+
+        ``rhiza-test`` is deliberately absent: its recipe is language-neutral, so it moved
+        to core's quality.mk in #1471 rather than existing identically in all three layers.
+        """
         go_mk = (self.project / ".rhiza" / "make.d" / "go.mk").read_text(encoding="utf-8")
-        for target in ("install:", "all:", "test::", "coverage:", "typecheck:", "docs-coverage:", "rhiza-test:"):
+        for target in ("install:", "all:", "test::", "coverage:", "typecheck:", "docs-coverage:"):
             assert target in go_mk, f"go.mk is missing {target}"
+        assert "rhiza-test:" not in go_mk, (
+            "go.mk redefines rhiza-test, which core now owns — two recipes for one "
+            "target name is exactly what #1471 removed"
+        )
 
     def test_only_one_language_fragment_is_synced(self):
         """python.mk, rust.mk and go.mk all define `install` — receiving two would be a clash."""

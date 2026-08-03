@@ -169,8 +169,15 @@ class TestRustLayerKeepsTheSameContract:
         """Nextest ignores doctests; dropping the `cargo test --doc` line silently stops testing them."""
         assert "cargo test --doc" in strip_ansi(run_make(logger, ["all"], check=False).stdout)
 
-    def test_rhiza_test_still_runs_the_python_self_tests(self, logger):
-        """The template's own suite validates YAML and READMEs, so it stays Python under uv."""
+    def test_rhiza_test_resolves_through_this_layers_install(self, logger):
+        """`rhiza-test` is core's recipe (#1471), but its `install` prerequisite is the layer's.
+
+        The template's own suite validates YAML, READMEs and release config rather than
+        the project's code, so it stays Python under uv and the runner belongs in core.
+        What that costs is one prerequisite crossing from core into the layer, which is
+        worth asserting per layer: a target that exists but cannot build its prerequisite
+        is not a working gate, and `all` depends on this one.
+        """
         out = strip_ansi(run_make(logger, ["rhiza-test"], check=False).stdout)
         assert "pytest .rhiza/tests" in out
 
@@ -296,8 +303,15 @@ class TestGoLayerKeepsTheSameContract:
         ):
             assert command in out, f"`make all` no longer runs the {gate} gate ({command})"
 
-    def test_rhiza_test_still_runs_the_python_self_tests(self, logger):
-        """The template's own suite validates YAML and READMEs, so it stays Python under uv."""
+    def test_rhiza_test_resolves_through_this_layers_install(self, logger):
+        """`rhiza-test` is core's recipe (#1471), but its `install` prerequisite is the layer's.
+
+        The template's own suite validates YAML, READMEs and release config rather than
+        the project's code, so it stays Python under uv and the runner belongs in core.
+        What that costs is one prerequisite crossing from core into the layer, which is
+        worth asserting per layer: a target that exists but cannot build its prerequisite
+        is not a working gate, and `all` depends on this one.
+        """
         out = strip_ansi(run_make(logger, ["rhiza-test"], check=False).stdout)
         assert "pytest .rhiza/tests" in out
 
@@ -341,3 +355,22 @@ class TestCoreAloneHasNoLanguageLayer:
         """The framework half of core stands on its own."""
         out = strip_ansi(run_make(logger, ["help"], dry_run=False).stdout)
         assert "install-uv" in out, "core still provisions the tool runner"
+
+    def test_rhiza_test_is_declared_here_but_needs_a_layer_to_run(self, logger):
+        """Core owns `rhiza-test` (#1471), and its one layer-owned prerequisite shows up as such.
+
+        The recipe is language-neutral, so core is its home — but it depends on `install`,
+        which core must never define. Every shipped profile pairs core with exactly one
+        layer, so the prerequisite always resolves in practice; a core-only tree is the
+        one place it cannot.
+
+        Pinned because the failure has to stay legible. `make rhiza-test` here must
+        complain about the missing *prerequisite*, naming `install`, rather than about
+        `rhiza-test` itself — the latter would suggest the recipe went missing rather
+        than the layer.
+        """
+        proc = run_make(logger, ["rhiza-test"], check=False)
+        assert proc.returncode != 0
+        stderr = proc.stderr.lower()
+        assert "install" in stderr, f"the failure should name the missing prerequisite:\n{proc.stderr}"
+        assert "no rule to make target 'rhiza-test'" not in stderr, f"core stopped declaring rhiza-test:\n{proc.stderr}"
