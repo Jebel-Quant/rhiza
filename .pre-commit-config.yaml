@@ -99,7 +99,7 @@ repos:
         files: ^src/
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v0.7.1  # Use the latest release
+    rev: v1.0.0  # Use the latest release
     hooks:
       # Migrated from rhiza
       - id: check-rhiza-workflow-names
@@ -108,9 +108,14 @@ repos:
       - id: check-rhiza-config
       - id: check-makefile-targets
       - id: check-python-version-consistency
+      # Rejects a PEP 639 `license` expression declared alongside a `License ::` trove
+      # classifier — setuptools/hatch treat that pairing as an error, so it is worth
+      # catching at commit time rather than at build time.
+      - id: check-license-metadata
       # check-bumpversion-config asserts that bump-my-version can actually discover
-      # this repo's version config (issue #1453). Enable it once rhiza-hooks ships a
-      # release containing it — v0.7.1 does not. Until then .rhiza/tests/test_pyproject.py
-      # enforces the same invariant, one gate later.
+      # this repo's version config (issue #1453). The pinned v1.0.0 ships it, so the pin
+      # no longer blocks it — enabling it is now just a decision to move the gate
+      # earlier. Until then .rhiza/tests/test_pyproject.py enforces the same invariant,
+      # one gate later.
       # - id: check-bumpversion-config
       # - id: check-template-bundles
