@@ -508,13 +508,13 @@ uv run pytest -v -s
 
 ```bash
 # Install pre-commit
-uv run pre-commit install
+uvx prek install
 
 # Run all hooks manually
 make fmt
 
 # Run specific hook
-uv run pre-commit run hook-name --all-files
+uvx prek run hook-name --all-files
 ```
 
 #### "Git LFS files not downloading"

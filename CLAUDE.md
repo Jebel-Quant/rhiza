@@ -13,7 +13,7 @@ Downstream projects adopt Rhiza by adding a `.rhiza/template.yml` that lists whi
 ```bash
 make install      # Full setup: installs uv, downloads Python version from .python-version, creates .venv, installs deps
 make test         # Run all tests with coverage (90% minimum required)
-make fmt          # Run all pre-commit hooks (ruff format/check, markdownlint, bandit, etc.)
+make fmt          # Run all hooks via prek (ruff format/check, markdownlint, bandit, etc.)
 make deptry       # Check for unused/missing dependencies
 make docs-coverage  # Check docstring coverage with interrogate (100% required)
 make typecheck    # Static type checking with pyright
@@ -193,7 +193,7 @@ Its `install` is also the thinnest of the
 three — go.mod's `go`/`toolchain` directives make the go command fetch a matching
 compiler on demand, so there is no rustup step to mirror.
 
-`uv` sits in core, not in the Python layer, because rhiza runs pre-commit, mkdocs and
+`uv` sits in core, not in the Python layer, because rhiza runs prek, mkdocs and
 semgrep through `uvx` regardless of the project's language. What moved is the
 *project* virtualenv and the `uv sync` of its declared dependencies.
 
@@ -267,7 +267,31 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 - **Ruff** (`ruff.toml`): see `ruff.toml` for the authoritative and current enabled rule set (rule-prefix reference: https://docs.astral.sh/ruff/rules/)
 - **Docstring coverage**: 100% (interrogate) — all public functions, classes, and modules require docstrings
 - **Test coverage**: 90% minimum
-- **Pre-commit hooks**: `make fmt` runs ruff, markdownlint, bandit, actionlint, interrogate, jsonschema, and uv-lock validation
+- **Hooks**: `make fmt` runs ruff, markdownlint, bandit, actionlint, interrogate, jsonschema, and uv-lock validation
+
+> **The hook runner is [prek](https://github.com/j178/prek), not pre-commit.** It reads the
+> same `.pre-commit-config.yaml` — all four of them are unchanged, and Renovate still
+> manages hook versions from that file — so this is a runner swap, not a config change
+> (ADR 0009 carries the amendment). Two things are worth knowing before editing
+> `quality.mk`:
+>
+> - **`make fmt` passes `--config .pre-commit-config.yaml` deliberately.** prek otherwise
+>   treats *every* nested `.pre-commit-config.yaml` as a separate project and runs each
+>   one's hooks. That is a feature in a monorepo and wrong here: `bundles/python-core`,
+>   `bundles/rust-core` and `bundles/go-core` each ship one as **template content**.
+>   Without the flag, go-core's hooks run `go vet ./...` in a directory that has no
+>   `go.mod` — because a synced project brings its own — and `make fmt` fails on the
+>   mother repo. `.prekignore` is documented for this job but is not honoured by prek
+>   0.4.12.
+> - **`fmt` no longer pins an interpreter.** `uvx pre-commit` needed one to run
+>   pre-commit itself on, so a Rust or Go repo — which ships no `.python-version` — rested
+>   on `rhiza.mk`'s `PYTHON_VERSION` fallback. prek is a binary that provisions each
+>   hook's toolchain itself. `test_fmt_target_no_longer_needs_python_version` pins the
+>   absence, so the coupling cannot creep back.
+>
+> The CI job keeps its id `pre-commit` and its display name "Pre-commit hooks": that name
+> is a required status check in `.github/rulesets/main-branch-protection.json`, so
+> renaming it would leave every PR waiting on a context that never reports.
 
 > **Coverage in this repo (mother-repo specifics).** Rhiza has no `src/` and ships no
 > runtime Python, so `make test` prints `Source folder src not found, running tests without

@@ -74,13 +74,13 @@ jobs:
 
       # Keyed on the shipped config, not on the repo's own: the hooks that run are
       # the scaffolded project's, from bundles/python-core/.pre-commit-config.yaml.
-      - name: Cache pre-commit environments
+      - name: Cache prek environments
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
-          path: ~/.cache/pre-commit
-          key: ${{ runner.os }}-pre-commit-e2e-python-${{ hashFiles('bundles/python-core/.pre-commit-config.yaml') }}
+          path: ~/.cache/prek
+          key: ${{ runner.os }}-prek-e2e-python-${{ hashFiles('bundles/python-core/.pre-commit-config.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pre-commit-e2e-python-
+            ${{ runner.os }}-prek-e2e-python-
 
       - name: Run the Python layer end to end
         run: make e2e E2E_ARGS=tests/e2e/test_python_layer_e2e.py
@@ -130,13 +130,13 @@ jobs:
         with:
           tool: cargo-binstall,cargo-nextest,cargo-llvm-cov,cargo-deny,cargo-machete
 
-      - name: Cache pre-commit environments
+      - name: Cache prek environments
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
-          path: ~/.cache/pre-commit
-          key: ${{ runner.os }}-pre-commit-e2e-rust-${{ hashFiles('bundles/rust-core/.pre-commit-config.yaml') }}
+          path: ~/.cache/prek
+          key: ${{ runner.os }}-prek-e2e-rust-${{ hashFiles('bundles/rust-core/.pre-commit-config.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pre-commit-e2e-rust-
+            ${{ runner.os }}-prek-e2e-rust-
 
       - name: Run the Rust layer end to end
         run: make e2e E2E_ARGS=tests/e2e/test_rust_layer_e2e.py
@@ -181,13 +181,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-e2e-
 
-      - name: Cache pre-commit environments
+      - name: Cache prek environments
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
-          path: ~/.cache/pre-commit
-          key: ${{ runner.os }}-pre-commit-e2e-go-${{ hashFiles('bundles/go-core/.pre-commit-config.yaml') }}
+          path: ~/.cache/prek
+          key: ${{ runner.os }}-prek-e2e-go-${{ hashFiles('bundles/go-core/.pre-commit-config.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pre-commit-e2e-go-
+            ${{ runner.os }}-prek-e2e-go-
 
       - name: Run the Go layer end to end
         run: make e2e E2E_ARGS=tests/e2e/test_go_layer_e2e.py

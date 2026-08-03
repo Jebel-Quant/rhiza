@@ -44,7 +44,7 @@ class TestPythonLayerProvidesTheContract:
     def test_all_chains_the_python_gates(self, logger):
         """`all` names the per-language gate set, so it belongs to the layer."""
         out = strip_ansi(run_make(logger, ["all"]).stdout)
-        assert "pre-commit run --all-files" in out  # fmt, from core
+        assert "prek run --all-files" in out  # fmt, from core
         assert "deptry" in out  # deptry, from the layer
         assert "pip-licenses" in out  # license, from the layer
 
@@ -154,7 +154,7 @@ class TestRustLayerKeepsTheSameContract:
         that is named but whose recipe has been gutted still fails.
         """
         out = strip_ansi(run_make(logger, ["all"], check=False).stdout)
-        assert "pre-commit run --all-files" in out  # fmt, from core
+        assert "prek run --all-files" in out  # fmt, from core
         for gate, command in (
             ("test", "cargo nextest run"),
             ("docs-coverage", "-D missing_docs"),
@@ -181,17 +181,20 @@ class TestRustLayerKeepsTheSameContract:
         out = strip_ansi(run_make(logger, ["rhiza-test"], check=False).stdout)
         assert "pytest .rhiza/tests" in out
 
-    def test_neutral_tooling_works_without_a_python_version_file(self, logger):
-        """`fmt` runs pre-commit through `uvx -p $(PYTHON_VERSION)` whatever the language.
+    def test_neutral_tooling_needs_no_python_at_all(self, logger):
+        """`fmt` must not depend on a Python version on a project that declares none.
 
-        A Rust repo ships no `.python-version`, so the whole language-neutral half of
-        the template rests on the fallback in rhiza.mk resolving to a real version —
-        an empty `-p` would break `fmt` on every Rust project at once.
+        This used to assert the opposite shape — that `fmt` reached pre-commit through
+        `uvx -p $(PYTHON_VERSION)`, so a Rust repo (which ships no `.python-version`)
+        rested on rhiza.mk's fallback resolving to something real. prek is a binary that
+        provisions each hook's toolchain itself, so the dependency is gone rather than
+        satisfied, and the assertion inverts: no `-p` should appear at all.
         """
         out = strip_ansi(run_make(logger, ["fmt"], check=False).stdout)
-        assert not (self.project / ".python-version").exists(), "fixture drifted: this asserts the fallback path"
-        assert re.search(r"-p \d+\.\d+ pre-commit run --all-files", out), (
-            f"`make fmt` did not resolve PYTHON_VERSION to a usable value:\n{out}"
+        assert not (self.project / ".python-version").exists(), "fixture drifted: this asserts the no-Python path"
+        assert "prek run --all-files" in out, f"`make fmt` no longer runs prek:\n{out}"
+        assert not re.search(r"prek\b[^\n]*-p \d", out), (
+            f"`make fmt` still pins an interpreter for prek, which needs none:\n{out}"
         )
 
 
@@ -292,7 +295,7 @@ class TestGoLayerKeepsTheSameContract:
     def test_all_chains_the_go_gates(self, logger):
         """The mirror of the Python and Rust `all` tests — a dropped gate shows up here."""
         out = strip_ansi(run_make(logger, ["all"], check=False).stdout)
-        assert "pre-commit run --all-files" in out  # fmt, from core
+        assert "prek run --all-files" in out  # fmt, from core
         for gate, command in (
             ("test", "go test ./..."),
             ("docs-coverage", "revive"),
@@ -315,12 +318,13 @@ class TestGoLayerKeepsTheSameContract:
         out = strip_ansi(run_make(logger, ["rhiza-test"], check=False).stdout)
         assert "pytest .rhiza/tests" in out
 
-    def test_neutral_tooling_works_without_a_python_version_file(self, logger):
-        """As with Rust: no `.python-version`, so `fmt` rests on the rhiza.mk fallback."""
+    def test_neutral_tooling_needs_no_python_at_all(self, logger):
+        """As with Rust: no `.python-version`, and with prek `fmt` no longer wants one."""
         out = strip_ansi(run_make(logger, ["fmt"], check=False).stdout)
-        assert not (self.project / ".python-version").exists(), "fixture drifted: this asserts the fallback path"
-        assert re.search(r"-p \d+\.\d+ pre-commit run --all-files", out), (
-            f"`make fmt` did not resolve PYTHON_VERSION to a usable value:\n{out}"
+        assert not (self.project / ".python-version").exists(), "fixture drifted: this asserts the no-Python path"
+        assert "prek run --all-files" in out, f"`make fmt` no longer runs prek:\n{out}"
+        assert not re.search(r"prek\b[^\n]*-p \d", out), (
+            f"`make fmt` still pins an interpreter for prek, which needs none:\n{out}"
         )
 
 

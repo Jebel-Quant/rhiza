@@ -72,7 +72,7 @@ install: pre-install ## install the toolchain and download dependencies
 	    printf "${BLUE}[INFO] Skipping pre-commit hook install: core.hooksPath is set${RESET}\n"; \
 	  else \
 	    printf "${BLUE}[INFO] Installing pre-commit hooks...${RESET}\n"; \
-	    ${UVX_BIN} -p ${PYTHON_VERSION} pre-commit install || { printf "${YELLOW}[WARN] Failed to install pre-commit hooks${RESET}\n"; }; \
+	    ${UVX_BIN} prek install || { printf "${YELLOW}[WARN] Failed to install pre-commit hooks${RESET}\n"; }; \
 	  fi; \
 	fi
 
