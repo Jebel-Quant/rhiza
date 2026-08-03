@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.3.1] - 2026-08-03
+
+### Bug Fixes
+- *(go-core)* Ship a test so a fresh Go repo's test gate is not vacuous (#1467)
+- *(rust-core)* Stop cargo-tools assuming the cargo bin dir is on PATH (#1468)
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1463)
+
 ## [1.3.0] - 2026-08-02
 
 ### New Features
