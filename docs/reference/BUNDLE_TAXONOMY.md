@@ -30,7 +30,7 @@ the source of truth for the exact set. See
 | `core` | Required base, and language-neutral: thin Makefile, `.rhiza/` modular make system, help/logo machinery, and uv/uvx as a tool runner. Not a working repo on its own. |
 | `python-core` | The Python language layer: virtualenv and `uv sync` (`install`), `.python-version`, `ruff.toml`, `.bandit`, pre-commit config, `deptry` and licence scans, and the `all` aggregate. Exactly one language layer per repo. |
 | `rust-core` | The Rust language layer: rustup and `cargo fetch` (`install`), `rust-toolchain.toml`, `rustfmt.toml`, `clippy.toml`, `deny.toml`, pre-commit config, and the test/coverage/lint gates. Carries its own test targets — in Rust they are cargo subcommands with nothing to configure. |
-| `go-core` | The Go language layer: `go mod download` (`install`), `.golangci.yml`, `revive.toml`, pre-commit config, a `version.Version` constant for the release flow, and the test/coverage/lint gates. Carries its own test targets — `go test` and `go tool cover` need no configuration. |
+| `go-core` | The Go language layer: `go mod download` (`install`), `.golangci.yml`, `revive.toml`, pre-commit config, a `version.Version` constant for the release flow (with the one test file that keeps `make test` from passing vacuously), and the test/coverage/lint gates. Carries its own test targets — `go test` and `go tool cover` need no configuration. |
 | `tests` | Local testing: pytest, coverage, and type checking. |
 | `benchmarks` | Performance benchmarking with `pytest-benchmark` and reporting (builds on `tests`). |
 | `book` | Documentation site with MkDocs + zensical. |

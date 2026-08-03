@@ -117,10 +117,18 @@ bundles:
       The Go sibling of `python-core` and `rust-core`. Ships `.golangci.yml`,
       `revive.toml`, a Go pre-commit config, a root `.bumpversion.toml` (see
       `rust-core` for why it is not in `.rhiza/`), a starter
-      `internal/version/version.go`, and `.rhiza/make.d/go.mk`.
+      `internal/version/version.go` with its `version_test.go`, and
+      `.rhiza/make.d/go.mk`.
 
       Like Rust it carries its own test targets: `go test` and `go tool cover`
-      need no configuration files, so a `go-tests` bundle would own nothing.
+      need no configuration files, so a `go-tests` bundle would own nothing but
+      the gates.
+
+      The shipped test is what keeps those gates honest. `go test ./...` prints
+      "[no test files]" for a package without one and exits 0, so a fresh Go repo
+      passed `make test` while running nothing. Rust is spared because
+      `cargo init --lib` leaves an `it_works` test behind; `go mod init` writes no
+      Go file at all, so the layer brings the first test itself.
 
       `install` is only `go mod download` — go.mod's `go`/`toolchain` directives
       make the go command fetch a matching compiler itself, so there is no rustup
