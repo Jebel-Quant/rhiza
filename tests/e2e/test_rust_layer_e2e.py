@@ -15,7 +15,10 @@ Skips unless ``RHIZA_E2E=1`` and cargo/rustup are on PATH. See `harness.py`.
 
 from __future__ import annotations
 
+import os
 import shutil
+import subprocess  # nosec B404 - resolves cargo subcommands the way the gates do
+from pathlib import Path
 
 import pytest
 
@@ -26,6 +29,7 @@ from tests.e2e.harness import (
     assemble,
     assert_hooks_passed,
     gate,
+    gate_env,
     line_rate,
 )
 
@@ -35,11 +39,65 @@ pytestmark = [pytest.mark.e2e, pytest.mark.timeout(GATE_TIMEOUT_SECONDS)]
 # a gate whose subcommand is missing fails with a bare "no such command".
 CARGO_TOOLS = ("cargo-nextest", "cargo-llvm-cov", "cargo-deny", "cargo-machete")
 
+# Where `cargo install` puts them, mirroring rust.mk's CARGO_BIN_DIR.
+CARGO_BIN_DIR = (
+    Path(os.environ.get("CARGO_INSTALL_ROOT") or os.environ.get("CARGO_HOME") or Path.home() / ".cargo") / "bin"
+)
+
 
 @pytest.fixture(scope="module")
 def project(root, tmp_path_factory, logger) -> Project:
     """Sync core + rust-core + book, scaffold a crate, and install it."""
     return assemble(RUST, root, tmp_path_factory.mktemp("e2e-rust"), logger)
+
+
+def resolves_as_a_cargo_subcommand(tool: str, env: dict[str, str]) -> bool:
+    """Report whether `cargo <sub>` finds `tool`, which is how every gate calls it.
+
+    Not `shutil.which`: cargo resolves a subcommand from `$CARGO_HOME/bin` as well as
+    from PATH, so a tool can be perfectly usable by the gates and invisible to a
+    PATH lookup. Asking cargo is the only check that matches what the gates do.
+
+    Args:
+        tool: The binary name, e.g. `cargo-nextest`.
+        env: Environment for the probe.
+
+    Returns:
+        True when the subcommand runs.
+    """
+    cargo = shutil.which("cargo", path=env.get("PATH")) or "cargo"
+    proc = subprocess.run(  # nosec B603
+        [cargo, tool.removeprefix("cargo-"), "--version"], env=env, capture_output=True, text=True
+    )
+    return proc.returncode == 0
+
+
+def env_without_the_cargo_bin_dir(tmp_path: Path) -> dict[str, str]:
+    """Return a gate environment reproducing a machine whose cargo bin dir is unlinked.
+
+    `brew install rustup` — the layer's own suggestion when rustup is missing — puts
+    the shims in Homebrew's bin and never links ~/.cargo/bin. Dropping that directory
+    from PATH is only half of it: on a rustup-managed runner `cargo` itself lives
+    there, and removing it would test nothing but a missing compiler. So the cargo and
+    rustup binaries are re-exposed through a shim directory, which is exactly the
+    Homebrew layout — cargo reachable, everything it installed not.
+
+    Args:
+        tmp_path: Directory to put the shims in.
+
+    Returns:
+        The environment, ready to hand to `gate`.
+    """
+    env = gate_env()
+    shims = tmp_path / "shims"
+    shims.mkdir(exist_ok=True)
+    for name in ("cargo", "rustup"):
+        resolved = shutil.which(name)
+        if resolved and not (shims / name).exists():
+            (shims / name).symlink_to(resolved)
+    kept = [entry for entry in env.get("PATH", "").split(os.pathsep) if Path(entry) != CARGO_BIN_DIR]
+    env["PATH"] = os.pathsep.join([str(shims), *kept])
+    return env
 
 
 def test_install_materialises_the_toolchain_and_a_lockfile(project: Project):
@@ -63,10 +121,29 @@ def test_install_does_not_create_a_python_virtualenv(project: Project):
 
 
 def test_cargo_tools_provides_every_subcommand_the_gates_call(project: Project, logger):
-    """After `cargo-tools`, each gate's subcommand resolves on PATH."""
+    """After `cargo-tools`, each gate's subcommand resolves through cargo."""
     gate(project, "cargo-tools", logger)
-    missing = [tool for tool in CARGO_TOOLS if shutil.which(tool) is None]
+    env = gate_env()
+    missing = [tool for tool in CARGO_TOOLS if not resolves_as_a_cargo_subcommand(tool, env)]
     assert not missing, f"`make cargo-tools` left {missing} uninstalled"
+
+
+def test_cargo_tools_works_where_the_cargo_bin_dir_is_not_on_path(project: Project, logger, tmp_path: Path):
+    """The gate must not assume `cargo install`'s output directory is on PATH.
+
+    It usually is — rustup's own installer links ~/.cargo/bin — which is why this
+    went unnoticed until a Homebrew-installed rustup hit it: `cargo install
+    cargo-binstall` succeeded with a warning, and the next line, a bare
+    `cargo-binstall`, died with "command not found". Every gate below survives
+    this environment already, because they all invoke cargo rather than the tool.
+
+    Cheap despite being end-to-end: with the fix, the tools already sitting in the
+    cargo bin directory are found there and nothing is reinstalled.
+    """
+    env = env_without_the_cargo_bin_dir(tmp_path)
+    gate(project, "cargo-tools", logger, env=env)
+    missing = [tool for tool in CARGO_TOOLS if not resolves_as_a_cargo_subcommand(tool, env)]
+    assert not missing, f"`make cargo-tools` left {missing} unusable on a bare PATH"
 
 
 def test_test_gate_runs_both_nextest_and_the_doctests(project: Project, logger):
