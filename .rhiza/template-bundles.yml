@@ -55,14 +55,20 @@ bundles:
   # LANGUAGE LAYERS - exactly one per repo
   # ============================================================================
   python-core:
-    description: "Python toolchain layer: virtualenv, uv sync, ruff/bandit config, deptry"
+    description: "Python toolchain layer: virtualenv, uv sync, ruff/bandit config, and the Python gate set"
     standalone: true
     layer: language
     requires: [core]
     notes: |
       The Python half of what used to be `core`: `.python-version`, `ruff.toml`,
-      `.bandit`, the pre-commit config, and `.rhiza/make.d/python.mk` (the
-      `install`, `all`, `deptry`, `license` and `rhiza-test` targets).
+      `.bandit`, the pre-commit config, `pytest.ini`, and `.rhiza/make.d/python.mk`.
+
+      That one fragment defines every gate its own `all` names — `install`, `deptry`,
+      `license`, `test`, `typecheck`, `security`, `docs-coverage` — which is what makes
+      it comparable to `rust.mk` and `go.mk`. Four of those lived in the `tests` bundle
+      until #1475 while `all` named them here, so `core + python-core` alone had an
+      unrunnable `all`. `rhiza-test` is the one gate in `all` that core owns (#1471):
+      its recipe is language-neutral.
 
       A language layer owns the target *names* the rest of the template calls —
       `install`, `all` — so book.mk, test.mk and the CI workflows never need to
@@ -78,8 +84,9 @@ bundles:
       synced `.bumpversion.toml` would *shadow* that table, and the
       `.rhiza/.cfg.toml` this layer used to ship was never read at all: with no
       config found bump-my-version does not fail, it falls back to `git describe`.
-      Each repo therefore declares its own three-line block, and the `tests` bundle's
-      `.rhiza/tests/test_pyproject.py` fails when it is missing.
+      Each repo therefore declares its own three-line block, and this layer's own
+      `.rhiza/tests/test_pyproject.py` fails when it is missing — the Rust and Go
+      layers ship the equivalent check for their manifests.
 
   rust-core:
     description: "Rust toolchain layer: rustup/cargo, clippy, nextest, llvm-cov, cargo-deny"
@@ -98,10 +105,11 @@ bundles:
       `current_version`: a synced file must not own a value only the consuming repo
       can maintain, so the version is read from the newest `v*` tag instead.
 
-      It carries the test targets too, unlike Python — where pytest, coverage and
-      type checking need their own configuration and get a `tests` bundle. In Rust
-      all four are cargo subcommands with nothing to configure, so splitting them
-      out would create a bundle with no files of its own.
+      It carries the test targets, as all three layers now do — Python's moved into
+      `python-core` in #1475. What stays out of every layer is the optional extras
+      the `tests` bundle keeps (benchmarks, hypothesis, stress, mutation), and Rust
+      has no equivalent: `test`, `coverage` and `typecheck` are cargo subcommands
+      with nothing to configure, so a `rust-tests` bundle would own no files at all.
 
       `typecheck` is clippy: rustc already type-checks, so the analogous gate is
       the lint pass that runs after it. `docs-coverage` is `RUSTDOCFLAGS`
@@ -299,15 +307,35 @@ bundles:
       ANTHROPIC_API_KEY CI/CD variable is set (masked).
 
   # ============================================================================
-  # TESTS - Testing infrastructure with pytest, coverage, and type checking
+  # TESTS - Optional Python testing extras (benchmarks, hypothesis, stress, mutation)
   # ============================================================================
   tests:
-    description: "Local testing infrastructure with pytest, coverage, and type checking"
+    description: "Optional Python testing extras: benchmark, hypothesis-test, stress and mutation gates"
     standalone: true
     requires:
       - book
       - core
-      - python-core   # pytest.ini, the .rhiza/tests suite and test.mk are Python
+      - python-core   # test.mk reads TESTS_FOLDER and pytest.ini from the layer
+    notes: |
+      Carries only the gates that no layer's `all` depends on. The four that it does
+      name — `test`, `typecheck`, `security`, `docs-coverage` — moved into
+      `python-core` in #1475, along with `pytest.ini` and the Python modules of the
+      `.rhiza/tests` suite.
+
+      The reason is that `python.mk`'s own `all` named them while this bundle defined
+      them, and nothing made this bundle arrive: the dependency runs the other way.
+      A project syncing `core + python-core` therefore had an `all` that died on a
+      missing rule, while `core + rust-core` and `core + go-core` were self-contained.
+      No shipped profile reached it — all three Python profiles select `tests` — which
+      is why it went unnoticed;
+      `test_bundle_sync.py::TestALayersAllIsSatisfiableOnItsOwn` now pins the property
+      for every layer.
+
+      What is left is genuinely optional: four gates, each needing its own tool and
+      folder convention (benchmarks, Hypothesis property tests, stress/load tests,
+      mutation testing), plus `test_readme_validation.py` — the half of the README
+      checks that only means something on a Python project, its neutral half having
+      moved to `core` in #1472.
 
   # ============================================================================
   # GITHUB-TESTS - GitHub Actions workflows for CI

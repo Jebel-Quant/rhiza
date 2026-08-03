@@ -1,1 +1,1 @@
-../../bundles/tests/.rhiza/tests/README.md
+../../bundles/core/.rhiza/tests/README.md
