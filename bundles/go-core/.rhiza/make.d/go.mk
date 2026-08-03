@@ -13,7 +13,7 @@
 # configuration files, while `go test` and `go tool cover` need none.
 
 # Declare phony targets (they don't produce files)
-.PHONY: all coverage deps docs-coverage go-tools install license rhiza-test security test typecheck
+.PHONY: all coverage deps docs-coverage go-tools install license security test typecheck
 
 GO ?= go
 
@@ -157,11 +157,3 @@ license: install go-tools ## run license compliance scan
 	@printf "${BLUE}[INFO] Running license compliance scan${RESET}\n"
 	@$(GO_BIN_DIR)/go-licenses check ./... --ignore "$$($(GO) list -m)"
 
-rhiza-test: install ## run rhiza's own tests (if any)
-	# The template's self-tests validate READMEs and YAML, not Go code, so they
-	# stay Python and run through uv here rather than being ported.
-	@if [ -d ".rhiza/tests" ]; then \
-		${UV_BIN} run --with pytest --with pytest-timeout --with python-dotenv --with packaging pytest .rhiza/tests; \
-	else \
-		printf "${YELLOW}[WARN] No .rhiza/tests directory found, skipping rhiza-tests${RESET}\n"; \
-	fi
