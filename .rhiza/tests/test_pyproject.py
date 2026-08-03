@@ -1,1 +1,1 @@
-../../bundles/tests/.rhiza/tests/test_pyproject.py
+../../bundles/python-core/.rhiza/tests/test_pyproject.py

@@ -56,18 +56,20 @@ The core abstraction is the **bundle** — a named group of configuration files.
   help/logo machinery, and uv/uvx as a *tool runner*. It deliberately defines no
   `install` and no `all` — see **Language layers** below.
 - `python-core` (the Python **language layer**): `.python-version`, `ruff.toml`,
-  `.bandit`, the pre-commit config, and `.rhiza/make.d/python.mk` (`install`, `all`,
-  `deptry`, `license`, `rhiza-test`). Ships no bump-my-version config — see
+  `.bandit`, the pre-commit config, `pytest.ini`, and `.rhiza/make.d/python.mk`
+  (`install`, `all`, `deptry`, `license`, plus `test`, `typecheck`, `security` and
+  `docs-coverage` — see **Language layers**). Ships no bump-my-version config — see
   **Where the version config lives**.
 - `rust-core` (the Rust **language layer**): `rust-toolchain.toml`, `rustfmt.toml`,
   `clippy.toml`, `deny.toml`, a Rust pre-commit config, `.bumpversion.toml`, and
-  `.rhiza/make.d/rust.mk`. Carries its own test targets, unlike Python — see
-  **Language layers**.
+  `.rhiza/make.d/rust.mk`. Carries its own test targets, as every layer now does —
+  see **Language layers**.
 - `go-core` (the Go **language layer**): `.golangci.yml`, `revive.toml`, a Go
   pre-commit config, `.bumpversion.toml`, a starter `internal/version/version.go`
   with its `version_test.go`, and `.rhiza/make.d/go.mk`. Carries its own test
-  targets, like Rust.
-- `tests`: pytest, coverage, type checking (Python; requires `python-core`)
+  targets, like the other two.
+- `tests`: optional Python testing extras — `benchmark`, `hypothesis-test`, `stress`,
+  `mutation` (requires `python-core`; the gates `all` names live in the layer)
 - `benchmarks`: pytest-benchmark infrastructure and reporting
 - `github`: GitHub repository configuration (actions, dependabot, core workflows)
 - `gitlab`: GitLab CI/CD pipeline configuration and core workflows
@@ -156,11 +158,19 @@ and tags itself so the changelog lands in the bump commit.
 | `license` | pip-licenses | `cargo deny check licenses` | `go-licenses check` |
 | unused deps | `deptry` | `deps` → `cargo machete` | `deps` → `go mod tidy -diff` |
 
-The Rust and Go layers also carry `test`/`coverage`/`typecheck`, which on the Python side
-live in the separate `tests` bundle. That is not an inconsistency: pytest, coverage
-and mypy each need configuration files worth bundling, while `cargo nextest` and
-`go test` need no configuration at all — so a `rust-tests` or `go-tests` bundle would
-own nothing but the gates themselves.
+All three layers carry `test`/`coverage`/`typecheck` themselves. Python's used to live
+in the separate `tests` bundle, and that was a real inconsistency rather than a
+considered asymmetry: `python.mk`'s own `all` named them while `tests` defined them, and
+nothing made `tests` arrive — the dependency runs the other way, so `core + python-core`
+alone had an `all` that died on a missing rule (#1475). No shipped profile reached it,
+which is why it survived; `tests/bundles/test_bundle_sync.py::TestALayersAllIsSatisfiableOnItsOwn`
+now pins the property for every layer.
+
+What `tests` still owns is what is genuinely optional — `benchmark`, `hypothesis-test`,
+`stress` and `mutation`, each needing its own tool and folder convention, and none named
+by any `all`. There is still no `rust-tests` or `go-tests` bundle, for the original
+reason: `cargo nextest` and `go test` need no configuration, so such a bundle would own
+nothing at all.
 
 **Where Go differs from both.** A Go module has no manifest: its version *is* the git
 tag, so unlike `pyproject.toml` and `Cargo.toml` there is no file in the tree for
@@ -226,14 +236,14 @@ The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiz
 | `.rhiza/make.d/` file | owner bundle | provides |
 | --- | --- | --- |
 | `bootstrap.mk` | core | `install-uv` tool bootstrap, install hooks, `clean` |
-| `python.mk` | python-core | `install`, `all`, `deptry`, `license`, `rhiza-test` |
+| `python.mk` | python-core | `install`, `all`, `deptry`, `license`, and the pytest-backed gates |
 | `rust.mk` | rust-core | `install`, `all`, and the cargo-backed gates |
 | `go.mk` | go-core | `install`, `all`, and the go-backed gates |
 | `doctor.mk` | core | `make doctor` environment checks |
-| `quality.mk` | core | `fmt`, `todos`, `semgrep` — the language-neutral gates |
+| `quality.mk` | core | `fmt`, `todos`, `semgrep`, `rhiza-test` — the language-neutral gates |
 | `custom-env.mk` | core | example stub: project variables |
 | `custom-task.mk` | core | example stub: project targets/hooks |
-| `test.mk` | tests | `test`, coverage, typecheck, stress, mutation |
+| `test.mk` | tests | `benchmark`, `hypothesis-test`, `stress`, `mutation` — the optional extras |
 | `book.mk` | book | `make book` docs build |
 | `docker.mk` | docker | container build/run |
 | `marimo.mk` | marimo | `make marimo` notebooks |
@@ -266,7 +276,7 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 > Make targets, YAML, and bundle invariants behaviourally, where there is no Python module to
 > cover. So "no coverage on `make test`" is expected here and does not mean anything is
 > unmeasured. Downstream
-> consumers that adopt the `tests` bundle *do* have a `src/` and get the full 90% `make test` gate.
+> consumers on the `python-core` layer *do* have a `src/` and get the full 90% `make test` gate.
 
 ### CI/CD
 

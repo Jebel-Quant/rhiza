@@ -114,6 +114,20 @@ class TestCoreIsLanguageNeutral:
         bootstrap = (self.project / ".rhiza" / "make.d" / "bootstrap.mk").read_text(encoding="utf-8")
         assert "install-uv:" in bootstrap
 
+    def test_core_ships_the_semgrep_config_its_own_target_reads(self):
+        """`semgrep` is a core target, so its config cannot live in a Python-only bundle.
+
+        Until #1475 `.rhiza/semgrep.yml` was shipped by `tests` (which requires
+        python-core) while `quality.mk` — core's — ran
+        ``semgrep --config .rhiza/semgrep.yml``. On a Rust crate that broke outright:
+        SOURCE_FOLDER defaults to `src`, which a crate has, so the guard passed and
+        semgrep ran against a file that was never synced. Asserted here rather than only
+        in the Rust class because the mismatch is core's to avoid.
+        """
+        assert (self.project / ".rhiza" / "semgrep.yml").is_file(), (
+            "core defines `make semgrep` but does not ship the config it names"
+        )
+
 
 class TestPythonCoreBundleSync:
     """Syncing core + python-core produces a working Python project layer."""
@@ -195,6 +209,16 @@ class TestRustCoreBundleSync:
     def test_python_tooling_is_absent(self, name):
         """A Rust repo gets no Python config — the layers are alternatives, not additions."""
         assert not (self.project / name).exists(), f"{name} belongs to python-core, not rust-core"
+
+    def test_the_semgrep_config_arrives_without_a_python_bundle(self):
+        """`make semgrep` must be runnable on a Rust project (#1475).
+
+        The config moved from the `tests` bundle to `core` because `quality.mk` — core's —
+        is what names it. Before that a Rust sync got the target and not the file.
+        """
+        assert (self.project / ".rhiza" / "semgrep.yml").is_file(), (
+            "core's semgrep target has no config on a Rust project"
+        )
 
     def test_rust_mk_provides_the_language_contract(self):
         """rust.mk owns the same target names python.mk does, plus the cargo-backed gates.
@@ -437,6 +461,16 @@ class TestGoCoreBundleSync:
         """A Go repo gets neither the Python nor the Rust toolchain — layers are alternatives."""
         assert not (self.project / name).exists(), f"{name} belongs to another language layer"
 
+    def test_the_semgrep_config_arrives_without_a_python_bundle(self):
+        """`make semgrep` must be runnable on a Go project (#1475).
+
+        The config moved from the `tests` bundle to `core` because `quality.mk` — core's —
+        is what names it. Before that a Go sync got the target and not the file.
+        """
+        assert (self.project / ".rhiza" / "semgrep.yml").is_file(), (
+            "core's semgrep target has no config on a Go project"
+        )
+
     def test_go_mk_provides_the_language_contract(self):
         """go.mk owns the same target names its siblings do, plus the go-backed gates.
 
@@ -619,12 +653,18 @@ class TestProfileGoLocalSync:
 
 
 class TestCoreAndTestsBundleSync:
-    """Syncing core + tests bundles adds pytest infrastructure."""
+    """Syncing the Python layer plus the tests bundle adds pytest infrastructure.
+
+    ``python-core`` is in the list because the ``tests`` bundle requires it, and since
+    #1475 it is what owns ``pytest.ini`` and the four gates ``all`` names — this bundle
+    carries only the optional extras. Syncing ``tests`` without it was never a real
+    configuration.
+    """
 
     @pytest.fixture(autouse=True)
     def synced(self, tmp_path, root):
-        """Sync core and tests bundles into a fresh directory."""
-        sync_bundles(root, ["core", "tests"], tmp_path)
+        """Sync core, python-core and tests bundles into a fresh directory."""
+        sync_bundles(root, ["core", "python-core", "tests"], tmp_path)
         self.project = tmp_path
 
     def test_pytest_ini_exists(self):
@@ -709,3 +749,49 @@ class TestProfileLocalSync:
             assert not workflow_files, (
                 f"Local profile should not inject workflow files, found: {[f.name for f in workflow_files]}"
             )
+
+
+@pytest.mark.parametrize("layer", ["python-core", "rust-core", "go-core"])
+class TestALayersAllIsSatisfiableOnItsOwn:
+    """`core` + one language layer must be enough to run that layer's `all`.
+
+    This is the invariant #1475 established. `python.mk`'s `all` named `test`,
+    `typecheck`, `security` and `docs-coverage` while the `tests` bundle defined them,
+    and nothing made `tests` arrive — the dependency runs the other way. So
+    `core + python-core` had an `all` that died on a missing rule, while the Rust and Go
+    layers were self-contained. No shipped profile reached it (all three Python profiles
+    select `tests`), which is exactly why it went unnoticed; a hand-written
+    `.rhiza/template.yml` of `[core, python-core]` did.
+
+    Parametrised over all three layers rather than written for Python, because the point
+    is the property, not the one instance of it that was broken.
+    """
+
+    def test_every_prerequisite_of_all_has_a_rule(self, tmp_path, root, layer):
+        """Each name in `all`'s prerequisite list is defined by some synced fragment."""
+        sync_bundles(root, ["core", layer], tmp_path)
+        fragments = list((tmp_path / ".rhiza").rglob("*.mk"))
+        assert fragments, f"{layer} synced no make fragments"
+
+        text = {f: f.read_text(encoding="utf-8") for f in fragments}
+
+        all_line = next(
+            (line for body in text.values() for line in body.splitlines() if line.startswith("all:")),
+            None,
+        )
+        assert all_line, f"{layer} defines no `all` target"
+        prerequisites = all_line.split("##")[0].split(":", 1)[1].split()
+
+        defined = {
+            line.split(":", 1)[0].rstrip(":")
+            for body in text.values()
+            for line in body.splitlines()
+            if re.match(r"^[a-z][a-z0-9-]*::? ", line) or re.match(r"^[a-z][a-z0-9-]*::?$", line)
+        }
+
+        missing = [name for name in prerequisites if name not in defined]
+        assert not missing, (
+            f"`make all` on core + {layer} names {missing}, which no synced fragment defines. "
+            f"Either the layer must define them or they belong in core — a gate that only "
+            f"resolves once another bundle happens to be selected is not part of the contract."
+        )

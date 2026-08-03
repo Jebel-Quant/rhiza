@@ -1,8 +1,17 @@
-"""Integration tests for .rhiza/make.d/test.mk.
+"""Integration tests for the `test` target's recipe.
 
 Covers the missing-test-files short circuit plus the parallel-teardown
 robustness behaviour (retry on pytest exit code 3, no retry on real failures,
 stale coverage cleanup) added for issues #1256 and #1257.
+
+The recipe lives in `python.mk` since #1475 — it moved out of the `tests` bundle's
+test.mk along with the other gates `python.mk`'s own `all` names. This module is named
+for the target rather than the fragment so it does not have to move again.
+
+Including python.mk means inheriting the real `install`, whose recipe would spend fake-uv
+invocations the retry assertions count. So the mock is declared *after* the include —
+make then warns on stderr and uses the last recipe — and `pre-install`/`install-uv` get
+stubs, because overriding a recipe does not drop the prerequisites that came with it.
 """
 
 from pathlib import Path
@@ -39,10 +48,18 @@ TESTS_FOLDER := tests
 SOURCE_FOLDER := src
 UV_BIN := {uv_bin}
 
-install:
-	@echo "Mock install"
+include .rhiza/make.d/python.mk
 
-include .rhiza/make.d/test.mk
+# Declared after the include so this recipe wins; the prerequisites python.mk attached
+# to `install` survive the override, hence the stubs.
+pre-install::
+	@:
+
+install-uv:
+	@:
+
+install: pre-install install-uv
+	@echo "Mock install"
 """
 
 
@@ -135,12 +152,17 @@ TESTS_FOLDER := tests
 SOURCE_FOLDER := src
 VENV := .venv
 
-# Mock install to avoid actual installation in test
-install:
-	@echo "Mock install"
+# Include the target under test, then override `install` so the real recipe does not run.
+include .rhiza/make.d/python.mk
 
-# Include the target under test
-include .rhiza/make.d/test.mk
+pre-install::
+	@:
+
+install-uv:
+	@:
+
+install: pre-install install-uv
+	@echo "Mock install"
 """
     (git_repo / "Makefile").write_text(makefile_content, encoding="utf-8")
 
@@ -165,6 +187,6 @@ include .rhiza/make.d/test.mk
     # 5. Verify results
     assert result.returncode == 0, "make test should exit with 0 when no tests found"
 
-    # The warning message matches what we put in test.mk
+    # The warning message matches what python.mk emits
     # "No test files found in {TESTS_FOLDER}, skipping tests"
     assert "No test files found in tests, skipping tests" in result.stdout
