@@ -84,6 +84,21 @@ def test_test_gate_runs_the_suite_under_the_race_detector(project: Project, logg
     assert "example.com/demo/greeting" in out, f"go test did not run the scaffold's package:\n{out}"
 
 
+def test_the_layer_brings_its_own_test_so_a_fresh_repo_tests_something(project: Project, logger):
+    """The bundle's `internal/version` package runs a test, not "[no test files]".
+
+    This is the gate's vacuity check, and it has to run for real: `go test ./...`
+    exits 0 on a package with no test file, so the scaffold's own `greeting_test.go`
+    would mask a go-core that shipped none. Asserting on the bundle's package
+    instead is what fails if `version_test.go` is dropped from the layer.
+    """
+    out = gate(project, "test", logger)
+    assert "example.com/demo/internal/version" in out, (
+        f"go-core's own package reported no test run — a fresh Go repo's `make test` "
+        f"passes without testing anything:\n{out}"
+    )
+
+
 def test_coverage_gate_converts_the_profile_and_enforces_the_floor(project: Project, logger):
     """Go emits a profile; the gate converts it to the Cobertura path book.mk reads.
 
