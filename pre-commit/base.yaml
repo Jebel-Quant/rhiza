@@ -1,12 +1,12 @@
 # This file is part of the jebel-quant/rhiza repository
 # (https://github.com/jebel-quant/rhiza).
 #
-# GENERATED FILE - do not edit. Rendered by utils/render_precommit.py from
-# pre-commit/base.yaml, pre-commit/python.yaml.
-# Edit a fragment and run `make sync-precommit`.
+# Language-neutral pre-commit fragment: the hooks every language layer shares. A
+# mixin -- it declares no output:, so utils/render_precommit.py never renders it on
+# its own, only as the base of a fragment that extends it.
 #
-# pre-commit hard-codes this path, so the language layers that deploy it are
-# alternatives rather than files that could coexist.
+# A blank line closes this file header. Comment runs below it document the key that
+# follows and travel with it into every rendered config.
 
 # Pin node so pre-commit provisions a compatible runtime instead of using the
 # system node. Some npm-based hooks (markdownlint-cli) pull transitive deps that
@@ -21,7 +21,6 @@ repos:
       - id: check-toml
       - id: check-yaml
         args: ['--unsafe']
-        exclude: ^recipe/meta\.yaml$
 
   - repo: local
     hooks:
@@ -30,12 +29,6 @@ repos:
         entry: "bash -c 'find . -type f -name \"*.rej\" | grep -q . && { echo \"ERROR: .rej files detected\"; find . -type f -name \"*.rej\"; exit 1; } || exit 0'"
         language: system
         pass_filenames: false
-
-      - id: no-python-cache-files
-        name: Prevent committing Python cache files
-        language: fail
-        entry: Python cache files (__pycache__, .pyc, .pyo, .pyd) must not be committed. Run 'make clean' to remove them.
-        files: '(/__pycache__/|\.py[cod]$)'
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.49.0
@@ -71,43 +64,9 @@ repos:
       # Additional utility hooks
       - id: check-rhiza-config
       - id: check-makefile-targets
-
-      - id: check-python-version-consistency
       # check-bumpversion-config asserts that bump-my-version can actually discover
       # this repo's version config (issue #1453). Enable it once rhiza-hooks ships a
       # release containing it — v0.7.1 does not. Until then .rhiza/tests/test_pyproject.py
       # enforces the same invariant, one gate later.
       # - id: check-bumpversion-config
       # - id: check-template-bundles
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 'v0.16.1'
-    hooks:
-      - id: ruff
-        args: [ --fix, --exit-non-zero-on-fix, --unsafe-fixes ]
-
-      # Run the formatter
-      - id: ruff-format
-
-  - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.25
-    hooks:
-      - id: validate-pyproject
-
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.9.4
-    hooks:
-      - id: bandit
-        args: ["--ini", ".bandit", "--exclude", ".venv,tests,.rhiza/tests,.git,.pytest_cache"]
-
-  - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.12.1
-    hooks:
-      - id: uv-lock
-
-  - repo: https://github.com/econchick/interrogate
-    rev: 1.7.0
-    hooks:
-      - id: interrogate
-        args: [--config=pyproject.toml]
-        files: ^src/

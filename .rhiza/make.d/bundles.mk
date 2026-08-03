@@ -2,7 +2,7 @@
 # Provides make explain-bundles for new contributors unfamiliar with the bundle model.
 # Mother-repo-only fragment: no bundle ships it, so it is never synced downstream.
 
-.PHONY: explain-bundles sync-self sync-self-check e2e
+.PHONY: explain-bundles sync-self sync-self-check sync-precommit sync-precommit-check e2e
 
 # Which end-to-end modules `make e2e` runs. One per language layer, so CI can give
 # each its own job (and its own toolchain) by narrowing this:
@@ -18,6 +18,20 @@ sync-self: ## relink root dogfood copies as symlinks into bundles/ (mother repo 
 
 sync-self-check: ## fail if any dogfood symlink is stale/missing without writing (CI drift guard, mother repo only)
 	@uv run utils/link_dogfood.py --check
+
+# The layers' .pre-commit-config.yaml files are rendered, not written: pre-commit
+# hard-codes the filename, so every language layer ships the same path and the
+# neutral two thirds of it were duplicated per layer. pre-commit/base.yaml holds
+# that half once and each layer fragment declares where its rendered config goes.
+#
+# Unlike the sync-self pair above these go through ${UV_BIN} and depend on install-uv:
+# the CI job that runs the drift check is the pre-commit job, which installs no uv of
+# its own and would otherwise fail on `uv: command not found` rather than on drift.
+sync-precommit: install-uv ## render each layer's .pre-commit-config.yaml from pre-commit/*.yaml (mother repo only)
+	@${UV_BIN} run --with pyyaml utils/render_precommit.py
+
+sync-precommit-check: install-uv ## fail if any rendered .pre-commit-config.yaml is stale (CI drift guard, mother repo only)
+	@${UV_BIN} run --with pyyaml utils/render_precommit.py --check
 
 # The language-layer end-to-end suite: assemble a profile into a temp directory,
 # scaffold the smallest project the layer should be green on, and run every gate

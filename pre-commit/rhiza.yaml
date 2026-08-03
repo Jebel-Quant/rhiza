@@ -1,0 +1,28 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# The mother repo's own fragment: rhiza runs on the python-core layer plus the two
+# hooks that only make sense here. It is why the root .pre-commit-config.yaml is a
+# deliberate override rather than a dogfood symlink into bundles/python-core --
+# see utils/link_dogfood.py.
+
+extends: [python.yaml]
+output: .pre-commit-config.yaml
+
+repos:
+  # No rev: -- the pin is base.yaml's. Only this repo carries template-bundles.yml
+  # and the schema it is validated against, so the hook ships to nobody.
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    hooks:
+      - id: check-jsonschema
+        name: Validate template-bundles.yml
+        files: ^\.rhiza/template-bundles\.yml$
+        args: ["--schemafile", ".rhiza/template-bundles.schema.json", "--verbose"]
+
+  # rhiza ships shell in its Makefile fragments and workflow steps; a downstream
+  # Python project usually does not, so this stays out of the layer.
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+        files: '\.sh$'

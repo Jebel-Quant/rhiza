@@ -278,6 +278,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pre-commit-
 
+      # .pre-commit-config.yaml is rendered from pre-commit/*.yaml, so a fragment
+      # edited without `make sync-precommit` would leave the next step linting an
+      # older hook set. Checked here rather than in its own job: it is the same
+      # config `make fmt` is about to consume, and it costs seconds.
+      - name: Check rendered pre-commit configs are up to date
+        run: |
+          make sync-precommit-check
+
       - name: Run pre-commit
         run: |
           make fmt

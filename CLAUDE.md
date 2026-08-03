@@ -91,7 +91,49 @@ A few files **cannot** be symlinks and stay as **real copies**, kept in sync by 
 - `.github/*` platform config (Dependabot, release notes, secret scanning, PR template, rulesets) — GitHub reads these blobs directly and does not resolve symlinks. **Live `.github/workflows/*` are also real** (Actions won't run a symlinked workflow) and differ from the bundle stubs by design. So does **`rulesets/main-branch-protection.json`**, and for a subtler reason (#1448): here `rhiza_ci.yml` has `push:`/`pull_request:` triggers, so its jobs run top-level and report bare check-run names, while downstream the `github-tests` stub delegates via `jobs.ci` and GitHub reports them as `ci / <job name>`. The bundle copy therefore prefixes all six required contexts; `tests/bundles/test_bundle_github_sync.py` pins that relationship, including the coupling to the stub's job id.
 - `.rhiza/.gitignore` (and any `.gitignore`/`.gitattributes`) — git opens these with `O_NOFOLLOW`, so a symlink yields an ELOOP warning and the rules are ignored.
 
-Plus intentional mother-repo overrides that deliberately diverge from their bundle source: root `.gitignore`, `.pre-commit-config.yaml`, `.python-version`, `SECURITY.md`, `renovate.json`. The exclusion list lives in `utils/link_dogfood.py`. Downstream consumers are unaffected: `rhiza-cli` sparse-checks-out a bundle and dereferences symlinks on copy, so synced projects always receive real files (guarded by `test_no_symlinks_in_*`).
+Plus intentional mother-repo overrides that deliberately diverge from their bundle source: root `.gitignore`, `.pre-commit-config.yaml`, `.python-version`, `SECURITY.md`, `renovate.json`. The exclusion list lives in `utils/link_dogfood.py`.
+
+Downstream consumers are unaffected: `rhiza-cli` sparse-checks-out a bundle and dereferences symlinks on copy, so synced projects always receive real files (guarded by `test_no_symlinks_in_*`).
+
+### Rendered pre-commit configs
+
+`.pre-commit-config.yaml` is the one dogfood override that is **generated** rather than
+hand-maintained, and so is every layer's copy of it. pre-commit hard-codes the filename,
+so `python-core`, `rust-core` and `go-core` each ship the same path and are alternatives
+rather than files that coexist — which used to mean the neutral two thirds of the config
+(markdownlint, actionlint, schema validation, secret scanning, the rhiza hooks) were
+duplicated per layer and kept in step by hand.
+
+The fragments in `pre-commit/` invert that. `base.yaml` holds the neutral hooks once and
+is a **mixin** — it declares no `output:`, so it is only ever pulled in via `extends:`.
+Each other fragment holds only what it adds and declares where its rendered config goes:
+
+| fragment | extends | renders to |
+| --- | --- | --- |
+| `base.yaml` | — | *(mixin — nothing)* |
+| `python.yaml` | `base.yaml` | `bundles/python-core/.pre-commit-config.yaml` |
+| `rhiza.yaml` | `python.yaml` | `.pre-commit-config.yaml` (this repo's own) |
+
+`utils/render_precommit.py` merges a chain: `repos` dedupe by URL, hooks by `id`, and a
+later hook replaces an earlier one with the same id — which is how `python.yaml` narrows
+base's `check-yaml`. A later entry may omit `rev:` to inherit the pin; two fragments
+pinning the same repo to *different* revs is an error rather than a silent pick. A
+fragment may also `remove:` hooks or repos it does not want from its base. So a rev bump
+in `base.yaml` reaches every layer through one edit.
+
+**Never hand-edit a `.pre-commit-config.yaml`** — the header says so and the next render
+would overwrite it. Edit the fragment, then:
+
+```bash
+make sync-precommit        # render every fragment that declares an output
+make sync-precommit-check  # fail on drift without writing (CI drift guard)
+```
+
+Because the deployed configs are generated, `make fmt` is only as current as the last
+render: **run `make sync-precommit` before `make fmt`**. CI enforces the same ordering —
+the `pre-commit` job runs `sync-precommit-check` immediately before `make fmt`, so a
+fragment edited without re-rendering fails there rather than quietly linting an older
+hook set.
 
 ### Language layers
 
@@ -227,7 +269,7 @@ The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiz
 | `paper.mk` | paper | LaTeX paper compilation |
 | `lfs.mk` | lfs | Git LFS install/track/status |
 | `github.mk` | github | GitHub repo/workflow helpers |
-| `bundles.mk` | *(mother-repo only — no bundle ships it)* | `explain-bundles`, `sync-self`, `sync-self-check`, `e2e` |
+| `bundles.mk` | *(mother-repo only — no bundle ships it)* | `explain-bundles`, `sync-self`, `sync-self-check`, `sync-precommit`, `sync-precommit-check`, `e2e` |
 
 Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can be defined multiple times to chain behaviour. Add project-specific hooks directly in the root `Makefile` above the include line. Developer-local shortcuts go in `local.mk` (not committed).
 

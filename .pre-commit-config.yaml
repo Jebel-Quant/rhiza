@@ -1,6 +1,13 @@
 # This file is part of the jebel-quant/rhiza repository
 # (https://github.com/jebel-quant/rhiza).
 #
+# GENERATED FILE - do not edit. Rendered by utils/render_precommit.py from
+# pre-commit/base.yaml, pre-commit/python.yaml, pre-commit/rhiza.yaml.
+# Edit a fragment and run `make sync-precommit`.
+#
+# pre-commit hard-codes this path, so the language layers that deploy it are
+# alternatives rather than files that could coexist.
+
 # Pin node so pre-commit provisions a compatible runtime instead of using the
 # system node. Some npm-based hooks (markdownlint-cli) pull transitive deps that
 # reject odd-numbered current node releases (e.g. v25), failing on EBADENGINE.
@@ -18,26 +25,17 @@ repos:
 
   - repo: local
     hooks:
-      - id: no-python-cache-files
-        name: Prevent committing Python cache files
-        language: fail
-        entry: Python cache files (__pycache__, .pyc, .pyo, .pyd) must not be committed. Run 'make clean' to remove them.
-        files: '(/__pycache__/|\.py[cod]$)'
-
       - id: no-rej-files
         name: Reject .rej files
         entry: "bash -c 'find . -type f -name \"*.rej\" | grep -q . && { echo \"ERROR: .rej files detected\"; find . -type f -name \"*.rej\"; exit 1; } || exit 0'"
         language: system
         pass_filenames: false
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 'v0.16.1'
-    hooks:
-      - id: ruff
-        args: [ --fix, --exit-non-zero-on-fix, --unsafe-fixes ]
-
-      # Run the formatter
-      - id: ruff-format
+      - id: no-python-cache-files
+        name: Prevent committing Python cache files
+        language: fail
+        entry: Python cache files (__pycache__, .pyc, .pyo, .pyd) must not be committed. Run 'make clean' to remove them.
+        files: '(/__pycache__/|\.py[cod]$)'
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.49.0
@@ -64,6 +62,38 @@ repos:
     hooks:
       - id: actionlint
 
+  - repo: https://github.com/betterleaks/betterleaks
+    rev: v1.7.3
+    hooks:
+      - id: betterleaks
+
+  - repo: https://github.com/Jebel-Quant/rhiza-hooks
+    rev: v0.7.1  # Use the latest release
+    hooks:
+      # Migrated from rhiza
+      - id: check-rhiza-workflow-names
+      - id: update-readme-help
+      # Additional utility hooks
+      - id: check-rhiza-config
+      - id: check-makefile-targets
+
+      - id: check-python-version-consistency
+      # check-bumpversion-config asserts that bump-my-version can actually discover
+      # this repo's version config (issue #1453). Enable it once rhiza-hooks ships a
+      # release containing it — v0.7.1 does not. Until then .rhiza/tests/test_pyproject.py
+      # enforces the same invariant, one gate later.
+      # - id: check-bumpversion-config
+      # - id: check-template-bundles
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 'v0.16.1'
+    hooks:
+      - id: ruff
+        args: [ --fix, --exit-non-zero-on-fix, --unsafe-fixes ]
+
+      # Run the formatter
+      - id: ruff-format
+
   - repo: https://github.com/abravalheri/validate-pyproject
     rev: v0.25
     hooks:
@@ -74,17 +104,6 @@ repos:
     hooks:
       - id: bandit
         args: ["--ini", ".bandit", "--exclude", ".venv,tests,.rhiza/tests,.git,.pytest_cache"]
-
-  - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
-    hooks:
-      - id: shellcheck
-        files: '\.sh$'
-
-  - repo: https://github.com/betterleaks/betterleaks
-    rev: v1.7.3
-    hooks:
-      - id: betterleaks
 
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.12.1
@@ -98,19 +117,10 @@ repos:
         args: [--config=pyproject.toml]
         files: ^src/
 
-  - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v0.7.1  # Use the latest release
+  # rhiza ships shell in its Makefile fragments and workflow steps; a downstream
+  # Python project usually does not, so this stays out of the layer.
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
     hooks:
-      # Migrated from rhiza
-      - id: check-rhiza-workflow-names
-      - id: update-readme-help
-      # Additional utility hooks
-      - id: check-rhiza-config
-      - id: check-makefile-targets
-      - id: check-python-version-consistency
-      # check-bumpversion-config asserts that bump-my-version can actually discover
-      # this repo's version config (issue #1453). Enable it once rhiza-hooks ships a
-      # release containing it — v0.7.1 does not. Until then .rhiza/tests/test_pyproject.py
-      # enforces the same invariant, one gate later.
-      # - id: check-bumpversion-config
-      # - id: check-template-bundles
+      - id: shellcheck
+        files: '\.sh$'

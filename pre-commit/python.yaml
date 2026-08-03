@@ -1,0 +1,63 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Python language-layer pre-commit fragment: only the hooks that need a Python
+# project. Merged onto base.yaml by utils/render_precommit.py.
+
+extends: [base.yaml]
+output: bundles/python-core/.pre-commit-config.yaml
+
+repos:
+  # No rev: -- the pin is base.yaml's. This entry exists only to narrow one of its
+  # hooks: a conda recipe's meta.yaml is Jinja-templated and check-yaml cannot read
+  # it, and only a Python project is likely to carry one.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    hooks:
+      - id: check-yaml
+        args: ['--unsafe']
+        exclude: ^recipe/meta\.yaml$
+
+  - repo: local
+    hooks:
+      - id: no-python-cache-files
+        name: Prevent committing Python cache files
+        language: fail
+        entry: Python cache files (__pycache__, .pyc, .pyo, .pyd) must not be committed. Run 'make clean' to remove them.
+        files: '(/__pycache__/|\.py[cod]$)'
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 'v0.16.1'
+    hooks:
+      - id: ruff
+        args: [ --fix, --exit-non-zero-on-fix, --unsafe-fixes ]
+
+      # Run the formatter
+      - id: ruff-format
+
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.25
+    hooks:
+      - id: validate-pyproject
+
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.4
+    hooks:
+      - id: bandit
+        args: ["--ini", ".bandit", "--exclude", ".venv,tests,.rhiza/tests,.git,.pytest_cache"]
+
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.12.1
+    hooks:
+      - id: uv-lock
+
+  - repo: https://github.com/econchick/interrogate
+    rev: 1.7.0
+    hooks:
+      - id: interrogate
+        args: [--config=pyproject.toml]
+        files: ^src/
+
+  - repo: https://github.com/Jebel-Quant/rhiza-hooks
+    rev: v0.7.1  # Use the latest release
+    hooks:
+      - id: check-python-version-consistency
