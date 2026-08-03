@@ -60,6 +60,11 @@ class Layer:
         profile: The profile in `.rhiza/template-bundles.yml` this mirrors.
         bundles: Bundles to sync, in order.
         tools: Executables that must be on PATH, or the layer's tests skip.
+        version: The version the layer's scaffold declares, tagged as `v{version}`
+            after the initial commit. Without a tag the shipped self-tests that
+            reconcile the version with it skip, and the assertion that matters most —
+            that the release config can still find the version it is about to
+            rewrite — would never run.
         files: Project files to write after the sync, keyed by relative path.
     """
 
@@ -67,6 +72,7 @@ class Layer:
     profile: str
     bundles: tuple[str, ...]
     tools: tuple[str, ...]
+    version: str
     files: dict[str, str] = field(repr=False)
 
 
@@ -84,6 +90,7 @@ PYTHON = Layer(
     profile="local",
     bundles=("core", "python-core", "book", "tests"),
     tools=("git", "uv"),
+    version="0.1.0",
     files=scaffolds.PYTHON_FILES,
 )
 
@@ -92,6 +99,7 @@ RUST = Layer(
     profile="rust-local",
     bundles=("core", "rust-core", "book"),
     tools=("git", "uv", "cargo", "rustup"),
+    version="0.1.0",
     files=scaffolds.RUST_FILES,
 )
 
@@ -100,6 +108,7 @@ GO = Layer(
     profile="go-local",
     bundles=("core", "go-core", "book"),
     tools=("git", "uv", "go"),
+    version="0.0.0",
     files=scaffolds.GO_FILES,
 )
 
@@ -171,15 +180,22 @@ def _git(project: Path, *args: str) -> None:
     subprocess.run([GIT, *args], cwd=project, check=True, capture_output=True)  # nosec B603
 
 
-def _init_repo(project: Path) -> None:
-    """Make the project a git repo with its scaffold committed.
+def _init_repo(project: Path, version: str) -> None:
+    """Make the project a git repo with its scaffold committed and tagged.
 
     pre-commit reads the file list from git and refuses to run outside a
     repository, so `make fmt` needs both the repo and a commit. The remote is set
     because rhiza's own tooling reads `origin` to identify the project.
 
+    The tag is what makes the shipped self-tests do their real work. Every layer's
+    release config derives the current version from the newest tag — for Go that *is*
+    the version — so `.rhiza/tests` reconciles the tag against the version in the
+    manifest. On an untagged repo all of those skip, leaving the gate green for the
+    wrong reason.
+
     Args:
         project: The assembled project root.
+        version: Version the scaffold declares; tagged as `v{version}`.
     """
     _git(project, "init", "--initial-branch=main")
     _git(project, "config", "user.email", "e2e@example.com")
@@ -187,6 +203,7 @@ def _init_repo(project: Path) -> None:
     _git(project, "remote", "add", "origin", "https://github.com/jebel-quant/demo")
     _git(project, "add", ".")
     _git(project, "commit", "--no-verify", "-m", "Initial sync")
+    _git(project, "tag", f"v{version}")
 
 
 def _sync(root: Path, layer: Layer, project: Path) -> None:
@@ -230,7 +247,7 @@ def assemble(layer: Layer, root: Path, workdir: Path, logger) -> Project:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
 
-    _init_repo(project)
+    _init_repo(project, layer.version)
     logger.info("assembled %s project at %s from bundles %s", layer.name, project, ", ".join(layer.bundles))
 
     install = run_make(logger, ["install"], check=False, dry_run=False, env=gate_env(), cwd=project)

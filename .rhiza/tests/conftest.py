@@ -1,1 +1,1 @@
-../../bundles/tests/.rhiza/tests/conftest.py
+../../bundles/core/.rhiza/tests/conftest.py

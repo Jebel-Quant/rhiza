@@ -1,0 +1,1 @@
+../../bundles/core/.rhiza/tests/test_release_tags.py
