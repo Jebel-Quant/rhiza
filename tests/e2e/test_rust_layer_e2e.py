@@ -16,6 +16,7 @@ Skips unless ``RHIZA_E2E=1`` and cargo/rustup are on PATH. See `harness.py`.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess  # nosec B404 - resolves cargo subcommands the way the gates do
 from pathlib import Path
@@ -207,14 +208,25 @@ def test_deps_gate_reports_no_unused_dependencies(project: Project, logger):
     assert "Checking for unused dependencies" in out
 
 
-def test_rhiza_test_gate_skips_cleanly_without_a_tests_bundle(project: Project, logger):
-    """`rust-local` ships no `.rhiza/tests`, so the self-test gate must no-op.
+def test_rhiza_test_gate_actually_runs_the_shipped_suite(project: Project, logger):
+    """`rhiza-test` must collect real tests, not report an empty directory.
 
-    `all` depends on `rhiza-test`, so a gate that failed on a missing directory
-    would make `make all` red on every Rust project.
+    This assertion used to be its own inverse — it required "No .rhiza/tests directory
+    found", pinning as intended the fact that nothing ever delivered the suite to a Rust
+    repo. `rhiza-test` is a prerequisite of `all`, so that made the gate vacuous on
+    every Rust project.
+
+    `core` now ships the neutral harness and `rust-core` its own `test_cargo_toml.py`,
+    so the payload arrives with the layer and no `tests` bundle is needed.
     """
     out = gate(project, "rhiza-test", logger)
-    assert "No .rhiza/tests directory found" in out
+    assert "No .rhiza/tests directory found" not in out, "the self-test suite was not delivered to a Rust project"
+    assert "test_cargo_toml.py" in out, f"the Rust layer's own self-tests did not run:\n{out}"
+    assert re.search(r"\d+ passed", out), f"rhiza-test collected nothing:\n{out}"
+    # Nothing in the Rust suite has a legitimate reason to skip on this scaffold, and the
+    # ones that would — every test reconciling [package].version with the newest tag — are
+    # the whole point of tagging the scaffold in `_init_repo`.
+    assert "skipped" not in out, f"a self-test skipped instead of running:\n{out}"
 
 
 def test_fmt_gate_passes_every_pre_commit_hook(project: Project, logger):
