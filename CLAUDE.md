@@ -64,8 +64,9 @@ The core abstraction is the **bundle** — a named group of configuration files.
   `.rhiza/make.d/rust.mk`. Carries its own test targets, unlike Python — see
   **Language layers**.
 - `go-core` (the Go **language layer**): `.golangci.yml`, `revive.toml`, a Go
-  pre-commit config, `.bumpversion.toml`, a starter `internal/version/version.go`,
-  and `.rhiza/make.d/go.mk`. Carries its own test targets, like Rust.
+  pre-commit config, `.bumpversion.toml`, a starter `internal/version/version.go`
+  with its `version_test.go`, and `.rhiza/make.d/go.mk`. Carries its own test
+  targets, like Rust.
 - `tests`: pytest, coverage, type checking (Python; requires `python-core`)
 - `benchmarks`: pytest-benchmark infrastructure and reporting
 - `github`: GitHub repository configuration (actions, dependabot, core workflows)
@@ -158,14 +159,27 @@ and tags itself so the changelog lands in the bump commit.
 The Rust and Go layers also carry `test`/`coverage`/`typecheck`, which on the Python side
 live in the separate `tests` bundle. That is not an inconsistency: pytest, coverage
 and mypy each need configuration files worth bundling, while `cargo nextest` and
-`go test` need none, so a `rust-tests` or `go-tests` bundle would own no files.
+`go test` need no configuration at all — so a `rust-tests` or `go-tests` bundle would
+own nothing but the gates themselves.
 
 **Where Go differs from both.** A Go module has no manifest: its version *is* the git
 tag, so unlike `pyproject.toml` and `Cargo.toml` there is no file in the tree for
 bump-my-version to write to. `go-core` therefore ships a starter
 `internal/version/version.go` holding a `Version` constant and anchors the release
 config to it, which keeps the release commit and its tag in step. Delete that file and
-the `/rhiza:release` flow has no version location to write to. Its `install` is also the thinnest of the
+the `/rhiza:release` flow has no version location to write to.
+
+It ships that file's `version_test.go` too, and that one is about the test gate rather
+than the release. `go test ./...` prints `[no test files]` for a package without one and
+exits 0, so a freshly synced Go repo passed `make test` — and therefore `make all` —
+while running nothing at all. Rust never had the hole: `cargo init --lib` leaves an
+`it_works` test behind and the skeleton step preserves it. `go mod init` writes no Go
+file whatsoever, so the layer has to bring the first test itself. What it asserts is the
+release invariant next door — that `Version` matches the shape `.bumpversion.toml`
+parses — never the literal shipped `0.0.0`, which bump-my-version rewrites in
+`version.go` and not in the test.
+
+Its `install` is also the thinnest of the
 three — go.mod's `go`/`toolchain` directives make the go command fetch a matching
 compiler on demand, so there is no rustup step to mirror.
 

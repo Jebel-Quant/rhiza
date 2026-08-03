@@ -445,6 +445,31 @@ class TestGoCoreBundleSync:
         assert source.startswith("// Package version"), "the package doc comment the docs-coverage gate requires"
         assert 'const Version = "0.0.0"' in source
 
+    def test_the_layer_ships_a_test_so_the_test_gate_is_not_vacuous(self):
+        """`go test ./...` exits 0 on a package with no test file, printing "[no test files]".
+
+        So a freshly synced Go project passed `make test` — and `make all` — while
+        running nothing at all. Rust never had this hole: `cargo init --lib` leaves an
+        `it_works` test behind, while `go mod init` writes no Go file whatsoever, so
+        the layer has to bring the first test itself.
+        """
+        version_test = self.project / "internal" / "version" / "version_test.go"
+        assert version_test.is_file(), (
+            "go-core must ship internal/version/version_test.go — without a single test "
+            "file a fresh Go repo's `make test` is green without testing anything"
+        )
+        source = version_test.read_text(encoding="utf-8")
+        assert "func Test" in source, "the file ships no test function, so it does not close the vacuum"
+
+        # Comments are stripped before the literal check: the file explains in prose why
+        # it does not compare against "0.0.0", and matching that would fail the test for
+        # documenting the very trap it avoids.
+        code = "\n".join(line for line in source.splitlines() if not line.lstrip().startswith("//"))
+        assert '"0.0.0"' not in code, (
+            "the test must not compare against the literal shipped version: bump-my-version "
+            "rewrites version.go and not this file, so a literal turns red on the first release"
+        )
+
     def test_no_symlinks_in_synced_project(self):
         """Synced files are real files, as a downstream project would receive them."""
         for path in self.project.rglob("*"):
