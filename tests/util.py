@@ -35,13 +35,23 @@ def run_make(
     that chdir into a temp project rely on. The end-to-end suite passes it
     explicitly instead: its projects are built per module and outlive a single
     test, so chdir-ing would make the tests order- and worker-dependent.
+
+    Decoding is pinned to UTF-8 rather than left to ``text=True``'s default, which is the
+    *locale* codec — cp1252 on the Windows runners. The make fragments are UTF-8 and some
+    print non-ASCII (`doctor`'s ✅/❌ markers), so on Windows the default decode raised
+    ``UnicodeDecodeError`` inside subprocess, which surfaced as ``stdout`` being ``None``
+    and then a ``TypeError`` several frames away in ``strip_ansi`` — a decoding problem
+    wearing the mask of a type error. ``errors="replace"`` keeps any future stray byte
+    from doing that again.
     """
     cmd = [_MAKE]
     if args:
         cmd.extend(args)
     cmd.insert(1, "-sn" if dry_run else "-s")
     logger.info("Running command: %s (cwd=%s)", " ".join(cmd), cwd or Path.cwd())
-    result = subprocess.run(cmd, capture_output=True, text=True, env=env, cwd=cwd)  # nosec B603
+    result = subprocess.run(  # nosec B603
+        cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", env=env, cwd=cwd
+    )
     if check and result.returncode != 0:
         msg = f"make failed with code {result.returncode}:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
         raise AssertionError(msg)

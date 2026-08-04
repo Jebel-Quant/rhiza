@@ -64,6 +64,21 @@ class TestMakefile:
         sys.platform == "win32",
         reason="uses POSIX '#!/usr/bin/env sh' fake-bin scripts on a ':'-separated PATH; unsupported on Windows",
     )
+    def test_doctor_output_survives_a_non_utf8_locale(self, logger):
+        """`doctor`'s ✅/❌ markers must come back as text on every platform.
+
+        `run_make` used to leave decoding to `text=True`, which uses the *locale* codec —
+        cp1252 on the Windows runners. `doctor` prints the only non-ASCII any fragment
+        emits, so on Windows subprocess raised UnicodeDecodeError internally, handed back
+        `stdout=None`, and the failure surfaced as a `TypeError` several frames away in
+        `strip_ansi`: a decoding problem wearing the mask of a type error.
+
+        Asserted on the marker rather than on the type, because `stdout` being a `str` is
+        exactly what the broken version also reported right up until it wasn't.
+        """
+        out = strip_ansi(run_make(logger, ["doctor"], dry_run=False, check=False).stdout)
+        assert "✅" in out, f"doctor's markers did not survive the round trip:\n{out!r}"
+
     def test_doctor_fails_when_minimum_version_is_not_met(self, logger, tmp_path):
         """Doctor should exit non-zero when a prerequisite version is below the minimum."""
         fake_bin = tmp_path / "fake-bin"
