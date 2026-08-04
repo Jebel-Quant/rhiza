@@ -42,7 +42,7 @@ class TestMakefile:
         assert "Usage:" in out
         assert "Targets:" in out
         # ensure a few known targets appear in the help index
-        for target in ["install", "fmt", "deptry", "test", "help"]:
+        for target in ["install", "fmt", "deps", "test", "help"]:
             assert target in out
 
     def test_help_target(self, logger):
@@ -130,7 +130,7 @@ class TestMakefile:
         env = os.environ.copy()
         env.pop("PYTHON_VERSION", None)
 
-        proc = run_make(logger, ["deptry"], env=env)
+        proc = run_make(logger, ["deps"], env=env)
 
         out = proc.stdout
         assert_uvx_command_uses_version(out, tmp_path, "deptry src")
@@ -330,6 +330,6 @@ class TestMakefileRootFixture:
             if split_path.exists():
                 content += "\n" + split_path.read_text(encoding="utf-8")
 
-        expected_targets = ["install", "fmt", "test", "deptry", "help"]
+        expected_targets = ["install", "fmt", "test", "deps", "help"]
         for target in expected_targets:
             assert f"{target}:" in content or f".PHONY: {target}" in content

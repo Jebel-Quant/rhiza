@@ -208,7 +208,7 @@ A fast Python linter and formatter from Astral. Replaces flake8, isort, black, a
 A Python build backend used to create distribution packages (wheels and sdists). Invoked via `uv build`.
 
 ### Deptry
-A tool that checks for unused and missing dependencies in Python projects. Integrated in CI via `make deptry`.
+A tool that checks for unused and missing dependencies in Python projects. Integrated in CI via `make deps`.
 
 ### Bandit
 A security linter for Python code. Finds common security issues. Integrated in pre-commit and CI.
@@ -273,5 +273,5 @@ Workflow running security scans (pip-audit, bandit) on the codebase.
 | `make release-status` | Show release workflow status and latest release |
 | `make doctor` | Validate tools and environment — start here when something is wrong |
 | `make validate` | Validate project structure against `.rhiza/template.yml` |
-| `make deptry` | Check for unused/missing dependencies |
+| `make deps` | Check for unused/missing dependencies |
 | `make help` | Show all available targets |
