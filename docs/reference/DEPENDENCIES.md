@@ -141,7 +141,7 @@ When adding dependencies:
 1. **Research**: Check release notes for recent major versions
 2. **Constrain**: Use `>=X.Y,<(X+1).0` for major version pinning
 3. **Document**: Add inline comment explaining the purpose
-4. **Test**: Verify with `make test` and `make deptry`
+4. **Test**: Verify with `make test` and `make deps`
 5. **Update This Doc**: Add entry to this file explaining the constraint rationale
 
 ### Updating Dependencies

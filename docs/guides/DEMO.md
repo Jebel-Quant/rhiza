@@ -47,7 +47,7 @@ make test
 make fmt
 
 # 5. Check dependencies
-make deptry
+make deps
 
 # 6. Check release status (releasing itself is driven by the rhiza-claude /release command)
 make release-status
@@ -93,7 +93,7 @@ sleep 2
 type_cmd "make fmt"
 sleep 2
 
-type_cmd "make deptry"
+type_cmd "make deps"
 sleep 2
 
 echo -e "\n\033[1;34mDemo complete!\033[0m"
@@ -183,7 +183,7 @@ https://user-images.githubusercontent.com/YOUR_ID/VIDEO_ID.mp4
 3. **Install** (10s) - `make install` showing fast uv setup
 4. **Test** (10s) - `make test` with coverage output
 5. **Format** (5s) - `make fmt` for linting
-6. **Quality** (5s) - `make deptry` for dependency check
+6. **Quality** (5s) - `make deps` for dependency check
 7. **Outro** (3s) - Summary message
 
 Total: ~45 seconds

@@ -45,7 +45,7 @@ class TestPythonLayerProvidesTheContract:
         """`all` names the per-language gate set, so it belongs to the layer."""
         out = strip_ansi(run_make(logger, ["all"]).stdout)
         assert "prek run --all-files" in out  # fmt, from core
-        assert "deptry" in out  # deptry, from the layer
+        assert "deptry" in out  # `deps` runs deptry, from the layer
         assert "pip-licenses" in out  # license, from the layer
 
     @pytest.mark.parametrize("target", LANGUAGE_LAYER_TARGETS)

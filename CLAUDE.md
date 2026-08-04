@@ -14,7 +14,7 @@ Downstream projects adopt Rhiza by adding a `.rhiza/template.yml` that lists whi
 make install      # Full setup: installs uv, downloads Python version from .python-version, creates .venv, installs deps
 make test         # Run all tests with coverage (90% minimum required)
 make fmt          # Run all hooks via prek (ruff format/check, markdownlint, bandit, etc.)
-make deptry       # Check for unused/missing dependencies
+make deps         # Check for unused/missing dependencies
 make docs-coverage  # Check docstring coverage with interrogate (100% required)
 make typecheck    # Static type checking with pyright
 make benchmark    # Performance benchmarks
@@ -57,7 +57,7 @@ The core abstraction is the **bundle** — a named group of configuration files.
   `install` and no `all` — see **Language layers** below.
 - `python-core` (the Python **language layer**): `.python-version`, `ruff.toml`,
   `.bandit`, the pre-commit config, `pytest.ini`, and `.rhiza/make.d/python.mk`
-  (`install`, `all`, `deptry`, `license`, plus `test`, `typecheck`, `security` and
+  (`install`, `all`, `deps`, `license`, plus `test`, `typecheck`, `security` and
   `docs-coverage` — see **Language layers**). Ships no bump-my-version config — see
   **Where the version config lives**.
 - `rust-core` (the Rust **language layer**): `rust-toolchain.toml`, `rustfmt.toml`,
@@ -156,7 +156,16 @@ and tags itself so the changelog lands in the bump commit.
 | `docs-coverage` | interrogate (%) | `RUSTDOCFLAGS=-D missing_docs` (pass/fail) | revive `exported` rule (pass/fail) |
 | `security` | bandit + pip-audit | `cargo deny check advisories` | `govulncheck` |
 | `license` | pip-licenses | `cargo deny check licenses` | `go-licenses check` |
-| unused deps | `deptry` | `deps` → `cargo machete` | `deps` → `go mod tidy -diff` |
+| `deps` | `deptry` | `cargo machete` | `go mod tidy -diff` |
+
+Every row is a **shared target name** with a different engine behind it — including
+`deps`, which until #1474 was the one exception: python-core named it `deptry`, after the
+tool, so `make deps` failed on Python and `make deptry` on the other two. The tool-named
+`DEPTRY_FOLDERS`/`DEPTRY_IGNORE` variables stay, because they name deptry's *arguments*
+(marimo.mk appends `--ignore DEP004`) and are the accumulator interface a downstream
+`local.mk` writes to. `make deptry` survives as a deprecated alias that warns.
+`tests/bundles/test_bundle_sync.py::TestEveryLayerDefinesTheSameGateNames` now fails on
+the next divergence rather than documenting it.
 
 All three layers carry `test`/`coverage`/`typecheck` themselves. Python's used to live
 in the separate `tests` bundle, and that was a real inconsistency rather than a
@@ -188,6 +197,26 @@ file whatsoever, so the layer has to bring the first test itself. What it assert
 release invariant next door — that `Version` matches the shape `.bumpversion.toml`
 parses — never the literal shipped `0.0.0`, which bump-my-version rewrites in
 `version.go` and not in the test.
+
+**Two of the three layers ship a starter test, for the same reason.** Python had the
+identical hole (#1476): `make test` searches `TESTS_FOLDER` for `test_*.py`, and finding
+none it warns and **exits 0**, so a freshly synced Python repo passed `make test` — and
+`make all` — measuring nothing. Note that `.rhiza/tests` does not help, since it sits
+outside `TESTS_FOLDER` and runs under the separate `rhiza-test` gate. So `python-core`
+ships `tests/test_rhiza_packaging.py`, asserting that the version installed into the
+environment matches `[project].version` — a real invariant (it catches a stale editable
+install or a build backend pointed at the wrong tree), distinct from
+`test_pyproject.py`'s pyproject-versus-tag check, and one that skips cleanly on a repo
+with no distribution of its own, such as this one.
+
+Both layers' e2e assertions name the **shipped** file rather than the scaffold's own
+test, and that is the load-bearing part: `scaffolds.py` writes a test into every
+scaffold, so an item-count assertion stays green even if the layer ships no starter at
+all. That is precisely how the Go hole survived until #1467. The Python check reads the
+gate's HTML report rather than stdout, because `test` runs pytest under xdist, which
+prints a bare progress line and never names a file — and reading the report lets it
+require *Passed* rather than merely collected, since a silently skipped starter measures
+nothing either.
 
 Its `install` is also the thinnest of the
 three — go.mod's `go`/`toolchain` directives make the go command fetch a matching
@@ -236,7 +265,7 @@ The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiz
 | `.rhiza/make.d/` file | owner bundle | provides |
 | --- | --- | --- |
 | `bootstrap.mk` | core | `install-uv` tool bootstrap, install hooks, `clean` |
-| `python.mk` | python-core | `install`, `all`, `deptry`, `license`, and the pytest-backed gates |
+| `python.mk` | python-core | `install`, `all`, `deps`, `license`, and the pytest-backed gates |
 | `rust.mk` | rust-core | `install`, `all`, and the cargo-backed gates |
 | `go.mk` | go-core | `install`, `all`, and the go-backed gates |
 | `doctor.mk` | core | `make doctor` environment checks |

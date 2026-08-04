@@ -46,7 +46,7 @@ This directory contains GitLab CI/CD workflow configurations that mirror the fun
 - On merge requests to main/master
 
 **Key Features:**
-- Dependency checking with deptry (`make deptry`)
+- Dependency checking with deptry (`make deps`)
 - Pre-commit hooks for code formatting and linting (`make fmt`)
 - Documentation coverage validation (`make docs-coverage`)
 - Link checking on README.md with lychee

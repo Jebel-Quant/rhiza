@@ -249,7 +249,7 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - name: Run deptry
-        run: make deptry
+        run: make deps
 
   pre-commit:
     name: Pre-commit hooks

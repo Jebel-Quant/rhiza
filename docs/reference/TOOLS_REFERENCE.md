@@ -47,7 +47,7 @@ These are the commands you'll use most frequently:
 
 | Command | Description |
 |---------|-------------|
-| `make deptry` | Check for unused/missing dependencies |
+| `make deps` | Check for unused/missing dependencies |
 | `make pre-commit` | Run all pre-commit hooks |
 | `make typecheck` | Run type checking with ty |
 | `make security` | Run security scans (pip-audit and bandit) |
@@ -354,7 +354,7 @@ uv run bandit -r src/
 
 ```bash
 # Check for unused/missing dependencies
-make deptry
+make deps
 
 # Check for outdated packages
 uv pip list --outdated
@@ -719,7 +719,7 @@ PYTHON_VERSION = 3.12
 - Let uv handle Python version management (don't use pyenv/asdf)
 - Use `uv add` instead of manually editing `pyproject.toml`
 - Commit both `pyproject.toml` and `uv.lock` to git
-- Run `make deptry` regularly to check for unused dependencies
+- Run `make deps` regularly to check for unused dependencies
 
 ### Testing
 

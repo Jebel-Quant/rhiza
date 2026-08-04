@@ -1,0 +1,1 @@
+../bundles/python-core/tests/test_rhiza_packaging.py

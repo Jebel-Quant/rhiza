@@ -15,7 +15,7 @@ These fail the pull request when they fail. They run on every PR via
 | Format, lint, hooks | `make fmt` | ruff, markdownlint, bandit, actionlint, shellcheck, jsonschema, uv-lock. |
 | Type checking | `make typecheck` | `ty` + `mypy --strict` over the project's Python source (set `TYPECHECKER=ty` or `TYPECHECKER=mypy` to run only one). |
 | Tests | `make test`, `make rhiza-test` | Full suites; `rhiza-test` runs Rhiza's own `.rhiza/tests/` suite. |
-| Dependency hygiene | `make deptry` | Unused/missing dependency scan. |
+| Dependency hygiene | `make deps` | Unused/missing dependency scan. |
 | Docstring coverage | `make docs-coverage` | interrogate at 100%. |
 | Security | `make security` | pip-audit + bandit. |
 | CodeQL | `rhiza_codeql.yml` | Code scanning on PR and push. |
