@@ -163,15 +163,15 @@ license: install cargo-tools ## run license compliance scan (allow-list in deny.
 # blocked by a missing component, and `doctor` is a diagnostic rather than a gate.
 doctor:: ## report Rust toolchain problems the version checks cannot see
 	@if ! command -v $(CARGO) >/dev/null 2>&1; then \
-	  printf "${YELLOW}[⚠️ ]${RESET} %-11s not found — install: https://rustup.rs\n" "cargo"; \
+	  printf "${YELLOW}[WARN]${RESET} %-11s not found - install: https://rustup.rs\n" "cargo"; \
 	else \
 	  sysroot="$$($(RUSTC) --print sysroot 2>/dev/null)"; \
 	  rustup_home="$${RUSTUP_HOME:-$$HOME/.rustup}"; \
 	  case "$$sysroot" in \
 	    "$$rustup_home"*) \
-	      printf "${GREEN}[✅]${RESET} %-11s rustup-managed\n" "cargo" ;; \
+	      printf "${GREEN}[ OK ]${RESET} %-11s rustup-managed\n" "cargo" ;; \
 	    *) \
-	      printf "${YELLOW}[⚠️ ]${RESET} %-11s not rustup-managed (sysroot: %s)\n" "cargo" "$$sysroot"; \
+	      printf "${YELLOW}[WARN]${RESET} %-11s not rustup-managed (sysroot: %s)\n" "cargo" "$$sysroot"; \
 	      printf "         rust-toolchain.toml's components go to %s, which this cargo does not read.\n" "$$rustup_home"; \
 	      if command -v $(RUSTUP) >/dev/null 2>&1; then \
 	        printf "         rustup is installed but shadowed. Put its shims first on PATH, or remove\n"; \
@@ -183,9 +183,9 @@ doctor:: ## report Rust toolchain problems the version checks cannot see
 	  if [ -n "$$sysroot" ]; then \
 	    host="$$($(RUSTC) -vV 2>/dev/null | awk '/^host:/ {print $$2}')"; \
 	    if [ -x "$$sysroot/lib/rustlib/$$host/bin/llvm-cov" ]; then \
-	      printf "${GREEN}[✅]${RESET} %-11s present (make coverage)\n" "llvm-tools"; \
+	      printf "${GREEN}[ OK ]${RESET} %-11s present (make coverage)\n" "llvm-tools"; \
 	    else \
-	      printf "${YELLOW}[⚠️ ]${RESET} %-11s missing — \`make coverage\` will fail\n" "llvm-tools"; \
+	      printf "${YELLOW}[WARN]${RESET} %-11s missing - `make coverage` will fail\n" "llvm-tools"; \
 	      printf "         rustup component add llvm-tools-preview\n"; \
 	    fi; \
 	  fi; \

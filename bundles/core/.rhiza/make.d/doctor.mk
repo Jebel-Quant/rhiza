@@ -30,20 +30,20 @@ doctor:: ## verify local prerequisites and print actionable guidance
 	check_tool() { \
 		tool="$$1"; min="$$2"; install_url="$$3"; version_cmd="$$4"; gnu_required="$$5"; \
 		if ! command -v "$$tool" >/dev/null 2>&1; then \
-			printf "${RED}[❌]${RESET} %-9s missing — install: %s\n" "$$tool" "$$install_url"; \
+			printf "${RED}[FAIL]${RESET} %-11s missing - install: %s\n" "$$tool" "$$install_url"; \
 			failed=1; \
 			return; \
 		fi; \
 		version="$$(eval "$$version_cmd" 2>/dev/null)"; \
 		if [ -z "$$version" ]; then \
-			printf "${RED}[❌]${RESET} %-9s unknown version (required ≥ %s)\n" "$$tool" "$$min"; \
+			printf "${RED}[FAIL]${RESET} %-11s unknown version (required >= %s)\n" "$$tool" "$$min"; \
 			failed=1; \
 			return; \
 		fi; \
 		extra=""; \
 		if [ "$$gnu_required" = "gnu" ] && ! make --version 2>/dev/null | grep -q '^GNU Make'; then \
 			extra=" (GNU required)"; \
-			printf "${RED}[❌]${RESET} %-9s %-8s < %s%s\n" "$$tool" "$$version" "$$min" "$$extra"; \
+			printf "${RED}[FAIL]${RESET} %-11s %-8s < %s%s\n" "$$tool" "$$version" "$$min" "$$extra"; \
 			failed=1; \
 			return; \
 		fi; \
@@ -51,12 +51,12 @@ doctor:: ## verify local prerequisites and print actionable guidance
 			if [ "$$gnu_required" = "gnu" ]; then \
 				extra=" (GNU required)"; \
 			fi; \
-			printf "${GREEN}[✅]${RESET} %-9s %-8s ≥ %s%s\n" "$$tool" "$$version" "$$min" "$$extra"; \
+			printf "${GREEN}[ OK ]${RESET} %-11s %-8s >= %s%s\n" "$$tool" "$$version" "$$min" "$$extra"; \
 		else \
 			if [ "$$gnu_required" = "gnu" ]; then \
 				extra=" (GNU required)"; \
 			fi; \
-			printf "${RED}[❌]${RESET} %-9s %-8s < %s%s\n" "$$tool" "$$version" "$$min" "$$extra"; \
+			printf "${RED}[FAIL]${RESET} %-11s %-8s < %s%s\n" "$$tool" "$$version" "$$min" "$$extra"; \
 			failed=1; \
 		fi; \
 	}; \

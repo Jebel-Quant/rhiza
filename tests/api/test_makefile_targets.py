@@ -64,20 +64,20 @@ class TestMakefile:
         sys.platform == "win32",
         reason="uses POSIX '#!/usr/bin/env sh' fake-bin scripts on a ':'-separated PATH; unsupported on Windows",
     )
-    def test_doctor_output_survives_a_non_utf8_locale(self, logger):
-        """`doctor`'s ✅/❌ markers must come back as text on every platform.
+    def test_doctor_markers_are_ascii(self, logger):
+        """`doctor`'s status markers must be ASCII, on every platform.
 
-        `run_make` used to leave decoding to `text=True`, which uses the *locale* codec —
-        cp1252 on the Windows runners. `doctor` prints the only non-ASCII any fragment
-        emits, so on Windows subprocess raised UnicodeDecodeError internally, handed back
-        `stdout=None`, and the failure surfaced as a `TypeError` several frames away in
-        `strip_ansi`: a decoding problem wearing the mask of a type error.
+        They were ✅/❌ until the Windows jobs showed what that costs: mingw's printf does
+        not pass the UTF-8 literals through intact, so the markers reached the CI log — and
+        any test reading them — as cp1252 mojibake (`â`, `Œ` for the bytes of ❌). That was
+        true before any test asserted on them; it was simply invisible.
 
-        Asserted on the marker rather than on the type, because `stdout` being a `str` is
-        exactly what the broken version also reported right up until it wasn't.
+        A diagnostic is the last place to spend a portability budget on decoration, so the
+        markers are plain text and this pins them that way.
         """
         out = strip_ansi(run_make(logger, ["doctor"], dry_run=False, check=False).stdout)
-        assert "✅" in out, f"doctor's markers did not survive the round trip:\n{out!r}"
+        assert "[ OK ]" in out, f"doctor did not report a passing check:\n{out!r}"
+        assert out.isascii(), f"doctor emitted non-ASCII, which Windows mangles:\n{out!r}"
 
     def test_doctor_fails_when_minimum_version_is_not_met(self, logger, tmp_path):
         """Doctor should exit non-zero when a prerequisite version is below the minimum."""
@@ -100,7 +100,7 @@ class TestMakefile:
         proc = run_make(logger, ["doctor"], dry_run=False, check=False, env=env)
         out = strip_ansi(proc.stdout)
         assert proc.returncode != 0
-        assert "[❌] uv" in out
+        assert "[FAIL] uv" in out
         assert "0.3.0" in out
         assert "0.4.0" in out
 
