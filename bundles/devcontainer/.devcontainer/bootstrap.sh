@@ -52,9 +52,11 @@ export UV_LINK_MODE=copy
 # Add to current PATH so subsequent commands can find uv
 export PATH="$INSTALL_DIR:$PATH"
 
-# Default to a lightweight dependency set in devcontainers.
+# Default to a lightweight dependency set in devcontainers. Only `test` is named: a
+# `lint` group would make `uv sync` fail outright on the projects that no longer declare
+# one, and it had nothing to install anyway — prek/uvx provision every linter.
 # Override with UV_SYNC_ARGS to install different groups.
-export UV_SYNC_ARGS="${UV_SYNC_ARGS:---group lint --group test}"
+export UV_SYNC_ARGS="${UV_SYNC_ARGS:---group test}"
 
 # Install dependencies with recovery options
 echo "📦 Installing project dependencies..."
