@@ -83,11 +83,18 @@ repos:
       - id: betterleaks
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v0.7.1  # Use the latest release
+    rev: v1.1.0  # Use the latest release
     hooks:
       - id: check-rhiza-workflow-names
       - id: update-readme-help
       - id: check-rhiza-config
       - id: check-makefile-targets
+      # Fails when rust-toolchain.toml's channel is *below* Cargo.toml's
+      # `[package].rust-version`, which is genuinely unbuildable. It does not demand the
+      # two be equal — they are different promises, as rust-toolchain.toml's own comment
+      # says — so this does not contradict the layer's stance on MSRV. Dormant on the
+      # shipped `channel = "stable"`, which has no concrete version to compare; it starts
+      # working the moment a consumer pins one.
+      - id: check-rust-version-consistency
       # check-python-version-consistency is deliberately absent: there is no
       # .python-version in a Rust repo for it to reconcile.
