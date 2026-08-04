@@ -316,7 +316,7 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 >   because prek bakes `--config` into the git shim it generates. Passing it only to
 >   `run` fixed the gate and left the *hook* unpinned, so `git commit` ran a different
 >   set of hooks than `make fmt` — and in this repo failed outright on the nested
->   go-core config. The two halves are one invariant, so
+>   go-core config (#1488). The two halves are one invariant, so
 >   `test_both_prek_entry_points_name_the_config` asserts them together, per layer. A
 >   consumer wanting prek's monorepo behaviour drops the flag from *both* places.
 > - **`fmt` no longer pins an interpreter.** `uvx pre-commit` needed one to run
