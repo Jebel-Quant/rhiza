@@ -23,32 +23,35 @@ classifiers = [
 dependencies = []
 
 [dependency-groups]
-lint = [
-    #"ruff>=0.4,<1.0",
-    #"interrogate>=1.7,<2.0",
-    #"pre-commit>=3.7,<5.0",
-]
+# Since #1380 every *tool* is provisioned where it is used — `uv run --with pytest`,
+# `uvx deptry`, `uvx prek` — so a group here earns its place only when something has
+# to be present in the project environment itself. Two things qualify, and nothing
+# else does: a library the `tests/` suite imports, and a notebook import deptry would
+# otherwise report as DEP001. A tool named by a `--with` flag does not, which is what
+# retired the `typecheck` group (ty/mypy) in #1484.
+#
+# That same rule is why there is no `lint` group. It held ruff, interrogate and
+# pre-commit until #1330 commented all three out, and every one of them runs through
+# prek/uvx now — so what survived was an empty group kept alive by a shipped test
+# asserting its own presence. Both are gone as of #1484. A downstream project may
+# still declare one; nothing requires it.
 test = [
+    # Exactly what `tests/` imports. pytest itself is also injected by the `test`
+    # target's `--with`, but stays declared so a bare `uv run pytest tests/...` works.
     "pytest>=9,<10",
-    "python-dotenv>=1,<2",
     "pyyaml>=6.0.1,<7.0",
     "defusedxml>=0.7,<1",
     "packaging>=26,<27",
 ]
 docs = [
-    # Declared so deptry can resolve the notebook imports in docs/notebooks/.
+    # Load-bearing, and not for running anything: this repo has no src/, so
+    # DEPTRY_FOLDERS is docs/notebooks alone and these are the imports `make deps`
+    # resolves there. Drop one and deptry reports DEP001.
     # The notebook also pins these via its PEP 723 header.
     "marimo>=0.18.0,<1.0",   # Reactive notebook runtime for book/ examples (v0.18+ for streaming, <1.0 for API stability)
     "numpy>=2.4.0,<3.0",     # Numerical computing for notebook data analysis (v2.4+ includes 2.0 improvements, <3.0 avoids breaking changes)
     "plotly>=6.5.0,<7.0",    # Interactive visualization in notebooks (v6.5+ mature features, <7.0 for API stability)
     "pandas>=3,<3.1",        # Data manipulation for notebook examples (v3+ for modern APIs, <3.1 conservative after major release)
-]
-typecheck = [
-    # Type checkers for `make typecheck` (uv run ty / mypy). Formerly shipped in
-    # .rhiza/requirements/tools.txt; kept here as a dependency group.
-    "ty>=0.0.30",
-    "mypy==2.3.0",
-    "typer==0.27.0",
 ]
 
 [project.urls]
@@ -114,8 +117,9 @@ replace = '\1@v{new_version}'
 ignore_missing_version = true
 
 # uv.lock is deliberately absent: its `name = "rhiza"` entry is regenerated with
-# `uv lock` after the bump. A search on the bare version string would also
-# rewrite any dependency pinned at the same number (python-dotenv is at 1.2.2).
+# `uv lock` after the bump. A search on the bare version string would also rewrite any
+# *dependency* that happens to sit at the same number, and the lock file is full of
+# third-party versions this repo does not control.
 
 [tool.deptry.package_module_name_map]
 # uvx runs deptry without the project deps installed, so it cannot read each
@@ -123,13 +127,9 @@ ignore_missing_version = true
 # explicitly silences the "Assuming the corresponding module name ..." warnings.
 pyyaml = "yaml"
 pytest = "pytest"
-python-dotenv = "dotenv"
 defusedxml = "defusedxml"
 packaging = "packaging"
 marimo = "marimo"
 numpy = "numpy"
 plotly = "plotly"
 pandas = "pandas"
-ty = "ty"
-mypy = "mypy"
-typer = "typer"

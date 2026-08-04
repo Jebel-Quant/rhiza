@@ -338,7 +338,7 @@ For Rhiza templates to work correctly, your project must satisfy these expectati
 | `.github/workflows/rhiza_*.yml` | Rhiza | Template-managed workflow stubs |
 | `Makefile` | Rhiza | Template-managed; add your hooks *above* the `include` line |
 | `ruff.toml`, `.editorconfig`, `.pre-commit-config.yaml` | Rhiza | Template-managed config files |
-| `pyproject.toml` | Yours | Rhiza ships a starter template; you own and extend it freely |
+| `pyproject.toml` | Yours | Never synced — `/rhiza:init` creates it, then it's yours; `rhiza-test` only checks its structure |
 | `src/` or application code | Yours | Never touched by Rhiza |
 | `tests/` | Yours | Never touched by Rhiza |
 | `local.mk` | Yours | Local shortcuts — not committed, not synced, auto-loaded |
