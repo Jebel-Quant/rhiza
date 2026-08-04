@@ -5,6 +5,29 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.3.2] - 2026-08-04
+
+### New Features
+- *(doctor)* Catch a cargo that is not rustup-managed (#1481)
+
+### Bug Fixes
+- *(core)* Deliver .rhiza/tests to the Rust and Go layers (#1470)
+- *(python-core)* Own the gates `all` names, and move semgrep's config to core (#1477)
+- Unify the unused-deps gate name, and stop a fresh Python repo's test gate being vacuous (#1479)
+- *(deps)* Bump rhiza-hooks to v1.1.0 and enable the Rust/Go consistency hooks (#1482)
+- *(devcontainer)* Stop defaulting UV_SYNC_ARGS to a `lint` group (#1486)
+- *(hooks)* Pin prek's config in the installed git shim, not just in `fmt` (#1488)
+- *(changelog)* Stop the skip rule eating dependency bumps
+
+### Dependencies
+- *(deps)* Prune [dependency-groups] to what the environment actually needs (#1484)
+- *(deps)* Bump rhiza-hooks to v1.2.0 and correct the disabled-hook comments (#1487)
+
+### Maintenance
+- *(core)* Own the rhiza-test runner and the neutral README tests (#1473)
+- Run the hooks with prek instead of pre-commit (#1478)
+- Chore(deps)(deps): bump the github-actions group with 7 updates (#1485)
+
 ## [1.3.1] - 2026-08-03
 
 ### Bug Fixes
@@ -523,6 +546,7 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 
 ### Maintenance
 - Skip book workflow on forks
+- Bump workflow stubs v0.16.0 → v0.18.4 in bundles
 - *(tests)* Move rhiza-specific tests to correct locations (#1139)
 - Enforce monotonic release tags and align pyproject sync tests (#1133)
 
@@ -645,6 +669,7 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - Add CodeFactor config to exclude bundles/ from analysis
 - Add .codefactor.yml to core bundle
 - Remove .codefactor.yml from core bundle
+- Bump workflow stubs to rhiza v0.16.0
 
 ### Other Changes
 - Bump version 0.15.3 → 0.16.0
@@ -735,6 +760,9 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 
 ### Bug Fixes
 - Handle {source, dest} dict entries in template bundle tests
+
+### Maintenance
+- Bump .rhiza-version to 0.15.0 (#1067)
 
 ### Other Changes
 - Bump version 0.12.0 → 0.13.0
