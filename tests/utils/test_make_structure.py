@@ -169,7 +169,10 @@ def test_parser_sees_known_targets(root):
     for fragment in _make_fragments(root):
         all_targets |= _single_colon_targets(fragment)
 
-    expected = {"install", "clean", "doctor", "explain-bundles"}
+    # `doctor` is deliberately absent: it became a double-colon hook so a language layer
+    # can append its own diagnostics (rust.mk checks for a cargo that is not
+    # rustup-managed), and `_single_colon_targets` excludes those by design.
+    expected = {"install", "clean", "fmt", "explain-bundles"}
     missing = expected - all_targets
     assert not missing, f"parser failed to find known single-colon targets: {missing}"
 

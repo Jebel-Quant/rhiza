@@ -64,6 +64,21 @@ class TestMakefile:
         sys.platform == "win32",
         reason="uses POSIX '#!/usr/bin/env sh' fake-bin scripts on a ':'-separated PATH; unsupported on Windows",
     )
+    def test_doctor_markers_are_ascii(self, logger):
+        """`doctor`'s status markers must be ASCII, on every platform.
+
+        They were ✅/❌ until the Windows jobs showed what that costs: mingw's printf does
+        not pass the UTF-8 literals through intact, so the markers reached the CI log — and
+        any test reading them — as cp1252 mojibake (`â`, `Œ` for the bytes of ❌). That was
+        true before any test asserted on them; it was simply invisible.
+
+        A diagnostic is the last place to spend a portability budget on decoration, so the
+        markers are plain text and this pins them that way.
+        """
+        out = strip_ansi(run_make(logger, ["doctor"], dry_run=False, check=False).stdout)
+        assert "[ OK ]" in out, f"doctor did not report a passing check:\n{out!r}"
+        assert out.isascii(), f"doctor emitted non-ASCII, which Windows mangles:\n{out!r}"
+
     def test_doctor_fails_when_minimum_version_is_not_met(self, logger, tmp_path):
         """Doctor should exit non-zero when a prerequisite version is below the minimum."""
         fake_bin = tmp_path / "fake-bin"
@@ -85,7 +100,7 @@ class TestMakefile:
         proc = run_make(logger, ["doctor"], dry_run=False, check=False, env=env)
         out = strip_ansi(proc.stdout)
         assert proc.returncode != 0
-        assert "[❌] uv" in out
+        assert "[FAIL] uv" in out
         assert "0.3.0" in out
         assert "0.4.0" in out
 

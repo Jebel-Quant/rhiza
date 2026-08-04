@@ -147,6 +147,28 @@ def test_cargo_tools_works_where_the_cargo_bin_dir_is_not_on_path(project: Proje
     assert not missing, f"`make cargo-tools` left {missing} unusable on a bare PATH"
 
 
+def test_doctor_confirms_a_healthy_rust_toolchain(project: Project, logger):
+    """`make doctor` runs core's checks and the layer's, and is clean on a working setup.
+
+    The dry-run test pins how the check detects a shadowed cargo; this pins that it does
+    not cry wolf on a correct one — the failure mode that would make developers stop
+    reading `doctor` output at all.
+
+    Also the only assertion that `doctor::` composes: core defines one rule and rust.mk a
+    second, so a single-colon rule in either file would make make reject the build rather
+    than run both.
+    """
+    out = gate(project, "doctor", logger)
+    assert "uv" in out, "core's own doctor checks did not run"
+    assert "rustup-managed" in out, f"the Rust layer's doctor rule did not run:\n{out}"
+    assert "not rustup-managed" not in out, (
+        f"doctor reports a shadowed cargo on a toolchain the other gates are passing with:\n{out}"
+    )
+    assert "llvm-tools  missing" not in out, (
+        f"doctor reports llvm-tools missing, but `make coverage` passes here:\n{out}"
+    )
+
+
 def test_test_gate_runs_both_nextest_and_the_doctests(project: Project, logger):
     """Nextest runs the unit tests; the separate `cargo test --doc` line runs the rest.
 
