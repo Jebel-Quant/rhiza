@@ -58,7 +58,7 @@ jobs:
 
       - name: Lint Dockerfile with hadolint
         if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
-        uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5 # v3.3.0
+        uses: hadolint/hadolint-action@2a66e89f53d0771bb131a7fa31f3136336094aa6 # v3.4.0
         with:
           dockerfile: docker/Dockerfile
           # Fail on any error-level findings (default behavior). Adjust if needed:
@@ -109,7 +109,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
 
       - name: Upload Trivy scan results to GitHub Security
-        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        uses: github/codeql-action/upload-sarif@f205ea1c3313d32999d8d6a48b4f6530d4437b38 # v4.37.4
         if: always() && steps.check_dockerfile.outputs.docker_present == 'true'
         with:
           sarif_file: 'trivy-results.sarif'
