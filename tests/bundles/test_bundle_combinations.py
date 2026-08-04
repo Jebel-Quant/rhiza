@@ -113,13 +113,13 @@ def test_pyproject_declares_uv_dependency_groups(root: Path) -> None:
         pyproject = tomllib.load(fh)
 
     groups = pyproject.get("dependency-groups", {})
-    # 'lint' is deliberately not in this set (#1483) — prek/uvx provision every linter,
+    # 'lint' is deliberately not in this set (#1484) — prek/uvx provision every linter,
     # so the group had nothing to hold and existed only as `lint = []`.
     assert {"test", "docs"} <= set(groups)
 
     # The test group declares exactly the third-party libraries `tests/` imports.
     # python-dotenv used to sit here too, and was the clearest case of the drift this
-    # test now guards (#1483): nothing under tests/ imports it, and its one consumer —
+    # test now guards (#1484): nothing under tests/ imports it, and its one consumer —
     # the shipped .rhiza/tests/test_docstrings.py — is run by `rhiza-test`, which
     # injects `--with python-dotenv` itself.
     assert _group_has_dependency(groups["test"], "pytest")
@@ -138,7 +138,7 @@ def test_pyproject_declares_uv_dependency_groups(root: Path) -> None:
 # #1380). Declaring one in a dependency group is not a second opinion but a second
 # *source of truth*: the group's pin does not reach the `--with` resolution, so the
 # two silently disagree while the group still costs every `uv sync` a download. The
-# `typecheck` group held ty and mypy that way until #1483 — plus typer, whose
+# `typecheck` group held ty and mypy that way until #1484 — plus typer, whose
 # consumer had already been deleted in #1378.
 #
 # pytest's plugins are listed here but *pytest is deliberately not*, and the line is not
@@ -194,7 +194,7 @@ def test_core_bundle_pyproject_declares_uv_dependency_groups(test_data_dir: Path
 
     The path is tests/resources/pyproject.toml, not a bundle file: no bundle ships a
     pyproject.toml at all, so this is the example skeleton rather than synced content.
-    'lint' left the expected set in #1483 along with the group itself.
+    'lint' left the expected set in #1484 along with the group itself.
     """
     pyproject_path = test_data_dir / "pyproject.toml"
     assert pyproject_path.is_file(), f"{test_data_dir / 'pyproject.toml'} not found"

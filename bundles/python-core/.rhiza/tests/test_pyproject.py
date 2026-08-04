@@ -201,7 +201,7 @@ class TestDependencyGroups:
     """Tests for [dependency-groups] — ensures required groups are declared.
 
     Only ``test`` is required, and only because ``make test`` has to have somewhere to
-    find pytest. There was a ``test_lint_group_present`` here until #1483, and it is
+    find pytest. There was a ``test_lint_group_present`` here until #1484, and it is
     worth saying why it went: rhiza provisions every linter through prek/uvx, so the
     group it demanded had nothing legitimate to hold, and the mother repo satisfied it
     with a literal ``lint = []``. A required-group check that the reference

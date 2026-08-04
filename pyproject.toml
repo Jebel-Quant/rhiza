@@ -28,12 +28,12 @@ dependencies = []
 # to be present in the project environment itself. Two things qualify, and nothing
 # else does: a library the `tests/` suite imports, and a notebook import deptry would
 # otherwise report as DEP001. A tool named by a `--with` flag does not, which is what
-# retired the `typecheck` group (ty/mypy) in #1483.
+# retired the `typecheck` group (ty/mypy) in #1484.
 #
 # That same rule is why there is no `lint` group. It held ruff, interrogate and
 # pre-commit until #1330 commented all three out, and every one of them runs through
 # prek/uvx now — so what survived was an empty group kept alive by a shipped test
-# asserting its own presence. Both are gone as of #1483. A downstream project may
+# asserting its own presence. Both are gone as of #1484. A downstream project may
 # still declare one; nothing requires it.
 test = [
     # Exactly what `tests/` imports. pytest itself is also injected by the `test`
@@ -117,8 +117,9 @@ replace = '\1@v{new_version}'
 ignore_missing_version = true
 
 # uv.lock is deliberately absent: its `name = "rhiza"` entry is regenerated with
-# `uv lock` after the bump. A search on the bare version string would also
-# rewrite any dependency pinned at the same number (python-dotenv is at 1.2.2).
+# `uv lock` after the bump. A search on the bare version string would also rewrite any
+# *dependency* that happens to sit at the same number, and the lock file is full of
+# third-party versions this repo does not control.
 
 [tool.deptry.package_module_name_map]
 # uvx runs deptry without the project deps installed, so it cannot read each
