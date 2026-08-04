@@ -108,19 +108,21 @@ def _group_has_dependency(group: list[str], package_name: str) -> bool:
 
 
 def test_pyproject_declares_uv_dependency_groups(root: Path) -> None:
-    """pyproject.toml should expose lint/test/docs uv groups for focused installs."""
+    """pyproject.toml should expose test/docs uv groups for focused installs."""
     with (root / "pyproject.toml").open("rb") as fh:
         pyproject = tomllib.load(fh)
 
     groups = pyproject.get("dependency-groups", {})
-    assert {"lint", "test", "docs"} <= set(groups)
+    # 'lint' is deliberately not in this set (#1483) — prek/uvx provision every linter,
+    # so the group had nothing to hold and existed only as `lint = []`.
+    assert {"test", "docs"} <= set(groups)
 
-    # The test group declares the dependencies the test suite actually imports.
-    # Tooling-only deps (ruff, interrogate, pre-commit, mutmut, hypothesis, pytest
-    # plugins, zensical/mkdocs-material) are provisioned on the fly by their make
-    # targets via `uv run --with` / `uvx`, not declared here.
+    # The test group declares exactly the third-party libraries `tests/` imports.
+    # python-dotenv used to sit here too, and was the clearest case of the drift this
+    # test now guards (#1483): nothing under tests/ imports it, and its one consumer —
+    # the shipped .rhiza/tests/test_docstrings.py — is run by `rhiza-test`, which
+    # injects `--with python-dotenv` itself.
     assert _group_has_dependency(groups["test"], "pytest")
-    assert _group_has_dependency(groups["test"], "python-dotenv")
     assert _group_has_dependency(groups["test"], "pyyaml")
     assert _group_has_dependency(groups["test"], "defusedxml")
     assert _group_has_dependency(groups["test"], "packaging")
@@ -132,8 +134,68 @@ def test_pyproject_declares_uv_dependency_groups(root: Path) -> None:
     assert _group_has_dependency(groups["docs"], "plotly")
 
 
+# Tools every make target provisions for itself via `uv run --with` / `uvx` (see
+# #1380). Declaring one in a dependency group is not a second opinion but a second
+# *source of truth*: the group's pin does not reach the `--with` resolution, so the
+# two silently disagree while the group still costs every `uv sync` a download. The
+# `typecheck` group held ty and mypy that way until #1483 — plus typer, whose
+# consumer had already been deleted in #1378.
+#
+# pytest's plugins are listed here but *pytest is deliberately not*, and the line is not
+# arbitrary: 48 of the files under tests/ contain `import pytest`, while none imports
+# pytest_cov, pytest_xdist, pytest_html, pytest_timeout or pytest_mock — those load
+# through entry points and no test ever names them. A library the suite imports has to
+# be in the project environment (a bare `uv run pytest tests/...` finds nothing
+# otherwise, and the shipped test_pyproject.py requires it); runner configuration does
+# not. Adding "pytest" below would fail the suite it is meant to protect.
+_PROVISIONED_ON_THE_FLY = frozenset(
+    {
+        "ty",
+        "mypy",
+        "typer",
+        "ruff",
+        "interrogate",
+        "pre-commit",
+        "prek",
+        "deptry",
+        "bandit",
+        "mutmut",
+        "hypothesis",
+        "pip-licenses",
+        "pytest-cov",
+        "pytest-xdist",
+        "pytest-html",
+        "pytest-timeout",
+        "pytest-mock",
+        "pytest-benchmark",
+    }
+)
+
+
+def test_no_dependency_group_declares_an_on_the_fly_tool(root: Path) -> None:
+    """No [dependency-groups] entry may duplicate a tool its make target already injects."""
+    with (root / "pyproject.toml").open("rb") as fh:
+        pyproject = tomllib.load(fh)
+
+    offenders = {
+        f"{group}:{Requirement(dep).name}"
+        for group, deps in pyproject.get("dependency-groups", {}).items()
+        for dep in deps
+        if Requirement(dep).name.lower() in _PROVISIONED_ON_THE_FLY
+    }
+    assert not offenders, (
+        "these dependency-group entries duplicate a tool provisioned by `uv run --with` "
+        f"or `uvx`; remove them and let the make target own the version: {sorted(offenders)}"
+    )
+
+
 def test_core_bundle_pyproject_declares_uv_dependency_groups(test_data_dir: Path) -> None:
-    """bundles/core/pyproject.toml must expose lint/test/docs groups for downstream repos."""
+    """The starter pyproject fixture must expose the test/docs groups.
+
+    The path is tests/resources/pyproject.toml, not a bundle file: no bundle ships a
+    pyproject.toml at all, so this is the example skeleton rather than synced content.
+    'lint' left the expected set in #1483 along with the group itself.
+    """
     pyproject_path = test_data_dir / "pyproject.toml"
     assert pyproject_path.is_file(), f"{test_data_dir / 'pyproject.toml'} not found"
 
@@ -141,9 +203,7 @@ def test_core_bundle_pyproject_declares_uv_dependency_groups(test_data_dir: Path
         pyproject = tomllib.load(fh)
 
     groups = pyproject.get("dependency-groups", {})
-    assert {"lint", "test", "docs"} <= set(groups), (
-        f"bundles/core/pyproject.toml is missing dependency groups; found: {set(groups)}"
-    )
+    assert {"test", "docs"} <= set(groups), f"{pyproject_path} is missing dependency groups; found: {set(groups)}"
 
 
 class TestGitlabProjectProfileSync:

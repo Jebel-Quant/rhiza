@@ -130,9 +130,6 @@ Repository = "https://github.com/jebel-quant/rhiza"
 test = [
     "pytest>=9,<10",
 ]
-lint = [
-    "ruff>=0.16,<1.0",
-]
 
 [build-system]
 requires = ["hatchling"]

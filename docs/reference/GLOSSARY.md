@@ -223,9 +223,12 @@ A reactive Python notebook format. Rhiza includes support for marimo notebooks i
 
 ### `pyproject.toml`
 The central Python project configuration file (PEP 518/621). Contains project metadata, dependencies, and tool configurations.
-Rhiza's core bundle ships a starter `pyproject.toml` and validates a minimum structure downstream:
+No bundle ships a `pyproject.toml` — the project owns it outright, and `/rhiza:init` creates it
+as part of the skeleton rather than a sync delivering it. What the `python-core` layer ships is a
+*validator*: `.rhiza/tests/test_pyproject.py`, run by `make rhiza-test`, which requires a minimum
+structure — among other things:
 - `[project]` table with `name`, `version`, `description`, `readme`, and `requires-python` (all non-empty strings)
-- `[dependency-groups]` table with at least `lint`, `test`, and `docs` groups
+- `[dependency-groups]` table with a `test` group that lists pytest
 
 ### `uv.lock`
 Lock file containing exact versions of all dependencies. Ensures reproducible builds across environments.
