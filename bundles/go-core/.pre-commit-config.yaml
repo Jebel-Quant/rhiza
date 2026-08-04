@@ -89,11 +89,17 @@ repos:
       - id: betterleaks
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v0.7.1  # Use the latest release
+    rev: v1.1.0  # Use the latest release
     hooks:
       - id: check-rhiza-workflow-names
       - id: update-readme-help
       - id: check-rhiza-config
       - id: check-makefile-targets
+      # Fails when `.go-version` is below go.mod's `go` directive. This layer ships no
+      # `.go-version` — go.mod's directives are the source of truth here — so the hook is
+      # dormant until a consumer adds one, which many do for `actions/setup-go`. Enabled
+      # anyway: it costs nothing while absent and guards the mismatch the moment the file
+      # appears, which is exactly when nobody is looking for it.
+      - id: check-go-version-consistency
       # check-python-version-consistency is deliberately absent: there is no
       # .python-version in a Go repo for it to reconcile.
