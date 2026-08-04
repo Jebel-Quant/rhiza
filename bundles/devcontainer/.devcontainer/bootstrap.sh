@@ -79,11 +79,16 @@ else
 fi
 
 # Initialize pre-commit hooks if configured with fallback
+#
+# prek, and `-c`, to match what `make install` and `make fmt` do. This installed a
+# `pre-commit` shim until now — a leftover from the runner swap (ADR 0009) — so a
+# devcontainer got a commit-time gate driven by a different runner than the one its
+# `make fmt` uses, and pulled the Python pre-commit package to do it.
 if [ -f .pre-commit-config.yaml ]; then
     echo "🔧 Setting up pre-commit hooks..."
-    if ! "$UVX_BIN" pre-commit install 2>/dev/null; then
+    if ! "$UVX_BIN" prek install -c .pre-commit-config.yaml 2>/dev/null; then
         echo "⚠️  WARNING: Pre-commit hook installation failed (non-critical)"
-        echo "   You can manually install later with: uvx pre-commit install"
+        echo "   You can manually install later with: uvx prek install"
         echo "   Continuing with bootstrap..."
     else
         echo "✓ Pre-commit hooks configured successfully"

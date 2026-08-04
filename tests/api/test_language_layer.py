@@ -26,6 +26,13 @@ from tests.util import run_make, setup_rhiza_git_repo, strip_ansi
 # must keep — the classes below assert it for `python-core` and `rust-core` alike.
 LANGUAGE_LAYER_TARGETS = ("install", "all")
 
+# Both prek entry points and the exact flag each must carry. `fmt` is core's, `install` is
+# the layer's, and they have to agree — see the test that consumes this.
+PREK_CONFIG_INVOCATIONS = (
+    ("fmt", "prek run --all-files --config .pre-commit-config.yaml"),
+    ("install", "prek install -c .pre-commit-config.yaml"),
+)
+
 
 class TestPythonLayerProvidesTheContract:
     """The `python-core` layer defines the target names the rest of the template calls."""
@@ -53,6 +60,22 @@ class TestPythonLayerProvidesTheContract:
         """A missing layer target would surface as 'no rule to make target'."""
         proc = run_make(logger, [target])
         assert "no rule to make target" not in proc.stderr.lower()
+
+    @pytest.mark.parametrize(("target", "expected"), PREK_CONFIG_INVOCATIONS)
+    def test_both_prek_entry_points_name_the_config(self, logger, target, expected):
+        """The commit-time gate has to mean what `make fmt` means.
+
+        Two recipes reach prek — `fmt` in core's quality.mk runs it, the layer's `install`
+        installs its shim — and *both* must name the config, for one reason: prek bakes
+        `--config` into the shim it generates, so a flag passed only to `run` leaves the
+        hook resolving projects its own way. Unpinned, prek treats every nested
+        `.pre-commit-config.yaml` as a separate project; in this repo that is the three
+        layers' template configs, and the commit then dies on go-core's `go vet ./...` in
+        a directory with no go.mod. The two halves drifted exactly this way once, and
+        nothing caught it, because `fmt` was tested and `install` was not.
+        """
+        out = strip_ansi(run_make(logger, [target]).stdout)
+        assert expected in out, f"`make {target}` must pin prek's config:\n{out}"
 
 
 class TestRustLayerKeepsTheSameContract:
@@ -215,6 +238,12 @@ class TestRustLayerKeepsTheSameContract:
             f"`make fmt` still pins an interpreter for prek, which needs none:\n{out}"
         )
 
+    @pytest.mark.parametrize(("target", "expected"), PREK_CONFIG_INVOCATIONS)
+    def test_both_prek_entry_points_name_the_config(self, logger, target, expected):
+        """As for Python: the shim bakes in `--config`, so `install` must pass it too."""
+        out = strip_ansi(run_make(logger, [target], check=False).stdout)
+        assert expected in out, f"`make {target}` must pin prek's config:\n{out}"
+
 
 class TestGoLayerKeepsTheSameContract:
     """`go-core` is the third peer, assembled into a temp dir like the Rust one.
@@ -344,6 +373,12 @@ class TestGoLayerKeepsTheSameContract:
         assert not re.search(r"prek\b[^\n]*-p \d", out), (
             f"`make fmt` still pins an interpreter for prek, which needs none:\n{out}"
         )
+
+    @pytest.mark.parametrize(("target", "expected"), PREK_CONFIG_INVOCATIONS)
+    def test_both_prek_entry_points_name_the_config(self, logger, target, expected):
+        """As for Python: the shim bakes in `--config`, so `install` must pass it too."""
+        out = strip_ansi(run_make(logger, [target], check=False).stdout)
+        assert expected in out, f"`make {target}` must pin prek's config:\n{out}"
 
 
 class TestCoreAloneHasNoLanguageLayer:
