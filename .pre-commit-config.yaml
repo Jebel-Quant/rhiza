@@ -99,7 +99,7 @@ repos:
         files: ^src/
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v1.1.0  # Use the latest release
+    rev: v1.2.0  # Use the latest release
     hooks:
       # Migrated from rhiza
       - id: check-rhiza-workflow-names
@@ -108,9 +108,14 @@ repos:
       - id: check-rhiza-config
       - id: check-makefile-targets
       - id: check-python-version-consistency
-      # check-bumpversion-config asserts that bump-my-version can actually discover
-      # this repo's version config (issue #1453). Enable it once rhiza-hooks ships a
-      # release containing it — v0.7.1 does not. Until then .rhiza/tests/test_pyproject.py
-      # enforces the same invariant, one gate later.
+      # check-bumpversion-config asserts that bump-my-version can actually discover this
+      # repo's version config (issue #1453) — here, the [tool.bumpversion] table in
+      # pyproject.toml. It ships as of v1.1.0 and passes on this repo; it stays off only
+      # because .rhiza/tests/test_pyproject.py already enforces the same invariant one
+      # gate later, so enabling it buys an earlier failure, not a new one.
       # - id: check-bumpversion-config
+      # check-template-bundles validates a *consumer's* .rhiza/template.yml against the
+      # template repo's remote bundle list. The mother repo has no template.yml — it is
+      # the template — so the hook is inert here. Disabled in #660 (rhiza-hooks 0.3.0)
+      # with no reason recorded.
       # - id: check-template-bundles
