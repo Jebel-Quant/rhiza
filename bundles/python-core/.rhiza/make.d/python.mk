@@ -81,12 +81,17 @@ install: pre-install install-uv ## install
 
 	# Install pre-commit hooks (skip when core.hooksPath is set, e.g. by an
 	# external hook manager — pre-commit refuses to install in that case)
+	#
+	# `-c` for the reason quality.mk's `fmt` passes `--config`, and it must be repeated
+	# here: prek bakes the flag into the generated shim, so without it the commit-time
+	# gate rediscovers nested projects and stops meaning what `make fmt` means. A
+	# consumer who wants prek's monorepo behaviour drops the flag from both places.
 	@if [ -f ".pre-commit-config.yaml" ]; then \
 	  if [ -n "$$(git config --get core.hooksPath 2>/dev/null)" ]; then \
 	    printf "${BLUE}[INFO] Skipping pre-commit hook install: core.hooksPath is set${RESET}\n"; \
 	  else \
 	    printf "${BLUE}[INFO] Installing pre-commit hooks...${RESET}\n"; \
-	    ${UVX_BIN} prek install || { printf "${YELLOW}[WARN] Failed to install pre-commit hooks${RESET}\n"; }; \
+	    ${UVX_BIN} prek install -c .pre-commit-config.yaml || { printf "${YELLOW}[WARN] Failed to install pre-commit hooks${RESET}\n"; }; \
 	  fi; \
 	fi
 

@@ -312,6 +312,13 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 >   `go.mod` — because a synced project brings its own — and `make fmt` fails on the
 >   mother repo. `.prekignore` is documented for this job but is not honoured by prek
 >   0.4.12.
+> - **Every layer's `install` repeats it as `prek install -c .pre-commit-config.yaml`**,
+>   because prek bakes `--config` into the git shim it generates. Passing it only to
+>   `run` fixed the gate and left the *hook* unpinned, so `git commit` ran a different
+>   set of hooks than `make fmt` — and in this repo failed outright on the nested
+>   go-core config (#1488). The two halves are one invariant, so
+>   `test_both_prek_entry_points_name_the_config` asserts them together, per layer. A
+>   consumer wanting prek's monorepo behaviour drops the flag from *both* places.
 > - **`fmt` no longer pins an interpreter.** `uvx pre-commit` needed one to run
 >   pre-commit itself on, so a Rust or Go repo — which ships no `.python-version` — rested
 >   on `rhiza.mk`'s `PYTHON_VERSION` fallback. prek is a binary that provisions each
