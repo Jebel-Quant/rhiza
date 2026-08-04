@@ -18,11 +18,20 @@ from packaging.requirements import Requirement
 
 from tests.util import sync_bundles
 
+# Keyed by CI *job* name, valued by the make target it runs. Two rows where those
+# deliberately disagree, both for the same reason — the job name is a contract with
+# branch protection, the target name is not:
+#
+#   deptry     → `make deps`  the gate was renamed in #1474 (it was the one target whose
+#                             name differed by language); the job keeps its name because
+#                             "Check dependencies with deptry" is a required status check
+#                             in .github/rulesets/main-branch-protection.json
+#   pre-commit → `make fmt`   the runner became prek, the job name did not change
 PARITY_JOB_COMMANDS = {
     "test": "make test",
     "docs-coverage": "make docs-coverage",
     "typecheck": "make typecheck",
-    "deptry": "make deptry",
+    "deptry": "make deps",
     "pre-commit": "make fmt",
     "security": "make security",
     "license": "make license",

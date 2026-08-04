@@ -19,7 +19,7 @@
 # (benchmark, hypothesis-test, stress, mutation).
 
 # Declare phony targets (they don't produce files)
-.PHONY: all deptry docs-coverage install license security test test-pyproject typecheck
+.PHONY: all deps deptry docs-coverage install license security test test-pyproject typecheck
 
 # The project virtualenv, and the interpreter that fills it. PYTHON_VERSION is
 # declared in rhiza.mk (core needs a Python to run its own tooling on); here
@@ -97,7 +97,7 @@ install: pre-install install-uv ## install
 	@printf "${BLUE}To activate the virtual environment, run:${RESET}\n"
 	@printf "${YELLOW}  source ${VENV}/bin/activate${RESET}\n\n"
 
-all: fmt deptry test docs-coverage security license typecheck rhiza-test ## run all CI targets locally
+all: fmt deps test docs-coverage security license typecheck rhiza-test ## run all CI targets locally
 
 # deptry scans one or more folders for dependency issues. Each feature bundle
 # contributes the folders it owns to DEPTRY_FOLDERS (and any per-folder ignores
@@ -114,13 +114,31 @@ ifneq ($(wildcard $(SOURCE_FOLDER)),)
 DEPTRY_FOLDERS += $(SOURCE_FOLDER)
 endif
 
-deptry: install-uv ## Run deptry over the folders contributed by each bundle
+# Named `deps`, matching rust.mk and go.mk. This was the one gate whose *target name*
+# differed by language (#1474): `deptry` names the tool, which nothing else in the
+# contract does — pytest is `test`, mypy is `typecheck`, bandit is `security`. So
+# `make deps` used to fail on a Python project and `make deptry` on the other two, and
+# nothing language-neutral could invoke the gate without knowing the language first.
+#
+# The variables stay `DEPTRY_*`: they name the tool's *arguments*, honestly so —
+# marimo.mk appends `--ignore DEP004`, a deptry rule code — and they are the accumulator
+# interface a downstream local.mk writes to, so renaming them would break consumers for
+# nothing.
+deps: install-uv ## Run deptry over the folders contributed by each bundle
 	@if [ -n "$(strip $(DEPTRY_FOLDERS))" ]; then \
 		printf "${BLUE}[INFO] Running deptry on:${RESET} $(strip $(DEPTRY_FOLDERS))\n"; \
 		$(UVX_BIN) -p ${PYTHON_VERSION} deptry $(strip $(DEPTRY_FOLDERS) $(DEPTRY_IGNORE)); \
 	else \
 		printf "${YELLOW}[WARN] no deptry folders found, skipping.${RESET}\n"; \
 	fi
+
+# Deprecated alias. A downstream local.mk, a hand-written CI job or a contributor's
+# muscle memory all still call `make deptry`; a hard rename would break them at the
+# point where the gate simply stops existing. Warns rather than failing, and can go in
+# a future release once consumers have moved.
+deptry: ## deprecated alias for `deps`
+	@printf "${YELLOW}[WARN] \`make deptry\` is deprecated and will be removed; use \`make deps\`.${RESET}\n"
+	@$(MAKE) --no-print-directory deps
 
 license: install ## run license compliance scan (fail on GPL, LGPL, AGPL)
 	@printf "${BLUE}[INFO] Running license compliance scan...${RESET}\n"

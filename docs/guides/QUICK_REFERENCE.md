@@ -25,7 +25,7 @@ A concise reference for common Rhiza operations.
 | Command | Description |
 |---------|-------------|
 | `make fmt` | Format + lint with auto-fix |
-| `make deptry` | Check for unused/missing dependencies |
+| `make deps` | Check for unused/missing dependencies |
 | `make pre-commit` | Run all pre-commit hooks |
 
 ## Template Sync
