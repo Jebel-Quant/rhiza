@@ -13,9 +13,10 @@
 # their Rust counterparts are cargo subcommands with nothing to configure.
 
 # Declare phony targets (they don't produce files)
-.PHONY: all cargo-tools coverage deps docs-coverage install license security test typecheck
+.PHONY: all cargo-tools coverage deps docs-coverage doctor install license security test typecheck
 
 CARGO ?= cargo
+RUSTC ?= rustc
 RUSTUP ?= rustup
 
 # Extra flags for the whole gate set — e.g. CARGO_FLAGS="--all-features".
@@ -141,3 +142,51 @@ license: install cargo-tools ## run license compliance scan (allow-list in deny.
 	@printf "${BLUE}[INFO] Running license compliance scan${RESET}\n"
 	@$(CARGO) deny check licenses
 
+
+# A second `doctor::` rule — core's checks uv/make/git, this adds the two Rust facts no
+# version check would catch. Both have already cost real debugging time.
+#
+# 1. A cargo that is not rustup-managed. `brew install rust` and `brew install rustup`
+#    can coexist, and Homebrew links the *formula's* cargo into /opt/homebrew/bin while
+#    rustup's shims sit unlinked in /opt/homebrew/opt/rustup/bin. `cargo --version` looks
+#    perfectly healthy; what breaks is everything depending on rustup semantics.
+#    `rust-toolchain.toml`'s pinned components go to rustup's toolchain while the active
+#    cargo reads a different sysroot — so `make coverage` fails with "failed to find
+#    llvm-tools-preview" while `rustup component list` cheerfully shows it installed.
+#    Detected by asking where the sysroot is, not by matching version strings.
+#
+# 2. The llvm-tools binaries themselves, which is what `cargo llvm-cov` actually needs.
+#    Checked directly, so a rustup-managed toolchain whose components were never
+#    materialised reports the same way — the symptom is what matters, not the cause.
+#
+# Advisory by design: it exits 0. A Rust developer who never runs `make coverage` is not
+# blocked by a missing component, and `doctor` is a diagnostic rather than a gate.
+doctor:: ## report Rust toolchain problems the version checks cannot see
+	@if ! command -v $(CARGO) >/dev/null 2>&1; then \
+	  printf "${YELLOW}[⚠️ ]${RESET} %-11s not found — install: https://rustup.rs\n" "cargo"; \
+	else \
+	  sysroot="$$($(RUSTC) --print sysroot 2>/dev/null)"; \
+	  rustup_home="$${RUSTUP_HOME:-$$HOME/.rustup}"; \
+	  case "$$sysroot" in \
+	    "$$rustup_home"*) \
+	      printf "${GREEN}[✅]${RESET} %-11s rustup-managed\n" "cargo" ;; \
+	    *) \
+	      printf "${YELLOW}[⚠️ ]${RESET} %-11s not rustup-managed (sysroot: %s)\n" "cargo" "$$sysroot"; \
+	      printf "         rust-toolchain.toml's components go to %s, which this cargo does not read.\n" "$$rustup_home"; \
+	      if command -v $(RUSTUP) >/dev/null 2>&1; then \
+	        printf "         rustup is installed but shadowed. Put its shims first on PATH, or remove\n"; \
+	        printf "         the duplicate toolchain (on Homebrew: brew uninstall rust).\n"; \
+	      else \
+	        printf "         Install rustup so the pinned toolchain and its components are honoured.\n"; \
+	      fi ;; \
+	  esac; \
+	  if [ -n "$$sysroot" ]; then \
+	    host="$$($(RUSTC) -vV 2>/dev/null | awk '/^host:/ {print $$2}')"; \
+	    if [ -x "$$sysroot/lib/rustlib/$$host/bin/llvm-cov" ]; then \
+	      printf "${GREEN}[✅]${RESET} %-11s present (make coverage)\n" "llvm-tools"; \
+	    else \
+	      printf "${YELLOW}[⚠️ ]${RESET} %-11s missing — \`make coverage\` will fail\n" "llvm-tools"; \
+	      printf "         rustup component add llvm-tools-preview\n"; \
+	    fi; \
+	  fi; \
+	fi

@@ -169,6 +169,24 @@ class TestRustLayerKeepsTheSameContract:
         """Nextest ignores doctests; dropping the `cargo test --doc` line silently stops testing them."""
         assert "cargo test --doc" in strip_ansi(run_make(logger, ["all"], check=False).stdout)
 
+    def test_doctor_reports_a_cargo_that_is_not_rustup_managed(self, logger):
+        """The layer adds a `doctor::` rule for the failure a version check cannot see.
+
+        `brew install rust` and `brew install rustup` coexist happily, and Homebrew links
+        the formula's cargo while rustup's shims sit unlinked. `cargo --version` then looks
+        healthy, but `rust-toolchain.toml`'s components go to a sysroot that cargo never
+        reads — so `make coverage` dies on a missing llvm-tools the component list shows as
+        installed. It cost this exact debugging twice (see also #1468).
+
+        Asserted on *how* it detects: comparing sysroot against RUSTUP_HOME, not matching
+        "(Homebrew)" in a version string, which would miss every other way two toolchains
+        end up installed.
+        """
+        out = strip_ansi(run_make(logger, ["doctor"], check=False).stdout)
+        assert "--print sysroot" in out, "the check must ask rustc where its sysroot is"
+        assert "RUSTUP_HOME" in out, "the sysroot must be compared against rustup's home"
+        assert "llvm-cov" in out, "`make coverage`'s actual requirement must be checked directly"
+
     def test_rhiza_test_resolves_through_this_layers_install(self, logger):
         """`rhiza-test` is core's recipe (#1471), but its `install` prerequisite is the layer's.
 

@@ -1,9 +1,18 @@
 ## .rhiza/make.d/doctor.mk - Developer prerequisite diagnostics
+#
+# Core checks only the tools it needs whatever the language: uv, make, git. A language
+# layer appends its own diagnostics with a second `doctor::` rule — double-colon, like
+# `pre-install::` and `test::`, so each rule runs in turn and a layer never has to know
+# what core already checked. rust.mk uses this to catch a cargo that is not
+# rustup-managed, which no version check would notice.
+#
+# Each rule runs in its own shell, so `failed` below is local to this one: a layer's rule
+# reports and exits on its own account, and `make doctor` fails if any rule does.
 
 .PHONY: doctor
 
 ##@ Dev
-doctor: ## verify local prerequisites and print actionable guidance
+doctor:: ## verify local prerequisites and print actionable guidance
 	@failed=0; \
 	version_ge() { \
 		awk -v a="$$1" -v b="$$2" 'BEGIN { \
