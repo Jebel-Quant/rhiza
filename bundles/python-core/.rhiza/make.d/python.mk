@@ -29,8 +29,21 @@ UV_SYNC_ARGS ?= --all-extras --all-groups
 
 export UV_VENV_CLEAR := 1
 
-# Configurable list of licenses that fail the compliance scan (semicolon-separated)
+# Configurable list of licenses that fail the compliance scan (semicolon-separated).
+#
+# These are matched as *substrings* of the reported licence -- see `--partial-match`
+# in the `license` recipe. Without that flag pip-licenses compares against the whole
+# licence string, and `GPL` never equals a real classifier such as "GNU General
+# Public License v2 or later (GPLv2+)", so the gate passed with a GPL package
+# installed.
 LICENSE_FAIL_ON ?= GPL;LGPL;AGPL
+
+# Packages exempted from the scan by name, space-separated. Empty by default: an
+# exemption should be a deliberate, reviewable act in a project's own Makefile,
+# not something the template grants. The usual legitimate case is a copyleft
+# *development* dependency -- a reference implementation a differential test runs
+# against -- that is never imported by the shipped package and never redistributed.
+LICENSE_IGNORE_PACKAGES ?=
 
 # Default directory for tests. Also read by the `tests` bundle's test.mk, which
 # requires this layer, so the two never disagree about where tests live.
@@ -145,9 +158,14 @@ deptry: ## deprecated alias for `deps`
 	@printf "${YELLOW}[WARN] \`make deptry\` is deprecated and will be removed; use \`make deps\`.${RESET}\n"
 	@$(MAKE) --no-print-directory deps
 
+# --ignore-packages takes one or more names and errors on a bare flag, so it is
+# omitted entirely when nothing is exempted.
+LICENSE_IGNORE_FLAG = $(if $(strip $(LICENSE_IGNORE_PACKAGES)),--ignore-packages $(strip $(LICENSE_IGNORE_PACKAGES)),)
+
 license: install ## run license compliance scan (fail on GPL, LGPL, AGPL)
 	@printf "${BLUE}[INFO] Running license compliance scan...${RESET}\n"
-	@${UV_BIN} run --with pip-licenses pip-licenses --fail-on="${LICENSE_FAIL_ON}"
+	@${UV_BIN} run --with pip-licenses pip-licenses \
+		--fail-on="${LICENSE_FAIL_ON}" --partial-match ${LICENSE_IGNORE_FLAG}
 
 ##@ Development and Testing
 

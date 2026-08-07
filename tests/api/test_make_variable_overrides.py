@@ -46,6 +46,32 @@ class TestLicenseFailOn:
         proc = run_make(logger, ["license"])
         assert "GPL" in proc.stdout, "Default license check should fail on GPL; got:\n" + proc.stdout[:500]
 
+    def test_matching_is_partial(self, logger) -> None:
+        """The scan must pass --partial-match, or the fail-on list matches nothing.
+
+        pip-licenses compares --fail-on against the *whole* licence string. A real
+        package reports "GNU General Public License v2 or later (GPLv2+)", which is
+        never equal to "GPL", so without this flag the default fail-on list is inert
+        and the gate reports success with a GPL dependency installed. The assertion
+        above only proves the substring reaches the command line; this proves the
+        command can act on it.
+        """
+        proc = run_make(logger, ["license"])
+        assert "--partial-match" in proc.stdout, (
+            "license scan must use --partial-match, else --fail-on never matches a real classifier; got:\n"
+            + proc.stdout[:500]
+        )
+
+    def test_no_packages_are_exempted_by_default(self, logger) -> None:
+        """The template grants no exemptions; a project opts in deliberately."""
+        proc = run_make(logger, ["license"])
+        assert "--ignore-packages" not in proc.stdout
+
+    def test_ignore_packages_override_is_passed_through(self, logger) -> None:
+        """LICENSE_IGNORE_PACKAGES names the exemptions in the pip-licenses call."""
+        proc = run_make(logger, ["license", "LICENSE_IGNORE_PACKAGES=quadprog chardet"])
+        assert "--ignore-packages quadprog chardet" in proc.stdout
+
     def test_fail_on_override_single_license(self, logger) -> None:
         """Custom single-license override must appear in the make license command."""
         proc = run_make(logger, ["license", "LICENSE_FAIL_ON=MIT"])
