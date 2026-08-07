@@ -15,6 +15,7 @@ executed without running them — keeping the suite fast and side-effect-free.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from tests.util import run_make, strip_ansi
 
@@ -62,10 +63,31 @@ class TestLicenseFailOn:
             + proc.stdout[:500]
         )
 
-    def test_no_packages_are_exempted_by_default(self, logger) -> None:
-        """The template grants no exemptions; a project opts in deliberately."""
+    def test_the_layer_alone_exempts_nothing(self, root: Path) -> None:
+        """python-core grants no exemptions of its own; every one is contributed or opted into.
+
+        Asserted against the bundle source rather than `make license`, because this repo
+        also syncs the marimo bundle, which appends docutils (see the test below).
+        """
+        mk = (root / "bundles" / "python-core" / ".rhiza" / "make.d" / "python.mk").read_text()
+        assert "LICENSE_IGNORE_PACKAGES ?=\n" in mk, (
+            "python-core must default LICENSE_IGNORE_PACKAGES to empty, so an exemption is "
+            "always something a project or a bundle asked for"
+        )
+
+    def test_marimo_bundle_exempts_docutils(self, logger) -> None:
+        """The bundle owning a multi-licensed dependency contributes its own exemption.
+
+        docutils reports "BSD License; GNU General Public License (GPL); Public Domain" —
+        one string, no *or* semantics in pip-licenses — so `--partial-match` fails the gate
+        on a package taken under BSD. marimo depends on it, so marimo.mk appends the
+        exemption and no consumer of the bundle has to rediscover this.
+        """
         proc = run_make(logger, ["license"])
-        assert "--ignore-packages" not in proc.stdout
+        out = strip_ansi(proc.stdout)
+        assert "--ignore-packages docutils" in out, (
+            "marimo.mk should contribute docutils to the licence exemptions; got:\n" + out[-600:]
+        )
 
     def test_ignore_packages_override_is_passed_through(self, logger) -> None:
         """LICENSE_IGNORE_PACKAGES names the exemptions in the pip-licenses call."""

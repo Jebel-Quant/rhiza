@@ -39,10 +39,20 @@ export UV_VENV_CLEAR := 1
 LICENSE_FAIL_ON ?= GPL;LGPL;AGPL
 
 # Packages exempted from the scan by name, space-separated. Empty by default: an
-# exemption should be a deliberate, reviewable act in a project's own Makefile,
-# not something the template grants. The usual legitimate case is a copyleft
-# *development* dependency -- a reference implementation a differential test runs
-# against -- that is never imported by the shipped package and never redistributed.
+# exemption should be a deliberate, reviewable act -- in a project's own Makefile, or
+# in the bundle that owns the dependency -- not something this layer grants globally.
+# Two cases are legitimate, and `?=` plus `+=` makes it an accumulator for both:
+#
+#   1. A copyleft *development* dependency -- a reference implementation a differential
+#      test runs against -- never imported by the shipped package and never redistributed.
+#   2. A package offered under several licences at the reader's choice. pip-licenses
+#      reports the classifier list joined with "; " and has no notion of *or*, so
+#      `--partial-match` fires on the copyleft option even where a permissive one is
+#      taken. marimo.mk exempts docutils ("BSD License; GNU General Public License
+#      (GPL); Public Domain") for exactly this reason.
+#
+# Case 2 is the one to be careful with: check that a permissive option really is on
+# offer, rather than that the string merely looks long.
 LICENSE_IGNORE_PACKAGES ?=
 
 # Default directory for tests. Also read by the `tests` bundle's test.mk, which
