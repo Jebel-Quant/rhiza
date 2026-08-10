@@ -25,8 +25,10 @@ from tests.e2e.harness import (
     assemble,
     assert_hooks_passed,
     gate,
+    gate_env,
     line_rate,
 )
+from tests.util import run_make, strip_ansi
 
 pytestmark = [pytest.mark.e2e, pytest.mark.timeout(GATE_TIMEOUT_SECONDS)]
 
@@ -136,6 +138,52 @@ def test_license_gate_accepts_a_permissive_dependency_set(project: Project, logg
     """pip-licenses fails on GPL/LGPL/AGPL; the scaffold declares none."""
     out = gate(project, "license", logger)
     assert "Running license compliance scan" in out
+
+
+def test_license_gate_actually_rejects_a_matching_licence(project: Project, logger):
+    """The gate must go red on a match -- the case nothing else here covers.
+
+    Every other assertion about this gate is that it stays green, which a gate
+    that can never fail also satisfies. That is not hypothetical: `--fail-on`
+    compares against the *whole* licence string, so before `--partial-match` was
+    added the default `GPL;LGPL;AGPL` matched no real classifier and the gate was
+    inert.
+
+    `IT` is the probe because it is a strict substring of `MIT` and equal to no
+    licence any package reports. Whole-string matching cannot match it, so this
+    test fails without `--partial-match`; substring matching must. It needs no
+    copyleft dependency installed to prove the point, and every Python venv has
+    an MIT-licensed package in it.
+    """
+    proc = run_make(
+        logger,
+        ["license", "LICENSE_FAIL_ON=IT"],
+        check=False,
+        dry_run=False,
+        env=gate_env(),
+        cwd=project.path,
+    )
+
+    assert proc.returncode != 0, (
+        "license gate reported success on a matching licence -- --fail-on is inert:\n" + proc.stdout[-2000:]
+    )
+    assert "fail-on license" in strip_ansi(proc.stdout) + strip_ansi(proc.stderr)
+
+
+def test_license_gate_honours_an_exemption(project: Project, logger):
+    """A package named in LICENSE_IGNORE_PACKAGES drops out of the scan entirely.
+
+    The exemption is what makes the gate above survivable: a project with a
+    legitimate copyleft *development* dependency needs a way to say so once,
+    visibly, rather than deleting the gate that keeps catching it.
+
+    Asserted by absence from the report rather than by flipping a failure to a
+    pass, which would depend on guessing every package that could match.
+    """
+    out = gate(project, "license", logger, env={**gate_env(), "LICENSE_IGNORE_PACKAGES": "pytest"})
+
+    assert "Running license compliance scan" in out
+    assert "pytest" not in out, "pytest was scanned despite being exempted:\n" + out[-2000:]
 
 
 def test_deptry_gate_finds_no_dependency_problems(project: Project, logger):
