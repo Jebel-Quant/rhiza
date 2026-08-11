@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.3.3] - 2026-08-11
+
+### Bug Fixes
+- *(python)* The licence gate has never failed on GPL (#1491)
+- *(ci)* Bump BAIPP to v3.0.1 so the matrix survives metadata 2.5 (#1497)
+- *(bandit)* Move the scan scope into .bandit, where every runner can see it (#1502)
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1495)
+- *(deps)* Update pre-commit hook astral-sh/ruff-pre-commit to v0.16.2 (#1498)
+- *(deps)* Update pre-commit hook betterleaks/betterleaks to v1.7.4 (#1500)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.12.3 (#1499)
+- *(deps)* Update pre-commit hook python-jsonschema/check-jsonschema to v0.38.0 (#1501)
+
+### Maintenance
+- Chore(deps)(deps): bump the github-actions group with 8 updates (#1496)
+
+### Other Changes
+- Update TESTS.md (#1490)
+
 ## [1.3.2] - 2026-08-04
 
 ### New Features
