@@ -204,15 +204,25 @@ class TestSecurityConfiguration:
         truth, so the args may name the config and nothing else.
         """
         repo_root = pathlib.Path(__file__).parent.parent.parent
-        content = (repo_root / ".pre-commit-config.yaml").read_text()
 
-        bandit_args = [line for line in content.splitlines() if "--ini" in line and ".bandit" in line]
-        assert bandit_args, "expected the bandit hook to pass --ini .bandit"
-        for line in bandit_args:
-            assert "--exclude" not in line, (
-                "bandit's scope must live in .bandit, not in the hook args, so that "
-                f"CodeFactor and local runs agree with CI (#1493). Offending line: {line.strip()}"
-            )
+        # Both copies matter and they are separate files: the root config is an
+        # intentional mother-repo override, while the bundle copy is the one
+        # actually synced into consumers — so checking only one leaves the other
+        # free to drift back, and it is the bundle that reaches the fleet.
+        configs = [repo_root / ".pre-commit-config.yaml"]
+        bundle_config = repo_root / "bundles" / "python-core" / ".pre-commit-config.yaml"
+        if bundle_config.exists():
+            configs.append(bundle_config)
+
+        for config in configs:
+            where = config.relative_to(repo_root)
+            bandit_args = [line for line in config.read_text().splitlines() if "--ini" in line and ".bandit" in line]
+            assert bandit_args, f"expected the bandit hook in {where} to pass --ini .bandit"
+            for line in bandit_args:
+                assert "--exclude" not in line, (
+                    "bandit's scope must live in .bandit, not in the hook args, so that "
+                    f"CodeFactor and local runs agree with CI (#1493). {where}: {line.strip()}"
+                )
 
     def test_bandit_config_excludes_tests_however_it_is_invoked(self, tmp_path: pathlib.Path) -> None:
         """``.bandit`` alone must exclude the test trees in *both* invocation modes.
@@ -233,15 +243,19 @@ class TestSecurityConfiguration:
         if not bandit_ini.exists():
             pytest.skip("python-core bundle not present")
 
-        # A tree shaped like a synced consumer: a clean source folder plus test
-        # trees holding a finding that is real but out of scope by policy.
-        offender = "import random\n\n\ndef test_x() -> None:\n    assert random.randint(0, 5) >= 0\n"
+        # A tree shaped like a synced consumer: the test trees hold a finding that
+        # is real but out of scope by policy, and src/ holds one that must always
+        # be reported. That second file is the positive control — without it every
+        # assertion below is "B311 is absent", which is also true of a bandit that
+        # never ran, crashed, or was handed an exclude so broad it scanned nothing.
+        out_of_scope = "import random\n\n\ndef test_x() -> None:\n    assert random.randint(0, 5) >= 0\n"
+        in_scope = "def f(expr: str) -> object:\n    return eval(expr)\n"
         (tmp_path / "src").mkdir()
-        (tmp_path / "src" / "mod.py").write_text("def f() -> int:\n    return 1\n")
+        (tmp_path / "src" / "mod.py").write_text(in_scope)
         for folder in ("tests", ".rhiza/tests"):
             target = tmp_path / folder
             target.mkdir(parents=True)
-            (target / "test_r.py").write_text(offender)
+            (target / "test_r.py").write_text(out_of_scope)
         shutil.copy(bandit_ini, tmp_path / ".bandit")
 
         def _findings(*args: str) -> str:
@@ -256,6 +270,18 @@ class TestSecurityConfiguration:
             )
             if "No module named" in result.stderr or "error: unrecognized" in result.stderr:
                 pytest.skip(f"bandit unavailable via uvx: {result.stderr[:200]}")
+            # 0 = clean, 1 = findings. Anything else is bandit failing to run, which
+            # would otherwise satisfy every "not in" assertion below for free.
+            assert result.returncode in (0, 1), (
+                f"bandit exited {result.returncode} rather than scanning.\n"
+                f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+            )
+            # The in-scope finding proves the scan reached the source tree, so an
+            # absent B311 means "excluded" rather than "nothing was scanned".
+            assert "B307" in result.stdout, (
+                "the in-scope finding in src/mod.py was not reported, so this run "
+                f"proves nothing about what is excluded.\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+            )
             return result.stdout
 
         recursive = _findings("-r", ".")
