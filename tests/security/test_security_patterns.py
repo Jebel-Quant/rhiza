@@ -15,6 +15,8 @@ These tests only verify that:
 
 import pathlib
 import re
+import shutil
+import subprocess
 import tomllib
 
 import pytest
@@ -192,6 +194,80 @@ class TestSecurityConfiguration:
 
         content = bandit_ini.read_text()
         assert "[bandit]" in content, ".bandit file must contain a [bandit] section"
+
+    def test_bandit_scope_is_not_kept_in_the_hook_args(self) -> None:
+        """The pre-commit hook must not carry ``--exclude``.
+
+        Scope in the hook args is invisible to every other bandit runner, which
+        is what made CodeFactor scan ``tests/`` and report ten false-positive
+        ``B311`` hits downstream (#1493).  ``.bandit`` is the single source of
+        truth, so the args may name the config and nothing else.
+        """
+        repo_root = pathlib.Path(__file__).parent.parent.parent
+        content = (repo_root / ".pre-commit-config.yaml").read_text()
+
+        bandit_args = [line for line in content.splitlines() if "--ini" in line and ".bandit" in line]
+        assert bandit_args, "expected the bandit hook to pass --ini .bandit"
+        for line in bandit_args:
+            assert "--exclude" not in line, (
+                "bandit's scope must live in .bandit, not in the hook args, so that "
+                f"CodeFactor and local runs agree with CI (#1493). Offending line: {line.strip()}"
+            )
+
+    def test_bandit_config_excludes_tests_however_it_is_invoked(self, tmp_path: pathlib.Path) -> None:
+        """``.bandit`` alone must exclude the test trees in *both* invocation modes.
+
+        This is the actual guarantee #1493 asks for, and it cannot be asserted by
+        reading the file: bandit matches an exclude entry against the path string
+        it is handed, which differs by caller.  ``bandit -r .`` discovers
+        ``./tests/foo.py`` while pre-commit passes ``tests/foo.py``, so a config
+        listing only one spelling passes a substring check and still half-works.
+        Running it both ways is the only check that distinguishes them.
+        """
+        uvx = shutil.which("uvx")
+        if uvx is None:
+            pytest.skip("uvx not available; cannot run bandit out-of-tree")
+
+        repo_root = pathlib.Path(__file__).parent.parent.parent
+        bandit_ini = repo_root / "bundles" / "python-core" / ".bandit"
+        if not bandit_ini.exists():
+            pytest.skip("python-core bundle not present")
+
+        # A tree shaped like a synced consumer: a clean source folder plus test
+        # trees holding a finding that is real but out of scope by policy.
+        offender = "import random\n\n\ndef test_x() -> None:\n    assert random.randint(0, 5) >= 0\n"
+        (tmp_path / "src").mkdir()
+        (tmp_path / "src" / "mod.py").write_text("def f() -> int:\n    return 1\n")
+        for folder in ("tests", ".rhiza/tests"):
+            target = tmp_path / folder
+            target.mkdir(parents=True)
+            (target / "test_r.py").write_text(offender)
+        shutil.copy(bandit_ini, tmp_path / ".bandit")
+
+        def _findings(*args: str) -> str:
+            result = subprocess.run(
+                [uvx, "bandit", "--ini", ".bandit", *args],
+                cwd=tmp_path,
+                capture_output=True,
+                text=True,
+                timeout=300,
+                check=False,
+            )
+            if "No module named" in result.stderr or "error: unrecognized" in result.stderr:
+                pytest.skip(f"bandit unavailable via uvx: {result.stderr[:200]}")
+            return result.stdout
+
+        recursive = _findings("-r", ".")
+        assert "B311" not in recursive, (
+            "`bandit -r .` — how CodeFactor and a contributor reproducing a finding "
+            f"invoke it — scanned the excluded test trees.\n{recursive}"
+        )
+
+        explicit = _findings("tests/test_r.py", ".rhiza/tests/test_r.py", "src/mod.py")
+        assert "B311" not in explicit, (
+            "bandit given explicit paths — how pre-commit invokes it — scanned the "
+            f"excluded test trees. A './'-only exclude list causes exactly this.\n{explicit}"
+        )
 
     @_REQUIRES_GITHUB_BUNDLE
     def test_security_policy_exists(self) -> None:
