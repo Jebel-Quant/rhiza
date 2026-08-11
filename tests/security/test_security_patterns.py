@@ -245,6 +245,7 @@ class TestSecurityConfiguration:
         shutil.copy(bandit_ini, tmp_path / ".bandit")
 
         def _findings(*args: str) -> str:
+            """Run bandit in the fixture tree with the shipped config and return its report."""
             result = subprocess.run(
                 [uvx, "bandit", "--ini", ".bandit", *args],
                 cwd=tmp_path,
