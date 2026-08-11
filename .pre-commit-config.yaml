@@ -73,7 +73,8 @@ repos:
     rev: 1.9.4
     hooks:
       - id: bandit
-        args: ["--ini", ".bandit", "--exclude", ".venv,tests,.rhiza/tests,.git,.pytest_cache"]
+        # Scope deliberately lives in .bandit, not here — see that file (#1493).
+        args: ["--ini", ".bandit"]
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.11.0.1
