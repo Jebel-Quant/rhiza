@@ -135,6 +135,23 @@ ignore_missing_version = true
 strict = true
 files = ["utils"]
 
+[tool.interrogate]
+# The same job [tool.mypy] does above, for the same reason (#1535). The interrogate hook
+# in .pre-commit-config.yaml has always passed `--config=pyproject.toml`, and this table
+# has never existed — interrogate falls back to its own defaults for a missing table
+# rather than failing, so the hook silently enforced fail-under 80 with magic and
+# __init__ methods counted, where `make docs-coverage` enforces 100 with both ignored.
+# A hook that is weaker than the gate it shadows is worse than no hook: it passes on
+# work the gate will reject.
+#
+# Keep these in step with the flags in python.mk's docs-coverage recipe
+# (`interrogate -vv --fail-under 100 --ignore-init-method --ignore-magic`). No `paths`
+# key: the hook is handed the files it matched, and the gate passes DOCSTRING_FOLDERS on
+# the command line, so neither reads a path from here.
+fail-under = 100
+ignore-init-method = true
+ignore-magic = true
+
 [tool.check_test_layout]
 # Rhiza ships configuration templates, not a runtime library: there is no `src/` tree,
 # so there is no module for a `tests/<path>/test_<name>.py` to mirror and never will be.
