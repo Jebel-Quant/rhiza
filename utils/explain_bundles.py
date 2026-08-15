@@ -4,22 +4,29 @@
 # ///
 """Print all Rhiza bundles and profiles with descriptions and dependencies.
 
-Run as a script from a project root that contains ``.rhiza/template-bundles.yml``.
-It reads that file, groups every bundle into the base, GitHub, and GitLab families,
-and prints a colourised summary of each bundle (with its ``requires``/``recommends``
-dependencies) followed by the profiles and the bundles they expand to.
+It reads ``.rhiza/template-bundles.yml``, groups every bundle into the base, GitHub,
+and GitLab families, and prints a colourised summary of each bundle (with its
+``requires``/``recommends`` dependencies) followed by the profiles and the bundles
+they expand to.
+
+Importing this module has **no side effects**: the YAML is read and the summary
+printed only when :func:`main` runs. That is deliberate (#1530) — the config used to
+be opened at import time through a *relative* path, so the module was importable only
+from the repository root, and every consumer (a doctest, a test, another script) had
+to chdir first.
 
 Example:
     Invoke through the Makefile target (the supported entry point)::
 
         $ make explain-bundles
 
-    or run the module directly from the repository root::
+    or run the module directly, from any directory::
 
         $ python utils/explain_bundles.py
 """
 
 import sys
+from pathlib import Path
 
 try:
     import yaml  # type: ignore[import-untyped]
@@ -33,11 +40,8 @@ YELLOW = "\033[33m"
 DIM = "\033[2m"
 RESET = "\033[0m"
 
-with open(".rhiza/template-bundles.yml") as f:
-    data = yaml.safe_load(f)
-
-bundles = data.get("bundles", {})
-profiles = data.get("profiles", {})
+# The config's path relative to whichever project root holds it.
+_CONFIG_REL = Path(".rhiza") / "template-bundles.yml"
 
 
 def _is_github(name: str) -> bool:
@@ -150,33 +154,86 @@ def _print_bundle(name: str, info: dict) -> None:  # type: ignore[type-arg]
         print(f"  {'':24}{DIM}recommends: {', '.join(recommends)}{RESET}")
 
 
-groups: dict[str, dict] = {"base": {}, "github": {}, "gitlab": {}}  # type: ignore[type-arg]
-for name, info in bundles.items():
-    groups[_bundle_group(name)][name] = info
+def _config_path() -> Path:
+    """Locate ``.rhiza/template-bundles.yml``.
 
-base_bundles = groups["base"]
-github_bundles = groups["github"]
-gitlab_bundles = groups["gitlab"]
+    The current directory wins when it holds a config, so the script still explains
+    *this* project when run from a project root. Otherwise the path is resolved
+    relative to this file, which is what makes the module usable from anywhere —
+    including from a test or a doctest that never changes directory.
 
-print(f"\n{BOLD}Bundles{RESET}  ({len(bundles)} total)\n" + "─" * 72)
+    Returns:
+        The config path to read. It is not guaranteed to exist; :func:`main` reports
+        a missing file rather than letting ``open`` raise.
+    """
+    local = Path.cwd() / _CONFIG_REL
+    if local.is_file():
+        return local
+    return Path(__file__).resolve().parent.parent / _CONFIG_REL
 
-print(f"\n  {BOLD}Core & Feature{RESET}  ({len(base_bundles)})\n")
-for name, info in base_bundles.items():
-    _print_bundle(name, info)
 
-print(f"\n  {BOLD}GitHub{RESET}  ({len(github_bundles)})\n")
-for name, info in github_bundles.items():
-    _print_bundle(name, info)
+def group_bundles(bundles: dict) -> dict[str, dict]:  # type: ignore[type-arg]
+    """Split every bundle into its display group.
 
-print(f"\n  {BOLD}GitLab{RESET}  ({len(gitlab_bundles)})\n")
-for name, info in gitlab_bundles.items():
-    _print_bundle(name, info)
+    Args:
+        bundles: The ``bundles`` mapping from ``template-bundles.yml``.
 
-print(f"\n{BOLD}Profiles{RESET}  ({len(profiles)} total)\n" + "─" * 72)
-for name, info in profiles.items():
-    desc = info.get("description", "").strip().splitlines()[0]
-    members = info.get("bundles", [])
-    print(f"  {GREEN}{BOLD}{name:<24}{RESET}{desc}")
-    print(f"  {'':24}{DIM}expands to: {', '.join(members)}{RESET}")
+    Returns:
+        A mapping with exactly the keys ``base``, ``github`` and ``gitlab``, each
+        holding the bundles that belong to that family. Empty families are kept so
+        callers can render a heading with a count of zero.
 
-print()
+    Examples:
+        >>> groups = group_bundles({"core": {}, "github-tests": {}})
+        >>> sorted(groups)
+        ['base', 'github', 'gitlab']
+        >>> list(groups["base"])
+        ['core']
+        >>> list(groups["github"])
+        ['github-tests']
+        >>> groups["gitlab"]
+        {}
+    """
+    groups: dict[str, dict] = {"base": {}, "github": {}, "gitlab": {}}  # type: ignore[type-arg]
+    for name, info in bundles.items():
+        groups[_bundle_group(name)][name] = info
+    return groups
+
+
+def main() -> int:
+    """Read the bundle config and print the bundle and profile summary.
+
+    Returns:
+        ``0`` on success. A missing config exits non-zero with guidance instead of
+        returning, so the caller never prints an empty summary and claims success.
+    """
+    config = _config_path()
+    if not config.is_file():
+        sys.exit(f"{YELLOW}No {_CONFIG_REL} found — run from a project root that has one.{RESET}")
+
+    with open(config) as f:
+        data = yaml.safe_load(f)
+
+    bundles = data.get("bundles", {})
+    profiles = data.get("profiles", {})
+    groups = group_bundles(bundles)
+
+    print(f"\n{BOLD}Bundles{RESET}  ({len(bundles)} total)\n" + "─" * 72)
+    for heading, key in (("Core & Feature", "base"), ("GitHub", "github"), ("GitLab", "gitlab")):
+        print(f"\n  {BOLD}{heading}{RESET}  ({len(groups[key])})\n")
+        for name, info in groups[key].items():
+            _print_bundle(name, info)
+
+    print(f"\n{BOLD}Profiles{RESET}  ({len(profiles)} total)\n" + "─" * 72)
+    for name, info in profiles.items():
+        desc = info.get("description", "").strip().splitlines()[0]
+        members = info.get("bundles", [])
+        print(f"  {GREEN}{BOLD}{name:<24}{RESET}{desc}")
+        print(f"  {'':24}{DIM}expands to: {', '.join(members)}{RESET}")
+
+    print()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

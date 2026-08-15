@@ -48,18 +48,7 @@ def _load(root: Path, name: str):  # type: ignore[no-untyped-def]
     return module
 
 
-@pytest.fixture
-def _in_root(root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Run from the repository root.
-
-    ``explain_bundles`` opens ``.rhiza/template-bundles.yml`` at *import* time via a
-    relative path, so it is only importable with the root as the working directory.
-    """
-    monkeypatch.chdir(root)
-
-
 @pytest.mark.parametrize("name", _MODULES)
-@pytest.mark.usefixtures("_in_root")
 def test_doctests_pass(root: Path, name: str) -> None:
     """Every doctest example in the module must evaluate to its documented output."""
     module = _load(root, name)
@@ -72,7 +61,6 @@ def test_doctests_pass(root: Path, name: str) -> None:
 
 
 @pytest.mark.parametrize("name", _MODULES)
-@pytest.mark.usefixtures("_in_root")
 def test_module_carries_examples(root: Path, name: str) -> None:
     """Each module must carry at least one example, or the check above measures nothing."""
     module = _load(root, name)

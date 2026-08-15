@@ -96,6 +96,8 @@ A few files **cannot** be symlinks and stay as **real copies**, kept in sync by 
 
 Plus intentional mother-repo overrides that deliberately diverge from their bundle source: root `.gitignore`, `.pre-commit-config.yaml`, `.python-version`, `SECURITY.md`, `renovate.json`. The exclusion list lives in `utils/link_dogfood.py`. Downstream consumers are unaffected: `rhiza-cli` sparse-checks-out a bundle and dereferences symlinks on copy, so synced projects always receive real files (guarded by `test_no_symlinks_in_*`).
 
+**What guards the invariant in CI is `tests/bundles/test_bundle_dogfood_symlinks.py`, not `make sync-self-check`.** The test runs inside `make test` on every push and PR, and it reuses `link_dogfood`'s own carve-out predicate and bundle index, so the guard and the linker cannot disagree about the rules. `sync-self-check` is the *local* equivalent — the same `--check` pass, for running before you commit a new bundle file — and no workflow invokes it. It was described as "the CI drift guard" in four places until #1532, which is the kind of claim that stops anyone checking whether the real guard still exists.
+
 ### Language layers
 
 `core` used to be a Python project in disguise: it created a virtualenv, ran `uv sync`
@@ -178,7 +180,7 @@ Python kept *outside* the source root was unreachable by three of the four stati
 The mother repo was the extreme case — it ships configuration, not a library, so it has no
 `src/` at all and `typecheck`, `security` and `deps` each exited **0** having measured
 nothing, on the very repo that ships those gates to everyone else. `utils/` (the tooling
-behind `make sync-self` and the `sync-self-check` drift guard) is contributed from
+behind `make sync-self` and the `sync-self-check` drift check) is contributed from
 `.rhiza/make.d/bundles.mk`, which is mother-repo-only — the root `Makefile` cannot hold it,
 being a dogfood symlink into `bundles/core/`. `tests/utils/test_gate_scope.py` asserts the
 outcome rather than the wiring: each gate must resolve to a non-empty list naming `utils`.
@@ -302,7 +304,7 @@ The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiz
 | `paper.mk` | paper | LaTeX paper compilation |
 | `lfs.mk` | lfs | Git LFS install/track/status |
 | `github.mk` | github | GitHub repo/workflow helpers |
-| `bundles.mk` | *(mother-repo only — no bundle ships it)* | `explain-bundles`, `sync-self`, `sync-self-check`, `e2e` |
+| `bundles.mk` | *(mother-repo only — no bundle ships it)* | `explain-bundles`, `sync-self`, `sync-self-check`, `e2e`, `gitlab-docker-test` |
 
 Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can be defined multiple times to chain behaviour. Add project-specific hooks directly in the root `Makefile` above the include line. Developer-local shortcuts go in `local.mk` (not committed).
 
@@ -354,7 +356,7 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 > **Coverage in this repo (mother-repo specifics).** Rhiza has no `src/`, so `SOURCE_FOLDER`
 > matches nothing and the coverage scope comes entirely from the `COVERAGE_FOLDERS`
 > accumulator — `.rhiza/make.d/bundles.mk` contributes `utils`, the tooling behind
-> `make sync-self` and the `sync-self-check` drift guard. `make test` therefore prints
+> `make sync-self` and the `sync-self-check` drift check. `make test` therefore prints
 > `Measuring coverage in:utils` and enforces the standard 90% bar, which `utils` currently
 > passes at 100%.
 >
@@ -381,4 +383,6 @@ This repo runs on **GitHub Actions only**: `.github/workflows/` — CI, e2e, rel
 
 GitLab support ships as a **template for downstream consumers**, not as active CI in this repo: the `gitlab` bundle (`bundles/gitlab/`) materializes a `.gitlab-ci.yml` plus `.gitlab/` pipelines into projects that adopt the `gitlab-project` profile, mirroring the GitHub Actions coverage there.
 
-Because no GitLab pipeline runs here, `tests/bundles/test_gitlab_ci.py` validates the GitLab templates without a GitLab host: it assembles a `gitlab-project` and (1) checks every container image the pipeline/Dockerfiles reference actually exists on its registry (the guard that catches a retired tag like the removed `uv:*-bookworm`), (2) runs `gitlab-ci-local` (pinned, via `npx`) to resolve every `include:` and validate the merged pipeline against GitLab's JSON schema. A third test actually runs a job in Docker against the pinned `$UV_IMAGE` — it needs Docker and is opt-in: `RHIZA_GITLAB_DOCKER=1 make test` (or run it directly). All three skip cleanly when their dependency (network / Node / Docker) is absent, so `make test` stays green offline.
+Because no GitLab pipeline runs here, `tests/bundles/test_gitlab_ci.py` validates the GitLab templates without a GitLab host: it assembles a `gitlab-project` and (1) checks every container image the pipeline/Dockerfiles reference actually exists on its registry (the guard that catches a retired tag like the removed `uv:*-bookworm`), (2) runs `gitlab-ci-local` (pinned, via `npx`) to resolve every `include:` and validate the merged pipeline against GitLab's JSON schema. A third test actually runs a job in Docker against the pinned `$UV_IMAGE` — it needs Docker and Node and is opt-in behind `RHIZA_GITLAB_DOCKER`, reached as **`make gitlab-docker-test`**. All three skip cleanly when their dependency (network / Node / Docker) is absent, so `make test` stays green offline.
+
+That third one is the reason the target exists (#1528). Opt-in was correct — it pulls a large image — but the variable was set by no workflow, no target and no `.env`, so the only check that the pinned image still pulls and runs was skipped in *every* environment while reading as covered. `.github/workflows/rhiza_weekly.yml` now calls the target on the weekly schedule, and asserts `docker`/`npx` are present first so a runner image that drops either fails the job instead of quietly reinstating the skip. Weekly matches the cost, and matches the risk: no GitLab pipeline runs here, so a retired image tag would otherwise surface first in a downstream consumer.

@@ -31,6 +31,7 @@ Example:
 
 from __future__ import annotations
 
+import argparse
 import os
 import shutil
 import subprocess  # nosec B404  # git is invoked with a fixed, non-user argument list
@@ -311,6 +312,57 @@ def _report(*, check: bool, linked: int, unchanged: int, ambiguous: list[str], p
     return 1 if (ambiguous or pending) else 0
 
 
+def _resolve_inputs(root: Path, index: dict[str, list[Path]] | None) -> tuple[dict[str, list[Path]], list[str]]:
+    """Settle what to scan: the bundle index and the candidate root paths.
+
+    Split out of :func:`relink` so that function is a loop over an already-decided
+    input rather than a loop wrapped in setup. The caller-supplied-index branch is
+    the one unit tests take, which is exactly why it is worth isolating: it must stay
+    equivalent to the scan without duplicating it.
+
+    Args:
+        root: The repository root containing ``bundles/`` and the dogfood files.
+        index: A pre-built bundle index, or None to scan ``bundles/`` and ``git ls-files``.
+
+    Returns:
+        The bundle index and the list of root-relative paths to classify.
+    """
+    if index is not None:
+        return index, list(index.keys())
+    bundles_dir = root / "bundles"
+    if not bundles_dir.is_dir():
+        sys.exit(f"{YELLOW}No bundles/ directory found at {root} — run from the rhiza repo root.{RESET}")
+    return _bundle_index(bundles_dir), _tracked_files(root)
+
+
+def _apply(root: Path, rel: str, source: Path, *, check: bool) -> str:
+    """Link ``rel`` to ``source`` — or, in check mode, report that it would be.
+
+    This holds the whole check-versus-write distinction, so :func:`relink` never
+    branches on ``check`` itself and simply files each path under the verdict it gets
+    back.
+
+    Args:
+        root: The repository root.
+        rel: The dogfood file path relative to ``root``.
+        source: The owning bundle file the symlink should target.
+        check: When True, print and classify without writing anything.
+
+    Returns:
+        One of ``"pending"`` (check mode, not yet linked), ``"linked"`` (a symlink was
+        created) or ``"unchanged"`` (already correct).
+    """
+    if check:
+        if _link_is_current(root, rel, source):
+            return "unchanged"
+        print(f"  {YELLOW}would link{RESET} {rel} {DIM}->{RESET} {source.relative_to(root)}")
+        return "pending"
+    if _link_one(root, rel, source):
+        print(f"  {GREEN}linked{RESET}    {rel} {DIM}->{RESET} {source.relative_to(root)}")
+        return "linked"
+    return "unchanged"
+
+
 def relink(
     root: Path,
     index: dict[str, list[Path]] | None = None,
@@ -324,9 +376,13 @@ def relink(
     more than one bundle) are skipped with a warning rather than guessed.
 
     In ``check`` mode nothing is written: the function only reports the copies that
-    *would* be linked and returns non-zero if any are pending. This is the CI drift
-    guard — it fails a build when someone adds a bundle file (or lets a copy reappear)
-    without running ``make sync-self``.
+    *would* be linked and returns non-zero if any are pending — the local drift check,
+    reached as ``make sync-self-check``, for use before committing a new bundle file.
+
+    In CI the same invariant is asserted by ``tests/bundles/test_bundle_dogfood_symlinks.py``
+    inside ``make test``, which reuses this module's own carve-out predicate and bundle
+    index so the two can never disagree. No workflow calls ``sync-self-check`` itself
+    (#1532).
 
     Args:
         root: The repository root containing ``bundles/`` and the dogfood files.
@@ -342,41 +398,56 @@ def relink(
         Process exit code: ``0`` on success, ``1`` if any file was ambiguous or (in
         ``check`` mode) if any eligible copy is not yet linked.
     """
-    if index is None:
-        bundles_dir = root / "bundles"
-        if not bundles_dir.is_dir():
-            sys.exit(f"{YELLOW}No bundles/ directory found at {root} — run from the rhiza repo root.{RESET}")
-        index = _bundle_index(bundles_dir)
-        files: list[str] = _tracked_files(root)
-    else:
-        files = list(index.keys())
-
-    linked = 0
-    unchanged = 0
-    ambiguous: list[str] = []
-    pending: list[str] = []
+    index, files = _resolve_inputs(root, index)
+    verdicts: dict[str, list[str]] = {"linked": [], "unchanged": [], "pending": [], "ambiguous": []}
 
     for rel in files:
         kind, source = _classify_dogfood(root, rel, index)
         if kind == "ambiguous":
-            ambiguous.append(rel)
-            continue
-        if kind == "skip" or source is None:
-            continue
-        if check:
-            if _link_is_current(root, rel, source):
-                unchanged += 1
-            else:
-                print(f"  {YELLOW}would link{RESET} {rel} {DIM}->{RESET} {source.relative_to(root)}")
-                pending.append(rel)
-        elif _link_one(root, rel, source):
-            print(f"  {GREEN}linked{RESET}    {rel} {DIM}->{RESET} {source.relative_to(root)}")
-            linked += 1
-        else:
-            unchanged += 1
+            verdicts["ambiguous"].append(rel)
+        elif kind == "link" and source is not None:
+            verdicts[_apply(root, rel, source, check=check)].append(rel)
 
-    return _report(check=check, linked=linked, unchanged=unchanged, ambiguous=ambiguous, pending=pending)
+    return _report(
+        check=check,
+        linked=len(verdicts["linked"]),
+        unchanged=len(verdicts["unchanged"]),
+        ambiguous=verdicts["ambiguous"],
+        pending=verdicts["pending"],
+    )
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse the command line.
+
+    Uses argparse rather than scanning ``sys.argv`` (#1531). The distinction is not
+    cosmetic on this tool: the default mode *rewrites tracked files as symlinks*, so a
+    mistyped ``--check`` must be an error rather than silently falling through to the
+    writing run.
+
+    Args:
+        argv: Arguments to parse, or None to read ``sys.argv[1:]``.
+
+    Returns:
+        The parsed namespace, carrying the boolean ``check``.
+    """
+    parser = argparse.ArgumentParser(
+        prog="link_dogfood.py",
+        description=(
+            "Relink the mother repo's dogfood copies as relative symlinks into bundles/. "
+            "Mother-repo tooling; run it via `make sync-self`."
+        ),
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help=(
+            "report what would be linked and exit non-zero if anything is pending, "
+            "without writing (`make sync-self-check`)"
+        ),
+    )
+    return parser.parse_args(argv)
 
 
 if __name__ == "__main__":
-    sys.exit(relink(Path(__file__).resolve().parent.parent, check="--check" in sys.argv[1:]))
+    sys.exit(relink(Path(__file__).resolve().parent.parent, check=_parse_args().check))
