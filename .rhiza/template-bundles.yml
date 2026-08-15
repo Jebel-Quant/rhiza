@@ -313,7 +313,7 @@ bundles:
     description: "Optional Python testing extras: benchmark, hypothesis-test, stress and mutation gates"
     standalone: true
     requires:
-      - book
+      - book          # ships docs/development/TESTS.md, which needs the book's docs/ tree
       - core
       - python-core   # test.mk reads TESTS_FOLDER and pytest.ini from the layer
     notes: |

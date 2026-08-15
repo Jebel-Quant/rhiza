@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess  # nosec B404 - git is invoked with a fixed, non-user argument list
+import subprocess  # nosec B404  # git is invoked with a fixed, non-user argument list
 import sys
 import tempfile
 from pathlib import Path
@@ -160,7 +160,7 @@ def _tracked_files(root: Path) -> list[str]:
     Returns:
         The list of tracked file paths reported by ``git ls-files``.
     """
-    result = subprocess.run(  # noqa: S603  # nosec B603 - resolved git path, fixed args, no shell
+    result = subprocess.run(  # noqa: S603  # nosec B603  # resolved git path, fixed args, no shell
         [_GIT, "ls-files"],
         cwd=root,
         capture_output=True,

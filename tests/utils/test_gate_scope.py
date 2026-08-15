@@ -29,8 +29,17 @@ written to prevent, for as long as the bug existed.
 
 So ``test_every_declared_accumulator_is_guarded`` derives the expected set from the
 bundle sources: every ``*_FOLDERS ?=`` declaration across ``bundles/*/.rhiza/make.d/`` is
-an accumulator some gate reads, and each must appear below. Adding a sixth path-scoped
+an accumulator some gate reads, and each must appear below. Adding a further path-scoped
 gate now fails this suite until it is guarded, rather than joining silently.
+
+That guard did its job, and also showed where it ends. ``coverage`` was the *sixth*
+path-scoped gate and #1505 never converted it: ``test`` still passed
+``--cov=$(SOURCE_FOLDER)`` behind a ``[ -d ... ]``, so here the suite ran and measured no
+coverage whatsoever. Deriving from declarations catches a gate that has an accumulator and
+is unguarded; it is structurally blind to one that never declared an accumulator at all.
+#1516 gave ``coverage`` the same shape as the rest, which is what brings it into range of
+the derivation — the lesson being that this file's completeness argument holds only once a
+gate has opted into the convention.
 """
 
 from __future__ import annotations
@@ -56,6 +65,7 @@ _SCOPED_GATES = [
     ("security", "BANDIT_FOLDERS", re.compile(r'bandit_paths="([^"]*)"')),
     ("docs-coverage", "DOCSTRING_FOLDERS", re.compile(r'docstring_paths="([^"]*)"')),
     ("semgrep", "SEMGREP_FOLDERS", re.compile(r'semgrep_paths="([^"]*)"')),
+    ("test", "COVERAGE_FOLDERS", re.compile(r'coverage_paths="([^"]*)"')),
     # `(?!on:)` skips the "[INFO] Running deptry on:" banner and matches the invocation.
     ("deps", "DEPTRY_FOLDERS", re.compile(r"deptry (?!on:)([^\n;\\]*)")),
 ]
@@ -96,6 +106,30 @@ def test_scoped_gate_covers_utils(target: str, gate_scopes: dict[str, str]) -> N
     assert "utils" in gate_scopes[target], (
         f"`make {target}` resolves to {gate_scopes[target]!r}, which omits utils/ — the "
         f"tooling behind `make sync-self` and the sync-self-check CI drift guard."
+    )
+
+
+def test_rhiza_test_carries_the_docstring_scope_to_the_shipped_doctests(logger) -> None:
+    """`make rhiza-test` must hand the shipped test_docstrings.py the same scope as docs-coverage.
+
+    Not a member of ``_SCOPED_GATES``: ``RHIZA_DOCTEST_FOLDERS`` is not an accumulator of
+    its own but a *carrier* for ``DOCSTRING_FOLDERS``, so the derivation above would flag
+    it as stale. The property is worth pinning separately, because the two halves are one
+    invariant — ``docs-coverage`` asking whether a docstring exists while the doctest
+    runner looks somewhere else is exactly the split that let 23 examples in ``utils/`` go
+    unchecked (#1517).
+    """
+    out = strip_ansi(run_make(logger, ["rhiza-test"], cwd=_ROOT).stdout)
+    match = re.search(r'RHIZA_DOCTEST_FOLDERS="([^"]*)"', out)
+    assert match, f"`make rhiza-test` no longer passes RHIZA_DOCTEST_FOLDERS:\n{out[-800:]}"
+    scope = match.group(1).strip()
+    assert scope, (
+        "`make rhiza-test` resolves an empty doctest scope, so test_docstrings.py would "
+        "skip and the repo's docstring examples would go unchecked (#1517)."
+    )
+    assert "utils" in scope, (
+        f"`make rhiza-test` scopes doctests to {scope!r}, which omits utils/ — where this "
+        f"repo's only non-test Python, and its only docstring examples, live."
     )
 
 

@@ -161,3 +161,16 @@ marimo = "marimo"
 numpy = "numpy"
 plotly = "plotly"
 pandas = "pandas"
+
+[tool.coverage.report]
+# `make test` now measures COVERAGE_FOLDERS rather than a hard-coded SOURCE_FOLDER
+# (#1516), which brought utils/ under the coverage gate for the first time. These are
+# the conventional non-executable exclusions; without them the `__main__` guard at the
+# foot of each script counts as a missed statement it is not possible to cover from a
+# test that imports the module.
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]

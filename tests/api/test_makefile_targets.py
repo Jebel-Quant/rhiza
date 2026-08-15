@@ -157,7 +157,14 @@ class TestMakefile:
         assert "--cov-report=xml:_tests/coverage.xml" in out
 
     def test_test_target_without_source_folder(self, logger, tmp_path):
-        """Test target should run without coverage when SOURCE_FOLDER doesn't exist."""
+        """Test target should run without coverage when no coverage folder resolves.
+
+        Asserts the *resolved scope* rather than the shell that computes it. This test
+        used to pin the literal `if [ -d nonexistent_src ]`, which #1516 replaced with the
+        COVERAGE_FOLDERS accumulator every other path-scoped gate already used — so it was
+        testing the wiring, and broke on a change that preserved the behaviour exactly.
+        `coverage_paths` is expanded by make, so a dry run shows the real scope.
+        """
         # Update .env to set SOURCE_FOLDER to a non-existent directory
         env_file = tmp_path / ".rhiza" / ".env"
         env_content = env_file.read_text()
@@ -170,11 +177,27 @@ class TestMakefile:
 
         proc = run_make(logger, ["test"])
         out = proc.stdout
-        # Should see warning about missing source folder
-        assert "if [ -d nonexistent_src ]" in out
-        # Should still run pytest but without coverage flags
+        # The accumulator seeds itself only from a SOURCE_FOLDER that exists, so nothing
+        # contributes one here and the gate measures no coverage.
+        assert 'coverage_paths=""' in out
+        # Should still run pytest, and still write the HTML test report.
         assert "uv run --with pytest" in out
         assert "--html=_tests/html-report/report.html" in out
+
+    def test_test_target_measures_the_source_folder_when_it_exists(self, logger, tmp_path):
+        """The default case: an existing SOURCE_FOLDER seeds COVERAGE_FOLDERS by itself.
+
+        The companion to the test above, and the reason #1516 is not a behaviour change
+        for a project laid out conventionally: it gets exactly the previous scope without
+        setting anything.
+        """
+        (tmp_path / "src").mkdir(exist_ok=True)
+        (tmp_path / "tests").mkdir(exist_ok=True)
+
+        proc = run_make(logger, ["test"])
+        out = proc.stdout
+        assert 'coverage_paths="src"' in out
+        assert "--cov-fail-under=" in out
 
     def test_docs_coverage_target_dry_run(self, logger):
         """Docs coverage should run interrogate over the docstring paths."""

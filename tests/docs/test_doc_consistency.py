@@ -186,6 +186,60 @@ class TestBundleDocumentation:
         )
 
 
+def _make_module_names() -> list[str]:
+    """Return the basename of every ``.rhiza/make.d/*.mk`` fragment that ships or runs here.
+
+    The union of two sources, because neither alone is complete: the bundle sources carry
+    ``rust.mk`` and ``go.mk``, which the mother repo never materialises (it runs one
+    language layer), while ``bundles.mk`` exists only at the root because no bundle ships
+    it.
+    """
+    names = {p.name for p in _ROOT.glob("bundles/*/.rhiza/make.d/*.mk")}
+    names |= {p.name for p in (_ROOT / ".rhiza" / "make.d").glob("*.mk")}
+    return sorted(names)
+
+
+def _claude_md_make_module_table() -> set[str]:
+    """Return the ``.rhiza/make.d/`` filenames listed in CLAUDE.md's ownership table.
+
+    Reads the table itself rather than the whole document on purpose: the gap this
+    guards against is a fragment mentioned somewhere in the prose while missing from the
+    map a contributor actually uses to find its owning bundle.
+    """
+    claude_md = (_ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+    header = "| `.rhiza/make.d/` file | owner bundle | provides |"
+    assert header in claude_md, "CLAUDE.md no longer contains the .rhiza/make.d ownership table header"
+    body = claude_md.split(header, 1)[1].split("\n\n", 1)[0]
+    return set(re.findall(r"^\|\s*`([^`]+\.mk)`\s*\|", body, re.MULTILINE))
+
+
+class TestMakeModuleDocumentation:
+    """Verify CLAUDE.md's ``.rhiza/make.d`` ownership table lists every shipped fragment.
+
+    The bundle tables are guarded in both directions; this one used to be guarded only
+    doc-to-repo (``test_mentioned_make_targets_exist``), so a fragment could be added
+    without ever being mapped to its owner. ``completions.mk`` reached main that way.
+    """
+
+    @pytest.mark.parametrize("module_name", _make_module_names())
+    def test_make_module_documented_in_claude_md(self, module_name: str) -> None:
+        """Every shipped .rhiza/make.d fragment must have a row in the ownership table."""
+        assert module_name in _claude_md_make_module_table(), (
+            f"'{module_name}' ships in .rhiza/make.d/ but has no row in CLAUDE.md's ownership table — "
+            "add one naming its owner bundle, so a contributor knows which bundle source to edit"
+        )
+
+    def test_the_table_lists_no_unknown_modules(self) -> None:
+        """The table must not name a fragment that no bundle ships and the root lacks."""
+        unknown = _claude_md_make_module_table() - set(_make_module_names())
+        assert not unknown, f"CLAUDE.md's ownership table names .rhiza/make.d fragments that do not exist: {unknown}"
+
+    def test_the_table_was_parsed(self) -> None:
+        """Guard against the table scanner silently collecting nothing."""
+        assert len(_claude_md_make_module_table()) > 10, "expected the ownership table to list many fragments"
+        assert len(_make_module_names()) > 10, "expected to discover many .rhiza/make.d fragments"
+
+
 _BUNDLE_TAXONOMY = _ROOT / "docs" / "reference" / "BUNDLE_TAXONOMY.md"
 
 
