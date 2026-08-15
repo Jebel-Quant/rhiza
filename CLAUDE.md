@@ -164,7 +164,7 @@ tool, so `make deps` failed on Python and `make deptry` on the other two. The to
 `DEPTRY_FOLDERS`/`DEPTRY_IGNORE` variables stay, because they name deptry's *arguments*
 (marimo.mk appends `--ignore DEP004`) and are the accumulator interface a downstream
 `local.mk` writes to. `make deptry` survives as a deprecated alias that warns.
-`tests/bundles/test_bundle_sync.py::TestEveryLayerDefinesTheSameGateNames` now fails on
+`tests/bundles/test_layer_contract.py::TestEveryLayerDefinesTheSameGateNames` now fails on
 the next divergence rather than documenting it.
 
 **Where each Python gate looks, and how to add a folder.** python-core's four path-scoped
@@ -193,7 +193,7 @@ in the separate `tests` bundle, and that was a real inconsistency rather than a
 considered asymmetry: `python.mk`'s own `all` named them while `tests` defined them, and
 nothing made `tests` arrive — the dependency runs the other way, so `core + python-core`
 alone had an `all` that died on a missing rule (#1475). No shipped profile reached it,
-which is why it survived; `tests/bundles/test_bundle_sync.py::TestALayersAllIsSatisfiableOnItsOwn`
+which is why it survived; `tests/bundles/test_layer_contract.py::TestALayersAllIsSatisfiableOnItsOwn`
 now pins the property for every layer.
 
 What `tests` still owns is what is genuinely optional — `benchmark`, `hypothesis-test`,

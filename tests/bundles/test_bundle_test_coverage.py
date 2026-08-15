@@ -42,6 +42,11 @@ _GENERIC_TESTS = {
     "test_bundle_matrix.py",
     "test_bundle_combinations.py",
     "test_bundle_content_validity.py",
+    # The two suites split out of test_bundle_content_validity.py in #1514. They inherited
+    # its generic shape — both walk every bundle from the YAML — so they must inherit its
+    # exclusion too, or a bundle merely swept by them would look behaviourally covered.
+    "test_bundle_parse_validity.py",
+    "test_bundle_ci_content.py",
     "test_doc_consistency.py",
     "test_bundle_test_coverage.py",  # this module
 }

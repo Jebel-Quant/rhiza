@@ -86,6 +86,48 @@ def is_dogfood_carveout(rel: str) -> bool:
 
     Returns:
         True if ``rel`` must remain a real file; False if it is eligible for symlinking.
+
+    Examples:
+        An ordinary bundle-owned file is linked, not carved out:
+
+        >>> is_dogfood_carveout(".rhiza/rhiza.mk")
+        False
+        >>> is_dogfood_carveout("ruff.toml")
+        False
+
+        A declared mother-repo override stays a real file, because its content
+        deliberately diverges from the bundle it would otherwise point at:
+
+        >>> is_dogfood_carveout(".python-version")
+        True
+        >>> is_dogfood_carveout("SECURITY.md")
+        True
+
+        Anything under ``.github/`` stays real at any depth — GitHub reads these blobs
+        directly and does not resolve symlinks:
+
+        >>> is_dogfood_carveout(".github/dependabot.yml")
+        True
+        >>> is_dogfood_carveout(".github/rulesets/main-branch-protection.json")
+        True
+
+        The ``O_NOFOLLOW`` names are matched by *basename*, so a nested one is caught
+        just as the root copy is. This is the case that is easy to get wrong: a
+        symlinked ``.gitignore`` does not error loudly, it makes git ignore the file's
+        rules while warning on every command.
+
+        >>> is_dogfood_carveout(".gitignore")
+        True
+        >>> is_dogfood_carveout(".rhiza/.gitignore")
+        True
+        >>> is_dogfood_carveout("bundles/core/.gitattributes")
+        True
+
+        Note that ``.github`` matches as a prefix rather than a path component, so a
+        directory merely *starting* with those characters is not carved out:
+
+        >>> is_dogfood_carveout(".github-notes/README.md")
+        False
     """
     return rel in _EXCLUDE or rel.startswith(".github/") or Path(rel).name in _NO_FOLLOW_NAMES
 
