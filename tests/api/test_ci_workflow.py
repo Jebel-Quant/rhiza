@@ -69,11 +69,66 @@ def test_ci_jobs_define_timeout_budgets(root):
         "docs-coverage": 10,
         "security": 10,
         "license": 10,
+        "rhiza-test": 5,
         "ci-gate": 5,
     }
 
     for job_name, timeout in expected.items():
         assert jobs[job_name]["timeout-minutes"] == timeout
+
+
+def test_every_gate_named_by_make_all_runs_in_ci(root):
+    """Each target `make all` names must be invoked by some CI job.
+
+    `make all` is the local aggregate, and a target that only ever runs there is a gate
+    in name only: it constrains one developer's habits, not the repo. `rhiza-test` was
+    exactly that (#1523) — it ran the shipped `.rhiza/tests/` suite, including the
+    doctests `RHIZA_DOCTEST_FOLDERS` scopes (#1517), and no workflow ever invoked it.
+
+    Derived from `all`'s own prerequisite list rather than a hand-written set, so adding
+    a gate to `all` without wiring it into CI fails here instead of passing silently.
+    """
+    all_line = next(
+        line
+        for line in (root / ".rhiza" / "make.d" / "python.mk").read_text(encoding="utf-8").splitlines()
+        if line.startswith("all:")
+    )
+    # "all: fmt deps test ... ## run all CI targets locally"
+    gates = all_line.split("##")[0].split(":", 1)[1].split()
+
+    workflows = (root / ".github" / "workflows").glob("*.yml")
+    invoked = "\n".join(wf.read_text(encoding="utf-8") for wf in workflows)
+
+    missing = [gate for gate in gates if f"make {gate}" not in invoked]
+    assert not missing, (
+        f"these targets are named by `make all` but no .github/workflows job runs them: "
+        f"{missing}. A gate that runs only locally cannot block a pull request (#1523)."
+    )
+
+
+def test_ci_gate_rolls_up_rhiza_test(root):
+    """The roll-up gate must depend on rhiza-test, which is what makes it *required*.
+
+    Branch protection requires the "CI gate" context and not the per-job names, so a job
+    absent from `needs` reports its own check run and blocks nothing. Adding rhiza-test
+    to the roll-up is what gave it teeth without a seventh required context — which would
+    have meant editing the ruleset, its bundle copy, and the sync test pinning the
+    `ci / ` prefix between them.
+    """
+    with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
+        workflow = yaml.safe_load(fh)
+
+    gate = workflow["jobs"]["ci-gate"]
+    assert "rhiza-test" in gate["needs"], (
+        f"ci-gate needs {gate['needs']}, which omits rhiza-test — so a failing "
+        f"rhiza-test would not block the PR (#1523)."
+    )
+
+    run_script = next(s["run"] for s in gate["steps"] if "needs." in s.get("run", ""))
+    assert "needs.rhiza-test.result" in run_script, (
+        "ci-gate lists rhiza-test in `needs` but never inspects its result, so the job "
+        "runs and its outcome is discarded."
+    )
 
 
 def test_ci_cache_keys_match_audit_policy(root):

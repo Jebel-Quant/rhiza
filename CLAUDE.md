@@ -351,14 +351,25 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 > is a required status check in `.github/rulesets/main-branch-protection.json`, so
 > renaming it would leave every PR waiting on a context that never reports.
 
-> **Coverage in this repo (mother-repo specifics).** Rhiza has no `src/` and ships no
-> runtime Python, so `make test` prints `Source folder src not found, running tests without
-> coverage` and the main `tests/` suite runs *without* a Python coverage number — by design.
-> Both that suite and `make rhiza-test` (which runs the shipped `.rhiza/tests/` suite) exercise
-> Make targets, YAML, and bundle invariants behaviourally, where there is no Python module to
-> cover. So "no coverage on `make test`" is expected here and does not mean anything is
-> unmeasured. Downstream
-> consumers on the `python-core` layer *do* have a `src/` and get the full 90% `make test` gate.
+> **Coverage in this repo (mother-repo specifics).** Rhiza has no `src/`, so `SOURCE_FOLDER`
+> matches nothing and the coverage scope comes entirely from the `COVERAGE_FOLDERS`
+> accumulator — `.rhiza/make.d/bundles.mk` contributes `utils`, the tooling behind
+> `make sync-self` and the `sync-self-check` drift guard. `make test` therefore prints
+> `Measuring coverage in:utils` and enforces the standard 90% bar, which `utils` currently
+> passes at 100%.
+>
+> **That is recent, and the previous behaviour is worth knowing** because it is the bug the
+> accumulators exist to prevent: until #1516 `test` passed `--cov=$(SOURCE_FOLDER)` behind a
+> `[ -d ... ]`, so on a repo with no `src/` the suite ran and measured no coverage at all —
+> silently, since a missing source folder warns rather than fails. `utils/` was reachable by
+> four gates and invisible to the fifth.
+>
+> What has *not* changed is where this repo's assurance actually comes from. 166 statements
+> of `utils` is a small fraction of it; the `tests/` suite and `make rhiza-test` mostly
+> exercise Make targets, YAML and bundle invariants behaviourally, and no statement-coverage
+> number describes that. A high percentage here is a check on the tooling, not a summary of
+> the suite. Downstream consumers on the `python-core` layer have a real `src/` and get the
+> same 90% gate over it.
 
 ### CI/CD
 
