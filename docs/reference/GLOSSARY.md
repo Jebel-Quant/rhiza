@@ -263,7 +263,7 @@ Multi-phase workflow triggered by version tags. Builds packages, creates GitHub 
 Workflow that synchronizes template files from upstream Rhiza repository.
 
 ### Security Workflow
-Workflow running security scans (pip-audit, bandit) on the codebase.
+Workflow running security scans (bandit, semgrep, CodeQL) on the codebase.
 
 ## Commands Reference
 

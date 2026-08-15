@@ -16,11 +16,11 @@ make test         # Run all tests with coverage (90% minimum required)
 make fmt          # Run all hooks via prek (ruff format/check, markdownlint, bandit, etc.)
 make deps         # Check for unused/missing dependencies
 make docs-coverage  # Check docstring coverage with interrogate (100% required)
-make typecheck    # Static type checking with pyright
+make typecheck    # Static type checking with ty and mypy --strict (TYPECHECKER=ty|mypy|both)
 make benchmark    # Performance benchmarks
 make hypothesis-test  # Property-based tests only
 make stress       # Load/concurrency tests
-make security     # pip-audit + bandit security scans
+make security     # bandit security scan
 make e2e          # Language-layer end-to-end suite (opt-in, real toolchains; see below)
 make book         # Build documentation
 make marimo       # Start Marimo notebook server
@@ -154,7 +154,7 @@ and tags itself so the changelog lands in the bump commit.
 | `coverage` | pytest-cov | `cargo llvm-cov` (same `_tests/coverage.xml` path) | `go test -coverprofile` + `gocover-cobertura` (same path) |
 | `typecheck` | ty / mypy | `cargo clippy -D warnings` (rustc already type-checks) | `go vet` + golangci-lint (the compiler already type-checks) |
 | `docs-coverage` | interrogate (%) | `RUSTDOCFLAGS=-D missing_docs` (pass/fail) | revive `exported` rule (pass/fail) |
-| `security` | bandit + pip-audit | `cargo deny check advisories` | `govulncheck` |
+| `security` | bandit | `cargo deny check advisories` | `govulncheck` |
 | `license` | pip-licenses | `cargo deny check licenses` | `go-licenses check` |
 | `deps` | `deptry` | `cargo machete` | `go mod tidy -diff` |
 

@@ -49,8 +49,8 @@ These are the commands you'll use most frequently:
 |---------|-------------|
 | `make deps` | Check for unused/missing dependencies |
 | `make pre-commit` | Run all pre-commit hooks |
-| `make typecheck` | Run type checking with ty |
-| `make security` | Run security scans (pip-audit and bandit) |
+| `make typecheck` | Run type checking with ty and mypy --strict |
+| `make security` | Run the bandit security scan |
 | `make docs-coverage` | Check documentation coverage |
 
 ### Testing
@@ -340,14 +340,11 @@ uv run ty check path/to/file.py
 ### Security Scanning
 
 ```bash
-# Run all security scans
+# Run the security gate (bandit over BANDIT_FOLDERS, scoped by .bandit)
 make security
 
-# Run pip-audit only
-uv run pip-audit
-
-# Run bandit only
-uv run bandit -r src/
+# Run bandit directly, with the same scope the gate uses
+uvx bandit -r src/ -ll -q --ini .bandit
 ```
 
 ### Dependency Checking

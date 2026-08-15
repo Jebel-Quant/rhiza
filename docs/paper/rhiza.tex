@@ -206,7 +206,7 @@ Rhiza integrates a layered quality stack that operates at multiple stages of the
 
 \paragraph{Pre-commit hooks.} The \texttt{pre-commit} bundle installs hooks that run \texttt{ruff} for linting and formatting, catching issues before they enter the repository.
 
-\paragraph{CI pipelines.} The \texttt{github} and \texttt{gitlab} bundles provide workflows that run on every pull request: unit tests across Python 3.11--3.14, type checking with \texttt{ty}, dependency validation with \texttt{deptry}, security scanning with \texttt{pip-audit} and \texttt{bandit}, and static analysis with \texttt{semgrep}.
+\paragraph{CI pipelines.} The \texttt{github} and \texttt{gitlab} bundles provide workflows that run on every pull request: unit tests across Python 3.11--3.14, type checking with \texttt{ty}, dependency validation with \texttt{deptry}, security scanning with \texttt{bandit}, and static analysis with \texttt{semgrep} and CodeQL.
 
 \paragraph{Automated dependency updates.} A Renovate configuration file, included in the \texttt{core} bundle, opens pull requests whenever a pinned dependency or the template \texttt{ref} is updated upstream. This closes the loop: Rhiza itself is treated as a dependency that can be automatically proposed for upgrade.
 

@@ -41,7 +41,7 @@ to the evidence that already exists in rhiza, so the questionnaire is mostly cop
 | Secured delivery (HTTPS) | GitHub + PyPI over HTTPS |
 | Crypto / no hardcoded secrets | `detect-secrets` pre-commit hook |
 | Dynamic / fuzz analysis | ClusterFuzzLite + Atheris (`rhiza_fuzzing.yml`, `.clusterfuzzlite/`) |
-| Dependency vulnerability monitoring | Dependabot + Renovate + `pip-audit` (`make security`) |
+| Dependency vulnerability monitoring | Dependabot + Renovate (version currency), CodeQL (`rhiza_codeql.yml`), OpenSSF Scorecard (`rhiza_scorecard.yml`), Trivy for images (`rhiza_docker.yml`) |
 | Contribution guide | `CONTRIBUTING.md` |
 | Code review of changes | Branch-protection ruleset (`docs/ops/BRANCH_PROTECTION.md`) |
 | Continuous integration | GitHub Actions + GitLab CI |
