@@ -173,11 +173,45 @@ def _link_one(root: Path, rel: str, source: Path) -> bool:
     return True
 
 
+def _owner_by_content(root_path: Path, owners: list[Path]) -> tuple[str, Path | None]:
+    """Pick the single bundle source whose bytes match ``root_path``.
+
+    Split out of :func:`_classify_dogfood` so that function stays a short ladder of
+    *eligibility* questions and this one holds the *content* comparison. Both halves
+    return the same ``(kind, source)`` verdict, so the split is invisible to callers.
+
+    Size is compared before content deliberately: a dogfood copy that diverges from
+    its bundle source usually differs in length, so the cheap check settles most
+    non-matches without reading either file. ``tests/utils/test_link_dogfood.py``
+    pins that ordering.
+
+    Args:
+        root_path: The concrete root file being classified.
+        owners: The bundle files that claim ``root_path``'s bundle-relative path.
+
+    Returns:
+        A ``(kind, source)`` verdict — see :func:`_classify_dogfood` for the vocabulary.
+    """
+    root_size = root_path.stat().st_size
+    same_size_owners = [o for o in owners if o.stat().st_size == root_size]
+    if not same_size_owners:
+        return ("skip", None)  # diverges from every owner — an (undeclared) override; leave it real
+    root_bytes = root_path.read_bytes()
+    identical = [o for o in same_size_owners if o.read_bytes() == root_bytes]
+    if not identical:
+        return ("skip", None)  # diverges from every owner — an (undeclared) override; leave it real
+    if len(identical) > 1:
+        return ("ambiguous", None)
+    return ("link", identical[0])
+
+
 def _classify_dogfood(root: Path, rel: str, index: dict[str, list[Path]]) -> tuple[str, Path | None]:
     """Classify a tracked root path for dogfood linking.
 
     This is the eligibility decision for a single file, factored out of
     :func:`relink` so the loop there stays a straight-line consumer of the verdict.
+    The byte-level comparison lives in :func:`_owner_by_content`; what remains here
+    is the ladder of reasons a path never reaches it.
 
     Args:
         root: The repository root.
@@ -209,17 +243,7 @@ def _classify_dogfood(root: Path, rel: str, index: dict[str, list[Path]]) -> tup
     # so the sole owner is the answer — and with several, the linker must not guess.
     if root_path.is_symlink() and not root_path.exists():
         return ("link", owners[0]) if len(owners) == 1 else ("ambiguous", None)
-    root_size = root_path.stat().st_size
-    same_size_owners = [o for o in owners if o.stat().st_size == root_size]
-    if not same_size_owners:
-        return ("skip", None)  # diverges from every owner — an (undeclared) override; leave it real
-    root_bytes = root_path.read_bytes()
-    identical = [o for o in same_size_owners if o.read_bytes() == root_bytes]
-    if not identical:
-        return ("skip", None)  # diverges from every owner — an (undeclared) override; leave it real
-    if len(identical) > 1:
-        return ("ambiguous", None)
-    return ("link", identical[0])
+    return _owner_by_content(root_path, owners)
 
 
 def _report(*, check: bool, linked: int, unchanged: int, ambiguous: list[str], pending: list[str]) -> int:
