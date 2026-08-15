@@ -161,11 +161,16 @@ def test_config_path_falls_back_to_the_repo_that_ships_the_script(root, monkeypa
 
 
 def test_main_exits_with_guidance_when_no_config_exists(root, monkeypatch, tmp_path):
-    """A missing config must fail loudly rather than print an empty summary."""
+    """A missing config must fail loudly rather than print an empty summary.
+
+    The expected text is built from the module's own ``_CONFIG_REL`` rather than
+    written out: it is a ``Path``, so it renders with a backslash on Windows, and
+    hard-coding the POSIX form failed the whole Windows matrix while passing locally.
+    """
     module = _load_module(root, monkeypatch, tmp_path, "bundles: {}\nprofiles: {}\n")
     monkeypatch.setattr(module, "_config_path", lambda: tmp_path / "absent" / "template-bundles.yml")
 
-    with pytest.raises(SystemExit, match=re.escape("No .rhiza/template-bundles.yml found")):
+    with pytest.raises(SystemExit, match=re.escape(f"No {module._CONFIG_REL} found")):
         module.main()
 
 
