@@ -16,11 +16,11 @@ make test         # Run all tests with coverage (90% minimum required)
 make fmt          # Run all hooks via prek (ruff format/check, markdownlint, bandit, etc.)
 make deps         # Check for unused/missing dependencies
 make docs-coverage  # Check docstring coverage with interrogate (100% required)
-make typecheck    # Static type checking with pyright
+make typecheck    # Static type checking with ty and mypy --strict (TYPECHECKER=ty|mypy|both)
 make benchmark    # Performance benchmarks
 make hypothesis-test  # Property-based tests only
 make stress       # Load/concurrency tests
-make security     # pip-audit + bandit security scans
+make security     # bandit security scan
 make e2e          # Language-layer end-to-end suite (opt-in, real toolchains; see below)
 make book         # Build documentation
 make marimo       # Start Marimo notebook server
@@ -154,7 +154,7 @@ and tags itself so the changelog lands in the bump commit.
 | `coverage` | pytest-cov | `cargo llvm-cov` (same `_tests/coverage.xml` path) | `go test -coverprofile` + `gocover-cobertura` (same path) |
 | `typecheck` | ty / mypy | `cargo clippy -D warnings` (rustc already type-checks) | `go vet` + golangci-lint (the compiler already type-checks) |
 | `docs-coverage` | interrogate (%) | `RUSTDOCFLAGS=-D missing_docs` (pass/fail) | revive `exported` rule (pass/fail) |
-| `security` | bandit + pip-audit | `cargo deny check advisories` | `govulncheck` |
+| `security` | bandit | `cargo deny check advisories` | `govulncheck` |
 | `license` | pip-licenses | `cargo deny check licenses` | `go-licenses check` |
 | `deps` | `deptry` | `cargo machete` | `go mod tidy -diff` |
 
@@ -166,6 +166,27 @@ tool, so `make deps` failed on Python and `make deptry` on the other two. The to
 `local.mk` writes to. `make deptry` survives as a deprecated alias that warns.
 `tests/bundles/test_bundle_sync.py::TestEveryLayerDefinesTheSameGateNames` now fails on
 the next divergence rather than documenting it.
+
+**Where each Python gate looks, and how to add a folder.** python-core's four path-scoped
+gates take their folder list from an accumulator, all seeded from `SOURCE_FOLDER` when it
+exists: `TYPECHECK_FOLDERS`, `BANDIT_FOLDERS`, `DOCSTRING_FOLDERS` and the older
+`DEPTRY_FOLDERS`/`DEPTRY_IGNORE` pair. A bundle or a consuming `Makefile`/`local.mk` adds
+a folder by appending, the way marimo.mk contributes its notebooks.
+
+Only `deps` had that shape before #1505; the other three hard-coded `SOURCE_FOLDER`, so
+Python kept *outside* the source root was unreachable by three of the four static gates.
+The mother repo was the extreme case — it ships configuration, not a library, so it has no
+`src/` at all and `typecheck`, `security` and `deps` each exited **0** having measured
+nothing, on the very repo that ships those gates to everyone else. `utils/` (the tooling
+behind `make sync-self` and the `sync-self-check` drift guard) is contributed from
+`.rhiza/make.d/bundles.mk`, which is mother-repo-only — the root `Makefile` cannot hold it,
+being a dogfood symlink into `bundles/core/`. `tests/utils/test_gate_scope.py` asserts the
+outcome rather than the wiring: each gate must resolve to a non-empty list naming `utils`.
+
+One consequence worth knowing when reading `make -n`: the folder list is expanded by
+**make**, not by the recipe's shell, so a dry run shows the real scope. The `[ -d ... ]`
+form it replaced printed its warning whether or not the branch would fire, which made a
+dry run's warnings meaningless as evidence either way.
 
 All three layers carry `test`/`coverage`/`typecheck` themselves. Python's used to live
 in the separate `tests` bundle, and that was a real inconsistency rather than a

@@ -121,6 +121,20 @@ ignore_missing_version = true
 # *dependency* that happens to sit at the same number, and the lock file is full of
 # third-party versions this repo does not control.
 
+[tool.mypy]
+# `make typecheck` passes both the strictness flag and the paths on the command line
+# (`mypy --strict $TYPECHECK_FOLDERS`), so this table does not drive CI — it makes a
+# *bare* `mypy` measure the same thing CI does (#1507). Without it the two disagreed:
+# the gate checked utils/ in strict mode while a contributor's `uvx mypy` swept the
+# whole tree at default strictness and reported on code this repo does not gate.
+#
+# Keep `files` in step with TYPECHECK_FOLDERS in .rhiza/make.d/bundles.mk, and `strict`
+# in step with the `--strict` in python.mk's typecheck recipe. tests/ is deliberately
+# absent from both: ruff exempts test code from ANN (see ruff.toml's per-file-ignores),
+# so the annotations strict mode would demand are not there by design.
+strict = true
+files = ["utils"]
+
 [tool.deptry.package_module_name_map]
 # uvx runs deptry without the project deps installed, so it cannot read each
 # package's metadata to resolve the import module name. Declaring the mappings

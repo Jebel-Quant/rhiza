@@ -5,7 +5,7 @@
 #   make security  -> cargo deny check advisories   (RustSec: known CVEs)
 #   make license   -> cargo deny check licenses     (the allow-list below)
 #
-# The Python layer uses pip-audit + bandit and pip-licenses for the same two jobs.
+# The Python layer uses bandit and pip-licenses for the same two jobs.
 
 [graph]
 # Check every target, not just the host. A dependency that is sound on Linux and

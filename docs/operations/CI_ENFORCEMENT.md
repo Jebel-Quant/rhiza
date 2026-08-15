@@ -17,7 +17,7 @@ These fail the pull request when they fail. They run on every PR via
 | Tests | `make test`, `make rhiza-test` | Full suites; `rhiza-test` runs Rhiza's own `.rhiza/tests/` suite. |
 | Dependency hygiene | `make deps` | Unused/missing dependency scan. |
 | Docstring coverage | `make docs-coverage` | interrogate at 100%. |
-| Security | `make security` | pip-audit + bandit. |
+| Security | `make security` | bandit over the folders in `BANDIT_FOLDERS`. |
 | CodeQL | `rhiza_codeql.yml` | Code scanning on PR and push. |
 
 ## Conditional / opt-in gates

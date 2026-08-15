@@ -322,3 +322,89 @@ class TestProseDrift:
     def test_make_mentions_were_collected(self) -> None:
         """Guard against the make-mention scanner silently collecting nothing."""
         assert len(_make_mention_cases()) > 10, "expected CLAUDE.md/README.md to mention make targets"
+
+
+# Tools whose presence in the toolchain is worth keeping the docs honest about. Each is
+# either invoked somewhere in _INVOCATION_SOURCES or it is not; the test below derives
+# which, rather than hard-coding a "retired" list that would drift in its own right.
+_WATCHED_TOOLS = (
+    "pip-audit",
+    "bandit",
+    "semgrep",
+    "deptry",
+    "interrogate",
+    "govulncheck",
+    "cargo-machete",
+)
+
+# Where a tool would be invoked from: the make fragments and every CI workflow, in this
+# repo and in the bundles it ships.
+_INVOCATION_SOURCES = (
+    *(_ROOT / s for s in _MAKE_SOURCES),
+    *sorted(_ROOT.glob(".github/workflows/*.yml")),
+    *sorted(_ROOT.glob("bundles/*/.rhiza/make.d/*.mk")),
+    *sorted(_ROOT.glob("bundles/*/.github/workflows/*.yml")),
+    *sorted(_ROOT.glob("bundles/*/.gitlab/**/*.yml")),
+    *sorted(_ROOT.glob("bundles/*/.gitlab-ci.yml")),
+)
+
+# Prose files exempt from the claim gate. CHANGELOG.md records what *was* true, and the
+# e2e suite's docstrings name pip-audit as the analogue of govulncheck/cargo-deny — both
+# describe history or comparison rather than claiming the tool runs.
+_CLAIM_GATE_EXEMPT = {"CHANGELOG.md"}
+
+
+def _invoked_tools() -> set[str]:
+    """Return the watched tools that some make fragment or CI workflow actually invokes."""
+    haystack = "\n".join(
+        path.read_text(encoding="utf-8", errors="replace") for path in _INVOCATION_SOURCES if path.is_file()
+    )
+    return {tool for tool in _WATCHED_TOOLS if tool in haystack}
+
+
+def _prose_files() -> list[Path]:
+    """Return the documentation files whose claims about the toolchain are gated."""
+    return [p for p in _markdown_files() if p.name not in _CLAIM_GATE_EXEMPT] + sorted(_ROOT.glob("docs/paper/*.tex"))
+
+
+class TestToolClaims:
+    """Documentation must not credit the project with a tool nothing runs.
+
+    `make security` dropped pip-audit, and a test pins the removal — but nine documents
+    went on describing it, including a self-attestation against the CII best-practices
+    standard and the published paper (#1506). Docstring coverage and markdownlint both
+    stayed green throughout: neither asks whether a claim is *true*. This does.
+
+    The invoked set is derived rather than declared, so reinstating a tool in a workflow
+    re-permits every mention of it in the same commit.
+    """
+
+    @pytest.mark.parametrize(
+        "doc",
+        _prose_files(),
+        ids=lambda p: str(p.relative_to(_ROOT)),
+    )
+    def test_docs_only_claim_tools_that_run(self, doc: Path) -> None:
+        """No prose may name a watched tool that no make fragment or workflow invokes."""
+        invoked = _invoked_tools()
+        text = doc.read_text(encoding="utf-8", errors="replace")
+        claimed_but_absent = [t for t in _WATCHED_TOOLS if t not in invoked and t in text]
+        assert not claimed_but_absent, (
+            f"{doc.relative_to(_ROOT)} names {claimed_but_absent}, which nothing in this "
+            f"repository invokes. Either wire the tool up or drop the claim (#1506)."
+        )
+
+    def test_the_invocation_scan_found_something(self) -> None:
+        """Positive control: an empty invoked set would make the gate above vacuous."""
+        invoked = _invoked_tools()
+        assert {"bandit", "deptry"} <= invoked, (
+            f"expected bandit and deptry to be detected as invoked; got {sorted(invoked)}. "
+            "The invocation scan is probably looking in the wrong places."
+        )
+
+    def test_pip_audit_is_the_known_absent_case(self) -> None:
+        """pip-audit is deliberately not wired up; this pins the fact the gate depends on."""
+        assert "pip-audit" not in _invoked_tools(), (
+            "pip-audit is invoked again — that is fine, but this test and the docs that "
+            "were pruned in #1506 should be revisited together."
+        )

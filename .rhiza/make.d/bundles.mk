@@ -4,6 +4,32 @@
 
 .PHONY: explain-bundles sync-self sync-self-check e2e
 
+# Bring utils/ into the four path-scoped gates.
+#
+# Rhiza ships configuration, not a runtime library, so it has no src/ and SOURCE_FOLDER
+# matches nothing. That left `typecheck`, `security` and `deps` exiting 0 having measured
+# nothing, and `docs-coverage` seeing only the test folders (#1505) — on the one repo that
+# ships those gates to everyone else. But real Python does live here: utils/ holds the
+# mother-repo tooling behind `make sync-self` and the sync-self-check CI drift guard.
+#
+# These are the accumulators python.mk exposes for exactly this. This fragment is loaded
+# before python.mk (make.d is read alphabetically), so each `+=` creates the variable and
+# python.mk's `?=` then leaves it alone.
+#
+# It belongs here rather than in the root Makefile because that file is a dogfood symlink
+# into bundles/core/ — editing it would ship rhiza's own layout to every consumer.
+#
+# DEP004 ("imported but declared as a dev dependency") is ignored on the grounds marimo.mk
+# ignores it for notebooks: utils/ *is* development tooling, so importing a dev dependency
+# there is correct rather than misplaced. marimo.mk contributes the same flag when its
+# folder exists; deptry accepts the repeat, and stating it here keeps utils/ from silently
+# depending on the marimo bundle staying adopted.
+TYPECHECK_FOLDERS += utils
+BANDIT_FOLDERS    += utils
+DOCSTRING_FOLDERS += utils
+DEPTRY_FOLDERS    += utils
+DEPTRY_IGNORE     += --ignore DEP004
+
 # Which end-to-end modules `make e2e` runs. One per language layer, so CI can give
 # each its own job (and its own toolchain) by narrowing this:
 #   make e2e E2E_ARGS=tests/e2e/test_go_layer_e2e.py

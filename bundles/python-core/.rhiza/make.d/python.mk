@@ -142,6 +142,31 @@ ifneq ($(wildcard $(SOURCE_FOLDER)),)
 DEPTRY_FOLDERS += $(SOURCE_FOLDER)
 endif
 
+# The same accumulator shape, for the other three path-scoped gates. `deps` has had
+# one since the bundle model began; `typecheck`, `security` and `docs-coverage` each
+# hard-coded SOURCE_FOLDER instead, so any Python a project keeps *outside* its source
+# root was unreachable by three of the four static gates (#1505). The mother repo is
+# the extreme case — it has no `src/` at all, so those three exited 0 having measured
+# nothing — but a downstream project with a `scripts/` or `tools/` directory has the
+# identical hole.
+#
+# Each seeds itself from SOURCE_FOLDER when that folder exists, so a project that never
+# touches these variables gets precisely the previous behaviour. A bundle or a consuming
+# Makefile contributes a folder by appending, exactly as marimo.mk does for DEPTRY_FOLDERS.
+#
+# The folder list is computed here, at make time, rather than by the `[ -d ... ]` tests
+# that used to live in each recipe. That is a deliberate change in what `make -n` prints:
+# the shell form emitted its assignment whether or not the folder existed, so a dry run
+# reported a scope the real run would not use.
+TYPECHECK_FOLDERS ?=
+BANDIT_FOLDERS ?=
+DOCSTRING_FOLDERS ?=
+ifneq ($(wildcard $(SOURCE_FOLDER)),)
+TYPECHECK_FOLDERS += $(SOURCE_FOLDER)
+BANDIT_FOLDERS += $(SOURCE_FOLDER)
+DOCSTRING_FOLDERS += $(SOURCE_FOLDER)
+endif
+
 # Named `deps`, matching rust.mk and go.mk. This was the one gate whose *target name*
 # differed by language (#1474): `deptry` names the tool, which nothing else in the
 # contract does — pytest is `test`, mypy is `typecheck`, bandit is `security`. So
@@ -234,16 +259,13 @@ test:: install ## run all tests
 	done
 
 # The 'typecheck' target runs static type analysis using ty and/or mypy.
-# 1. Builds a list of existing Python source folders to check.
+# 1. Takes the folder list from TYPECHECK_FOLDERS (see the accumulator block above).
 # 2. Depending on TYPECHECKER (ty|mypy|both, default: both), runs ty,
 #    mypy in strict mode, or both in sequence as a cross-check.
 typecheck: install ## run ty and/or mypy type checking (TYPECHECKER=ty|mypy|both, default: both)
-	@typecheck_paths=""; \
-	if [ -d "${SOURCE_FOLDER}" ]; then \
-	  typecheck_paths="${SOURCE_FOLDER}"; \
-	fi; \
+	@typecheck_paths="$(strip $(TYPECHECK_FOLDERS))"; \
 	if [ -z "$${typecheck_paths}" ]; then \
-	  printf "${YELLOW}[WARN] No typecheck folders found (SOURCE_FOLDER='${SOURCE_FOLDER}'), skipping typecheck${RESET}\n"; \
+	  printf "${YELLOW}[WARN] No typecheck folders found (TYPECHECK_FOLDERS is empty and SOURCE_FOLDER='${SOURCE_FOLDER}' does not exist), skipping typecheck${RESET}\n"; \
 	  exit 0; \
 	fi; \
 	case "${TYPECHECKER}" in \
@@ -267,28 +289,25 @@ typecheck: install ## run ty and/or mypy type checking (TYPECHECKER=ty|mypy|both
 	    ;; \
 	esac
 
-# The 'security' target runs bandit to find common security issues in the
-# Python source folders that exist.
+# The 'security' target runs bandit over the folders in BANDIT_FOLDERS (see the
+# accumulator block above). Scope *within* those folders is .bandit's job, not this
+# target's — see that file for why it is the single source of truth (#1493).
 security: install ## run security scans (bandit)
-	@bandit_paths=""; \
-	if [ -d "${SOURCE_FOLDER}" ]; then \
-	  bandit_paths="${SOURCE_FOLDER}"; \
-	fi; \
+	@bandit_paths="$(strip $(BANDIT_FOLDERS))"; \
 	if [ -n "$${bandit_paths}" ]; then \
 	  printf "${BLUE}[INFO] Running bandit security scan in:$${bandit_paths}${RESET}\n"; \
 	  ${UVX_BIN} bandit -r $${bandit_paths} -ll -q --ini .bandit; \
 	else \
-	  printf "${YELLOW}[WARN] No bandit scan folders found (SOURCE_FOLDER='${SOURCE_FOLDER}'), skipping bandit${RESET}\n"; \
+	  printf "${YELLOW}[WARN] No bandit scan folders found (BANDIT_FOLDERS is empty and SOURCE_FOLDER='${SOURCE_FOLDER}' does not exist), skipping bandit${RESET}\n"; \
 	fi
 
 # The 'docs-coverage' target checks documentation coverage using interrogate.
-# 1. Builds a list of existing Python source folders to check.
-# 2. Runs interrogate with verbose output against those folders.
+# 1. Takes DOCSTRING_FOLDERS (see the accumulator block above) as the base list.
+# 2. Adds the test folders, which are checked wherever they exist and are not part
+#    of the accumulator: a consumer contributing a folder means source, not tests.
+# 3. Runs interrogate with verbose output against the result.
 docs-coverage: install ## check documentation coverage with interrogate
-	@docstring_paths=""; \
-	if [ -d "${SOURCE_FOLDER}" ]; then \
-	  docstring_paths="${SOURCE_FOLDER}"; \
-	fi; \
+	@docstring_paths="$(strip $(DOCSTRING_FOLDERS))"; \
 	if [ -d "tests" ]; then \
 	  docstring_paths="$${docstring_paths} tests"; \
 	fi; \
@@ -299,7 +318,7 @@ docs-coverage: install ## check documentation coverage with interrogate
 	  printf "${BLUE}[INFO] Checking documentation coverage in:$${docstring_paths}${RESET}\n"; \
 	  ${UV_BIN} run --with interrogate interrogate -vv --fail-under 100 --ignore-init-method --ignore-magic $${docstring_paths}; \
 	else \
-	  printf "${YELLOW}[WARN] No docs-coverage folders found (SOURCE_FOLDER='${SOURCE_FOLDER}'), skipping docs-coverage${RESET}\n"; \
+	  printf "${YELLOW}[WARN] No docs-coverage folders found (DOCSTRING_FOLDERS is empty, SOURCE_FOLDER='${SOURCE_FOLDER}' does not exist, and there are no test folders), skipping docs-coverage${RESET}\n"; \
 	fi
 
 test-pyproject: install ## run pyproject.toml structure tests
