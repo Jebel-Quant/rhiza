@@ -112,7 +112,9 @@ def test_every_declared_accumulator_is_guarded() -> None:
     """
     declared: set[str] = set()
     for fragment in sorted(_BUNDLES.glob("*/.rhiza/make.d/*.mk")):
-        declared.update(_ACCUMULATOR_DECL.findall(fragment.read_text()))
+        # encoding is explicit: the fragments carry UTF-8 prose (em dashes in the comment
+        # blocks), and Windows would otherwise decode them as cp1252 and raise.
+        declared.update(_ACCUMULATOR_DECL.findall(fragment.read_text(encoding="utf-8")))
 
     assert declared, (
         "no `*_FOLDERS ?=` declarations found under bundles/*/.rhiza/make.d/ — the "
