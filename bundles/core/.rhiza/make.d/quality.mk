@@ -48,12 +48,34 @@ todos: ## search and report all TODO/FIXME/HACK comments in the codebase
 		printf "${GREEN}[SUCCESS] No TODO/FIXME/HACK comments found!${RESET}\n"
 	@printf "\n${BLUE}[INFO] Search complete.${RESET}\n"
 
+# semgrep takes its folder list from an accumulator, exactly as `typecheck`, `security`,
+# `docs-coverage` and `deps` do since #1505. It was left on the old `[ -d $(SOURCE_FOLDER) ]`
+# form by that change because it is the one static gate owned by *core* rather than by
+# python.mk, so it sat outside the file being edited — and outside the guard, whose
+# `_SCOPED_GATES` list named only the four (#1511).
+#
+# The consequence was the same one #1505 existed to remove: on a repo with no `src/` the
+# recipe printed a warning and exited 0 having analysed nothing. That is a silent pass in
+# the mother repo, where `.github/workflows/rhiza_weekly.yml` runs `make semgrep` on a
+# schedule, and in any downstream project keeping Python outside its source root.
+#
+# The accumulator is declared here, in core, and seeded from SOURCE_FOLDER when that
+# folder exists — SOURCE_FOLDER is a core variable (rhiza.mk), not a Python-layer one, so
+# nothing about this reaches across the language-layer boundary. A project with no `src/`
+# contributes its folders by appending, the way .rhiza/make.d/bundles.mk contributes
+# `utils` here.
+SEMGREP_FOLDERS ?=
+ifneq ($(wildcard $(SOURCE_FOLDER)),)
+SEMGREP_FOLDERS += $(SOURCE_FOLDER)
+endif
+
 semgrep: install ## run Semgrep static analysis
-	@printf "${BLUE}[INFO] Running Semgrep...${RESET}\n"
-	@if [ -d ${SOURCE_FOLDER} ]; then \
-		${UVX_BIN} semgrep --config .rhiza/semgrep.yml ${SOURCE_FOLDER}; \
+	@semgrep_paths="$(strip $(SEMGREP_FOLDERS))"; \
+	if [ -n "$${semgrep_paths}" ]; then \
+		printf "${BLUE}[INFO] Running Semgrep in:$${semgrep_paths}${RESET}\n"; \
+		${UVX_BIN} semgrep --config .rhiza/semgrep.yml $${semgrep_paths}; \
 	else \
-		printf "${YELLOW}[WARN] SOURCE_FOLDER '${SOURCE_FOLDER}' not found, skipping semgrep.${RESET}\n"; \
+		printf "${YELLOW}[WARN] No semgrep folders found (SEMGREP_FOLDERS is empty and SOURCE_FOLDER='${SOURCE_FOLDER}' does not exist), skipping semgrep.${RESET}\n"; \
 	fi
 
 # Owned by core, not by a language layer, because nothing about it is language-specific:

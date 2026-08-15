@@ -4,7 +4,7 @@
 
 .PHONY: explain-bundles sync-self sync-self-check e2e
 
-# Bring utils/ into the four path-scoped gates.
+# Bring utils/ into the five path-scoped gates.
 #
 # Rhiza ships configuration, not a runtime library, so it has no src/ and SOURCE_FOLDER
 # matches nothing. That left `typecheck`, `security` and `deps` exiting 0 having measured
@@ -12,9 +12,14 @@
 # ships those gates to everyone else. But real Python does live here: utils/ holds the
 # mother-repo tooling behind `make sync-self` and the sync-self-check CI drift guard.
 #
-# These are the accumulators python.mk exposes for exactly this. This fragment is loaded
-# before python.mk (make.d is read alphabetically), so each `+=` creates the variable and
-# python.mk's `?=` then leaves it alone.
+# `semgrep` joined them in #1511. It has the same shape and had the same hole, but was
+# missed by #1505 because it is owned by core's quality.mk rather than by python.mk — and
+# it is the one of the five that runs on a schedule (rhiza_weekly.yml) rather than from
+# `all`, so the silent pass was a green weekly job rather than a fast local one.
+#
+# These are the accumulators python.mk and quality.mk expose for exactly this. This
+# fragment is loaded before both (make.d is read alphabetically), so each `+=` creates the
+# variable and the owning fragment's `?=` then leaves it alone.
 #
 # It belongs here rather than in the root Makefile because that file is a dogfood symlink
 # into bundles/core/ — editing it would ship rhiza's own layout to every consumer.
@@ -28,6 +33,7 @@ TYPECHECK_FOLDERS += utils
 BANDIT_FOLDERS    += utils
 DOCSTRING_FOLDERS += utils
 DEPTRY_FOLDERS    += utils
+SEMGREP_FOLDERS   += utils
 DEPTRY_IGNORE     += --ignore DEP004
 
 # Which end-to-end modules `make e2e` runs. One per language layer, so CI can give

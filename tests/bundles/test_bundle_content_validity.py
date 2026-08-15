@@ -1,264 +1,33 @@
-"""Content validity tests for bundle files.
+"""Per-bundle content checks: docs, completions, Makefile fragments, legal, config.
 
-Validates the substance of files inside every bundle directory:
-- YAML, JSON and TOML files parse without error
-- GitHub workflow stubs delegate to the canonical reusable workflow in jebel-quant/rhiza
-- Shell completion scripts are non-trivial
-- Makefile fragments expose at least one documented target (## help comment)
-- Legal files have non-trivial content
-- renovate.json contains the required schema declaration
-- Requirements files use compatible-release or minimum-version specifiers, not strict pins,
-  in the test requirements (to avoid forcing downstream exact versions)
+What remains of the original 864-line module after #1514 split it three ways. Unlike its
+two siblings, every class here inspects a *named* bundle or a named kind of file rather
+than sweeping the whole tree:
+
+- every bundle is described in ``template-bundles.yml`` and documented
+- shell completion scripts are non-trivial
+- Makefile fragments expose at least one documented target (``## help`` comment)
+- legal files have real content
+- ``renovate.json`` carries the required schema declaration
+- each language layer's ``.pre-commit-config.yaml`` names the config both prek entry
+  points read (see the prek note in CLAUDE.md)
+- the devcontainer definition is valid and self-consistent
+
+The sweeping suites moved to ``test_bundle_parse_validity`` (YAML/JSON/TOML parse) and
+``test_bundle_ci_content`` (workflow stubs, GitLab image pinning); shared helpers to
+``tests/bundles/_content.py`` and the ``bundle_names`` fixture to ``conftest.py``.
 """
 
 from __future__ import annotations
 
 import json
-import os
 import re
-import tomllib
 from pathlib import Path
 
 import pytest
 import yaml
 
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _all_files_in_bundle(bundle_dir: Path) -> list[Path]:
-    """Return every real file (resolving symlinks) inside a bundle directory."""
-    files: list[Path] = []
-    for dirpath, _dirs, filenames in os.walk(bundle_dir, followlinks=True):
-        for name in filenames:
-            p = Path(dirpath) / name
-            if p.is_file():
-                files.append(p)
-    return files
-
-
-def _load_bundle_names(root: Path) -> list[str]:
-    """Return bundle names from .rhiza/template-bundles.yml."""
-    bundles_file = root / ".rhiza" / "template-bundles.yml"
-    if not bundles_file.exists():
-        return []
-    with bundles_file.open() as f:
-        data = yaml.safe_load(f)
-    return list(data.get("bundles", {}).keys())
-
-
-def _language_layer_bundles(root: Path) -> list[str]:
-    """Return the bundles declaring ``layer: language`` (python-core, rust-core, ...).
-
-    Derived from the YAML rather than hard-coded, so a third language layer is
-    covered by the layer-wide guards below the moment it is declared.
-    """
-    bundles_file = root / ".rhiza" / "template-bundles.yml"
-    with bundles_file.open() as f:
-        data = yaml.safe_load(f)
-    return sorted(name for name, config in data.get("bundles", {}).items() if (config or {}).get("layer") == "language")
-
-
-_LAYER_BUNDLES = _language_layer_bundles(Path(__file__).resolve().parents[2])
-
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
-
-@pytest.fixture(scope="module")
-def bundle_names(root: Path) -> list[str]:
-    """Return all bundle names defined in template-bundles.yml."""
-    return _load_bundle_names(root)
-
-
-# ---------------------------------------------------------------------------
-# YAML / JSON validity
-# ---------------------------------------------------------------------------
-
-
-def _is_mkdocs_python_tag_file(path: Path) -> bool:
-    """Return True for mkdocs config files that legitimately use Python YAML tags.
-
-    mkdocs-material uses !!python/name: tags in its configuration files.  These
-    are intentional and cannot be parsed with yaml.safe_load — we skip them for
-    parse-error tests but still validate them as non-empty elsewhere.
-    """
-    return path.name in {"mkdocs-base.yml", "mkdocs.yml"}
-
-
-class TestBundleYamlValidity:
-    """Every YAML file in every bundle directory must parse without error."""
-
-    def test_all_yaml_files_are_parseable(self, root: Path, bundle_names: list[str]) -> None:
-        """Walk every bundle and assert every .yml / .yaml file loads cleanly.
-
-        mkdocs config files that use Python YAML tags (tag:yaml.org,2002:python/name:...)
-        are intentionally excluded because those tags require a full Python YAML loader
-        and are expected/valid in those files.
-        """
-        errors: list[str] = []
-        for name in bundle_names:
-            bundle_dir = root / "bundles" / name
-            if not bundle_dir.is_dir():
-                continue
-            for f in _all_files_in_bundle(bundle_dir):
-                if f.suffix not in {".yml", ".yaml"}:
-                    continue
-                if _is_mkdocs_python_tag_file(f):
-                    continue
-                try:
-                    with f.open(encoding="utf-8") as fh:
-                        yaml.safe_load(fh)
-                except yaml.constructor.ConstructorError:
-                    # Python-specific YAML tags are acceptable in mkdocs-adjacent files
-                    pass
-                except yaml.YAMLError as exc:
-                    rel = f.relative_to(root / "bundles")
-                    errors.append(f"  [{name}] {rel}: {exc}")
-        if errors:
-            pytest.fail("YAML parse errors in bundle files:\n" + "\n".join(errors))
-
-    def test_no_yaml_file_is_empty(self, root: Path, bundle_names: list[str]) -> None:
-        """No .yml / .yaml bundle file should be empty (null document).
-
-        mkdocs config files that require Python YAML tags are skipped here too
-        since yaml.safe_load would raise rather than return None for them.
-        """
-        empties: list[str] = []
-        for name in bundle_names:
-            bundle_dir = root / "bundles" / name
-            if not bundle_dir.is_dir():
-                continue
-            for f in _all_files_in_bundle(bundle_dir):
-                if f.suffix not in {".yml", ".yaml"}:
-                    continue
-                if _is_mkdocs_python_tag_file(f):
-                    continue
-                try:
-                    with f.open(encoding="utf-8") as fh:
-                        doc = yaml.safe_load(fh)
-                except yaml.YAMLError:
-                    continue
-                if doc is None:
-                    rel = f.relative_to(root / "bundles")
-                    empties.append(f"  [{name}] {rel}")
-        if empties:
-            pytest.fail("Empty (null) YAML documents in bundle files:\n" + "\n".join(empties))
-
-
-def _is_jsonc_file(path: Path) -> bool:
-    """Return True for files that use JSONC (JSON with Comments) format.
-
-    devcontainer.json uses JSONC to allow inline comments.  Standard json.load
-    cannot parse them; we skip parse validation for these files and instead
-    verify they are non-empty.
-    """
-    return path.name == "devcontainer.json"
-
-
-class TestBundleJsonValidity:
-    """Every JSON file in every bundle directory must parse without error."""
-
-    def test_all_json_files_are_parseable(self, root: Path, bundle_names: list[str]) -> None:
-        """Walk every bundle and assert every .json file loads cleanly.
-
-        Files using JSONC format (JSON with Comments) such as devcontainer.json are
-        intentionally excluded because they require a JSONC parser and their use of
-        comments is valid by spec.
-        """
-        errors: list[str] = []
-        for name in bundle_names:
-            bundle_dir = root / "bundles" / name
-            if not bundle_dir.is_dir():
-                continue
-            for f in _all_files_in_bundle(bundle_dir):
-                if f.suffix != ".json":
-                    continue
-                if _is_jsonc_file(f):
-                    continue
-                try:
-                    with f.open(encoding="utf-8") as fh:
-                        json.load(fh)
-                except json.JSONDecodeError as exc:
-                    rel = f.relative_to(root / "bundles")
-                    errors.append(f"  [{name}] {rel}: {exc}")
-        if errors:
-            pytest.fail("JSON parse errors in bundle files:\n" + "\n".join(errors))
-
-    def test_jsonc_files_are_non_empty(self, root: Path, bundle_names: list[str]) -> None:
-        """JSONC files (devcontainer.json) must be non-empty even though we skip parse validation."""
-        for name in bundle_names:
-            bundle_dir = root / "bundles" / name
-            if not bundle_dir.is_dir():
-                continue
-            for f in _all_files_in_bundle(bundle_dir):
-                if f.suffix == ".json" and _is_jsonc_file(f):
-                    content = f.read_text(encoding="utf-8").strip()
-                    rel = f.relative_to(root / "bundles")
-                    assert content, f"JSONC file is empty: [{name}] {rel}"
-
-
-# ---------------------------------------------------------------------------
-# TOML validity
-# ---------------------------------------------------------------------------
-
-
-class TestBundleTomlValidity:
-    """Every TOML file in every bundle directory must parse without error.
-
-    TOML carries as much shipped configuration as YAML does — cliff.toml, ruff.toml,
-    the bump-my-version `.bumpversion.toml` of the Rust and Go layers, and the whole
-    rust-core toolchain set (rust-toolchain, rustfmt, clippy, deny). None of it is
-    exercised by the mother repo's own gates when it belongs to a bundle rhiza does
-    not dogfood, so a syntax error there would otherwise reach downstream projects.
-    """
-
-    def test_all_toml_files_are_parseable(self, root: Path, bundle_names: list[str]) -> None:
-        """Walk every bundle and assert every .toml file loads cleanly."""
-        errors: list[str] = []
-        for name in bundle_names:
-            bundle_dir = root / "bundles" / name
-            if not bundle_dir.is_dir():
-                continue
-            for f in _all_files_in_bundle(bundle_dir):
-                if f.suffix != ".toml":
-                    continue
-                try:
-                    with f.open("rb") as fh:
-                        tomllib.load(fh)
-                except tomllib.TOMLDecodeError as exc:
-                    rel = f.relative_to(root / "bundles")
-                    errors.append(f"  [{name}] {rel}: {exc}")
-        if errors:
-            pytest.fail("TOML parse errors in bundle files:\n" + "\n".join(errors))
-
-    def test_no_toml_file_is_empty(self, root: Path, bundle_names: list[str]) -> None:
-        """A TOML file that parses to an empty table is almost certainly a truncated sync."""
-        for name in bundle_names:
-            bundle_dir = root / "bundles" / name
-            if not bundle_dir.is_dir():
-                continue
-            for f in _all_files_in_bundle(bundle_dir):
-                if f.suffix != ".toml":
-                    continue
-                with f.open("rb") as fh:
-                    doc = tomllib.load(fh)
-                rel = f.relative_to(root / "bundles")
-                assert doc, f"TOML file has no content: [{name}] {rel}"
-
-    def test_the_scan_reaches_every_language_layer(self, root: Path) -> None:
-        """Guard against a scan that silently covers nothing: each layer ships TOML."""
-        for layer in _LAYER_BUNDLES:
-            tomls = [f for f in _all_files_in_bundle(root / "bundles" / layer) if f.suffix == ".toml"]
-            assert tomls, f"layer '{layer}' ships no .toml file — has the scan gone stale?"
-
-
-# ---------------------------------------------------------------------------
-# Documentation coverage
-# ---------------------------------------------------------------------------
+from tests.bundles._content import _LAYER_BUNDLES, _all_files_in_bundle
 
 
 class TestBundleDocumentation:
@@ -313,144 +82,6 @@ _REUSABLE_WORKFLOW_PREFIX = "jebel-quant/rhiza/.github/workflows/"
 _NON_STUB_RHIZA_WORKFLOWS = {"rhiza_release.yml"}
 
 
-def _load_workflow_doc(path: Path) -> object:
-    """Parse a workflow YAML file and return the loaded document."""
-    with path.open(encoding="utf-8") as fh:
-        return yaml.safe_load(fh)
-
-
-class TestGithubWorkflowStubs:
-    """Bundle-shipped GitHub workflows must delegate to jebel-quant/rhiza reusables.
-
-    Covers every bundle that ships a .github/workflows/ directory — not just the
-    github-* overlays, but also the `github` bundle.  Documented full workflows
-    (rhiza_release.yml) are excepted from the thin-stub requirement.
-    """
-
-    def _bundles_with_github_workflows(self, root: Path, bundle_names: list[str]) -> list[tuple[str, Path]]:
-        """Return (bundle_name, workflows_dir) for every bundle shipping GitHub workflows."""
-        result: list[tuple[str, Path]] = []
-        for bundle_name in bundle_names:
-            workflows_dir = root / "bundles" / bundle_name / ".github" / "workflows"
-            if workflows_dir.is_dir():
-                result.append((bundle_name, workflows_dir))
-        return result
-
-    def test_workflow_stubs_have_name_field(self, root: Path, bundle_names: list[str]) -> None:
-        """Every GitHub workflow YAML file has a top-level 'name' field."""
-        errors: list[str] = []
-        for bundle_name, workflows_dir in self._bundles_with_github_workflows(root, bundle_names):
-            for wf in workflows_dir.glob("*.yml"):
-                doc = _load_workflow_doc(wf)
-                if not isinstance(doc, dict) or "name" not in doc:
-                    errors.append(f"  [{bundle_name}] {wf.name}: missing 'name' field")
-        if errors:
-            pytest.fail("Workflow stubs without 'name':\n" + "\n".join(errors))
-
-    def test_workflow_stubs_have_on_trigger(self, root: Path, bundle_names: list[str]) -> None:
-        """Every GitHub workflow YAML file has an 'on' trigger section.
-
-        Note: pyyaml parses the bare YAML key 'on' as Python boolean True (since 'on'
-        is a YAML boolean literal).  We check for both True and the string 'on' to
-        handle both parsed and raw representations.
-        """
-        errors: list[str] = []
-        for bundle_name, workflows_dir in self._bundles_with_github_workflows(root, bundle_names):
-            for wf in workflows_dir.glob("*.yml"):
-                doc = _load_workflow_doc(wf)
-                if not isinstance(doc, dict):
-                    errors.append(f"  [{bundle_name}] {wf.name}: not a YAML mapping")
-                    continue
-                # pyyaml parses 'on:' as True (YAML boolean); check both forms
-                has_on = "on" in doc or True in doc
-                if not has_on:
-                    errors.append(f"  [{bundle_name}] {wf.name}: missing 'on' trigger")
-        if errors:
-            pytest.fail("Workflow stubs without 'on' trigger:\n" + "\n".join(errors))
-
-    def test_workflow_stubs_have_jobs(self, root: Path, bundle_names: list[str]) -> None:
-        """Every GitHub workflow YAML file has a non-empty 'jobs' section."""
-        errors: list[str] = []
-        for bundle_name, workflows_dir in self._bundles_with_github_workflows(root, bundle_names):
-            for wf in workflows_dir.glob("*.yml"):
-                doc = _load_workflow_doc(wf)
-                if not isinstance(doc, dict):
-                    continue
-                jobs = doc.get("jobs")
-                if not jobs:
-                    errors.append(f"  [{bundle_name}] {wf.name}: missing or empty 'jobs' section")
-        if errors:
-            pytest.fail("Workflow stubs without 'jobs':\n" + "\n".join(errors))
-
-    def test_reusable_calls_target_rhiza_workflows(self, root: Path, bundle_names: list[str]) -> None:
-        """Every job that calls a reusable workflow must target a jebel-quant/rhiza one.
-
-        This inspects the parsed job-level ``uses:`` reference rather than doing a
-        substring search of the file, so it is not satisfied by the jebel-quant/rhiza
-        URL in the boilerplate header comment.  Step-level ``uses:`` (third-party
-        actions) are intentionally ignored.
-        """
-        errors: list[str] = []
-        for bundle_name, workflows_dir in self._bundles_with_github_workflows(root, bundle_names):
-            for wf in workflows_dir.glob("*.yml"):
-                doc = _load_workflow_doc(wf)
-                if not isinstance(doc, dict):
-                    continue
-                for job_name, job in (doc.get("jobs") or {}).items():
-                    if not isinstance(job, dict):
-                        continue
-                    uses = job.get("uses")
-                    if uses is None:
-                        continue  # not a reusable-workflow call
-                    if not (isinstance(uses, str) and uses.startswith(_REUSABLE_WORKFLOW_PREFIX)):
-                        errors.append(
-                            f"  [{bundle_name}] {wf.name}: job '{job_name}' calls '{uses}', "
-                            f"not a {_REUSABLE_WORKFLOW_PREFIX}* reusable workflow"
-                        )
-        if errors:
-            pytest.fail("Reusable-workflow calls not targeting jebel-quant/rhiza:\n" + "\n".join(errors))
-
-    def test_rhiza_workflows_are_thin_stubs(self, root: Path, bundle_names: list[str]) -> None:
-        """Every rhiza_*.yml bundle workflow is a thin stub (except documented exceptions).
-
-        A thin stub delegates entirely to a jebel-quant/rhiza reusable workflow: each
-        of its jobs has a ``uses:`` pointing at that repo and defines no inline
-        ``steps:``.  rhiza_release.yml is exempt (it is a full release workflow).
-        """
-        errors: list[str] = []
-        for bundle_name, workflows_dir in self._bundles_with_github_workflows(root, bundle_names):
-            for wf in workflows_dir.glob("*.yml"):
-                if not wf.name.startswith("rhiza_") or wf.name in _NON_STUB_RHIZA_WORKFLOWS:
-                    continue
-                doc = _load_workflow_doc(wf)
-                jobs = doc.get("jobs") if isinstance(doc, dict) else None
-                if not jobs:
-                    errors.append(f"  [{bundle_name}] {wf.name}: no jobs to delegate")
-                    continue
-                for job_name, job in jobs.items():
-                    if not isinstance(job, dict):
-                        errors.append(f"  [{bundle_name}] {wf.name}: job '{job_name}' is malformed")
-                        continue
-                    uses = job.get("uses")
-                    if not (isinstance(uses, str) and uses.startswith(_REUSABLE_WORKFLOW_PREFIX)):
-                        errors.append(
-                            f"  [{bundle_name}] {wf.name}: job '{job_name}' does not delegate to a "
-                            f"{_REUSABLE_WORKFLOW_PREFIX}* reusable workflow"
-                        )
-                    if "steps" in job:
-                        errors.append(
-                            f"  [{bundle_name}] {wf.name}: job '{job_name}' defines inline steps; "
-                            f"rhiza_* workflows must be thin stubs (add it to the reusable workflow instead)"
-                        )
-        if errors:
-            pytest.fail("rhiza_* bundle workflows that are not thin stubs:\n" + "\n".join(errors))
-
-
-# ---------------------------------------------------------------------------
-# Shell completion scripts
-# ---------------------------------------------------------------------------
-
-
 class TestShellCompletions:
     """Shell completion scripts in the core bundle must have real content."""
 
@@ -497,11 +128,6 @@ class TestShellCompletions:
             pytest.skip("rhiza-completion.zsh not found")
         content = zsh_comp.read_text(encoding="utf-8")
         assert "make" in content, "zsh completion should invoke 'make' to discover targets dynamically"
-
-
-# ---------------------------------------------------------------------------
-# Makefile fragments
-# ---------------------------------------------------------------------------
 
 
 class TestMakefileFragments:
@@ -551,11 +177,6 @@ class TestMakefileFragments:
             pytest.fail("Makefile fragments with targets but no .PHONY declaration:\n" + "\n".join(violations))
 
 
-# ---------------------------------------------------------------------------
-# Legal bundle content
-# ---------------------------------------------------------------------------
-
-
 class TestLegalBundleContent:
     """Files in the legal bundle must have real, non-trivial content."""
 
@@ -593,11 +214,6 @@ class TestLegalBundleContent:
         assert len(content) >= 200, "CODE_OF_CONDUCT.md is suspiciously short"
 
 
-# ---------------------------------------------------------------------------
-# Renovate configuration
-# ---------------------------------------------------------------------------
-
-
 class TestRenovateBundleContent:
     """renovate.json in the renovate bundle must be a valid, non-trivial config."""
 
@@ -626,11 +242,6 @@ class TestRenovateBundleContent:
         required = {"pep621", "github-actions", "gitlabci"}
         missing = required - set(enabled)
         assert not missing, f"renovate.json 'enabledManagers' is missing required managers: {sorted(missing)}"
-
-
-# ---------------------------------------------------------------------------
-# Language-layer pre-commit configuration
-# ---------------------------------------------------------------------------
 
 
 def _layer_precommit(root: Path, layer: str) -> dict:
@@ -706,98 +317,6 @@ class TestLayerPreCommitConfig:
 
 _UV_IMAGE_LITERAL = re.compile(r"ghcr\.io/astral-sh/uv:")
 _IMAGE_LINE = re.compile(r"^\s*image:\s*(\S+)")
-
-
-class TestGitlabImagePinning:
-    """Every GitLab job image must resolve from the single `$UV_IMAGE` variable.
-
-    The uv/Python CI image used to be hardcoded (`ghcr.io/astral-sh/uv:<version>`)
-    in ~20 places across the gitlab* bundles, drifting from the version GitHub
-    Actions pins. `.gitlab-ci.yml` now defines `UV_IMAGE` once and every job
-    references `image: $UV_IMAGE`. These guards stop the literal pin from
-    creeping back in and keep the caching plumbing in place.
-    """
-
-    def _gitlab_ci_yml(self, root: Path) -> Path:
-        """Return the gitlab bundle's `.gitlab-ci.yml`, skipping if the bundle is absent."""
-        ci = root / "bundles" / "gitlab" / ".gitlab-ci.yml"
-        if not ci.exists():
-            pytest.skip("gitlab bundle not present")
-        return ci
-
-    def test_no_hardcoded_uv_image_pin_outside_single_source(self, root: Path) -> None:
-        """The literal `ghcr.io/astral-sh/uv:` tag may appear only in the UV_IMAGE definition."""
-        self._gitlab_ci_yml(root)  # skip if gitlab bundle absent
-        offenders: list[str] = []
-        for bundle in sorted(root.glob("bundles/gitlab*")):
-            for path in _all_files_in_bundle(bundle):
-                if path.suffix not in {".yml", ".yaml", ".jinja"}:
-                    continue
-                for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-                    if not _UV_IMAGE_LITERAL.search(line):
-                        continue
-                    # The sole allowed literal: the `UV_IMAGE:` variable value.
-                    if re.match(r"\s*UV_IMAGE:\s*", line):
-                        continue
-                    offenders.append(f"{path.relative_to(root)}:{lineno}: {line.strip()}")
-        assert not offenders, "Hardcoded uv image pin(s) found; reference `$UV_IMAGE` instead:\n" + "\n".join(offenders)
-
-    def test_image_lines_reference_the_variable(self, root: Path) -> None:
-        """Any `image:` value that is a uv image must be exactly `$UV_IMAGE`."""
-        self._gitlab_ci_yml(root)
-        bad: list[str] = []
-        for bundle in sorted(root.glob("bundles/gitlab*")):
-            for path in _all_files_in_bundle(bundle):
-                if path.suffix not in {".yml", ".yaml", ".jinja"}:
-                    continue
-                for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-                    m = _IMAGE_LINE.match(line)
-                    if not m:
-                        continue
-                    value = m.group(1)
-                    # Only constrain the uv image; alpine/renovate/etc. are unrelated.
-                    if "uv" in value or _UV_IMAGE_LITERAL.search(line):
-                        assert_msg = f"{path.relative_to(root)}:{lineno}: {line.strip()}"
-                        if value != "$UV_IMAGE":
-                            bad.append(assert_msg)
-        assert not bad, "uv `image:` lines must be `$UV_IMAGE`:\n" + "\n".join(bad)
-
-    def test_single_source_variables_defined_once(self, root: Path) -> None:
-        """`.gitlab-ci.yml` must define UV_IMAGE / UV_CACHE_DIR / UV_PYTHON_INSTALL_DIR exactly once."""
-        ci = self._gitlab_ci_yml(root)
-        parsed = yaml.safe_load(ci.read_text(encoding="utf-8"))
-        variables = parsed.get("variables", {})
-        assert variables.get("UV_IMAGE", "").startswith("ghcr.io/astral-sh/uv:"), (
-            "variables.UV_IMAGE must pin a concrete ghcr.io/astral-sh/uv image"
-        )
-        for key in ("UV_CACHE_DIR", "UV_PYTHON_INSTALL_DIR"):
-            assert key in variables, f"variables.{key} must redirect uv's cache under $CI_PROJECT_DIR"
-            assert "CI_PROJECT_DIR" in variables[key], (
-                f"variables.{key} must live under $CI_PROJECT_DIR so GitLab can cache it"
-            )
-
-    def test_default_cache_covers_uv_dirs(self, root: Path) -> None:
-        """`default.cache` must persist the uv wheel + managed-Python directories."""
-        ci = self._gitlab_ci_yml(root)
-        parsed = yaml.safe_load(ci.read_text(encoding="utf-8"))
-        cache = parsed.get("default", {}).get("cache")
-        assert cache, "default.cache must be defined so uv downloads persist across jobs"
-        paths = cache.get("paths", [])
-        assert ".cache/uv" in paths, f"default.cache.paths must include '.cache/uv', got: {paths}"
-        assert ".cache/uv-python" in paths, f"default.cache.paths must include '.cache/uv-python', got: {paths}"
-
-    def test_orphaned_python_base_template_removed(self, root: Path) -> None:
-        """The unused `.python_base` job template must not reappear."""
-        ci = self._gitlab_ci_yml(root)
-        parsed = yaml.safe_load(ci.read_text(encoding="utf-8"))
-        assert ".python_base" not in parsed, (
-            ".python_base was an orphaned template (nothing extends it); it should stay removed"
-        )
-
-
-# ---------------------------------------------------------------------------
-# Devcontainer bundle content
-# ---------------------------------------------------------------------------
 
 
 class TestDevcontainerBundleContent:

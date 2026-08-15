@@ -48,6 +48,27 @@ def _is_github(name: str) -> bool:
 
     Returns:
         True if the bundle is GitHub-specific, False otherwise.
+
+    Examples:
+        The feature bundle itself and every platform overlay built on it:
+
+        >>> _is_github("github")
+        True
+        >>> _is_github("github-tests")
+        True
+
+        Feature bundles and the other platform's overlays are not:
+
+        >>> _is_github("core")
+        False
+        >>> _is_github("gitlab-tests")
+        False
+
+        The hyphen in the prefix is load-bearing — it keeps a hypothetical unrelated
+        bundle whose name merely begins with these letters out of the family:
+
+        >>> _is_github("githubbub")
+        False
     """
     return name.startswith("github-") or name == "github"
 
@@ -60,6 +81,16 @@ def _is_gitlab(name: str) -> bool:
 
     Returns:
         True if the bundle is GitLab-specific, False otherwise.
+
+    Examples:
+        >>> _is_gitlab("gitlab")
+        True
+        >>> _is_gitlab("gitlab-book")
+        True
+        >>> _is_gitlab("github-book")
+        False
+        >>> _is_gitlab("book")
+        False
     """
     return name.startswith("gitlab-") or name == "gitlab"
 
@@ -73,6 +104,20 @@ def _bundle_group(name: str) -> str:
     Returns:
         One of ``"github"``, ``"gitlab"``, or ``"base"`` — the section
         heading the bundle is printed under.
+
+    Examples:
+        >>> _bundle_group("github-marimo")
+        'github'
+        >>> _bundle_group("gitlab-quality-review")
+        'gitlab'
+
+        Everything that is not platform-specific groups under ``base`` — the feature
+        bundles and the language layers alike:
+
+        >>> _bundle_group("marimo")
+        'base'
+        >>> _bundle_group("python-core")
+        'base'
     """
     if _is_github(name):
         return "github"

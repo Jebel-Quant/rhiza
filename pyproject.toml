@@ -135,6 +135,20 @@ ignore_missing_version = true
 strict = true
 files = ["utils"]
 
+[tool.check_test_layout]
+# Rhiza ships configuration templates, not a runtime library: there is no `src/` tree,
+# so there is no module for a `tests/<path>/test_<name>.py` to mirror and never will be.
+# Without this table the checker reports all 56 test files as orphans of `src/...`
+# modules that were never meant to exist (#1513) — a 56-line failure whose only correct
+# reading is "does not apply", re-derived by hand every time someone runs it.
+#
+# The suite is organised by the invariant under test instead: tests/bundles/ for the
+# bundle contract, tests/api/ for the Make target surface, tests/e2e/ per language layer.
+# What guarantees coverage here is not per-module parity but that every bundle and every
+# gate is exercised behaviourally — see tests/bundles/test_bundle_test_coverage.py.
+enforce = false
+reason = "Rhiza ships configuration templates, not a runtime library: there is no src/ tree to mirror. Tests are organised by the invariant under test (bundles, Make API, per-layer e2e), and bundle/gate coverage is enforced by tests/bundles/test_bundle_test_coverage.py."
+
 [tool.deptry.package_module_name_map]
 # uvx runs deptry without the project deps installed, so it cannot read each
 # package's metadata to resolve the import module name. Declaring the mappings
