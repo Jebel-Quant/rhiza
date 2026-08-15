@@ -138,9 +138,28 @@ all: fmt deps test docs-coverage security license typecheck rhiza-test ## run al
 # for it.
 DEPTRY_FOLDERS ?=
 DEPTRY_IGNORE ?=
-ifneq ($(wildcard $(SOURCE_FOLDER)),)
-DEPTRY_FOLDERS += $(SOURCE_FOLDER)
-endif
+DEPTRY_FOLDERS += $(wildcard $(SOURCE_FOLDER))
+
+# The seed is deferred, and that is the whole point of the `$(wildcard ...)` rather than
+# the `ifneq ($(wildcard $(SOURCE_FOLDER)),)` guard that used to wrap this line (#1534).
+#
+# `?=` (and `+=` on a not-yet-defined variable) creates a *recursive* variable, so the
+# text appended here is expanded when a gate uses it — after every makefile has been
+# read. An `ifneq` is not: it is evaluated where it is written, which is while python.mk
+# itself is being parsed.
+#
+# That difference was load-bearing, because the root Makefile reads `local.mk` *after*
+# `include .rhiza/rhiza.mk`. A project whose source root is not `src/` and which set
+# `SOURCE_FOLDER` there — the file CLAUDE.md points developers at — had the conditional
+# already decided against it on the `?= src` default, so `deps`, `typecheck`, `security`,
+# `docs-coverage` and `test` each fell through to their empty-list branch and exited 0
+# having measured nothing. Silently: an empty folder list warns rather than fails, which
+# is the failure mode #1505, #1511 and #1516 each closed one gate at a time.
+#
+# Deferring it makes the accumulators independent of *where* SOURCE_FOLDER is set —
+# `.rhiza/.env`, the environment, the root Makefile above the include, the command line,
+# or `local.mk` below it all now agree. The non-existent case is unchanged: `$(wildcard)`
+# expands to nothing, so a project without the folder still gets an empty seed.
 
 # The same accumulator shape, for the other four path-scoped gates. `deps` has had
 # one since the bundle model began; `typecheck`, `security` and `docs-coverage` each
@@ -185,12 +204,12 @@ TYPECHECK_FOLDERS ?=
 BANDIT_FOLDERS ?=
 DOCSTRING_FOLDERS ?=
 COVERAGE_FOLDERS ?=
-ifneq ($(wildcard $(SOURCE_FOLDER)),)
-TYPECHECK_FOLDERS += $(SOURCE_FOLDER)
-BANDIT_FOLDERS += $(SOURCE_FOLDER)
-DOCSTRING_FOLDERS += $(SOURCE_FOLDER)
-COVERAGE_FOLDERS += $(SOURCE_FOLDER)
-endif
+# Deferred for the reason spelled out at DEPTRY_FOLDERS above (#1534): expanded at use,
+# so it no longer matters whether SOURCE_FOLDER was set above or below the include.
+TYPECHECK_FOLDERS += $(wildcard $(SOURCE_FOLDER))
+BANDIT_FOLDERS += $(wildcard $(SOURCE_FOLDER))
+DOCSTRING_FOLDERS += $(wildcard $(SOURCE_FOLDER))
+COVERAGE_FOLDERS += $(wildcard $(SOURCE_FOLDER))
 
 # Named `deps`, matching rust.mk and go.mk. This was the one gate whose *target name*
 # differed by language (#1474): `deptry` names the tool, which nothing else in the

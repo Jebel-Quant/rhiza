@@ -159,6 +159,74 @@ def test_rhiza_test_carries_the_docstring_scope_to_the_shipped_doctests(logger) 
     )
 
 
+def _interrogate_hook() -> dict:
+    """Return the interrogate hook mapping from the root .pre-commit-config.yaml."""
+    import yaml
+
+    config = yaml.safe_load((_ROOT / ".pre-commit-config.yaml").read_text(encoding="utf-8"))
+    for repo in config["repos"]:
+        for hook in repo["hooks"]:
+            if hook["id"] == "interrogate":
+                return hook
+    pytest.fail("the root .pre-commit-config.yaml no longer declares an interrogate hook")
+
+
+def test_interrogate_hook_matches_this_repos_python(gate_scopes: dict[str, str]) -> None:
+    """`make fmt`'s interrogate hook must be scoped to files this repo actually has.
+
+    The same failure as the gates above, one layer out (#1535). The hook shipped
+    ``files: ^src/`` — correct downstream, inert here, because rhiza ships configuration
+    rather than a runtime library. It reported "(no files to check)Skipped" on every
+    ``make fmt``, which in a list of twenty-odd Passed lines reads as a check that ran.
+
+    Checked against the folders ``docs-coverage`` *resolves* rather than a hardcoded list,
+    so the hook and the gate cannot drift apart: whatever the accumulator contributes, the
+    hook must be able to see it.
+    """
+    pattern = re.compile(_interrogate_hook()["files"])
+    folders = gate_scopes["docs-coverage"].split()
+    assert folders, "docs-coverage resolves no folders, so there is nothing to scope the hook to"
+
+    for folder in folders:
+        candidates = sorted((_ROOT / folder).rglob("*.py"))
+        assert candidates, f"docs-coverage names {folder!r} but it holds no Python at all"
+        matched = [p for p in candidates if pattern.match(p.relative_to(_ROOT).as_posix())]
+        assert matched, (
+            f"the interrogate hook's files pattern {pattern.pattern!r} matches none of the "
+            f"{len(candidates)} Python files under {folder}/, which `make docs-coverage` "
+            f"does measure. The hook would report '(no files to check)Skipped' and read as "
+            f"a check that ran (#1535)."
+        )
+
+
+def test_interrogate_hook_and_gate_agree_on_the_threshold() -> None:
+    """The [tool.interrogate] table must enforce what python.mk's docs-coverage enforces.
+
+    The hook passes ``--config=pyproject.toml``; the gate passes its thresholds on the
+    command line. Until #1535 the table did not exist, and interrogate falls back to its
+    own defaults for a missing table rather than failing — so the hook enforced 80% where
+    the gate enforced 100%, and a hook weaker than the gate it shadows passes work the
+    gate will reject.
+    """
+    import tomllib
+
+    recipe = (_BUNDLES / "python-core" / ".rhiza" / "make.d" / "python.mk").read_text(encoding="utf-8")
+    match = re.search(r"interrogate\s+-vv\s+--fail-under\s+(\d+)", recipe)
+    assert match, "could not find the --fail-under flag in python.mk's docs-coverage recipe"
+    gate_threshold = int(match.group(1))
+
+    table = tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["interrogate"]
+    assert table["fail-under"] == gate_threshold, (
+        f"[tool.interrogate] fail-under is {table['fail-under']} but `make docs-coverage` "
+        f"enforces {gate_threshold}. The pre-commit hook reads the table and the gate reads "
+        f"the flag, so they would disagree about whether the same code passes (#1535)."
+    )
+    for flag in ("ignore-init-method", "ignore-magic"):
+        assert table.get(flag) is True, (
+            f"[tool.interrogate] must set {flag} = true to match the `--{flag}` the docs-coverage recipe passes."
+        )
+
+
 def test_every_declared_accumulator_is_guarded() -> None:
     """Every ``*_FOLDERS ?=`` accumulator in the bundles must be covered by ``_SCOPED_GATES``.
 

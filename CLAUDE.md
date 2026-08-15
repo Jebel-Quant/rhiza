@@ -188,7 +188,30 @@ outcome rather than the wiring: each gate must resolve to a non-empty list namin
 One consequence worth knowing when reading `make -n`: the folder list is expanded by
 **make**, not by the recipe's shell, so a dry run shows the real scope. The `[ -d ... ]`
 form it replaced printed its warning whether or not the branch would fire, which made a
-dry run's warnings meaningless as evidence either way.
+dry run's warnings meaningless as evidence either way. Note that this cuts both ways when
+writing an assertion: a dry run prints *both* arms of an `if`, so the presence of a skip
+message proves nothing — only the expanded folder list does.
+
+**The `SOURCE_FOLDER` seed is deferred, and where you set the variable no longer matters.**
+Each accumulator appends `$(wildcard $(SOURCE_FOLDER))` rather than sitting inside an
+`ifneq ($(wildcard $(SOURCE_FOLDER)),)`. `?=` makes these *recursive* variables, so the
+appended text is expanded when a gate reads it — after every makefile has been parsed —
+whereas an `ifneq` is decided where it is written, while python.mk is still being read.
+
+That difference was load-bearing until #1534, because the root `Makefile` reads `local.mk`
+*after* `include .rhiza/rhiza.mk`. A project whose source root is not `src/` and which set
+`SOURCE_FOLDER` there had the conditional already decided against it on the `?= src`
+default, so `deps`, `typecheck`, `security`, `docs-coverage` and `test` all fell through to
+their empty-list branch and exited **0** having measured nothing — the same silent
+measure-nothing failure as #1505, #1511 and #1516, but reached through a documented
+configuration surface rather than a hard-coded path. It survived because every channel the
+override tests cover — the command line, `.rhiza/.env`, the root `Makefile` above the
+include — is read *before* python.mk is parsed, so none of them could see it.
+`tests/api/test_make_variable_overrides.py::TestSourceFolderFromLocalMk` now pins all five
+gates against a `local.mk`-declared source root.
+
+Appending has always worked from `local.mk` and still does; it was only *setting*
+`SOURCE_FOLDER` that was position-dependent.
 
 All three layers carry `test`/`coverage`/`typecheck` themselves. Python's used to live
 in the separate `tests` bundle, and that was a real inconsistency rather than a
@@ -348,6 +371,17 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 >   on `rhiza.mk`'s `PYTHON_VERSION` fallback. prek is a binary that provisions each
 >   hook's toolchain itself. `test_fmt_target_no_longer_needs_python_version` pins the
 >   absence, so the coupling cannot creep back.
+> - **The root config's interrogate hook is scoped differently from the bundle's, and
+>   that is the override doing its job (#1535).** The bundle ships `files: ^src/`, right
+>   for a downstream project and inert here, so the hook reported
+>   `(no files to check)Skipped` on every `make fmt` — a line that reads like a check, in
+>   the output of the gate this repo runs most. The root copy points instead at the folders
+>   `make docs-coverage` resolves. Its `--config=pyproject.toml` also named a
+>   `[tool.interrogate]` table that did not exist; interrogate falls back to its own
+>   defaults for a missing table rather than failing, so the hook was quietly enforcing 80%
+>   where the gate enforces 100%. `tests/utils/test_gate_scope.py` now pins both halves —
+>   that the pattern matches files the gate measures, and that the table and the recipe
+>   agree on the threshold.
 >
 > The CI job keeps its id `pre-commit` and its display name "Pre-commit hooks": that name
 > is a required status check in `.github/rulesets/main-branch-protection.json`, so

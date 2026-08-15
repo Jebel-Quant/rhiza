@@ -92,12 +92,25 @@ repos:
     hooks:
       - id: uv-lock
 
+  # Mother-repo override (#1535). The bundle ships `files: ^src/`, which is right for a
+  # downstream project and inert here: rhiza ships configuration rather than a runtime
+  # library, so it has no src/ and the hook reported "(no files to check)Skipped" on every
+  # `make fmt` — a line that reads like a check in the output of the gate this repo runs
+  # most. Scoped instead to the folders `make docs-coverage` measures, which is
+  # DOCSTRING_FOLDERS (utils, contributed by .rhiza/make.d/bundles.mk) plus the test
+  # folders that target folds in.
+  #
+  # The settings live in pyproject.toml's [tool.interrogate], which the `--config` below
+  # has always named and which did not exist until now: interrogate falls back to its own
+  # defaults for a missing table rather than failing, so the hook was also a *weaker*
+  # standard than the gate (fail-under 80, magic and __init__ methods counted). One table,
+  # read by both, keeps them from disagreeing.
   - repo: https://github.com/econchick/interrogate
     rev: 1.7.0
     hooks:
       - id: interrogate
         args: [--config=pyproject.toml]
-        files: ^src/
+        files: ^(utils|tests|\.rhiza/tests)/.*\.py$
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
     rev: v1.2.0  # Use the latest release

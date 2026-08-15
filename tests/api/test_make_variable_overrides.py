@@ -17,6 +17,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+import pytest
+
 from tests.util import run_make, strip_ansi
 
 
@@ -198,6 +200,68 @@ class TestSourceFolderVariable:
         # marimo.mk is included before quality.mk, so its folder is appended first.
         assert "deptry notebooks mypackage --ignore DEP004" in out, (
             "deptry should scan marimo + source folders in a single call with DEP004 ignored; got:\n" + out[:600]
+        )
+
+
+class TestSourceFolderFromLocalMk:
+    """SOURCE_FOLDER set in ``local.mk`` must still seed the five path-scoped gates (#1534).
+
+    The root Makefile reads ``local.mk`` *after* ``include .rhiza/rhiza.mk``, so the
+    accumulator seeds in python.mk are parsed before it. While those seeds were wrapped in
+    ``ifneq ($(wildcard $(SOURCE_FOLDER)),)`` the conditional had already been decided
+    against the ``?= src`` default, and a project whose source root is not ``src/`` got
+    ``deps``, ``typecheck``, ``security``, ``docs-coverage`` and ``test`` each falling
+    through to their empty-list branch — exiting 0 having measured nothing, the failure
+    mode #1505, #1511 and #1516 each closed one gate at a time.
+
+    The sibling class above covers the channels that always worked (the command line, and
+    ``.rhiza/.env``), which is exactly why the regression survived: every one of them is
+    read *before* python.mk is parsed, so none of them could see this.
+    """
+
+    # Each gate's computed path list, as the recipe assigns it. Asserting on the
+    # assignment rather than on a bare "mypackage" substring is deliberate: four of the
+    # five WARN-and-skip branches interpolate SOURCE_FOLDER into their message
+    # ("...and SOURCE_FOLDER='mypackage' does not exist"), so a substring check would
+    # pass just as happily on the broken behaviour it is meant to catch.
+    GATE_PATHS = (
+        ("typecheck", 'typecheck_paths="mypackage"'),
+        ("security", 'bandit_paths="mypackage"'),
+        ("docs-coverage", 'docstring_paths="mypackage"'),
+        ("test", 'coverage_paths="mypackage"'),
+    )
+
+    @staticmethod
+    def _project_with_local_mk(tmp_path: Path) -> None:
+        """Give the temp project a non-default source root, declared only in local.mk."""
+        (tmp_path / "mypackage").mkdir(exist_ok=True)
+        (tmp_path / "local.mk").write_text("SOURCE_FOLDER = mypackage\n")
+
+    @pytest.mark.parametrize(("target", "expected"), GATE_PATHS, ids=[t for t, _ in GATE_PATHS])
+    def test_gate_scope_honours_local_mk(self, logger, tmp_path: Path, target: str, expected: str) -> None:
+        """Each path-scoped gate must resolve to the source root local.mk declares."""
+        self._project_with_local_mk(tmp_path)
+
+        out = strip_ansi(run_make(logger, [target]).stdout)
+        assert expected in out, (
+            f"`make {target}` should scope to the local.mk SOURCE_FOLDER; expected {expected!r}.\n"
+            f"An empty list here means the accumulator seed was evaluated before local.mk "
+            f"was read (#1534). Got:\n" + out[-800:]
+        )
+
+    def test_deps_scope_honours_local_mk(self, logger, tmp_path: Path) -> None:
+        """`make deps` is checked apart: deptry takes its folders as bare arguments.
+
+        Note that the assertion is on the deptry *invocation*, not on the absence of the
+        recipe's "no deptry folders found" branch. Under ``make -n`` the whole recipe is
+        printed, both arms of the ``if`` included, so an absence check would fail even on
+        correct behaviour — the dry run shows the branch that *would not* be taken.
+        """
+        self._project_with_local_mk(tmp_path)
+
+        out = strip_ansi(run_make(logger, ["deps"]).stdout)
+        assert "deptry mypackage" in out, (
+            "`make deps` should scan the local.mk SOURCE_FOLDER (#1534); got:\n" + out[-800:]
         )
 
 
