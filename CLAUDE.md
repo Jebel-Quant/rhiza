@@ -167,6 +167,27 @@ tool, so `make deps` failed on Python and `make deptry` on the other two. The to
 `tests/bundles/test_bundle_sync.py::TestEveryLayerDefinesTheSameGateNames` now fails on
 the next divergence rather than documenting it.
 
+**Where each Python gate looks, and how to add a folder.** python-core's four path-scoped
+gates take their folder list from an accumulator, all seeded from `SOURCE_FOLDER` when it
+exists: `TYPECHECK_FOLDERS`, `BANDIT_FOLDERS`, `DOCSTRING_FOLDERS` and the older
+`DEPTRY_FOLDERS`/`DEPTRY_IGNORE` pair. A bundle or a consuming `Makefile`/`local.mk` adds
+a folder by appending, the way marimo.mk contributes its notebooks.
+
+Only `deps` had that shape before #1505; the other three hard-coded `SOURCE_FOLDER`, so
+Python kept *outside* the source root was unreachable by three of the four static gates.
+The mother repo was the extreme case — it ships configuration, not a library, so it has no
+`src/` at all and `typecheck`, `security` and `deps` each exited **0** having measured
+nothing, on the very repo that ships those gates to everyone else. `utils/` (the tooling
+behind `make sync-self` and the `sync-self-check` drift guard) is contributed from
+`.rhiza/make.d/bundles.mk`, which is mother-repo-only — the root `Makefile` cannot hold it,
+being a dogfood symlink into `bundles/core/`. `tests/utils/test_gate_scope.py` asserts the
+outcome rather than the wiring: each gate must resolve to a non-empty list naming `utils`.
+
+One consequence worth knowing when reading `make -n`: the folder list is expanded by
+**make**, not by the recipe's shell, so a dry run shows the real scope. The `[ -d ... ]`
+form it replaced printed its warning whether or not the branch would fire, which made a
+dry run's warnings meaningless as evidence either way.
+
 All three layers carry `test`/`coverage`/`typecheck` themselves. Python's used to live
 in the separate `tests` bundle, and that was a real inconsistency rather than a
 considered asymmetry: `python.mk`'s own `all` named them while `tests` defined them, and
