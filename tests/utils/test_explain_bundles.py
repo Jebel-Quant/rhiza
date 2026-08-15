@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import builtins
 import importlib.util
+import re
 import sys
 from pathlib import Path
 from textwrap import dedent
@@ -14,7 +15,11 @@ from tests.util import strip_ansi
 
 
 def _load_module(root: Path, monkeypatch, tmp_path: Path, yaml_text: str):
-    """Load explain_bundles.py against a temp project whose template-bundles.yml holds yaml_text."""
+    """Load explain_bundles.py against a temp project whose template-bundles.yml holds yaml_text.
+
+    Since #1530 the import itself reads nothing — the chdir is what makes
+    ``_config_path`` prefer the temp project once ``main`` is called.
+    """
     module_path = root / "utils" / "explain_bundles.py"
     config_dir = tmp_path / ".rhiza"
     config_dir.mkdir()
@@ -85,8 +90,8 @@ def test_print_bundle_renders_dependencies_and_standalone_tag(root, monkeypatch,
     assert "Additional detail" not in output
 
 
-def test_import_prints_grouped_bundle_and_profile_sections(root, monkeypatch, tmp_path, capsys):
-    """Importing the script should render bundle and profile summaries from YAML."""
+def test_main_prints_grouped_bundle_and_profile_sections(root, monkeypatch, tmp_path, capsys):
+    """Running main should render bundle and profile summaries from YAML."""
     module = _load_module(
         root,
         monkeypatch,
@@ -106,15 +111,67 @@ def test_import_prints_grouped_bundle_and_profile_sections(root, monkeypatch, tm
             bundles: [core, github-tests]
         """,
     )
+    capsys.readouterr()
+
+    assert module.main() == 0
 
     output = strip_ansi(capsys.readouterr().out)
-    assert module.groups["base"] == {"core": {"description": "Core bundle"}}
+    assert module.group_bundles({"core": {"description": "Core bundle"}})["base"] == {
+        "core": {"description": "Core bundle"}
+    }
     assert "Bundles  (3 total)" in output
     assert "Core & Feature  (1)" in output
     assert "GitHub  (1)" in output
     assert "GitLab  (1)" in output
     assert "Profiles  (1 total)" in output
     assert "expands to: core, github-tests" in output
+
+
+def test_import_reads_nothing_and_works_outside_a_project(root, monkeypatch, tmp_path, capsys):
+    """The module must import from a directory holding no config, printing nothing (#1530).
+
+    The regression this pins is the original defect: the config was opened at import
+    time via a *relative* path, so importing from anywhere but a project root raised
+    ``FileNotFoundError`` before a single function could be called.
+    """
+    monkeypatch.chdir(tmp_path)
+
+    spec = importlib.util.spec_from_file_location("explain_bundles_no_project", root / "utils" / "explain_bundles.py")
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+
+    assert capsys.readouterr().out == ""
+    assert module._bundle_group("github-tests") == "github"
+
+
+def test_config_path_falls_back_to_the_repo_that_ships_the_script(root, monkeypatch, tmp_path):
+    """With no config in the current directory, the script explains its own repo.
+
+    This is the half that makes the module usable from anywhere: the fallback is
+    resolved from ``__file__``, not from the process working directory.
+    """
+    module = _load_module(root, monkeypatch, tmp_path, "bundles: {}\nprofiles: {}\n")
+    assert module._config_path() == tmp_path / ".rhiza" / "template-bundles.yml"
+
+    monkeypatch.chdir(tmp_path / ".rhiza")  # a directory with no .rhiza/ of its own
+    assert module._config_path() == root / ".rhiza" / "template-bundles.yml"
+
+
+def test_main_exits_with_guidance_when_no_config_exists(root, monkeypatch, tmp_path):
+    """A missing config must fail loudly rather than print an empty summary.
+
+    The expected text is built from the module's own ``_CONFIG_REL`` rather than
+    written out: it is a ``Path``, so it renders with a backslash on Windows, and
+    hard-coding the POSIX form failed the whole Windows matrix while passing locally.
+    """
+    module = _load_module(root, monkeypatch, tmp_path, "bundles: {}\nprofiles: {}\n")
+    monkeypatch.setattr(module, "_config_path", lambda: tmp_path / "absent" / "template-bundles.yml")
+
+    with pytest.raises(SystemExit, match=re.escape(f"No {module._CONFIG_REL} found")):
+        module.main()
 
 
 def test_import_exits_with_install_hint_when_pyyaml_is_missing(root, monkeypatch, tmp_path):

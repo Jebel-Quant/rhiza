@@ -2,7 +2,7 @@
 # Provides make explain-bundles for new contributors unfamiliar with the bundle model.
 # Mother-repo-only fragment: no bundle ships it, so it is never synced downstream.
 
-.PHONY: explain-bundles sync-self sync-self-check e2e
+.PHONY: explain-bundles sync-self sync-self-check e2e gitlab-docker-test
 
 # Bring utils/ into the five path-scoped gates.
 #
@@ -10,7 +10,7 @@
 # matches nothing. That left `typecheck`, `security` and `deps` exiting 0 having measured
 # nothing, and `docs-coverage` seeing only the test folders (#1505) — on the one repo that
 # ships those gates to everyone else. But real Python does live here: utils/ holds the
-# mother-repo tooling behind `make sync-self` and the sync-self-check CI drift guard.
+# mother-repo tooling behind `make sync-self` and the `sync-self-check` drift check.
 #
 # `semgrep` joined them in #1511. It has the same shape and had the same hole, but was
 # missed by #1505 because it is owned by core's quality.mk rather than by python.mk — and
@@ -49,7 +49,11 @@ explain-bundles: ## print all bundles and profiles with descriptions and depende
 sync-self: ## relink root dogfood copies as symlinks into bundles/ (mother repo only)
 	@uv run utils/link_dogfood.py
 
-sync-self-check: ## fail if any dogfood symlink is stale/missing without writing (CI drift guard, mother repo only)
+# The local drift check, for use before committing a new bundle file. In CI the same
+# invariant is asserted by tests/bundles/test_bundle_dogfood_symlinks.py inside
+# `make test` — using link_dogfood's own carve-out predicate and bundle index, so the
+# two cannot disagree. No workflow runs this target (#1532).
+sync-self-check: ## fail if any dogfood symlink is stale/missing without writing (local drift check, mother repo only)
 	@uv run utils/link_dogfood.py --check
 
 # The language-layer end-to-end suite: assemble a profile into a temp directory,
@@ -74,3 +78,21 @@ sync-self-check: ## fail if any dogfood symlink is stale/missing without writing
 e2e: install ## run the language-layer end-to-end suite against real toolchains (opt-in, mother repo only)
 	@printf "${BLUE}[INFO] Running end-to-end suite: $(E2E_ARGS)${RESET}\n"
 	@RHIZA_E2E=1 ${UV_BIN} run --with pytest-timeout pytest $(E2E_ARGS) -v
+
+# The Docker-backed half of the GitLab suite: run a real job under gitlab-ci-local
+# against the pinned $UV_IMAGE from bundles/gitlab/.gitlab-ci.yml.
+#
+# Opt-in for the same reason `e2e` is — it pulls a large image and needs Docker and
+# Node — but opt-in without an entry point is how it came to run nowhere at all
+# (#1528): RHIZA_GITLAB_DOCKER was set by no workflow, no target and no .env, so the
+# one check that the pinned image still pulls and runs was skipped in every
+# environment. rhiza_weekly.yml calls this target; the cadence matches the cost, and
+# a retired image tag is a slow failure rather than a sudden one.
+#
+# `-m gitlab_exec` selects by marker (registered in tests/conftest.py) rather than by
+# node id, so a second Docker-backed test is picked up by writing it, not by editing
+# this recipe. The test still skips itself when docker or npx is missing, so this is
+# safe to run on a machine without either.
+gitlab-docker-test: install ## run the Docker-backed GitLab job test against the pinned image (opt-in, mother repo only)
+	@printf "${BLUE}[INFO] Running the Docker-backed GitLab job test${RESET}\n"
+	@RHIZA_GITLAB_DOCKER=1 ${UV_BIN} run pytest tests/bundles/test_gitlab_ci.py -m gitlab_exec -v

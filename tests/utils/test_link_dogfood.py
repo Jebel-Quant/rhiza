@@ -362,3 +362,44 @@ def test_relink_scans_bundles_and_git_when_given_no_index(root, tmp_path) -> Non
     assert (tmp_path / "ruff.toml").is_symlink()
     # The bundle source itself must never be linked to itself.
     assert not source.is_symlink()
+
+
+def test_parse_args_defaults_to_write_mode(root) -> None:
+    """With no flags the tool writes — the historical default, preserved (#1531)."""
+    module = _load_module(root)
+
+    assert module._parse_args([]).check is False
+
+
+def test_parse_args_accepts_the_check_flag(root) -> None:
+    """``--check`` selects the non-writing drift check."""
+    module = _load_module(root)
+
+    assert module._parse_args(["--check"]).check is True
+
+
+def test_parse_args_rejects_an_unknown_flag(root, capsys) -> None:
+    """A mistyped flag must fail, not silently fall through to the writing run.
+
+    This is the whole point of #1531: the previous ``"--check" in sys.argv[1:]`` scan
+    treated ``--checks`` as "no flag given", so a user who asked for a preview got the
+    run that rewrites tracked files as symlinks instead.
+    """
+    module = _load_module(root)
+
+    with pytest.raises(SystemExit) as excinfo:
+        module._parse_args(["--checks"])
+
+    assert excinfo.value.code == 2
+    assert "unrecognized arguments: --checks" in capsys.readouterr().err
+
+
+def test_parse_args_documents_check_in_its_help(root, capsys) -> None:
+    """``--help`` must describe ``--check`` rather than leaving it to be read in the source."""
+    module = _load_module(root)
+
+    with pytest.raises(SystemExit) as excinfo:
+        module._parse_args(["--help"])
+
+    assert excinfo.value.code == 0
+    assert "--check" in capsys.readouterr().out
