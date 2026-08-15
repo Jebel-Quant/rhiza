@@ -34,6 +34,7 @@ BANDIT_FOLDERS    += utils
 DOCSTRING_FOLDERS += utils
 DEPTRY_FOLDERS    += utils
 SEMGREP_FOLDERS   += utils
+COVERAGE_FOLDERS  += utils
 DEPTRY_IGNORE     += --ignore DEP004
 
 # Which end-to-end modules `make e2e` runs. One per language layer, so CI can give

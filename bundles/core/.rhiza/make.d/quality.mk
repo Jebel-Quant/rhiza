@@ -93,8 +93,19 @@ semgrep: install ## run Semgrep static analysis
 # `test_a_profile_never_selects_two_bundles_from_one_layer` and
 # `test_every_profile_selects_a_language_layer` bracket that from both sides. A
 # core-only tree is not a shipped configuration; there, this fails naming `install`.
+#
+# RHIZA_DOCTEST_FOLDERS carries the doctest scope to the shipped test_docstrings.py, which
+# had resolved `src` and nothing else — so a project keeping Python outside its source root
+# had its docstring examples skipped rather than checked (#1517). DOCSTRING_FOLDERS is the
+# same accumulator `make docs-coverage` reads, so "has a docstring" and "the example in it
+# still works" cannot end up scoped differently.
+#
+# Naming a python-core variable from core is safe in the way `install` above is: on a Rust
+# or Go layer the variable is simply undefined, the value is empty, and the suite falls
+# back to SOURCE_FOLDER exactly as before.
 rhiza-test: install ## run rhiza's own tests (if any)
 	@if [ -d ".rhiza/tests" ]; then \
+		RHIZA_DOCTEST_FOLDERS="$(strip $(DOCSTRING_FOLDERS))" \
 		${UV_BIN} run --with pytest --with pytest-timeout --with python-dotenv --with packaging pytest .rhiza/tests; \
 	else \
 		printf "${YELLOW}[WARN] No .rhiza/tests directory found, skipping rhiza-tests${RESET}\n"; \

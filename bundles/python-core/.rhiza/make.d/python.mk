@@ -142,13 +142,24 @@ ifneq ($(wildcard $(SOURCE_FOLDER)),)
 DEPTRY_FOLDERS += $(SOURCE_FOLDER)
 endif
 
-# The same accumulator shape, for the other three path-scoped gates. `deps` has had
+# The same accumulator shape, for the other four path-scoped gates. `deps` has had
 # one since the bundle model began; `typecheck`, `security` and `docs-coverage` each
 # hard-coded SOURCE_FOLDER instead, so any Python a project keeps *outside* its source
 # root was unreachable by three of the four static gates (#1505). The mother repo is
 # the extreme case — it has no `src/` at all, so those three exited 0 having measured
 # nothing — but a downstream project with a `scripts/` or `tools/` directory has the
 # identical hole.
+#
+# COVERAGE_FOLDERS joined them in #1516, and it is the same bug one gate later: `test`
+# still passed `--cov=$(SOURCE_FOLDER)` behind a `[ -d ... ]`, so on a project with no
+# `src/` the suite ran and measured no coverage at all — silently, since a missing
+# source folder is a warning rather than a failure. `utils/` in this very repo was the
+# proof: reachable by four gates, invisible to the fifth.
+#
+# It is a *separate* accumulator from the other four rather than a reuse of one, because
+# the questions differ. A folder can be worth type-checking or scanning without being
+# worth a coverage percentage (generated code, a vendored tree), and DEPTRY_FOLDERS in
+# particular already carries folders — marimo.mk's notebooks — that no test imports.
 #
 # Each seeds itself from SOURCE_FOLDER when that folder exists, so a project that never
 # touches these variables gets precisely the previous behaviour. A bundle or a consuming
@@ -158,13 +169,27 @@ endif
 # that used to live in each recipe. That is a deliberate change in what `make -n` prints:
 # the shell form emitted its assignment whether or not the folder existed, so a dry run
 # reported a scope the real run would not use.
+# One asymmetry here is deliberate rather than an oversight, and is recorded because it
+# reads as one (#1518): `docs-coverage` folds in the test folders on top of this list,
+# while `typecheck` does not. So a repo's tests are held to the docstring bar and not to
+# the typing bar.
+#
+# The reason is that `typecheck` runs mypy in --strict mode, and strict mode's
+# no-untyped-def is a poor fit for a pytest suite: fixtures arrive untyped from pytest,
+# parametrize decorators erase signatures, and monkeypatch stand-ins must match a
+# signature they cannot import. Measured on this repo, extending the scope reports 627
+# errors in 66 files, none of which is a defect. A consumer who does want its tests
+# type-checked appends them: `TYPECHECK_FOLDERS += tests` in the root Makefile or
+# local.mk, which is the accumulator's whole purpose.
 TYPECHECK_FOLDERS ?=
 BANDIT_FOLDERS ?=
 DOCSTRING_FOLDERS ?=
+COVERAGE_FOLDERS ?=
 ifneq ($(wildcard $(SOURCE_FOLDER)),)
 TYPECHECK_FOLDERS += $(SOURCE_FOLDER)
 BANDIT_FOLDERS += $(SOURCE_FOLDER)
 DOCSTRING_FOLDERS += $(SOURCE_FOLDER)
+COVERAGE_FOLDERS += $(SOURCE_FOLDER)
 endif
 
 # Named `deps`, matching rust.mk and go.mk. This was the one gate whose *target name*
@@ -222,28 +247,29 @@ license: install ## run license compliance scan (fail on GPL, LGPL, AGPL)
 # 0% coverage on the next run.
 test:: install ## run all tests
 	@rm -rf _tests
-	@if [ -z "$$(find ${TESTS_FOLDER} -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ]; then \
+	@coverage_paths="$(strip $(COVERAGE_FOLDERS))"; \
+	if [ -z "$$(find ${TESTS_FOLDER} -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ]; then \
 	  printf "${YELLOW}[WARN] No test files found in ${TESTS_FOLDER}, skipping tests.${RESET}\n"; \
 	  exit 0; \
 	fi; \
-	if [ -d ${SOURCE_FOLDER} ]; then \
-	  set -- -n auto \
-	    --ignore=${TESTS_FOLDER}/benchmarks \
-	    --ignore=${TESTS_FOLDER}/stress \
-	    --cov=${SOURCE_FOLDER} \
+	set -- -n auto \
+	  --ignore=${TESTS_FOLDER}/benchmarks \
+	  --ignore=${TESTS_FOLDER}/stress; \
+	if [ -n "$${coverage_paths}" ]; then \
+	  printf "${BLUE}[INFO] Measuring coverage in:$${coverage_paths}${RESET}\n"; \
+	  for coverage_path in $${coverage_paths}; do \
+	    set -- "$$@" --cov="$${coverage_path}"; \
+	  done; \
+	  set -- "$$@" \
 	    --cov-report=term \
 	    --cov-report=html:_tests/html-coverage \
 	    --cov-fail-under=$(COVERAGE_FAIL_UNDER) \
 	    --cov-report=json:_tests/coverage.json \
-	    --cov-report=xml:_tests/coverage.xml \
-	    --html=_tests/html-report/report.html; \
+	    --cov-report=xml:_tests/coverage.xml; \
 	else \
-	  printf "${YELLOW}[WARN] Source folder ${SOURCE_FOLDER} not found, running tests without coverage${RESET}\n"; \
-	  set -- -n auto \
-	    --ignore=${TESTS_FOLDER}/benchmarks \
-	    --ignore=${TESTS_FOLDER}/stress \
-	    --html=_tests/html-report/report.html; \
+	  printf "${YELLOW}[WARN] No coverage folders found (COVERAGE_FOLDERS is empty and SOURCE_FOLDER='${SOURCE_FOLDER}' does not exist), running tests without coverage${RESET}\n"; \
 	fi; \
+	set -- "$$@" --html=_tests/html-report/report.html; \
 	attempt=1; max_attempts=2; \
 	while :; do \
 	  rm -f .coverage .coverage.* _tests/coverage.xml _tests/coverage.json 2>/dev/null || true; \
