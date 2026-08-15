@@ -65,7 +65,23 @@ jobs:
         run: |
           echo "Python versions: ${{ steps.versions-output.outputs.list }}"
 
+      # This workflow serves double duty: it runs on push/PR here, and it is the
+      # reusable workflow every consumer's `github-tests` stub delegates to. So the
+      # OS matrix has to differ by caller (#1526). Rhiza ships Makefiles and shell
+      # recipes to macOS users, and validating them on Linux alone left BSD-userland
+      # portability untested — but forcing macos-latest on every consumer would spend
+      # their minutes to buy *this* repo's assurance. The mother repo therefore opts
+      # itself in and leaves the shipped default alone; a consumer who wants the same
+      # coverage sets RHIZA_CI_OS_MATRIX in its own .rhiza/.env.
+      #
+      # An empty value is not the same as an unset one to make's `?=`, which treats an
+      # exported empty string as set — hence `ci-os-matrix` resolves through
+      # `$(or ...)`, so the empty branch below falls back to ["ubuntu-latest"].
       - id: os
+        env:
+          RHIZA_CI_OS_MATRIX: >-
+            ${{ github.repository == 'jebel-quant/rhiza'
+                && '["ubuntu-latest","macos-latest"]' || '' }}
         run: |
           OS_MATRIX=$(make -f .rhiza/rhiza.mk -s ci-os-matrix)
           echo "list=$OS_MATRIX" >> "$GITHUB_OUTPUT"
@@ -251,6 +267,39 @@ jobs:
       - name: Run deptry
         run: make deps
 
+  rhiza-test:
+    name: Rhiza template tests
+    # Runs the suite the template syncs into .rhiza/tests/ — the [project] structure
+    # gate, docstring coverage, README validation and release-tag checks. `make all`
+    # has always named this target, but no CI job invoked it (#1523), so those
+    # assertions ran only on a developer's machine and constrained nobody else.
+    # CI budget: ≤5 min (small, dependency-light suite). Last measured: 2026-08-15.
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@b09bb98e06d4d774595224525879c09bc6e98c40 # v2.20.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.11.16"
+
+      - name: Configure git auth for private packages
+        uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Run the shipped .rhiza/tests suite
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        run: make rhiza-test
+
   pre-commit:
     name: Pre-commit hooks
     # CI budget: ≤5 min (lint/format hooks). Last measured: 2026-05-28.
@@ -385,13 +434,16 @@ jobs:
   ci-gate:
     name: CI gate
     # Roll-up gate: a single required status check that aggregates the test,
-    # typecheck, and lowest-deps jobs. Branch protection requires this context
-    # instead of every per-leg name, so the matrix can change without editing
-    # the ruleset.
+    # typecheck, lowest-deps and rhiza-test jobs. Branch protection requires this
+    # context instead of every per-leg name, so the matrix can change without editing
+    # the ruleset — which is why rhiza-test joined here rather than as a seventh
+    # required context (#1523): the roll-up is the mechanism that exists for exactly
+    # this, and adding a context would mean editing the ruleset, its bundle copy and
+    # the sync test that pins the `ci / ` prefix between them.
     # CI budget: ≤5 min (result aggregation only). Last measured: 2026-06-27.
     timeout-minutes: 5
     if: always()
-    needs: [test, typecheck, lowest-deps]
+    needs: [test, typecheck, lowest-deps, rhiza-test]
     runs-on: ubuntu-latest
 
     steps:
@@ -400,17 +452,19 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Verify test, typecheck, and lowest-deps succeeded
+      - name: Verify test, typecheck, lowest-deps and rhiza-test succeeded
         run: |
-          echo "test result:       ${{ needs.test.result }}"
-          echo "typecheck result:  ${{ needs.typecheck.result }}"
+          echo "test result:        ${{ needs.test.result }}"
+          echo "typecheck result:   ${{ needs.typecheck.result }}"
           echo "lowest-deps result: ${{ needs.lowest-deps.result }}"
+          echo "rhiza-test result:  ${{ needs.rhiza-test.result }}"
           # Accept "success" or "cancelled" (transient runner cancellation).
           # Reject "failure" (real failure) and "skipped" (job never ran).
           if [[ "${{ needs.test.result }}" != "success" && "${{ needs.test.result }}" != "cancelled" \
              || "${{ needs.typecheck.result }}" != "success" && "${{ needs.typecheck.result }}" != "cancelled" \
-             || "${{ needs.lowest-deps.result }}" != "success" && "${{ needs.lowest-deps.result }}" != "cancelled" ]]; then
-            echo "::error::test, typecheck, and/or lowest-deps did not succeed; failing the CI gate."
+             || "${{ needs.lowest-deps.result }}" != "success" && "${{ needs.lowest-deps.result }}" != "cancelled" \
+             || "${{ needs.rhiza-test.result }}" != "success" && "${{ needs.rhiza-test.result }}" != "cancelled" ]]; then
+            echo "::error::test, typecheck, lowest-deps and/or rhiza-test did not succeed; failing the CI gate."
             exit 1
           fi
           echo "All required CI jobs succeeded."

@@ -109,6 +109,32 @@ def test_scoped_gate_covers_utils(target: str, gate_scopes: dict[str, str]) -> N
     )
 
 
+def test_claude_md_does_not_claim_the_suite_runs_without_coverage(gate_scopes: dict[str, str]) -> None:
+    """CLAUDE.md must not describe `make test` as coverage-free while the gate resolves a scope.
+
+    The two halves drifted apart in #1525: #1516 gave `test` a COVERAGE_FOLDERS accumulator
+    and `utils` started being measured, but CLAUDE.md's mother-repo note still told readers
+    the suite ran "*without* a Python coverage number — by design". A contributor reading it
+    would conclude a green `make test` proves nothing about coverage, when in fact there is a
+    90% gate they can break.
+
+    Checked against the *resolved* scope rather than a hardcoded expectation, so if this repo
+    ever legitimately returns to measuring nothing, the claim becomes true again and this
+    test stops objecting.
+    """
+    stale_claims = ("running tests without coverage", "without* a Python coverage number")
+    prose = (_ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+
+    if not gate_scopes["test"]:
+        pytest.skip("`make test` resolves an empty coverage scope, so the coverage-free claim holds")
+
+    found = [claim for claim in stale_claims if claim in prose]
+    assert not found, (
+        f"CLAUDE.md still says {found} about this repo, but `make test` resolves a coverage "
+        f"scope of {gate_scopes['test']!r} and enforces COVERAGE_FAIL_UNDER against it (#1525)."
+    )
+
+
 def test_rhiza_test_carries_the_docstring_scope_to_the_shipped_doctests(logger) -> None:
     """`make rhiza-test` must hand the shipped test_docstrings.py the same scope as docs-coverage.
 

@@ -208,11 +208,15 @@ class TestCiWorkflow:
         or 'skipped' results.
         """
         gate_steps = ci_workflow.get("jobs", {}).get("ci-gate", {}).get("steps", [])
+        # Matched on the step's *shape* rather than its exact title: the title names the
+        # jobs being rolled up, so it changes whenever one joins (rhiza-test did in #1523)
+        # and an equality check would fail for a reason that has nothing to do with the
+        # cancelled-result property under test.
         verify_step = next(
-            (s for s in gate_steps if s.get("name") == "Verify test, typecheck, and lowest-deps succeeded"),
+            (s for s in gate_steps if s.get("name", "").startswith("Verify") and "needs." in s.get("run", "")),
             None,
         )
-        assert verify_step is not None, "CI gate must have a verification step"
+        assert verify_step is not None, "CI gate must have a verification step reading job results"
 
         run_script = verify_step.get("run", "")
         # The gate must not simply check `!= "success"` — it must also allow `cancelled`.
