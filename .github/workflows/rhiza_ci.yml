@@ -114,7 +114,7 @@ jobs:
             ${{ github.repository == 'jebel-quant/rhiza'
                 && '["ubuntu-latest","macos-latest"]' || '' }}
         run: |
-          OS_MATRIX=$(uvx rhiza-task@0.1.2 ci-os-matrix)
+          OS_MATRIX=$(uvx rhiza-task@0.2.0 ci-os-matrix)
           echo "list=$OS_MATRIX" >> "$GITHUB_OUTPUT"
 
       - name: Debug OS matrix

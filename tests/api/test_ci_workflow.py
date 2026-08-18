@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess  # nosec B404
 import sys
 from pathlib import Path
 
@@ -107,6 +108,51 @@ def test_ci_jobs_define_timeout_budgets(root):
         assert jobs[job_name]["timeout-minutes"] == timeout
 
 
+def _gates_named_by_all(root: Path) -> list[str]:
+    """Return the gate names ``all`` depends on, from the rhiza-task registry.
+
+    The registry is keyed ``layer:name`` and populated by the ``@task`` decorator, so the
+    task modules have to be imported before it is read. Only this repo's layer is consulted:
+    ``rust:all`` and ``go:all`` name a slightly different set, and asserting a Rust gate runs
+    in a Python repo's CI would be nonsense.
+
+    Args:
+        root: Repository root, used to locate the Makefile carrying the pin.
+
+    Returns:
+        The prerequisite gate names, in declaration order.
+    """
+    pin = re.search(r"^RHIZA_TASK \?= (\S+)", (root / "Makefile").read_text(encoding="utf-8"), re.MULTILINE)
+    assert pin, "the root Makefile no longer pins RHIZA_TASK"
+    name, _, version = pin.group(1).partition("@")
+    script = (
+        "import importlib, json;"
+        "[importlib.import_module('rhiza_task.tasks.' + m) for m in ('python', 'quality', 'book', 'extras', 'doctor')];"
+        "from rhiza_task.spec import REGISTRY;"
+        "print(json.dumps(list(REGISTRY['python:all'].needs)))"
+    )
+    proc = subprocess.run(  # nosec B603
+        [
+            "uv",
+            "run",
+            "--quiet",
+            "--no-project",
+            "--with",
+            f"{name}=={version}" if version else name,
+            "python",
+            "-c",
+            script,
+        ],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    gates = json.loads(proc.stdout)
+    assert gates, "the registry reports no prerequisites for `all`, so this guard would be inert"
+    return gates
+
+
 def test_every_gate_named_by_make_all_runs_in_ci(root):
     """Each target `make all` names must be invoked by some CI job.
 
@@ -116,15 +162,12 @@ def test_every_gate_named_by_make_all_runs_in_ci(root):
     `RHIZA_DOCTEST_FOLDERS` scopes (#1517), and no workflow ever invoked it.
 
     Derived from `all`'s own prerequisite list rather than a hand-written set, so adding
-    a gate to `all` without wiring it into CI fails here instead of passing silently.
+    a gate to `all` without wiring it into CI fails here instead of passing silently. That
+    list used to be the `all:` line in `python.mk`; since this repo moved to the rhiza-task
+    shim it comes from the CLI's task registry instead, which is the same derivation against
+    the new source of truth.
     """
-    all_line = next(
-        line
-        for line in (root / ".rhiza" / "make.d" / "python.mk").read_text(encoding="utf-8").splitlines()
-        if line.startswith("all:")
-    )
-    # "all: fmt deps test ... ## run all CI targets locally"
-    gates = all_line.split("##")[0].split(":", 1)[1].split()
+    gates = _gates_named_by_all(root)
 
     workflows = (root / ".github" / "workflows").glob("*.yml")
     invoked = "\n".join(wf.read_text(encoding="utf-8") for wf in workflows)

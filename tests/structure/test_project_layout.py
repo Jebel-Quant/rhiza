@@ -18,11 +18,16 @@ class TestRootFixture:
     def test_root_resolves_correctly_from_nested_location(self, root):
         """Root must resolve to the repository root, not to the nested test package.
 
-        Anchored on ``.rhiza/rhiza.mk`` — the file every rhiza-managed repo has at a fixed
-        depth below the root. It used to be anchored on ``.rhiza/tests/conftest.py``, which
-        stopped existing when the rhiza checks became the pytest-rhiza dependency (#1540).
+        Anchored on ``.rhiza/template-bundles.yml``, and the choice of anchor has a history
+        worth heeding. It was ``.rhiza/tests/conftest.py`` until the rhiza checks became the
+        pytest-rhiza dependency (#1540), then ``.rhiza/rhiza.mk`` until the make layer became
+        the rhiza-task dependency. Both anchors were *synced template content*, so each
+        extraction invalidated one — the same shape of breakage twice.
+
+        The bundle inventory cannot go the same way: it is what makes this the mother repo
+        rather than a consumer of it, so no extraction can move it out.
         """
-        assert (root / ".rhiza" / "rhiza.mk").exists(), f"{root} does not look like a rhiza repository root"
+        assert (root / ".rhiza" / "template-bundles.yml").is_file(), f"{root} does not look like the rhiza mother repo"
 
     def test_root_contains_expected_directories(self, root):
         """Root should contain all expected project directories."""

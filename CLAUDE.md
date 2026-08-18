@@ -180,10 +180,16 @@ Python kept *outside* the source root was unreachable by three of the four stati
 The mother repo was the extreme case — it ships configuration, not a library, so it has no
 `src/` at all and `typecheck`, `security` and `deps` each exited **0** having measured
 nothing, on the very repo that ships those gates to everyone else. `utils/` (the tooling
-behind `make sync-self` and the `sync-self-check` drift check) is contributed from
-`.rhiza/make.d/bundles.mk`, which is mother-repo-only — the root `Makefile` cannot hold it,
-being a dogfood symlink into `bundles/core/`. `tests/utils/test_gate_scope.py` asserts the
-outcome rather than the wiring: each gate must resolve to a non-empty list naming `utils`.
+behind `make sync-self` and the `sync-self-check` drift check) was contributed from
+`.rhiza/make.d/bundles.mk`, a mother-repo-only fragment, because the root `Makefile` could
+not hold it while it was a dogfood symlink into `bundles/core/`.
+
+**All of that is now history for this repo**, though the accumulators still ship. rhiza runs
+on the rhiza-task shim, whose config has no accumulators at all: every path-scoped gate reads
+one `source_folder`, and `pyproject.toml` declares `source-folder = "utils"`. Six `+=` lines
+became one setting. `tests/utils/test_gate_scope.py` still asserts the outcome rather than the
+wiring — the folder must exist and hold Python — which is why it survived the migration when
+the assertions it made did not.
 
 One consequence worth knowing when reading `make -n`: the folder list is expanded by
 **make**, not by the recipe's shell, so a dry run shows the real scope. The `[ -d ... ]`
@@ -395,11 +401,32 @@ ceasing to deliver a file does not delete it. Nothing runs it — the gate names
 paths — so it is inert rather than duplicated, and `rhiza-test` warns while the folder is
 still there.
 
-### Modular Makefile System
+### Modular Makefile System — shipped, but no longer run here
 
-The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiza/rhiza.mk`. That file auto-loads everything in `.rhiza/make.d/*.mk` alphabetically.
+> **This repo no longer runs the synced make layer.** rhiza migrated to
+> [rhiza-task](https://github.com/Jebel-Quant/rhiza-task): the root `Makefile` is now a
+> repo-owned shim (`uvx rhiza-task shim`) whose `%:` catch-all forwards any target to the
+> pinned CLI, so `make test` still works and no longer *contains* anything. There is no root
+> `.rhiza/rhiza.mk` and no root `.rhiza/make.d/`.
+>
+> The bundles still ship the layer described below, so this section documents what a
+> **consumer** receives until they migrate too. Three consequences worth knowing:
+>
+> - **`.rhiza/make.d/` files are no longer dogfood symlinks.** They are bundle-only, which
+>   costs the byte-for-byte guard in `tests/bundles/test_bundle_rhiza_sync.py`; the
+>   `_NOT_DOGFOODED_PATHS` carve-out there records it, and `utils/link_dogfood.py` carries
+>   the matching `_MAKE_LAYER_PREFIXES` so `make sync-self` does not helpfully recreate the
+>   whole layer at the root.
+> - **The fragments are still tested**, by assembly rather than by dogfooding:
+>   `tests/api/` and `tests/integration/` build their sandbox with `sync_bundles`, and
+>   `tests/e2e/` runs the assembled gates against real toolchains.
+> - **Not everything has a CLI equivalent yet.** `paper`, `presentation`, `install-uv` and
+>   the `deptry` alias exist only in the fragments, so those bundles cannot retire until
+>   rhiza-task grows tasks for them.
 
-**Each `*.mk` is owned by exactly one bundle** and syncs only when that bundle is adopted — so the file count reflects the bundle model, not accidental sprawl (a project without Docker never receives `docker.mk`). Edit the bundle source (`bundles/<owner>/.rhiza/make.d/<file>`); the root file is a dogfood symlink into it. Mapping:
+The root `Makefile` a consumer receives is intentionally thin and only `include`s `.rhiza/rhiza.mk`. That file auto-loads everything in `.rhiza/make.d/*.mk` alphabetically.
+
+**Each `*.mk` is owned by exactly one bundle** and syncs only when that bundle is adopted — so the file count reflects the bundle model, not accidental sprawl (a project without Docker never receives `docker.mk`). Edit the bundle source (`bundles/<owner>/.rhiza/make.d/<file>`). Mapping:
 
 | `.rhiza/make.d/` file | owner bundle | provides |
 | --- | --- | --- |
@@ -419,9 +446,14 @@ The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiz
 | `paper.mk` | paper | LaTeX paper compilation |
 | `lfs.mk` | lfs | Git LFS install/track/status |
 | `github.mk` | github | GitHub repo/workflow helpers |
-| `bundles.mk` | *(mother-repo only — no bundle ships it)* | `explain-bundles`, `sync-self`, `sync-self-check`, `e2e`, `gitlab-docker-test` |
 
 Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can be defined multiple times to chain behaviour. Add project-specific hooks directly in the root `Makefile` above the include line. Developer-local shortcuts go in `local.mk` (not committed).
+
+**The `::` hooks have no equivalent under the shim**, and this is the one documented capability the migration costs. `bootstrap.mk` anchors `pre-install::`/`post-install::` as no-ops precisely so a consumer can chain onto them; `uvx rhiza-task install` knows nothing about make targets, so a `post-install::` rule in a shim'd repo never runs. The workaround is to shadow the target instead of chaining onto it — an explicit `install:` rule beats the `%:` pattern rule, so it can call the CLI and then the extra step. This repo does exactly that for `rhiza-test` (see below).
+
+**Where `bundles.mk` went.** The mother-repo-only fragment that used to sit in this table — `explain-bundles`, `sync-self`, `sync-self-check`, `e2e`, `gitlab-docker-test` — is now a section of the root `Makefile`. Not `local.mk`, which is gitignored: CI invokes `make e2e` (`rhiza_e2e.yml`) and `make gitlab-docker-test` (`rhiza_weekly.yml`), so they need a committed home. Its six `*_FOLDERS += utils` accumulators became one `source-folder = "utils"` in `pyproject.toml`'s `[tool.rhiza-task]`.
+
+**And why `rhiza-test` is wrapped rather than delegated.** pytest-rhiza's `test_docstrings` reads its scope from the `RHIZA_DOCTEST_FOLDERS` environment variable; `quality.mk` exported it from `DOCSTRING_FOLDERS`, and rhiza-task does not (Jebel-Quant/rhiza-task#18). On a bare delegation the check reported `SKIPPED  No doctest folder found (looked for: src)` while the gate still said `ok rhiza-test` — #1517 exactly, this repo's only doctest examples unchecked behind a green gate. `.rhiza/.env` cannot carry the value because that file is gitignored. `tests/utils/test_gate_scope.py::test_rhiza_test_actually_runs_the_doctest_check` fails if the skip returns.
 
 ### Dependency Management
 
@@ -479,12 +511,17 @@ Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can
 > is a required status check in `.github/rulesets/main-branch-protection.json`, so
 > renaming it would leave every PR waiting on a context that never reports.
 
-> **Coverage in this repo (mother-repo specifics).** Rhiza has no `src/`, so `SOURCE_FOLDER`
-> matches nothing and the coverage scope comes entirely from the `COVERAGE_FOLDERS`
-> accumulator — `.rhiza/make.d/bundles.mk` contributes `utils`, the tooling behind
-> `make sync-self` and the `sync-self-check` drift check. `make test` therefore prints
-> `Measuring coverage in:utils` and enforces the standard 90% bar, which `utils` currently
-> passes at 100%.
+> **Coverage in this repo (mother-repo specifics).** Rhiza has no `src/`, so the default
+> `source_folder` matches nothing and the scope has to be declared: `pyproject.toml`'s
+> `[tool.rhiza-task]` sets `source-folder = "utils"`, the tooling behind `make sync-self` and
+> the `sync-self-check` drift check. `make test` measures `utils` and enforces the standard
+> 90% bar, which it currently passes at 100%.
+>
+> Leave that setting alone. Without it the folder resolves to `src`, which does not exist, and
+> the CLI's gates *skip* a missing folder rather than failing — so `typecheck`, `security`,
+> `docs-coverage`, `deps` and `semgrep` would all report success having measured nothing. That
+> is the same silent failure the six `COVERAGE_FOLDERS`-style accumulators were introduced to
+> fix (#1505, #1511, #1516), reachable again through a one-line config change.
 >
 > **That is recent, and the previous behaviour is worth knowing** because it is the bug the
 > accumulators exist to prevent: until #1516 `test` passed `--cov=$(SOURCE_FOLDER)` behind a

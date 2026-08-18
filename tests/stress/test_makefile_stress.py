@@ -16,6 +16,12 @@ import pytest
 # Get absolute paths for executables
 MAKE = shutil.which("make") or "/usr/bin/make"
 
+# `make help` under the rhiza-task shim prints the CLI's task table and then the
+# repo-owned targets the CLI cannot know about. This marker sits between the two, so
+# matching it proves the delegation *and* the local half ran. The old assertion looked
+# for "Usage:", the make layer's own banner, which no longer exists.
+_HELP_MARKER = "Repo-owned targets"
+
 
 @pytest.mark.stress
 def test_concurrent_help_invocations(root: Path, concurrent_workers: int):
@@ -33,7 +39,7 @@ def test_concurrent_help_invocations(root: Path, concurrent_workers: int):
             capture_output=True,
             text=True,
         )
-        return result.returncode == 0 and "Usage:" in result.stdout
+        return result.returncode == 0 and _HELP_MARKER in result.stdout
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrent_workers) as executor:
         futures = [executor.submit(run_help) for _ in range(concurrent_workers * 2)]
@@ -59,7 +65,7 @@ def test_repeated_help_executions(root: Path, stress_iterations: int):
             capture_output=True,
             text=True,
         )
-        results.append(result.returncode == 0 and "Usage:" in result.stdout)
+        results.append(result.returncode == 0 and _HELP_MARKER in result.stdout)
 
     success_rate = sum(results) / len(results)
     assert success_rate == 1.0, f"Expected 100% success rate, got {success_rate * 100:.1f}%"
@@ -123,19 +129,21 @@ def test_concurrent_variable_printing(root: Path, concurrent_workers: int):
     without corruption or conflicts. Uses only guaranteed-to-exist variables.
     """
 
-    def print_variable(var_name: str):
-        """Print a Makefile variable and return success status."""
+    def print_variable(setting: str):
+        """Print one resolved setting and return success status."""
         result = subprocess.run(  # nosec
-            [MAKE, "--no-print-directory", "-f", "Makefile", f"print-{var_name}"],
+            [MAKE, "--no-print-directory", setting],
             cwd=root,
             capture_output=True,
             text=True,
         )
         return result.returncode == 0
 
-    # Test only variables that are guaranteed to exist in the Makefile
-    # Repeat the variables to create enough work for concurrent execution
-    variables = ["SHELL"] * concurrent_workers
+    # `make print-VAR` was a pattern rule in the retired make layer; the CLI exposes a
+    # `print` subcommand instead, and the shim has no pattern rule that would reach it with
+    # an argument. `todos` stands in: a real target, cheap, read-only, and routed through the
+    # `%:` catch-all, so it exercises the same concurrent delegation path.
+    variables = ["todos"] * concurrent_workers
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrent_workers) as executor:
         futures = [executor.submit(print_variable, var) for var in variables]
