@@ -185,11 +185,8 @@ flowchart TD
 
     rhiza --> rhizamk[rhiza.mk]
     rhiza --> maked[make.d/]
-    rhiza --> reqs[requirements/]
-    rhiza --> rtests[tests/]
-    rhiza --> rdocs[docs/]
-    rhiza --> templates[templates/]
-    rhiza --> assets[assets/]
+    rhiza --> semgrep[semgrep.yml]
+    rhiza --> env[.env]
 
     github --> workflows[workflows/]
     workflows --> ci[rhiza_ci.yml]
@@ -250,9 +247,8 @@ flowchart TB
         
         subgraph other["Other Directories"]
             direction LR
-            docs_dir[docs/<br/>7 MD files]
-            templates_dir[templates/<br/>minibook]
-            assets_dir[assets/<br/>Logo]
+            docs_dir[docs/<br/>guides and reference]
+            utils_dir[utils/<br/>sync-self tooling]
         end
     end
     
