@@ -189,7 +189,6 @@ flowchart TD
     rhiza --> rtests[tests/]
     rhiza --> rdocs[docs/]
     rhiza --> templates[templates/]
-    rhiza --> assets[assets/]
 
     github --> workflows[workflows/]
     workflows --> ci[rhiza_ci.yml]
@@ -252,7 +251,6 @@ flowchart TB
             direction LR
             docs_dir[docs/<br/>7 MD files]
             templates_dir[templates/<br/>minibook]
-            assets_dir[assets/<br/>Logo]
         end
     end
     

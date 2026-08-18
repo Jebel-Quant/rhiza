@@ -164,14 +164,6 @@ make test COVERAGE_FAIL_UNDER=80
 
 You can customize the API documentation and companion book.
 
-### Project Logo
-
-The API documentation includes a logo in the sidebar. You can override the default logo (`assets/rhiza-logo.svg`) by setting the `LOGO_FILE` variable in your Makefile or `local.mk`:
-
-```makefile
-LOGO_FILE := assets/my-custom-logo.png
-```
-
 ### Custom Templates
 
 You can customise the look and feel of the documentation site by overriding MkDocs Material theme settings in `mkdocs.yml` (or `mkdocs-base.yml` if you use the split config approach). See the [MkDocs Material documentation](https://squidfunk.github.io/mkdocs-material/customization/) for available options.

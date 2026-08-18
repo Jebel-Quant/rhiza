@@ -1065,14 +1065,6 @@ git commit -m "Remove CodeQL workflow"
 
 ## Documentation Customization
 
-### Project Logo
-
-The API documentation includes a logo in the sidebar. Override the default logo (`assets/rhiza-logo.svg`) by setting the `LOGO_FILE` variable in your `Makefile` or `local.mk`:
-
-```makefile
-LOGO_FILE := assets/my-custom-logo.png
-```
-
 ### Custom pdoc Templates
 
 Customize the look and feel of the API documentation by providing your own Jinja2 templates. Place custom templates in the `book/pdoc-templates` directory.
