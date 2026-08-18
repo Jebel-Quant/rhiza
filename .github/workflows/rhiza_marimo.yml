@@ -47,13 +47,41 @@ jobs:
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
+      # Install uv/uvx
+      #
+      # `test-notebooks` below already installs it. `list-notebooks` did not, because its
+      # only dependency was make. Reading the folder from the CLI needs uvx on PATH here
+      # too -- the same step #1546 adds to `generate-matrix` in rhiza_ci.yml.
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.11.16"
+
       # Find all Python files in the marimo folder and create a matrix for parallel execution
       - name: Find notebooks and build matrix
         id: notebooks
         run: |
-          # Extract MARIMO_FOLDER from the project configuration (via Makefile)
-          # shellcheck disable=SC2016 # Single quotes intentional - Make syntax, not shell expansion
-          NOTEBOOK_DIR=$(make -s -f Makefile -f - <<< 'print: ; @echo $(or $(MARIMO_FOLDER),marimo)' print)
+          # Extract MARIMO_FOLDER from the project configuration, via the rhiza-task CLI.
+          #
+          # This step used to synthesise a makefile on stdin and read the variable out of
+          # make's own namespace, with `marimo` as the fallback. That put two things into
+          # the reusable contract that do not belong in it: a root `Makefile`, and
+          # MARIMO_FOLDER living inside make's variable namespace. A consumer that has
+          # replaced the synced make layer with the CLI satisfies neither by default -- it
+          # has to keep an `-include .rhiza/.env` alive in a Makefile it otherwise owns,
+          # purely so this one probe finds something. `rhiza-task print` exists precisely
+          # to replace make's `print-%` pattern rule, and reads `.rhiza/.env` itself, so
+          # nothing changes for a repository still on the synced make layer.
+          #
+          # One behaviour change, and it is a convergence rather than a regression: the old
+          # fallback was `marimo`, while the CLI's default is `docs/notebooks` -- which is
+          # what this repository and the shipped `.rhiza/.env` both use. A consumer that
+          # left MARIMO_FOLDER unset *and* keeps notebooks in `marimo/` must now say so;
+          # every synced consumer has the value set explicitly and is unaffected.
+          #
+          # Pinned for the reason the OS matrix is pinned (#1546): the folder a build
+          # discovers notebooks in must not move under a workflow called at a tag.
+          NOTEBOOK_DIR=$(uvx rhiza-task@0.1.2 print marimo_folder)
 
           echo "Searching notebooks in: $NOTEBOOK_DIR"
           # Check if directory exists
