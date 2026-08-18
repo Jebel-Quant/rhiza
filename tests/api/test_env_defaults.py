@@ -80,3 +80,62 @@ class TestEnvFileOptional:
         proc = run_make(logger, ["ci-os-matrix"], dry_run=False, env=env)
         out = strip_ansi(proc.stdout).strip()
         assert out == '["ubuntu-latest","macos-latest"]'
+
+
+class TestExportedCiOsMatrixSurvivesTheShippedEnvFile:
+    """Pin the precedence `.github/workflows/rhiza_ci.yml` depends on (#1545).
+
+    The workflow selects the CI matrix per caller by *exporting* RHIZA_CI_OS_MATRIX:
+    the mother repo opts itself into macOS, every consumer gets an empty string and
+    falls through to the single-OS default (#1526). That only works while the shipped
+    `.rhiza/.env` leaves the variable unset.
+
+    It did not. `bundles/core/.rhiza/.env` pinned all three OSes with a plain `=`,
+    and a makefile assignment outranks an environment variable in GNU make — so the
+    workflow's value was discarded and everyone, mother repo and consumers alike, ran
+    the full three-OS matrix.
+
+    The existing tests could not catch it: each one either deletes `.rhiza/.env` or
+    strips the variable from the environment, and `tests/api/test_ci_workflow.py`
+    passes it as a command-line `make VAR=...`, which outranks the file. None of the
+    three ever combined a populated `.env` with an exported variable, which is the
+    one configuration CI actually runs in. These tests do.
+    """
+
+    def test_exported_value_wins_over_the_shipped_env_file(self, logger, tmp_path):
+        """An exported RHIZA_CI_OS_MATRIX must survive the shipped .rhiza/.env.
+
+        This is the mother-repo path: the workflow exports ubuntu+macos and expects
+        to get it back.
+        """
+        assert (tmp_path / ".rhiza" / ".env").exists(), "fixture should have copied the shipped .env"
+        env = {**os.environ, "RHIZA_CI_OS_MATRIX": '["ubuntu-latest","macos-latest"]'}
+        proc = run_make(logger, ["ci-os-matrix"], dry_run=False, env=env)
+        assert strip_ansi(proc.stdout).strip() == '["ubuntu-latest","macos-latest"]'
+
+    def test_exported_empty_value_falls_back_to_the_single_os_default(self, logger, tmp_path):
+        """An exported empty string must fall back to the single-OS default.
+
+        This is the consumer path. `?=` treats an exported empty string as *set*, so
+        the recipe resolves through `$(or ...)` to get the fallback — and the shipped
+        `.env` must not pre-empt that with a value of its own.
+        """
+        assert (tmp_path / ".rhiza" / ".env").exists(), "fixture should have copied the shipped .env"
+        env = {**os.environ, "RHIZA_CI_OS_MATRIX": ""}
+        proc = run_make(logger, ["ci-os-matrix"], dry_run=False, env=env)
+        assert strip_ansi(proc.stdout).strip() == _DEFAULT_CI_OS_MATRIX
+
+    def test_shipped_env_file_does_not_pin_the_matrix(self, root: Path):
+        """The shipped .env must not assign RHIZA_CI_OS_MATRIX at all.
+
+        Asserted against the bundle source rather than the behaviour above, so the
+        failure names the cause directly if someone reinstates the line.
+        """
+        shipped = root / "bundles" / "core" / ".rhiza" / ".env"
+        assignments = [
+            line for line in shipped.read_text().splitlines() if line.strip().startswith("RHIZA_CI_OS_MATRIX")
+        ]
+        assert assignments == [], (
+            f"{shipped} must leave RHIZA_CI_OS_MATRIX unset so rhiza_ci.yml can select "
+            f"the matrix per caller (#1526, #1545); found: {assignments}"
+        )

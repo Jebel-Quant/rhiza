@@ -230,22 +230,23 @@ def test_deps_gate_reports_no_unused_dependencies(project: Project, logger):
     assert "Checking for unused dependencies" in out
 
 
-def test_rhiza_test_gate_actually_runs_the_shipped_suite(project: Project, logger):
-    """`rhiza-test` must collect real tests, not report an empty directory.
+def test_rhiza_test_gate_actually_runs_the_installed_checks(project: Project, logger):
+    """`rhiza-test` must resolve real checks and pass them, not skip an absent suite.
 
     This assertion used to be its own inverse — it required "No .rhiza/tests directory
     found", pinning as intended the fact that nothing ever delivered the suite to a Rust
     repo. `rhiza-test` is a prerequisite of `all`, so that made the gate vacuous on
     every Rust project.
 
-    `core` now ships the neutral harness and `rust-core` its own `test_cargo_toml.py`,
-    so the payload arrives with the layer and no `tests` bundle is needed.
+    Since #1540 the checks arrive as the pinned pytest-rhiza dependency and each bundle
+    names its own modules in `RHIZA_CHECKS`, so what is asserted is the resolved list —
+    the recipe's `[INFO]` line. Under `--pyargs` pytest reports node ids with no file name
+    at all, so grepping the run for a module's filename would prove nothing either way.
     """
     out = gate(project, "rhiza-test", logger)
-    assert "No .rhiza/tests directory found" not in out, "the self-test suite was not delivered to a Rust project"
-    assert "test_cargo_toml.py" in out, f"the Rust layer's own self-tests did not run:\n{out}"
+    assert "pytest_rhiza.checks.test_cargo_toml" in out, f"the Rust layer's own check was not selected:\n{out}"
     # core's neutral half must arrive too, not just the layer's own module (#1472):
-    assert "test_readme.py" in out, f"core's language-neutral README tests did not run:\n{out}"
+    assert "pytest_rhiza.checks.test_readme" in out, f"core's language-neutral README check was not selected:\n{out}"
     assert re.search(r"\d+ passed", out), f"rhiza-test collected nothing:\n{out}"
     # Nothing in the Rust suite has a legitimate reason to skip on this scaffold, and the
     # ones that would — every test reconciling [package].version with the newest tag — are

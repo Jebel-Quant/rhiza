@@ -247,11 +247,17 @@ class TestMakefile:
         assert "--paths-to-mutate=" in out
 
     def test_test_pyproject_target_dry_run(self, logger):
-        """Test-pyproject target should run the pyproject structure test module via pytest."""
+        """Test-pyproject runs the one installed check by module name, not by path.
+
+        Since #1540 the check is a module in pytest-rhiza rather than a file the template
+        syncs, so there is nothing in the tree for pytest to be pointed at — the shortcut
+        has to name it the way `rhiza-test` does, with `--pyargs`.
+        """
         proc = run_make(logger, ["test-pyproject"])
         out = proc.stdout
         assert "no rule to make target" not in proc.stderr.lower()
-        assert "uv run --with pytest pytest .rhiza/tests/test_pyproject.py" in out
+        assert "pytest-rhiza==" in out, f"the shortcut no longer installs the pinned checks:\n{out}"
+        assert "pytest --pyargs pytest_rhiza.checks.test_pyproject" in out
 
     def test_all_target_chains_ci_subtargets(self, logger):
         """The `all` aggregator should chain the CI sub-targets (fmt, test, docs-coverage, security)."""
@@ -260,7 +266,8 @@ class TestMakefile:
         assert "no rule to make target" not in proc.stderr.lower()
         # Markers proving the prerequisite chain expands each sub-target's recipe.
         assert "prek run --all-files" in out  # fmt
-        assert "uv run --with pytest" in out  # test / rhiza-test
+        assert "uv run --with pytest" in out  # test
+        assert "pytest --pyargs" in out  # rhiza-test
         assert "uv run --with interrogate interrogate" in out  # docs-coverage
         assert "Running bandit security scan in:" in out  # security
 

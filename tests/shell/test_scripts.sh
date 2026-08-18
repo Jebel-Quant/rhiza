@@ -87,9 +87,13 @@ assert_exit_code() {
     fi
 }
 
-# Find repository root (script is in .rhiza/tests/shell/)
+# Find repository root (script is in tests/shell/, so two levels up)
+# The comment above used to say `.rhiza/tests/shell/`, and the `../../..` that went with
+# it resolved one level *above* the repository root — so every "$REPO_ROOT/.devcontainer"
+# path below pointed at nothing. Nothing invokes this script (no make target, no
+# workflow), which is why that went unnoticed.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 echo -e "${BLUE}=== Shell Script Test Suite ===${NC}"
 echo "Repository: $REPO_ROOT"

@@ -576,7 +576,7 @@ Rhiza includes comprehensive maintainability features to help track project heal
 
 ### Technical Debt Tracking
 
-- **[docs/TECHNICAL_DEBT.md](docs/ops/TECHNICAL_DEBT.md)** - Comprehensive tracking of known limitations, debt items, and future improvements
+- **[docs/TECHNICAL_DEBT.md](docs/ops/TECHNICAL_DEBT.md)** - Scope and standing trade-offs; open items are tracked as GitHub issues labelled `technical-debt`
 - **`make todos`** - Automated scanning for TODO, FIXME, and HACK comments across the codebase
 
 ### Changelog Management

@@ -2,7 +2,7 @@
 
 The mother repo had 100% docstring coverage and zero executable examples (#1512).
 ``make docs-coverage`` asks whether a docstring *exists*; nothing asked whether what it
-claims is still true. The gate that would — the shipped ``.rhiza/tests/test_docstrings.py``
+claims is still true. The gate that would — pytest-rhiza's ``test_docstrings`` check
 — cannot reach this repo's Python for two independent reasons, and fixing either alone
 would not help:
 

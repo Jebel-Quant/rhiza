@@ -252,10 +252,9 @@ class TestSecurityConfiguration:
         in_scope = "def f(expr: str) -> object:\n    return eval(expr)\n"
         (tmp_path / "src").mkdir()
         (tmp_path / "src" / "mod.py").write_text(in_scope)
-        for folder in ("tests", ".rhiza/tests"):
-            target = tmp_path / folder
-            target.mkdir(parents=True)
-            (target / "test_r.py").write_text(out_of_scope)
+        target = tmp_path / "tests"
+        target.mkdir(parents=True)
+        (target / "test_r.py").write_text(out_of_scope)
         shutil.copy(bandit_ini, tmp_path / ".bandit")
 
         def _findings(*args: str) -> str:
@@ -290,10 +289,10 @@ class TestSecurityConfiguration:
             f"invoke it — scanned the excluded test trees.\n{recursive}"
         )
 
-        explicit = _findings("tests/test_r.py", ".rhiza/tests/test_r.py", "src/mod.py")
+        explicit = _findings("tests/test_r.py", "src/mod.py")
         assert "B311" not in explicit, (
             "bandit given explicit paths — how pre-commit invokes it — scanned the "
-            f"excluded test trees. A './'-only exclude list causes exactly this.\n{explicit}"
+            f"excluded test tree. A './'-only exclude list causes exactly this.\n{explicit}"
         )
 
     @_REQUIRES_GITHUB_BUNDLE

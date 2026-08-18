@@ -67,7 +67,7 @@ uv run ruff check --select S book/
 
 ### Custom Security Test Suite
 
-Located in `.rhiza/tests/security/test_security_patterns.py`, this suite validates that security tooling is properly configured. 
+Located in `tests/security/test_security_patterns.py`, this suite validates that security tooling is properly configured. 
 
 **Important**: This test suite does NOT duplicate security checks already performed by pre-commit hooks (Bandit, Ruff). The actual security scanning happens automatically via pre-commit.
 
@@ -85,13 +85,13 @@ Located in `.rhiza/tests/security/test_security_patterns.py`, this suite validat
 **Running Security Tests**:
 ```bash
 # Run all 4 security configuration tests
-uv run pytest .rhiza/tests/security/
+uv run pytest tests/security/
 
 # Run specific test class
-uv run pytest .rhiza/tests/security/test_security_patterns.py::TestSecurityConfiguration
+uv run pytest tests/security/test_security_patterns.py::TestSecurityConfiguration
 
 # Run with verbose output
-uv run pytest .rhiza/tests/security/ -v
+uv run pytest tests/security/ -v
 ```
 
 ## Security Exceptions in Test Code
@@ -157,7 +157,7 @@ The baseline should show **zero security findings** in production code:
 - `book/` - Marimo notebooks
 - Any future production Python modules
 
-Test code (`.rhiza/tests/`, `tests/`) is excluded from the baseline as it has different security requirements.
+Test code (`tests/`) is excluded from the baseline as it has different security requirements.
 
 ### Updating the Baseline
 
@@ -189,7 +189,7 @@ git commit -m "Update SAST baseline"
    make test
 
    # Run only security tests
-   uv run pytest .rhiza/tests/security/
+   uv run pytest tests/security/
    ```
 
 ### During Code Review
@@ -311,7 +311,7 @@ subprocess.run(["git", "status"], check=True)  # nosec B603, B607
 
 Before merging any PR with code changes:
 
-- [ ] All security configuration tests pass (`pytest .rhiza/tests/security/`)
+- [ ] All security configuration tests pass (`pytest tests/security/`)
 - [ ] Pre-commit hooks pass (includes Bandit and Ruff security checks)
 - [ ] No new security findings from Bandit in pre-commit
 - [ ] No new security findings from Ruff (`make fmt`)

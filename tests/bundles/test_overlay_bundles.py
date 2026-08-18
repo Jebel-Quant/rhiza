@@ -6,7 +6,7 @@ the CI workflow file(s) that wire that feature into that platform's CI system,
 while the feature bundle itself stays local-first (no hosted workflow files).
 
 Feature bundles and GitHub helper targets are exercised elsewhere
-(``tests/api/test_workflow_stubs.py``, ``.rhiza/tests/api/test_github_targets.py``),
+(``tests/api/test_workflow_stubs.py``, ``tests/api/test_github_targets.py``),
 but the overlay stubs themselves are only thinly verified.  These tests assert,
 per overlay, that it composes its feature + platform correctly:
 
@@ -19,7 +19,7 @@ per overlay, that it composes its feature + platform correctly:
   job-level ``uses:``; GitLab overlays inline the pipeline as runnable jobs.
 
 These tests describe rhiza's own ``bundles/<overlay>/`` layout, which downstream
-projects never receive, so they live in ``tests/`` rather than ``.rhiza/tests/``.
+projects never receive, so they live in the mother repo's own ``tests/``.
 """
 
 from __future__ import annotations

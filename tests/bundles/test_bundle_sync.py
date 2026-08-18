@@ -213,9 +213,17 @@ class TestCoreAndTestsBundleSync:
         """test.mk Makefile fragment is present."""
         assert (self.project / ".rhiza" / "make.d" / "test.mk").is_file()
 
-    def test_rhiza_tests_conftest_exists(self):
-        """Shared test infrastructure (conftest.py) is present."""
-        assert (self.project / ".rhiza" / "tests" / "conftest.py").is_file()
+    def test_no_rhiza_tests_folder_is_synced(self):
+        """The sync must not deliver a `.rhiza/tests` folder any more (#1540).
+
+        It used to carry the shared `conftest.py` and one module per bundle. The checks are
+        the pinned pytest-rhiza dependency now, named through `RHIZA_CHECKS`, so a folder
+        appearing here again would mean a bundle re-added template-owned test code — which
+        nothing runs, since the gate names modules rather than paths.
+        """
+        assert not (self.project / ".rhiza" / "tests").exists(), (
+            "the sync delivered a .rhiza/tests folder; the rhiza checks are a dependency (#1540)"
+        )
 
     def test_semgrep_config_exists(self):
         """Semgrep static analysis config is present."""

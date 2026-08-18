@@ -97,6 +97,13 @@ go-tools: ## install the Go tools the gates need (idempotent)
 	done
 	@printf "${BLUE}[INFO] All Go tools available in $(GO_BIN_DIR)${RESET}\n"
 
+# The rhiza check this layer owns, appended to core's accumulator (#1540). It was the
+# synced `.rhiza/tests/test_go_module.py`; it is now a module name in pytest-rhiza, which
+# core's `rhiza-test` names with `--pyargs`. Python rather than a `_test.go` for the reason
+# the file was: it reconciles `go.mod`, the `Version` constant and `.bumpversion.toml`,
+# which is release wiring rather than module code.
+RHIZA_CHECKS += pytest_rhiza.checks.test_go_module
+
 all: fmt test docs-coverage security deps license typecheck rhiza-test ## run all CI targets locally
 
 # Double-colon, matching test.mk and rust.mk: book.mk declares `test:: ; @:` as a

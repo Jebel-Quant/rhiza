@@ -77,6 +77,15 @@ jobs:
       # An empty value is not the same as an unset one to make's `?=`, which treats an
       # exported empty string as set — hence `ci-os-matrix` resolves through
       # `$(or ...)`, so the empty branch below falls back to ["ubuntu-latest"].
+      #
+      # This works only while `.rhiza/.env` leaves RHIZA_CI_OS_MATRIX unset. That file is
+      # `-include`d by rhiza.mk, and a makefile assignment outranks an environment
+      # variable in GNU make (only a command-line `make VAR=...` outranks the file), so a
+      # value pinned there discards whatever this step exports. It was pinned to all three
+      # OSes from #1072, which made the split below dead code from the day it landed in
+      # #1526 — mother repo and consumers alike ran the full three-OS matrix. Removed in
+      # #1545 and pinned by TestExportedCiOsMatrixSurvivesTheShippedEnvFile, which is the
+      # only test that combines a populated .env with an exported value.
       - id: os
         env:
           RHIZA_CI_OS_MATRIX: >-
@@ -268,11 +277,15 @@ jobs:
         run: make deps
 
   rhiza-test:
-    name: Rhiza template tests
-    # Runs the suite the template syncs into .rhiza/tests/ — the [project] structure
-    # gate, docstring coverage, README validation and release-tag checks. `make all`
-    # has always named this target, but no CI job invoked it (#1523), so those
+    name: Rhiza repository checks
+    # Runs the conformance checks `make rhiza-test` selects through RHIZA_CHECKS — the
+    # [project] structure gate, doctests, README validation and the release-tag check.
+    # `make all` has always named this target, but no CI job invoked it (#1523), so those
     # assertions ran only on a developer's machine and constrained nobody else.
+    #
+    # The job needs network on a cold runner, and always did: the checks arrive as the
+    # pinned pytest-rhiza dependency since #1540, where before they were synced files whose
+    # pytest came from `uv run --with` anyway. One resolve either way.
     # CI budget: ≤5 min (small, dependency-light suite). Last measured: 2026-08-15.
     timeout-minutes: 5
     runs-on: ubuntu-latest
@@ -295,7 +308,7 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
-      - name: Run the shipped .rhiza/tests suite
+      - name: Run the rhiza repository checks
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: make rhiza-test

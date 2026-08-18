@@ -1,1 +1,0 @@
-../../bundles/core/.rhiza/tests/test_readme.py
