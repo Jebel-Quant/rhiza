@@ -316,7 +316,6 @@ The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiz
 | `go.mk` | go-core | `install`, `all`, and the go-backed gates |
 | `doctor.mk` | core | `make doctor` environment checks |
 | `quality.mk` | core | `fmt`, `todos`, `semgrep`, `rhiza-test` — the language-neutral gates |
-| `completions.mk` | core | `install-completions` — shell tab-completion for make targets (`SHELL_KIND=bash\|zsh\|both`) |
 | `custom-env.mk` | core | example stub: project variables |
 | `custom-task.mk` | core | example stub: project targets/hooks |
 | `test.mk` | tests | `benchmark`, `hypothesis-test`, `stress`, `mutation` — the optional extras |

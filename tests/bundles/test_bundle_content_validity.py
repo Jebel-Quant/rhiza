@@ -1,11 +1,10 @@
-"""Per-bundle content checks: docs, completions, Makefile fragments, legal, config.
+"""Per-bundle content checks: docs, Makefile fragments, legal, config.
 
 What remains of the original 864-line module after #1514 split it three ways. Unlike its
 two siblings, every class here inspects a *named* bundle or a named kind of file rather
 than sweeping the whole tree:
 
 - every bundle is described in ``template-bundles.yml`` and documented
-- shell completion scripts are non-trivial
 - Makefile fragments expose at least one documented target (``## help`` comment)
 - legal files have real content
 - ``renovate.json`` carries the required schema declaration
@@ -80,54 +79,6 @@ _REUSABLE_WORKFLOW_PREFIX = "jebel-quant/rhiza/.github/workflows/"
 # is a full release-automation workflow that runs many first-party steps itself
 # rather than delegating to a reusable workflow.
 _NON_STUB_RHIZA_WORKFLOWS = {"rhiza_release.yml"}
-
-
-class TestShellCompletions:
-    """Shell completion scripts in the core bundle must have real content."""
-
-    @pytest.fixture
-    def completions_dir(self, root: Path) -> Path:
-        """Return the completions directory inside the core bundle."""
-        return root / "bundles" / "core" / ".rhiza" / "completions"
-
-    def test_bash_completion_exists_and_is_non_empty(self, completions_dir: Path) -> None:
-        """rhiza-completion.bash must exist and contain at least 10 lines."""
-        bash_comp = completions_dir / "rhiza-completion.bash"
-        assert bash_comp.exists(), "rhiza-completion.bash not found in core bundle"
-        lines = bash_comp.read_text(encoding="utf-8").splitlines()
-        assert len(lines) >= 10, f"bash completion suspiciously short: {len(lines)} lines"
-
-    def test_zsh_completion_exists_and_is_non_empty(self, completions_dir: Path) -> None:
-        """rhiza-completion.zsh must exist and contain at least 10 lines."""
-        zsh_comp = completions_dir / "rhiza-completion.zsh"
-        assert zsh_comp.exists(), "rhiza-completion.zsh not found in core bundle"
-        lines = zsh_comp.read_text(encoding="utf-8").splitlines()
-        assert len(lines) >= 10, f"zsh completion suspiciously short: {len(lines)} lines"
-
-    def test_bash_completion_uses_make_for_dynamic_targets(self, completions_dir: Path) -> None:
-        """Bash completion script should invoke make dynamically to discover targets."""
-        bash_comp = completions_dir / "rhiza-completion.bash"
-        if not bash_comp.exists():
-            pytest.skip("rhiza-completion.bash not found")
-        content = bash_comp.read_text(encoding="utf-8")
-        # Dynamic completion scripts call make to discover targets at completion time
-        assert "make" in content, "bash completion should invoke 'make' to discover targets dynamically"
-
-    def test_bash_completion_registers_with_complete(self, completions_dir: Path) -> None:
-        """Bash completion script must register itself via the 'complete' builtin."""
-        bash_comp = completions_dir / "rhiza-completion.bash"
-        if not bash_comp.exists():
-            pytest.skip("rhiza-completion.bash not found")
-        content = bash_comp.read_text(encoding="utf-8")
-        assert "complete " in content, "bash completion must call 'complete' to register the completion function"
-
-    def test_zsh_completion_uses_make_for_dynamic_targets(self, completions_dir: Path) -> None:
-        """Zsh completion script should invoke make dynamically to discover targets."""
-        zsh_comp = completions_dir / "rhiza-completion.zsh"
-        if not zsh_comp.exists():
-            pytest.skip("rhiza-completion.zsh not found")
-        content = zsh_comp.read_text(encoding="utf-8")
-        assert "make" in content, "zsh completion should invoke 'make' to discover targets dynamically"
 
 
 class TestMakefileFragments:

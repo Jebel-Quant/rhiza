@@ -147,7 +147,6 @@ Adopt a Rhiza bundle and your project immediately gains:
 - **Documentation** via MkDocs + zensical, with optional Marimo notebook exports
 - **Release automation** — version bumping, OIDC PyPI publishing, optional grayskull conda recipe generation (`vars.PUBLISH_CONDA`, defaults to `true`), SLSA provenance
 - **Security scanning** — CodeQL, bandit, secret scanning, Dependabot
-- **Shell completions** for bash and zsh (tab-complete all `make` targets)
 
 ## 📝 Architecture Decision Records
 
