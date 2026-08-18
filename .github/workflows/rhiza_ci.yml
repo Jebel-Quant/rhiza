@@ -77,6 +77,15 @@ jobs:
       # An empty value is not the same as an unset one to make's `?=`, which treats an
       # exported empty string as set — hence `ci-os-matrix` resolves through
       # `$(or ...)`, so the empty branch below falls back to ["ubuntu-latest"].
+      #
+      # This works only while `.rhiza/.env` leaves RHIZA_CI_OS_MATRIX unset. That file is
+      # `-include`d by rhiza.mk, and a makefile assignment outranks an environment
+      # variable in GNU make (only a command-line `make VAR=...` outranks the file), so a
+      # value pinned there discards whatever this step exports. It was pinned to all three
+      # OSes from #1072, which made the split below dead code from the day it landed in
+      # #1526 — mother repo and consumers alike ran the full three-OS matrix. Removed in
+      # #1545 and pinned by TestExportedCiOsMatrixSurvivesTheShippedEnvFile, which is the
+      # only test that combines a populated .env with an exported value.
       - id: os
         env:
           RHIZA_CI_OS_MATRIX: >-

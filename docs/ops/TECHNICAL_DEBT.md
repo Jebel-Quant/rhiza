@@ -1,277 +1,79 @@
 # Technical Debt
 
-This document tracks known limitations, technical debt items, and future improvements for the Rhiza project.
-
-## Overview
-
-Technical debt is a natural part of software development. This document helps us:
-- Maintain transparency about known limitations
-- Prioritize improvements systematically
-- Track the evolution of our codebase
-- Guide contributor efforts
-
-## Categories
-
-Debt items are categorized by:
-- **Priority**: Critical, High, Medium, Low
-- **Effort**: Small (< 1 day), Medium (1-3 days), Large (> 3 days)
-- **Type**: Architecture, Code Quality, Documentation, Testing, Performance
-
----
-
-## Critical Priority
-
-### 1. Template Conflict Resolution
-**Category**: Architecture | **Effort**: Large  
-**Issue**: Manual conflict resolution required when template updates conflict with local changes.
-
-**Impact**: 
-- Reduces automation effectiveness
-- Creates friction in sync workflow
-- Requires manual intervention
-
-**Proposed Solution**:
-- Implement three-way merge strategy
-- Add interactive conflict resolution UI
-- Provide rollback capabilities
-
-**Related Issues**: TBD
-
----
-
-## High Priority
-
-### 2. Test Coverage for Template Sync
-**Category**: Testing | **Effort**: Medium  
-**Issue**: Limited test coverage for template synchronization edge cases.
-
-**Impact**:
-- Risk of regression bugs
-- Harder to refactor with confidence
-- Edge cases may be undiscovered
-
-**Proposed Solution**:
-- Add integration tests for sync scenarios
-- Mock Git operations for testing
-- Test conflict resolution paths
-
-**Related Issues**: TBD
-
-### 3. Performance with Large Repositories
-**Category**: Performance | **Effort**: Large  
-**Issue**: Sync operations can be slow with large repositories or many files.
-
-**Impact**:
-- Poor developer experience
-- Longer CI/CD times
-- Resource consumption
-
-**Proposed Solution**:
-- Implement incremental sync
-- Add caching layer
-- Parallelize file operations
-- Profile and optimize hot paths
-
-**Related Issues**: TBD
-
-### 4. Documentation Coverage
-**Category**: Documentation | **Effort**: Medium  
-**Issue**: Some advanced features lack comprehensive documentation.
-
-**Impact**:
-- Harder for new users to adopt
-- Support burden on maintainers
-- Feature underutilization
-
-**Proposed Solution**:
-- Audit documentation coverage
-- Add examples for complex scenarios
-- Create video tutorials
-- Improve in-code documentation
-
-**Related Issues**: TBD
-
----
-
-## Medium Priority
-
-### 5. Error Messages Clarity
-**Category**: Code Quality | **Effort**: Small  
-**Issue**: Some error messages lack actionable guidance.
-
-**Impact**:
-- Poor debugging experience
-- Support requests increase
-- User frustration
-
-**Proposed Solution**:
-- Review and improve error messages
-- Add suggestions for common errors
-- Include documentation links
-- Standardize error format
-
-**Related Issues**: TBD
-
-### 6. Makefile Target Documentation
-**Category**: Documentation | **Effort**: Small  
-**Issue**: Not all Makefile targets have help text.
-
-**Impact**:
-- Reduced discoverability
-- Confusion about available commands
-- Incomplete `make help` output
-
-**Proposed Solution**:
-- Add `##` comments to all targets
-- Document parameters and examples
-- Ensure help text consistency
-
-**Related Issues**: TBD
-
-### 7. Dependency Version Constraints
-**Category**: Code Quality | **Effort**: Medium  
-**Issue**: Some dependencies lack upper bounds, risking breaking changes.
-
-**Impact**:
-- Potential for surprise breakage
-- Harder to reproduce builds
-- Upgrade uncertainty
-
-**Proposed Solution**:
-- Review and add upper bounds
-- Document version rationale
-- Setup automated testing across versions
-- Use Renovate for updates
-
-**Related Issues**: See docs/DEPENDENCIES.md
-
-### 8. Template Validation
-**Category**: Architecture | **Effort**: Medium  
-**Issue**: Limited validation of custom templates before sync.
-
-**Impact**:
-- Risk of invalid configurations
-- Harder to debug template issues
-- Potential security risks
-
-**Proposed Solution**:
-- Add schema validation for templates
-- Implement pre-sync checks
-- Provide template linting
-- Create template testing framework
-
-**Related Issues**: TBD
-
----
-
-## Low Priority
-
-### 9. Internationalization
-**Category**: Code Quality | **Effort**: Large  
-**Issue**: No support for non-English documentation or messages.
-
-**Impact**:
-- Limited accessibility for non-English speakers
-- Reduces global adoption potential
-
-**Proposed Solution**:
-- Evaluate demand for i18n
-- Setup localization framework
-- Translate documentation
-- Accept community translations
-
-**Related Issues**: TBD
-
-### 10. Plugin System
-**Category**: Architecture | **Effort**: Large  
-**Issue**: No plugin system for extending functionality.
-
-**Impact**:
-- Limited extensibility
-- Hard to add custom processors
-- Monolithic codebase
-
-**Proposed Solution**:
-- Design plugin architecture
-- Define plugin API
-- Create plugin examples
-- Setup plugin registry
-
-**Related Issues**: See ROADMAP.md v1.1+
-
-### 11. Legacy Python Version Support
-**Category**: Code Quality | **Effort**: Medium  
-**Issue**: Maintaining compatibility with Python 3.11 increases complexity.
-
-**Impact**:
-- Cannot use newest Python features
-- Extra testing burden
-- Backport requirements
-
-**Proposed Solution**:
-- Evaluate user base Python versions
-- Consider minimum version bump
-- Document migration path
-- Provide transition period
-
-**Related Issues**: TBD
-
----
-
-## Recently Resolved
-
-### ✅ UV Package Manager Migration
-**Resolved in**: v0.7.0  
-**Issue**: Dependency on pip and multiple tools  
-**Solution**: Migrated to UV for unified dependency management
-
-### ✅ Pre-commit Hook Standardization
-**Resolved in**: v0.6.5  
-**Issue**: Inconsistent pre-commit configurations  
-**Solution**: Standardized hooks across templates
-
-### ✅ GitHub Actions Modernization
-**Resolved in**: v0.6.0  
-**Issue**: Outdated GitHub Actions versions  
-**Solution**: Updated all actions to latest stable versions
-
----
-
-## Process
-
-### Adding Technical Debt
-1. Identify the issue clearly
-2. Assess impact and effort
-3. Add to appropriate priority section
-4. Link related issues/PRs
-5. Update this document
-
-### Addressing Technical Debt
-1. Select item from backlog
-2. Create GitHub issue if needed
-3. Implement solution
-4. Move to "Recently Resolved"
-5. Update related documentation
-
-### Review Cadence
-- **Monthly**: Review and re-prioritize items
-- **Quarterly**: Assess resolved items and overall debt
-- **Annually**: Archive old resolved items to CHANGELOG
-
----
-
-## Contributing
-
-Found technical debt? Help us improve:
-
-1. Open an issue describing the debt item
-2. Label it as `technical-debt`
-3. Provide context and impact assessment
-4. Suggest potential solutions
-5. Link to relevant code sections
-
-See [CONTRIBUTING.md](../../.rhiza/CONTRIBUTING.md) for general contribution guidelines.
-
----
-
-For planned features and improvements, see `ROADMAP.md` (if your project keeps one).
+Known limitations and deferred work in the Rhiza **template repository**.
+
+## Where the authoritative list lives
+
+The [GitHub issue tracker](https://github.com/Jebel-Quant/rhiza/issues) labelled
+`technical-debt`, not this file.
+
+This document used to carry a parallel register of eleven items, and it decayed in
+every way such a register decays: nine of them were marked `Related Issues: TBD` and so
+were tracked nowhere, two pointed at files (`docs/DEPENDENCIES.md`, `ROADMAP.md`) that
+do not exist in this repository, two described a *different* repository's problems, and
+two described problems the quality gates had since fixed — while the page went on
+rendering perfectly. It claimed a monthly review cadence it had not met in months.
+
+The lesson is the reason this section is now first: a hand-maintained list that
+duplicates the issue tracker will drift out of sync with the repository, and nothing in
+CI can tell. `interrogate` asks whether a docstring exists; `markdownlint` asks whether
+markdown is well-formed; lychee resolves `[text](target)` links but not prose paths.
+None of them asks whether a *claim* is still true.
+
+So: **file an issue.** Use this page only for context that has nowhere else to live.
+
+## Scope — what belongs here, and what does not
+
+Rhiza is a collection of configuration templates. The tool that *syncs* them into
+downstream projects is [`rhiza-cli`](https://github.com/Jebel-Quant/rhiza-cli), a
+separate repository ([ADR 0005](../adr/0005-separate-rhiza-template-from-cli.md)).
+
+Debt in sync behaviour — conflict resolution when a template update collides with local
+changes, sync performance on large repositories, pre-sync validation of a custom
+template — belongs to `rhiza-cli` and should be filed there. The previous version of
+this document tracked three such items against this repository, where no code
+implementing them exists.
+
+## Current items
+
+None recorded here. Open items live in the issue tracker; see the first section.
+
+Two standing trade-offs are worth knowing about, and neither is debt to be paid down —
+each is a deliberate position, recorded so it is not rediscovered as a surprise:
+
+- **Python 3.11 is still supported.** `pyproject.toml` sets
+  `requires-python = ">=3.11"`, which keeps the CI matrix wider and rules out
+  newer-only syntax. Revisit when the supported-version policy changes.
+- **The e2e suite is opt-in.** `make e2e` needs real Rust and Go toolchains, so it is
+  gated behind `RHIZA_E2E=1` and runs per-layer in `.github/workflows/rhiza_e2e.yml`.
+  A green local `make test` therefore does not exercise the Rust or Go layers. This is
+  a cost decision, documented in `CLAUDE.md` under **Language layers**.
+
+## Previously listed, now resolved
+
+Kept because "we already fixed that" is the most useful thing a stale list can tell its
+next reader. Each names the evidence, so the claim is checkable rather than asserted.
+
+| Item | Status | Evidence |
+| --- | --- | --- |
+| Documentation coverage incomplete | Resolved | `make docs-coverage` enforces 100% (interrogate); currently 100.0% over 1118 items |
+| Not all Makefile targets have help text | Resolved | The "Check Makefile targets" pre-commit hook enforces `##` help text; `make help` renders it |
+| No schema validation for templates | Resolved | The "Validate template-bundles.yml" and `check-jsonschema` hooks, plus `tests/bundles/test_template_bundles_schema.py` |
+| Dependencies lack upper bounds | Not applicable | Rhiza declares no runtime dependencies; `uv.lock` pins the dev toolchain and Renovate updates it |
+| UV package manager migration | Resolved in v0.7.0 | Unified dependency management via `uv` |
+| Pre-commit hook standardization | Resolved in v0.6.5 | Standardized hooks across templates |
+| GitHub Actions modernization | Resolved in v0.6.0 | Actions updated to current stable versions |
+
+Two earlier entries were dropped rather than resolved. "Some error messages lack
+actionable guidance" named no message and no file, so it could never be closed on
+evidence. "No support for non-English documentation" recorded no demand signal, and
+speculative work is a roadmap question, not debt.
+
+## Recording new debt
+
+1. Open a GitHub issue describing the limitation and its impact.
+2. Label it `technical-debt`.
+3. If it concerns syncing rather than the templates themselves, file it against
+   `rhiza-cli` instead.
+4. Add a note here **only** if the item needs context that does not fit an issue — and
+   link the issue, so the two cannot drift apart.
