@@ -81,7 +81,25 @@ The core abstraction is the **bundle** — a named group of configuration files.
 - `paper`: LaTeX paper compilation
 - `lfs`, `legal`, `renovate`: miscellaneous tooling
 
-**Platform overlay bundles** — CI workflow stubs that pair a feature with a platform: `github-tests`, `github-book`, `github-marimo`, `github-docker`, `github-devcontainer`, `github-paper`, `github-quality-review`, `gitlab-tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-quality-review`.
+**Platform overlay bundles** — CI workflow stubs that pair a feature with a platform: `github-tests`, `github-benchmark`, `github-mutation`, `github-book`, `github-marimo`, `github-docker`, `github-devcontainer`, `github-paper`, `github-quality-review`, `gitlab-tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-quality-review`.
+
+**An overlay pairs one workflow with the bundle owning the target it invokes.** That
+rule was applied unevenly until now: `github-tests` shipped `rhiza_benchmark.yml` and
+`rhiza_mutation.yml` alongside `rhiza_ci.yml` and `rhiza_codeql.yml`, and so had to
+declare `requires: [tests, github]`. Only the first two need `tests` — they call
+`make benchmark` and `make mutation` from `test.mk`; everything `rhiza_ci.yml` delegates
+to comes from the language layer and `core`. Since `tests` also required `book` (it
+shipped `docs/development/TESTS.md`), *wanting CI pulled in the optional testing extras
+and the documentation stack behind them* — the smallest GitHub selection that could run
+CI was 56 files, nearly the whole template.
+
+The two workflows now live in `github-benchmark` and `github-mutation`
+(`requires: [tests, github]`), `github-tests` and `gitlab-tests` require their language
+layer directly, and `TESTS.md` is rhiza's own docs rather than a synced file. A CI-only
+selection — `core`, `python-core`, `github`, `github-tests` — is **48 files** against
+`github-project`'s 59. `github-project` picked up both new overlays, so its own file set
+is unchanged. `tests/bundles/test_bundle_sync.py::TestGithubOverlaySync` syncs CI
+*without* `tests`, which is what would catch the coupling returning.
 
 **Meta-bundles** — curated compositions of other bundles: `github-project`, `gitlab-project`, `local` (no hosted CI), and the single-language local profiles `rust-local` and `go-local`.
 
@@ -317,8 +335,6 @@ The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiz
 | `doctor.mk` | core | `make doctor` environment checks |
 | `quality.mk` | core | `fmt`, `todos`, `semgrep`, `rhiza-test` — the language-neutral gates |
 | `completions.mk` | core | `install-completions` — shell tab-completion for make targets (`SHELL_KIND=bash\|zsh\|both`) |
-| `custom-env.mk` | core | example stub: project variables |
-| `custom-task.mk` | core | example stub: project targets/hooks |
 | `test.mk` | tests | `benchmark`, `hypothesis-test`, `stress`, `mutation` — the optional extras |
 | `book.mk` | book | `make book` docs build |
 | `docker.mk` | docker | container build/run |

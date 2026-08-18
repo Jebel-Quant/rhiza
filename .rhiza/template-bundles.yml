@@ -265,7 +265,7 @@ bundles:
   gitlab-tests:
     description: "GitLab CI pipeline for running tests (rhiza_ci)"
     standalone: true
-    requires: [tests, gitlab]
+    requires: [python-core, gitlab]
 
   # ============================================================================
   # GITLAB-MARIMO - GitLab CI pipeline for Marimo notebooks
@@ -313,7 +313,6 @@ bundles:
     description: "Optional Python testing extras: benchmark, hypothesis-test, stress and mutation gates"
     standalone: true
     requires:
-      - book          # ships docs/development/TESTS.md, which needs the book's docs/ tree
       - core
       - python-core   # test.mk reads TESTS_FOLDER and pytest.ini from the layer
     notes: |
@@ -341,9 +340,48 @@ bundles:
   # GITHUB-TESTS - GitHub Actions workflows for CI
   # ============================================================================
   github-tests:
-    description: "GitHub Actions workflow stubs for CI (rhiza_ci, rhiza_codeql, rhiza_mutation)"
+    description: "GitHub Actions workflow stubs for the always-on gates (rhiza_ci, rhiza_codeql)"
+    standalone: true
+    requires: [python-core, github]
+    notes: |
+      Carries only the two workflows every project runs: `rhiza_ci.yml` and
+      `rhiza_codeql.yml`. The gates `rhiza_ci.yml` delegates to — `test`,
+      `typecheck`, `docs-coverage`, `deps`, `security`, `license`, `fmt` — all come
+      from the language layer and `core`, which is why this requires `python-core`
+      directly rather than reaching it through `tests`.
+
+      It used to ship `rhiza_benchmark.yml` and `rhiza_mutation.yml` too, and those
+      *do* need `tests` (they call `make benchmark` and `make mutation` from
+      `test.mk`). Because they sat here, every consumer of CI dragged in `tests` —
+      and, until this change, `book` behind it — so the smallest GitHub profile that
+      could run CI was almost the whole template. They now live in
+      `github-benchmark` and `github-mutation`, which pair each workflow with the
+      feature bundle that actually owns its target.
+
+  # ============================================================================
+  # GITHUB-BENCHMARK - GitHub Actions workflow for the benchmark gate
+  # ============================================================================
+  github-benchmark:
+    description: "GitHub Actions workflow stub for the benchmark suite (rhiza_benchmark)"
     standalone: true
     requires: [tests, github]
+    notes: |
+      Pairs `test.mk`'s `benchmark` target with GitHub Actions. Split out of
+      `github-tests` so that wanting CI no longer means taking the optional testing
+      extras. Add the `benchmarks` bundle alongside it for the pytest-benchmark
+      fixtures the workflow is most useful with.
+
+  # ============================================================================
+  # GITHUB-MUTATION - GitHub Actions workflow for mutation testing
+  # ============================================================================
+  github-mutation:
+    description: "GitHub Actions workflow stub for mutation testing (rhiza_mutation, opt-in)"
+    standalone: true
+    requires: [tests, github]
+    notes: |
+      Pairs `test.mk`'s `mutation` target with GitHub Actions. The stub gates itself
+      on the `MUTATION_ENABLED` repository variable, so adopting the bundle is not
+      the same as switching mutation testing on.
 
   # ============================================================================
   # BENCHMARKS - Performance benchmarking with pytest-benchmark
@@ -520,6 +558,8 @@ profiles:
       - github-book
       - github-marimo
       - github-tests
+      - github-benchmark
+      - github-mutation
 
   # ============================================================================
   # GITLAB-PROJECT - Standard GitLab-hosted project

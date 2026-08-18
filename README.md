@@ -62,7 +62,7 @@ ref: v0.14.0
 
 templates:
   - core
-  - tests
+  - python-core
   - github
   - github-tests
   - docker
@@ -83,7 +83,7 @@ include: |
   ruff.toml
 
 exclude: |
-  .rhiza/make.d/custom-task.mk
+  .rhiza/make.d/marimo.mk
 ```
 
 > **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention.
@@ -192,7 +192,7 @@ Rhiza provides **profiles** — named presets that select a sensible set of bund
 | `local` | Local-first development with no hosted CI/CD workflow files | `core`, `python-core`, `book`, `marimo`, `tests` |
 | `rust-local` | Local-first Rust development, no hosted CI/CD (hosted profiles arrive with the Rust workflows) | `core`, `rust-core`, `book` |
 | `go-local` | Local-first Go development, no hosted CI/CD (hosted profiles arrive with the Go workflows) | `core`, `go-core`, `book` |
-| `github-project` | GitHub-hosted project with CI/CD and release automation | `core`, `python-core`, `github`, `book`, `marimo`, `tests`, `github-book`, `github-marimo`, `github-tests` |
+| `github-project` | GitHub-hosted project with CI/CD and release automation | `core`, `python-core`, `github`, `book`, `marimo`, `tests`, `github-book`, `github-marimo`, `github-tests`, `github-benchmark`, `github-mutation` |
 | `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `core`, `python-core`, `gitlab`, `book`, `marimo`, `tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-tests` |
 
 Declare a profile in `.rhiza/template.yml`:
@@ -249,7 +249,9 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 | Bundle | Description | Auto-installs |
 |--------|-------------|---------------|
 | `github` | Base GitHub repository automation (sync, release, dependabot) | `core` |
-| `github-tests` | GitHub Actions workflows for test automation (CI, CodeQL, weekly) | `github`, `tests`, `core` |
+| `github-tests` | GitHub Actions workflows for the always-on gates (CI, CodeQL) | `github`, `python-core`, `core` |
+| `github-benchmark` | GitHub Actions workflow for the benchmark suite | `github`, `tests`, `core` |
+| `github-mutation` | GitHub Actions workflow for mutation testing (opt-in) | `github`, `tests`, `core` |
 | `github-book` | GitHub Actions workflow for documentation publishing | `github`, `book`, `core` |
 | `github-marimo` | GitHub Actions workflow for Marimo notebook automation | `github`, `marimo`, `book`, `core` |
 | `github-docker` | GitHub Actions workflow for Docker image building and publishing | `github`, `docker`, `core` |
@@ -440,10 +442,6 @@ GitHub Helpers
   view-issues           list open issues
   failed-workflows      list recent failing workflow runs
   whoami                check github auth status
-
-Custom Tasks
-  hello-rhiza           a custom greeting task
-  post-install          run custom logic after core install
 
 ```
 

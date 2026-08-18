@@ -84,8 +84,6 @@ source, not the root symlink.
 | `doctor.mk` | core | `make doctor` environment checks |
 | `quality.mk` | core | `fmt`, lint, pre-commit gates |
 | `releasing.mk` | core | `bump` / `release` targets |
-| `custom-env.mk` | core | Example stub: project variables |
-| `custom-task.mk` | core | Example stub: project targets / hooks |
 | `test.mk` | tests | `test`, coverage, typecheck, stress, mutation |
 | `book.mk` | book | `make book` documentation build |
 | `docker.mk` | docker | Container build / run |
@@ -347,8 +345,8 @@ flowchart LR
 Makefiles follow these conventions:
 
 1. **Lowercase with hyphens**: All makefile names use lowercase letters with hyphens for word separation
-   - ✅ `bootstrap.mk`, `custom-task.mk`, `github.mk`
-   - ❌ `Bootstrap.mk`, `customTask.mk`, `GitHub.mk`
+   - ✅ `bootstrap.mk`, `completions.mk`, `github.mk`
+   - ❌ `Bootstrap.mk`, `Completions.mk`, `GitHub.mk`
 
 2. **Descriptive domain names**: Each file represents a logical domain or feature area
    - `bootstrap.mk` - Installation and setup
@@ -356,11 +354,10 @@ Makefiles follow these conventions:
    - `marimo.mk` - Marimo notebooks
    - `test.mk` - Testing infrastructure
 
-3. **Example vs. Production files**:
-   - Files prefixed with `custom-` are **examples** for user customization
-   - `custom-env.mk` - Example environment variable customizations
-   - `custom-task.mk` - Example custom task definitions
-   - Users should create their own files or modify the root `Makefile` for customizations
+3. **No example files**: every fragment here is template-managed and does real work.
+   Project-specific variables, hooks and targets belong in the root `Makefile` (above the
+   `include` line) or in `local.mk` — see the
+   [Customization Guide](../guides/CUSTOMIZATION.md).
 
 ### Target Naming
 

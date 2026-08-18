@@ -62,14 +62,16 @@ that matches your platform *and* the feature bundle it pairs with.
 
 | Bundle | Pairs feature → platform |
 |--------|--------------------------|
-| `github-tests` | `tests` → GitHub Actions (CI, CodeQL, mutation) |
+| `github-tests` | `python-core` → GitHub Actions (CI, CodeQL) |
+| `github-benchmark` | `tests` → GitHub Actions benchmark suite |
+| `github-mutation` | `tests` → GitHub Actions mutation testing (opt-in) |
 | `github-book` | `book` → GitHub Pages publishing |
 | `github-marimo` | `marimo` → GitHub Actions notebook publishing |
 | `github-docker` | `docker` → GitHub Actions lint/build/scan |
 | `github-devcontainer` | `devcontainer` → GitHub Actions image build validation |
 | `github-paper` | `paper` → GitHub Actions LaTeX build + PDF publishing |
 | `github-quality-review` | `core` → GitHub Actions advisory Claude design review of PR diffs (opt-in) |
-| `gitlab-tests` | `tests` → GitLab CI |
+| `gitlab-tests` | `python-core` → GitLab CI |
 | `gitlab-book` | `book` → GitLab Pages publishing |
 | `gitlab-marimo` | `marimo` → GitLab CI notebook execution |
 | `gitlab-quality-review` | `core` → GitLab CI advisory Claude design review of MR diffs (opt-in) |

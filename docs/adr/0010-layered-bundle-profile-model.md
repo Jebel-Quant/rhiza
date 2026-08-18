@@ -143,3 +143,32 @@ separate concern; this ADR covers the template repository structure and metadata
   resulting bundle list.
 - **Profile maintenance overhead**: Profiles must be kept current as bundles are added
   or renamed. Automated tests enforce that every bundle referenced in a profile exists.
+
+## Amendment: CI overlays decoupled from the `tests` extras (2026-08-18)
+
+The overlay model this record establishes was applied unevenly to the test feature.
+`github-tests` shipped four workflows — `rhiza_ci.yml`, `rhiza_codeql.yml`,
+`rhiza_benchmark.yml` and `rhiza_mutation.yml` — and therefore declared
+`requires: [tests, github]`. Only the last two need anything from `tests`: they call
+`make benchmark` and `make mutation` from `test.mk`. The gates `rhiza_ci.yml` delegates
+to (`test`, `typecheck`, `docs-coverage`, `deps`, `security`, `license`, `fmt`) come from
+the language layer and `core`.
+
+The consequence was the opposite of this ADR's "clean local mode" goal: wanting CI pulled
+in the optional testing extras, and `tests` in turn required `book` because it shipped
+`docs/development/TESTS.md`. The smallest GitHub selection that could run CI came to 56
+files — nearly the whole template.
+
+What changed, with no change to the model itself:
+
+- `rhiza_benchmark.yml` and `rhiza_mutation.yml` moved into new `github-benchmark` and
+  `github-mutation` overlays, each `requires: [tests, github]` — one workflow paired with
+  the bundle owning the target it invokes, exactly as this record prescribes.
+- `github-tests` now `requires: [python-core, github]`, and `gitlab-tests` likewise.
+- `docs/development/TESTS.md` left the `tests` bundle (it is rhiza's own documentation and
+  is published on the docs site), so `tests` no longer requires `book`.
+- `github-project` gained the two new overlays, so profile users receive exactly the same
+  files as before.
+
+A CI-only selection — `core`, `python-core`, `github`, `github-tests` — is now 48 files,
+against 59 for `github-project`.

@@ -134,15 +134,14 @@ class TestMakefileFragments:
     """Makefile fragments in bundles must follow the help-comment convention."""
 
     def test_all_mk_files_have_at_least_one_documented_target(self, root: Path, bundle_names: list[str]) -> None:
-        """Every .mk fragment that is not a customisation template must document at least one target with ##."""
-        skip_names = {"custom-env.mk", "custom-task.mk", "README.md"}
+        """Every .mk fragment must document at least one target with ##."""
         violations: list[str] = []
         for bundle_name in bundle_names:
             bundle_dir = root / "bundles" / bundle_name
             if not bundle_dir.is_dir():
                 continue
             for mk_file in _all_files_in_bundle(bundle_dir):
-                if mk_file.suffix != ".mk" or mk_file.name in skip_names:
+                if mk_file.suffix != ".mk":
                     continue
                 content = mk_file.read_text(encoding="utf-8")
                 # A documented target looks like: target: ... ## description
@@ -154,14 +153,13 @@ class TestMakefileFragments:
 
     def test_all_mk_files_have_phony_declarations(self, root: Path, bundle_names: list[str]) -> None:
         """Makefile fragments that define targets should declare them as .PHONY."""
-        skip_names = {"custom-env.mk", "custom-task.mk"}
         violations: list[str] = []
         for bundle_name in bundle_names:
             bundle_dir = root / "bundles" / bundle_name
             if not bundle_dir.is_dir():
                 continue
             for mk_file in _all_files_in_bundle(bundle_dir):
-                if mk_file.suffix != ".mk" or mk_file.name in skip_names:
+                if mk_file.suffix != ".mk":
                     continue
                 content = mk_file.read_text(encoding="utf-8")
                 # If the file defines targets (has :: or : rules) it should have .PHONY

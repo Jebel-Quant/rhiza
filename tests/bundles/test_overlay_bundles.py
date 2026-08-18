@@ -64,12 +64,29 @@ _WORKFLOW_DIR = {
 # Authoritative expectation for every overlay bundle.  Grounded in the actual
 # contents of bundles/<overlay>/ as of this commit; update alongside the bundles.
 _OVERLAYS: tuple[OverlaySpec, ...] = (
+    # github-tests overlays the *language layer*, not the `tests` extras bundle: the
+    # gates rhiza_ci.yml delegates to are python-core's. The two workflows that really
+    # do need `test.mk` were split into their own overlays below (see the bundle notes).
     OverlaySpec(
         bundle="github-tests",
         platform="github",
+        feature="python-core",
+        workflows=("rhiza_ci.yml", "rhiza_codeql.yml"),
+        feature_workflows=("rhiza_ci.yml", "rhiza_codeql.yml"),
+    ),
+    OverlaySpec(
+        bundle="github-benchmark",
+        platform="github",
         feature="tests",
-        workflows=("rhiza_ci.yml", "rhiza_codeql.yml", "rhiza_mutation.yml", "rhiza_benchmark.yml"),
-        feature_workflows=("rhiza_ci.yml", "rhiza_codeql.yml", "rhiza_mutation.yml", "rhiza_benchmark.yml"),
+        workflows=("rhiza_benchmark.yml",),
+        feature_workflows=("rhiza_benchmark.yml",),
+    ),
+    OverlaySpec(
+        bundle="github-mutation",
+        platform="github",
+        feature="tests",
+        workflows=("rhiza_mutation.yml",),
+        feature_workflows=("rhiza_mutation.yml",),
     ),
     OverlaySpec(
         bundle="github-book",
@@ -116,7 +133,7 @@ _OVERLAYS: tuple[OverlaySpec, ...] = (
     OverlaySpec(
         bundle="gitlab-tests",
         platform="gitlab",
-        feature="tests",
+        feature="python-core",
         workflows=("rhiza_ci.yml",),
     ),
     OverlaySpec(

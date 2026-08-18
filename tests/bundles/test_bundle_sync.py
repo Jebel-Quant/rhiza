@@ -39,7 +39,7 @@ class TestCoreBundleSync:
     def test_make_d_fragments_exist(self):
         """All core Makefile fragments are present."""
         make_d = self.project / ".rhiza" / "make.d"
-        for name in ("bootstrap.mk", "doctor.mk", "quality.mk", "custom-env.mk", "custom-task.mk"):
+        for name in ("bootstrap.mk", "doctor.mk", "quality.mk", "completions.mk"):
             assert (make_d / name).is_file(), f"Missing make.d fragment: {name}"
 
     def test_cliff_config_exists(self):
@@ -227,8 +227,13 @@ class TestGithubOverlaySync:
 
     @pytest.fixture(autouse=True)
     def synced(self, tmp_path, root):
-        """Sync core, github, and github-tests bundles."""
-        sync_bundles(root, ["core", "github", "tests", "github-tests"], tmp_path)
+        """Sync the CI overlay without the optional testing extras.
+
+        ``tests`` is deliberately absent: since the benchmark and mutation stubs moved
+        to their own overlays, wanting CI no longer drags in `test.mk` (nor `book`
+        behind it), and this fixture is what would notice the coupling coming back.
+        """
+        sync_bundles(root, ["core", "python-core", "github", "github-tests"], tmp_path)
         self.project = tmp_path
 
     def test_ci_workflow_exists(self):

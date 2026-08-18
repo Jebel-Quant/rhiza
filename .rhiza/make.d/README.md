@@ -140,8 +140,6 @@ Both recipes run on `make sync`. Rules of the road:
 | `book.mk` | Documentation book generation |
 | `bootstrap.mk` | Installation and environment setup |
 | `bundles.mk` | Bundle inspection (`make explain-bundles`) |
-| `custom-env.mk` | Example environment customizations |
-| `custom-task.mk` | Example custom tasks |
 | `docker.mk` | Docker build and run targets |
 | `doctor.mk` | Environment diagnostics (`make doctor`) |
 | `github.mk` | GitHub CLI integrations |
@@ -152,7 +150,7 @@ Both recipes run on `make sync`. Rules of the road:
 | `quality.mk` | Code quality and formatting |
 | `test.mk` | Testing infrastructure |
 
-Files prefixed with `custom-` are **examples** showing how to customize Rhiza. Don't edit them directly; instead, add your customizations to the root `Makefile`.
+Everything here is template-managed. Put your own variables, hooks and targets in the root `Makefile` (above the `include` line) or in `local.mk` — see the [Customization Guide](../../docs/guides/CUSTOMIZATION.md).
 
 ### Naming Conventions
 

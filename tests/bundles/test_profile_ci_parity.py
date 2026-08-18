@@ -217,6 +217,8 @@ class TestGithubProjectProfileSync:
         "github-book",
         "github-marimo",
         "github-tests",
+        "github-benchmark",
+        "github-mutation",
     ]
 
     @pytest.fixture(autouse=True)

@@ -53,7 +53,7 @@ ref: v0.14.0
 
 templates:
   - core
-  - tests
+  - python-core
   - github
   - github-tests
 ```

@@ -69,6 +69,8 @@ flowchart LR
         github_docker["github-docker"]
         github_paper["github-paper"]
         github_tests["github-tests"]
+        github_benchmark["github-benchmark"]
+        github_mutation["github-mutation"]
         github_marimo["github-marimo"]
         github_book["github-book"]
         github_quality_review["github-quality-review"]
@@ -87,7 +89,6 @@ flowchart LR
     github --> core
     gitlab --> core
     book --> core
-    tests --> book
     tests --> core
     tests --> python_core
     benchmarks --> tests
