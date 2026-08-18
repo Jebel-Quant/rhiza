@@ -1,1 +1,0 @@
-../../bundles/core/.rhiza/completions/rhiza-completion.zsh

@@ -38,14 +38,7 @@ The MkDocs configuration lives in `mkdocs.yml` at the root of the repository. Ke
 
 ### Logo and Favicon
 
-The logo shown in the sidebar is controlled by the `LOGO_FILE` Makefile variable:
-
-```makefile
-# In your root Makefile or local.mk
-LOGO_FILE := assets/my-logo.svg
-```
-
-To change the logo and favicon directly in `mkdocs.yml`:
+The logo and favicon shown in the sidebar are set in `mkdocs.yml`:
 
 ```yaml
 theme:
@@ -139,4 +132,3 @@ Omitting the `nav` key causes MkDocs to generate navigation automatically from t
 | `BOOK_OUTPUT` | `_book` | Output directory for `make book` |
 | `MKDOCS_OUTPUT` | `_mkdocs` | Output directory for `make mkdocs-build` |
 | `MKDOCS_CONFIG` | `mkdocs.yml` | Path to the MkDocs config file |
-| `LOGO_FILE` | `.rhiza/assets/rhiza-logo.svg` | Logo used in the sidebar |

@@ -166,10 +166,11 @@ You can customize the API documentation and companion book.
 
 ### Project Logo
 
-The API documentation includes a logo in the sidebar. You can override the default logo (`assets/rhiza-logo.svg`) by setting the `LOGO_FILE` variable in your Makefile or `local.mk`:
+The API documentation can show a logo in the sidebar. Set it in `mkdocs.yml`:
 
-```makefile
-LOGO_FILE := assets/my-custom-logo.png
+```yaml
+theme:
+  logo: assets/my-custom-logo.png
 ```
 
 ### Custom Templates
