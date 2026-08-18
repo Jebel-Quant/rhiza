@@ -29,6 +29,8 @@ style: |
 
 **Reusable Configuration Templates for Modern Python Projects**
 
+![w:200](https://raw.githubusercontent.com/Jebel-Quant/rhiza/main/bundles/book/docs/assets/rhiza-logo.svg)
+
 *ῥίζα (ree-ZAH) — Ancient Greek for "root"*
 
 ---
@@ -571,4 +573,6 @@ make marimo                    # Interactive notebooks
 # Ready to Root Your Project?
 
 **Get Started**: [github.com/jebel-quant/rhiza](https://github.com/jebel-quant/rhiza)
+
+![w:300](https://raw.githubusercontent.com/Jebel-Quant/rhiza/main/bundles/book/docs/assets/rhiza-logo.svg)
 
