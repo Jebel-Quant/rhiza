@@ -65,6 +65,22 @@ jobs:
         run: |
           echo "Python versions: ${{ steps.versions-output.outputs.list }}"
 
+      # The matrix comes from the rhiza-task CLI rather than from
+      # `make -f .rhiza/rhiza.mk -s ci-os-matrix`, which is what this step used to run.
+      # Naming that path made a *file* part of the contract, and a consumer that has
+      # replaced the make layer with the CLI then has to keep a stub `.rhiza/rhiza.mk`
+      # alive for this one step and nothing else. Nothing changes for a repo still on
+      # the synced make layer: both readers take the value from `.rhiza/.env`, which
+      # stays the single source of truth.
+      #
+      # The version is pinned here rather than read from a consumer's `RHIZA_TASK`,
+      # which this workflow cannot see — and should not: the matrix a build runs on must
+      # not move under it. It tracks the tag this workflow is called at.
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.11.16"
+
       # This workflow serves double duty: it runs on push/PR here, and it is the
       # reusable workflow every consumer's `github-tests` stub delegates to. So the
       # OS matrix has to differ by caller (#1526). Rhiza ships Makefiles and shell
@@ -74,25 +90,27 @@ jobs:
       # itself in and leaves the shipped default alone; a consumer who wants the same
       # coverage sets RHIZA_CI_OS_MATRIX in its own .rhiza/.env.
       #
-      # An empty value is not the same as an unset one to make's `?=`, which treats an
-      # exported empty string as set — hence `ci-os-matrix` resolves through
-      # `$(or ...)`, so the empty branch below falls back to ["ubuntu-latest"].
+      # The empty branch below is what hands the question to a consumer's `.rhiza/.env`,
+      # and it relies on rhiza-task treating an empty setting as unset. That is make's
+      # `$(or ...)` rule, which the CLI applies to every setting rather than to this one
+      # alone (Jebel-Quant/rhiza-task#4) — hence the 0.1.2 pin: 0.1.1 resolved the empty
+      # string to a value and answered `[]`, which GitHub expands to zero jobs rather than
+      # failing, so `test` would vanish and CI would go green having run nothing.
       #
-      # This works only while `.rhiza/.env` leaves RHIZA_CI_OS_MATRIX unset. That file is
-      # `-include`d by rhiza.mk, and a makefile assignment outranks an environment
-      # variable in GNU make (only a command-line `make VAR=...` outranks the file), so a
-      # value pinned there discards whatever this step exports. It was pinned to all three
-      # OSes from #1072, which made the split below dead code from the day it landed in
-      # #1526 — mother repo and consumers alike ran the full three-OS matrix. Removed in
-      # #1545 and pinned by TestExportedCiOsMatrixSurvivesTheShippedEnvFile, which is the
-      # only test that combines a populated .env with an exported value.
+      # One caveat this step used to carry is gone rather than merely restated. Under make,
+      # an assignment in `.rhiza/.env` outranked an exported environment variable (only a
+      # command-line `make VAR=...` beat the file), so a value pinned there silently
+      # discarded whatever this step exported — which is how the split below was dead code
+      # from #1526 until #1545 removed the pin. rhiza-task resolves in the opposite order:
+      # `.rhiza/.env` is layer 2 and the environment is layer 4, so the export wins and the
+      # file answers only when nothing is exported. Verified both ways.
       - id: os
         env:
           RHIZA_CI_OS_MATRIX: >-
             ${{ github.repository == 'jebel-quant/rhiza'
                 && '["ubuntu-latest","macos-latest"]' || '' }}
         run: |
-          OS_MATRIX=$(make -f .rhiza/rhiza.mk -s ci-os-matrix)
+          OS_MATRIX=$(uvx rhiza-task@0.1.2 ci-os-matrix)
           echo "list=$OS_MATRIX" >> "$GITHUB_OUTPUT"
 
       - name: Debug OS matrix

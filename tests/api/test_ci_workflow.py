@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -40,6 +41,35 @@ def test_ci_os_matrix_make_target_can_be_configured(logger):
     )
     assert result.returncode == 0
     assert json.loads(result.stdout.strip()) == ["ubuntu-latest", "windows-latest"]
+
+
+def test_ci_generate_matrix_reads_the_os_matrix_from_the_cli(root):
+    """The OS matrix must come from a pinned rhiza-task, not from a make file path.
+
+    This step used to run ``make -f .rhiza/rhiza.mk -s ci-os-matrix``, which put a
+    *file path* into the reusable contract: a consumer that has replaced the synced make
+    layer with the ``rhiza-task`` CLI then has to keep a stub at exactly that path, whose
+    only caller is this step. Both readers take the value from ``.rhiza/.env``, so the
+    switch changes nothing for a repo still on the make layer.
+
+    The pin is asserted too. An unpinned ``uvx rhiza-task ci-os-matrix`` would let the
+    matrix a build runs on move under a workflow that is itself called at a tag.
+    """
+    with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
+        workflow = yaml.safe_load(fh)
+
+    steps = workflow["jobs"]["generate-matrix"]["steps"]
+    os_step = next(step for step in steps if step.get("id") == "os")
+
+    assert re.search(r"uvx rhiza-task@\d+\.\d+\.\d+ ci-os-matrix", os_step["run"]), (
+        f"the OS matrix step must call a pinned rhiza-task, got: {os_step['run']!r}"
+    )
+    assert ".rhiza/rhiza.mk" not in os_step["run"], (
+        "naming .rhiza/rhiza.mk here forces every migrated consumer to keep a stub at that path for this one step"
+    )
+    assert any("astral-sh/setup-uv@" in step.get("uses", "") for step in steps), (
+        "generate-matrix installs no uv, so `uvx` would not be on PATH"
+    )
 
 
 def test_ci_security_job_runs_security_scans(root):
