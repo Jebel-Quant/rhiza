@@ -35,6 +35,36 @@ DOCSTRING_FOLDERS += utils
 DEPTRY_FOLDERS    += utils
 SEMGREP_FOLDERS   += utils
 COVERAGE_FOLDERS  += utils
+
+# packages/rhiza-test/ is the conformance suite, shipped as a distribution rather than
+# copied into each repo. It is Python this repo owns, so the static gates must see it —
+# the alternative is ~700 lines that `make all` passes without reading, which is the
+# #1505/#1516 failure exactly.
+#
+# Two gates are deliberately absent, and neither is an oversight:
+#
+#   DEPTRY   — the package declares its own dependencies in its own pyproject.toml.
+#              Run from the repo root, deptry would compare its imports against the
+#              *mother repo's* manifest and report pytest and packaging as missing.
+#   COVERAGE — `make test` runs tests/, while this code is executed by `make rhiza-test`.
+#              Adding it here would report near-zero and fail the 90% bar for a reason
+#              that has nothing to do with how well the code is tested. The logic that is
+#              not itself test code is covered by tests/packages/.
+_RHIZA_TEST_SRC := packages/rhiza-test/src
+BANDIT_FOLDERS    += $(_RHIZA_TEST_SRC)
+DOCSTRING_FOLDERS += $(_RHIZA_TEST_SRC)
+SEMGREP_FOLDERS   += $(_RHIZA_TEST_SRC)
+
+# typecheck gets the package's *runtime* modules only, not `suite/`. Those are pytest
+# modules, and this repo does not run mypy --strict over `tests/` either — ruff's own
+# config exempts test code from annotation rules on the same reasoning. Pointing the gate
+# at them would demand ~60 annotations on assertions to make a point the repo does not
+# make anywhere else. The one piece of real logic that has to live in `suite/` — the
+# layer detection in conftest.py, which pytest will not load from anywhere else — is
+# covered by tests/packages/ instead.
+TYPECHECK_FOLDERS += $(_RHIZA_TEST_SRC)/rhiza_test/__init__.py
+TYPECHECK_FOLDERS += $(_RHIZA_TEST_SRC)/rhiza_test/__main__.py
+TYPECHECK_FOLDERS += $(_RHIZA_TEST_SRC)/rhiza_test/_fences.py
 DEPTRY_IGNORE     += --ignore DEP004
 
 # Which end-to-end modules `make e2e` runs. One per language layer, so CI can give

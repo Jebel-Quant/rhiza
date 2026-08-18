@@ -218,9 +218,16 @@ class TestRustLayerKeepsTheSameContract:
         What that costs is one prerequisite crossing from core into the layer, which is
         worth asserting per layer: a target that exists but cannot build its prerequisite
         is not a working gate, and `all` depends on this one.
+
+        The suite itself is no longer a synced folder, so this no longer asserts
+        ``pytest .rhiza/tests``. What it must still show is the layer's install running
+        ahead of it — and, because this scaffold carries no ``.rhiza/template.yml``, the
+        recipe correctly reaching its no-ref branch rather than a missing rule.
         """
         out = strip_ansi(run_make(logger, ["rhiza-test"], check=False).stdout)
-        assert "pytest .rhiza/tests" in out
+        assert "cargo fetch" in out, "rhiza-test no longer builds the Rust layer's install prerequisite"
+        assert "No rule to make target" not in out, f"rhiza-test is not a resolvable target:\n{out}"
+        assert "skipping rhiza-test" in out, f"expected the no-ref branch on a scaffold with no template.yml:\n{out}"
 
     def test_neutral_tooling_needs_no_python_at_all(self, logger):
         """`fmt` must not depend on a Python version on a project that declares none.
@@ -361,9 +368,16 @@ class TestGoLayerKeepsTheSameContract:
         What that costs is one prerequisite crossing from core into the layer, which is
         worth asserting per layer: a target that exists but cannot build its prerequisite
         is not a working gate, and `all` depends on this one.
+
+        The suite itself is no longer a synced folder, so this no longer asserts
+        ``pytest .rhiza/tests``. What it must still show is the layer's install running
+        ahead of it — and, because this scaffold carries no ``.rhiza/template.yml``, the
+        recipe correctly reaching its no-ref branch rather than a missing rule.
         """
         out = strip_ansi(run_make(logger, ["rhiza-test"], check=False).stdout)
-        assert "pytest .rhiza/tests" in out
+        assert "go mod download" in out, "rhiza-test no longer builds the Go layer's install prerequisite"
+        assert "No rule to make target" not in out, f"rhiza-test is not a resolvable target:\n{out}"
+        assert "skipping rhiza-test" in out, f"expected the no-ref branch on a scaffold with no template.yml:\n{out}"
 
     def test_neutral_tooling_needs_no_python_at_all(self, logger):
         """As with Rust: no `.python-version`, and with prek `fmt` no longer wants one."""

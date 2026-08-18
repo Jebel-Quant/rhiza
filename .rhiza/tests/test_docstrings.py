@@ -1,1 +1,0 @@
-../../bundles/python-core/.rhiza/tests/test_docstrings.py

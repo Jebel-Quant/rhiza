@@ -11,9 +11,8 @@ parse — moved to ``core``'s ``test_readme.py`` in #1472, so a Rust or Go proje
 too. What stays here only means something where the project itself is Python: running a
 ``python`` fence and diffing it against the following ``result`` block.
 
-``SKIP_FLAG`` and ``_should_skip`` are duplicated with that module rather than shared.
-Bundles are copied independently, so a shared helper would need a third home both bundles
-ship — a worse trade for four lines.
+The fence flags live in :mod:`rhiza_test._fences`, shared with that module. They were
+duplicated while the suite was copied per-bundle; packaging gave them one home.
 """
 
 import re
@@ -21,21 +20,12 @@ import subprocess  # nosec B404
 import sys
 
 import pytest
+from rhiza_test._fences import SKIP_FLAG, should_skip
 
 # Regex for Python code blocks — captures optional flags (e.g. "+RHIZA_SKIP") and the code body.
 CODE_BLOCK = re.compile(r"```python([^\n]*)\n(.*?)```", re.DOTALL)
 
 RESULT = re.compile(r"```result\n(.*?)```", re.DOTALL)
-
-# Flag that marks a code block as intentionally excluded from readme tests.
-# Usage: add the flag after the language identifier on the opening fence line,
-# e.g. ```python +RHIZA_SKIP  or  ```bash +RHIZA_SKIP
-SKIP_FLAG = "+RHIZA_SKIP"
-
-
-def _should_skip(flags: str) -> bool:
-    """Return True if the fence flags string contains the +RHIZA_SKIP marker."""
-    return SKIP_FLAG in flags
 
 
 def test_readme_runs(logger, root):
@@ -48,7 +38,7 @@ def test_readme_runs(logger, root):
 
     code_blocks = []
     for i, (flags, code) in enumerate(all_code_blocks):
-        if _should_skip(flags):
+        if should_skip(flags):
             logger.info("Skipping Python code block %d (%s flag)", i, SKIP_FLAG)
         else:
             code_blocks.append(code)
@@ -90,7 +80,7 @@ class TestReadmeTestEdgeCases:
         all_code_blocks = CODE_BLOCK.findall(content)
 
         for i, (flags, code) in enumerate(all_code_blocks):
-            if _should_skip(flags):
+            if should_skip(flags):
                 continue
             try:
                 compile(code, f"<readme_block_{i}>", "exec")
@@ -101,17 +91,9 @@ class TestReadmeTestEdgeCases:
 class TestSkipFlag:
     """Tests for the +RHIZA_SKIP flag as it applies to Python fences."""
 
-    def test_should_skip_returns_true_for_skip_flag(self):
-        """+RHIZA_SKIP in flags string should cause _should_skip to return True."""
-        assert _should_skip(" +RHIZA_SKIP") is True
-        assert _should_skip("+RHIZA_SKIP") is True
-        assert _should_skip(" +RHIZA_SKIP other-flag") is True
-
-    def test_should_skip_returns_false_without_flag(self):
-        """Absence of +RHIZA_SKIP should cause _should_skip to return False."""
-        assert _should_skip("") is False
-        assert _should_skip(" ") is False
-        assert _should_skip("other-flag") is False
+    # should_skip's own behaviour is covered once, in test_readme.py, next to the
+    # language-neutral half. What is specific here is that a flagged *python* fence
+    # is kept out of the list this module executes.
 
     def test_python_block_with_skip_flag_is_excluded(self, tmp_path):
         """A ```python +RHIZA_SKIP block should not appear in the list of blocks to execute."""
@@ -125,6 +107,6 @@ class TestSkipFlag:
         content = readme.read_text(encoding="utf-8")
         all_blocks = CODE_BLOCK.findall(content)
         assert len(all_blocks) == 2
-        executed = [code for flags, code in all_blocks if not _should_skip(flags)]
+        executed = [code for flags, code in all_blocks if not should_skip(flags)]
         assert len(executed) == 1
         assert "raise RuntimeError" not in executed[0]

@@ -4,7 +4,8 @@ This file contains example benchmark tests that demonstrate how to use
 pytest-benchmark. These are **placeholder tests you should replace** with
 your own meaningful benchmarks.
 
-The Rhiza project's own tests live in ``.rhiza/tests/``.
+Rhiza's own conformance tests are not in this repo: they ship as the ``rhiza-test``
+package and run via ``make rhiza-test``.
 
 Uses pytest-benchmark to measure and compare execution times.
 """

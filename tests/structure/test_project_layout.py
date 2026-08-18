@@ -14,10 +14,15 @@ import pytest
 class TestRootFixture:
     """Tests for the root fixture that provides repository root path."""
 
-    def test_root_resolves_correctly_from_nested_location(self, root):
-        """Root should correctly resolve to repository root from .rhiza/tests/."""
-        conftest_path = root / ".rhiza" / "tests" / "conftest.py"
-        assert conftest_path.exists()
+    def test_root_resolves_to_the_repository_root(self, root):
+        """Root should resolve to the repository root, not to a test file's own folder.
+
+        This used to prove the point via `.rhiza/tests/conftest.py`, which no longer
+        exists: the conformance suite is the `rhiza-test` package now. `.rhiza/rhiza.mk`
+        is the equivalent landmark — it is at a fixed path relative to the root and
+        nowhere else.
+        """
+        assert (root / ".rhiza" / "rhiza.mk").exists()
 
     def test_root_contains_expected_directories(self, root):
         """Root should contain all expected project directories."""

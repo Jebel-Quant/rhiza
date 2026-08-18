@@ -102,10 +102,31 @@ def test_scoped_gate_resolves_a_non_empty_scope(target: str, gate_scopes: dict[s
 
 @pytest.mark.parametrize("target", [g[0] for g in _SCOPED_GATES])
 def test_scoped_gate_covers_utils(target: str, gate_scopes: dict[str, str]) -> None:
-    """utils/ holds this repo's only non-test Python, so every scoped gate must include it."""
+    """utils/ holds the sync tooling, so every scoped gate must include it."""
     assert "utils" in gate_scopes[target], (
         f"`make {target}` resolves to {gate_scopes[target]!r}, which omits utils/ — the "
         f"tooling behind `make sync-self` and the sync-self-check CI drift guard."
+    )
+
+
+# The static gates only. `deps` and `test` are excluded on purpose, with the reasons
+# recorded next to the accumulators in bundles.mk: the package declares its dependencies
+# in its own manifest, and its code runs under `make rhiza-test` rather than `make test`.
+_STATIC_GATES = [g[0] for g in _SCOPED_GATES if g[0] in {"typecheck", "security", "docs-coverage", "semgrep"}]
+
+
+@pytest.mark.parametrize("target", _STATIC_GATES)
+def test_static_gate_covers_the_rhiza_test_package(target: str, gate_scopes: dict[str, str]) -> None:
+    """packages/rhiza-test/ is this repo's other non-test Python and must be gated too.
+
+    It arrived as ~700 lines the moment the conformance suite stopped being copied into
+    each repo. Left out of the accumulators it would be code `make all` passes without
+    reading — the #1505/#1516 failure, reintroduced by a directory that did not exist when
+    those were fixed.
+    """
+    assert "packages/rhiza-test/src" in gate_scopes[target], (
+        f"`make {target}` resolves to {gate_scopes[target]!r}, which omits the rhiza-test "
+        f"package source. Contribute it via the accumulators in .rhiza/make.d/bundles.mk."
     )
 
 

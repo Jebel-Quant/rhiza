@@ -247,11 +247,20 @@ class TestMakefile:
         assert "--paths-to-mutate=" in out
 
     def test_test_pyproject_target_dry_run(self, logger):
-        """Test-pyproject target should run the pyproject structure test module via pytest."""
+        """Test-pyproject should select the pyproject module out of the packaged suite.
+
+        It named a path — `.rhiza/tests/test_pyproject.py` — until the conformance suite
+        became the `rhiza-test` distribution. There is no such path in the tree now, so
+        the target selects the module with `-k` from wherever the package is installed,
+        and it must reach that through the same local-tree-or-synced-ref choice
+        `rhiza-test` makes rather than resolving a source of its own.
+        """
         proc = run_make(logger, ["test-pyproject"])
         out = proc.stdout
         assert "no rule to make target" not in proc.stderr.lower()
-        assert "uv run --with pytest pytest .rhiza/tests/test_pyproject.py" in out
+        assert ".rhiza/tests" not in out, "test-pyproject still names the folder the suite left"
+        assert "-k pyproject" in out, f"test-pyproject no longer selects the pyproject module:\n{out}"
+        assert "rhiza_test" in out, f"test-pyproject no longer reaches the packaged suite:\n{out}"
 
     def test_all_target_chains_ci_subtargets(self, logger):
         """The `all` aggregator should chain the CI sub-targets (fmt, test, docs-coverage, security)."""

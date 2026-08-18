@@ -13,10 +13,9 @@ The Python-block half stays behind in ``tests`` as ``test_readme_validation.py``
 executes ``python`` fences and diffs them against a ``result`` block, which only means
 something where the project *is* Python.
 
-Note the split of labour with the fence flags: ``SKIP_FLAG`` and ``_should_skip`` are
-duplicated across the two modules rather than shared. Bundles are copied
-independently — a Rust project receives this file and not the other — so a shared helper
-would need a third home that both bundles ship, which is a worse trade for four lines.
+The fence flags themselves live in :mod:`rhiza_test._fences`, shared with
+``test_readme_validation.py``. They were duplicated across the two modules while the
+suite was copied per-bundle; packaging gave them one home.
 """
 
 from __future__ import annotations
@@ -26,6 +25,7 @@ import subprocess  # nosec B404
 from pathlib import Path
 
 import pytest
+from rhiza_test._fences import SKIP_FLAG, should_skip
 
 # Bash code blocks — captures optional flags (e.g. "+RHIZA_SKIP") and the code body.
 BASH_BLOCK = re.compile(r"```bash([^\n]*)\n(.*?)```", re.DOTALL)
@@ -33,24 +33,8 @@ BASH_BLOCK = re.compile(r"```bash([^\n]*)\n(.*?)```", re.DOTALL)
 # Bash executable used for syntax checking; `bash -n` parses without executing.
 BASH = "bash"
 
-# Flag marking a fence as intentionally excluded. Usage: add it after the language
-# identifier on the opening fence line, e.g. ```bash +RHIZA_SKIP
-SKIP_FLAG = "+RHIZA_SKIP"
-
 # Box-drawing characters mean the fence is a directory tree, not runnable shell.
 _TREE_MARKERS = ("├──", "└──", "│")
-
-
-def _should_skip(flags: str) -> bool:
-    """Return True if the fence flags string contains the +RHIZA_SKIP marker.
-
-    Args:
-        flags: Text following the language identifier on the opening fence line.
-
-    Returns:
-        True when the block is intentionally excluded.
-    """
-    return SKIP_FLAG in flags
 
 
 class TestReadmeExists:
@@ -84,7 +68,7 @@ class TestReadmeBashFragments:
         logger.info("Found %d bash code block(s) in README", len(bash_blocks))
 
         for i, (flags, code) in enumerate(bash_blocks):
-            if _should_skip(flags):
+            if should_skip(flags):
                 logger.info("Skipping bash block %d (%s flag)", i, SKIP_FLAG)
                 continue
 
@@ -116,15 +100,15 @@ class TestSkipFlag:
 
     def test_should_skip_returns_true_for_skip_flag(self) -> None:
         """+RHIZA_SKIP in flags string should cause _should_skip to return True."""
-        assert _should_skip(" +RHIZA_SKIP") is True
-        assert _should_skip("+RHIZA_SKIP") is True
-        assert _should_skip(" +RHIZA_SKIP other-flag") is True
+        assert should_skip(" +RHIZA_SKIP") is True
+        assert should_skip("+RHIZA_SKIP") is True
+        assert should_skip(" +RHIZA_SKIP other-flag") is True
 
     def test_should_skip_returns_false_without_flag(self) -> None:
         """Absence of +RHIZA_SKIP should cause _should_skip to return False."""
-        assert _should_skip("") is False
-        assert _should_skip(" ") is False
-        assert _should_skip("other-flag") is False
+        assert should_skip("") is False
+        assert should_skip(" ") is False
+        assert should_skip("other-flag") is False
 
     def test_bash_block_with_skip_flag_is_excluded(self, tmp_path: Path) -> None:
         """A ```bash +RHIZA_SKIP block should not be syntax-checked."""
@@ -135,6 +119,6 @@ class TestSkipFlag:
         )
         all_blocks = BASH_BLOCK.findall(readme.read_text(encoding="utf-8"))
         assert len(all_blocks) == 2
-        checked = [code for flags, code in all_blocks if not _should_skip(flags)]
+        checked = [code for flags, code in all_blocks if not should_skip(flags)]
         assert len(checked) == 1
         assert "not-valid-bash" not in checked[0]

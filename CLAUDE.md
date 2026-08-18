@@ -135,7 +135,7 @@ was inert in every downstream repo (#1453), and the placement now differs by lay
   `[tool.bumpversion]` table rewrites PEP 621 `[project].version` natively — no
   `current_version`, no `[[files]]` entry for pyproject itself. A synced
   `.bumpversion.toml` would *shadow* that table, so the repo declares its own block and
-  the shipped `.rhiza/tests/test_pyproject.py` fails when it is missing or when it sets
+  the `rhiza-test` suite's `test_pyproject.py` fails when it is missing or when it sets
   `commit`/`tag` to true.
 - **rust-core and go-core ship a root `.bumpversion.toml`.** Neither language owns a
   discoverable file, so the layer must provide one. It deliberately omits
@@ -247,8 +247,8 @@ parses — never the literal shipped `0.0.0`, which bump-my-version rewrites in
 **Two of the three layers ship a starter test, for the same reason.** Python had the
 identical hole (#1476): `make test` searches `TESTS_FOLDER` for `test_*.py`, and finding
 none it warns and **exits 0**, so a freshly synced Python repo passed `make test` — and
-`make all` — measuring nothing. Note that `.rhiza/tests` does not help, since it sits
-outside `TESTS_FOLDER` and runs under the separate `rhiza-test` gate. So `python-core`
+`make all` — measuring nothing. Note that the conformance suite does not help, since it
+runs under the separate `rhiza-test` gate rather than from `TESTS_FOLDER`. So `python-core`
 ships `tests/test_rhiza_packaging.py`, asserting that the version installed into the
 environment matches `[project].version` — a real invariant (it catches a stale editable
 install or a build backend pointed at the wrong tree), distinct from

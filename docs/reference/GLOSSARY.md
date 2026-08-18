@@ -225,7 +225,7 @@ A reactive Python notebook format. Rhiza includes support for marimo notebooks i
 The central Python project configuration file (PEP 518/621). Contains project metadata, dependencies, and tool configurations.
 No bundle ships a `pyproject.toml` — the project owns it outright, and `/rhiza:init` creates it
 as part of the skeleton rather than a sync delivering it. What the `python-core` layer ships is a
-*validator*: `.rhiza/tests/test_pyproject.py`, run by `make rhiza-test`, which requires a minimum
+*validator*: the `rhiza-test` package's `test_pyproject.py`, run by `make rhiza-test`, which requires a minimum
 structure — among other things:
 - `[project]` table with `name`, `version`, `description`, `readme`, and `requires-python` (all non-empty strings)
 - `[dependency-groups]` table with a `test` group that lists pytest

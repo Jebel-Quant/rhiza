@@ -85,7 +85,7 @@ bundles:
       `.rhiza/.cfg.toml` this layer used to ship was never read at all: with no
       config found bump-my-version does not fail, it falls back to `git describe`.
       Each repo therefore declares its own three-line block, and this layer's own
-      `.rhiza/tests/test_pyproject.py` fails when it is missing — the Rust and Go
+      the `rhiza-test` suite's `test_pyproject.py` fails when it is missing — the Rust and Go
       layers ship the equivalent check for their manifests.
 
   rust-core:
@@ -320,7 +320,8 @@ bundles:
       Carries only the gates that no layer's `all` depends on. The four that it does
       name — `test`, `typecheck`, `security`, `docs-coverage` — moved into
       `python-core` in #1475, along with `pytest.ini` and the Python modules of the
-      `.rhiza/tests` suite.
+      conformance suite (which has since become the `rhiza-test` distribution, so no
+      bundle ships those modules any more).
 
       The reason is that `python.mk`'s own `all` named them while this bundle defined
       them, and nothing made this bundle arrive: the dependency runs the other way.

@@ -418,7 +418,7 @@ post-sync::      # Runs after make sync
    - Lowercase with hyphens: `make.d/`, `template-bundles.yml`
    - Plural for collections: `requirements/`, `templates/`, `tests/`
 
-2. **Test organization** (`.rhiza/tests/`):
+2. **Test organization** (`tests/`):
    - Tests grouped by **purpose**, not by feature
    - `api/` - Makefile API tests
    - `structure/` - Project structure validation

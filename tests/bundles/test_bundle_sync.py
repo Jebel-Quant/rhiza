@@ -213,9 +213,17 @@ class TestCoreAndTestsBundleSync:
         """test.mk Makefile fragment is present."""
         assert (self.project / ".rhiza" / "make.d" / "test.mk").is_file()
 
-    def test_rhiza_tests_conftest_exists(self):
-        """Shared test infrastructure (conftest.py) is present."""
-        assert (self.project / ".rhiza" / "tests" / "conftest.py").is_file()
+    def test_no_rhiza_tests_folder_is_synced(self):
+        """The conformance suite ships as the `rhiza-test` package, not as copied files.
+
+        It lived at `.rhiza/tests/` until it moved to `packages/rhiza-test/`. Asserting
+        the absence keeps a stray copy from being reintroduced into a bundle, where it
+        would shadow the packaged suite: `make rhiza-test` would still run the package,
+        so the copy would sit there looking authoritative and never execute.
+        """
+        assert not (self.project / ".rhiza" / "tests").exists(), (
+            "a bundle is shipping .rhiza/tests again — the suite belongs in packages/rhiza-test"
+        )
 
     def test_semgrep_config_exists(self):
         """Semgrep static analysis config is present."""

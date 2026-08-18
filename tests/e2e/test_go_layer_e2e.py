@@ -167,11 +167,12 @@ def test_rhiza_test_gate_actually_runs_the_shipped_suite(project: Project, logge
     repo. `rhiza-test` is a prerequisite of `all`, so that made the gate vacuous on
     every Go project: the same hole as the empty `go test ./...` (#1467), one level up.
 
-    `core` now ships the neutral harness and `go-core` its own `test_go_module.py`, so
-    the payload arrives with the layer and no `tests` bundle is needed.
+    The suite is the `rhiza-test` package now rather than files in the repo, so what has
+    to arrive is the *selection*: its conftest collects a layer's module only for a repo
+    of that language, and `go-core`'s `go.mk` is what marks this one as Go.
     """
     out = gate(project, "rhiza-test", logger)
-    assert "No .rhiza/tests directory found" not in out, "the self-test suite was not delivered to a Go project"
+    assert "skipping rhiza-test" not in out, "the conformance suite did not run on a Go project"
     assert "test_go_module.py" in out, f"the Go layer's own self-tests did not run:\n{out}"
     # core's neutral half must arrive too, not just the layer's own module (#1472):
     assert "test_readme.py" in out, f"core's language-neutral README tests did not run:\n{out}"

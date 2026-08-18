@@ -139,6 +139,10 @@ class Project:
         return strip_ansi(self.install.stdout) + strip_ansi(self.install.stderr)
 
 
+# This repository's root: tests/e2e/harness.py -> tests/e2e -> tests -> root.
+_RHIZA_ROOT = Path(__file__).resolve().parents[2]
+
+
 def gate_env() -> dict[str, str]:
     """Return the environment for a nested make run.
 
@@ -150,7 +154,13 @@ def gate_env() -> dict[str, str]:
     reached through `make e2e` or a bare `pytest` run.
     """
     dropped = {"MAKEFLAGS", "MAKELEVEL", "MFLAGS", "MAKE_TERMOUT", "MAKE_TERMERR", "VIRTUAL_ENV"}
-    return {key: value for key, value in os.environ.items() if key not in dropped}
+    env = {key: value for key, value in os.environ.items() if key not in dropped}
+    # Point `rhiza-test` at this checkout's conformance package. A scaffold has no
+    # `.rhiza/template.yml`, so the gate would otherwise take its no-ref branch and every
+    # e2e assertion about the suite would hold while nothing ran — and e2e exists to test
+    # *this* working tree, not the last released one.
+    env["RHIZA_TEST_PATH"] = str(_RHIZA_ROOT / "packages" / "rhiza-test")
+    return env
 
 
 def require_e2e_enabled() -> None:

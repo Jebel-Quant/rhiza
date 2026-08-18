@@ -193,7 +193,7 @@ def test_deptry_gate_finds_no_dependency_problems(project: Project, logger):
 
 
 def test_rhiza_test_gate_runs_the_shipped_self_tests(project: Project, logger):
-    """The `.rhiza/tests` suite the tests bundle ships passes on a fresh sync.
+    """The `rhiza-test` conformance suite passes on a fresh sync.
 
     This is the gate that judges the *scaffold* against rhiza's own expectations —
     pyproject shape, README validity, doctests — which is exactly what a downstream

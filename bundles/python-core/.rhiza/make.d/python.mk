@@ -19,7 +19,7 @@
 # (benchmark, hypothesis-test, stress, mutation).
 
 # Declare phony targets (they don't produce files)
-.PHONY: all deps deptry docs-coverage install license security test test-pyproject typecheck
+.PHONY: all deps deptry docs-coverage install license security test test-pyproject rhiza-test-pyproject typecheck
 
 # The project virtualenv, and the interpreter that fills it. PYTHON_VERSION is
 # declared in rhiza.mk (core needs a Python to run its own tooling on); here
@@ -132,7 +132,7 @@ all: fmt deps test docs-coverage security license typecheck rhiza-test ## run al
 # to DEPTRY_IGNORE), so this target never needs to know which bundles are
 # present. The language layer itself contributes SOURCE_FOLDER when it exists; see e.g.
 # marimo.mk for a bundle that appends its own folder. Rhiza's own test folder
-# (.rhiza/tests) is deliberately excluded: its tooling is provisioned on the fly
+# (the rhiza-test package) is deliberately excluded: its tooling is provisioned on the fly
 # via `uv run --with` in the individual targets, not declared in the project's
 # pyproject, so deptry (which validates against pyproject) would only emit noise
 # for it.
@@ -356,9 +356,6 @@ docs-coverage: install ## check documentation coverage with interrogate
 	if [ -d "tests" ]; then \
 	  docstring_paths="$${docstring_paths} tests"; \
 	fi; \
-	if [ -d ".rhiza/tests" ]; then \
-	  docstring_paths="$${docstring_paths} .rhiza/tests"; \
-	fi; \
 	if [ -n "$${docstring_paths}" ]; then \
 	  printf "${BLUE}[INFO] Checking documentation coverage in:$${docstring_paths}${RESET}\n"; \
 	  ${UV_BIN} run --with interrogate interrogate -vv --fail-under 100 --ignore-init-method --ignore-magic $${docstring_paths}; \
@@ -366,11 +363,19 @@ docs-coverage: install ## check documentation coverage with interrogate
 	  printf "${YELLOW}[WARN] No docs-coverage folders found (DOCSTRING_FOLDERS is empty, SOURCE_FOLDER='${SOURCE_FOLDER}' does not exist, and there are no test folders), skipping docs-coverage${RESET}\n"; \
 	fi
 
-test-pyproject: install ## run pyproject.toml structure tests
-	@${UV_BIN} run --with pytest pytest .rhiza/tests/test_pyproject.py \
-		-v \
-		--tb=long \
-		--showlocals \
-		-rA \
-		--durations=0 \
-		--no-header
+# A focused view of one module of the conformance suite. It reaches it through
+# `rhiza-test` rather than a path, because the suite is a distribution now and the module
+# has no location in this tree — `-k` selects it wherever the package happens to be
+# installed. RHIZA_TEST_* come from core's quality.mk, which resolves local tree versus
+# synced ref; this target inherits that choice rather than making its own.
+test-pyproject: rhiza-test-pyproject ## run pyproject.toml structure tests
+
+rhiza-test-pyproject: install
+	@if [ -n '$(RHIZA_TEST_LOCAL)' ]; then \
+		PYTHONPATH="$(RHIZA_TEST_PATH)/src" \
+		${UV_BIN} run $(RHIZA_TEST_DEPS) python -m rhiza_test -k pyproject -v -rA --no-header; \
+	elif [ -n '$(RHIZA_TEST_REF)' ]; then \
+		${UVX_BIN} --from 'git+$(RHIZA_TEST_REPO)@$(RHIZA_TEST_REF)$(RHIZA_TEST_SUBDIR)' rhiza-test -k pyproject -v -rA --no-header; \
+	else \
+		printf "${YELLOW}[WARN] no ref: in .rhiza/template.yml and no local packages/rhiza-test — skipping${RESET}\n"; \
+	fi

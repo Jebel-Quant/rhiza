@@ -15,5 +15,8 @@
 # Note these are *added* to bandit's own defaults (.git, __pycache__, .tox,
 # .eggs, …), so those need no repeating here.
 [bandit]
+# .rhiza/tests is kept even though no bundle ships it any more: a repo synced before
+# the suite became the `rhiza-test` package still has the folder until it deletes it,
+# and an exclusion that matches nothing costs nothing.
 exclude = tests,./tests,.rhiza/tests,./.rhiza/tests,.venv,./.venv
 skips = B101
