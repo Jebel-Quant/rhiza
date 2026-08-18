@@ -159,34 +159,48 @@ def test_no_unknown_folder_setting_has_appeared() -> None:
     )
 
 
-def test_rhiza_test_actually_runs_the_doctest_check() -> None:
-    """``make rhiza-test`` must run pytest-rhiza's ``test_docstrings``, not skip it.
+def test_rhiza_test_carries_the_docstring_scope_to_the_doctest_check() -> None:
+    """``make rhiza-test`` must export a non-empty RHIZA_DOCTEST_FOLDERS.
 
-    The sharpest test in this file, because it caught a live regression the moment this repo
-    moved to the shim. ``test_docstrings`` reads its scope from the ``RHIZA_DOCTEST_FOLDERS``
+    The sharpest guard in this file, because the property it pins broke the moment this repo
+    moved to the shim. pytest-rhiza's ``test_docstrings`` reads its scope from that
     environment variable, falling back to ``SOURCE_FOLDER`` in ``.rhiza/.env`` and then to
     ``src``. ``quality.mk`` exported it from ``DOCSTRING_FOLDERS``; rhiza-task does not, and
-    cannot read ``[tool.rhiza-task] source-folder`` either — so the check reported
+    cannot read ``[tool.rhiza-task] source-folder`` either -- so the check reported
 
         SKIPPED  No doctest folder found (looked for: src)
 
     while the gate still said ``ok rhiza-test``. That is #1517 exactly: this repo's only
     doctest examples unchecked, silently, behind a green gate. ``.rhiza/.env`` cannot carry
-    the value because that file is gitignored, so CI would never see it — hence the wrapper
-    in the root Makefile, and hence this test.
+    the value because that file is gitignored, so CI would never see it -- hence the wrapper
+    in the root Makefile (Jebel-Quant/rhiza-task#18), and hence this test.
 
-    Asserted on the absence of the skip rather than on the wrapper's presence: a test that
-    grepped the Makefile would still pass if pytest-rhiza changed how it reads the scope.
+    **Asserted from a dry run, deliberately.** An earlier version ran the gate for real and
+    checked that no rhiza check reported SKIPPED. That was stricter and wrong twice over: it
+    failed the ``lowest-direct`` dependency job, where ``install``'s ``uv lock --check``
+    legitimately fails on a deliberately-mismatched lockfile, and it failed every matrix job
+    because ``test_release_tags`` skips on a checkout with no tags. Both are facts about the
+    runner, not gates measuring nothing. The variable's expanded value is the thing that was
+    actually broken, ``make`` expands it during ``-n``, and reading it needs no network, no
+    lockfile and no tags.
     """
     import logging
 
-    out = strip_ansi(run_make(logging.getLogger(__name__), ["rhiza-test"], dry_run=False, cwd=_ROOT).stdout)
-    assert "No doctest folder found" not in out, (
-        "pytest-rhiza's test_docstrings skipped for want of a folder, so this repo's docstring "
-        "examples went unchecked behind a passing gate (#1517, Jebel-Quant/rhiza-task#18). The "
-        f"root Makefile's rhiza-test wrapper should export RHIZA_DOCTEST_FOLDERS.\n{out[-800:]}"
+    out = strip_ansi(run_make(logging.getLogger(__name__), ["rhiza-test"], cwd=_ROOT).stdout)
+    match = re.search(r'RHIZA_DOCTEST_FOLDERS="([^"]*)"', out)
+    assert match, (
+        f"`make rhiza-test` no longer exports RHIZA_DOCTEST_FOLDERS, so pytest-rhiza's "
+        f"test_docstrings would fall back to `src` and skip (#1517):\n{out[-800:]}"
     )
-    assert "skipped" not in out.lower(), f"a rhiza check skipped rather than running:\n{out[-800:]}"
+    scope = match.group(1).strip()
+    assert scope, (
+        "`make rhiza-test` exports an empty doctest scope, so the test_docstrings check would "
+        "skip and this repo's docstring examples would go unchecked (#1517)."
+    )
+    assert "utils" in scope, (
+        f"`make rhiza-test` scopes doctests to {scope!r}, which omits utils/ -- where this "
+        f"repo's only non-test Python, and its only docstring examples, live."
+    )
 
 
 def test_claude_md_does_not_claim_the_suite_runs_without_coverage(source_folder: str) -> None:
