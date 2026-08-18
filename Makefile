@@ -17,10 +17,30 @@ RHIZA_TASK ?= rhiza-task@0.2.0
 # runs `make fmt` with no `astral-sh/setup-uv` step, and `ubuntu-latest` ships no uv. A shim
 # that only ran `uvx` would turn a required status check red on the day a repo migrated.
 #
-# So the bootstrap survives, minus the parts the CLI took over: no `bin/uv`, no PATH export,
-# no clean-up, just the one binary needed to reach the pin above.
+# So the bootstrap survives, minus the parts the CLI took over: no `bin/uv`, no clean-up,
+# just the one binary needed to reach the pin above.
 INSTALL_DIR ?= $(abspath ./bin)
 UVX ?= $(shell command -v uvx 2>/dev/null || echo $(INSTALL_DIR)/uvx)
+
+# --- mother-repo addition: the PATH export the shim drops, which it must not.
+#
+# The shipped shim says "no PATH export" and reaches the CLI by absolute path, which is
+# enough to *start* it and not enough to let it work. rhiza-task's task bodies shell out to
+# bare `uv` and `uvx` (`uv.py`'s `uv_run`/`uvx` helpers), so on a runner with no uv the shim
+# provisions ./bin/uvx, invokes it, and then the CLI dies with
+#
+#   FileNotFoundError: [Errno 2] No such file or directory: 'uvx'
+#
+# which is what turned the required `Pre-commit hooks` check red on the first push of this
+# migration: that job runs `make fmt` with no astral-sh/setup-uv step. `bootstrap.mk`
+# exported PATH for exactly this reason.
+#
+# Prepended rather than appended, so the bootstrapped binary is the one every gate uses --
+# otherwise a runner with an older uv earlier on PATH would resolve differently from a bare
+# one, and the pin above would stop being the whole version contract.
+#
+# Reported upstream as Jebel-Quant/rhiza-task#19; remove when the shipped shim carries it.
+export PATH := $(INSTALL_DIR):$(PATH)
 
 .DEFAULT_GOAL := help
 

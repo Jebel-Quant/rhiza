@@ -377,6 +377,29 @@ class TestMakefileRootFixture:
         )
         assert re.search(r"^%:", content, re.MULTILINE), "without the `%:` catch-all no gate resolves at all"
 
+    def test_makefile_puts_the_bootstrapped_uv_on_path(self, root: Path) -> None:
+        """The shim must export PATH, or every gate fails on a runner without uv.
+
+        The shipped shim deliberately omits this ("no PATH export") and reaches the CLI by
+        absolute path. That is enough to *start* it and not enough to let it work:
+        rhiza-task's task bodies shell out to bare ``uv``/``uvx``, so the first gate dies
+        with ``FileNotFoundError: 'uvx'``.
+
+        Pinned because it is load-bearing for a *required* check. The ``pre-commit`` job runs
+        ``make fmt`` with no ``astral-sh/setup-uv`` step, and ``Pre-commit hooks`` is required
+        in ``.github/rulesets/main-branch-protection.json`` — so losing this line makes the
+        branch unmergeable, which is exactly what happened on the first push of the migration.
+
+        Asserted as a prepend, not merely a mention: appending leaves a runner with an older
+        uv earlier on PATH resolving differently from a bare one, which would quietly make
+        ``RHIZA_TASK`` no longer the whole version contract. See Jebel-Quant/rhiza-task#19.
+        """
+        content = (root / "Makefile").read_text(encoding="utf-8")
+        assert re.search(r"^export PATH := \$\(INSTALL_DIR\):\$\(PATH\)", content, re.MULTILINE), (
+            "the Makefile must prepend $(INSTALL_DIR) to PATH, or a runner without uv fails "
+            "every gate once the shim has bootstrapped it (rhiza-task#19)"
+        )
+
     def test_makefile_keeps_the_mother_repo_only_targets(self, root: Path) -> None:
         """The five targets rehomed from the retired .rhiza/make.d/bundles.mk.
 
