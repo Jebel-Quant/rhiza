@@ -51,6 +51,16 @@ bundles:
       in). It is deliberately not a working repo on its own: `install` and `all`
       come from a language layer, and every profile pairs core with exactly one.
 
+      It ships **no** `.rhiza/.env`. The one it used to ship set SOURCE_FOLDER and
+      MARIMO_FOLDER to values identical to `rhiza.mk`'s own `?=` defaults, so it
+      carried no information — while a makefile assignment outranks an exported
+      environment variable in GNU make, so naming a variable there removed it from
+      every caller's reach. That is the mechanism of #1545, where a pinned
+      RHIZA_CI_OS_MATRIX silently discarded `rhiza_ci.yml`'s per-caller export. The
+      `-include .rhiza/.env` stays, because a consumer's own file is still layer 2 of
+      rhiza-task's resolution order; the documented home for project settings is a
+      `[tool.rhiza-task]` table in pyproject.toml, which is layer 3.
+
   # ============================================================================
   # LANGUAGE LAYERS - exactly one per repo
   # ============================================================================

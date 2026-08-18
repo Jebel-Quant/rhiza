@@ -70,8 +70,8 @@ jobs:
       # Naming that path made a *file* part of the contract, and a consumer that has
       # replaced the make layer with the CLI then has to keep a stub `.rhiza/rhiza.mk`
       # alive for this one step and nothing else. Nothing changes for a repo still on
-      # the synced make layer: both readers take the value from `.rhiza/.env`, which
-      # stays the single source of truth.
+      # the synced make layer: the CLI reads the same layers make did, and core ships no
+      # `.rhiza/.env` of its own, so neither reader starts from a template-owned value.
       #
       # The version is pinned here rather than read from a consumer's `RHIZA_TASK`,
       # which this workflow cannot see — and should not: the matrix a build runs on must
@@ -88,10 +88,14 @@ jobs:
       # portability untested — but forcing macos-latest on every consumer would spend
       # their minutes to buy *this* repo's assurance. The mother repo therefore opts
       # itself in and leaves the shipped default alone; a consumer who wants the same
-      # coverage sets RHIZA_CI_OS_MATRIX in its own .rhiza/.env.
+      # coverage declares ci-os-matrix in its own pyproject.toml `[tool.rhiza-task]`
+      # table. That works whichever layer the consumer is on, because this step reads
+      # through the CLI — `rhiza.mk` itself does not parse the table, so a make-layer
+      # consumer setting it there gets the CI matrix and not `make ci-os-matrix`.
       #
-      # The empty branch below is what hands the question to a consumer's `.rhiza/.env`,
-      # and it relies on rhiza-task treating an empty setting as unset. That is make's
+      # The empty branch below is what hands the question to a consumer's own
+      # configuration — its `.rhiza/.env` (layer 2) or its `[tool.rhiza-task]` table
+      # (layer 3) — and it relies on rhiza-task treating an empty setting as unset. That is make's
       # `$(or ...)` rule, which the CLI applies to every setting rather than to this one
       # alone (Jebel-Quant/rhiza-task#4) — hence the 0.1.2 pin: 0.1.1 resolved the empty
       # string to a value and answered `[]`, which GitHub expands to zero jobs rather than

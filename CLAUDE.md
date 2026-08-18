@@ -213,6 +213,38 @@ gates against a `local.mk`-declared source root.
 Appending has always worked from `local.mk` and still does; it was only *setting*
 `SOURCE_FOLDER` that was position-dependent.
 
+**Where a project's settings live — and why core ships no `.rhiza/.env`.** It used to,
+and the file was pure liability. Its entire payload was `SOURCE_FOLDER=src` and
+`MARIMO_FOLDER=docs/notebooks`, both *identical* to the `?=` defaults in `rhiza.mk`
+directly below the include — so it carried no information any reader could act on. What it
+did carry was precedence: a makefile assignment outranks an exported environment variable
+in GNU make (only a command-line `make VAR=...` beats it), so naming a variable in that
+file took it out of reach of every caller that exported it. That is the whole mechanism of
+#1545 — `RHIZA_CI_OS_MATRIX` was pinned there, and `rhiza_ci.yml`'s per-caller export was
+silently discarded for the mother repo and consumers alike. Deleting the file changes no
+resolved value and removes the mechanism, which is why the guard is now
+`test_core_ships_no_env_file_at_all` rather than an assertion about one line inside it.
+
+The documented home is a `[tool.rhiza-task]` table in `pyproject.toml`: layer 3 of
+rhiza-task's five-layer order (defaults → `.rhiza/.env` → `pyproject.toml` → `RHIZA_*`
+environment → CLI flags), typed by TOML rather than parsed out of strings. Two caveats
+worth knowing before moving anything there:
+
+- **`rhiza.mk` does not read it.** A repo on the synced make layer resolves settings
+  through `?=`, the root `Makefile` and `.rhiza/.env`; the table is inert until the repo
+  moves to `uvx rhiza-task shim`. So this repo's own `MKDOCS_EXTRA_PACKAGES` override stays
+  in the root `Makefile` — relocating it to `pyproject.toml` today would silently break
+  `make book`. Only the CI `generate-matrix` step reads the table here, because that step
+  is the one caller already going through the CLI.
+- **It is Python-only.** `_from_pyproject` reads `pyproject.toml` and nothing else, so
+  `rust-core` and `go-core` have no equivalent — a crate has `Cargo.toml`, a Go module has
+  no manifest at all. Those layers keep `.rhiza/.env` and the root `Makefile` as their only
+  settings surfaces until rhiza-task grows a language-neutral source.
+
+`.rhiza/.env` itself stays supported and `rhiza.mk` still `-include`s it — what changed is
+that the file is now unambiguously **repo-owned**, which also resolves the standing
+contradiction with "never modify files in `.rhiza/`".
+
 All three layers carry `test`/`coverage`/`typecheck` themselves. Python's used to live
 in the separate `tests` bundle, and that was a real inconsistency rather than a
 considered asymmetry: `python.mk`'s own `all` named them while `tests` defined them, and

@@ -34,8 +34,9 @@ Rhiza's modular design allows you to extend functionality without modifying temp
 | Root `Makefile` | Project-wide customizations | ✅ Yes |
 | `local.mk` | Developer-local overrides | ❌ No (gitignored) |
 | `.rhiza/.env` | Environment variables | ✅ Yes (optional) |
+| `pyproject.toml` `[tool.rhiza-task]` | Project settings | ✅ Yes (optional) |
 
-**Important**: Never modify files in `.rhiza/` directly—they are template-managed and will be overwritten during sync operations.
+**Important**: Never modify files in `.rhiza/` directly—they are template-managed and will be overwritten during sync operations. `.rhiza/.env` is the exception, and only because Rhiza ships no such file: core once did, setting two variables to values identical to its own built-in defaults, which carried no information while taking those variables out of reach of any caller that exported them (#1545). The file is yours to create; nothing overwrites it.
 
 ---
 
@@ -249,7 +250,29 @@ export MY_API_URL
 include .rhiza/rhiza.mk
 ```
 
+#### In pyproject.toml
+
+The documented home for Rhiza's own settings. TOML types the values, they sit beside the
+project's other tool config, and `rhiza-task` reads the table as layer 3 of its resolution
+order — above `.rhiza/.env`, below the environment.
+
+```toml
+[tool.rhiza-task]
+source-folder = "mypackage"
+typechecker = "mypy"
+coverage-fail-under = 80
+ci-os-matrix = ["ubuntu-latest", "macos-latest"]
+```
+
+Note that a repo still on the synced make layer resolves settings through `rhiza.mk`, which
+does not read this table — set those in the root `Makefile` or `.rhiza/.env` until the repo
+moves to `uvx rhiza-task shim`.
+
 #### In .rhiza/.env
+
+For values `make` itself must see. Best kept to genuine environment variables rather than
+Rhiza settings, and remember that an assignment here outranks an exported variable — so
+pinning something CI expects to pass in silently discards it.
 
 ```bash
 # .rhiza/.env
