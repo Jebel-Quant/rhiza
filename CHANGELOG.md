@@ -5,6 +5,32 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.3.4] - 2026-08-18
+
+### New Features
+- Deliver the rhiza checks as pytest-rhiza instead of syncing .rhiza/tests (#1540) (#1547)
+
+### Bug Fixes
+- Make the mother repo's own static gates measure something (#1505, #1506, #1507, #1508) (#1510)
+- Close the four quality findings (#1511, #1512, #1513, #1514) (#1515)
+- Close the six quality findings (#1516, #1517, #1518, #1519, #1520, #1521) (#1522)
+- Wire rhiza-test into CI and correct the coverage note (#1523, #1525, #1526) (#1527)
+- Close the five quality findings (#1528, #1529, #1530, #1531, #1532) (#1533)
+- Make gate scope independent of local.mk, and rescope the interrogate hook (#1534, #1535) (#1536)
+- *(ci)* Read the OS matrix from rhiza-task, not from .rhiza/rhiza.mk (#1546)
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1538)
+
+### Maintenance
+- *(bandit)* Give the scope test a positive control and check both configs (#1504)
+- Chore(deps)(deps): bump the github-actions group with 6 updates (#1543)
+- Drop .rhiza/assets and retire .rhiza/completions from core (#1549)
+
+### Other Changes
+- Delete .github/pull_request_template.md (#1550)
+- Delete bundles/github/.github/pull_request_template.md (#1551)
+
 ## [1.3.3] - 2026-08-11
 
 ### Bug Fixes
