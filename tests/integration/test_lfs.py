@@ -13,10 +13,15 @@ import subprocess  # nosec
 import pytest
 
 # Skip the entire module when the lfs bundle is not present.
-# This mother-repo test lives in tests/integration/; parents[2] is the repo root,
-# and lfs.mk is dogfooded at .rhiza/make.d/lfs.mk (a symlink into bundles/lfs/).
+#
+# Checked against the *bundle source*, not the root. It used to look at
+# `.rhiza/make.d/lfs.mk`, which was a dogfood symlink into bundles/lfs/ — but this repo
+# migrated to the rhiza-task shim and has no root make layer any more, so that path stopped
+# existing and this whole module skipped itself silently. The `git_repo` fixture assembles
+# the layer from the bundles (see MAKE_LAYER_BUNDLES in conftest.py), so what decides
+# whether these tests can run is whether the bundle ships the fragment.
 _ROOT = pathlib.Path(__file__).resolve().parents[2]
-_LFS_MK = _ROOT / ".rhiza" / "make.d" / "lfs.mk"
+_LFS_MK = _ROOT / "bundles" / "lfs" / ".rhiza" / "make.d" / "lfs.mk"
 if not _LFS_MK.exists():
     pytest.skip("lfs bundle not installed (lfs.mk not found)", allow_module_level=True)
 

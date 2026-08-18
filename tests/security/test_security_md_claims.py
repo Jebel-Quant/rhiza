@@ -25,11 +25,6 @@ def _read(relative: str) -> str:
     return path.read_text(encoding="utf-8") if path.is_file() else ""
 
 
-def _make_fragments_text() -> str:
-    """Return the concatenated text of all .rhiza/make.d fragments."""
-    return "\n".join(p.read_text(encoding="utf-8") for p in sorted((_ROOT / ".rhiza" / "make.d").glob("*.mk")))
-
-
 # Claim (the bold lead of a bullet under "## Security Measures") -> a predicate
 # proving the repository actually implements it.
 _CLAIM_EVIDENCE = {

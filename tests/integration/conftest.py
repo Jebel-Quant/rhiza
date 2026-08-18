@@ -28,7 +28,26 @@ from pathlib import Path
 
 import pytest
 
+from tests.util import sync_bundles
+
 GIT = shutil.which("git") or "/usr/bin/git"
+
+# The bundles whose make layer these fixtures assemble. Sourced from ``bundles/`` because
+# this repo no longer dogfoods that layer -- it runs on the ``rhiza-task`` shim, so there is
+# no root ``.rhiza/rhiza.mk`` or ``.rhiza/make.d/`` to copy. This list is exactly the set
+# whose fragments used to be symlinked into the root, so the assembled sandbox is unchanged.
+MAKE_LAYER_BUNDLES = [
+    "core",
+    "python-core",
+    "tests",
+    "book",
+    "docker",
+    "github",
+    "lfs",
+    "marimo",
+    "paper",
+    "presentation",
+]
 
 MOCK_MAKE_SCRIPT = """#!/usr/bin/env python3
 import sys
@@ -170,15 +189,9 @@ def git_repo(root, tmp_path, monkeypatch) -> Path:
 
     monkeypatch.setenv("PATH", f"{bin_dir}:{os.environ.get('PATH', '')}")
 
-    # Copy core Rhiza Makefiles
+    # Assemble the make layer from the bundles that ship it.
     (local_dir / ".rhiza").mkdir(parents=True, exist_ok=True)
-    shutil.copy(root / ".rhiza" / "rhiza.mk", local_dir / ".rhiza" / "rhiza.mk")
-    shutil.copy(root / "Makefile", local_dir / "Makefile")
-
-    make_d_src = root / ".rhiza" / "make.d"
-    if make_d_src.is_dir():
-        make_d_dst = local_dir / ".rhiza" / "make.d"
-        shutil.copytree(make_d_src, make_d_dst, dirs_exist_ok=True)
+    sync_bundles(root, MAKE_LAYER_BUNDLES, local_dir)
 
     book_src = root / "book"
     book_dst = local_dir / "book"

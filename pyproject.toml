@@ -121,6 +121,59 @@ ignore_missing_version = true
 # *dependency* that happens to sit at the same number, and the lock file is full of
 # third-party versions this repo does not control.
 
+[tool.rhiza-task]
+# Rhiza's own settings for the task runner that replaced the synced make layer. Read as
+# layer 4 of rhiza-task's resolution order, above `.rhiza/.env` and below the environment.
+#
+# `source-folder` is the one entry that is load-bearing rather than a preference. It
+# replaces six make accumulators that `.rhiza/make.d/bundles.mk` used to carry
+# (TYPECHECK_FOLDERS, BANDIT_FOLDERS, DOCSTRING_FOLDERS, DEPTRY_FOLDERS, SEMGREP_FOLDERS,
+# COVERAGE_FOLDERS += utils). They existed because this repo ships configuration rather
+# than a library: it has no `src/`, so the default matched nothing and `typecheck`,
+# `security`, `deps`, `docs-coverage` and `semgrep` each exited 0 having measured nothing
+# (#1505, #1511, #1516) — on the repo that ships those gates to everyone else.
+#
+# The CLI reads a single `source_folder` per gate rather than a per-gate list, and `utils/`
+# is this repo's only non-test Python, so one setting covers what six appends did. Leave it
+# set: without it every scoped gate silently measures nothing again.
+# tests/utils/test_gate_scope.py asserts the outcome rather than this wiring.
+source-folder = "utils"
+
+# DEP004 is "imported but declared as a development dependency". utils/ *is* development
+# tooling — it is the code behind `make sync-self` and the drift check — so importing a dev
+# dependency there is correct rather than misplaced. The marimo tasks contribute the same
+# flag when their folder exists; deptry accepts the repeat, and stating it here keeps utils/
+# from silently depending on the marimo bundle staying adopted.
+deptry-ignore = ["--ignore", "DEP004"]
+
+# Declared rather than detected. `detect_layers()` infers the layer set from which manifests
+# are present and falls back to python when it finds none — runtime manifest-sniffing of the
+# kind the sync-time accumulator existed to avoid, where a misconfigured checkout quietly
+# gets a different gate set instead of going red. Naming it costs one line and removes the
+# inference entirely.
+layers = ["python"]
+
+# Restores what the make layer defaulted to. `python.mk` had `TYPECHECKER ?= both`; the CLI
+# defaults to `ty` alone, so a bare migration silently dropped `mypy --strict` from this
+# repo's typecheck gate — while CLAUDE.md and the README go on describing `make typecheck`
+# as "ty and mypy --strict".
+#
+# `both` is also better here than it was under make. The shell `case` ran the two in
+# sequence and let mypy's exit status win, so a ty failure could pass; the CLI loops and
+# each run raises, so ty failing stops the gate. Same setting, one fewer way to be green
+# while broken.
+typechecker = "both"
+
+# Preserves the checks version this repo was already running. `quality.mk` had
+# `RHIZA_CHECKS_VERSION ?= 0.2.1`; rhiza-task's default is v0.2.0, so a bare migration would
+# have *downgraded* the conformance checks — which is exactly the drift the pin exists to
+# prevent, since its whole purpose is that a repo runs the assertions of a known release.
+#
+# Deliberately not v0.2.2, which is newer: bumping the checks is an upgrade decision with its
+# own failure modes, and folding it into a migration PR would confuse "this behaves as before"
+# with "this behaves differently but still passes".
+pytest-rhiza = "pytest-rhiza @ git+https://github.com/Jebel-Quant/pytest-rhiza@v0.2.1"
+
 [tool.mypy]
 # `make typecheck` passes both the strictness flag and the paths on the command line
 # (`mypy --strict $TYPECHECK_FOLDERS`), so this table does not drive CI — it makes a

@@ -16,6 +16,9 @@ import subprocess  # nosec B404 - subprocess module needed for git operations in
 
 import pytest
 
+from tests.integration.conftest import MAKE_LAYER_BUNDLES
+from tests.util import sync_bundles
+
 # Get absolute path for git to avoid S607 warnings
 GIT = shutil.which("git") or "/usr/bin/git"
 
@@ -194,16 +197,10 @@ def git_repo(root, tmp_path, monkeypatch):
     # Ensure our bin comes first on PATH so 'uv' resolves to mock
     monkeypatch.setenv("PATH", f"{bin_dir}:{os.environ.get('PATH', '')}")
 
-    # Copy core Rhiza Makefiles
+    # Assemble the make layer from the bundles that ship it (see MAKE_LAYER_BUNDLES in
+    # tests/integration/conftest.py for why this reads bundles/ rather than the root).
     (local_dir / ".rhiza").mkdir(parents=True, exist_ok=True)
-    shutil.copy(root / ".rhiza" / "rhiza.mk", local_dir / ".rhiza" / "rhiza.mk")
-    shutil.copy(root / "Makefile", local_dir / "Makefile")
-
-    # Copy .rhiza/make.d/ directory (contains split makefiles)
-    make_d_src = root / ".rhiza" / "make.d"
-    if make_d_src.is_dir():
-        make_d_dst = local_dir / ".rhiza" / "make.d"
-        shutil.copytree(make_d_src, make_d_dst, dirs_exist_ok=True)
+    sync_bundles(root, MAKE_LAYER_BUNDLES, local_dir)
 
     book_src = root / "book"
     book_dst = local_dir / "book"

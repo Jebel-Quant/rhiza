@@ -1,50 +1,33 @@
 """The mother repo's own static gates must actually look at its own Python.
 
-Rhiza ships configuration rather than a runtime library, so it has no ``src/`` and
-``SOURCE_FOLDER`` matches nothing. Three of the four path-scoped gates keyed on that
-variable alone, which meant ``make typecheck``, ``make security`` and ``make deps``
-exited **0** having measured nothing here, and ``docs-coverage`` saw only the test
-folders (#1505). A green ``make all`` therefore said less than it appeared to — on the
-one repository that ships those gates to everyone else.
+Rhiza ships configuration rather than a runtime library, so it has no ``src/``. Under the
+make layer that meant ``SOURCE_FOLDER`` matched nothing and five path-scoped gates exited
+**0** having measured nothing (#1505, #1511, #1516) — on the one repository that ships those
+gates to everyone else. The fix was an accumulator per gate, with ``utils/`` contributed from
+``.rhiza/make.d/bundles.mk``.
 
-The fix was to give each gate the accumulator shape ``deps`` already had, and to
-contribute ``utils/`` from ``.rhiza/make.d/bundles.mk``. What these tests pin is the
-*outcome* rather than the wiring: a test that grepped ``bundles.mk`` for ``utils`` would
-still pass if python.mk stopped reading the accumulator, which is precisely the
-regression worth catching.
+**This file was rewritten when the make layer was retired.** rhiza now runs on the
+``rhiza-task`` shim, and the CLI has no accumulators: every path-scoped gate reads a single
+``source_folder`` setting. So the six per-gate assertions collapse into one — the folder that
+setting names must exist and hold Python — and the completeness argument changes shape.
+It used to derive the expected gate list from ``*_FOLDERS ?=`` declarations in the bundles,
+because a hardcoded list cannot fail when a gate is missing from it (which is how ``semgrep``
+kept the pre-#1505 form through #1505). Under the CLI a gate cannot have a private scope to
+forget: there is one field. What *can* still drift is a new folder setting appearing, so
+:func:`test_no_unknown_folder_setting_has_appeared` derives from the CLI's own schema.
 
-Each gate's folder list is expanded by **make**, not by the recipe's shell, so it is
-visible in ``make -n`` output and no gate has to run. That distinction is what makes
-these assertions possible: the recipes' ``[ -d ... ]`` warnings are printed by a dry run
-whether or not they would fire, so the presence of a warning proves nothing and only the
-expanded value does.
-
-**Why the list below is derived rather than written down.** #1505 fixed four gates and
-left ``semgrep`` on the old ``[ -d $(SOURCE_FOLDER) ]`` form (#1511) — not through
-carelessness about that gate, but because ``semgrep`` is owned by core's ``quality.mk``
-while the other four live in ``python.mk``, so it sat outside both the file being edited
-and the hand-written ``_SCOPED_GATES`` list here. A hardcoded list of gates cannot fail
-when a gate is missing from it, which made this suite blind to exactly the bug it was
-written to prevent, for as long as the bug existed.
-
-So ``test_every_declared_accumulator_is_guarded`` derives the expected set from the
-bundle sources: every ``*_FOLDERS ?=`` declaration across ``bundles/*/.rhiza/make.d/`` is
-an accumulator some gate reads, and each must appear below. Adding a further path-scoped
-gate now fails this suite until it is guarded, rather than joining silently.
-
-That guard did its job, and also showed where it ends. ``coverage`` was the *sixth*
-path-scoped gate and #1505 never converted it: ``test`` still passed
-``--cov=$(SOURCE_FOLDER)`` behind a ``[ -d ... ]``, so here the suite ran and measured no
-coverage whatsoever. Deriving from declarations catches a gate that has an accumulator and
-is unguarded; it is structurally blind to one that never declared an accumulator at all.
-#1516 gave ``coverage`` the same shape as the rest, which is what brings it into range of
-the derivation — the lesson being that this file's completeness argument holds only once a
-gate has opted into the convention.
+The migration immediately reintroduced #1517, which is why the doctest test below is the
+sharpest one here: ``rhiza-test`` reported ``ok`` while pytest-rhiza's ``test_docstrings``
+skipped with "No doctest folder found (looked for: src)", because that check reads the
+``RHIZA_DOCTEST_FOLDERS`` environment variable and the CLI does not set it
+(Jebel-Quant/rhiza-task#18). The root ``Makefile`` wraps the gate to export it.
 """
 
 from __future__ import annotations
 
+import json
 import re
+import subprocess  # nosec B404 - fixed argument vectors
 from pathlib import Path
 
 import pytest
@@ -52,115 +35,204 @@ import pytest
 from tests.util import run_make, strip_ansi
 
 _ROOT = Path(__file__).resolve().parents[2]
-
-# Each gate, the accumulator it reads, and the make-expanded fragment that carries its
-# resolved folder list. For the four shell-variable gates that is the assignment itself;
-# for `deps` it is deptry's own argument list, which python.mk expands inline.
-#
-# The accumulator name is not decoration: `test_every_declared_accumulator_is_guarded`
-# checks this column against the `*_FOLDERS ?=` declarations in the bundle sources, so a
-# new path-scoped gate cannot be added without being guarded here.
-_SCOPED_GATES = [
-    ("typecheck", "TYPECHECK_FOLDERS", re.compile(r'typecheck_paths="([^"]*)"')),
-    ("security", "BANDIT_FOLDERS", re.compile(r'bandit_paths="([^"]*)"')),
-    ("docs-coverage", "DOCSTRING_FOLDERS", re.compile(r'docstring_paths="([^"]*)"')),
-    ("semgrep", "SEMGREP_FOLDERS", re.compile(r'semgrep_paths="([^"]*)"')),
-    ("test", "COVERAGE_FOLDERS", re.compile(r'coverage_paths="([^"]*)"')),
-    # `(?!on:)` skips the "[INFO] Running deptry on:" banner and matches the invocation.
-    ("deps", "DEPTRY_FOLDERS", re.compile(r"deptry (?!on:)([^\n;\\]*)")),
-]
-
-# Where the accumulators are declared. Every language layer and core may own some, so the
-# search is over all bundles rather than a named pair of files.
 _BUNDLES = _ROOT / "bundles"
-_ACCUMULATOR_DECL = re.compile(r"^([A-Z_]+_FOLDERS)\s*\?=", re.MULTILINE)
+
+# The folder settings the CLI exposes, and what this suite expects of each. `source_folder`
+# is the one every path-scoped gate reads, so it is the one that must hold real Python.
+_KNOWN_FOLDER_SETTINGS = {"source_folder", "tests_folder", "marimo_folder"}
+
+
+def _rhiza_task() -> str:
+    """Return the pinned rhiza-task spec from the root Makefile.
+
+    Read rather than hardcoded so this suite follows the pin instead of drifting from it.
+
+    Returns:
+        The ``rhiza-task@X.Y.Z`` spec.
+    """
+    match = re.search(r"^RHIZA_TASK \?= (\S+)", (_ROOT / "Makefile").read_text(encoding="utf-8"), re.MULTILINE)
+    assert match, "the root Makefile no longer pins RHIZA_TASK"
+    return match.group(1)
+
+
+def _rhiza_task_requirement() -> str:
+    """Return the pin as a PEP 508 requirement, for ``uv run --with``.
+
+    ``uvx`` accepts ``name@version``; ``--with`` needs ``name==version``. Converted rather
+    than written twice so both forms follow the single pin in the Makefile.
+
+    Returns:
+        e.g. ``rhiza-task==0.2.0``.
+    """
+    name, _, version = _rhiza_task().partition("@")
+    return f"{name}=={version}" if version else name
+
+
+def _cli_print(setting: str) -> str:
+    """Return one resolved setting, via ``rhiza-task print``.
+
+    Args:
+        setting: A config field name, e.g. ``source_folder``.
+
+    Returns:
+        The resolved value, whitespace-collapsed.
+    """
+    proc = subprocess.run(  # nosec B603
+        ["uvx", _rhiza_task(), "print", setting],
+        cwd=_ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return " ".join(strip_ansi(proc.stdout).split())
 
 
 @pytest.fixture(scope="module")
-def gate_scopes() -> dict[str, str]:
-    """Dry-run each scoped gate from the repository root and return its resolved folder list."""
+def source_folder() -> str:
+    """Return the folder every path-scoped gate resolves to."""
+    return _cli_print("source_folder")
+
+
+def test_source_folder_resolves_to_something(source_folder: str) -> None:
+    """The setting must not be empty, or every path-scoped gate measures nothing."""
+    assert source_folder, (
+        "rhiza-task resolves an empty source_folder, so typecheck, security, docs-coverage, "
+        "deps and semgrep would each exit 0 having scanned nothing (#1505). Set "
+        "[tool.rhiza-task] source-folder in pyproject.toml."
+    )
+
+
+def test_source_folder_exists_and_holds_python(source_folder: str) -> None:
+    """The named folder must exist and contain Python — the #1505 regression guard.
+
+    Asserting existence is not pedantry: the default is ``src``, this repo has no ``src/``,
+    and the CLI's gates skip a folder that is not a directory rather than failing. A wrong
+    value here is therefore silent, which is exactly how #1505/#1511/#1516 survived.
+    """
+    path = _ROOT / source_folder
+    assert path.is_dir(), (
+        f"source_folder resolves to {source_folder!r}, which is not a directory. Every "
+        f"path-scoped gate would skip it and report success having measured nothing."
+    )
+    assert sorted(path.rglob("*.py")), f"source_folder names {source_folder!r} but it holds no Python at all"
+
+
+def test_source_folder_is_the_repos_own_tooling(source_folder: str) -> None:
+    """It must be ``utils/`` — this repo's only non-test Python.
+
+    ``utils/`` is the tooling behind ``make sync-self`` and the ``sync-self-check`` drift
+    check. Named explicitly so a change of source root is a deliberate edit here rather than
+    a silent narrowing of every gate.
+    """
+    assert source_folder == "utils", (
+        f"source_folder is {source_folder!r}, expected 'utils' — where the tooling behind "
+        f"`make sync-self` and the sync-self-check drift guard lives."
+    )
+
+
+def test_no_unknown_folder_setting_has_appeared() -> None:
+    """A new ``*_folder`` setting in the CLI must be considered here, not arrive silently.
+
+    This replaces the ``*_FOLDERS ?=`` derivation the make layer needed. Same inversion, new
+    schema: the expectation comes from the CLI rather than from a list written by hand, so a
+    gate scoped by some *other* folder cannot escape review the way ``semgrep`` did in #1505.
+    """
+    script = (
+        "from dataclasses import fields;"
+        "from rhiza_task.config import Config;"
+        "import json;"
+        "print(json.dumps(sorted(f.name for f in fields(Config) if f.name.endswith('_folder'))))"
+    )
+    proc = subprocess.run(  # nosec B603
+        ["uv", "run", "--quiet", "--no-project", "--with", _rhiza_task_requirement(), "python", "-c", script],
+        cwd=_ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    found = set(json.loads(proc.stdout))
+    assert found, "introspection returned no folder settings at all, so this guard is inert"
+    unknown = found - _KNOWN_FOLDER_SETTINGS
+    assert not unknown, (
+        f"rhiza-task exposes folder settings this suite does not know about: {sorted(unknown)}. "
+        f"If a gate is scoped by one of them, guard it here."
+    )
+
+
+def test_rhiza_test_carries_the_docstring_scope_to_the_doctest_check() -> None:
+    """``make rhiza-test`` must export a non-empty RHIZA_DOCTEST_FOLDERS.
+
+    The sharpest guard in this file, because the property it pins broke the moment this repo
+    moved to the shim. pytest-rhiza's ``test_docstrings`` reads its scope from that
+    environment variable, falling back to ``SOURCE_FOLDER`` in ``.rhiza/.env`` and then to
+    ``src``. ``quality.mk`` exported it from ``DOCSTRING_FOLDERS``; rhiza-task does not, and
+    cannot read ``[tool.rhiza-task] source-folder`` either -- so the check reported
+
+        SKIPPED  No doctest folder found (looked for: src)
+
+    while the gate still said ``ok rhiza-test``. That is #1517 exactly: this repo's only
+    doctest examples unchecked, silently, behind a green gate. ``.rhiza/.env`` cannot carry
+    the value because that file is gitignored, so CI would never see it -- hence the wrapper
+    in the root Makefile (Jebel-Quant/rhiza-task#18), and hence this test.
+
+    **Asserted from a dry run, deliberately.** An earlier version ran the gate for real and
+    checked that no rhiza check reported SKIPPED. That was stricter and wrong twice over: it
+    failed the ``lowest-direct`` dependency job, where ``install``'s ``uv lock --check``
+    legitimately fails on a deliberately-mismatched lockfile, and it failed every matrix job
+    because ``test_release_tags`` skips on a checkout with no tags. Both are facts about the
+    runner, not gates measuring nothing. The variable's expanded value is the thing that was
+    actually broken, ``make`` expands it during ``-n``, and reading it needs no network, no
+    lockfile and no tags.
+    """
     import logging
 
-    log = logging.getLogger(__name__)
-    scopes: dict[str, str] = {}
-    for target, _accumulator, pattern in _SCOPED_GATES:
-        out = strip_ansi(run_make(log, [target], cwd=_ROOT).stdout)
-        match = pattern.search(out)
-        assert match, f"could not find the resolved folder list for `make {target}` in:\n{out[-800:]}"
-        scopes[target] = match.group(1).strip()
-    return scopes
-
-
-@pytest.mark.parametrize("target", [g[0] for g in _SCOPED_GATES])
-def test_scoped_gate_resolves_a_non_empty_scope(target: str, gate_scopes: dict[str, str]) -> None:
-    """Each path-scoped gate must resolve to at least one folder, or it measures nothing."""
-    assert gate_scopes[target], (
-        f"`make {target}` resolves an empty folder list, so it would exit 0 having scanned "
-        f"nothing. Contribute a folder via the accumulators in .rhiza/make.d/bundles.mk (#1505)."
-    )
-
-
-@pytest.mark.parametrize("target", [g[0] for g in _SCOPED_GATES])
-def test_scoped_gate_covers_utils(target: str, gate_scopes: dict[str, str]) -> None:
-    """utils/ holds this repo's only non-test Python, so every scoped gate must include it."""
-    assert "utils" in gate_scopes[target], (
-        f"`make {target}` resolves to {gate_scopes[target]!r}, which omits utils/ — the "
-        f"tooling behind `make sync-self` and the sync-self-check CI drift guard."
-    )
-
-
-def test_claude_md_does_not_claim_the_suite_runs_without_coverage(gate_scopes: dict[str, str]) -> None:
-    """CLAUDE.md must not describe `make test` as coverage-free while the gate resolves a scope.
-
-    The two halves drifted apart in #1525: #1516 gave `test` a COVERAGE_FOLDERS accumulator
-    and `utils` started being measured, but CLAUDE.md's mother-repo note still told readers
-    the suite ran "*without* a Python coverage number — by design". A contributor reading it
-    would conclude a green `make test` proves nothing about coverage, when in fact there is a
-    90% gate they can break.
-
-    Checked against the *resolved* scope rather than a hardcoded expectation, so if this repo
-    ever legitimately returns to measuring nothing, the claim becomes true again and this
-    test stops objecting.
-    """
-    stale_claims = ("running tests without coverage", "without* a Python coverage number")
-    prose = (_ROOT / "CLAUDE.md").read_text(encoding="utf-8")
-
-    if not gate_scopes["test"]:
-        pytest.skip("`make test` resolves an empty coverage scope, so the coverage-free claim holds")
-
-    found = [claim for claim in stale_claims if claim in prose]
-    assert not found, (
-        f"CLAUDE.md still says {found} about this repo, but `make test` resolves a coverage "
-        f"scope of {gate_scopes['test']!r} and enforces COVERAGE_FAIL_UNDER against it (#1525)."
-    )
-
-
-def test_rhiza_test_carries_the_docstring_scope_to_the_doctest_check(logger) -> None:
-    """`make rhiza-test` must hand pytest-rhiza's test_docstrings the same scope as docs-coverage.
-
-    Not a member of ``_SCOPED_GATES``: ``RHIZA_DOCTEST_FOLDERS`` is not an accumulator of
-    its own but a *carrier* for ``DOCSTRING_FOLDERS``, so the derivation above would flag
-    it as stale. The property is worth pinning separately, because the two halves are one
-    invariant — ``docs-coverage`` asking whether a docstring exists while the doctest
-    runner looks somewhere else is exactly the split that let 23 examples in ``utils/`` go
-    unchecked (#1517).
-    """
-    out = strip_ansi(run_make(logger, ["rhiza-test"], cwd=_ROOT).stdout)
+    out = strip_ansi(run_make(logging.getLogger(__name__), ["rhiza-test"], cwd=_ROOT).stdout)
     match = re.search(r'RHIZA_DOCTEST_FOLDERS="([^"]*)"', out)
-    assert match, f"`make rhiza-test` no longer passes RHIZA_DOCTEST_FOLDERS:\n{out[-800:]}"
+    assert match, (
+        f"`make rhiza-test` no longer exports RHIZA_DOCTEST_FOLDERS, so pytest-rhiza's "
+        f"test_docstrings would fall back to `src` and skip (#1517):\n{out[-800:]}"
+    )
     scope = match.group(1).strip()
     assert scope, (
-        "`make rhiza-test` resolves an empty doctest scope, so the test_docstrings check would "
-        "skip and the repo's docstring examples would go unchecked (#1517)."
+        "`make rhiza-test` exports an empty doctest scope, so the test_docstrings check would "
+        "skip and this repo's docstring examples would go unchecked (#1517)."
     )
     assert "utils" in scope, (
-        f"`make rhiza-test` scopes doctests to {scope!r}, which omits utils/ — where this "
+        f"`make rhiza-test` scopes doctests to {scope!r}, which omits utils/ -- where this "
         f"repo's only non-test Python, and its only docstring examples, live."
     )
 
 
+def test_claude_md_does_not_claim_the_suite_runs_without_coverage(source_folder: str) -> None:
+    """CLAUDE.md must not describe ``make test`` as coverage-free while a scope resolves.
+
+    The two halves drifted apart in #1525: #1516 gave ``test`` a coverage scope and ``utils``
+    started being measured, but CLAUDE.md still told readers the suite ran "*without* a Python
+    coverage number — by design". A contributor reading that would conclude a green
+    ``make test`` proves nothing about coverage, when there is a 90% gate they can break.
+
+    Keyed on the resolved scope, so if this repo ever legitimately returns to measuring
+    nothing the claim becomes true again and this test stops objecting.
+    """
+    stale_claims = ("running tests without coverage", "without* a Python coverage number")
+    prose = (_ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+
+    if not (_ROOT / source_folder).is_dir():
+        pytest.skip("no coverage scope resolves, so the coverage-free claim holds")
+
+    found = [claim for claim in stale_claims if claim in prose]
+    assert not found, (
+        f"CLAUDE.md still says {found} about this repo, but coverage is measured over "
+        f"{source_folder!r} and enforced against coverage_fail_under (#1525)."
+    )
+
+
 def _interrogate_hook() -> dict:
-    """Return the interrogate hook mapping from the root .pre-commit-config.yaml."""
+    """Return the interrogate hook mapping from the root .pre-commit-config.yaml.
+
+    Returns:
+        The hook's YAML mapping.
+    """
     import yaml
 
     config = yaml.safe_load((_ROOT / ".pre-commit-config.yaml").read_text(encoding="utf-8"))
@@ -171,21 +243,20 @@ def _interrogate_hook() -> dict:
     pytest.fail("the root .pre-commit-config.yaml no longer declares an interrogate hook")
 
 
-def test_interrogate_hook_matches_this_repos_python(gate_scopes: dict[str, str]) -> None:
-    """`make fmt`'s interrogate hook must be scoped to files this repo actually has.
+def test_interrogate_hook_matches_this_repos_python(source_folder: str) -> None:
+    """``make fmt``'s interrogate hook must be scoped to files this repo actually has.
 
     The same failure as the gates above, one layer out (#1535). The hook shipped
-    ``files: ^src/`` — correct downstream, inert here, because rhiza ships configuration
-    rather than a runtime library. It reported "(no files to check)Skipped" on every
-    ``make fmt``, which in a list of twenty-odd Passed lines reads as a check that ran.
+    ``files: ^src/`` — correct downstream, inert here — and reported "(no files to
+    check)Skipped" on every ``make fmt``, which among twenty-odd Passed lines reads as a
+    check that ran.
 
-    Checked against the folders ``docs-coverage`` *resolves* rather than a hardcoded list,
-    so the hook and the gate cannot drift apart: whatever the accumulator contributes, the
-    hook must be able to see it.
+    Checked against the folders the gate measures rather than a hardcoded list, so the hook
+    and the gate cannot drift apart.
     """
     pattern = re.compile(_interrogate_hook()["files"])
-    folders = gate_scopes["docs-coverage"].split()
-    assert folders, "docs-coverage resolves no folders, so there is nothing to scope the hook to"
+    folders = [f for f in (source_folder, "tests") if (_ROOT / f).is_dir()]
+    assert folders, "no folder resolves, so there is nothing to scope the hook to"
 
     for folder in folders:
         candidates = sorted((_ROOT / folder).rglob("*.py"))
@@ -193,76 +264,42 @@ def test_interrogate_hook_matches_this_repos_python(gate_scopes: dict[str, str])
         matched = [p for p in candidates if pattern.match(p.relative_to(_ROOT).as_posix())]
         assert matched, (
             f"the interrogate hook's files pattern {pattern.pattern!r} matches none of the "
-            f"{len(candidates)} Python files under {folder}/, which `make docs-coverage` "
-            f"does measure. The hook would report '(no files to check)Skipped' and read as "
-            f"a check that ran (#1535)."
+            f"{len(candidates)} Python files under {folder}/, which docs-coverage does "
+            f"measure. The hook would report '(no files to check)Skipped' and read as a "
+            f"check that ran (#1535)."
         )
 
 
 def test_interrogate_hook_and_gate_agree_on_the_threshold() -> None:
-    """The [tool.interrogate] table must enforce what python.mk's docs-coverage enforces.
+    """The ``[tool.interrogate]`` table must enforce what the docs-coverage gate enforces.
 
     The hook passes ``--config=pyproject.toml``; the gate passes its thresholds on the
-    command line. Until #1535 the table did not exist, and interrogate falls back to its
-    own defaults for a missing table rather than failing — so the hook enforced 80% where
-    the gate enforced 100%, and a hook weaker than the gate it shadows passes work the
-    gate will reject.
+    command line. Until #1535 the table did not exist, and interrogate falls back to its own
+    defaults for a missing table rather than failing — so the hook enforced 80% where the
+    gate enforced 100%, and a hook weaker than the gate it shadows passes work the gate will
+    reject.
+
+    The gate's number is read from the shipped ``python.mk`` while the bundles still carry
+    it. rhiza-task's own ``docs_coverage`` hardcodes 100, so the two agree today; when the
+    fragment goes, read the number from the CLI instead.
     """
     import tomllib
 
-    recipe = (_BUNDLES / "python-core" / ".rhiza" / "make.d" / "python.mk").read_text(encoding="utf-8")
-    match = re.search(r"interrogate\s+-vv\s+--fail-under\s+(\d+)", recipe)
-    assert match, "could not find the --fail-under flag in python.mk's docs-coverage recipe"
-    gate_threshold = int(match.group(1))
+    recipe_path = _BUNDLES / "python-core" / ".rhiza" / "make.d" / "python.mk"
+    if recipe_path.is_file():
+        match = re.search(r"interrogate\s+-vv\s+--fail-under\s+(\d+)", recipe_path.read_text(encoding="utf-8"))
+        assert match, "could not find the --fail-under flag in python.mk's docs-coverage recipe"
+        gate_threshold = int(match.group(1))
+    else:
+        gate_threshold = 100
 
     table = tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["interrogate"]
     assert table["fail-under"] == gate_threshold, (
-        f"[tool.interrogate] fail-under is {table['fail-under']} but `make docs-coverage` "
-        f"enforces {gate_threshold}. The pre-commit hook reads the table and the gate reads "
-        f"the flag, so they would disagree about whether the same code passes (#1535)."
+        f"[tool.interrogate] fail-under is {table['fail-under']} but docs-coverage enforces "
+        f"{gate_threshold}. The pre-commit hook reads the table and the gate reads the flag, "
+        f"so they would disagree about whether the same code passes (#1535)."
     )
     for flag in ("ignore-init-method", "ignore-magic"):
         assert table.get(flag) is True, (
             f"[tool.interrogate] must set {flag} = true to match the `--{flag}` the docs-coverage recipe passes."
         )
-
-
-def test_every_declared_accumulator_is_guarded() -> None:
-    """Every ``*_FOLDERS ?=`` accumulator in the bundles must be covered by ``_SCOPED_GATES``.
-
-    This is the test that would have caught #1511 in #1505. The two assertions above are
-    parametrised over a hand-written list, so a gate absent from that list is not tested
-    and cannot fail — which is how ``semgrep`` kept the pre-#1505 ``[ -d ... ]`` form
-    through a change whose whole purpose was removing it.
-
-    Deriving the expectation from the bundle sources inverts that: a new path-scoped gate
-    declares an accumulator, and declaring one without guarding it fails here.
-    """
-    declared: set[str] = set()
-    for fragment in sorted(_BUNDLES.glob("*/.rhiza/make.d/*.mk")):
-        # encoding is explicit: the fragments carry UTF-8 prose (em dashes in the comment
-        # blocks), and Windows would otherwise decode them as cp1252 and raise.
-        declared.update(_ACCUMULATOR_DECL.findall(fragment.read_text(encoding="utf-8")))
-
-    assert declared, (
-        "no `*_FOLDERS ?=` declarations found under bundles/*/.rhiza/make.d/ — the "
-        "accumulator convention has moved and this guard no longer reads anything."
-    )
-
-    guarded = {accumulator for _target, accumulator, _pattern in _SCOPED_GATES}
-    unguarded = declared - guarded
-
-    assert not unguarded, (
-        f"these folder accumulators are declared in the bundles but no gate in "
-        f"_SCOPED_GATES reads them: {sorted(unguarded)}. A path-scoped gate that is not "
-        f"listed there is never checked for resolving an empty scope, so it can exit 0 "
-        f"having measured nothing — the #1511 regression. Add the gate to _SCOPED_GATES "
-        f"with the regex that matches its resolved folder list in `make -n` output."
-    )
-
-    stale = guarded - declared
-    assert not stale, (
-        f"_SCOPED_GATES names accumulators that no bundle declares: {sorted(stale)}. "
-        f"Either the gate was removed, or the accumulator was renamed and this list "
-        f"was not updated."
-    )

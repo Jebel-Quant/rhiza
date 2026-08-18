@@ -13,8 +13,10 @@ Two gated invariants:
 
 from __future__ import annotations
 
+import functools
 import os
 import re
+import subprocess  # nosec B404
 from pathlib import Path
 
 import pytest
@@ -304,11 +306,10 @@ class TestReadmeBundleList:
         assert len(_readme_profile_names()) > 1, "expected README to list multiple profiles"
 
 
-_MAKE_SOURCES = (
-    "Makefile",
-    ".rhiza/rhiza.mk",
-    *sorted(str(p.relative_to(_ROOT)) for p in (_ROOT / ".rhiza" / "make.d").glob("*.mk")),
-)
+# Only the root Makefile now: this repo runs on the rhiza-task shim, so there is no
+# `.rhiza/rhiza.mk` and no `.rhiza/make.d/` here. The gates a doc may legitimately mention
+# come from the CLI instead -- see :func:`_defined_make_targets`.
+_MAKE_SOURCES = ("Makefile",)
 
 _TARGET_DEF_RE = re.compile(r"^([A-Za-z0-9_.-]+(?:\s+[A-Za-z0-9_.-]+)*)\s*::?(?!=)", re.MULTILINE)
 _MAKE_MENTION_RE = re.compile(r"\bmake\s+([a-z][A-Za-z0-9_-]*)")
@@ -321,12 +322,59 @@ _STAMP_RE = re.compile(r"^\s*\*{0,2}Last Updated", re.MULTILINE | re.IGNORECASE)
 _PROSE_GATE_EXEMPT = {"CHANGELOG.md"}
 
 
+@functools.lru_cache(maxsize=1)
+def _cli_task_names() -> frozenset[str]:
+    """Return every task the pinned rhiza-task CLI can run in this repository.
+
+    The shim's ``%:`` catch-all forwards any unmatched target to the CLI, so these are as
+    much "make targets" as an explicit rule is -- ``make test`` works because ``test`` is a
+    task, not because anything in the Makefile mentions it.
+
+    Read from the CLI rather than listed here, and *in this repository* rather than
+    generically: the task set is layer-dependent, so a hand-written list would drift on the
+    next rhiza-task release.
+
+    Returns:
+        The task names, or an empty set if the CLI cannot be reached.
+    """
+    match = re.search(r"^RHIZA_TASK \?= (\S+)", (_ROOT / "Makefile").read_text(encoding="utf-8"), re.MULTILINE)
+    if not match:
+        return frozenset()
+    proc = subprocess.run(  # nosec B603
+        ["uvx", match.group(1), "list"],
+        cwd=_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        return frozenset()
+    return frozenset(m.group(1) for m in re.finditer(r"^\s(\S+)\s{2,}\S", proc.stdout, re.MULTILINE))
+
+
 def _defined_make_targets() -> set[str]:
-    """Return every make target defined by the root Makefile and .rhiza make modules."""
-    targets: set[str] = set()
-    for source in _MAKE_SOURCES:
-        text = (_ROOT / source).read_text(encoding="utf-8")
-        for match in _TARGET_DEF_RE.finditer(text):
+    """Return every target ``make`` can resolve: explicit rules plus CLI tasks.
+
+    Both halves are needed and neither is sufficient. The root Makefile holds only ``help``
+    and this repo's mother-repo-only targets; every gate a doc mentions -- ``test``, ``fmt``,
+    ``typecheck`` -- is a task the shim forwards to. Checking the file alone would fail every
+    such mention; checking the CLI alone would miss ``make e2e``.
+    """
+    targets: set[str] = set(_cli_task_names())
+    sources = [_ROOT / s for s in _MAKE_SOURCES]
+    # Plus the fragments the bundles still ship. CLAUDE.md and README.md document what rhiza
+    # *ships*, not only what it runs, and the two diverged when this repo moved to the shim:
+    # `make paper`, `make presentation`, `make deptry` and `make install-uv` are real for a
+    # consumer on the make layer and unknown to the CLI, which has no task for any of them.
+    # Dropping the bundles here would have forced deleting true documentation to keep a test
+    # green -- the wrong direction. When a fragment retires, its prose fails here and can be
+    # removed then.
+    sources += sorted((_ROOT / "bundles").glob("*/.rhiza/make.d/*.mk"))
+    sources += sorted((_ROOT / "bundles").glob("*/Makefile"))
+    for source in sources:
+        if not source.is_file():
+            continue
+        for match in _TARGET_DEF_RE.finditer(source.read_text(encoding="utf-8")):
             targets.update(name for name in match.group(1).split() if not name.startswith("."))
     return targets
 
