@@ -90,13 +90,30 @@ export UV_NO_MODIFY_PATH := 1
 unexport VIRTUAL_ENV
 
 # Load .rhiza/.env (if present) and export its variables so recipes see them.
-# This file is optional — sensible defaults are defined below.
+#
+# Core ships no such file, and that is the point. The one it used to ship set
+# SOURCE_FOLDER and MARIMO_FOLDER to values identical to the ?= defaults below, so it
+# carried no information — while a makefile assignment outranks an exported environment
+# variable in GNU make, so merely *naming* a variable there took it out of the
+# environment's reach. That is what made #1545 possible: RHIZA_CI_OS_MATRIX was pinned in
+# the shipped file, and rhiza_ci.yml's per-caller export was silently discarded for
+# everyone. A file that ships no values cannot repeat that.
+#
+# The include stays, because a consumer's *own* .rhiza/.env is still layer 2 of
+# rhiza-task's resolution order and the reusable workflows read it. But the documented
+# home for a project's settings is now a [tool.rhiza-task] table in pyproject.toml —
+# typed by TOML, discoverable next to the project's other tool config, and layer 3 of the
+# same order. Use .rhiza/.env for a value make must see today; use pyproject.toml for
+# anything the CLI resolves.
 -include .rhiza/.env
 
 # ---------------------------------------------------------------------------
-# Default values for variables that may be set in .rhiza/.env.
-# These ?= assignments are skipped when the variable is already defined by
-# the included file, by an environment variable, or by the root Makefile.
+# Built-in defaults. These ?= assignments are skipped when the variable is already
+# defined by the included file, by an environment variable, or by the root Makefile,
+# so every one of them is overridable without editing this template-owned file.
+#
+# Keep them equal to rhiza-task's Config defaults: a repo on the make layer and the
+# same repo after `uvx rhiza-task shim` must resolve the same values.
 # ---------------------------------------------------------------------------
 
 # Directory that holds the project's Python source package(s).
@@ -106,7 +123,9 @@ SOURCE_FOLDER ?= src
 MARIMO_FOLDER ?= docs/notebooks
 
 # JSON array of GitHub Actions runner OS labels used by the CI matrix.
-# Override in .rhiza/.env or your root Makefile to add more platforms.
+# Override in pyproject.toml (`[tool.rhiza-task] ci-os-matrix`), or on the command line,
+# to add more platforms. Do not pin it in .rhiza/.env: rhiza_ci.yml selects the matrix
+# per caller by exporting it, and a makefile assignment would outrank that export (#1545).
 RHIZA_CI_OS_MATRIX ?= ["ubuntu-latest"]
 
 # ==============================================================================
