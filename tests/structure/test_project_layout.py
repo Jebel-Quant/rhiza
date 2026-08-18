@@ -1,11 +1,12 @@
 """Tests for the root pytest fixture that yields the repository root Path.
 
-This file and its associated tests flow down via a SYNC action from the jebel-quant/rhiza repository
-(https://github.com/jebel-quant/rhiza).
+This module ensures the fixture resolves to the true project root and that expected
+files/directories exist, enabling other tests to locate resources reliably.
 
-This module ensures the fixture resolves to the true project root and that
-expected files/directories exist, enabling other tests to locate resources
-reliably.
+It used to carry a header saying it flowed downstream via a SYNC action, which had not been
+true since the module moved into the mother repo's own ``tests/``. The distinction is real
+now that the rhiza checks are a package (#1540): this asserts *rhiza's* layout, while the
+equivalent assertion for a consumer's repository lives in pytest-rhiza.
 """
 
 import pytest
@@ -15,9 +16,13 @@ class TestRootFixture:
     """Tests for the root fixture that provides repository root path."""
 
     def test_root_resolves_correctly_from_nested_location(self, root):
-        """Root should correctly resolve to repository root from .rhiza/tests/."""
-        conftest_path = root / ".rhiza" / "tests" / "conftest.py"
-        assert conftest_path.exists()
+        """Root must resolve to the repository root, not to the nested test package.
+
+        Anchored on ``.rhiza/rhiza.mk`` — the file every rhiza-managed repo has at a fixed
+        depth below the root. It used to be anchored on ``.rhiza/tests/conftest.py``, which
+        stopped existing when the rhiza checks became the pytest-rhiza dependency (#1540).
+        """
+        assert (root / ".rhiza" / "rhiza.mk").exists(), f"{root} does not look like a rhiza repository root"
 
     def test_root_contains_expected_directories(self, root):
         """Root should contain all expected project directories."""

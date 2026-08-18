@@ -1,6 +1,6 @@
 """Fixtures for rhiza-specific integration tests.
 
-These tests live in tests/ (not .rhiza/tests/) and do not sync downstream.
+These tests live in the mother repo's own tests/ and do not sync downstream.
 
 Two git-repo fixtures are provided:
 

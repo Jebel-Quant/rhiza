@@ -187,11 +187,11 @@ def _init_repo(project: Path, version: str) -> None:
     repository, so `make fmt` needs both the repo and a commit. The remote is set
     because rhiza's own tooling reads `origin` to identify the project.
 
-    The tag is what makes the shipped self-tests do their real work. Every layer's
-    release config derives the current version from the newest tag — for Go that *is*
-    the version — so `.rhiza/tests` reconciles the tag against the version in the
-    manifest. On an untagged repo all of those skip, leaving the gate green for the
-    wrong reason.
+    The tag is what makes the rhiza checks do their real work. Every layer's release
+    config derives the current version from the newest tag — for Go that *is* the version —
+    so the checks reconcile the tag against the version in the manifest. On an untagged repo
+    pytest-rhiza's `latest_tag` fixture skips, and all of them go with it, leaving the gate
+    green for the wrong reason.
 
     Args:
         project: The assembled project root.

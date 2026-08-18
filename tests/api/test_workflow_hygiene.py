@@ -2,7 +2,7 @@
 
 Rhiza-specific: covers both rhiza's own workflows (.github/workflows/) and the
 workflow stubs shipped to downstream projects (bundles/*/.github/workflows/).
-Lives in tests/, not .rhiza/tests/, so it does not sync downstream.
+Lives in the mother repo's own tests/, so it does not sync downstream.
 
 Two invariants:
 

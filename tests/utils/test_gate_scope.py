@@ -135,8 +135,8 @@ def test_claude_md_does_not_claim_the_suite_runs_without_coverage(gate_scopes: d
     )
 
 
-def test_rhiza_test_carries_the_docstring_scope_to_the_shipped_doctests(logger) -> None:
-    """`make rhiza-test` must hand the shipped test_docstrings.py the same scope as docs-coverage.
+def test_rhiza_test_carries_the_docstring_scope_to_the_doctest_check(logger) -> None:
+    """`make rhiza-test` must hand pytest-rhiza's test_docstrings the same scope as docs-coverage.
 
     Not a member of ``_SCOPED_GATES``: ``RHIZA_DOCTEST_FOLDERS`` is not an accumulator of
     its own but a *carrier* for ``DOCSTRING_FOLDERS``, so the derivation above would flag
@@ -150,7 +150,7 @@ def test_rhiza_test_carries_the_docstring_scope_to_the_shipped_doctests(logger) 
     assert match, f"`make rhiza-test` no longer passes RHIZA_DOCTEST_FOLDERS:\n{out[-800:]}"
     scope = match.group(1).strip()
     assert scope, (
-        "`make rhiza-test` resolves an empty doctest scope, so test_docstrings.py would "
+        "`make rhiza-test` resolves an empty doctest scope, so the test_docstrings check would "
         "skip and the repo's docstring examples would go unchecked (#1517)."
     )
     assert "utils" in scope, (

@@ -41,13 +41,13 @@ profiles:
 
 # No ```python fence, and one ```bash fence, for two different reasons.
 #
-# No Python: `rhiza-test` runs the shipped test_readme_validation.py, which executes
+# No Python: `rhiza-test` runs pytest-rhiza's test_readme_validation check, which executes
 # every ```python block and diffs it against the following ```result block. An empty
 # set of blocks passes that trivially, which keeps the README about the scaffold
 # rather than about satisfying a test — and on a Rust or Go scaffold there is no
 # Python to demonstrate anyway.
 #
-# One bash fence, because core's test_readme.py syntax-checks them with `bash -n` for
+# One bash fence, because core's test_readme check syntax-checks them with `bash -n` for
 # every layer (#1472), and a README with no fence at all would pass that trivially too
 # — the exact vacuum #1469 was about. The block is never executed, so naming real
 # targets here costs nothing and keeps the check honest.
@@ -153,9 +153,9 @@ tag = false
 
 _PYTHON_INIT = '"""A minimal package whose public surface is one greeting helper."""\n'
 
-# The doctest is load-bearing: `make rhiza-test` runs the shipped
-# test_docstrings.py, which discovers packages under SOURCE_FOLDER and skips when
-# no module has any doctests. With one here, that self-test actually asserts.
+# The doctest is load-bearing: `make rhiza-test` runs pytest-rhiza's test_docstrings
+# check, which discovers packages under RHIZA_DOCTEST_FOLDERS (falling back to
+# SOURCE_FOLDER) and skips when no module has any doctests. With one here, it asserts.
 _PYTHON_GREETING = '''\
 """Build greetings, the one behaviour this scaffold ships."""
 

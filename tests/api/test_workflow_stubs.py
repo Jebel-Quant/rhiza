@@ -2,7 +2,7 @@
 
 Rhiza-specific: validates that rhiza's own workflow stubs reference
 jebel-quant/rhiza and carry the expected structure. Lives in tests/,
-not .rhiza/tests/, so it does not sync to downstream projects.
+the mother repo's own suite, so it does not sync to downstream projects.
 
 Workflow stubs in downstream projects are thin wrappers that delegate
 to the reusable canonical workflows in jebel-quant/rhiza.  These tests

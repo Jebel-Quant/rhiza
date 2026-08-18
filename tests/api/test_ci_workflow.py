@@ -82,8 +82,8 @@ def test_every_gate_named_by_make_all_runs_in_ci(root):
 
     `make all` is the local aggregate, and a target that only ever runs there is a gate
     in name only: it constrains one developer's habits, not the repo. `rhiza-test` was
-    exactly that (#1523) — it ran the shipped `.rhiza/tests/` suite, including the
-    doctests `RHIZA_DOCTEST_FOLDERS` scopes (#1517), and no workflow ever invoked it.
+    exactly that (#1523) — it ran the rhiza checks, including the doctests
+    `RHIZA_DOCTEST_FOLDERS` scopes (#1517), and no workflow ever invoked it.
 
     Derived from `all`'s own prerequisite list rather than a hand-written set, so adding
     a gate to `all` without wiring it into CI fails here instead of passing silently.

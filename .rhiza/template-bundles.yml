@@ -85,8 +85,9 @@ bundles:
       `.rhiza/.cfg.toml` this layer used to ship was never read at all: with no
       config found bump-my-version does not fail, it falls back to `git describe`.
       Each repo therefore declares its own three-line block, and this layer's own
-      `.rhiza/tests/test_pyproject.py` fails when it is missing — the Rust and Go
-      layers ship the equivalent check for their manifests.
+      `RHIZA_CHECKS` contribution — pytest-rhiza's `test_pyproject`, run by
+      `make rhiza-test` — fails when it is missing. The Rust and Go layers name the
+      equivalent check for their manifests.
 
   rust-core:
     description: "Rust toolchain layer: rustup/cargo, clippy, nextest, llvm-cov, cargo-deny"
@@ -319,8 +320,7 @@ bundles:
     notes: |
       Carries only the gates that no layer's `all` depends on. The four that it does
       name — `test`, `typecheck`, `security`, `docs-coverage` — moved into
-      `python-core` in #1475, along with `pytest.ini` and the Python modules of the
-      `.rhiza/tests` suite.
+      `python-core` in #1475, along with `pytest.ini` and the Python-only rhiza checks.
 
       The reason is that `python.mk`'s own `all` named them while this bundle defined
       them, and nothing made this bundle arrive: the dependency runs the other way.
@@ -333,9 +333,10 @@ bundles:
 
       What is left is genuinely optional: four gates, each needing its own tool and
       folder convention (benchmarks, Hypothesis property tests, stress/load tests,
-      mutation testing), plus `test_readme_validation.py` — the half of the README
-      checks that only means something on a Python project, its neutral half having
-      moved to `core` in #1472.
+      mutation testing), plus one line of `RHIZA_CHECKS` naming pytest-rhiza's
+      `test_readme_validation` — the half of the README checks that only means something
+      on a Python project, its neutral half having moved to `core` in #1472. That was a
+      synced file until #1540; the ownership is unchanged, only the delivery.
 
   # ============================================================================
   # GITHUB-TESTS - GitHub Actions workflows for CI

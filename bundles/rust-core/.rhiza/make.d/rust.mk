@@ -101,6 +101,14 @@ cargo-tools: ## install the cargo subcommands the gates need (idempotent)
 	  printf "${BLUE}[INFO] All cargo tools already installed${RESET}\n"; \
 	fi
 
+# The rhiza check this layer owns, appended to core's accumulator (#1540). It was the
+# synced `.rhiza/tests/test_cargo_toml.py`; it is now a module name in pytest-rhiza, which
+# core's `rhiza-test` names with `--pyargs`. One `+=` replaces one file, and the module is
+# Python for the reason the file was: the gate validates `Cargo.toml` and the
+# `.bumpversion.toml` that rewrites it, which is release wiring rather than crate code, so
+# it belongs with the rest of the checks and not in a `#[test]`.
+RHIZA_CHECKS += pytest_rhiza.checks.test_cargo_toml
+
 all: fmt test docs-coverage security deps license typecheck rhiza-test ## run all CI targets locally
 
 # Double-colon, matching test.mk: book.mk declares `test:: ; @:` as a no-op default

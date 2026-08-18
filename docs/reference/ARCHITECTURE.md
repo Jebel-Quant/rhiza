@@ -418,13 +418,18 @@ post-sync::      # Runs after make sync
    - Lowercase with hyphens: `make.d/`, `template-bundles.yml`
    - Plural for collections: `requirements/`, `templates/`, `tests/`
 
-2. **Test organization** (`.rhiza/tests/`):
+2. **Test organization** (`tests/`):
    - Tests grouped by **purpose**, not by feature
    - `api/` - Makefile API tests
+   - `bundles/` - the bundle contract and per-bundle sync
    - `structure/` - Project structure validation
    - `integration/` - End-to-end workflows
-   - `sync/` - Template synchronization
+   - `e2e/` - one real toolchain run per language layer
    - `deps/` - Dependency validation
+
+   No bundle ships test code any more. The conformance checks a consumer's repository is
+   held to used to be synced into `.rhiza/tests/`; they are the `pytest-rhiza` dependency
+   of `make rhiza-test` now (#1540).
 
 3. **Dependency provisioning** (no `.rhiza/requirements/`):
    - Libraries the test suite imports live in `pyproject.toml` `[dependency-groups]`

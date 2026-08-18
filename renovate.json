@@ -51,6 +51,18 @@
         "(?:repository|template-repository):\\s*\"(?<depName>[^\"]+)\"[\\s\\S]*?(?:ref|template-branch):\\s*\"(?<currentValue>[^\"]+)\""
       ],
       "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "The pytest-rhiza pin in core's quality.mk. `make rhiza-test` installs the rhiza repository checks at an exact version so the checks and the template move as one number (#1540); no other manager parses a Makefile, so without this the pin only ages.",
+      "managerFilePatterns": [
+        "/(^|/)\\.rhiza/make\\.d/quality\\.mk$/"
+      ],
+      "matchStrings": [
+        "RHIZA_CHECKS_VERSION\\s*\\?=\\s*(?<currentValue>\\S+)"
+      ],
+      "depNameTemplate": "pytest-rhiza",
+      "datasourceTemplate": "pypi"
     }
   ]
 }

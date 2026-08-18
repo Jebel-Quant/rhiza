@@ -8,9 +8,9 @@ that gap.
 
 For every bundle declared in ``template-bundles.yml`` we require either:
 
-1. a behavioural test under ``.rhiza/tests/`` or ``tests/`` that references the
-   bundle by name (a quoted string, a ``bundles/<name>`` path, or a
-   ``test_<name>`` / ``<name>_targets`` test module), or
+1. a behavioural test under ``tests/`` that references the bundle by name (a quoted
+   string, a ``bundles/<name>`` path, or a ``test_<name>`` / ``<name>_targets`` test
+   module), or
 2. an explicit entry in ``_EXEMPT`` with a documented reason (for static
    file-only bundles that have no behaviour to drive — their content is already
    guarded by the bundle content-validity and byte-identity sync tests).
@@ -73,15 +73,20 @@ def _bundle_names() -> list[str]:
 
 
 def _behavioural_test_files() -> list[Path]:
-    """Return every non-generic test file under .rhiza/tests/ and tests/."""
+    """Return every non-generic test file under tests/.
+
+    ``.rhiza/tests`` used to be scanned as a second root. It held the checks the template
+    synced downstream, which are the pytest-rhiza dependency since #1540 — and they were
+    never evidence here anyway: they assert things about a *consumer's* repository, not
+    about a bundle's targets or workflows.
+    """
     files: list[Path] = []
-    for base in (".rhiza/tests", "tests"):
-        for path in sorted((_ROOT / base).rglob("*.py")):
-            if "__pycache__" in path.parts:
-                continue
-            if path.name in _GENERIC_TESTS:
-                continue
-            files.append(path)
+    for path in sorted((_ROOT / "tests").rglob("*.py")):
+        if "__pycache__" in path.parts:
+            continue
+        if path.name in _GENERIC_TESTS:
+            continue
+        files.append(path)
     return files
 
 
@@ -133,7 +138,7 @@ class TestBundleTestCoverage:
         covering = _covering_tests(bundle)
         assert covering, (
             f"bundle '{bundle}' is declared in .rhiza/template-bundles.yml but no behavioural "
-            f"test under .rhiza/tests/ or tests/ references it. Add a test that exercises the "
+            f"test under tests/ references it. Add a test that exercises the "
             f"bundle's targets/workflows/files, or add '{bundle}' to _EXEMPT in this module with a reason."
         )
 

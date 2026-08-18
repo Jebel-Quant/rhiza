@@ -135,8 +135,8 @@ was inert in every downstream repo (#1453), and the placement now differs by lay
   `[tool.bumpversion]` table rewrites PEP 621 `[project].version` natively — no
   `current_version`, no `[[files]]` entry for pyproject itself. A synced
   `.bumpversion.toml` would *shadow* that table, so the repo declares its own block and
-  the shipped `.rhiza/tests/test_pyproject.py` fails when it is missing or when it sets
-  `commit`/`tag` to true.
+  pytest-rhiza's `test_pyproject` check — which the layer names in `RHIZA_CHECKS` — fails
+  when it is missing or when it sets `commit`/`tag` to true.
 - **rust-core and go-core ship a root `.bumpversion.toml`.** Neither language owns a
   discoverable file, so the layer must provide one. It deliberately omits
   `current_version` — a synced file cannot hold a value only the consuming repo can
@@ -247,13 +247,13 @@ parses — never the literal shipped `0.0.0`, which bump-my-version rewrites in
 **Two of the three layers ship a starter test, for the same reason.** Python had the
 identical hole (#1476): `make test` searches `TESTS_FOLDER` for `test_*.py`, and finding
 none it warns and **exits 0**, so a freshly synced Python repo passed `make test` — and
-`make all` — measuring nothing. Note that `.rhiza/tests` does not help, since it sits
-outside `TESTS_FOLDER` and runs under the separate `rhiza-test` gate. So `python-core`
-ships `tests/test_rhiza_packaging.py`, asserting that the version installed into the
-environment matches `[project].version` — a real invariant (it catches a stale editable
-install or a build backend pointed at the wrong tree), distinct from
-`test_pyproject.py`'s pyproject-versus-tag check, and one that skips cleanly on a repo
-with no distribution of its own, such as this one.
+`make all` — measuring nothing. Note that the rhiza checks do not help, since they run
+under the separate `rhiza-test` gate and none of them looks at `TESTS_FOLDER`. So
+`python-core` ships `tests/test_rhiza_packaging.py`, asserting that the version installed
+into the environment matches `[project].version` — a real invariant (it catches a stale
+editable install or a build backend pointed at the wrong tree), distinct from the
+`test_pyproject` check's pyproject-versus-tag assertion, and one that skips cleanly on a
+repo with no distribution of its own, such as this one.
 
 Both layers' e2e assertions name the **shipped** file rather than the scaffold's own
 test, and that is the load-bearing part: `scaffolds.py` writes a test into every
@@ -302,6 +302,67 @@ Two properties keep it from being merely expensive:
 Narrow the run with `make e2e E2E_ARGS=tests/e2e/test_go_layer_e2e.py`, which is how
 each CI job selects its layer.
 
+### The rhiza checks are a dependency, not synced files
+
+`make rhiza-test` runs rhiza's **conformance checks** — the assertions about a consuming
+repository, as distinct from the mother repo's own `tests/` suite. They validate the
+README's fences, the release tags, and whichever manifest the project has, with its
+bump-my-version wiring.
+
+Until #1540 they were **code distributed by file-copy**: seven modules plus a `conftest.py`
+synced into `.rhiza/tests/`, one file per bundle that owned an assertion. They are now
+[pytest-rhiza](https://github.com/jebel-quant/pytest-rhiza), installed by the gate. What
+changed is only the delivery — the ownership model is identical, and deliberately so.
+
+**Ownership still lives with the bundle, as a `RHIZA_CHECKS` accumulator.** core's
+`quality.mk` declares it and seeds the two language-neutral checks; `python-core`,
+`rust-core`, `go-core` and `tests` each append their own. One `+=` line per bundle replaces
+one synced file per bundle, so which checks apply is still resolved *at sync time* by which
+bundles a project selected — nothing sniffs the manifest at runtime to decide, which is
+what keeps a misconfigured repo going red instead of quietly skipping a check.
+
+| check | contributed by | replaces |
+| --- | --- | --- |
+| `test_readme` | core | `.rhiza/tests/test_readme.py` |
+| `test_release_tags` | core | `.rhiza/tests/test_release_tags.py` |
+| `test_pyproject` | python-core | `.rhiza/tests/test_pyproject.py` |
+| `test_docstrings` | python-core | `.rhiza/tests/test_docstrings.py` |
+| `test_readme_validation` | tests | `.rhiza/tests/test_readme_validation.py` |
+| `test_cargo_toml` | rust-core | `.rhiza/tests/test_cargo_toml.py` |
+| `test_go_module` | go-core | `.rhiza/tests/test_go_module.py` |
+
+Five costs of the copy went with it: seven template-owned files in every consumer's tree;
+`pythonpath = .rhiza/tests` in `pytest.ini`, which existed only so the synced suite could
+import itself; `.rhiza/tests` folded into `docs-coverage`'s interrogate paths, holding
+*template* code to the project's 100% docstring bar; the four `--with` flags the recipe
+spelled out, because a copied file carries no dependency metadata; and the duplication the
+copy imposed — `SKIP_FLAG`/`_should_skip` existed twice because bundles are copied
+independently, so a shared helper had no third home.
+
+Three details are worth knowing before editing this:
+
+- **The accumulator's `?= ` empty / `+=` seed shape is load-bearing, not cosmetic.**
+  `rhiza.mk` includes `make.d/*.mk` alphabetically, so `go.mk` and `python.mk` are read
+  *before* `quality.mk`. In make, `+=` on an undefined variable defines it — so a bare
+  `RHIZA_CHECKS ?= <core's two>` would be skipped as already-defined on exactly those two
+  layers, and a Python or Go project would run its own checks while silently losing the
+  neutral pair. Each layer's `test_rhiza_test_selects_this_layers_checks_and_cores` asserts
+  both halves resolve.
+- **The version is pinned, and the pin travels in the template.** File-copy delivery had
+  one virtue: a repo synced at a release ran exactly that release's assertions.
+  `RHIZA_CHECKS_VERSION` in `quality.mk` keeps that property — one number, bumped here and
+  delivered by the next sync — rather than letting the checks and the template drift on two
+  independent version axes. A consumer who wants to lead or lag overrides it.
+- **The gate prints its resolved check list, and the tests assert on that line.** Under
+  `--pyargs`, pytest reports node ids with **no file name at all**, so grepping a run's
+  output for a module's filename proves nothing either way — which is what the e2e and
+  layer-contract assertions used to do against the synced files.
+
+A consumer that syncs past #1540 keeps its old `.rhiza/tests/` on disk, because a sync
+ceasing to deliver a file does not delete it. Nothing runs it — the gate names modules, not
+paths — so it is inert rather than duplicated, and `rhiza-test` warns while the folder is
+still there.
+
 ### Modular Makefile System
 
 The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiza/rhiza.mk`. That file auto-loads everything in `.rhiza/make.d/*.mk` alphabetically.
@@ -315,7 +376,7 @@ The root `Makefile` is intentionally thin (~10 lines) and only `include`s `.rhiz
 | `rust.mk` | rust-core | `install`, `all`, and the cargo-backed gates |
 | `go.mk` | go-core | `install`, `all`, and the go-backed gates |
 | `doctor.mk` | core | `make doctor` environment checks |
-| `quality.mk` | core | `fmt`, `todos`, `semgrep`, `rhiza-test` — the language-neutral gates |
+| `quality.mk` | core | `fmt`, `todos`, `semgrep`, `rhiza-test` (and the `RHIZA_CHECKS` accumulator) — the language-neutral gates |
 | `completions.mk` | core | `install-completions` — shell tab-completion for make targets (`SHELL_KIND=bash\|zsh\|both`) |
 | `custom-env.mk` | core | example stub: project variables |
 | `custom-task.mk` | core | example stub: project targets/hooks |

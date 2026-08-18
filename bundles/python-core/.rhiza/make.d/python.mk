@@ -131,11 +131,10 @@ all: fmt deps test docs-coverage security license typecheck rhiza-test ## run al
 # contributes the folders it owns to DEPTRY_FOLDERS (and any per-folder ignores
 # to DEPTRY_IGNORE), so this target never needs to know which bundles are
 # present. The language layer itself contributes SOURCE_FOLDER when it exists; see e.g.
-# marimo.mk for a bundle that appends its own folder. Rhiza's own test folder
-# (.rhiza/tests) is deliberately excluded: its tooling is provisioned on the fly
-# via `uv run --with` in the individual targets, not declared in the project's
-# pyproject, so deptry (which validates against pyproject) would only emit noise
-# for it.
+# marimo.mk for a bundle that appends its own folder. There is no `.rhiza/tests` carve-out
+# any more: the rhiza checks are a pinned dependency of the `rhiza-test` gate rather than
+# files in the tree (#1540), so there is nothing for deptry to resolve against pyproject
+# and nothing to exclude.
 DEPTRY_FOLDERS ?=
 DEPTRY_IGNORE ?=
 DEPTRY_FOLDERS += $(wildcard $(SOURCE_FOLDER))
@@ -210,6 +209,14 @@ TYPECHECK_FOLDERS += $(wildcard $(SOURCE_FOLDER))
 BANDIT_FOLDERS += $(wildcard $(SOURCE_FOLDER))
 DOCSTRING_FOLDERS += $(wildcard $(SOURCE_FOLDER))
 COVERAGE_FOLDERS += $(wildcard $(SOURCE_FOLDER))
+
+# The two rhiza checks this layer owns, appended to core's accumulator (#1540). They were
+# two synced files — `.rhiza/tests/test_pyproject.py` and `.rhiza/tests/test_docstrings.py`
+# — and are now two module names in pytest-rhiza, which core's `rhiza-test` names with
+# `--pyargs`. Selection stays with the bundle that owns the assertion, resolved at sync
+# time: a Rust project appends `test_cargo_toml` and never sees these two, exactly as it
+# never received the files.
+RHIZA_CHECKS += pytest_rhiza.checks.test_pyproject pytest_rhiza.checks.test_docstrings
 
 # Named `deps`, matching rust.mk and go.mk. This was the one gate whose *target name*
 # differed by language (#1474): `deptry` names the tool, which nothing else in the
@@ -348,16 +355,18 @@ security: install ## run security scans (bandit)
 
 # The 'docs-coverage' target checks documentation coverage using interrogate.
 # 1. Takes DOCSTRING_FOLDERS (see the accumulator block above) as the base list.
-# 2. Adds the test folders, which are checked wherever they exist and are not part
+# 2. Adds the project's test folder, which is checked wherever it exists and is not part
 #    of the accumulator: a consumer contributing a folder means source, not tests.
 # 3. Runs interrogate with verbose output against the result.
+#
+# `.rhiza/tests` used to be folded in as a third path, and that was a cost of delivering
+# the rhiza checks by file-copy: template code nobody downstream may edit was held to the
+# project's own 100% docstring bar. The checks are a dependency now (#1540), so the path
+# is gone rather than merely skipped.
 docs-coverage: install ## check documentation coverage with interrogate
 	@docstring_paths="$(strip $(DOCSTRING_FOLDERS))"; \
 	if [ -d "tests" ]; then \
 	  docstring_paths="$${docstring_paths} tests"; \
-	fi; \
-	if [ -d ".rhiza/tests" ]; then \
-	  docstring_paths="$${docstring_paths} .rhiza/tests"; \
 	fi; \
 	if [ -n "$${docstring_paths}" ]; then \
 	  printf "${BLUE}[INFO] Checking documentation coverage in:$${docstring_paths}${RESET}\n"; \
@@ -366,8 +375,11 @@ docs-coverage: install ## check documentation coverage with interrogate
 	  printf "${YELLOW}[WARN] No docs-coverage folders found (DOCSTRING_FOLDERS is empty, SOURCE_FOLDER='${SOURCE_FOLDER}' does not exist, and there are no test folders), skipping docs-coverage${RESET}\n"; \
 	fi
 
+# The single-check shortcut for the gate `rhiza-test` runs in full. It names the module
+# rather than a path for the same reason that gate does: since #1540 the check is installed
+# from pytest-rhiza, not synced into the tree, so there is no file here to point pytest at.
 test-pyproject: install ## run pyproject.toml structure tests
-	@${UV_BIN} run --with pytest pytest .rhiza/tests/test_pyproject.py \
+	@${UV_BIN} run --with 'pytest-rhiza==$(RHIZA_CHECKS_VERSION)' pytest --pyargs pytest_rhiza.checks.test_pyproject \
 		-v \
 		--tb=long \
 		--showlocals \

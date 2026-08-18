@@ -16,6 +16,8 @@ Skips unless ``RHIZA_E2E=1`` and uv is on PATH. See `harness.py`.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from tests.e2e.harness import (
@@ -192,15 +194,30 @@ def test_deptry_gate_finds_no_dependency_problems(project: Project, logger):
     assert "Running deptry on:" in out
 
 
-def test_rhiza_test_gate_runs_the_shipped_self_tests(project: Project, logger):
-    """The `.rhiza/tests` suite the tests bundle ships passes on a fresh sync.
+def test_rhiza_test_gate_runs_the_installed_checks(project: Project, logger):
+    """The rhiza checks pass on a fresh sync, and all four a Python profile selects arrive.
 
     This is the gate that judges the *scaffold* against rhiza's own expectations —
     pyproject shape, README validity, doctests — which is exactly what a downstream
     project gets judged on.
+
+    Since #1540 they are the pinned pytest-rhiza dependency rather than files the template
+    syncs, so this is also the only place the real install path runs: `pytest --pyargs` over
+    modules resolved out of site-packages, on a project assembled the way a consumer's is.
+    The resolved list is asserted because `--pyargs` node ids carry no file name, so a
+    passing run is no evidence of *which* checks ran — and the four come from three
+    different bundles, which is exactly the wiring that can silently lose one.
     """
     out = gate(project, "rhiza-test", logger)
-    assert "passed" in out, f"the shipped self-tests collected nothing:\n{out}"
+    for check in (
+        "pytest_rhiza.checks.test_readme",  # core
+        "pytest_rhiza.checks.test_release_tags",  # core
+        "pytest_rhiza.checks.test_pyproject",  # python-core
+        "pytest_rhiza.checks.test_docstrings",  # python-core
+        "pytest_rhiza.checks.test_readme_validation",  # tests
+    ):
+        assert check in out, f"{check} was not selected on a full Python profile:\n{out}"
+    assert re.search(r"\d+ passed", out), f"the rhiza checks collected nothing:\n{out}"
 
 
 def test_fmt_gate_passes_every_pre_commit_hook(project: Project, logger):

@@ -32,7 +32,7 @@ def test_pyproject_declares_uv_dependency_groups(root: Path) -> None:
     # The test group declares exactly the third-party libraries `tests/` imports.
     # python-dotenv used to sit here too, and was the clearest case of the drift this
     # test now guards (#1484): nothing under tests/ imports it, and its one consumer —
-    # the shipped .rhiza/tests/test_docstrings.py — is run by `rhiza-test`, which
+    # pytest-rhiza's test_docstrings check — is run by `rhiza-test`, which
     # injects `--with python-dotenv` itself.
     assert _group_has_dependency(groups["test"], "pytest")
     assert _group_has_dependency(groups["test"], "pyyaml")

@@ -1,7 +1,7 @@
 """Integration test for SBOM generation using cyclonedx-bom.
 
 Rhiza-specific: tests rhiza's release-pipeline SBOM generation tooling.
-Lives in tests/, not .rhiza/tests/, so it does not sync to downstream projects.
+Lives in the mother repo's own tests/, so it does not sync to downstream projects.
 
 Tests the SBOM (Software Bill of Materials) generation workflow to ensure
 the cyclonedx-bom tool works correctly with uvx.

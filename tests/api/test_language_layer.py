@@ -55,6 +55,31 @@ class TestPythonLayerProvidesTheContract:
         assert "deptry" in out  # `deps` runs deptry, from the layer
         assert "pip-licenses" in out  # license, from the layer
 
+    def test_rhiza_test_selects_this_layers_checks_and_cores(self, logger):
+        """`rhiza-test` runs core's recipe over checks both core and this layer contribute.
+
+        Since #1540 the rhiza checks are the pinned pytest-rhiza dependency rather than files
+        synced into `.rhiza/tests/`, and each bundle names its own modules in `RHIZA_CHECKS`.
+        The Python layer is where the include order bites hardest: `.rhiza/rhiza.mk` reads
+        `make.d/*.mk` alphabetically, so `python.mk`'s `+=` runs before `quality.mk` — and in
+        make, `+=` on an undefined variable defines it. Core's seed therefore cannot be a
+        bare `?=` carrying a value, or it would be skipped as already-defined and a Python
+        project would silently run its own two checks without the neutral pair.
+        """
+        out = strip_ansi(run_make(logger, ["rhiza-test"]).stdout)
+        assert "pytest-rhiza==" in out, f"`rhiza-test` no longer installs the pinned checks:\n{out[-800:]}"
+
+        match = re.search(r'checks="([^"]*)"', out)
+        assert match, f"`rhiza-test` no longer resolves RHIZA_CHECKS in the recipe:\n{out[-800:]}"
+        checks = match.group(1).split()
+        for expected in (
+            "pytest_rhiza.checks.test_pyproject",  # this layer
+            "pytest_rhiza.checks.test_docstrings",  # this layer
+            "pytest_rhiza.checks.test_readme",  # core
+            "pytest_rhiza.checks.test_release_tags",  # core
+        ):
+            assert expected in checks, f"{expected!r} is not selected; resolved {checks}"
+
     @pytest.mark.parametrize("target", LANGUAGE_LAYER_TARGETS)
     def test_every_contract_target_resolves(self, logger, target):
         """A missing layer target would surface as 'no rule to make target'."""
@@ -210,17 +235,37 @@ class TestRustLayerKeepsTheSameContract:
         assert "RUSTUP_HOME" in out, "the sysroot must be compared against rustup's home"
         assert "llvm-cov" in out, "`make coverage`'s actual requirement must be checked directly"
 
-    def test_rhiza_test_resolves_through_this_layers_install(self, logger):
-        """`rhiza-test` is core's recipe (#1471), but its `install` prerequisite is the layer's.
+    def test_rhiza_test_selects_this_layers_checks_and_cores(self, logger):
+        """`rhiza-test` is core's recipe (#1471), but the checks it runs come from both.
 
-        The template's own suite validates YAML, READMEs and release config rather than
-        the project's code, so it stays Python under uv and the runner belongs in core.
-        What that costs is one prerequisite crossing from core into the layer, which is
-        worth asserting per layer: a target that exists but cannot build its prerequisite
-        is not a working gate, and `all` depends on this one.
+        The rhiza checks validate READMEs, release config and the manifest rather than the
+        project's code, so they stay Python under uv and the runner belongs in core. Since
+        #1540 they arrive as the pinned pytest-rhiza dependency and each bundle contributes
+        module names to `RHIZA_CHECKS`, so two things are worth pinning per layer.
+
+        One is the prerequisite crossing from core into the layer: a target that exists but
+        cannot build its `install` is not a working gate, and `all` depends on this one.
+
+        The other is the accumulator resolving to *both* halves. `.rhiza/rhiza.mk` includes
+        `make.d/*.mk` alphabetically, so `rust.mk` is read before `quality.mk`, and `+=`
+        on an undefined variable defines it — which would turn core's seed into a no-op if it
+        were written as a bare `?=` carrying a value. The failure that guards against is
+        silent: Rust would run its own check and lose the neutral README and release-tag ones.
         """
         out = strip_ansi(run_make(logger, ["rhiza-test"], check=False).stdout)
-        assert "pytest .rhiza/tests" in out
+        assert "pytest-rhiza==" in out, f"`rhiza-test` no longer installs the pinned checks:\n{out[-800:]}"
+
+        match = re.search(r'checks="([^"]*)"', out)
+        assert match, f"`rhiza-test` no longer resolves RHIZA_CHECKS in the recipe:\n{out[-800:]}"
+        checks = match.group(1).split()
+        assert "pytest_rhiza.checks.test_cargo_toml" in checks, (
+            f"the Rust layer does not contribute its own check; resolved {checks}"
+        )
+        for neutral in ("pytest_rhiza.checks.test_readme", "pytest_rhiza.checks.test_release_tags"):
+            assert neutral in checks, (
+                f"core's neutral check {neutral!r} was lost on the Rust layer; resolved {checks}. "
+                f"This is the include-order trap the accumulator's `?=`/`+=` shape avoids."
+            )
 
     def test_neutral_tooling_needs_no_python_at_all(self, logger):
         """`fmt` must not depend on a Python version on a project that declares none.
@@ -353,17 +398,37 @@ class TestGoLayerKeepsTheSameContract:
         ):
             assert command in out, f"`make all` no longer runs the {gate} gate ({command})"
 
-    def test_rhiza_test_resolves_through_this_layers_install(self, logger):
-        """`rhiza-test` is core's recipe (#1471), but its `install` prerequisite is the layer's.
+    def test_rhiza_test_selects_this_layers_checks_and_cores(self, logger):
+        """`rhiza-test` is core's recipe (#1471), but the checks it runs come from both.
 
-        The template's own suite validates YAML, READMEs and release config rather than
-        the project's code, so it stays Python under uv and the runner belongs in core.
-        What that costs is one prerequisite crossing from core into the layer, which is
-        worth asserting per layer: a target that exists but cannot build its prerequisite
-        is not a working gate, and `all` depends on this one.
+        The rhiza checks validate READMEs, release config and the manifest rather than the
+        project's code, so they stay Python under uv and the runner belongs in core. Since
+        #1540 they arrive as the pinned pytest-rhiza dependency and each bundle contributes
+        module names to `RHIZA_CHECKS`, so two things are worth pinning per layer.
+
+        One is the prerequisite crossing from core into the layer: a target that exists but
+        cannot build its `install` is not a working gate, and `all` depends on this one.
+
+        The other is the accumulator resolving to *both* halves. `.rhiza/rhiza.mk` includes
+        `make.d/*.mk` alphabetically, so `go.mk` is read before `quality.mk`, and `+=`
+        on an undefined variable defines it — which would turn core's seed into a no-op if it
+        were written as a bare `?=` carrying a value. The failure that guards against is
+        silent: Go would run its own check and lose the neutral README and release-tag ones.
         """
         out = strip_ansi(run_make(logger, ["rhiza-test"], check=False).stdout)
-        assert "pytest .rhiza/tests" in out
+        assert "pytest-rhiza==" in out, f"`rhiza-test` no longer installs the pinned checks:\n{out[-800:]}"
+
+        match = re.search(r'checks="([^"]*)"', out)
+        assert match, f"`rhiza-test` no longer resolves RHIZA_CHECKS in the recipe:\n{out[-800:]}"
+        checks = match.group(1).split()
+        assert "pytest_rhiza.checks.test_go_module" in checks, (
+            f"the Go layer does not contribute its own check; resolved {checks}"
+        )
+        for neutral in ("pytest_rhiza.checks.test_readme", "pytest_rhiza.checks.test_release_tags"):
+            assert neutral in checks, (
+                f"core's neutral check {neutral!r} was lost on the Go layer; resolved {checks}. "
+                f"This is the include-order trap the accumulator's `?=`/`+=` shape avoids."
+            )
 
     def test_neutral_tooling_needs_no_python_at_all(self, logger):
         """As with Rust: no `.python-version`, and with prek `fmt` no longer wants one."""
