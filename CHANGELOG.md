@@ -5,6 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.4.1] - 2026-08-19
+
+### Bug Fixes
+- *(ci)* Reach the gates through the rhiza-task CLI, not through make (#1562)
+
 ## [1.4.0] - 2026-08-19
 
 ### Bug Fixes
