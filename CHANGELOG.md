@@ -5,6 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.4.2] - 2026-08-19
+
+### Maintenance
+- Bump rhiza-task to 0.3.1, retiring two mother-repo workarounds (#1564)
+
 ## [1.4.1] - 2026-08-19
 
 ### Bug Fixes
