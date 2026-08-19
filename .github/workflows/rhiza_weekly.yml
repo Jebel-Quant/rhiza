@@ -22,6 +22,16 @@ concurrency:
 permissions:
   contents: read
 
+# The rhiza-task pin the gate steps below run through. v1.4.0 retired the synced make
+# layer -- core ships no Makefile and no `.rhiza/rhiza.mk` -- so a consumer that syncs it
+# has no make targets left and each gate dies with `No rule to make target '<gate>'`.
+#
+# `gitlab-docker-test` below is deliberately NOT converted: it is a mother-repo-only
+# target defined in this repo's own Makefile, not a rhiza-task task, so make is the only
+# thing that can resolve it.
+env:
+  RHIZA_TASK: rhiza-task@0.3.0
+
 on:
   #push:
   #  branches: [main]
@@ -81,7 +91,7 @@ jobs:
       - name: Run tests
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
-        run: make test
+        run: uvx "$RHIZA_TASK" test
 
   semgrep:
     name: Semgrep (numpy)
@@ -108,7 +118,7 @@ jobs:
       - name: Run Semgrep
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
-        run: make semgrep
+        run: uvx "$RHIZA_TASK" semgrep
 
   # The one check that the pinned $UV_IMAGE in bundles/gitlab/.gitlab-ci.yml still
   # pulls and runs a job. It is opt-in behind RHIZA_GITLAB_DOCKER because it pulls a

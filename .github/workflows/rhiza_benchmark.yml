@@ -18,6 +18,15 @@ concurrency:
 permissions:
   contents: read
 
+# The rhiza-task pin the gate step below runs through. v1.4.0 retired the synced make
+# layer -- core ships no Makefile and no `.rhiza/rhiza.mk` -- so a consumer that syncs it
+# has no make targets left and the gate dies with `No rule to make target '<gate>'`.
+# Calling the CLI directly drops the dependency on a front door this workflow does not
+# ship. Pinned rather than read from a consumer's `RHIZA_TASK`, which this workflow cannot
+# see: it tracks the tag the workflow is called at.
+env:
+  RHIZA_TASK: rhiza-task@0.3.0
+
 on:
   push:
     branches:
@@ -59,5 +68,5 @@ jobs:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: |
           START=$(date +%s)
-          make benchmark
+          uvx "$RHIZA_TASK" benchmark
           echo "Benchmark run: $(($(date +%s) - START))s" >> "$GITHUB_STEP_SUMMARY"

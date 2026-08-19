@@ -17,14 +17,17 @@ import yaml
 
 from tests.util import sync_bundles
 
+# The gate each job must invoke, keyed by job name. These are rhiza-task task names
+# rather than Make targets: v1.4.0 retired the synced make layer, so both pipelines now
+# reach the CLI directly and `make <gate>` resolves nothing in a synced project.
 PARITY_JOB_COMMANDS = {
-    "test": "make test",
-    "docs-coverage": "make docs-coverage",
-    "typecheck": "make typecheck",
-    "deptry": "make deps",
-    "pre-commit": "make fmt",
-    "security": "make security",
-    "license": "make license",
+    "test": "test",
+    "docs-coverage": "docs-coverage",
+    "typecheck": "typecheck",
+    "deptry": "deps",
+    "pre-commit": "fmt",
+    "security": "security",
+    "license": "license",
 }
 
 
@@ -82,9 +85,20 @@ def _job_commands(job: dict, key: str) -> list[str]:
     return [str(command) for command in commands]
 
 
-def _contains_make_command(commands: str, target: str) -> bool:
-    """Return True when commands invoke the given Make target with or without -f."""
-    return any(candidate in commands for candidate in (f"make {target}", f"make -f .rhiza/rhiza.mk {target}"))
+def _contains_gate_invocation(commands: str, target: str) -> bool:
+    """Return True when the commands invoke the given gate, by either interface.
+
+    The CLI form is what both pipelines ship now. The Make forms are still accepted
+    because a consumer pinned to an older tag, or one that kept a repo-owned target
+    shadowing the catch-all, invokes the same gate through them -- what this asserts is
+    that the job runs the gate at all, not which front door it uses.
+    """
+    candidates = (
+        f'uvx "$RHIZA_TASK" {target}',
+        f"make {target}",
+        f"make -f .rhiza/rhiza.mk {target}",
+    )
+    return any(candidate in commands for candidate in candidates)
 
 
 class TestGitlabProjectProfileSync:
@@ -189,9 +203,8 @@ class TestGitlabProjectProfileSync:
         )
         gitlab_commands = "\n".join(_job_commands(gitlab_job, "script"))
 
-        target = command.removeprefix("make ")
-        assert _contains_make_command(github_commands, target)
-        assert _contains_make_command(gitlab_commands, target)
+        assert _contains_gate_invocation(github_commands, command)
+        assert _contains_gate_invocation(gitlab_commands, command)
 
     def test_gitlab_ci_jobs_define_timeout_budgets(self) -> None:
         """GitLab CI core jobs must define explicit timeout budgets."""
