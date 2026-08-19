@@ -50,7 +50,7 @@ def test_install_creates_the_venv_and_resolves_a_lock(project: Project):
     """
     assert (project.path / ".venv").is_dir(), "install did not create the project virtualenv"
     assert (project.path / "uv.lock").is_file(), "install did not resolve a lock file"
-    assert "Installation complete" in project.install_output
+    assert "ok  install" in project.install_output, f"install did not report success:\n{project.install_output[-600:]}"
 
 
 def test_install_wires_up_the_pre_commit_hook(project: Project):
@@ -126,20 +126,34 @@ def test_docs_coverage_gate_reaches_100_percent(project: Project, logger):
 def test_typecheck_gate_runs_both_checkers(project: Project, logger):
     """TYPECHECKER defaults to both, so ty and mypy --strict each get a turn."""
     out = gate(project, "typecheck", logger)
-    assert "Running ty type checking" in out
-    assert "Running mypy strict type checking" in out
+    assert "ty check" in out, f"the typecheck gate did not run ty:\n{out[-1500:]}"
+    # mypy is *not* asserted here, and that is a behaviour change worth naming rather than
+    # hiding. `python.mk` defaulted to `TYPECHECKER ?= both`, so a synced project type-checked
+    # with ty *and* `mypy --strict`; rhiza-task's `typechecker` field defaults to `ty` alone, and
+    # the layer ships no config to override it. A consumer who wants both now opts in:
+    #
+    #     [tool.rhiza-task]
+    #     typechecker = "both"
+    #
+    # The mother repo does exactly that. Asserting `mypy --strict` here would demand of a freshly
+    # synced project a default it no longer has -- so this asserts the default, and the capability
+    # is covered by the mother repo's own `make typecheck`.
+    assert "mypy" not in out, (
+        "the typecheck gate ran mypy on a project that did not ask for it, so the default is no "
+        f"longer `ty` and this test's premise (and the note above) need revisiting:\n{out[-1500:]}"
+    )
 
 
 def test_security_gate_scans_the_source(project: Project, logger):
     """Bandit runs over SOURCE_FOLDER with the shipped .bandit config."""
     out = gate(project, "security", logger)
-    assert "Running bandit security scan" in out
+    assert "bandit -r" in out
 
 
 def test_license_gate_accepts_a_permissive_dependency_set(project: Project, logger):
     """pip-licenses fails on GPL/LGPL/AGPL; the scaffold declares none."""
     out = gate(project, "license", logger)
-    assert "Running license compliance scan" in out
+    assert "pip-licenses" in out
 
 
 def test_license_gate_actually_rejects_a_matching_licence(project: Project, logger):
@@ -179,19 +193,27 @@ def test_license_gate_honours_an_exemption(project: Project, logger):
     legitimate copyleft *development* dependency needs a way to say so once,
     visibly, rather than deleting the gate that keeps catching it.
 
-    Asserted by absence from the report rather than by flipping a failure to a
-    pass, which would depend on guessing every package that could match.
+    Asserted on the flag the gate passes rather than on the package's absence from the output,
+    which is what this checked before. The CLI echoes each command it runs, so the exempted name
+    now appears in ``out`` as part of ``--ignore-packages pytest`` -- absence can no longer
+    distinguish "not scanned" from "not mentioned". The flag is the mechanism anyway: pip-licenses
+    errors on a bare ``--ignore-packages``, so its presence with the name is exactly what carries
+    the exemption through.
     """
     out = gate(project, "license", logger, env={**gate_env(), "LICENSE_IGNORE_PACKAGES": "pytest"})
 
-    assert "Running license compliance scan" in out
-    assert "pytest" not in out, "pytest was scanned despite being exempted:\n" + out[-2000:]
+    assert "pip-licenses" in out
+    assert "--ignore-packages" in out, (
+        f"the license gate passed no exemption flag, so LICENSE_IGNORE_PACKAGES was dropped:\n{out[-1500:]}"
+    )
+    ignore_line = next(line for line in out.splitlines() if "--ignore-packages" in line)
+    assert "pytest" in ignore_line, f"pytest was not exempted: {ignore_line!r}"
 
 
 def test_deptry_gate_finds_no_dependency_problems(project: Project, logger):
     """Deptry runs on the folders the synced bundles contribute, and is clean."""
     out = gate(project, "deps", logger)
-    assert "Running deptry on:" in out
+    assert "deptry" in out
 
 
 def test_rhiza_test_gate_runs_the_installed_checks(project: Project, logger):
@@ -248,11 +270,11 @@ def test_all_runs_the_whole_gate_set(project: Project, logger):
     # so the evidence is a line only one of them emits.
     for gate_name, evidence in (
         ("fmt", "ruff format"),
-        ("deps", "Running deptry on:"),
+        ("deps", "deptry"),
         ("test", "[2 items]"),  # the scaffold's test plus the layer's starter (#1476)
-        ("docs-coverage", "Checking documentation coverage in:"),
-        ("security", "Running bandit security scan"),
-        ("license", "Running license compliance scan"),
-        ("typecheck", "Running mypy strict type checking"),
+        ("docs-coverage", "interrogate -vv"),
+        ("security", "bandit -r"),
+        ("license", "pip-licenses"),
+        ("typecheck", "ty check"),
     ):
         assert evidence in out, f"`make all` no longer runs the {gate_name} gate ({evidence!r})"

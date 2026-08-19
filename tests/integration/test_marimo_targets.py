@@ -1,70 +1,65 @@
-"""Tests for the Marimo notebook Makefile targets and their resilience.
+"""The marimo targets, after `marimo.mk` retired to rhiza-task.
 
-Mirrors test_presentation_targets.py: the marimo bundle ships make targets
-(marimo, marimo-validate) in .rhiza/make.d/marimo.mk, and this exercises them
-end-to-end against a synced repo rather than relying solely on static
-bundle-content checks.
+This module read the fragment: that it defined `marimo` and `marimo-validate`, declared them
+`.PHONY`, made them depend on `install`, and referenced `MARIMO_FOLDER`. All four assertions were
+about a file's text, and the file is gone — `marimo` and `marimo-validate` are registered tasks now.
+
+It is rewritten rather than deleted because of *how* it failed. The fixture skipped the whole
+module when `marimo.mk` was absent, so retiring the fragment turned four tests into four silent
+skips: a green suite, four fewer checks, no signal. That is the same trap `test_lfs.py` fell into
+in the same change, and the reason to prefer assertions that go red when their subject moves.
 """
 
-import shutil
-import subprocess  # nosec
+from __future__ import annotations
+
+import re
+import subprocess  # nosec B404
+from pathlib import Path
 
 import pytest
 
-MAKE = shutil.which("make") or "/usr/bin/make"
+_ROOT = Path(__file__).resolve().parents[2]
 
 
-@pytest.fixture
-def marimo_makefile(git_repo):
-    """Return the marimo.mk path or skip tests if missing."""
-    makefile = git_repo / ".rhiza" / "make.d" / "marimo.mk"
-    if not makefile.exists():
-        pytest.skip("marimo.mk not found, skipping test")
-    return makefile
+def _pin() -> str:
+    """Return the pinned rhiza-task spec from the root Makefile.
 
-
-def test_marimo_targets_defined(git_repo, marimo_makefile):
-    """Marimo targets must be defined and parseable even without a notebook folder.
-
-    Both targets guard internally on MARIMO_FOLDER existing, so a dry-run (-n)
-    verifies make can resolve them (and their 'install' prerequisite) without
-    starting a server or running notebooks.
+    Returns:
+        The ``rhiza-task@X.Y.Z`` spec.
     """
-    for target in ["marimo", "marimo-validate"]:
-        result = subprocess.run([MAKE, "-n", target], cwd=git_repo, capture_output=True, text=True)  # nosec
-        assert "no rule to make target" not in result.stderr.lower(), (
-            f"Target {target} should be defined in .rhiza/make.d/marimo.mk"
-        )
-        assert result.returncode == 0, f"Dry-run of {target} failed: {result.stderr}"
+    match = re.search(r"^RHIZA_TASK \?= (\S+)", (_ROOT / "Makefile").read_text(encoding="utf-8"), re.MULTILINE)
+    if not match:
+        pytest.skip("the root Makefile no longer pins RHIZA_TASK")
+    return match.group(1)
 
 
-def test_marimo_phony_targets(marimo_makefile):
-    """marimo.mk must declare the expected phony targets."""
-    content = marimo_makefile.read_text()
-
-    phony_targets = [line.strip() for line in content.splitlines() if line.startswith(".PHONY:")]
-    assert phony_targets, "expected at least one .PHONY declaration in marimo.mk"
-
-    all_targets = set()
-    for phony_line in phony_targets:
-        all_targets.update(phony_line.split(":")[1].strip().split())
-
-    expected_targets = {"marimo", "marimo-validate"}
-    assert expected_targets.issubset(all_targets), (
-        f"Expected phony targets to include {expected_targets}, got {all_targets}"
+@pytest.mark.parametrize("target", ["marimo", "marimo-validate"])
+def test_marimo_target_resolves(target: str) -> None:
+    """Both targets must resolve, so the fragment's retirement cost no entry point."""
+    proc = subprocess.run(  # nosec B603
+        ["make", "-n", target], cwd=_ROOT, capture_output=True, text=True, check=False
     )
+    assert proc.returncode == 0, f"`make {target}` did not resolve: {proc.stderr}"
+    assert "no rule to make target" not in proc.stderr.lower()
 
 
-def test_marimo_targets_depend_on_install(marimo_makefile):
-    """Both targets must depend on 'install' so the venv is ready before use."""
-    content = marimo_makefile.read_text()
-    assert "marimo: install" in content, "marimo should declare 'install' as a prerequisite"
-    assert "marimo-validate: install" in content, "marimo-validate should declare 'install' as a prerequisite"
+def test_the_notebook_folder_is_configurable_and_resolves() -> None:
+    """``marimo_folder`` must resolve to a real directory.
 
-
-def test_marimo_recipes_drive_marimo_cli(marimo_makefile):
-    """The recipes must launch the Marimo editor and validate notebooks under MARIMO_FOLDER."""
-    content = marimo_makefile.read_text()
-    assert "MARIMO_FOLDER" in content, "marimo.mk should reference the configurable MARIMO_FOLDER"
-    assert "marimo edit" in content, "marimo target should launch the editor via 'marimo edit'"
-    assert "Validating" in content, "marimo-validate should report on notebook validation"
+    The fragment referenced ``MARIMO_FOLDER`` so the notebook location was not hardcoded; the
+    setting survived the move as ``marimo_folder``, and both the marimo tasks and
+    ``rhiza_marimo.yml`` read it — the workflow via ``uvx rhiza-task print marimo_folder`` since
+    #1553. Asserting it resolves to an existing directory is what catches the failure that matters:
+    a wrong value makes the notebook gates measure nothing rather than fail.
+    """
+    proc = subprocess.run(  # nosec B603
+        ["uvx", _pin(), "print", "marimo_folder"], cwd=_ROOT, capture_output=True, text=True, check=False
+    )
+    if proc.returncode != 0:
+        pytest.skip(f"could not read marimo_folder: {proc.stderr.strip()[:160]}")
+    folder = proc.stdout.strip()
+    assert folder, "marimo_folder resolves to nothing"
+    assert (_ROOT / folder).is_dir(), (
+        f"marimo_folder resolves to {folder!r}, which is not a directory — the notebook tasks "
+        f"would find nothing to run and report success"
+    )

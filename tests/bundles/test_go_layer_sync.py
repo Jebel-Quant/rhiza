@@ -8,12 +8,49 @@ including the starter ``internal/version/version.go`` and its test, which exist 
 
 from __future__ import annotations
 
+import functools
+import re
+import subprocess  # nosec B404
 import tomllib
+from pathlib import Path
 
 import pytest
 import yaml
 
 from tests.util import sync_bundles
+
+
+@functools.lru_cache(maxsize=1)
+def _cli_task_sources() -> str:
+    """Return the concatenated source of the pinned CLI's modules.
+
+    Returns:
+        The text, or "" when the CLI cannot be reached.
+    """
+    root = Path(__file__).resolve().parents[2]
+    match = re.search(r"^RHIZA_TASK \?= (\S+)", (root / "Makefile").read_text(encoding="utf-8"), re.MULTILINE)
+    if not match:
+        return ""
+    name, _, version = match.group(1).partition("@")
+    proc = subprocess.run(  # nosec B603
+        [
+            "uv",
+            "run",
+            "--quiet",
+            "--no-project",
+            "--with",
+            f"{name}=={version}" if version else name,
+            "python",
+            "-c",
+            "import pathlib, rhiza_task;"
+            "print('\\n'.join(p.read_text() for p in pathlib.Path(rhiza_task.__file__).parent.rglob('*.py')))",
+        ],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return proc.stdout if proc.returncode == 0 else ""
 
 
 class TestGoCoreBundleSync:
@@ -50,26 +87,27 @@ class TestGoCoreBundleSync:
             "core's semgrep target has no config on a Go project"
         )
 
-    def test_go_mk_provides_the_language_contract(self):
-        """go.mk owns the same target names its siblings do, plus the go-backed gates.
+    def test_no_language_fragment_is_synced_at_all(self):
+        """A language layer must ship no make fragment, so two layers cannot collide through one.
 
-        ``rhiza-test`` is deliberately absent: its recipe is language-neutral, so it moved
-        to core's quality.mk in #1471 rather than existing identically in all three layers.
+        This guarded the original clash: ``python.mk``, ``rust.mk`` and ``go.mk`` each defined
+        ``install``, so receiving two meant two recipes for one target and no way to know which
+        ran. The gates moved to rhiza-task, where the layer is part of the registry key
+        (``go:install``) and the collision is structurally impossible.
+
+        The layers *do* still claim overlapping paths on purpose -- ``.pre-commit-config.yaml``
+        in all three, ``.bumpversion.toml`` in the two non-Python ones -- so "one layer per repo"
+        is still enforced, just by those files rather than by these.
+
+        This also replaces the companion test that listed the target names the fragment had to
+        define, and that it must not redefine ``rhiza-test``. Both are the registry's business
+        now: ``test_layer_contract.py`` asserts the gate names for all three layers at once, and
+        the layer key makes a duplicate impossible rather than merely forbidden. Asserted as an
+        absence so a fragment cannot quietly return and reintroduce the ambiguity.
         """
-        go_mk = (self.project / ".rhiza" / "make.d" / "go.mk").read_text(encoding="utf-8")
-        for target in ("install:", "all:", "test::", "coverage:", "typecheck:", "docs-coverage:"):
-            assert target in go_mk, f"go.mk is missing {target}"
-        assert "rhiza-test:" not in go_mk, (
-            "go.mk redefines rhiza-test, which core now owns — two recipes for one "
-            "target name is exactly what #1471 removed"
-        )
-
-    def test_only_one_language_fragment_is_synced(self):
-        """python.mk, rust.mk and go.mk all define `install` — receiving two would be a clash."""
-        fragments = sorted(p.name for p in (self.project / ".rhiza" / "make.d").iterdir())
-        assert "go.mk" in fragments
-        assert "python.mk" not in fragments
-        assert "rust.mk" not in fragments
+        make_d = self.project / ".rhiza" / "make.d"
+        stale = sorted(f.name for f in make_d.rglob("*.mk")) if make_d.is_dir() else []
+        assert not stale, f"go-core ships make fragments again: {stale}"
 
     def test_the_version_constant_ships_with_the_layer(self):
         """Unlike Cargo.toml, this file does not exist in a Go project unless rhiza puts it there."""
@@ -188,11 +226,18 @@ class TestProfileGoLocalSync:
         sync_bundles(root, self.GO_LOCAL_BUNDLES, tmp_path)
         self.project = tmp_path
 
-    def test_the_language_contract_is_available(self):
-        """`install` and `all` exist, which is what makes the profile usable at all."""
-        go_mk = (self.project / ".rhiza" / "make.d" / "go.mk").read_text(encoding="utf-8")
-        assert "install:" in go_mk
-        assert "all:" in go_mk
+    def test_the_profile_ships_no_make_fragment(self):
+        """The profile must not deliver a language fragment.
+
+        This asserted that ``go.mk`` defined ``install`` and ``all`` -- the contract that makes
+        the profile usable. That contract is the task registry's now, and
+        ``test_layer_contract.py`` asserts it for all three layers at once against the registry
+        itself, which is a stronger check than grepping one file for two strings. What is worth
+        keeping here is the negative: the profile must not ship a fragment that would shadow it.
+        """
+        make_d = self.project / ".rhiza" / "make.d"
+        stale = sorted(f.name for f in make_d.rglob("*.mk")) if make_d.is_dir() else []
+        assert not stale, f"the profile ships make fragments again: {stale}"
 
     def test_docs_skeleton_exists(self):
         """The book bundle is language-neutral, so a Go project gets docs too."""
@@ -200,11 +245,21 @@ class TestProfileGoLocalSync:
         assert (self.project / "docs" / "mkdocs-base.yml").is_file()
 
     def test_book_badge_step_and_go_coverage_agree_on_the_report_path(self):
-        """book.mk badges `_tests/coverage.xml`; the Go `coverage` target must write it."""
-        book_mk = (self.project / ".rhiza" / "make.d" / "book.mk").read_text(encoding="utf-8")
-        go_mk = (self.project / ".rhiza" / "make.d" / "go.mk").read_text(encoding="utf-8")
-        assert "_tests/coverage.xml" in book_mk
-        assert "_tests/coverage.xml" in go_mk
+        """The book's badge step and the Go `coverage` task must name one path.
+
+        Worth keeping through the migration: two independent pieces have to agree on
+        ``_tests/coverage.xml``, and nothing fails loudly when they stop -- the badge just renders
+        "unknown" against a report that was written elsewhere. Both halves used to be make
+        fragments; both are rhiza-task tasks now, so the assertion reads the CLI's own source
+        rather than files that no longer ship.
+        """
+        source = _cli_task_sources()
+        if not source:
+            pytest.skip("could not read the rhiza-task task sources")
+        assert source.count("_tests/coverage.xml") >= 2, (
+            "the coverage report path appears fewer than twice in rhiza-task's tasks, so the book "
+            "badge step and the coverage task may no longer agree on where the report lands"
+        )
 
     def test_no_github_workflows_injected(self):
         """go-local is local-first: the Go CI workflows do not exist yet."""

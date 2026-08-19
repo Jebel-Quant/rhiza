@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import logging
 import os
 import re
@@ -19,6 +20,70 @@ _ANSI_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 def strip_ansi(text: str) -> str:
     """Strip ANSI escape sequences from text."""
     return _ANSI_RE.sub("", text)
+
+
+@functools.lru_cache(maxsize=1)
+def _shim_text() -> str:
+    """Return the rhiza-task shim Makefile, generated once per session.
+
+    Why the fixtures need this at all: ``core`` no longer ships a ``Makefile`` or a
+    ``.rhiza/rhiza.mk``, so a project assembled from bundles by :func:`sync_bundles` has no
+    front door and no loader for the five fragments that survive (docker, github, lfs, paper,
+    presentation). Every test that drives ``make`` against such a project has to supply the
+    shim, which is exactly what a real consumer does once with ``uvx rhiza-task shim > Makefile``.
+
+    Generated from the *pinned* CLI rather than copied from the repo root, for two reasons: the
+    root Makefile carries mother-repo-only targets that must not leak into a fixture, and
+    generating it means these tests exercise the shim a consumer would actually get.
+
+    Cached because it costs a subprocess and the answer cannot change within a session.
+
+    Returns:
+        The shim's text.
+
+    Raises:
+        pytest.skip.Exception: When the CLI cannot be reached, rather than failing every
+            make-driven test with a confusing subprocess error.
+    """
+    root = Path(__file__).resolve().parents[1]
+    match = re.search(r"^RHIZA_TASK \?= (\S+)", (root / "Makefile").read_text(encoding="utf-8"), re.MULTILINE)
+    if not match:
+        pytest.skip("the root Makefile no longer pins RHIZA_TASK, so no shim can be generated")
+    proc = subprocess.run(  # nosec B603
+        ["uvx", match.group(1), "shim"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0 or not proc.stdout.strip():
+        pytest.skip(f"could not generate the rhiza-task shim: {proc.stderr.strip()[:200]}")
+    return proc.stdout
+
+
+def write_shim(dest: Path) -> Path:
+    """Write the rhiza-task shim into ``dest`` as its ``Makefile``.
+
+    Also adds the fragment include the shipped shim does not carry yet
+    (Jebel-Quant/rhiza-task#20), because without it the surviving ``.rhiza/make.d`` fragments
+    are inert and every target they own reports "no rule to make target".
+
+    Args:
+        dest: The assembled project's root.
+
+    Returns:
+        The path written.
+    """
+    text = _shim_text()
+    if "-include .rhiza/make.d/*.mk" not in text:
+        text += (
+            "\n# Added by the test harness: the shipped shim does not include the fragments yet\n"
+            "# (Jebel-Quant/rhiza-task#20), and the surviving bundles' targets live in them.\n"
+            "-include .rhiza/make.d/*.mk\n"
+            ".rhiza/make.d/%.mk: ;\n"
+        )
+    makefile = dest / "Makefile"
+    makefile.write_text(text, encoding="utf-8")
+    return makefile
 
 
 def run_make(

@@ -36,7 +36,7 @@ import pytest
 from defusedxml import ElementTree
 
 from tests.e2e import scaffolds
-from tests.util import run_make, strip_ansi, sync_bundles
+from tests.util import run_make, strip_ansi, sync_bundles, write_shim
 
 GIT = shutil.which("git") or "/usr/bin/git"
 
@@ -218,6 +218,10 @@ def _sync(root: Path, layer: Layer, project: Path) -> None:
         project: Destination project root.
     """
     sync_bundles(root, list(layer.bundles), project)
+    # core ships no Makefile any more, so the assembled project has no front door until we give
+    # it one. This is the step a real consumer performs once, and putting it here means the whole
+    # e2e suite exercises the shim a consumer actually gets rather than a synced file.
+    write_shim(project)
 
 
 def assemble(layer: Layer, root: Path, workdir: Path, logger) -> Project:

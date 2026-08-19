@@ -28,7 +28,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.util import sync_bundles
+from tests.util import sync_bundles, write_shim
 
 GIT = shutil.which("git") or "/usr/bin/git"
 
@@ -189,9 +189,12 @@ def git_repo(root, tmp_path, monkeypatch) -> Path:
 
     monkeypatch.setenv("PATH", f"{bin_dir}:{os.environ.get('PATH', '')}")
 
-    # Assemble the make layer from the bundles that ship it.
+    # Assemble the surviving fragments from the bundles that ship them, then supply the shim:
+    # core ships no Makefile or rhiza.mk now, so without it nothing loads them and every target
+    # they own reports "no rule to make target".
     (local_dir / ".rhiza").mkdir(parents=True, exist_ok=True)
     sync_bundles(root, MAKE_LAYER_BUNDLES, local_dir)
+    write_shim(local_dir)
 
     book_src = root / "book"
     book_dst = local_dir / "book"

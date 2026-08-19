@@ -1,99 +1,110 @@
-"""Tests for book-related Makefile targets and their resilience."""
+"""The book targets, after `book.mk` retired to rhiza-task.
 
-import shutil
-import subprocess  # nosec
+This module read the fragment, and its most interesting test was about *resilience*: `book.mk`
+defined no-op `test::`/`benchmark::`/`stress::`/`hypothesis-test::` anchors so that `make book`
+resolved even when the `tests` bundle was not selected, and the book target itself checked for the
+`book/` folder at runtime rather than existing only when it was present.
+
+Both concerns are answered differently now, which is why the tests are rewritten rather than
+ported. The double-colon anchors are gone with the make layer — the CLI's `book` task declares its
+prerequisites in the registry, so a missing one is a resolution error rather than a silently
+skipped rule. And the folder check lives in the task.
+
+Rewritten rather than deleted because of *how* it failed: each test skipped itself when `book.mk`
+was absent, so retiring the fragment turned four tests into four silent skips. The same trap caught
+`test_lfs.py`, `test_marimo_targets.py` and `test_benchmark_targets.py` in this change.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+import subprocess  # nosec B404
+from pathlib import Path
 
 import pytest
 
-MAKE = shutil.which("make") or "/usr/bin/make"
+_ROOT = Path(__file__).resolve().parents[2]
 
 
-@pytest.fixture
-def book_makefile(git_repo):
-    """Return the book.mk path or skip tests if missing."""
-    makefile = git_repo / ".rhiza" / "make.d" / "book.mk"
-    if not makefile.exists():
-        pytest.skip("book.mk not found, skipping test")
-    return makefile
+def _pin() -> str:
+    """Return the pinned rhiza-task spec from the root Makefile.
 
-
-def test_no_book_folder(git_repo, book_makefile):
-    """Test that make targets work gracefully when book folder is missing.
-
-    Now that book-related targets are defined in .rhiza/make.d/, they are always
-    available but check internally for the existence of the book folder.
-    Using dry-run (-n) to test the target logic without actually executing.
+    Returns:
+        The ``rhiza-task@X.Y.Z`` spec.
     """
-    if (git_repo / "book").exists():
-        shutil.rmtree(git_repo / "book")
-    assert not (git_repo / "book").exists()
-
-    # Targets are now always defined via .rhiza/make.d/
-    # Use dry-run to verify they exist and can be parsed
-    for target in ["book"]:
-        result = subprocess.run([MAKE, "-n", target], cwd=git_repo, capture_output=True, text=True)  # nosec
-        # Target should exist (not "no rule to make target")
-        assert "no rule to make target" not in result.stderr.lower(), (
-            f"Target {target} should be defined in .rhiza/make.d/"
-        )
+    match = re.search(r"^RHIZA_TASK \?= (\S+)", (_ROOT / "Makefile").read_text(encoding="utf-8"), re.MULTILINE)
+    if not match:
+        pytest.skip("the root Makefile no longer pins RHIZA_TASK")
+    return match.group(1)
 
 
-def test_book_folder_but_no_mk(git_repo, book_makefile):
-    """Test behavior when book folder exists but is empty.
+@pytest.mark.parametrize("target", ["book", "serve"])
+def test_book_target_resolves(target: str) -> None:
+    """The book targets must resolve, so retiring `book.mk` cost no entry point."""
+    proc = subprocess.run(  # nosec B603
+        ["make", "-n", target], cwd=_ROOT, capture_output=True, text=True, check=False
+    )
+    assert proc.returncode == 0, f"`make {target}` did not resolve: {proc.stderr}"
+    assert "no rule to make target" not in proc.stderr.lower()
 
-    With the new architecture, targets are always defined in .rhiza/make.d/book.mk,
-    so they should exist regardless of the book folder contents.
+
+def test_every_prerequisite_of_book_resolves() -> None:
+    """`book`'s prerequisites must all be registered tasks.
+
+    This is what the no-op `::` anchors were for. `book.mk` needed `test`, `benchmark`, `stress`
+    and `hypothesis-test` to *exist* whether or not the `tests` bundle was selected, and satisfied
+    that by defining each as a rule with an empty recipe — so `make book` never died on a missing
+    rule, and never ran a gate that was not there.
+
+    The registry replaces the trick: `book` names its prerequisites, and they resolve because the
+    tasks are registered rather than because a fragment stubbed them. Asserted here because the
+    property is the same one and its failure mode is identical — `book` dying on a name nothing
+    provides.
     """
-    # ensure book folder exists but is empty
-    if (git_repo / "book").exists():
-        shutil.rmtree(git_repo / "book")
-    # create an empty book folder
-    (git_repo / "book").mkdir()
+    name, _, version = _pin().partition("@")
+    script = (
+        "import importlib, json;"
+        "[importlib.import_module('rhiza_task.tasks.' + m)"
+        " for m in ('python', 'quality', 'book', 'extras', 'doctor')];"
+        "from rhiza_task.spec import REGISTRY;"
+        "print(json.dumps({k: list(v.needs) for k, v in REGISTRY.items()}))"
+    )
+    proc = subprocess.run(  # nosec B603
+        [
+            "uv",
+            "run",
+            "--quiet",
+            "--no-project",
+            "--with",
+            f"{name}=={version}" if version else name,
+            "python",
+            "-c",
+            script,
+        ],
+        cwd=_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc.returncode != 0:
+        pytest.skip("could not read the rhiza-task registry")
+    registry = json.loads(proc.stdout)
 
-    # assert the book folder exists
-    assert (git_repo / "book").exists()
-    # assert the git_repo / "book" folder is empty
-    assert not list((git_repo / "book").iterdir())
-
-    # Targets are now always defined via .rhiza/make.d/
-    # Use dry-run to verify they exist and can be parsed
-    for target in ["book"]:
-        result = subprocess.run([MAKE, "-n", target], cwd=git_repo, capture_output=True, text=True)  # nosec
-        # Target should exist (not "no rule to make target")
-        assert "no rule to make target" not in result.stderr.lower(), (
-            f"Target {target} should be defined in .rhiza/make.d/"
-        )
-
-
-def test_book_folder(git_repo, book_makefile):
-    """Test that .rhiza/make.d/book.mk defines the expected phony targets."""
-    content = book_makefile.read_text()
-
-    # get the list of phony targets from the Makefile
-    phony_targets = [line.strip() for line in content.splitlines() if line.startswith(".PHONY:")]
-    if not phony_targets:
-        pytest.skip("No .PHONY targets found in book.mk")
-
-    # Collect all targets from all .PHONY lines
-    all_targets = set()
-    for phony_line in phony_targets:
-        targets = phony_line.split(":")[1].strip().split()
-        all_targets.update(targets)
-
-    expected_targets = {"book", "test", "benchmark", "stress", "hypothesis-test"}
-    assert expected_targets.issubset(all_targets), (
-        f"Expected phony targets to include {expected_targets}, got {all_targets}"
+    book = next((v for k, v in registry.items() if k.endswith("book")), None)
+    assert book is not None, "`book` is not a registered task"
+    missing = [n for n in book if f"python:{n}" not in registry and n not in registry]
+    assert not missing, (
+        f"`book` names {missing}, which resolve to no registered task — the failure the no-op `::` "
+        f"anchors in book.mk existed to prevent"
     )
 
 
-def test_book_noop_targets_defined(book_makefile):
-    """Test that book.mk defines no-op fallback targets for build resilience.
+def test_the_docs_folder_the_book_builds_from_exists() -> None:
+    """`mkdocs.yml` and `docs/` must be present, or the build has no input.
 
-    These no-op double-colon rules ensure 'make book' succeeds even when
-    test.mk is not available or tests are not installed.
+    `book.mk` guarded on the folder at runtime and printed a warning; the task does its own
+    checking, so what is worth asserting here is the repo's side of the contract.
     """
-    content = book_makefile.read_text()
-    for target in ["test", "benchmark", "stress", "hypothesis-test"]:
-        assert f"{target}::" in content, (
-            f"book.mk should define a no-op '::' fallback for '{target}' to ensure build resilience"
-        )
+    assert (_ROOT / "mkdocs.yml").is_file(), "mkdocs.yml is missing, so `make book` has no config"
+    assert (_ROOT / "docs").is_dir(), "docs/ is missing, so `make book` would build an empty site"

@@ -22,7 +22,10 @@ pytestmark = pytest.mark.skipif(
     reason="exercises POSIX make + gh targets via a shell; unsupported on Windows",
 )
 
-# Every GitHub helper target defined in github.mk; all must appear in `make help`.
+# Every GitHub helper target defined in github.mk. `github.mk` is one of the five fragments that
+# survive the rhiza-task migration -- rhiza-task has no task for any of these, and `github` is in
+# the `github-project` profile, so retiring it would take `make view-prs` from consumers on the
+# flagship profile (Jebel-Quant/rhiza-task#20).
 _GH_TARGETS = (
     "gh-install",
     "view-prs",
@@ -48,12 +51,20 @@ _TARGET_COMMANDS = (
 
 
 def test_gh_targets_exist(logger):
-    """Verify that every GitHub target is listed in help."""
-    result = run_make(logger, ["help"], dry_run=False)
-    output = result.stdout
+    """Verify that every GitHub target resolves.
 
+    Asserted by resolution rather than by appearing in ``make help``, which is what this checked
+    before. Under the shim ``help`` runs the CLI's own ``list``, and the CLI knows nothing about
+    the fragments the shim ``-include``s -- so these targets work while being absent from help.
+    That discoverability gap is real and recorded in Jebel-Quant/rhiza-task#20; it is not this
+    test's subject, and asserting on help output would fail for a reason unrelated to gh.
+    """
     for target in _GH_TARGETS:
-        assert target in output, f"Target {target} not found in help output"
+        result = run_make(logger, [target], check=False)
+        assert result.returncode == 0, f"`make {target}` did not resolve: {result.stderr}"
+        assert "no rule to make target" not in result.stderr.lower(), (
+            f"{target} is not defined -- github.mk should still be included by the shim"
+        )
 
 
 @pytest.mark.parametrize(("target", "expected_command"), _TARGET_COMMANDS)

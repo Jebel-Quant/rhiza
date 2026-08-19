@@ -234,9 +234,21 @@ class TestBenchmarksBundleSync:
         """tests/benchmarks/ directory must be present."""
         assert (self.project / "tests" / "benchmarks").is_dir(), "tests/benchmarks/ not found"
 
-    def test_test_mk_present(self) -> None:
-        """test.mk must be present (benchmarks depend on test infrastructure)."""
-        assert (self.project / ".rhiza" / "make.d" / "test.mk").is_file()
+    def test_the_benchmark_task_is_registered(self) -> None:
+        """``benchmark`` must be a task the CLI can run.
+
+        This asserted that ``test.mk`` was synced, on the grounds that benchmarks depend on the
+        test infrastructure. The fragment retired to rhiza-task, so what matters is that the task
+        exists — the dependency is expressed in its registry entry rather than by a file arriving.
+        """
+        from tests.bundles.test_layer_contract import _registry, _resolves
+
+        registry = _registry()
+        if not registry:
+            pytest.skip("could not read the rhiza-task registry")
+        assert _resolves(registry, "python", "benchmark"), (
+            "`benchmark` resolves to no registered task, so this bundle's config has no gate to feed"
+        )
 
     def test_benchmarks_conftest_or_init_present(self) -> None:
         """Benchmarks test directory should contain a conftest or __init__ to set up fixtures."""

@@ -53,21 +53,20 @@ def test_lfs_files_exist():
     assert (_LFS_MK.parents[2] / "docs" / "lfs" / "LFS.md").exists()
 
 
-def test_lfs_targets_exist(git_repo, logger, lfs_makefile):
-    """Test that all LFS targets are defined in the Makefile."""
-    result = subprocess.run(
-        [MAKE, "help"],
-        cwd=git_repo,
-        capture_output=True,
-        text=True,
-    )  # nosec
+def test_lfs_targets_exist(git_repo):
+    """Every lfs target must resolve.
 
-    assert result.returncode == 0
-    assert "lfs-install" in result.stdout
-    assert "lfs-pull" in result.stdout
-    assert "lfs-track" in result.stdout
-    assert "lfs-status" in result.stdout
-    assert "Git LFS" in result.stdout
+    Asserted by resolution rather than by appearing in ``make help``, which is what this
+    checked before. Under the rhiza-task shim ``help`` runs the CLI's own ``list``, and the CLI
+    knows nothing about the fragments the shim ``-include``s -- so a surviving bundle's targets
+    work but are invisible there. That is a real discoverability gap, reported as part of
+    Jebel-Quant/rhiza-task#20; it is not this test's subject, and asserting on help output would
+    make this fail for a reason that has nothing to do with git-lfs.
+    """
+    for target in ("lfs-install", "lfs-pull", "lfs-track", "lfs-status"):
+        result = subprocess.run([MAKE, "-n", target], cwd=git_repo, capture_output=True, text=True)  # nosec
+        assert result.returncode == 0, f"`make {target}` did not resolve: {result.stderr}"
+        assert "no rule to make target" not in result.stderr.lower()
 
 
 def test_lfs_install_dry_run(lfs_install_dry_run):

@@ -17,7 +17,7 @@ import subprocess  # nosec B404 - subprocess module needed for git operations in
 import pytest
 
 from tests.integration.conftest import MAKE_LAYER_BUNDLES
-from tests.util import sync_bundles
+from tests.util import sync_bundles, write_shim
 
 # Get absolute path for git to avoid S607 warnings
 GIT = shutil.which("git") or "/usr/bin/git"
@@ -201,6 +201,7 @@ def git_repo(root, tmp_path, monkeypatch):
     # tests/integration/conftest.py for why this reads bundles/ rather than the root).
     (local_dir / ".rhiza").mkdir(parents=True, exist_ok=True)
     sync_bundles(root, MAKE_LAYER_BUNDLES, local_dir)
+    write_shim(local_dir)
 
     book_src = root / "book"
     book_dst = local_dir / "book"

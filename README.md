@@ -326,7 +326,7 @@ For Rhiza templates to work correctly, your project must satisfy these expectati
 | Tool | Minimum version | Notes |
 |------|-----------------|-------|
 | **GNU Make** | 3.81 | macOS ships BSD make; install via `brew install make` and use `gmake` |
-| **uv** | 0.5.0 | Installed automatically by `make install-uv` if missing |
+| **uv** | 0.5.0 | Installed automatically by any `make` target if missing |
 | **Python** | 3.11 | Managed automatically by `uv` via `.python-version` |
 
 **What Rhiza owns vs what you own**

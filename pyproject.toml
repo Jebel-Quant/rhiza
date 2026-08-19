@@ -174,6 +174,16 @@ typechecker = "both"
 # with "this behaves differently but still passes".
 pytest-rhiza = "pytest-rhiza @ git+https://github.com/Jebel-Quant/pytest-rhiza@v0.2.1"
 
+# Restores this repo's own book override, which the migration to the shim dropped. The old root
+# Makefile carried `MKDOCS_EXTRA_PACKAGES = --with 'mkdocstrings[python]'` above the include, and
+# replacing that file with the shim lost it silently: `mkdocs_extra_packages` defaults to empty,
+# so `make book` built the site without the plugin that renders the API reference. Nothing fails
+# -- the pages just come out missing their generated content, which is the worst shape for a
+# regression to have.
+#
+# Bare specs, not flags: the CLI passes these as `withs=`, adding `--with` itself.
+mkdocs-extra-packages = ["mkdocstrings[python]"]
+
 [tool.mypy]
 # `make typecheck` passes both the strictness flag and the paths on the command line
 # (`mypy --strict $TYPECHECK_FOLDERS`), so this table does not drive CI — it makes a

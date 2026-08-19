@@ -161,13 +161,15 @@ and tags itself so the changelog lands in the bump commit.
 | `deps` | `deptry` | `cargo machete` | `go mod tidy -diff` |
 
 Every row is a **shared target name** with a different engine behind it — including
-`deps`, which until #1474 was the one exception: python-core named it `deptry`, after the
-tool, so `make deps` failed on Python and `make deptry` on the other two. The tool-named
-`DEPTRY_FOLDERS`/`DEPTRY_IGNORE` variables stay, because they name deptry's *arguments*
-(marimo.mk appends `--ignore DEP004`) and are the accumulator interface a downstream
-`local.mk` writes to. `make deptry` survives as a deprecated alias that warns.
-`tests/bundles/test_layer_contract.py::TestEveryLayerDefinesTheSameGateNames` now fails on
-the next divergence rather than documenting it.
+`deps`, which until #1474 was the one exception: python-core named that target after the tool
+itself, so the shared name failed on Python and the tool-named one failed on the other two. The
+deprecated alias that reconciled them retired with `python.mk`; rhiza-task exposes `deps` only.
+
+The tool-named *variables* went the same way. `DEPTRY_FOLDERS` was the accumulator interface a
+downstream `local.mk` appended to, and the CLI has no accumulators — `deps` derives its folder
+list instead (the source folder, plus the marimo folder when the marimo tasks are registered),
+and `DEPTRY_IGNORE` survives as the `deptry-ignore` setting because it names deptry's own
+arguments rather than a scope.
 
 **Where each Python gate looks, and how to add a folder.** python-core's four path-scoped
 gates take their folder list from an accumulator, all seeded from `SOURCE_FOLDER` when it
@@ -401,59 +403,80 @@ ceasing to deliver a file does not delete it. Nothing runs it — the gate names
 paths — so it is inert rather than duplicated, and `rhiza-test` warns while the folder is
 still there.
 
-### Modular Makefile System — shipped, but no longer run here
+### What is left of the Makefile system
 
-> **This repo no longer runs the synced make layer.** rhiza migrated to
-> [rhiza-task](https://github.com/Jebel-Quant/rhiza-task): the root `Makefile` is now a
-> repo-owned shim (`uvx rhiza-task shim`) whose `%:` catch-all forwards any target to the
-> pinned CLI, so `make test` still works and no longer *contains* anything. There is no root
-> `.rhiza/rhiza.mk` and no root `.rhiza/make.d/`.
->
-> The bundles still ship the layer described below, so this section documents what a
-> **consumer** receives until they migrate too. Three consequences worth knowing:
->
-> - **`.rhiza/make.d/` files are no longer dogfood symlinks.** They are bundle-only, which
->   costs the byte-for-byte guard in `tests/bundles/test_bundle_rhiza_sync.py`; the
->   `_NOT_DOGFOODED_PATHS` carve-out there records it, and `utils/link_dogfood.py` carries
->   the matching `_MAKE_LAYER_PREFIXES` so `make sync-self` does not helpfully recreate the
->   whole layer at the root.
-> - **The fragments are still tested**, by assembly rather than by dogfooding:
->   `tests/api/` and `tests/integration/` build their sandbox with `sync_bundles`, and
->   `tests/e2e/` runs the assembled gates against real toolchains.
-> - **Not everything has a CLI equivalent yet.** `paper`, `presentation`, `install-uv` and
->   the `deptry` alias exist only in the fragments, so those bundles cannot retire until
->   rhiza-task grows tasks for them.
+The synced make layer is **gone from the bundles**, not merely from this repo. `core` ships no
+`Makefile` and no `.rhiza/rhiza.mk`; eleven of the sixteen fragments went with them — 1481 lines.
+Each repository owns its front door instead, generated once:
 
-The root `Makefile` a consumer receives is intentionally thin and only `include`s `.rhiza/rhiza.mk`. That file auto-loads everything in `.rhiza/make.d/*.mk` alphabetically.
+```bash
+uvx rhiza-task shim > Makefile
+```
 
-**Each `*.mk` is owned by exactly one bundle** and syncs only when that bundle is adopted — so the file count reflects the bundle model, not accidental sprawl (a project without Docker never receives `docker.mk`). Edit the bundle source (`bundles/<owner>/.rhiza/make.d/<file>`). Mapping:
+`make` therefore still works and still is what a stranger types, but it no longer *contains*
+anything: a `%:` catch-all forwards every unmatched target to a pinned CLI, and `RHIZA_TASK` is
+the whole version contract. Bumping it is the migration that used to be `/rhiza:update`
+re-syncing eleven fragments and reconciling whatever had been shadowed.
+
+**Five fragments survive, and none of them is a gate.** rhiza-task has no task for their targets,
+so retiring them would delete working behaviour to tidy a folder:
 
 | `.rhiza/make.d/` file | owner bundle | provides |
 | --- | --- | --- |
-| `bootstrap.mk` | core | `install-uv` tool bootstrap, install hooks, `clean` |
-| `python.mk` | python-core | `install`, `all`, `deps`, `license`, and the pytest-backed gates |
-| `rust.mk` | rust-core | `install`, `all`, and the cargo-backed gates |
-| `go.mk` | go-core | `install`, `all`, and the go-backed gates |
-| `doctor.mk` | core | `make doctor` environment checks |
-| `quality.mk` | core | `fmt`, `todos`, `semgrep`, `rhiza-test` (and the `RHIZA_CHECKS` accumulator) — the language-neutral gates |
-| `custom-env.mk` | core | example stub: project variables |
-| `custom-task.mk` | core | example stub: project targets/hooks |
-| `test.mk` | tests | `benchmark`, `hypothesis-test`, `stress`, `mutation` — the optional extras |
-| `book.mk` | book | `make book` docs build |
-| `docker.mk` | docker | container build/run |
-| `marimo.mk` | marimo | `make marimo` notebooks |
-| `presentation.mk` | presentation | Marp slide build |
-| `paper.mk` | paper | LaTeX paper compilation |
-| `lfs.mk` | lfs | Git LFS install/track/status |
-| `github.mk` | github | GitHub repo/workflow helpers |
+| `github.mk` | github | `view-prs`, `view-issues`, `workflow-status`, `failed-workflows`, `latest-release`, `whoami` |
+| `docker.mk` | docker | `docker-build`, `docker-run`, `docker-clean` |
+| `lfs.mk` | lfs | `lfs-install`, `lfs-pull`, `lfs-track`, `lfs-status` |
+| `paper.mk` | paper | `paper`, `paper-clean` (latexmk) |
+| `presentation.mk` | presentation | `presentation`, `presentation-pdf`, `presentation-serve` (Marp) |
 
-Hook targets use double-colon syntax (`pre-install::`, `post-install::`) and can be defined multiple times to chain behaviour. Add project-specific hooks directly in the root `Makefile` above the include line. Developer-local shortcuts go in `local.mk` (not committed).
+`github` is the one that matters most: it is in the `github-project` profile, so dropping it would
+take `make view-prs` from consumers on the flagship profile. The other four are opt-in standalone
+bundles in no profile. They retire when rhiza-task grows tasks for them
+(Jebel-Quant/rhiza-task#20), and the folder goes with the last one.
 
-**The `::` hooks have no equivalent under the shim**, and this is the one documented capability the migration costs. `bootstrap.mk` anchors `pre-install::`/`post-install::` as no-ops precisely so a consumer can chain onto them; `uvx rhiza-task install` knows nothing about make targets, so a `post-install::` rule in a shim'd repo never runs. The workaround is to shadow the target instead of chaining onto it — an explicit `install:` rule beats the `%:` pattern rule, so it can call the CLI and then the extra step. This repo does exactly that for `rhiza-test` (see below).
+**The shim has to load them, and that is a repo-owned addition rather than something the shipped
+shim does.** `rhiza.mk` used to `-include .rhiza/make.d/*.mk`; the generated shim includes only
+`local.mk`, so this repo's Makefile adds:
 
-**Where `bundles.mk` went.** The mother-repo-only fragment that used to sit in this table — `explain-bundles`, `sync-self`, `sync-self-check`, `e2e`, `gitlab-docker-test` — is now a section of the root `Makefile`. Not `local.mk`, which is gitignored: CI invokes `make e2e` (`rhiza_e2e.yml`) and `make gitlab-docker-test` (`rhiza_weekly.yml`), so they need a committed home. Its six `*_FOLDERS += utils` accumulators became one `source-folder = "utils"` in `pyproject.toml`'s `[tool.rhiza-task]`.
+```make
+-include .rhiza/make.d/*.mk
+.rhiza/make.d/%.mk: ;
+```
 
-**And why `rhiza-test` is wrapped rather than delegated.** pytest-rhiza's `test_docstrings` reads its scope from the `RHIZA_DOCTEST_FOLDERS` environment variable; `quality.mk` exported it from `DOCSTRING_FOLDERS`, and rhiza-task does not (Jebel-Quant/rhiza-task#18). On a bare delegation the check reported `SKIPPED  No doctest folder found (looked for: src)` while the gate still said `ok rhiza-test` — #1517 exactly, this repo's only doctest examples unchecked behind a green gate. `.rhiza/.env` cannot carry the value because that file is gitignored. `tests/utils/test_gate_scope.py::test_rhiza_test_actually_runs_the_doctest_check` fails if the skip returns.
+The second line is not decoration. An included makefile is also a target make tries to *remake*,
+and with `%:` in scope that attempt is routed to the CLI — so without it every invocation opens
+with `unknown task: docker.mk`. The shim already carries the same trick for `local.mk`; this is
+the folder equivalent. `tests/util.py`'s `write_shim` appends both lines when generating a shim
+for a test fixture, for exactly the same reason.
+
+Three consequences worth knowing:
+
+- **The surviving fragments are still dogfooded.** They are ordinary bundle-owned files and this
+  repo adopts those bundles, so `.rhiza/make.d/*.mk` are relative symlinks into `bundles/` and
+  `make sync-self` keeps them so. Only the root `Makefile` is carved out, being the repo-owned
+  shim — `utils/link_dogfood.py` lists it in `_EXCLUDE`.
+- **They are invisible in `make help`.** The shim's `help` runs the CLI's own `list`, which knows
+  nothing about included fragments. This repo's Makefile prints its own targets as a second
+  section; a consumer's generated shim does not, which is a real discoverability gap recorded in
+  rhiza-task#20.
+- **Hook targets are gone.** `bootstrap.mk` anchored `pre-install::`/`post-install::` as no-ops so
+  a consumer could chain onto them, and that was *the* documented way to add project hooks.
+  `uvx rhiza-task install` knows nothing about make targets. Shadow the target instead: an
+  explicit `install:` rule beats the catch-all, so it can call the CLI and then the extra step.
+  This repo does exactly that for `rhiza-test`.
+
+**Where the mother-repo-only targets live.** `explain-bundles`, `sync-self`, `sync-self-check`,
+`e2e` and `gitlab-docker-test` were `.rhiza/make.d/bundles.mk`, a fragment no bundle shipped. They
+are a section of the root `Makefile` now — not `local.mk`, which is gitignored while CI invokes
+`make e2e` and `make gitlab-docker-test`.
+
+**And why `rhiza-test` is wrapped rather than delegated.** pytest-rhiza's `test_docstrings` reads
+its scope from the `RHIZA_DOCTEST_FOLDERS` environment variable; `quality.mk` exported it from
+`DOCSTRING_FOLDERS`, and rhiza-task does not (Jebel-Quant/rhiza-task#18). On a bare delegation the
+check reported `SKIPPED  No doctest folder found (looked for: src)` while the gate still said
+`ok rhiza-test` — #1517 exactly, this repo's only doctest examples unchecked behind a green gate.
+`.rhiza/.env` cannot carry the value because that file is gitignored.
+`tests/utils/test_gate_scope.py` fails if the export goes.
 
 ### Dependency Management
 

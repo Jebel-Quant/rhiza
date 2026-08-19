@@ -11,8 +11,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tests.util import run_make
-
 MULTI_OS_MATRIX = 'RHIZA_CI_OS_MATRIX=["ubuntu-latest","windows-latest"]'
 WORKFLOW_PATH = Path(".github") / "workflows" / "rhiza_ci.yml"
 
@@ -24,24 +22,11 @@ _skip_on_windows = pytest.mark.skipif(
 )
 
 
-@_skip_on_windows
-def test_ci_os_matrix_make_target_defaults_to_ubuntu_when_env_missing(logger):
-    """ci-os-matrix target must default to ubuntu-latest when env value is absent."""
-    result = run_make(logger, ["-f", ".rhiza/rhiza.mk", "RHIZA_CI_OS_MATRIX=", "ci-os-matrix"], dry_run=False)
-    assert result.returncode == 0
-    assert json.loads(result.stdout.strip()) == ["ubuntu-latest"]
-
-
-@_skip_on_windows
-def test_ci_os_matrix_make_target_can_be_configured(logger):
-    """ci-os-matrix target must use the configured RHIZA_CI_OS_MATRIX value."""
-    result = run_make(
-        logger,
-        ["-f", ".rhiza/rhiza.mk", MULTI_OS_MATRIX, "ci-os-matrix"],
-        dry_run=False,
-    )
-    assert result.returncode == 0
-    assert json.loads(result.stdout.strip()) == ["ubuntu-latest", "windows-latest"]
+# The two `make -f .rhiza/rhiza.mk ci-os-matrix` tests lived here. That recipe retired with
+# `rhiza.mk`; the value now comes from `uvx rhiza-task ci-os-matrix`, which is what the workflow
+# has called since #1546 and what the test below asserts. rhiza-task tests the resolution itself
+# (including the empty-string-means-unset rule the per-caller matrix depends on), so re-testing it
+# through a make wrapper that no longer exists would be testing nothing.
 
 
 def test_ci_generate_matrix_reads_the_os_matrix_from_the_cli(root):

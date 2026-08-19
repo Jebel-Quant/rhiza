@@ -28,19 +28,23 @@ class TestCoreBundleSync:
         sync_bundles(root, ["core"], tmp_path)
         self.project = tmp_path
 
-    def test_makefile_exists(self):
-        """Makefile is present at the project root."""
-        assert (self.project / "Makefile").is_file()
+    def test_core_ships_no_make_layer(self):
+        """Core must ship no ``Makefile``, no ``rhiza.mk`` and no fragments of its own.
 
-    def test_rhiza_mk_exists(self):
-        """Core make infrastructure is in place."""
-        assert (self.project / ".rhiza" / "rhiza.mk").is_file()
-
-    def test_make_d_fragments_exist(self):
-        """All core Makefile fragments are present."""
-        make_d = self.project / ".rhiza" / "make.d"
-        for name in ("bootstrap.mk", "doctor.mk", "quality.mk", "custom-env.mk", "custom-task.mk"):
-            assert (make_d / name).is_file(), f"Missing make.d fragment: {name}"
+        The inverse of what this asserted before, and asserted rather than simply deleted so the
+        layer cannot come back by accident. Each repo owns its front door now, generated once with
+        ``uvx rhiza-task shim > Makefile`` -- which is why core must not ship one: a synced
+        Makefile would be template-owned, and ``/rhiza:update`` would clobber whatever the repo
+        had added to it. This repo's own copy carries its ``e2e``/``sync-self`` targets and its
+        ``rhiza-test`` wrapper, so that is not hypothetical.
+        """
+        assert not (self.project / "Makefile").exists(), (
+            "core ships a Makefile again; the shim is repo-owned and generated, so syncing one "
+            "would let /rhiza:update overwrite a repo's own targets"
+        )
+        assert not (self.project / ".rhiza" / "rhiza.mk").exists(), "core ships rhiza.mk again"
+        stale = sorted((self.project / ".rhiza").rglob("*.mk"))
+        assert not stale, f"core ships make fragments again: {[f.name for f in stale]}"
 
     def test_cliff_config_exists(self):
         """git-cliff config is synced by the core bundle."""
@@ -96,19 +100,26 @@ class TestCoreIsLanguageNeutral:
         """Python-only config moved to python-core and must not come back."""
         assert not (self.project / name).exists(), f"{name} belongs to python-core, not core"
 
-    def test_core_defines_no_install_or_all_target(self):
-        """`install` and `all` are the language layer's contract, not core's."""
-        fragments = list((self.project / ".rhiza").rglob("*.mk"))
-        assert fragments, "core ships no make fragments at all"
-        for fragment in fragments:
-            for line in fragment.read_text(encoding="utf-8").splitlines():
-                assert not line.startswith("install:"), f"{fragment.name} defines install"
-                assert not line.startswith("all:"), f"{fragment.name} defines all"
+    def test_uv_is_still_provisioned_without_a_language_layer(self):
+        """Something must still bootstrap uv, whatever the project is written in.
 
-    def test_core_still_provisions_uv_as_a_tool_runner(self):
-        """Uvx runs pre-commit/mkdocs/semgrep whatever the language, so core keeps it."""
-        bootstrap = (self.project / ".rhiza" / "make.d" / "bootstrap.mk").read_text(encoding="utf-8")
-        assert "install-uv:" in bootstrap
+        core's ``bootstrap.mk`` had an ``install-uv`` target for this, and the reason it was
+        core's rather than a layer's has not changed: uvx runs prek, mkdocs and semgrep whatever
+        the language. The job moved to the generated shim, which resolves ``UVX`` to ``./bin/uvx``
+        and has a rule to download it -- so ``make <anything>`` still works on a bare runner,
+        which is what keeps rhiza's own required ``Pre-commit hooks`` check green.
+
+        Asserted against the generated shim rather than a synced file, because that is where the
+        behaviour now lives; ``tests/util.py``'s ``write_shim`` produces the same text a consumer
+        gets.
+        """
+        from tests.util import write_shim
+
+        shim = write_shim(self.project).read_text(encoding="utf-8")
+        assert "UVX ?=" in shim, "the shim no longer resolves a uvx path"
+        assert "astral.sh/uv/install.sh" in shim, (
+            "the shim no longer downloads uv, so `make fmt` fails on a runner without it"
+        )
 
     def test_core_ships_the_semgrep_config_its_own_target_reads(self):
         """`semgrep` is a core target, so its config cannot live in a Python-only bundle.
@@ -144,19 +155,17 @@ class TestPythonCoreBundleSync:
         content = (self.project / "ruff.toml").read_text(encoding="utf-8")
         assert "target-version =" not in content
 
-    def test_python_mk_provides_the_language_contract(self):
-        """python.mk owns the target names the rest of the template calls.
+    def test_python_core_ships_no_make_fragment(self):
+        """The Python gates are the CLI's now, not ``python.mk``'s.
 
-        ``rhiza-test`` is deliberately absent: its recipe is language-neutral, so it moved
-        to core's quality.mk in #1471 rather than existing identically in all three layers.
+        The contract itself -- that a layer provides ``install``, ``all``, ``deps``, ``license``
+        and the rest under names no caller has to translate -- is asserted against the task
+        registry in ``test_layer_contract.py``, which is where it moved. What is left to check
+        here is that the fragment does not come back alongside it, which would give a consumer two
+        definitions of every gate and no way to know which one ran.
         """
-        python_mk = (self.project / ".rhiza" / "make.d" / "python.mk").read_text(encoding="utf-8")
-        for target in ("install:", "all:", "deps:", "license:"):
-            assert target in python_mk, f"python.mk is missing {target}"
-        assert "rhiza-test:" not in python_mk, (
-            "python.mk redefines rhiza-test, which core now owns — two recipes for one "
-            "target name is exactly what #1471 removed"
-        )
+        stale = sorted((self.project / ".rhiza").rglob("*.mk"))
+        assert not stale, f"python-core ships make fragments again: {[f.name for f in stale]}"
 
     @pytest.mark.parametrize("name", [".bumpversion.toml", ".bumpversion.cfg", "setup.cfg", ".rhiza/.cfg.toml"])
     def test_no_bumpversion_config_is_shipped(self, name):
@@ -209,9 +218,16 @@ class TestCoreAndTestsBundleSync:
         content = (self.project / "pytest.ini").read_text()
         assert "log_cli = false" in content
 
-    def test_test_mk_exists(self):
-        """test.mk Makefile fragment is present."""
-        assert (self.project / ".rhiza" / "make.d" / "test.mk").is_file()
+    def test_tests_bundle_ships_no_make_fragment(self):
+        """The optional extras are CLI tasks now, not ``test.mk`` targets.
+
+        ``benchmark``, ``hypothesis-test``, ``stress`` and ``mutation`` are what this bundle
+        exists for, and all four are registered tasks — so the fragment that defined them has
+        nothing left to own. What the bundle still ships is its *configuration*, which the
+        assertions below cover.
+        """
+        stale = sorted((self.project / ".rhiza").rglob("*.mk"))
+        assert not stale, f"the tests bundle ships make fragments again: {[f.name for f in stale]}"
 
     def test_no_rhiza_tests_folder_is_synced(self):
         """The sync must not deliver a `.rhiza/tests` folder any more (#1540).

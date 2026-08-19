@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.util import setup_rhiza_git_repo, sync_bundles
+from tests.util import setup_rhiza_git_repo, sync_bundles, write_shim
 
 # The bundles whose make layer these tests exercise. Sourced from ``bundles/`` rather than
 # from the repo root, which is the change this repo's own migration forced: rhiza now runs
@@ -38,6 +38,9 @@ MAKE_LAYER_BUNDLES = [
 def setup_tmp_makefile(logger, root: Path, tmp_path: Path):
     """Copy Makefile and split files into a temp dir and chdir there."""
     sync_bundles(root, MAKE_LAYER_BUNDLES, tmp_path)
+    # core ships no Makefile any more, so the assembled project needs the shim -- exactly what a
+    # consumer does once with `uvx rhiza-task shim > Makefile`.
+    write_shim(tmp_path)
     (tmp_path / ".rhiza").mkdir(exist_ok=True)
 
     if (root / ".python-version").exists():

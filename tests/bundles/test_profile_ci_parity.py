@@ -130,14 +130,20 @@ class TestGitlabProjectProfileSync:
         parsed = yaml.safe_load(content)
         assert parsed is not None, ".gitlab-ci.yml is empty or invalid YAML"
 
-    def test_core_infrastructure_present(self) -> None:
-        """Core Makefile and rhiza.mk must be present alongside GitLab CI."""
-        assert (self.project / "Makefile").is_file()
-        assert (self.project / ".rhiza" / "rhiza.mk").is_file()
+    def test_no_make_layer_is_synced(self) -> None:
+        """The profile must ship no ``Makefile``, ``rhiza.mk`` or gate fragment.
 
-    def test_test_mk_present(self) -> None:
-        """test.mk fragment must be synced (from the tests bundle)."""
-        assert (self.project / ".rhiza" / "make.d" / "test.mk").is_file()
+        This asserted their presence. The GitLab pipeline still calls ``make test``, ``make fmt``
+        and the rest — that has not changed and is what ``test_ci_workflows_expose_same_core_job_names``
+        below checks — but the front door is generated per repo now
+        (``uvx rhiza-task shim > Makefile``) rather than synced, so a profile that delivered one
+        would let ``/rhiza:update`` overwrite whatever the repo added to it.
+        """
+        assert not (self.project / "Makefile").exists(), "the profile ships a Makefile again"
+        assert not (self.project / ".rhiza" / "rhiza.mk").exists(), "the profile ships rhiza.mk again"
+        make_d = self.project / ".rhiza" / "make.d"
+        stale = sorted(f.name for f in make_d.rglob("*.mk")) if make_d.is_dir() else []
+        assert not stale, f"the profile ships gate fragments again: {stale}"
 
     def test_ci_workflows_expose_same_core_job_names(self, root: Path) -> None:
         """GitHub and GitLab CI definitions must expose the same core parity jobs."""
