@@ -177,8 +177,8 @@ def test_rhiza_test_carries_the_docstring_scope_to_the_doctest_check() -> None:
     The sharpest guard in this file, because the property it pins broke the moment this repo
     moved to the shim. pytest-rhiza's ``test_docstrings`` reads its scope from that
     environment variable, falling back to ``SOURCE_FOLDER`` in ``.rhiza/.env`` and then to
-    ``src``. ``quality.mk`` exported it from ``DOCSTRING_FOLDERS``; rhiza-task does not, and
-    cannot read ``[tool.rhiza-task] source-folder`` either -- so the check reported
+    ``src``. ``quality.mk`` exported it from ``DOCSTRING_FOLDERS``; rhiza-task 0.3.0 did not
+    -- so the check reported
 
         SKIPPED  No doctest folder found (looked for: src)
 
@@ -186,6 +186,13 @@ def test_rhiza_test_carries_the_docstring_scope_to_the_doctest_check() -> None:
     doctest examples unchecked, silently, behind a green gate. ``.rhiza/.env`` cannot carry
     the value because that file is gitignored, so CI would never see it -- hence the wrapper
     in the root Makefile (Jebel-Quant/rhiza-task#18), and hence this test.
+
+    **rhiza-task 0.3.1 passes the scope through itself**, so the wrapper no longer supplies
+    something absent; it supplies something *observable*. The upstream fix lives inside the
+    pin, where only a real run reveals whether it is still there, and a real run is what the
+    note below rules out. Reading the export out of a dry run keeps a bump that regressed it
+    -- upstream or here -- from landing green. If the wrapper is ever dropped in favour of a
+    bare delegation, this test must be replaced rather than deleted.
 
     **Asserted from a dry run, deliberately.** An earlier version ran the gate for real and
     checked that no rhiza check reported SKIPPED. That was stricter and wrong twice over: it

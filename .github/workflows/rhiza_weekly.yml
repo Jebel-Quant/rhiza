@@ -30,7 +30,7 @@ permissions:
 # target defined in this repo's own Makefile, not a rhiza-task task, so make is the only
 # thing that can resolve it.
 env:
-  RHIZA_TASK: rhiza-task@0.3.0
+  RHIZA_TASK: rhiza-task@0.3.1
 
 on:
   #push:

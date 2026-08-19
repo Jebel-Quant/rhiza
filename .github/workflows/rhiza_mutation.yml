@@ -45,7 +45,7 @@ permissions:
 # has no make targets left and each gate dies with `No rule to make target '<gate>'`.
 # Pinned rather than read from a consumer's `RHIZA_TASK`, which this workflow cannot see.
 env:
-  RHIZA_TASK: rhiza-task@0.3.0
+  RHIZA_TASK: rhiza-task@0.3.1
 
 on:
   pull_request:

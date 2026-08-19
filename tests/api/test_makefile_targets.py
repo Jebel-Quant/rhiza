@@ -80,10 +80,12 @@ class TestMakefileRootFixture:
     def test_makefile_puts_the_bootstrapped_uv_on_path(self, root: Path) -> None:
         """The shim must export PATH, or every gate fails on a runner without uv.
 
-        The shipped shim deliberately omits this ("no PATH export") and reaches the CLI by
-        absolute path. That is enough to *start* it and not enough to let it work:
+        The shim through 0.3.0 deliberately omitted this ("no PATH export") and reached the
+        CLI by absolute path. That is enough to *start* it and not enough to let it work:
         rhiza-task's task bodies shell out to bare ``uv``/``uvx``, so the first gate dies
-        with ``FileNotFoundError: 'uvx'``.
+        with ``FileNotFoundError: 'uvx'``. 0.3.1 ships the export, so this is no longer a
+        mother-repo addition -- but it is still the line whose loss makes the branch
+        unmergeable, which is what this test exists to catch, whoever owns it.
 
         Pinned because it is load-bearing for a *required* check. The ``pre-commit`` job runs
         ``make fmt`` with no ``astral-sh/setup-uv`` step, and ``Pre-commit hooks`` is required
