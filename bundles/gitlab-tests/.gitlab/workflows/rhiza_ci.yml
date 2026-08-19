@@ -9,6 +9,15 @@
 #
 # Trigger: On push and merge requests.
 
+#
+# RHIZA_TASK is the pin every gate below runs through. v1.4.0 retired the synced make
+# layer -- core ships no Makefile and no `.rhiza/rhiza.mk` -- so a project that syncs it
+# has no make targets left and each gate dies with `No rule to make target '<gate>'`.
+# Calling the CLI directly drops the dependency on a front door rhiza no longer ships.
+
+variables:
+  RHIZA_TASK: "rhiza-task@0.3.0"
+
 ci:test:
   # CI budget: ≤20 min (test matrix execution). Last measured: 2026-05-28.
   timeout: 20m
@@ -29,7 +38,7 @@ ci:test:
     # `make test` bootstraps its own environment via the `install` target, which
     # creates the venv with PYTHON_VERSION (a `?=` default the matrix env var
     # overrides) and provisions test tooling on the fly — no explicit `uv venv`.
-    - make test
+    - uvx "$RHIZA_TASK" test
 
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -42,7 +51,7 @@ ci:docs-coverage:
   image: $UV_IMAGE
   script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-    - make docs-coverage
+    - uvx "$RHIZA_TASK" docs-coverage
 
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -56,7 +65,7 @@ ci:typecheck:
   image: $UV_IMAGE
   script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-    - make typecheck
+    - uvx "$RHIZA_TASK" typecheck
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
@@ -68,7 +77,7 @@ ci:deptry:
   needs: []
   image: $UV_IMAGE
   script:
-    - make deps
+    - uvx "$RHIZA_TASK" deps
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
@@ -80,7 +89,7 @@ ci:pre-commit:
   needs: []
   image: $UV_IMAGE
   script:
-    - make fmt
+    - uvx "$RHIZA_TASK" fmt
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
@@ -93,7 +102,7 @@ ci:security:
   image: $UV_IMAGE
   script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-    - make security
+    - uvx "$RHIZA_TASK" security
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
@@ -106,7 +115,7 @@ ci:license:
   image: $UV_IMAGE
   script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-    - make license
+    - uvx "$RHIZA_TASK" license
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH

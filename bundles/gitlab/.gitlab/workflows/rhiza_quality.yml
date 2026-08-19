@@ -11,12 +11,21 @@
 #
 # Equivalent GitHub Action: .github/workflows/rhiza_quality.yml
 
+#
+# RHIZA_TASK is the pin every gate below runs through. v1.4.0 retired the synced make
+# layer -- core ships no Makefile and no `.rhiza/rhiza.mk` -- so a project that syncs it
+# has no make targets left and each gate dies with `No rule to make target '<gate>'`.
+# Calling the CLI directly drops the dependency on a front door rhiza no longer ships.
+
+variables:
+  RHIZA_TASK: "rhiza-task@0.3.0"
+
 quality:deptry:
   stage: test
   needs: []
   image: $UV_IMAGE
   script:
-    - make deps
+    - uvx "$RHIZA_TASK" deps
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
@@ -26,7 +35,7 @@ quality:pre-commit:
   needs: []
   image: $UV_IMAGE
   script:
-    - make fmt
+    - uvx "$RHIZA_TASK" fmt
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
@@ -38,7 +47,7 @@ quality:docs-coverage:
   variables:
     UV_EXTRA_INDEX_URL: "${UV_EXTRA_INDEX_URL}"
   script:
-    - make docs-coverage
+    - uvx "$RHIZA_TASK" docs-coverage
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH

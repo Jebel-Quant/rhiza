@@ -12,13 +12,22 @@
 # Trigger: Scheduled pipeline (configure weekly in GitLab CI/CD Schedules),
 #          or manually via the web UI.
 
+#
+# RHIZA_TASK is the pin every gate below runs through. v1.4.0 retired the synced make
+# layer -- core ships no Makefile and no `.rhiza/rhiza.mk` -- so a project that syncs it
+# has no make targets left and each gate dies with `No rule to make target '<gate>'`.
+# Calling the CLI directly drops the dependency on a front door rhiza no longer ships.
+
+variables:
+  RHIZA_TASK: "rhiza-task@0.3.0"
+
 weekly:semgrep:
   stage: test
   needs: []
   image: $UV_IMAGE
   script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
-    - make semgrep
+    - uvx "$RHIZA_TASK" semgrep
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "web"

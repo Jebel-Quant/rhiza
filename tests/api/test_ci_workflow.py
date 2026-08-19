@@ -59,14 +59,14 @@ def test_ci_generate_matrix_reads_the_os_matrix_from_the_cli(root):
 
 
 def test_ci_security_job_runs_security_scans(root):
-    """CI security job must run the security scans via `make security`."""
+    """CI security job must run the security scans through the rhiza-task CLI."""
     with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
         workflow = yaml.safe_load(fh)
 
     security_job = workflow["jobs"]["security"]
     run_steps = [step.get("run", "") for step in security_job.get("steps", [])]
 
-    assert any("make security" in run for run in run_steps)
+    assert any('uvx "$RHIZA_TASK" security' in run for run in run_steps)
 
 
 def test_ci_jobs_define_timeout_budgets(root):
@@ -157,7 +157,11 @@ def test_every_gate_named_by_make_all_runs_in_ci(root):
     workflows = (root / ".github" / "workflows").glob("*.yml")
     invoked = "\n".join(wf.read_text(encoding="utf-8") for wf in workflows)
 
-    missing = [gate for gate in gates if f"make {gate}" not in invoked]
+    # Either interface counts: the gates run through `uvx "$RHIZA_TASK" <gate>` since
+    # v1.4.0 retired the make layer, while the mother-repo-only targets (`e2e`,
+    # `gitlab-docker-test`) are real Make rules in this repo's own Makefile. What must
+    # hold is that some workflow invokes the gate.
+    missing = [gate for gate in gates if f'uvx "$RHIZA_TASK" {gate}' not in invoked and f"make {gate}" not in invoked]
     assert not missing, (
         f"these targets are named by `make all` but no .github/workflows job runs them: "
         f"{missing}. A gate that runs only locally cannot block a pull request (#1523)."
@@ -214,13 +218,13 @@ def test_ci_cache_keys_match_audit_policy(root):
 
 
 def test_ci_test_job_runs_make_under_bash(root):
-    """CI test job must run make under bash for Windows compatibility."""
+    """CI test job must run the test gate under bash for Windows compatibility."""
     with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
         workflow = yaml.safe_load(fh)
 
     run_tests_step = next(step for step in workflow["jobs"]["test"]["steps"] if step.get("name") == "Run tests")
     assert run_tests_step["shell"] == "bash"
-    assert "make test" in run_tests_step["run"]
+    assert 'uvx "$RHIZA_TASK" test' in run_tests_step["run"]
 
 
 def test_ci_typecheck_job_documents_ty_and_mypy(root):
@@ -229,7 +233,7 @@ def test_ci_typecheck_job_documents_ty_and_mypy(root):
         workflow = yaml.safe_load(fh)
 
     typecheck_steps = workflow["jobs"]["typecheck"]["steps"]
-    typecheck_step = next(step for step in typecheck_steps if step.get("run") == "make typecheck")
+    typecheck_step = next(step for step in typecheck_steps if step.get("run") == 'uvx "$RHIZA_TASK" typecheck')
     assert "ty and mypy" in typecheck_step["name"]
 
 
