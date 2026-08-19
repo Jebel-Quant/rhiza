@@ -264,8 +264,8 @@ jobs:
           token: ${{ secrets.GH_PAT }}
 
       - name: Run ty and mypy type checkers (make typecheck)
-        # Runs `uv run ty check src/` and `uv run mypy --strict src/`
-        # as defined in .rhiza/make.d/test.mk. Set TYPECHECKER=ty or
+        # Runs `uv run ty check <source>` and `uv run mypy --strict <source>`
+        # as defined by rhiza-task's `typecheck` task. Set TYPECHECKER=ty or
         # TYPECHECKER=mypy to run only one of the two checkers.
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}

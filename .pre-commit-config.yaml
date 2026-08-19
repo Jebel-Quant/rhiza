@@ -97,7 +97,7 @@ repos:
   # library, so it has no src/ and the hook reported "(no files to check)Skipped" on every
   # `make fmt` — a line that reads like a check in the output of the gate this repo runs
   # most. Scoped instead to the folders `make docs-coverage` measures, which is
-  # DOCSTRING_FOLDERS (utils, contributed by .rhiza/make.d/bundles.mk) plus the test
+  # DOCSTRING_FOLDERS (utils, from [tool.rhiza-task].source-folder) plus the test
   # folder that target folds in.
   #
   # The settings live in pyproject.toml's [tool.interrogate], which the `--config` below

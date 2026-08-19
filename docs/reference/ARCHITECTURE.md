@@ -11,10 +11,9 @@ flowchart TB
         local[local.mk]
     end
 
-    subgraph Core[".rhiza/ Core"]
-        rhizamk[rhiza.mk<br/>Core Logic]
-        maked[make.d/*.mk<br/>Extensions]
-        reqs[requirements/<br/>Dependencies]
+    subgraph Core["Task layer"]
+        shim[Makefile<br/>repo-owned shim]
+        cli[rhiza-task<br/>pinned CLI]
         template[template-bundles.yml<br/>Bundle Config]
     end
 
@@ -32,11 +31,10 @@ flowchart TB
         sync[Sync Workflow]
     end
 
-    make --> rhizamk
-    local -.-> rhizamk
-    rhizamk --> maked
-    maked --> reqs
-    maked --> pyproject
+    make --> shim
+    local -.-> shim
+    shim --> cli
+    cli --> pyproject
     ci --> make
     release --> make
     security --> make
@@ -48,53 +46,64 @@ flowchart TB
 ```mermaid
 flowchart TD
     subgraph Entry["Entry Point"]
-        Makefile[Makefile<br/>9 lines]
+        Makefile[Makefile<br/>repo-owned shim]
     end
 
-    subgraph Core["Core Logic"]
-        rhizamk[.rhiza/rhiza.mk<br/>268 lines]
+    subgraph CLI["Pinned CLI"]
+        rhizatask[rhiza-task@X.Y.Z<br/>uvx-provisioned]
+        registry[task registry<br/>layer:name]
     end
 
-    subgraph Extensions["Auto-loaded Extensions"]
-        config[00-19: Configuration]
-        tasks[20-79: Task Definitions]
-        hooks[80-99: Hook Implementations]
+    subgraph Settings["Settings"]
+        table["[tool.rhiza-task]<br/>pyproject.toml / rhiza.toml"]
+        env[.rhiza/.env<br/>developer-local]
     end
 
     subgraph Local["Local Customization"]
         localmk[local.mk<br/>Not synced]
+        shadow[explicit rules<br/>shadow a task]
     end
 
-    Makefile -->|includes| rhizamk
-    rhizamk -->|includes| config
-    rhizamk -->|includes| tasks
-    rhizamk -->|includes| hooks
-    rhizamk -.->|optional| localmk
+    Makefile -->|"%: forwards to"| rhizatask
+    Makefile -.->|includes| localmk
+    Makefile -.->|beats the catch-all| shadow
+    rhizatask --> registry
+    registry -->|resolves against| table
+    registry -.-> env
 ```
 
-`rhiza.mk` auto-loads every `.rhiza/make.d/*.mk` alphabetically. Each fragment is
-owned by exactly one bundle and is synced (as a dogfood symlink into
-`bundles/<owner>/.rhiza/make.d/`) only when that bundle is adopted — so the number of
-fragments tracks the bundle model rather than growing arbitrarily. Edit the bundle
-source, not the root symlink.
+There is no make layer left to load. `core` ships no `Makefile` and no `.rhiza/rhiza.mk`,
+and `.rhiza/make.d/` no longer exists: every fragment it once held retired into
+[rhiza-task](https://github.com/Jebel-Quant/rhiza-task), a pinned CLI, in two steps —
+eleven at 0.2.0 and the last five at 0.3.0.
 
-| `.rhiza/make.d/` fragment | Owner bundle | Provides |
-| --- | --- | --- |
-| `bootstrap.mk` | core | `install` / `uv` bootstrap |
-| `doctor.mk` | core | `make doctor` environment checks |
-| `quality.mk` | core | `fmt`, lint, pre-commit gates |
-| `releasing.mk` | core | `bump` / `release` targets |
-| `custom-env.mk` | core | Example stub: project variables |
-| `custom-task.mk` | core | Example stub: project targets / hooks |
-| `test.mk` | tests | `test`, coverage, typecheck, stress, mutation |
-| `book.mk` | book | `make book` documentation build |
-| `docker.mk` | docker | Container build / run |
-| `marimo.mk` | marimo | `make marimo` notebooks |
-| `presentation.mk` | presentation | Marp slide build |
-| `paper.mk` | paper | LaTeX paper compilation |
-| `lfs.mk` | lfs | Git LFS install / track / status |
-| `github.mk` | github | GitHub repo / workflow helpers |
-| `bundles.mk` | *(mother-repo only — no bundle ships it)* | `explain-bundles`, `sync-self`, `sync-self-check` |
+A repository generates its front door once:
+
+```bash
+uvx rhiza-task shim > Makefile
+```
+
+That file is repo-owned from then on. It pins `RHIZA_TASK`, bootstraps uv if the runner has
+none, and forwards every unmatched target to the CLI through a `%:` catch-all. What used to
+be "which fragments were synced?" is now "which tasks does the pinned version have, for the
+language layers this repository has?" — `uvx rhiza-task list` answers it.
+
+| was | is |
+| --- | --- |
+| `bootstrap.mk` — `install`, uv bootstrap | the `install` task, plus three lines of the shim |
+| `test.mk` — test, coverage, typecheck, stress, mutation | the `python`/`rust`/`go` layers and the testing extras |
+| `quality.mk` — `fmt`, lint, `rhiza-test` | the neutral quality tasks |
+| `book.mk`, `marimo.mk` | the `book` and `marimo` tasks |
+| `doctor.mk` | the `doctor` task |
+| `releasing.mk` | `/rhiza:release` and bump-my-version |
+| `docker.mk`, `github.mk`, `lfs.mk`, `paper.mk`, `presentation.mk` | tasks of the same names, added in rhiza-task 0.3.0 |
+| `custom-env.mk`, `custom-task.mk` — example stubs | the repo-owned `Makefile`, or a gitignored `local.mk` |
+| `bundles.mk` — mother-repo only | a section of rhiza's own `Makefile` |
+
+Bundles still own capabilities; what a bundle contributes is now configuration and
+documentation rather than make recipes. The `docker` bundle ships the `Dockerfile`, `paper`
+ships the `docs/paper/` convention, and their targets come from the CLI whatever bundles a
+project selected.
 
 ## Hook System
 
@@ -183,8 +192,7 @@ flowchart TD
     root --> docs[docs/]
     root --> book[book/]
 
-    rhiza --> rhizamk[rhiza.mk]
-    rhiza --> maked[make.d/]
+    root --> shim[Makefile<br/>rhiza-task shim]
     rhiza --> semgrep[semgrep.yml]
     rhiza --> env[.env]
 
@@ -194,14 +202,7 @@ flowchart TD
     workflows --> security[rhiza_security.yml]
     workflows --> more[... 11 more]
 
-    maked --> book[book.mk]
-    maked --> bootstrap[bootstrap.mk]
-    maked --> docker[docker.mk]
-    maked --> docs_mk[docs.mk]
-    maked --> github_mk[github.mk]
-    maked --> marimo[marimo.mk]
-    maked --> test[test.mk]
-    maked --> more_mk[... 6 more]
+    shim --> tasks[uvx rhiza-task &lt;task&gt;]
 ```
 
 ## .rhiza/ Directory Structure and Dependencies
@@ -212,20 +213,9 @@ flowchart TB
         direction TB
         
         subgraph core["Core Files"]
-            rhizamk[rhiza.mk<br/>Core Logic - 153 lines]
             env[.env<br/>Environment]
             bundles[template-bundles.yml<br/>Bundle Definitions]
-        end
-        
-        subgraph maked["make.d/ (make fragments)"]
-            direction LR
-            bootstrap[bootstrap.mk<br/>Installation]
-            test[test.mk<br/>Testing]
-            book_mk[book.mk<br/>Documentation]
-            docker_mk[docker.mk<br/>Containers]
-            quality[quality.mk<br/>Code Quality]
-            releasing[releasing.mk<br/>Releases]
-            more[...]
+            semgrep[semgrep.yml<br/>Static analysis rules]
         end
         
         subgraph requirements["requirements/ (4 files)"]
@@ -260,18 +250,13 @@ flowchart TB
         python_version[.python-version<br/>Python 3.13]
     end
     
-    Makefile -->|includes| rhizamk
-    rhizamk -->|auto-loads| maked
-    maked -->|reads| pyproject
-    maked -->|reads| python_version
-    test -->|uses| pytest_ini
-    test -->|installs| tests_txt
-    book_mk -->|installs| docs_txt
-    book_mk -->|uses| marimo_txt
-    quality -->|uses| ruff_toml
-    bootstrap -->|installs| tools_txt
+    Makefile -->|forwards to| cli
+    cli -->|reads| pyproject
+    cli -->|reads| python_version
+    cli -->|uses| pytest_ini
+    cli -->|uses| ruff_toml
+    cli -->|reads| env
     tests_dir -->|validates| core
-    tests_dir -->|validates| maked
 ```
 
 ## CI/CD Workflow Triggers
@@ -338,25 +323,20 @@ flowchart LR
 
 ## Naming Conventions and Organization Patterns
 
-### Makefile Naming (`.rhiza/make.d/`)
+### Task Naming (rhiza-task)
 
-Makefiles follow these conventions:
+Task names follow these conventions:
 
-1. **Lowercase with hyphens**: All makefile names use lowercase letters with hyphens for word separation
-   - ✅ `bootstrap.mk`, `custom-task.mk`, `github.mk`
-   - ❌ `Bootstrap.mk`, `customTask.mk`, `GitHub.mk`
+1. **Lowercase with hyphens**: `docs-coverage`, `view-prs`, `marimo-validate` — never
+   `docsCoverage` or `Docs_Coverage`.
 
-2. **Descriptive domain names**: Each file represents a logical domain or feature area
-   - `bootstrap.mk` - Installation and setup
-   - `docker.mk` - Docker containerization
-   - `marimo.mk` - Marimo notebooks
-   - `test.mk` - Testing infrastructure
+2. **The same name means the same thing in every language**: `test` is pytest in a Python
+   project, `cargo nextest` in a crate and `go test` in a module. That parity is what lets
+   the CI workflows call `make typecheck` without knowing the language.
 
-3. **Example vs. Production files**:
-   - Files prefixed with `custom-` are **examples** for user customization
-   - `custom-env.mk` - Example environment variable customizations
-   - `custom-task.mk` - Example custom task definitions
-   - Users should create their own files or modify the root `Makefile` for customizations
+3. **Sections group them**: `Python`, `Rust`, `Go`, `Quality`, `Book`, `Dev`, `Testing extras`
+   and one per bundle-owned group (`Docker`, `Git LFS`, `Paper`, `Presentation`,
+   `GitHub Helpers`). `uvx rhiza-task list` prints them grouped.
 
 ### Target Naming
 
@@ -411,7 +391,7 @@ post-sync::      # Runs after make sync
 ### File Organization Patterns
 
 1. **Directory naming**:
-   - Lowercase with hyphens: `make.d/`, `template-bundles.yml`
+   - Lowercase with hyphens: `template-bundles.yml`, `docs/reference/`
    - Plural for collections: `requirements/`, `templates/`, `tests/`
 
 2. **Test organization** (`tests/`):
@@ -508,19 +488,19 @@ GitHub Actions workflows use the pattern `rhiza_<feature>.yml`:
 - **Dependencies**: `pyproject.toml` (not duplicated in makefiles)
 - **Bundle definitions**: `template-bundles.yml` (not scattered)
 
-### 2. Auto-Loading Pattern
+### 2. Catch-All Delegation
 
-Makefiles in `.rhiza/make.d/` are automatically included:
+The generated `Makefile` forwards anything it cannot resolve itself:
 
 ```makefile
-# In .rhiza/rhiza.mk (last line)
--include .rhiza/make.d/*.mk
+%: $(UVX)
+	@$(UVX) $(RHIZA_TASK) $@
 ```
 
 This allows:
-- Adding new features by dropping in a `.mk` file
-- No manual maintenance of include lists
-- Clean separation of concerns
+- New tasks to arrive with a version bump, not a file sync
+- No include lists, and no ordering to get wrong
+- An explicit rule to shadow any task, which is how a project extends one
 
 ### 3. Extension Points
 

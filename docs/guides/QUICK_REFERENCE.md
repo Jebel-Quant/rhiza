@@ -77,28 +77,29 @@ uv run pytest -v -s
 ## Directory Structure
 
 ```text
+Makefile              # repo-owned shim, generated once by `rhiza-task shim`
+local.mk              # optional, gitignored: personal one-off targets
+pyproject.toml        # [tool.rhiza-task] settings live here
 .rhiza/
-├── rhiza.mk          # Core Makefile logic
-├── make.d/           # Modular extensions (auto-loaded)
-│   ├── 00-19*.mk     # Configuration
-│   ├── 20-79*.mk     # Task definitions
-│   └── 80-99*.mk     # Hook implementations
-├── utils/            # Python utilities
-└── template.yml      # Sync configuration
+├── template.yml      # Sync configuration
+├── semgrep.yml       # Static-analysis rules
+└── .env              # optional, gitignored: developer-local settings
 ```
 
-## Hook Targets
+## Extending a Task
 
-Extend these with `::` syntax in `local.mk` or `.rhiza/make.d/`:
+There are no hook targets. `pre-install::`/`post-install::` belonged to the synced make layer;
+the CLI knows nothing about make targets. Shadow the task instead — an explicit rule beats the
+shim's `%:` catch-all:
 
-| Hook | When it runs |
-|------|--------------|
-| `pre-install::` | Before dependency installation |
-| `post-install::` | After dependency installation |
-| `pre-sync::` | Before template sync |
-| `post-sync::` | After template sync |
-| `pre-validate::` | Before project validation |
-| `post-validate::` | After project validation |
+```makefile
+install:
+	@$(UVX) $(RHIZA_TASK) install
+	@./scripts/fetch-fixtures.sh
+```
+
+That works for any task, runs in a defined order, and needs no anchor to have been declared in
+advance.
 
 ## Key Files
 

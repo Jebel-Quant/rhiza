@@ -126,7 +126,7 @@ ignore_missing_version = true
 # layer 4 of rhiza-task's resolution order, above `.rhiza/.env` and below the environment.
 #
 # `source-folder` is the one entry that is load-bearing rather than a preference. It
-# replaces six make accumulators that `.rhiza/make.d/bundles.mk` used to carry
+# replaces six make accumulators that the retired `.rhiza/make.d/bundles.mk` used to carry
 # (TYPECHECK_FOLDERS, BANDIT_FOLDERS, DOCSTRING_FOLDERS, DEPTRY_FOLDERS, SEMGREP_FOLDERS,
 # COVERAGE_FOLDERS += utils). They existed because this repo ships configuration rather
 # than a library: it has no `src/`, so the default matched nothing and `typecheck`,
@@ -191,7 +191,7 @@ mkdocs-extra-packages = ["mkdocstrings[python]"]
 # the gate checked utils/ in strict mode while a contributor's `uvx mypy` swept the
 # whole tree at default strictness and reported on code this repo does not gate.
 #
-# Keep `files` in step with TYPECHECK_FOLDERS in .rhiza/make.d/bundles.mk, and `strict`
+# Keep `files` in step with [tool.rhiza-task].source-folder, and `strict`
 # in step with the `--strict` in python.mk's typecheck recipe. tests/ is deliberately
 # absent from both: ruff exempts test code from ANN (see ruff.toml's per-file-ignores),
 # so the annotations strict mode would demand are not there by design.

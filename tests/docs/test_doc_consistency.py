@@ -44,7 +44,7 @@ _PLACEHOLDER_TARGETS = {"XXXX-title.md"}
 
 # Templates that are copied elsewhere before use: deployment-relative file
 # path -> directory its links actually resolve from. PRESENTATION.md is
-# rendered by Marp from the repository root (see .rhiza/make.d/presentation.mk).
+# rendered by Marp from the repository root (see rhiza-task's `presentation` task).
 _DEPLOYED_DIR_OVERRIDES = {
     Path("docs/development/PRESENTATION.md"): Path(),
 }
@@ -188,75 +188,6 @@ class TestBundleDocumentation:
         )
 
 
-def _make_module_names() -> list[str]:
-    """Return the basename of every ``.rhiza/make.d/*.mk`` fragment that ships or runs here.
-
-    The union of two sources, because neither alone is complete: the bundle sources carry
-    ``rust.mk`` and ``go.mk``, which the mother repo never materialises (it runs one
-    language layer), while ``bundles.mk`` exists only at the root because no bundle ships
-    it.
-    """
-    names = {p.name for p in _ROOT.glob("bundles/*/.rhiza/make.d/*.mk")}
-    names |= {p.name for p in (_ROOT / ".rhiza" / "make.d").glob("*.mk")}
-    return sorted(names)
-
-
-def _claude_md_make_module_table() -> set[str]:
-    """Return the ``.rhiza/make.d/`` filenames listed in CLAUDE.md's ownership table.
-
-    Reads the table itself rather than the whole document on purpose: the gap this
-    guards against is a fragment mentioned somewhere in the prose while missing from the
-    map a contributor actually uses to find its owning bundle.
-    """
-    claude_md = (_ROOT / "CLAUDE.md").read_text(encoding="utf-8")
-    header = "| `.rhiza/make.d/` file | owner bundle | provides |"
-    assert header in claude_md, "CLAUDE.md no longer contains the .rhiza/make.d ownership table header"
-    body = claude_md.split(header, 1)[1].split("\n\n", 1)[0]
-    return set(re.findall(r"^\|\s*`([^`]+\.mk)`\s*\|", body, re.MULTILINE))
-
-
-class TestMakeModuleDocumentation:
-    """Verify CLAUDE.md's ``.rhiza/make.d`` ownership table lists every shipped fragment.
-
-    The bundle tables are guarded in both directions; this one used to be guarded only
-    doc-to-repo (``test_mentioned_make_targets_exist``), so a fragment could be added
-    without ever being mapped to its owner. ``completions.mk`` reached main that way.
-    """
-
-    @pytest.mark.parametrize("module_name", _make_module_names())
-    def test_make_module_documented_in_claude_md(self, module_name: str) -> None:
-        """Every shipped .rhiza/make.d fragment must have a row in the ownership table."""
-        assert module_name in _claude_md_make_module_table(), (
-            f"'{module_name}' ships in .rhiza/make.d/ but has no row in CLAUDE.md's ownership table — "
-            "add one naming its owner bundle, so a contributor knows which bundle source to edit"
-        )
-
-    def test_the_table_lists_no_unknown_modules(self) -> None:
-        """The table must not name a fragment that no bundle ships and the root lacks."""
-        unknown = _claude_md_make_module_table() - set(_make_module_names())
-        assert not unknown, f"CLAUDE.md's ownership table names .rhiza/make.d fragments that do not exist: {unknown}"
-
-    def test_the_table_was_parsed(self) -> None:
-        """Guard against the table scanner silently collecting nothing.
-
-        The bound used to be "more than ten", which was true while sixteen fragments shipped and
-        became wrong the moment eleven of them retired to rhiza-task. A magic number cannot
-        survive the thing it is counting shrinking, so this asserts the two sides *agree* and are
-        non-empty instead -- which is the property the guard was reaching for, and which stays
-        true at any fragment count above zero.
-
-        When the last fragment retires (Jebel-Quant/rhiza-task#20) this test and the table it
-        guards both go.
-        """
-        table = _claude_md_make_module_table()
-        discovered = set(_make_module_names())
-        assert discovered, "no .rhiza/make.d fragments were discovered, so the scanner is inert"
-        assert table == discovered, (
-            f"CLAUDE.md's ownership table and the shipped fragments disagree: "
-            f"table-only={sorted(table - discovered)}, shipped-only={sorted(discovered - table)}"
-        )
-
-
 _BUNDLE_TAXONOMY = _ROOT / "docs" / "reference" / "BUNDLE_TAXONOMY.md"
 
 
@@ -377,14 +308,11 @@ def _defined_make_targets() -> set[str]:
     """
     targets: set[str] = set(_cli_task_names())
     sources = [_ROOT / s for s in _MAKE_SOURCES]
-    # Plus the fragments the bundles still ship. CLAUDE.md and README.md document what rhiza
-    # *ships*, not only what it runs, and the two diverged when this repo moved to the shim:
-    # `make paper`, `make presentation`, `make deptry` and `make install-uv` are real for a
-    # consumer on the make layer and unknown to the CLI, which has no task for any of them.
-    # Dropping the bundles here would have forced deleting true documentation to keep a test
-    # green -- the wrong direction. When a fragment retires, its prose fails here and can be
-    # removed then.
-    sources += sorted((_ROOT / "bundles").glob("*/.rhiza/make.d/*.mk"))
+    # The bundles' own `.rhiza/make.d/*.mk` used to be scanned alongside, because rhiza
+    # documented what it *ships* and not only what it runs: `make paper` and `make view-prs`
+    # were real for a consumer while unknown to the CLI. rhiza-task 0.3.0 closed that gap by
+    # taking over the last five fragments, so the CLI is once again the complete answer and
+    # the two sources have converged.
     sources += sorted((_ROOT / "bundles").glob("*/Makefile"))
     for source in sources:
         if not source.is_file():
@@ -412,7 +340,7 @@ class TestProseDrift:
     def test_mentioned_make_targets_exist(self, label: str, target: str) -> None:
         """Every `make <target>` mentioned in CLAUDE.md/README.md code must be a real target."""
         assert target in _defined_make_targets(), (
-            f"{label}: target is not defined in the Makefile or any .rhiza/make.d module"
+            f"{label}: target is not defined in the Makefile and is not a task of the pinned CLI"
         )
 
     @pytest.mark.parametrize(
@@ -454,12 +382,12 @@ _WATCHED_TOOLS = (
     "cargo-machete",
 )
 
-# Where a tool would be invoked from: the make fragments and every CI workflow, in this
-# repo and in the bundles it ships.
+# Where a tool would be invoked from: this repo's Makefile and every CI workflow, here and
+# in the bundles it ships. The bundles' `.rhiza/make.d/*.mk` were a source until rhiza-task
+# 0.3.0 took over the last five; a tool a *task* invokes is rhiza-task's to document.
 _INVOCATION_SOURCES = (
     *(_ROOT / s for s in _MAKE_SOURCES),
     *sorted(_ROOT.glob(".github/workflows/*.yml")),
-    *sorted(_ROOT.glob("bundles/*/.rhiza/make.d/*.mk")),
     *sorted(_ROOT.glob("bundles/*/.github/workflows/*.yml")),
     *sorted(_ROOT.glob("bundles/*/.gitlab/**/*.yml")),
     *sorted(_ROOT.glob("bundles/*/.gitlab-ci.yml")),

@@ -52,22 +52,24 @@ The core abstraction is the **bundle** — a named group of configuration files.
 
 **Feature bundles** — one per capability:
 
-- `core` (required, **language-neutral**): the thin Makefile, the `.rhiza/make.d` system,
-  help/logo machinery, and uv/uvx as a *tool runner*. It deliberately defines no
-  `install` and no `all` — see **Language layers** below.
+- `core` (required, **language-neutral**): the language-neutral configuration —
+  `.editorconfig`, `cliff.toml`, `.gitignore`, `.rhiza/semgrep.yml` — and uv/uvx as a
+  *tool runner*. It ships no `Makefile` and no make fragments at all: the front door is
+  generated per repo (`uvx rhiza-task shim > Makefile`) and the gates are CLI tasks. It
+  deliberately provides no `install` and no `all` — see **Language layers** below.
 - `python-core` (the Python **language layer**): `.python-version`, `ruff.toml`,
-  `.bandit`, the pre-commit config, `pytest.ini`, and `.rhiza/make.d/python.mk`
-  (`install`, `all`, `deps`, `license`, plus `test`, `typecheck`, `security` and
-  `docs-coverage` — see **Language layers**). Ships no bump-my-version config — see
-  **Where the version config lives**.
+  `.bandit`, the pre-commit config and `pytest.ini`. Its gate set — `install`, `all`,
+  `deps`, `license`, `test`, `typecheck`, `security`, `docs-coverage` — is rhiza-task's
+  `python` layer rather than a synced fragment (see **Language layers**). Ships no
+  bump-my-version config — see **Where the version config lives**.
 - `rust-core` (the Rust **language layer**): `rust-toolchain.toml`, `rustfmt.toml`,
-  `clippy.toml`, `deny.toml`, a Rust pre-commit config, `.bumpversion.toml`, and
-  `.rhiza/make.d/rust.mk`. Carries its own test targets, as every layer now does —
+  `clippy.toml`, `deny.toml`, a Rust pre-commit config and `.bumpversion.toml`. Its gates
+  are rhiza-task's `rust` layer, test targets included, as every layer now does —
   see **Language layers**.
 - `go-core` (the Go **language layer**): `.golangci.yml`, `revive.toml`, a Go
-  pre-commit config, `.bumpversion.toml`, a starter `internal/version/version.go`
-  with its `version_test.go`, and `.rhiza/make.d/go.mk`. Carries its own test
-  targets, like the other two.
+  pre-commit config, `.bumpversion.toml`, and a starter `internal/version/version.go`
+  with its `version_test.go`. Its gates are rhiza-task's `go` layer, test targets
+  included, like the other two.
 - `tests`: optional Python testing extras — `benchmark`, `hypothesis-test`, `stress`,
   `mutation` (requires `python-core`; the gates `all` names live in the layer)
 - `benchmarks`: pytest-benchmark infrastructure and reporting
@@ -381,8 +383,9 @@ independently, so a shared helper had no third home.
 
 Three details are worth knowing before editing this:
 
-- **The accumulator's `?= ` empty / `+=` seed shape is load-bearing, not cosmetic.**
-  `rhiza.mk` includes `make.d/*.mk` alphabetically, so `go.mk` and `python.mk` are read
+- **The accumulator's `?= ` empty / `+=` seed shape was load-bearing, not cosmetic.**
+  (Historical: the accumulator is a derivation from the layer set in rhiza-task now.)
+  `rhiza.mk` included `make.d/*.mk` alphabetically, so `go.mk` and `python.mk` were read
   *before* `quality.mk`. In make, `+=` on an undefined variable defines it — so a bare
   `RHIZA_CHECKS ?= <core's two>` would be skipped as already-defined on exactly those two
   layers, and a Python or Go project would run its own checks while silently losing the
@@ -405,9 +408,10 @@ still there.
 
 ### What is left of the Makefile system
 
-The synced make layer is **gone from the bundles**, not merely from this repo. `core` ships no
-`Makefile` and no `.rhiza/rhiza.mk`; eleven of the sixteen fragments went with them — 1481 lines.
-Each repository owns its front door instead, generated once:
+The synced make layer is **gone**, bundles included. `core` ships no `Makefile` and no
+`.rhiza/rhiza.mk`, `.rhiza/make.d/` no longer exists in any bundle or at the root, and all
+sixteen fragments — 1481 lines — retired with them. Each repository owns its front door
+instead, generated once:
 
 ```bash
 uvx rhiza-task shim > Makefile
@@ -416,54 +420,49 @@ uvx rhiza-task shim > Makefile
 `make` therefore still works and still is what a stranger types, but it no longer *contains*
 anything: a `%:` catch-all forwards every unmatched target to a pinned CLI, and `RHIZA_TASK` is
 the whole version contract. Bumping it is the migration that used to be `/rhiza:update`
-re-syncing eleven fragments and reconciling whatever had been shadowed.
+re-syncing sixteen fragments and reconciling whatever had been shadowed.
 
-**Five fragments survive, and none of them is a gate.** rhiza-task has no task for their targets,
-so retiring them would delete working behaviour to tidy a folder:
+**The last five went in two steps, and the second is worth knowing about.** Eleven fragments
+retired with rhiza-task 0.2.0. `github.mk`, `docker.mk`, `lfs.mk`, `paper.mk` and
+`presentation.mk` could not, because the CLI had no task for `view-prs`, `docker-build`,
+`lfs-pull`, `paper` or `presentation-pdf` — none of them a gate, so deleting them would have
+removed working behaviour to tidy a folder. rhiza-task 0.3.0 added all eighteen targets under
+their original names (Jebel-Quant/rhiza-task#22), which is what let the folder go.
 
-| `.rhiza/make.d/` file | owner bundle | provides |
-| --- | --- | --- |
-| `github.mk` | github | `view-prs`, `view-issues`, `workflow-status`, `failed-workflows`, `latest-release`, `whoami` |
-| `docker.mk` | docker | `docker-build`, `docker-run`, `docker-clean` |
-| `lfs.mk` | lfs | `lfs-install`, `lfs-pull`, `lfs-track`, `lfs-status` |
-| `paper.mk` | paper | `paper`, `paper-clean` (latexmk) |
-| `presentation.mk` | presentation | `presentation`, `presentation-pdf`, `presentation-serve` (Marp) |
+Three consequences of *that* step, all of them things a reader will otherwise trip over:
 
-`github` is the one that matters most: it is in the `github-project` profile, so dropping it would
-take `make view-prs` from consumers on the flagship profile. The other four are opt-in standalone
-bundles in no profile. They retire when rhiza-task grows tasks for them
-(Jebel-Quant/rhiza-task#20), and the folder goes with the last one.
+- **A consumer's stale fragments now shadow the CLI, silently.** A sync that stops delivering a
+  file does not delete it, so a repo that synced `github` before this keeps
+  `.rhiza/make.d/github.mk` on disk. That is only inert if nothing includes it — and an explicit
+  rule beats the `%:` catch-all, so a repo whose Makefile still carries the `-include` runs the
+  *old* recipe. This is the `.rhiza/tests/` situation from #1540 with the sign flipped: there the
+  leftovers were unreachable, here they win. `/rhiza:update` should delete the folder; until it
+  does, a migrating repo removes `.rhiza/make.d/` by hand.
+- **Three targets changed behaviour** when they became tasks, deliberately, and are documented in
+  their rhiza-task module docstrings: `lfs-install` configures the repository and reports how to
+  install git-lfs rather than downloading a binary into `.local/bin` (which never ended up on
+  `PATH`, so the macOS branch left nothing working); `presentation` reaches Marp through
+  `npx --yes` rather than `npm install -g`; and `paper` picks its root document by
+  `main.tex` → `paper.tex` → alphabetical instead of preferring one downstream repo's
+  `basanos.tex`.
+- **The `paper` bundle's only file was its fragment.** It ships `docs/paper/README.md` now — the
+  folder convention, the root-document rule and the `paper-folder` setting — which is the shape
+  `docker`, `lfs` and `presentation` already had. Without it the bundle would be an empty
+  directory, and `test_all_bundle_dirs_are_non_empty` says so.
 
-**The shim has to load them, and that is a repo-owned addition rather than something the shipped
-shim does.** `rhiza.mk` used to `-include .rhiza/make.d/*.mk`; the generated shim includes only
-`local.mk`, so this repo's Makefile adds:
+**Hook targets are gone**, and that predates this step. `bootstrap.mk` anchored
+`pre-install::`/`post-install::` as no-ops so a consumer could chain onto them, and that was *the*
+documented way to add project hooks. `uvx rhiza-task install` knows nothing about make targets.
+Shadow the target instead: an explicit `install:` rule beats the catch-all, so it can call the CLI
+and then the extra step. This repo does exactly that for `rhiza-test`.
 
-```make
--include .rhiza/make.d/*.mk
-.rhiza/make.d/%.mk: ;
-```
-
-The second line is not decoration. An included makefile is also a target make tries to *remake*,
-and with `%:` in scope that attempt is routed to the CLI — so without it every invocation opens
-with `unknown task: docker.mk`. The shim already carries the same trick for `local.mk`; this is
-the folder equivalent. `tests/util.py`'s `write_shim` appends both lines when generating a shim
-for a test fixture, for exactly the same reason.
-
-Three consequences worth knowing:
-
-- **The surviving fragments are still dogfooded.** They are ordinary bundle-owned files and this
-  repo adopts those bundles, so `.rhiza/make.d/*.mk` are relative symlinks into `bundles/` and
-  `make sync-self` keeps them so. Only the root `Makefile` is carved out, being the repo-owned
-  shim — `utils/link_dogfood.py` lists it in `_EXCLUDE`.
-- **They are invisible in `make help`.** The shim's `help` runs the CLI's own `list`, which knows
-  nothing about included fragments. This repo's Makefile prints its own targets as a second
-  section; a consumer's generated shim does not, which is a real discoverability gap recorded in
-  rhiza-task#20.
-- **Hook targets are gone.** `bootstrap.mk` anchored `pre-install::`/`post-install::` as no-ops so
-  a consumer could chain onto them, and that was *the* documented way to add project hooks.
-  `uvx rhiza-task install` knows nothing about make targets. Shadow the target instead: an
-  explicit `install:` rule beats the catch-all, so it can call the CLI and then the extra step.
-  This repo does exactly that for `rhiza-test`.
+**What guards the pin.** `RHIZA_TASK` being the whole version contract cuts both ways: a bump that
+dropped a task would remove `make view-prs` from every consumer on the `github-project` profile,
+and nothing in the shim would notice — it resolves any target, and the CLI's "unknown task" error
+appears only when someone runs it. `tests/api/test_bundle_cli_targets.py` reads the pin out of the
+root `Makefile`, asks that exact version what tasks it has, and requires every retired target to
+be in the answer. It needs uv and the network and skips without them, so `make test` stays green
+offline while CI does the real check.
 
 **Where the mother-repo-only targets live.** `explain-bundles`, `sync-self`, `sync-self-check`,
 `e2e` and `gitlab-docker-test` were `.rhiza/make.d/bundles.mk`, a fragment no bundle shipped. They

@@ -4,11 +4,10 @@ These tests live in the mother repo's own tests/ and do not sync downstream.
 
 Two git-repo fixtures are provided:
 
-* ``git_repo`` — a *rich* sandbox: a bare remote + local clone with the core Rhiza
-  Makefiles (``rhiza.mk`` + ``.rhiza/make.d/``), the ``book/`` tree, and mock
-  ``uv``/``make`` executables on ``PATH``. Makefile-target integration tests
-  (book, docs, test.mk, virtual-env, lfs, docker, marimo, paper, presentation,
-  benchmark) drive real ``make`` against it.
+* ``git_repo`` — a *rich* sandbox: a bare remote + local clone carrying the generated
+  ``rhiza-task`` shim, the files the bundles below contribute, the ``book/`` tree, and
+  mock ``uv``/``make`` executables on ``PATH``. Makefile-target integration tests (book,
+  docs, virtual-env, marimo, benchmark) drive real ``make`` against it.
 * ``minimal_git_repo`` — a bare git repo with only a ``pyproject.toml`` and the
   developer's real ``PATH``. Used by tests that must invoke the *real* ``uv``
   (e.g. SBOM generation), where the mock ``uv`` would get in the way.
@@ -32,11 +31,12 @@ from tests.util import sync_bundles, write_shim
 
 GIT = shutil.which("git") or "/usr/bin/git"
 
-# The bundles whose make layer these fixtures assemble. Sourced from ``bundles/`` because
-# this repo no longer dogfoods that layer -- it runs on the ``rhiza-task`` shim, so there is
-# no root ``.rhiza/rhiza.mk`` or ``.rhiza/make.d/`` to copy. This list is exactly the set
-# whose fragments used to be symlinked into the root, so the assembled sandbox is unchanged.
-MAKE_LAYER_BUNDLES = [
+# The bundles these fixtures assemble into the sandbox. It was "the bundles whose make layer
+# these fixtures assemble" while `.rhiza/make.d/` existed; none of them contributes a make
+# fragment any more, so what they contribute now is ordinary files -- the Dockerfile, the
+# notebook folder, the docs tree. Kept as one list because the sandbox is shared and a test
+# added later should find the same project the others do.
+SANDBOX_BUNDLES = [
     "core",
     "python-core",
     "tests",
@@ -193,7 +193,7 @@ def git_repo(root, tmp_path, monkeypatch) -> Path:
     # core ships no Makefile or rhiza.mk now, so without it nothing loads them and every target
     # they own reports "no rule to make target".
     (local_dir / ".rhiza").mkdir(parents=True, exist_ok=True)
-    sync_bundles(root, MAKE_LAYER_BUNDLES, local_dir)
+    sync_bundles(root, SANDBOX_BUNDLES, local_dir)
     write_shim(local_dir)
 
     book_src = root / "book"

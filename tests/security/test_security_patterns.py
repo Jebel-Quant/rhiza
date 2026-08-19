@@ -463,6 +463,18 @@ class TestPipedInstallers:
         )
 
     def test_scanner_finds_sources(self) -> None:
-        """Guard against the scanner silently matching nothing."""
+        """Guard against the scanner silently matching nothing.
+
+        The bound was "more than ten", which held while sixteen synced fragments carried a
+        `.mk` suffix each and became wrong the moment the last of them retired to rhiza-task:
+        four sources remain, and a count cannot survive the thing it counts shrinking.
+
+        Naming them is the stronger assertion anyway. These two are the files the piped-installer
+        rule exists for -- both legitimately curl a remote installer, both are on the allowlist,
+        and a scanner that stopped seeing either would report a clean repository while the only
+        real instances went unchecked.
+        """
         repo_root = pathlib.Path(__file__).parent.parent.parent
-        assert len(_shell_and_make_sources(repo_root)) > 10, "expected to scan make and shell sources"
+        found = {p.relative_to(repo_root).as_posix() for p in _shell_and_make_sources(repo_root)}
+        for required in ("Makefile", "bundles/devcontainer/.devcontainer/bootstrap.sh"):
+            assert required in found, f"the scanner no longer sees {required}; found {sorted(found)}"

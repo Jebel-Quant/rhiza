@@ -16,7 +16,7 @@ import subprocess  # nosec B404 - subprocess module needed for git operations in
 
 import pytest
 
-from tests.integration.conftest import MAKE_LAYER_BUNDLES
+from tests.integration.conftest import SANDBOX_BUNDLES
 from tests.util import sync_bundles, write_shim
 
 # Get absolute path for git to avoid S607 warnings
@@ -197,10 +197,10 @@ def git_repo(root, tmp_path, monkeypatch):
     # Ensure our bin comes first on PATH so 'uv' resolves to mock
     monkeypatch.setenv("PATH", f"{bin_dir}:{os.environ.get('PATH', '')}")
 
-    # Assemble the make layer from the bundles that ship it (see MAKE_LAYER_BUNDLES in
-    # tests/integration/conftest.py for why this reads bundles/ rather than the root).
+    # Assemble the sandbox from bundles/ rather than from the repo root (see SANDBOX_BUNDLES
+    # in tests/integration/conftest.py for why).
     (local_dir / ".rhiza").mkdir(parents=True, exist_ok=True)
-    sync_bundles(root, MAKE_LAYER_BUNDLES, local_dir)
+    sync_bundles(root, SANDBOX_BUNDLES, local_dir)
     write_shim(local_dir)
 
     book_src = root / "book"

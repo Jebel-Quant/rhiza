@@ -10,20 +10,31 @@ Git LFS (Large File Storage) is an extension to Git that allows you to version l
 
 ### `make lfs-install`
 
-Installs Git LFS and configures it for the current repository.
-
-**Features:**
-- **Cross-platform support**: Works on macOS (both Intel and ARM) and Linux
-- **macOS**: Downloads and installs the latest git-lfs binary to `.local/bin/`
-- **Linux**: Installs git-lfs via apt-get package manager
-- **Automatic configuration**: Runs `git lfs install` to set up LFS hooks
+Configures Git LFS for the current repository by running `git lfs install`, which
+writes the filter and hook configuration Git needs to route tracked files through LFS.
 
 **Usage:**
 ```bash
 make lfs-install
 ```
 
-**Note for macOS users:** The git-lfs binary is installed locally in `.local/bin/` and added to PATH for the installation. This approach avoids requiring system-level package managers like Homebrew.
+**It does not install the binary.** If `git-lfs` is not on `PATH` the target fails with
+the install command for your platform:
+
+| platform | install with |
+| --- | --- |
+| macOS | `brew install git-lfs` |
+| Linux | `sudo apt-get install git-lfs`, or your distribution's package |
+| Windows | `winget install GitHub.GitLFS` |
+
+In CI, use the runner's package manager or an action such as `setup-git-lfs`.
+
+Earlier versions of this target did try to provision the binary — apt-get on Linux, and
+on macOS a download of the release archive into `.local/bin/`. The macOS path did not
+leave a working installation: `.local/bin` is not on `PATH` once the target exits, so the
+other three targets, which invoke `git lfs` directly, still failed. Reporting the
+platform's own package manager is both shorter and correct, and keeps a task runner from
+invoking `sudo` as a side effect of a target you typed.
 
 ### `make lfs-pull`
 

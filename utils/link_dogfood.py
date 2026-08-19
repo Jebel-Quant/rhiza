@@ -95,11 +95,10 @@ def is_dogfood_carveout(rel: str) -> bool:
         >>> is_dogfood_carveout("ruff.toml")
         False
 
-        The five surviving ``make.d`` fragments are *not* carved out. They are ordinary
-        bundle-owned files and the mother repo adopts those bundles, so it dogfoods them the way
-        it dogfoods anything else -- the shim ``-include``s them just as ``rhiza.mk`` did:
+        A bundle-owned file under ``.rhiza/`` is linked too -- the folder is not special, only
+        the carve-outs below are:
 
-        >>> is_dogfood_carveout(".rhiza/make.d/github.mk")
+        >>> is_dogfood_carveout(".rhiza/semgrep.yml")
         False
 
         The root ``Makefile`` is carved out, and this one is easy to get wrong. It is the

@@ -4,7 +4,13 @@ Date: 2024-03-01
 
 ## Status
 
-Accepted
+Superseded by [ADR 0011](0011-replace-the-synced-make-layer-with-a-pinned-cli.md) (2026-08-19).
+
+The split described here was the right answer to the problem it names, and the record is kept
+because the problem recurs: a capability's configuration still belongs to exactly one bundle.
+What it could not fix is that `include` cannot reach a remote file, so every consumer held a
+full copy and the version was a claim rather than a dependency. `.rhiza/rhiza.mk` and
+`.rhiza/make.d/` no longer exist in any bundle; the tasks are a pinned CLI.
 
 ## Context
 
