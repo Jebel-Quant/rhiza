@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.4.0] - 2026-08-19
+
+### Bug Fixes
+- *(marimo)* Read MARIMO_FOLDER from rhiza-task, not from make's namespace (#1553)
+
+### Maintenance
+- Retire core's .rhiza/.env, point settings at [tool.rhiza-task] (#1555)
+- Migrate this repo to the rhiza-task shim, retiring its own make layer (#1556)
+- Stop shipping the make layer; keep the five fragments with no CLI task (#1557)
+- Retire the last five make fragments, and the folder with them (#1559)
+- Remove the .clusterfuzzlite config, which had no harness to build (#1560)
+
 ## [1.3.4] - 2026-08-18
 
 ### New Features
