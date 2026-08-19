@@ -471,11 +471,18 @@ are a section of the root `Makefile` now — not `local.mk`, which is gitignored
 
 **And why `rhiza-test` is wrapped rather than delegated.** pytest-rhiza's `test_docstrings` reads
 its scope from the `RHIZA_DOCTEST_FOLDERS` environment variable; `quality.mk` exported it from
-`DOCSTRING_FOLDERS`, and rhiza-task does not (Jebel-Quant/rhiza-task#18). On a bare delegation the
-check reported `SKIPPED  No doctest folder found (looked for: src)` while the gate still said
+`DOCSTRING_FOLDERS`, and rhiza-task 0.3.0 did not (Jebel-Quant/rhiza-task#18). On a bare delegation
+the check reported `SKIPPED  No doctest folder found (looked for: src)` while the gate still said
 `ok rhiza-test` — #1517 exactly, this repo's only doctest examples unchecked behind a green gate.
 `.rhiza/.env` cannot carry the value because that file is gitignored.
-`tests/utils/test_gate_scope.py` fails if the export goes.
+
+**0.3.1 passes it through itself**, so the wrapper stopped being a fix and became a probe: the
+export is the one form of the property `tests/utils/test_gate_scope.py` can read out of a `make -n`
+— no network, no lockfile, no tags — and the test fails if it goes. A bare delegation would move
+the property inside the pin, where only a real run reveals a regression. The two other mother-repo
+workarounds 0.3.1 retired did not need that treatment and are gone: the shim now ships the `PATH`
+export (rhiza-task#19), and `mkdocstrings[python]` is the default for `mkdocs-extra-packages`,
+which this repo's `pyproject.toml` now merely restates.
 
 ### Dependency Management
 

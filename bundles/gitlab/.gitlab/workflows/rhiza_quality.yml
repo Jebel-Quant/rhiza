@@ -18,7 +18,7 @@
 # Calling the CLI directly drops the dependency on a front door rhiza no longer ships.
 
 variables:
-  RHIZA_TASK: "rhiza-task@0.3.0"
+  RHIZA_TASK: "rhiza-task@0.3.1"
 
 quality:deptry:
   stage: test

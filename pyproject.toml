@@ -176,10 +176,17 @@ pytest-rhiza = "pytest-rhiza @ git+https://github.com/Jebel-Quant/pytest-rhiza@v
 
 # Restores this repo's own book override, which the migration to the shim dropped. The old root
 # Makefile carried `MKDOCS_EXTRA_PACKAGES = --with 'mkdocstrings[python]'` above the include, and
-# replacing that file with the shim lost it silently: `mkdocs_extra_packages` defaults to empty,
+# replacing that file with the shim lost it silently: `mkdocs_extra_packages` defaulted to empty,
 # so `make book` built the site without the plugin that renders the API reference. Nothing fails
 # -- the pages just come out missing their generated content, which is the worst shape for a
 # regression to have.
+#
+# rhiza-task 0.3.1 made `mkdocstrings[python]` the *default*, for the same reason on a wider
+# scale: the `book` bundle ships `docs/mkdocs-base.yml` with the plugin enabled, so every
+# consumer inherited a config zensical refused to build. This line is therefore no longer a
+# fix -- it now states explicitly what the pin already resolves to, which is worth one line
+# here because tests/integration/test_docs_targets.py asserts the generated API pages exist
+# and this is the setting that names why.
 #
 # Bare specs, not flags: the CLI passes these as `withs=`, adding `--with` itself.
 mkdocs-extra-packages = ["mkdocstrings[python]"]

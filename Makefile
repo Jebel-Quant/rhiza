@@ -11,7 +11,7 @@
 #
 # RHIZA_TASK is the entire version contract. Bumping it is the migration that used to be
 # `/rhiza:update` re-syncing eleven .mk files and reconciling whatever had been shadowed.
-RHIZA_TASK ?= rhiza-task@0.3.0
+RHIZA_TASK ?= rhiza-task@0.3.1
 
 # The one thing the shim cannot delegate to the CLI: uv itself, because uv is what runs
 # the CLI. `bootstrap.mk` had an `install-uv` target for exactly this, and the make layer's
@@ -20,28 +20,24 @@ RHIZA_TASK ?= rhiza-task@0.3.0
 # that only ran `uvx` would turn a required status check red on the day a repo migrated.
 #
 # So the bootstrap survives, minus the parts the CLI took over: no `bin/uv`, no clean-up,
-# just the one binary needed to reach the pin above.
+# just the one binary needed to reach the pin above -- and the PATH export, because
+# reaching the CLI is not the same as letting it run. Every task body shells out to a bare
+# `uv` or `uvx` (`uv.py` resolves both with `shutil.which`, which reads the PATH it
+# inherits), so provisioning `./bin/uvx` and then not exporting `./bin` gets as far as the
+# first gate that shells out and dies with `FileNotFoundError: 'uvx'` -- after a bootstrap
+# that looked like it worked. `version`, `print` and `list` are pure-CLI and stay green,
+# which is how this reached a required status check: the `pre-commit` job runs `make fmt`
+# with no astral-sh/setup-uv step, and `Pre-commit hooks` is required in
+# .github/rulesets/main-branch-protection.json.
+#
+# Prepended, not appended: with `$(INSTALL_DIR)` last, a runner carrying an older uv
+# earlier on PATH resolves differently from a bare one, and `RHIZA_TASK` quietly stops
+# being the whole version contract the header above claims it is.
+#
+# This block was a mother-repo addition until 0.3.1 (Jebel-Quant/rhiza-task#19); the
+# shipped shim carries it now, so the two are one file again.
 INSTALL_DIR ?= $(abspath ./bin)
 UVX ?= $(shell command -v uvx 2>/dev/null || echo $(INSTALL_DIR)/uvx)
-
-# --- mother-repo addition: the PATH export the shim drops, which it must not.
-#
-# The shipped shim says "no PATH export" and reaches the CLI by absolute path, which is
-# enough to *start* it and not enough to let it work. rhiza-task's task bodies shell out to
-# bare `uv` and `uvx` (`uv.py`'s `uv_run`/`uvx` helpers), so on a runner with no uv the shim
-# provisions ./bin/uvx, invokes it, and then the CLI dies with
-#
-#   FileNotFoundError: [Errno 2] No such file or directory: 'uvx'
-#
-# which is what turned the required `Pre-commit hooks` check red on the first push of this
-# migration: that job runs `make fmt` with no astral-sh/setup-uv step. `bootstrap.mk`
-# exported PATH for exactly this reason.
-#
-# Prepended rather than appended, so the bootstrapped binary is the one every gate uses --
-# otherwise a runner with an older uv earlier on PATH would resolve differently from a bare
-# one, and the pin above would stop being the whole version contract.
-#
-# Reported upstream as Jebel-Quant/rhiza-task#19; remove when the shipped shim carries it.
 export PATH := $(INSTALL_DIR):$(PATH)
 
 .DEFAULT_GOAL := help
@@ -174,21 +170,26 @@ gitlab-docker-test: install $(UV) ## run the Docker-backed GitLab job test again
 	@printf "\033[36m[INFO] Running the Docker-backed GitLab job test\033[0m\n"
 	@RHIZA_GITLAB_DOCKER=1 $(UV) run pytest tests/bundles/test_gitlab_ci.py -m gitlab_exec -v
 
-# `rhiza-test` is wrapped rather than delegated, for one reason the CLI cannot yet cover.
+# `rhiza-test` is wrapped rather than delegated. As of 0.3.1 the wrapper no longer *fixes*
+# anything; it is what makes the fix assertable here.
 #
 # pytest-rhiza's `test_docstrings` takes its scope from the RHIZA_DOCTEST_FOLDERS
 # environment variable, falling back to SOURCE_FOLDER in `.rhiza/.env` and then to `src`.
-# `quality.mk` used to export it from DOCSTRING_FOLDERS; rhiza-task does not, and it cannot
-# read `[tool.rhiza-task] source-folder` either. So on a bare delegation the check reported
+# `quality.mk` used to export it from DOCSTRING_FOLDERS; rhiza-task 0.3.0 did not, so on a
+# bare delegation the check reported
 #
 #   SKIPPED  No doctest folder found (looked for: src)
 #
 # and the gate still said `ok rhiza-test` — #1517 exactly: this repo's only doctest examples
-# unchecked, silently, behind a green gate. `.rhiza/.env` cannot carry it because that file
-# is gitignored, so CI would never see it.
+# unchecked, silently, behind a green gate. `.rhiza/.env` cannot carry the value because that
+# file is gitignored, so CI would never see it.
 #
-# Remove this wrapper once rhiza-task passes source_folder through to the check
-# (Jebel-Quant/rhiza-task#18). tests/utils/test_gate_scope.py fails if the skip returns.
+# rhiza-task 0.3.1 passes `source_folder` through as that variable itself
+# (Jebel-Quant/rhiza-task#18), so this recipe now exports the value the CLI would export
+# anyway — same folder, from the same setting. It stays because it is where the property can
+# be checked cheaply: tests/utils/test_gate_scope.py reads the expanded variable out of a
+# `make -n`, needing no network, no lockfile and no tags, and fails if the export goes. A
+# bare delegation moves the property inside the pin, where only a real run reveals it.
 rhiza-test: $(UVX) ## run the rhiza repository checks, with this repo's doctest scope
 	@RHIZA_DOCTEST_FOLDERS="$(shell $(UVX) $(RHIZA_TASK) print source_folder)" \
 		$(UVX) $(RHIZA_TASK) rhiza-test
