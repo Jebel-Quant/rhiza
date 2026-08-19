@@ -1,4 +1,8 @@
-"""Tests for the rhiza_fuzzing.yml workflow and ClusterFuzzLite configuration."""
+"""Tests for the rhiza_fuzzing.yml workflow.
+
+The workflow is reusable by downstream repos; this repo ships no
+``.clusterfuzzlite/`` config of its own, so only the workflow is asserted here.
+"""
 
 from __future__ import annotations
 
@@ -7,7 +11,6 @@ from pathlib import Path
 import yaml
 
 WORKFLOW_PATH = Path(".github") / "workflows" / "rhiza_fuzzing.yml"
-PROJECT_PATH = Path(".clusterfuzzlite") / "project.yaml"
 
 
 def _workflow_triggers(workflow_doc: dict) -> dict:
@@ -78,18 +81,3 @@ def test_fuzzing_steps_skip_when_no_clusterfuzzlite_config(root):
             assert "cfl" in step.get("if", ""), (
                 f"{job_name}: step '{step.get('name')}' must be gated on the config-detection output"
             )
-
-
-def test_clusterfuzzlite_configuration_targets_python(root):
-    """ClusterFuzzLite config must declare Python.
-
-    The repo ships the fuzzing capability (workflow + .clusterfuzzlite/ config)
-    but no longer bundles a concrete Atheris harness — the suppression parser it
-    used to fuzz now lives in the rhiza-tools package. The build script compiles
-    any ``tests/fuzz/fuzz_*.py`` harness a downstream repo (or a future target)
-    adds; see ``.clusterfuzzlite/build.sh``.
-    """
-    with (root / PROJECT_PATH).open(encoding="utf-8") as fh:
-        project = yaml.safe_load(fh)
-
-    assert project["language"] == "python"

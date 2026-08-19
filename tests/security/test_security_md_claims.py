@@ -31,10 +31,6 @@ _CLAIM_EVIDENCE = {
     "CodeQL": lambda: (_ROOT / ".github" / "workflows" / "rhiza_codeql.yml").is_file(),
     "Bandit": lambda: "bandit" in _read(".pre-commit-config.yaml"),
     "Secret Scanning": lambda: (_ROOT / ".github" / "secret_scanning.yml").is_file(),
-    "Fuzzing": lambda: (
-        (_ROOT / ".github" / "workflows" / "rhiza_fuzzing.yml").is_file()
-        and (_ROOT / ".clusterfuzzlite" / "Dockerfile").is_file()
-    ),
     "SLSA Provenance": lambda: "attest-build-provenance" in _read(".github/workflows/rhiza_release.yml"),
     "Locked Dependencies": lambda: (_ROOT / "uv.lock").is_file(),
     "Dependabot": lambda: (_ROOT / ".github" / "dependabot.yml").is_file(),

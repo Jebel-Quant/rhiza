@@ -126,5 +126,3 @@ local.mk
 .mutmut-cache
 
 
-# ClusterFuzzLite copies the audited module next to the harness at build time
-tests/fuzz/suppression_audit.py
