@@ -1,174 +1,102 @@
-# Makefile Cookbook
+# What lives in `.rhiza/make.d/`
 
-This directory (`.rhiza/make.d/`) contains **template-managed build logic**. Files here are synced from the Rhiza template and should not be modified directly.
+Almost nothing, now. This folder used to hold the whole build system — eleven fragments
+defining every gate, loaded by `.rhiza/rhiza.mk`. That moved to
+[rhiza-task](https://github.com/Jebel-Quant/rhiza-task), a pinned CLI, and your `Makefile` is a
+generated shim that forwards to it.
 
-**For project-specific customizations, use your root `Makefile`** (before the `include .rhiza/rhiza.mk` line).
+What remains here are the fragments for bundles the CLI has no task for yet:
 
-Use this cookbook to find copy-paste patterns for common development needs.
+| file | bundle | targets |
+| --- | --- | --- |
+| `github.mk` | `github` | `view-prs`, `view-issues`, `workflow-status`, `failed-workflows`, `latest-release`, `whoami` |
+| `docker.mk` | `docker` | `docker-build`, `docker-run`, `docker-clean` |
+| `lfs.mk` | `lfs` | `lfs-install`, `lfs-pull`, `lfs-track`, `lfs-status` |
+| `paper.mk` | `paper` | `paper`, `paper-clean` |
+| `presentation.mk` | `presentation` | `presentation`, `presentation-pdf`, `presentation-serve` |
 
-## 🥘 Recipes
+You only receive the ones whose bundle you selected. They are template-managed: edit the bundle
+source upstream, not the copy here. They retire as rhiza-task grows tasks for them
+([rhiza-task#20](https://github.com/Jebel-Quant/rhiza-task/issues/20)).
 
-### 1. Add a Simple Task
-**Goal**: Run a script with `make train-model`.
+## Your Makefile
 
-Add to your root `Makefile`:
-```makefile
-##@ Machine Learning
-train: ## Train the model using local data
-	@echo "Training model..."
-	@uv run python scripts/train.py
+Generate it once and commit it. It is **yours** — nothing syncs over it:
 
-# Include the Rhiza API (template-managed)
-include .rhiza/rhiza.mk
+```bash
+uvx rhiza-task shim > Makefile
 ```
 
-### 2. Inject Code into Standard Workflows (Hooks)
-**Goal**: Apply task after `make sync`.
+It is about a dozen lines. A `%:` catch-all forwards any target it cannot resolve to the CLI, so
+`make test`, `make fmt` and `make all` work exactly as before while the file contains no recipes.
+`RHIZA_TASK` at the top is the entire version contract: bumping that one line is the upgrade that
+used to be a re-sync of eleven fragments plus reconciling whatever you had shadowed.
 
-Add to your root `Makefile`:
-```makefile
-post-sync::
-	@echo "Applying something..."
-```
-*Note: Use double-colons (`::`) for hooks to allow accumulation.*
+To load the fragments above, the shim needs these two lines — add them if your generated copy
+lacks them:
 
-### 3. Define Global Variables
-**Goal**: Set a default timeout for all test runs.
-
-Add to your root `Makefile` (before the include line):
-```makefile
-# Override default timeout (defaults to 60s)
-export TEST_TIMEOUT := 120
-
-# Include the Rhiza API (template-managed)
-include .rhiza/rhiza.mk
-```
-
-### 4. Create a Private Shortcut
-**Goal**: Create a command that only exists on my machine (not committed).
-
-Create a `local.mk` in the project root:
-```makefile
-deploy-dev:
-	@./scripts/deploy-to-my-sandbox.sh
-```
-
-### 5. Install System Dependencies
-**Goal**: Ensure `graphviz` is installed for Marimo notebooks using a hook.
-
-Add to your root `Makefile`:
-```makefile
-pre-install::
-	@if ! command -v dot >/dev/null 2>&1; then \
-		echo "Graphviz not found. Installing..."; \
-		if command -v brew >/dev/null 2>&1; then \
-			brew install graphviz; \
-		elif command -v apt-get >/dev/null 2>&1; then \
-			sudo apt-get install -y graphviz; \
-		else \
-			echo "Please install graphviz manually."; \
-			exit 1; \
-		fi \
-	fi
-```
-
----
-
-## ℹ️ Reference
-
-### How the modular Makefile loads
-
-The root `Makefile` is intentionally thin — it only `include`s `.rhiza/rhiza.mk`,
-whose **last line** auto-loads every fragment in this directory:
-
-```makefile
-# In .rhiza/rhiza.mk (last line)
+```make
 -include .rhiza/make.d/*.mk
+.rhiza/make.d/%.mk: ;
 ```
 
-Key consequences:
+The second is not decoration. An included makefile is also a target `make` tries to *remake*, and
+with `%:` in scope that attempt is forwarded to the CLI — so without it every single invocation
+opens with `unknown task: docker.mk`. The shim carries the same trick for `local.mk`.
 
-- **Alphabetical load order.** `make` expands the `*.mk` glob alphabetically, so
-  fragments are included in filename order (`book.mk`, `bootstrap.mk`,
-  `bundles.mk`, …). Don't rely on a later fragment overriding an earlier one — a
-  duplicate **single-colon** target across two fragments is a silent
-  last-definition-wins bug, and CI fails it (see
-  `tests/utils/test_make_structure.py`). Use a hook instead (below).
-- **Drop-in extension.** Adding a feature is just dropping a new `.mk` file here;
-  there is no include list to maintain.
-- **`local.mk`** (project root, not committed) is auto-loaded the same way for
-  developer-only shortcuts.
+## Recipes
 
-### The hook contract (double-colon targets)
+### Add a task
 
-Lifecycle hooks use GNU Make **double-colon** (`::`) rules. Unlike single-colon
-targets, a double-colon target **may be defined any number of times**, and make
-runs **every** definition in order. That is what lets a fragment, the root
-`Makefile`, and a downstream project all attach behaviour to the same lifecycle
-point without colliding:
+Put it straight in your `Makefile`. An explicit rule beats the `%:` catch-all, so it wins:
 
 ```makefile
-# .rhiza/rhiza.mk ships an empty default so the hook always exists:
-post-sync:: ; @:
-
-# Your root Makefile adds to it (this does NOT replace the default):
-post-sync::
-	@echo "Regenerating lockfile after sync..."
-	@uv lock
+train: ## Train the model using local data
+	@uv run python scripts/train.py
 ```
 
-Both recipes run on `make sync`. Rules of the road:
+### Change a setting
 
-- Always use `::` for hooks — a single `:` would trigger the duplicate-target
-  gate and silently drop one definition.
-- Where to put what:
-  - **Project-specific hooks / custom targets** → your root `Makefile`, *above*
-    the `include .rhiza/rhiza.mk` line (committed, shared with the team).
-  - **Developer-local, throwaway shortcuts** → `local.mk` (not committed).
-  - **Never** edit files in `.rhiza/make.d/` directly — they are overwritten on
-    the next template sync.
+Settings are no longer make variables. They live in a `[tool.rhiza-task]` table in
+`pyproject.toml` (or `rhiza.toml`, which any language can use):
 
-### File Organization
-- **`.rhiza/make.d/`**: Template-managed files (do not edit)
-- **Root `Makefile`**: Project-specific customizations (variables, hooks, custom targets)
-- **`local.mk`**: Developer-local shortcuts (not committed)
+```toml
+[tool.rhiza-task]
+source-folder = "mypackage"
+typechecker = "both"
+coverage-fail-under = 80
+```
 
-### Makefile Files in `.rhiza/make.d/`
+`uvx rhiza-task print source-folder` shows what a setting resolves to, which is the fastest way to
+check that an override took effect. The resolution order, lowest first: built-in defaults →
+`.rhiza/.env` → `rhiza.toml` → `[tool.rhiza-task]` → `RHIZA_*` environment variables → CLI flags.
 
-| File | Purpose |
-|------|---------|
-| `book.mk` | Documentation book generation |
-| `bootstrap.mk` | Installation and environment setup |
-| `bundles.mk` | Bundle inspection (`make explain-bundles`) |
-| `custom-env.mk` | Example environment customizations |
-| `custom-task.mk` | Example custom tasks |
-| `docker.mk` | Docker build and run targets |
-| `doctor.mk` | Environment diagnostics (`make doctor`) |
-| `github.mk` | GitHub CLI integrations |
-| `lfs.mk` | Git LFS management |
-| `marimo.mk` | Marimo notebook support |
-| `paper.mk` | LaTeX paper compilation |
-| `presentation.mk` | Presentation building (Marp) |
-| `quality.mk` | Code quality and formatting |
-| `test.mk` | Testing infrastructure |
+Note that `.rhiza/.env` is **gitignored**, so it is for developer-local values only — CI checks
+your repository out and never sees it. Anything CI must resolve belongs in a committed file.
 
-Files prefixed with `custom-` are **examples** showing how to customize Rhiza. Don't edit them directly; instead, add your customizations to the root `Makefile`.
+### Run something before or after a gate
 
-### Naming Conventions
+The old `pre-install::`/`post-install::` hooks are gone: the CLI knows nothing about make targets,
+so a double-colon rule in your Makefile never fires. **Shadow the target instead** — an explicit
+rule beats the catch-all, so call the CLI yourself and add your step:
 
-**Targets**: Lowercase with hyphens, verb-noun format
-- ✅ `install-uv`, `docker-build`, `view-prs`
-- ❌ `installUv`, `docker_build`
+```makefile
+install:
+	@uvx $(RHIZA_TASK) install
+	@./scripts/seed-dev-data.sh
+```
 
-**Variables**: SCREAMING_SNAKE_CASE
-- ✅ `INSTALL_DIR`, `UV_BIN`, `PYTHON_VERSION`
-- ❌ `installDir`, `uvBin`
+### Keep a private shortcut
 
-**Section Headers**: Title Case with `##@`
-- `##@ Bootstrap`, `##@ GitHub Helpers`
+`local.mk` is gitignored and `-include`d by the shim, so anything there is yours alone:
 
-### Available Hooks
-Add these to your root `Makefile` using double-colon syntax (`::`):
-- `pre-install` / `post-install`: Runs around `make install`.
-- `pre-sync` / `post-sync`: Runs around repository synchronization.
-- `pre-validate` / `post-validate`: Runs around validation checks.
+```makefile
+# local.mk
+t: ; @uvx $(RHIZA_TASK) test
+```
+
+## Discovering what exists
+
+`make help` lists the CLI's tasks. It does **not** list targets from the fragments above or from
+your own Makefile, because the CLI cannot see them — a known gap, tracked in rhiza-task#20. Until
+it closes, `grep '##' Makefile .rhiza/make.d/*.mk` is the honest answer.

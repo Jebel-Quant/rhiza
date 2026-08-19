@@ -27,8 +27,17 @@ marimo:notebooks:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
   script:
     - |
-      # Discover the notebook directory from the Makefile (default: marimo)
-      NOTEBOOK_DIR=$(make -s -f Makefile -f - <<< 'print: ; @echo $(or $(MARIMO_FOLDER),marimo)' print 2>/dev/null || echo "marimo")
+      # Discover the notebook directory from rhiza-task, not from make's namespace.
+      #
+      # This used to synthesise a makefile on stdin — `make -s -f Makefile -f - <<< 'print: ;
+      # @echo $(or $(MARIMO_FOLDER),marimo)' print` — to read a variable out of the make layer.
+      # That made the layer part of the contract for one lookup, which is the coupling #1546
+      # removed for the CI OS matrix and #1553 for this same setting on the GitHub side; the
+      # GitLab copy was simply missed. It stopped working outright once `rhiza.mk` was retired.
+      #
+      # The version is pinned rather than read from RHIZA_TASK: this pipeline cannot see a
+      # consumer's Makefile, and a value a job depends on must not move under it.
+      NOTEBOOK_DIR=$(uvx rhiza-task@0.2.0 print marimo_folder 2>/dev/null || echo "marimo")
       echo "Searching notebooks in: $NOTEBOOK_DIR"
 
       if [ ! -d "$NOTEBOOK_DIR" ]; then

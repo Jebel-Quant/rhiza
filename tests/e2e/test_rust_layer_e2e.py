@@ -109,7 +109,7 @@ def test_install_materialises_the_toolchain_and_a_lockfile(project: Project):
     So a layer whose install skipped the fetch would pass `install` and fail `fmt`.
     """
     assert (project.path / "Cargo.lock").is_file(), "install did not fetch dependencies (no Cargo.lock)"
-    assert "Installation complete" in project.install_output
+    assert "ok  install" in project.install_output, f"install did not report success:\n{project.install_output[-600:]}"
 
 
 def test_install_does_not_create_a_python_virtualenv(project: Project):
@@ -147,26 +147,25 @@ def test_cargo_tools_works_where_the_cargo_bin_dir_is_not_on_path(project: Proje
     assert not missing, f"`make cargo-tools` left {missing} unusable on a bare PATH"
 
 
-def test_doctor_confirms_a_healthy_rust_toolchain(project: Project, logger):
-    """`make doctor` runs core's checks and the layer's, and is clean on a working setup.
+def test_doctor_runs_and_is_clean_on_a_healthy_toolchain(project: Project, logger):
+    """The `doctor` gate must run and pass on a working setup.
 
-    The dry-run test pins how the check detects a shadowed cargo; this pins that it does
-    not cry wolf on a correct one — the failure mode that would make developers stop
-    reading `doctor` output at all.
+    **The Rust-specific half of this check is gone**, and that is a real capability loss rather
+    than a test detail. `rust.mk` defined a second `doctor::` rule -- the composition this test
+    also existed to prove -- reporting whether `cargo` was rustup-managed and whether
+    `llvm-tools` was present. Both matter: a Homebrew cargo shadowing the rustup one passes
+    `install` and then fails `coverage` in a way nothing explains, and that rule is what named it.
 
-    Also the only assertion that `doctor::` composes: core defines one rule and rust.mk a
-    second, so a single-colon rule in either file would make make reject the build rather
-    than run both.
+    rhiza-task's `doctor` checks only the language-neutral prerequisites (make, git, uv), so a
+    layer has nowhere to contribute one. Filed as part of Jebel-Quant/rhiza-task#20; until it is
+    addressed, a shadowed cargo is diagnosed by the failure it causes rather than by `doctor`.
+
+    What this can still assert is that the gate runs and does not cry wolf -- the failure mode
+    that makes developers stop reading its output at all.
     """
     out = gate(project, "doctor", logger)
-    assert "uv" in out, "core's own doctor checks did not run"
-    assert "rustup-managed" in out, f"the Rust layer's doctor rule did not run:\n{out}"
-    assert "not rustup-managed" not in out, (
-        f"doctor reports a shadowed cargo on a toolchain the other gates are passing with:\n{out}"
-    )
-    assert "llvm-tools  missing" not in out, (
-        f"doctor reports llvm-tools missing, but `make coverage` passes here:\n{out}"
-    )
+    assert "[ OK ]" in out, f"doctor reported no passing check at all:\n{out}"
+    assert "[FAIL]" not in out, f"doctor reports a failure on a toolchain every other gate here passes with:\n{out}"
 
 
 def test_test_gate_runs_both_nextest_and_the_doctests(project: Project, logger):
@@ -178,7 +177,7 @@ def test_test_gate_runs_both_nextest_and_the_doctests(project: Project, logger):
     """
     out = gate(project, "test", logger)
     assert "greets_the_caller_by_name" in out, f"nextest did not run the unit test:\n{out}"
-    assert "Running doctests" in out
+    assert "cargo test --doc" in out
     assert "test result: ok" in out, f"the doctests did not run:\n{out}"
 
 
@@ -199,7 +198,7 @@ def test_coverage_gate_writes_the_cobertura_report_book_mk_reads(project: Projec
 def test_typecheck_gate_runs_clippy_with_warnings_as_errors(project: Project, logger):
     """`rustc` already type-checks, so the analogous gate is a clean clippy pass."""
     out = gate(project, "typecheck", logger)
-    assert "Running clippy" in out
+    assert "cargo clippy" in out
 
 
 def test_docs_coverage_gate_builds_docs_with_missing_docs_denied(project: Project, logger):
@@ -211,7 +210,7 @@ def test_docs_coverage_gate_builds_docs_with_missing_docs_denied(project: Projec
 def test_security_gate_checks_the_advisory_database(project: Project, logger):
     """cargo-deny advisories — the pip-audit analogue. Needs the RustSec index."""
     out = gate(project, "security", logger)
-    assert "Running cargo-deny advisories" in out
+    assert "cargo deny check advisories" in out
 
 
 def test_license_gate_enforces_the_allow_list(project: Project, logger):
@@ -221,13 +220,13 @@ def test_license_gate_enforces_the_allow_list(project: Project, logger):
     is the Rust echo of the `--ignore` flag go-core needs for the same reason.
     """
     out = gate(project, "license", logger)
-    assert "Running license compliance scan" in out
+    assert "cargo deny check licenses" in out
 
 
 def test_deps_gate_reports_no_unused_dependencies(project: Project, logger):
     """cargo-machete is the deptry analogue: declared but unused crates."""
     out = gate(project, "deps", logger)
-    assert "Checking for unused dependencies" in out
+    assert "cargo machete" in out
 
 
 def test_rhiza_test_gate_actually_runs_the_installed_checks(project: Project, logger):
@@ -280,10 +279,10 @@ def test_all_runs_the_whole_gate_set(project: Project, logger):
     for gate_name, evidence in (
         ("fmt", "cargo fmt"),
         ("test", "greets_the_caller_by_name"),
-        ("docs-coverage", "Building docs with missing_docs denied"),
-        ("security", "Running cargo-deny advisories"),
-        ("deps", "Checking for unused dependencies"),
-        ("license", "Running license compliance scan"),
-        ("typecheck", "Running clippy"),
+        ("docs-coverage", "cargo doc --no-deps"),
+        ("security", "cargo deny check advisories"),
+        ("deps", "cargo machete"),
+        ("license", "cargo deny check licenses"),
+        ("typecheck", "cargo clippy"),
     ):
         assert evidence in out, f"`make all` no longer runs the {gate_name} gate ({evidence!r})"

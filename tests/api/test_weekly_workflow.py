@@ -126,19 +126,31 @@ class TestWeeklyWorkflowMakeTargets:
         result = run_make(logger, ["test"])
         assert result.returncode == 0
 
-    def test_security_target_scans_existing_python_or_warns(self, logger):
-        """Make security must not silently pass when the default source folder is missing."""
-        result = run_make(logger, ["security"])
-        assert result.returncode == 0
-        assert "Running bandit security scan in:" in result.stdout
-        assert "No bandit scan folders found" in result.stdout
+    def test_security_target_resolves(self, logger):
+        """`make security` must resolve, so the weekly workflow's step cannot fail on a typo.
+
+        This asserted bandit's banner text and its no-folders warning, both printed by
+        ``quality.mk``'s recipe. That recipe retired to rhiza-task, so a dry run shows the
+        delegation and nothing else. The property it was really protecting -- that the gate does
+        not silently pass with nothing to scan -- moved with the recipe and is asserted where the
+        scope now lives: ``tests/utils/test_gate_scope.py`` requires ``source_folder`` to name an
+        existing folder holding Python, and ``tests/e2e/`` runs the gate for real.
+        """
+        result = run_make(logger, ["security"], check=False)
+        assert result.returncode == 0, f"`make security` did not resolve: {result.stderr}"
+        assert "no rule to make target" not in result.stderr.lower()
 
     def test_semgrep_target_in_help(self, logger):
-        """Semgrep target must appear in make help output."""
+        """Semgrep must be discoverable in `make help`.
+
+        Still true, and worth keeping: ``semgrep`` is a CLI *task*, so the shim's ``help`` lists
+        it. Only the five surviving fragments' targets are missing from help
+        (Jebel-Quant/rhiza-task#20), and semgrep is not one of them.
+        """
         result = run_make(logger, ["help"], dry_run=False)
         assert "semgrep" in result.stdout
 
     def test_security_target_in_help(self, logger):
-        """Security target must appear in make help output."""
+        """Security must be discoverable in `make help` -- a CLI task, so it is listed."""
         result = run_make(logger, ["help"], dry_run=False)
         assert "security" in result.stdout

@@ -237,9 +237,24 @@ class TestMakeModuleDocumentation:
         assert not unknown, f"CLAUDE.md's ownership table names .rhiza/make.d fragments that do not exist: {unknown}"
 
     def test_the_table_was_parsed(self) -> None:
-        """Guard against the table scanner silently collecting nothing."""
-        assert len(_claude_md_make_module_table()) > 10, "expected the ownership table to list many fragments"
-        assert len(_make_module_names()) > 10, "expected to discover many .rhiza/make.d fragments"
+        """Guard against the table scanner silently collecting nothing.
+
+        The bound used to be "more than ten", which was true while sixteen fragments shipped and
+        became wrong the moment eleven of them retired to rhiza-task. A magic number cannot
+        survive the thing it is counting shrinking, so this asserts the two sides *agree* and are
+        non-empty instead -- which is the property the guard was reaching for, and which stays
+        true at any fragment count above zero.
+
+        When the last fragment retires (Jebel-Quant/rhiza-task#20) this test and the table it
+        guards both go.
+        """
+        table = _claude_md_make_module_table()
+        discovered = set(_make_module_names())
+        assert discovered, "no .rhiza/make.d fragments were discovered, so the scanner is inert"
+        assert table == discovered, (
+            f"CLAUDE.md's ownership table and the shipped fragments disagree: "
+            f"table-only={sorted(table - discovered)}, shipped-only={sorted(discovered - table)}"
+        )
 
 
 _BUNDLE_TAXONOMY = _ROOT / "docs" / "reference" / "BUNDLE_TAXONOMY.md"
@@ -456,11 +471,60 @@ _INVOCATION_SOURCES = (
 _CLAIM_GATE_EXEMPT = {"CHANGELOG.md"}
 
 
+@functools.lru_cache(maxsize=1)
+def _cli_task_sources() -> str:
+    """Return the concatenated source of the pinned CLI's task modules.
+
+    Most of the watched tools moved *into* rhiza-task when the gate fragments retired: bandit,
+    mypy, ty, deptry, interrogate, pytest and the rest are named in its task bodies
+    (``uvx("bandit", ...)``, ``uv_run("mypy", ...)``) rather than in a ``.mk`` recipe. Scanning
+    only the fragments would therefore report them as *not invoked* and fail every document that
+    mentions them -- which is the opposite of the truth, and would invite deleting accurate prose
+    to get a green suite.
+
+    Read from the installed package rather than listed here, because this class's whole design is
+    that the invoked set is derived: adding a tool to a task must re-permit its mentions in the
+    same commit, with no list to update.
+
+    Returns:
+        The concatenated text, or an empty string if the CLI cannot be located.
+    """
+    match = re.search(r"^RHIZA_TASK \?= (\S+)", (_ROOT / "Makefile").read_text(encoding="utf-8"), re.MULTILINE)
+    if not match:
+        return ""
+    name, _, version = match.group(1).partition("@")
+    requirement = f"{name}=={version}" if version else name
+    proc = subprocess.run(  # nosec B603
+        [
+            "uv",
+            "run",
+            "--quiet",
+            "--no-project",
+            "--with",
+            requirement,
+            "python",
+            "-c",
+            "import pathlib, rhiza_task;"
+            "print('\\n'.join(p.read_text() for p in pathlib.Path(rhiza_task.__file__).parent.rglob('*.py')))",
+        ],
+        cwd=_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return proc.stdout if proc.returncode == 0 else ""
+
+
 def _invoked_tools() -> set[str]:
-    """Return the watched tools that some make fragment or CI workflow actually invokes."""
+    """Return the watched tools that something in the product actually invokes.
+
+    Three places now, where there used to be two: the make fragments and workflows still in the
+    tree, and the task bodies of the pinned CLI that replaced most of those fragments.
+    """
     haystack = "\n".join(
         path.read_text(encoding="utf-8", errors="replace") for path in _INVOCATION_SOURCES if path.is_file()
     )
+    haystack += "\n" + _cli_task_sources()
     return {tool for tool in _WATCHED_TOOLS if tool in haystack}
 
 

@@ -57,23 +57,9 @@ _EXCLUDE = frozenset(
         ".python-version",  # mother-repo pinned version
         "SECURITY.md",  # mother-repo variant
         "renovate.json",  # mother-repo variant
-        "Makefile",  # the rhiza-task shim, repo-owned (see _MAKE_LAYER_PREFIXES)
+        "Makefile",  # the rhiza-task shim, repo-owned
     }
 )
-
-# The synced make layer: shipped by the bundles, not run by the mother repo. rhiza migrated
-# to the ``rhiza-task`` shim, so the root has a repo-owned ``Makefile`` and no ``rhiza.mk``
-# or ``make.d/`` at all.
-#
-# Without this, ``sync-self`` would helpfully *recreate* every fragment as a root symlink on
-# the next run — the linker's job is to link bundle-owned files into the root, and these are
-# still bundle-owned. It would silently reinstate the layer this repo just left, and the
-# root ``Makefile`` would be clobbered back into a symlink into ``bundles/core/``, taking
-# rhiza's own ``e2e``/``sync-self`` targets with it.
-#
-# Prefix-matched rather than named: ``make.d`` holds one fragment per owning bundle, so a
-# new one must be excluded by arriving, not by being added to a list here.
-_MAKE_LAYER_PREFIXES = (".rhiza/rhiza.mk", ".rhiza/make.d/")
 
 # Git opens these files with O_NOFOLLOW (a security measure), so a symlinked copy
 # yields ELOOP — git warns on every command and silently ignores the file's rules.
@@ -89,8 +75,6 @@ def is_dogfood_carveout(rel: str) -> bool:
     ``CLAUDE.md``:
 
     * it is a declared mother-repo override in :data:`_EXCLUDE`;
-    * it belongs to the synced make layer (:data:`_MAKE_LAYER_PREFIXES`), which the bundles
-      ship but the mother repo no longer runs;
     * it lives under ``.github/`` (GitHub reads platform config blobs directly and does
       not resolve symlinks); or
     * git opens it with ``O_NOFOLLOW`` (see :data:`_NO_FOLLOW_NAMES`), so a symlink yields
@@ -111,14 +95,19 @@ def is_dogfood_carveout(rel: str) -> bool:
         >>> is_dogfood_carveout("ruff.toml")
         False
 
-        The synced make layer is carved out, because the bundles still ship it while the
-        mother repo runs the ``rhiza-task`` shim instead. Without this the linker would
-        recreate the whole layer at the root on the next ``sync-self``:
+        The five surviving ``make.d`` fragments are *not* carved out. They are ordinary
+        bundle-owned files and the mother repo adopts those bundles, so it dogfoods them the way
+        it dogfoods anything else -- the shim ``-include``s them just as ``rhiza.mk`` did:
 
-        >>> is_dogfood_carveout(".rhiza/rhiza.mk")
-        True
-        >>> is_dogfood_carveout(".rhiza/make.d/python.mk")
-        True
+        >>> is_dogfood_carveout(".rhiza/make.d/github.mk")
+        False
+
+        The root ``Makefile`` is carved out, and this one is easy to get wrong. It is the
+        ``rhiza-task`` shim: repo-owned, carrying this repo's ``e2e``/``sync-self`` targets and
+        its ``rhiza-test`` wrapper. ``core`` ships no ``Makefile`` at all now, so nothing could
+        link it today -- the entry stays because a bundle acquiring one later must not silently
+        clobber those targets:
+
         >>> is_dogfood_carveout("Makefile")
         True
 
@@ -156,12 +145,7 @@ def is_dogfood_carveout(rel: str) -> bool:
         >>> is_dogfood_carveout(".github-notes/README.md")
         False
     """
-    return (
-        rel in _EXCLUDE
-        or rel.startswith(".github/")
-        or rel.startswith(_MAKE_LAYER_PREFIXES)
-        or Path(rel).name in _NO_FOLLOW_NAMES
-    )
+    return rel in _EXCLUDE or rel.startswith(".github/") or Path(rel).name in _NO_FOLLOW_NAMES
 
 
 def _bundle_index(bundles_dir: Path) -> dict[str, list[Path]]:

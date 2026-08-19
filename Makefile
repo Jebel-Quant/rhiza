@@ -76,6 +76,24 @@ $(UVX):
 	@echo "[INFO] uv not found; installing into $(@D)"
 	@curl -LsSf https://astral.sh/uv/install.sh | UV_INSTALL_DIR="$(@D)" sh >/dev/null
 
+# The bundle fragments that survive the CLI migration, loaded here because `rhiza.mk` used to
+# do it and no longer exists.
+#
+# Five bundles still ship one -- docker, github, lfs, paper, presentation -- because rhiza-task
+# has no task for any of their targets: `docker-build`, `view-prs`, `workflow-status`,
+# `lfs-pull`, `paper`, `presentation-pdf` and the rest. They are conveniences rather than gates:
+# none is named by `all`, and no workflow calls them. So they keep working the way they always
+# did while the gate layer goes, instead of being deleted for the tidiness of an empty folder.
+# `github` is the one that matters most, being in the `github-project` profile -- dropping it
+# would take `make view-prs` from consumers on the flagship profile.
+#
+# An explicit rule from a fragment beats the `%:` catch-all above whatever the include order, so
+# a fragment's target is never shadowed by the CLI delegation.
+#
+# These retire as rhiza-task grows tasks for them (Jebel-Quant/rhiza-task#20); when the last one
+# goes, this line and the folder go with it.
+-include .rhiza/make.d/*.mk
+
 # Repo-specific one-offs live here, where they always belonged, and win over the catch-all
 # because an explicit rule beats a pattern rule. This is what `local.mk` was for -- and a
 # repository that carried its *own* fragment under `.rhiza/make.d/` has to move it here
@@ -87,6 +105,11 @@ $(UVX):
 # invocation used to begin with "unknown task: local.mk". An explicit rule with an empty
 # recipe satisfies the remake attempt silently.
 local.mk: ;
+
+# The fragments need the same treatment, and for the same reason: each included file is a target
+# make tries to remake, and with `%:` in scope every invocation would open with
+# "unknown task: docker.mk". A pattern rule with an empty recipe answers for all of them.
+.rhiza/make.d/%.mk: ;
 
 # The Makefile needs the same treatment now, and did not before. A match-anything rule with
 # no prerequisites cannot make an existing Makefile out of date, so the remake attempt was a
