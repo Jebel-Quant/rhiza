@@ -127,14 +127,16 @@ flowchart LR
 ### `.rhiza/`
 The core directory containing Rhiza's template system files. This directory is synced from upstream and should generally not be modified directly.
 
-### `.rhiza/rhiza.mk`
-The main Makefile containing core Rhiza functionality. Included by the project's root `Makefile`. Contains 268+ lines of make targets and logic.
+### `rhiza-task`
+The pinned CLI that provides Rhiza's developer tasks — `install`, `test`, `typecheck`, `book`,
+`view-prs` and the rest. Provisioned per invocation by `uvx`, never synced. It replaced
+`.rhiza/rhiza.mk` and the sixteen fragments in `.rhiza/make.d/`, both of which are gone.
 
-### `.rhiza/make.d/`
-Directory for modular Makefile extensions. Files are auto-loaded in numeric order:
-- `00-19`: Configuration files
-- `20-79`: Task definitions
-- `80-99`: Hook implementations
+### `Makefile` (the shim)
+A repo-owned file, generated once with `uvx rhiza-task shim > Makefile`. It pins `RHIZA_TASK`,
+bootstraps `uv` on a runner that has none, and forwards every unmatched target to the CLI with a
+`%:` catch-all. Because it is repo-owned rather than synced, anything a project adds to it
+survives a template update.
 
 ### `.rhiza/template.yml`
 Configuration file defining which files to sync from upstream, include/exclude patterns, and sync behavior.

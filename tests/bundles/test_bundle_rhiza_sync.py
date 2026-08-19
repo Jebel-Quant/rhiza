@@ -8,15 +8,17 @@ With two classes of exception, both cases of a file being template content that 
 mother repo does not itself run:
 
 * **A sibling language layer.** Only one can be dogfooded at a time — rhiza is a Python
-  project, so it runs `python-core` — and `rust-core`/`go-core` would each add a second
-  `install` target under `.rhiza/make.d/`.
-* **The make layer itself.** rhiza now runs on the `rhiza-task` shim, so `rhiza.mk` and
-  `make.d/` have no root counterpart at all. The bundles keep shipping them until
-  consumers have migrated.
+  project, so it runs `python-core` — and `rust-core`/`go-core` deliberately claim the same
+  deployment paths as the active layer.
 
-Both are covered instead by the tests that assemble bundles into a temp directory
+They are covered instead by the tests that assemble bundles into a temp directory
 (`tests/api/`, `tests/integration/`, both via `sync_bundles`) and by `tests/e2e/`, which
 runs the assembled gates against real toolchains.
+
+The synced make layer was a second category here until it retired entirely: no bundle ships
+`rhiza.mk` or anything under `.rhiza/make.d/` any longer, so there is nothing left to carve
+out. A fragment reappearing in a bundle should be dogfooded like any other file, which is
+what removing the carve-out makes happen.
 """
 
 from __future__ import annotations
@@ -31,18 +33,6 @@ _ROOT = Path(__file__).resolve().parents[2]
 # dogfooded at a time — rhiza is a Python project — and a sibling layer's files
 # deliberately collide with the active one's.
 _NOT_DOGFOODED = {"rust-core", "go-core"}
-
-# The synced make layer, shipped but no longer dogfooded. rhiza itself runs on the
-# ``rhiza-task`` shim — a repo-owned Makefile whose ``%:`` catch-all forwards to the pinned
-# CLI — so there is no root ``.rhiza/rhiza.mk`` and no root ``.rhiza/make.d/`` for these to
-# match against. The bundles keep shipping them until consumers have migrated.
-#
-# This is the same category the language layers above are in, for the same reason: a file
-# can be template content without the mother repo running it. What it costs is the
-# byte-for-byte guard, so these fragments are covered instead by the tests that assemble
-# them into a temp directory — tests/api/ and tests/integration/ both build their sandbox
-# with ``sync_bundles`` — and by tests/e2e/, which runs their gates for real.
-_NOT_DOGFOODED_PATHS = ("rhiza.mk", "make.d")
 
 
 def _bundle_rhiza_pairs() -> list[tuple[str, Path, Path]]:
@@ -68,8 +58,6 @@ def _bundle_rhiza_pairs() -> list[tuple[str, Path, Path]]:
             if "__pycache__" in file_path.parts:
                 continue
             relative = file_path.relative_to(bundle_rhiza)
-            if relative.parts[0] in _NOT_DOGFOODED_PATHS:
-                continue
             root_file = rhiza_root / relative
             label = f"{bundle_dir.name}/{relative}"
             pairs.append((label, file_path, root_file))

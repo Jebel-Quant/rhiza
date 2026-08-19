@@ -71,20 +71,20 @@ bundles:
     requires: [core]
     notes: |
       The Python half of what used to be `core`: `.python-version`, `ruff.toml`,
-      `.bandit`, the pre-commit config, `pytest.ini`, and `.rhiza/make.d/python.mk`.
+      `.bandit`, the pre-commit config, and `pytest.ini`. Its gates are rhiza-task tasks.
 
-      That one fragment defines every gate its own `all` names — `install`, `deptry`,
-      `license`, `test`, `typecheck`, `security`, `docs-coverage` — which is what makes
-      it comparable to `rust.mk` and `go.mk`. Four of those lived in the `tests` bundle
-      until #1475 while `all` named them here, so `core + python-core` alone had an
-      unrunnable `all`. `rhiza-test` is the one gate in `all` that core owns (#1471):
-      its recipe is language-neutral.
+      The gate set it names — `install`, `test`, `coverage`, `typecheck`, `security`,
+      `deps`, `license`, `docs-coverage`, `all` — is the same set `rust-core` and
+      `go-core` name, with a different engine behind each. That parity used to live in
+      three synced fragments and lives in rhiza-task's task registry now, keyed by
+      layer, so which one answers to a bare `test` is decided by the manifests a
+      repository actually has rather than by which fragment was synced into it.
 
       A language layer owns the target *names* the rest of the template calls —
-      `install`, `all` — so book.mk, test.mk and the CI workflows never need to
-      know the language. Sibling layers claim the same deployment paths on
-      purpose: selecting two at once is a file-ownership conflict, which is the
-      intended way for "one language per repo" to fail loudly.
+      `install`, `all` — so the book tasks and the CI workflows never need to know the
+      language. Sibling layers claim the same deployment paths on purpose: selecting
+      two at once is a file-ownership conflict, which is the intended way for "one
+      language per repo" to fail loudly.
 
       Unlike the Rust and Go layers it ships **no** bump-my-version config, and
       that is deliberate (issue #1453). bump-my-version auto-discovers exactly four
@@ -106,9 +106,9 @@ bundles:
     requires: [core]
     notes: |
       The Rust sibling of `python-core`. Ships `rust-toolchain.toml`,
-      `rustfmt.toml`, `clippy.toml`, `deny.toml`, a Rust pre-commit config, a
-      `.bumpversion.toml` pointing at `Cargo.toml`/`Cargo.lock`, and
-      `.rhiza/make.d/rust.mk`.
+      `rustfmt.toml`, `clippy.toml`, `deny.toml`, a Rust pre-commit config and a
+      `.bumpversion.toml` pointing at `Cargo.toml`/`Cargo.lock`. Its gates are
+      rhiza-task tasks rather than a synced `rust.mk`.
 
       The bump-my-version config sits at the repo root, not in `.rhiza/`, because
       those are the only paths the tool searches (issue #1453) — and unlike Python,
@@ -135,9 +135,9 @@ bundles:
     notes: |
       The Go sibling of `python-core` and `rust-core`. Ships `.golangci.yml`,
       `revive.toml`, a Go pre-commit config, a root `.bumpversion.toml` (see
-      `rust-core` for why it is not in `.rhiza/`), a starter
-      `internal/version/version.go` with its `version_test.go`, and
-      `.rhiza/make.d/go.mk`.
+      `rust-core` for why it is not in `.rhiza/`), and a starter
+      `internal/version/version.go` with its `version_test.go`. Its gates are
+      rhiza-task tasks rather than a synced `go.mk`.
 
       Like Rust it carries its own test targets: `go test` and `go tool cover`
       need no configuration files, so a `go-tests` bundle would own nothing but
@@ -326,7 +326,7 @@ bundles:
     requires:
       - book          # ships docs/development/TESTS.md, which needs the book's docs/ tree
       - core
-      - python-core   # test.mk reads TESTS_FOLDER and pytest.ini from the layer
+      - python-core   # the extras read TESTS_FOLDER and pytest.ini from the layer
     notes: |
       Carries only the gates that no layer's `all` depends on. The four that it does
       name — `test`, `typecheck`, `security`, `docs-coverage` — moved into

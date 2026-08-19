@@ -4,7 +4,7 @@ Rhiza ships configuration rather than a runtime library, so it has no ``src/``. 
 make layer that meant ``SOURCE_FOLDER`` matched nothing and five path-scoped gates exited
 **0** having measured nothing (#1505, #1511, #1516) — on the one repository that ships those
 gates to everyone else. The fix was an accumulator per gate, with ``utils/`` contributed from
-``.rhiza/make.d/bundles.mk``.
+the retired ``.rhiza/make.d/bundles.mk``.
 
 **This file was rewritten when the make layer was retired.** rhiza now runs on the
 ``rhiza-task`` shim, and the CLI has no accumulators: every path-scoped gate reads a single
@@ -39,7 +39,19 @@ _BUNDLES = _ROOT / "bundles"
 
 # The folder settings the CLI exposes, and what this suite expects of each. `source_folder`
 # is the one every path-scoped gate reads, so it is the one that must hold real Python.
-_KNOWN_FOLDER_SETTINGS = {"source_folder", "tests_folder", "marimo_folder"}
+# Every ``*_folder`` setting the pinned CLI exposes. The first three scope a *gate* and are
+# asserted individually below; ``docker_folder`` and ``paper_folder`` arrived with rhiza-task
+# 0.3.0 and scope a convenience task each -- `docker-build` looks for a Dockerfile there,
+# `paper` for a root `.tex`. Neither is named by `all` and neither reports success on an empty
+# folder: both skip with the folder in the reason, so a wrong value is visible rather than
+# silent. They are listed to acknowledge them, which is what this set is for.
+_KNOWN_FOLDER_SETTINGS = {
+    "source_folder",
+    "tests_folder",
+    "marimo_folder",
+    "docker_folder",
+    "paper_folder",
+}
 
 
 def _rhiza_task() -> str:
@@ -279,19 +291,13 @@ def test_interrogate_hook_and_gate_agree_on_the_threshold() -> None:
     gate enforced 100%, and a hook weaker than the gate it shadows passes work the gate will
     reject.
 
-    The gate's number is read from the shipped ``python.mk`` while the bundles still carry
-    it. rhiza-task's own ``docs_coverage`` hardcodes 100, so the two agree today; when the
-    fragment goes, read the number from the CLI instead.
+    The gate's number used to be read out of the shipped ``python.mk``. That fragment
+    retired to rhiza-task, whose ``docs_coverage`` task hardcodes 100 -- so the constant
+    here is the contract, and it is the pinned CLI's job to keep it.
     """
     import tomllib
 
-    recipe_path = _BUNDLES / "python-core" / ".rhiza" / "make.d" / "python.mk"
-    if recipe_path.is_file():
-        match = re.search(r"interrogate\s+-vv\s+--fail-under\s+(\d+)", recipe_path.read_text(encoding="utf-8"))
-        assert match, "could not find the --fail-under flag in python.mk's docs-coverage recipe"
-        gate_threshold = int(match.group(1))
-    else:
-        gate_threshold = 100
+    gate_threshold = 100
 
     table = tomllib.loads((_ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["interrogate"]
     assert table["fail-under"] == gate_threshold, (

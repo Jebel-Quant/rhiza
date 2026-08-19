@@ -63,9 +63,11 @@ def _shim_text() -> str:
 def write_shim(dest: Path) -> Path:
     """Write the rhiza-task shim into ``dest`` as its ``Makefile``.
 
-    Also adds the fragment include the shipped shim does not carry yet
-    (Jebel-Quant/rhiza-task#20), because without it the surviving ``.rhiza/make.d`` fragments
-    are inert and every target they own reports "no rule to make target".
+    Verbatim, which it was not while `.rhiza/make.d/` still had fragments in it: the
+    shipped shim never included that folder, so the harness appended an ``-include`` and
+    the ``%.mk: ;`` remake guard that goes with it, or every target the five surviving
+    bundles owned reported "no rule to make target". rhiza-task 0.3.0 carries tasks for
+    all of them, so an assembled project needs nothing the shim does not already have.
 
     Args:
         dest: The assembled project's root.
@@ -73,16 +75,8 @@ def write_shim(dest: Path) -> Path:
     Returns:
         The path written.
     """
-    text = _shim_text()
-    if "-include .rhiza/make.d/*.mk" not in text:
-        text += (
-            "\n# Added by the test harness: the shipped shim does not include the fragments yet\n"
-            "# (Jebel-Quant/rhiza-task#20), and the surviving bundles' targets live in them.\n"
-            "-include .rhiza/make.d/*.mk\n"
-            ".rhiza/make.d/%.mk: ;\n"
-        )
     makefile = dest / "Makefile"
-    makefile.write_text(text, encoding="utf-8")
+    makefile.write_text(_shim_text(), encoding="utf-8")
     return makefile
 
 

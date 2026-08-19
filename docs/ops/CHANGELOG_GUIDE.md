@@ -35,12 +35,11 @@ Rhiza generates `CHANGELOG.md` from git history using
 [git-cliff](https://git-cliff.org/). The release workflow
 (`.github/workflows/rhiza_release.yml`) already runs `uvx git-cliff` on every
 release — both to regenerate `CHANGELOG.md` and to produce the per-release
-`RELEASE_NOTES.md`. The `make changelog` target (in
-`.rhiza/make.d/releasing.mk`) runs the identical command locally so you can
-preview the result before tagging:
+`RELEASE_NOTES.md`. Run the identical command locally to preview the result
+before tagging:
 
 ```bash
-make changelog   # runs: uvx git-cliff --output CHANGELOG.md
+uvx git-cliff --output CHANGELOG.md
 ```
 
 Both the CI step and the local target read `cliff.toml` (synced from the `core`

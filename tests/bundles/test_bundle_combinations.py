@@ -44,9 +44,16 @@ class TestDockerBundleSync:
             "Neither Dockerfile.dockerignore nor .dockerignore found"
         )
 
-    def test_docker_mk_exists(self) -> None:
-        """docker.mk Makefile fragment must be present."""
-        assert (self.project / ".rhiza" / "make.d" / "docker.mk").is_file()
+    def test_docker_ships_no_make_fragment(self) -> None:
+        """The bundle's payload is the Dockerfile; its targets come from the pinned CLI.
+
+        ``.rhiza/make.d/docker.mk`` was the fragment carrying ``docker-build``,
+        ``docker-run`` and ``docker-clean``. They are rhiza-task tasks now, reached
+        through the shim's catch-all, and that the pin still carries them is asserted by
+        ``tests/api/test_bundle_cli_targets.py``. A fragment reappearing here would
+        shadow the CLI, since an explicit rule beats a pattern rule.
+        """
+        assert not (self.project / ".rhiza" / "make.d").exists()
 
     def test_no_github_workflows_from_docker_bundle(self) -> None:
         """The plain docker bundle must not inject any GitHub workflows."""

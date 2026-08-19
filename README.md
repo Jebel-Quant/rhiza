@@ -83,7 +83,7 @@ include: |
   ruff.toml
 
 exclude: |
-  .rhiza/make.d/custom-task.mk
+  docs/development/DOCKER.md
 ```
 
 > **💡 Automated Updates:** When using a version tag (e.g., `v0.7.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention.
@@ -506,10 +506,18 @@ The `.python-version` file specifies the default Python version for local develo
 
 ### Makefile Customisation
 
-Rhiza uses a modular Makefile system with extension points (hooks) for customisation. See [.rhiza/make.d/README.md](.rhiza/make.d/README.md) for the complete guide including:
-- Extension points and hooks
-- Custom target creation
-- Module ordering conventions
+The `Makefile` is yours. Generate it once with `uvx rhiza-task shim > Makefile`; from then on it
+is repo-owned and never synced, so anything you add to it survives every template update. A `%:`
+catch-all forwards unmatched targets to the pinned CLI, and an explicit rule always beats it:
+
+- **Add a target** — write it in the `Makefile`, or in a gitignored `local.mk` for one-off
+  personal helpers.
+- **Extend a task** — shadow it. An explicit `install:` rule wins over the catch-all, so it can
+  call `uvx $(RHIZA_TASK) install` and then your extra step. This replaces the
+  `pre-install::`/`post-install::` hooks the synced make layer anchored.
+- **Change a setting** — a `[tool.rhiza-task]` table in `pyproject.toml`, or `rhiza.toml` for a
+  project with no Python manifest. See `uvx rhiza-task list` for the tasks and
+  `uvx rhiza-task print <setting>` for what a setting currently resolves to.
 
 ### Custom Build Scripts
 
