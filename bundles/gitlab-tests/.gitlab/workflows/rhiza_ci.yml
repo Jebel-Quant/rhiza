@@ -11,9 +11,9 @@
 
 #
 # RHIZA_TASK is the pin every gate below runs through. v1.4.0 retired the synced make
-# layer -- core ships no Makefile and no `.rhiza/rhiza.mk` -- so a project that syncs it
-# has no make targets left and each gate dies with `No rule to make target '<gate>'`.
-# Calling the CLI directly drops the dependency on a front door rhiza no longer ships.
+# layer -- `.rhiza/rhiza.mk` and its fragments are CLI tasks now. `core` ships a `Makefile`
+# that forwards to the CLI, but this pipeline calls the CLI directly so it does not depend
+# on a front door it neither ships nor can verify.
 
 variables:
   RHIZA_TASK: "rhiza-task@0.3.1"

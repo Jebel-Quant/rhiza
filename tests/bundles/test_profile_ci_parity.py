@@ -144,16 +144,23 @@ class TestGitlabProjectProfileSync:
         parsed = yaml.safe_load(content)
         assert parsed is not None, ".gitlab-ci.yml is empty or invalid YAML"
 
-    def test_no_make_layer_is_synced(self) -> None:
-        """The profile must ship no ``Makefile``, ``rhiza.mk`` or gate fragment.
+    def test_the_front_door_is_synced_and_the_gate_fragments_are_not(self) -> None:
+        """The profile must ship a ``Makefile`` and no ``rhiza.mk`` or gate fragment.
 
-        This asserted their presence. The GitLab pipeline still calls ``make test``, ``make fmt``
-        and the rest — that has not changed and is what ``test_ci_workflows_expose_same_core_job_names``
-        below checks — but the front door is generated per repo now
-        (``uvx rhiza-task shim > Makefile``) rather than synced, so a profile that delivered one
-        would let ``/rhiza:update`` overwrite whatever the repo added to it.
+        Both halves matter and they used to move together. The GitLab pipeline calls ``make test``,
+        ``make fmt`` and the rest — which ``test_ci_workflows_expose_same_core_job_names`` below
+        checks — so a profile shipping no front door leaves a pipeline with nothing to call: for
+        the interval when ``uvx rhiza-task shim`` printed it, every consumer had to run that by
+        hand before its own CI could pass. ``core`` owns the file again, so the sync delivers it.
+
+        What must stay gone is the *content* the fragments held. A ``Makefile`` that forwards to a
+        pinned CLI is one file and one version; ``rhiza.mk`` plus ``make.d/`` was 1481 synced lines
+        of recipes, and a repo that still has them on disk shadows the CLI rather than merely
+        duplicating it.
         """
-        assert not (self.project / "Makefile").exists(), "the profile ships a Makefile again"
+        assert (self.project / "Makefile").is_file(), (
+            "the profile ships no Makefile, so `make test` in the pipeline has no front door"
+        )
         assert not (self.project / ".rhiza" / "rhiza.mk").exists(), "the profile ships rhiza.mk again"
         make_d = self.project / ".rhiza" / "make.d"
         stale = sorted(f.name for f in make_d.rglob("*.mk")) if make_d.is_dir() else []

@@ -35,11 +35,11 @@ permissions:
   contents: read
 
 # The rhiza-task pin the gate step below runs through. v1.4.0 retired the synced make
-# layer -- core ships no Makefile and no `.rhiza/rhiza.mk` -- so a consumer that syncs it
-# has no make targets left and the gate dies with `No rule to make target '<gate>'`.
-# Calling the CLI directly drops the dependency on a front door this workflow does not
-# ship. Pinned rather than read from a consumer's `RHIZA_TASK`, which this workflow cannot
-# see: it tracks the tag the workflow is called at.
+# layer -- `.rhiza/rhiza.mk` and its fragments are CLI tasks now -- and while `core` does
+# ship a `Makefile` that forwards to the CLI, calling the CLI directly drops the dependency
+# on a front door this workflow does not ship and cannot verify. Pinned rather than read
+# from a consumer's `RHIZA_TASK`, which this workflow cannot see: it tracks the tag the
+# workflow is called at.
 env:
   RHIZA_TASK: rhiza-task@0.3.1
 

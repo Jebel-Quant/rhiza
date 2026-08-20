@@ -45,11 +45,18 @@ bundles:
     required: true
     standalone: true
     notes: |
-      The make framework, help/logo machinery, shell and GNU-make guards, editor
-      config, changelog config, and uv/uvx as a *tool runner* (rhiza runs
-      pre-commit, mkdocs and semgrep through uvx whatever the project is written
-      in). It is deliberately not a working repo on its own: `install` and `all`
-      come from a language layer, and every profile pairs core with exactly one.
+      The front door (`Makefile` — a 71-line shim that pins `RHIZA_TASK` and
+      forwards every unmatched target to that CLI), editor config, changelog
+      config, and uv/uvx as a *tool runner* (rhiza runs pre-commit, mkdocs and
+      semgrep through uvx whatever the project is written in). The framework the
+      Makefile used to *be* — `rhiza.mk`, `make.d/`, the help and logo machinery,
+      the shell and GNU-make guards — is rhiza-task now. It is deliberately not a
+      working repo on its own: `install` and `all` come from a language layer, and
+      every profile pairs core with exactly one.
+
+      The Makefile is template-owned, so a sync overwrites it and `RHIZA_TASK`
+      travels with the template. Repo-owned targets go in `local.mk`, which the
+      Makefile `-include`s and core deliberately does not ignore.
 
       It ships **no** `.rhiza/.env`. The one it used to ship set SOURCE_FOLDER and
       MARIMO_FOLDER to values identical to `rhiza.mk`'s own `?=` defaults, so it
@@ -57,9 +64,9 @@ bundles:
       environment variable in GNU make, so naming a variable there removed it from
       every caller's reach. That is the mechanism of #1545, where a pinned
       RHIZA_CI_OS_MATRIX silently discarded `rhiza_ci.yml`'s per-caller export. The
-      `-include .rhiza/.env` stays, because a consumer's own file is still layer 2 of
-      rhiza-task's resolution order; the documented home for project settings is a
-      `[tool.rhiza-task]` table in pyproject.toml, which is layer 3.
+      file itself stays supported — a consumer's own copy is layer 2 of rhiza-task's
+      resolution order, read by the CLI rather than by make — and the documented home
+      for project settings is a `[tool.rhiza-task]` table in pyproject.toml, layer 3.
 
   # ============================================================================
   # LANGUAGE LAYERS - exactly one per repo

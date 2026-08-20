@@ -41,16 +41,27 @@ wants, and ADR 0006 and ADR 0010 still stand. The problem is the delivery mechan
 Distribute the task layer as a **pinned Python package**,
 [rhiza-task](https://github.com/Jebel-Quant/rhiza-task), provisioned per invocation by `uvx`.
 
-A repository generates its front door once:
-
-```bash
-uvx rhiza-task shim > Makefile
-```
-
-The generated `Makefile` is **repo-owned from then on**. It pins `RHIZA_TASK`, bootstraps `uv`
+The front door stays a `Makefile` and `core` ships it. It pins `RHIZA_TASK`, bootstraps `uv`
 when the runner has none, and forwards every unmatched target to the CLI through a `%:`
 catch-all. `make test` still works, because `test` is a task — not because anything in the
 file mentions it.
+
+> **Amendment (2026-08-20).** As first accepted, the CLI *printed* that file
+> (`uvx rhiza-task shim > Makefile`) and each repository owned the copy from then on. That is
+> reversed: the file is one of `core`'s templates, and rhiza-task defines no Makefile at all.
+>
+> Two things were wrong with the generated form. It put a **template inside the task runner** —
+> the CLI had to know about `local.mk`, the `##` help convention and the `./bin/uvx` bootstrap,
+> and rhiza then hand-carried a variant of the output anyway, so the generator was not even the
+> single source it was supposed to be. And it put the **pin inside a file no sync touches**:
+> `shim` wrote the version of whichever CLI printed it, so moving a consumer's gates forward was
+> a per-repo hand edit `/rhiza:update` could not make. "One version bump" under *Easier* below
+> was true only for someone who knew to make it.
+>
+> Template ownership restores the property `RHIZA_CHECKS_VERSION` has: a repo synced at a tag
+> runs that tag's gates. It costs the ability to append to the `Makefile`, which two earlier
+> changes had already made unnecessary — the mother-repo targets moved to `local.mk`, and
+> `bundles/core/.gitignore` stopped ignoring that file (#1574) so a consumer can commit its own.
 
 `.rhiza/rhiza.mk` and `.rhiza/make.d/` are deleted. The retirement ran in two steps:
 rhiza-task 0.2.0 took eleven fragments, and 0.3.0 took the last five — `github`, `docker`,
@@ -94,7 +105,9 @@ Three properties of the replacement are load-bearing:
 - **Reading a recipe.** `make -n test` used to show the command. Now it shows a delegation,
   and the answer is in another repository.
 - **Extending a task.** The `pre-install::`/`post-install::` hooks are gone; a project shadows
-  the target with an explicit rule instead. That is more capable and less discoverable.
+  the target with an explicit rule instead. That is more capable and less discoverable — and it
+  belongs in `local.mk`, since the amendment above made the `Makefile` synced: anything appended
+  to it is lost at the next `/rhiza:update`.
 - **A stale fragment can shadow a task.** A sync ceasing to deliver a file does not delete it,
   so a consumer that keeps `.rhiza/make.d/` *and* an `-include` for it runs the old recipe in
   preference to the new task. Migrating repos delete the folder.
