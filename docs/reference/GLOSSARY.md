@@ -14,7 +14,7 @@ A standalone Python package (published on PyPI as `rhiza-cli`) that provides the
 A template approach where configuration files remain synchronized with an upstream source over time, as opposed to traditional "one-shot" template generators (like cookiecutter or copier) that generate files once and then disconnect from the source.
 
 ### Template Sync
-The process of pulling updates from the upstream Rhiza repository into a downstream project. Executed via `make sync`. Allows projects to receive ongoing improvements without manual copying.
+The process of pulling updates from the upstream Rhiza repository into a downstream project. Executed via the rhiza-claude `/rhiza:update` command. Allows projects to receive ongoing improvements without manual copying.
 
 ### Downstream Project
 A project that has adopted Rhiza templates. It receives updates from the upstream Rhiza repository through template sync.
@@ -274,9 +274,9 @@ Workflow running security scans (bandit, semgrep, CodeQL) on the codebase.
 | `make install` | Install dependencies and set up environment |
 | `make test` | Run pytest with coverage |
 | `make fmt` | Format and lint code with ruff |
-| `make sync` | Sync templates from upstream |
-| `make release-status` | Show release workflow status and latest release |
+| `/rhiza:update` | Sync templates from upstream (a rhiza-claude command) |
+| `make workflow-status` | Show recent runs for the release workflow |
 | `make doctor` | Validate tools and environment — start here when something is wrong |
-| `make validate` | Validate project structure against `.rhiza/template.yml` |
+| `make rhiza-test` | Run the conformance checks over this repository |
 | `make deps` | Check for unused/missing dependencies |
 | `make help` | Show all available targets |

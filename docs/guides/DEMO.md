@@ -50,10 +50,10 @@ make fmt
 make deps
 
 # 6. Check release status (releasing itself is driven by the rhiza-claude /release command)
-make release-status
+make workflow-status
 
 # 7. Validate project structure
-make validate
+make rhiza-test
 ```
 
 ### Automated Demo Script

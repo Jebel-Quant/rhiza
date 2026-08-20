@@ -9,10 +9,10 @@ The Rhiza documentation site — referred to as the **book** — is built with [
 make book
 
 # Serve the docs locally with live reload (useful while editing)
-make mkdocs-serve
+make serve
 
 # Build only the MkDocs site (skips test reports and notebooks)
-make mkdocs-build
+make book
 ```
 
 The built site is written to `_book/` by default. To change the output directory:
@@ -130,5 +130,4 @@ Omitting the `nav` key causes MkDocs to generate navigation automatically from t
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `BOOK_OUTPUT` | `_book` | Output directory for `make book` |
-| `MKDOCS_OUTPUT` | `_mkdocs` | Output directory for `make mkdocs-build` |
 | `MKDOCS_CONFIG` | `mkdocs.yml` | Path to the MkDocs config file |

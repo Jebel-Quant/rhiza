@@ -2,7 +2,7 @@
 
 Rhiza ships development infrastructure as **bundles** — named groups of
 configuration files. A downstream project adopts Rhiza by listing the bundles
-(or profiles) it wants in `.rhiza/template.yml`; `make sync` then materialises
+(or profiles) it wants in `.rhiza/template.yml`; `/rhiza:update` then materialises
 exactly those files. This page is the map of what you can choose from.
 
 The authoritative, machine-readable definition lives in
@@ -112,7 +112,7 @@ templates:
   - github-tests
 ```
 
-Then run `make sync` to materialise the selected files. Required bundles
+Then run `/rhiza:update` to materialise the selected files. Required bundles
 (`core`) and any `requires` dependencies are pulled in automatically, so you only
 list the capabilities you care about.
 

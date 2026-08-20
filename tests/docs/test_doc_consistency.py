@@ -260,7 +260,9 @@ class TestReadmeBundleList:
 _MAKE_SOURCES = ("Makefile", "local.mk")
 
 _TARGET_DEF_RE = re.compile(r"^([A-Za-z0-9_.-]+(?:\s+[A-Za-z0-9_.-]+)*)\s*::?(?!=)", re.MULTILINE)
-_MAKE_MENTION_RE = re.compile(r"\bmake\s+([a-z][A-Za-z0-9_-]*)")
+# `[ \t]` and not `\s`, which spans newlines: in a mermaid edge list the lines
+# `ci --> make` and `release --> make` read as a mention of `make release`.
+_MAKE_MENTION_RE = re.compile(r"\bmake[ \t]+([a-z][A-Za-z0-9_-]*)")
 _CODE_REGION_RE = re.compile(r"```.*?```|`[^`\n]+`", re.DOTALL)
 
 _BUNDLE_COUNT_RE = re.compile(r"\b\d+\s+(?:\w+\s+){0,2}bundles\b", re.IGNORECASE)
@@ -268,6 +270,16 @@ _STAMP_RE = re.compile(r"^\s*\*{0,2}Last Updated", re.MULTILINE | re.IGNORECASE)
 
 # Markdown files exempt from prose-drift gates: generated or historical records.
 _PROSE_GATE_EXEMPT = {"CHANGELOG.md"}
+
+# Words that follow a literal `make` without naming a target of this repository, and so
+# cannot be checked against the CLI. Each is a documented category, not a leak:
+#   - metasyntax: `make <target>` rendered without the angle brackets, and the mermaid node
+#     label `make commands`
+#   - a package list: `apt-get install -y make git curl`
+#   - worked examples of a *consumer's* own targets, in the guide about adding them
+_MAKE_MENTION_EXEMPT = frozenset(
+    {"target", "targets", "variables", "commands", "git", "deploy", "deploy-dev", "deploy-prod", "deploy-staging"}
+)
 
 
 @functools.lru_cache(maxsize=1)
@@ -325,13 +337,28 @@ def _defined_make_targets() -> set[str]:
 
 
 def _make_mention_cases() -> list[tuple[str, str]]:
-    """Collect (label, target) for every `make <target>` mention in CLAUDE.md and README.md code."""
+    """Collect (label, target) for every `make <target>` mention in any markdown file's code.
+
+    Every markdown file, not just CLAUDE.md and README.md. Narrowing it to those two is how
+    eleven documents came to advertise targets that no longer exist -- `make sync`,
+    `make validate`, `make pre-commit`, `make release-status`, `make docs`, `make marimushka`,
+    `make mkdocs-build` -- years after the make layer that defined them was retired. The two
+    files under test were the two that stayed accurate, which is the wrong half to check.
+
+    That includes markdown under ``bundles/``, which is stronger than checking the mother
+    repo alone: a bundle file is what a consumer *receives*, so a stale `make <target>` there
+    is advice that was never true in the repository it lands in.
+    """
     cases: list[tuple[str, str]] = []
-    for doc in ("CLAUDE.md", "README.md"):
-        text = (_ROOT / doc).read_text(encoding="utf-8")
-        for region in _CODE_REGION_RE.findall(text):
+    for doc in _markdown_files():
+        if doc.name in _PROSE_GATE_EXEMPT:
+            continue
+        label = doc.relative_to(_ROOT)
+        for region in _CODE_REGION_RE.findall(doc.read_text(encoding="utf-8", errors="replace")):
             for match in _MAKE_MENTION_RE.finditer(region):
-                cases.append((f"{doc}: make {match.group(1)}", match.group(1)))
+                if match.group(1) in _MAKE_MENTION_EXEMPT:
+                    continue
+                cases.append((f"{label}: make {match.group(1)}", match.group(1)))
     return sorted(set(cases))
 
 
@@ -340,7 +367,7 @@ class TestProseDrift:
 
     @pytest.mark.parametrize(("label", "target"), _make_mention_cases(), ids=[c[0] for c in _make_mention_cases()])
     def test_mentioned_make_targets_exist(self, label: str, target: str) -> None:
-        """Every `make <target>` mentioned in CLAUDE.md/README.md code must be a real target."""
+        """Every `make <target>` mentioned in any markdown code span must be a real target."""
         assert target in _defined_make_targets(), (
             f"{label}: target is not defined in the Makefile and is not a task of the pinned CLI"
         )

@@ -117,15 +117,15 @@ This example adds a minimal `linter` bundle that injects a `.ruff.toml` override
    The CLAUDE.md mention is test-enforced: `tests/docs/test_doc_consistency.py::TestBundleDocumentation`
    fails for any bundle defined in `.rhiza/template-bundles.yml` that CLAUDE.md does not name.
 
-6. **Run `make validate`**
+6. **Run `make rhiza-test`**
 
    Before opening a PR, run the normal validation flow:
 
    ```bash
-   make validate
+   make rhiza-test
    ```
 
-   In this repository, `make validate` intentionally skips downstream-template validation because Rhiza itself has no `.rhiza/template.yml`. When you add a bundle here, also run the repository test suite so the new `tests/bundles/` coverage actually executes.
+   In this repository, `make rhiza-test` runs the conformance checks that do not need a `.rhiza/template.yml`, because Rhiza itself has none. When you add a bundle here, also run the repository test suite so the new `tests/bundles/` coverage actually executes.
 
 7. **Open a PR**
 
@@ -148,7 +148,7 @@ Each step lists the gate that enforces it, so a miss is discovered here rather t
   `.rhiza/template-bundles.yml` (gate: `tests/bundles/test_bundle_matrix.py` — nothing to add manually,
   but a matrix failure for `<name>` points at a YAML, ownership, or dependency problem in the new bundle)
 - `tests/bundles/` covers the new bundle's synced output (focused test you write)
-- `make validate` and the full test suite have been run locally
+- `make rhiza-test` and the full test suite have been run locally
 
 ---
 

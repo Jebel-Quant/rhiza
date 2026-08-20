@@ -16,7 +16,7 @@ A concise reference for common Rhiza operations.
 
 | Command | Description |
 |---------|-------------|
-| `make release-status` | Show release workflow status and latest release |
+| `make workflow-status` | Show recent runs for the release workflow |
 
 > Releasing is driven by the rhiza-claude `/release` command, which derives the next version, bumps `pyproject.toml`, regenerates `CHANGELOG.md`, and creates the git tag locally. Pushing that tag triggers the release workflow.
 
@@ -26,14 +26,14 @@ A concise reference for common Rhiza operations.
 |---------|-------------|
 | `make fmt` | Format + lint with auto-fix |
 | `make deps` | Check for unused/missing dependencies |
-| `make pre-commit` | Run all pre-commit hooks |
+| `make fmt` | Run all pre-commit hooks |
 
 ## Template Sync
 
 | Command | Description |
 |---------|-------------|
-| `make sync` | Sync templates from upstream Rhiza |
-| `make validate` | Validate project structure against `.rhiza/template.yml` |
+| `/rhiza:update` | Sync templates from upstream Rhiza (a rhiza-claude command, not a make target) |
+| `make rhiza-test` | Run the conformance checks over this repository |
 
 ### `.rhiza/template.yml` — profile-based (recommended)
 

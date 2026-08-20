@@ -27,7 +27,6 @@ These are the commands you'll use most frequently:
 | `make install` | Install dependencies and set up environment |
 | `make test` | Run all tests with coverage |
 | `make fmt` | Format and lint code |
-| `make tutorial` | Interactive tutorial for new developers |
 
 ---
 
@@ -48,7 +47,7 @@ These are the commands you'll use most frequently:
 | Command | Description |
 |---------|-------------|
 | `make deps` | Check for unused/missing dependencies |
-| `make pre-commit` | Run all pre-commit hooks |
+| `make fmt` | Run all pre-commit hooks |
 | `make typecheck` | Run type checking with ty and mypy --strict |
 | `make security` | Run the bandit security scan |
 | `make docs-coverage` | Check documentation coverage |
@@ -70,16 +69,15 @@ These are the commands you'll use most frequently:
 
 ### Template Management
 
-| Command | Description |
-|---------|-------------|
-| `make sync` | Sync with upstream template |
-| `make validate` | Validate project structure |
+Syncing is driven by the rhiza-claude `/rhiza:update` command, not a make target: it
+resolves the bundles in `.rhiza/template.yml`, writes the managed files and opens a PR.
+`make rhiza-test` runs the conformance checks over the result.
 
 ### Release Management
 
 | Command | Description | Options |
 |---------|-------------|---------|
-| `make release-status` | Show release workflow status | |
+| `make workflow-status` | Show recent runs for the release workflow | |
 
 > Releasing is driven by the rhiza-claude `/release` command, which derives the next version, bumps `pyproject.toml`, regenerates `CHANGELOG.md`, and creates the git tag locally. Pushing that tag triggers the release workflow.
 
@@ -96,7 +94,6 @@ These are the commands you'll use most frequently:
 | Command | Description |
 |---------|-------------|
 | `make marimo` | Start Marimo notebook server |
-| `make marimushka` | Export Marimo notebooks to HTML |
 | `make marimo-validate` | Validate all Marimo notebooks |
 
 ### Presentations
@@ -111,7 +108,6 @@ These are the commands you'll use most frequently:
 
 | Command | Description |
 |---------|-------------|
-| `make gh-install` | Install GitHub CLI and extensions |
 | `make view-prs` | List open pull requests |
 | `make view-issues` | List open issues |
 | `make failed-workflows` | List recent failing workflow runs |
@@ -132,10 +128,8 @@ These are the commands you'll use most frequently:
 
 | Command | Description |
 |---------|-------------|
-| `make help` | Display help message |
-| `make version-matrix` | Show supported Python versions |
-| `make print-VARIABLE` | Print value of any Makefile variable |
-| `make print-logo` | Display Rhiza logo |
+| `make help` | Display help message, and any targets `local.mk` adds |
+| `uvx rhiza-task print <setting>` | Print a resolved setting, e.g. `source_folder` |
 
 ---
 
@@ -364,17 +358,11 @@ uv pip list --outdated
 ### Generating Docs
 
 ```bash
-# Generate API documentation
-make docs
-
-# Build companion book
+# Build the companion book
 make book
 
-# Build MkDocs site
-make mkdocs-build
-
-# Serve docs with live reload
-make mkdocs-serve
+# Build it and serve on port 8000
+make serve
 ```
 
 ### Documentation Coverage
@@ -399,7 +387,7 @@ tag locally. Pushing that tag triggers the release workflow (`rhiza_release.yml`
 
 ```bash
 # Check release status
-make release-status
+make workflow-status
 
 # View latest release
 make latest-release
@@ -453,8 +441,8 @@ echo $VARIABLE_NAME
 # Set temporarily
 VARIABLE=value make target
 
-# Print Makefile variable
-make print-VARIABLE_NAME
+# Print a resolved rhiza-task setting
+uvx rhiza-task print source_folder
 ```
 
 ---
@@ -466,8 +454,8 @@ make print-VARIABLE_NAME
 #### "Command not found: uv"
 
 ```bash
-# Install uv
-make install-uv
+# The shim bootstraps uv itself as a prerequisite of every target
+make help
 
 # Or manually
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -535,10 +523,9 @@ uv pip list
 uv run python -c "import sys; print(sys.executable)"
 uv run python -c "import sys; print(sys.path)"
 
-# Check make variables
-make print-PYTHON_VERSION
-make print-UV_BIN
-make print-VENV
+# Check the resolved settings
+uvx rhiza-task print source_folder
+uvx rhiza-task print tests_folder
 
 # Check git status
 git status
@@ -644,7 +631,7 @@ make test
 # If still broken, check:
 git status
 git --no-pager diff
-make print-PYTHON_VERSION
+uvx rhiza-task print source_folder
 ```
 
 ---
@@ -729,7 +716,7 @@ PYTHON_VERSION = 3.12
 
 - Document functions with docstrings
 - README.md's help section is kept in sync by the `update-readme-help` pre-commit hook
-- Generate API docs with `make docs`
+- Generate the companion book with `make book`
 - Check documentation coverage with `make docs-coverage`
 
 ---
