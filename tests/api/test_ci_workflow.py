@@ -158,9 +158,8 @@ def test_every_gate_named_by_make_all_runs_in_ci(root):
     invoked = "\n".join(wf.read_text(encoding="utf-8") for wf in workflows)
 
     # Either interface counts: the gates run through `uvx "$RHIZA_TASK" <gate>` since
-    # v1.4.0 retired the make layer, while the mother-repo-only targets (`e2e`,
-    # `gitlab-docker-test`) are real Make rules in this repo's own Makefile. What must
-    # hold is that some workflow invokes the gate.
+    # v1.4.0 retired the make layer, while the mother-repo-only `e2e` is a real Make rule
+    # in this repo's own Makefile. What must hold is that some workflow invokes the gate.
     missing = [gate for gate in gates if f'uvx "$RHIZA_TASK" {gate}' not in invoked and f"make {gate}" not in invoked]
     assert not missing, (
         f"these targets are named by `make all` but no .github/workflows job runs them: "
