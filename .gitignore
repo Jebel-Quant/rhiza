@@ -18,21 +18,21 @@ _pdoc
 docs/notebooks/*.html
 docs/reports
 docs/reports.md
-_marimushka
 _mkdocs
 _benchmarks
 _jupyter
 _site
 
 # LaTeX build artifacts
-# The compiled PDF is published to the orphan `paper` branch by CI, never committed here.
-docs/paper/*.pdf
 docs/paper/*.aux
 docs/paper/*.fdb_latexmk
 docs/paper/*.fls
 docs/paper/*.log
 docs/paper/*.out
 docs/paper/*.toc
+docs/paper/*.pdf
+docs/paper/*.bbl
+docs/paper/*.blg
 
 # temp file used by Junie
 .output.txt
@@ -104,25 +104,13 @@ cover/
 *.mo
 *.pot
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
 # Cython debug symbols
 cython_debug/
 
-# Makefile
-local.mk
-
 .bandit-baseline.json
 
-# mutmut mutation testing cache
-.mutmut-cache
-
-
+# Rust (rust-core bundle). Kept in core rather than the language layer because
+# .gitignore has one owner and git opens it with O_NOFOLLOW, so it cannot be a
+# per-layer file. These entries are inert in a Python repo.
+target/
+**/*.rs.bk
