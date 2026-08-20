@@ -56,11 +56,11 @@ These never fail a PR by design — they exist to publish security/quality signa
 
 ### Other periodic scans
 
-`rhiza_weekly.yml` and `rhiza_fuzzing.yml` run on a schedule to surface drift and
-robustness issues; they are diagnostic and are not PR merge gates.
+`rhiza_weekly.yml` runs on a schedule to surface drift; it is diagnostic and is
+not a PR merge gate.
 
 ## Summary
 
 - **PR merge gates:** `fmt`, `typecheck`, `test`, `rhiza-test`, `deptry`,
   `docs-coverage`, `security`, CodeQL — plus mutation **iff** `MUTATION_ENABLED=true`.
-- **Report-only:** Scorecard, weekly, fuzzing.
+- **Report-only:** Scorecard, weekly.
