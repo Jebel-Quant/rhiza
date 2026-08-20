@@ -150,7 +150,7 @@ class TestMakefileRootFixture:
             for match in re.finditer(r"^([^\s:#=]+)\s*::?(?!=)", content, re.MULTILINE)
             if not match.group(1).startswith(".")
         }
-        assert defined <= {"help", "$(UVX)", "FORCE", "local.mk", "Makefile", "%"}, (
+        assert defined <= {"help", "$(UVX)", "$(UV)", "FORCE", "local.mk", "Makefile", "%"}, (
             f"the root Makefile has grown repo-owned rules ({sorted(defined)}) -- they belong "
             f"in local.mk, or a rhiza-task bump regenerating this file will drop them"
         )

@@ -14,6 +14,12 @@ INSTALL_DIR ?= $(abspath ./bin)
 UVX ?= $(shell command -v uvx 2>/dev/null || echo $(INSTALL_DIR)/uvx)
 export PATH := $(INSTALL_DIR):$(PATH)
 
+# `UV` too, for `local.mk` to reach: the astral installer writes both binaries into the
+# same directory, so once $(UVX) exists this does, and the empty recipe both satisfies
+# make's remake attempt and keeps the catch-all from forwarding the path as a task name.
+UV ?= $(shell command -v uv 2>/dev/null || echo $(INSTALL_DIR)/uv)
+$(UV): $(UVX) ;
+
 .DEFAULT_GOAL := help
 
 .PHONY: help

@@ -453,8 +453,9 @@ Three consequences of *that* step, all of them things a reader will otherwise tr
 **Hook targets are gone**, and that predates this step. `bootstrap.mk` anchored
 `pre-install::`/`post-install::` as no-ops so a consumer could chain onto them, and that was *the*
 documented way to add project hooks. `uvx rhiza-task install` knows nothing about make targets.
-Shadow the target instead: an explicit `install:` rule beats the catch-all, so it can call the CLI
-and then the extra step. This repo does exactly that for `rhiza-test`.
+Shadow the target instead: an explicit `install:` rule in `local.mk` beats the catch-all, so it can
+call the CLI and then the extra step. This repo did exactly that for `rhiza-test` until 0.3.1 made
+the wrapper redundant; nothing here shadows a CLI task now.
 
 **What guards the pin.** `RHIZA_TASK` being the whole version contract cuts both ways: a bump that
 dropped a task would remove `make view-prs` from every consumer on the `github-project` profile,
@@ -473,20 +474,22 @@ ignoring `local.mk`, unlike `bundles/core`'s: CI invokes `make e2e` in all three
 this repo's copy has to be committed. A fifth, `gitlab-docker-test`, lived there too and is gone —
 see **CI/CD** below.
 
-**And why `rhiza-test` is wrapped rather than delegated.** pytest-rhiza's `test_docstrings` reads
-its scope from the `RHIZA_DOCTEST_FOLDERS` environment variable; `quality.mk` exported it from
+**And why `rhiza-test` is no longer wrapped.** pytest-rhiza's `test_docstrings` reads its scope
+from the `RHIZA_DOCTEST_FOLDERS` environment variable; `quality.mk` exported it from
 `DOCSTRING_FOLDERS`, and rhiza-task 0.3.0 did not (Jebel-Quant/rhiza-task#18). On a bare delegation
 the check reported `SKIPPED  No doctest folder found (looked for: src)` while the gate still said
 `ok rhiza-test` — #1517 exactly, this repo's only doctest examples unchecked behind a green gate.
-`.rhiza/.env` cannot carry the value because that file is gitignored.
+`.rhiza/.env` cannot carry the value because that file is gitignored, so this repo wrapped the gate
+to export it.
 
-**0.3.1 passes it through itself**, so the wrapper stopped being a fix and became a probe: the
-export is the one form of the property `tests/utils/test_gate_scope.py` can read out of a `make -n`
-— no network, no lockfile, no tags — and the test fails if it goes. A bare delegation would move
-the property inside the pin, where only a real run reveals a regression. The two other mother-repo
-workarounds 0.3.1 retired did not need that treatment and are gone: the shim now ships the `PATH`
-export (rhiza-task#19), and `mkdocstrings[python]` is the default for `mkdocs-extra-packages`,
-which this repo's `pyproject.toml` now merely restates.
+**0.3.1 passes it through itself**, so the wrapper stopped fixing anything and survived only as a
+probe — an export `tests/utils/test_gate_scope.py` could read out of a `make -n`. It went with the
+move to `local.mk`, since a wrapper whose recipe restates what the CLI already does is exactly the
+duplication that file is meant not to accumulate. The property now lives inside the pin, asserted
+upstream against the resolved config; what is left here is a floor on the pinned version, because
+that is the half upstream cannot see. The two other mother-repo workarounds 0.3.1 retired are gone
+the same way: the shim ships the `PATH` export (rhiza-task#19), and `mkdocstrings[python]` is the
+default for `mkdocs-extra-packages`, which this repo's `pyproject.toml` now merely restates.
 
 ### Dependency Management
 

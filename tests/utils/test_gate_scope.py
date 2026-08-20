@@ -16,11 +16,11 @@ kept the pre-#1505 form through #1505). Under the CLI a gate cannot have a priva
 forget: there is one field. What *can* still drift is a new folder setting appearing, so
 :func:`test_no_unknown_folder_setting_has_appeared` derives from the CLI's own schema.
 
-The migration immediately reintroduced #1517, which is why the doctest test below is the
-sharpest one here: ``rhiza-test`` reported ``ok`` while pytest-rhiza's ``test_docstrings``
-skipped with "No doctest folder found (looked for: src)", because that check reads the
-``RHIZA_DOCTEST_FOLDERS`` environment variable and the CLI does not set it
-(Jebel-Quant/rhiza-task#18). The root ``Makefile`` wraps the gate to export it.
+The migration immediately reintroduced #1517: ``rhiza-test`` reported ``ok`` while
+pytest-rhiza's ``test_docstrings`` skipped with "No doctest folder found (looked for: src)",
+because that check reads the ``RHIZA_DOCTEST_FOLDERS`` environment variable and rhiza-task
+0.3.0 did not set it (Jebel-Quant/rhiza-task#18). The root ``Makefile`` wrapped the gate to
+export it until 0.3.1 made the CLI do it; what is left here is a floor on the pin.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.util import run_make, strip_ansi
+from tests.util import strip_ansi
 
 _ROOT = Path(__file__).resolve().parents[2]
 _BUNDLES = _ROOT / "bundles"
@@ -171,54 +171,51 @@ def test_no_unknown_folder_setting_has_appeared() -> None:
     )
 
 
-def test_rhiza_test_carries_the_docstring_scope_to_the_doctest_check() -> None:
-    """``make rhiza-test`` must export a non-empty RHIZA_DOCTEST_FOLDERS.
+# The version in which rhiza-task began passing `source_folder` through to the doctest check
+# itself (Jebel-Quant/rhiza-task#18). Below it, a bare delegation silently reintroduces #1517.
+_SCOPE_PASSTHROUGH_SINCE = (0, 3, 1)
 
-    The sharpest guard in this file, because the property it pins broke the moment this repo
-    moved to the shim. pytest-rhiza's ``test_docstrings`` reads its scope from that
-    environment variable, falling back to ``SOURCE_FOLDER`` in ``.rhiza/.env`` and then to
-    ``src``. ``quality.mk`` exported it from ``DOCSTRING_FOLDERS``; rhiza-task 0.3.0 did not
-    -- so the check reported
+
+def test_the_pinned_cli_is_new_enough_to_scope_the_doctest_check() -> None:
+    """The replacement for the `make -n` guard the root Makefile's wrapper used to allow.
+
+    pytest-rhiza's ``test_docstrings`` reads its scope from ``RHIZA_DOCTEST_FOLDERS``,
+    falling back to ``SOURCE_FOLDER`` in ``.rhiza/.env`` and then to a literal ``src``.
+    ``quality.mk`` exported it from ``DOCSTRING_FOLDERS``; rhiza-task 0.3.0 did not -- so the
+    check reported
 
         SKIPPED  No doctest folder found (looked for: src)
 
     while the gate still said ``ok rhiza-test``. That is #1517 exactly: this repo's only
     doctest examples unchecked, silently, behind a green gate. ``.rhiza/.env`` cannot carry
-    the value because that file is gitignored, so CI would never see it -- hence the wrapper
-    in the root Makefile (Jebel-Quant/rhiza-task#18), and hence this test.
+    the value because that file is gitignored, so CI would never see it.
 
-    **rhiza-task 0.3.1 passes the scope through itself**, so the wrapper no longer supplies
-    something absent; it supplies something *observable*. The upstream fix lives inside the
-    pin, where only a real run reveals whether it is still there, and a real run is what the
-    note below rules out. Reading the export out of a dry run keeps a bump that regressed it
-    -- upstream or here -- from landing green. If the wrapper is ever dropped in favour of a
-    bare delegation, this test must be replaced rather than deleted.
+    **rhiza-task 0.3.1 passes the scope through itself**, which is what let the wrapper go
+    when the mother-repo targets moved to ``local.mk``. The property therefore lives inside
+    the pin now, asserted upstream against the resolved config
+    (``rhiza-task tests/test_tasks.py``, which pins the ``utils`` case this repo is). What is
+    left here is the half upstream cannot see: that *this* repo pins a version which has it.
 
-    **Asserted from a dry run, deliberately.** An earlier version ran the gate for real and
-    checked that no rhiza check reported SKIPPED. That was stricter and wrong twice over: it
-    failed the ``lowest-direct`` dependency job, where ``install``'s ``uv lock --check``
-    legitimately fails on a deliberately-mismatched lockfile, and it failed every matrix job
-    because ``test_release_tags`` skips on a checkout with no tags. Both are facts about the
-    runner, not gates measuring nothing. The variable's expanded value is the thing that was
-    actually broken, ``make`` expands it during ``-n``, and reading it needs no network, no
-    lockfile and no tags.
+    A floor rather than a dry run, because there is no longer an export to read: with a bare
+    delegation the variable is set inside the CLI process, and the only local way to observe
+    it is to run the gate for real -- which fails the ``lowest-direct`` dependency job, where
+    ``install``'s ``uv lock --check`` legitimately fails on a deliberately-mismatched
+    lockfile. The other half of the property, that ``source_folder`` names this repo's own
+    Python, is :func:`test_source_folder_is_the_repos_own_tooling`.
     """
-    import logging
-
-    out = strip_ansi(run_make(logging.getLogger(__name__), ["rhiza-test"], cwd=_ROOT).stdout)
-    match = re.search(r'RHIZA_DOCTEST_FOLDERS="([^"]*)"', out)
-    assert match, (
-        f"`make rhiza-test` no longer exports RHIZA_DOCTEST_FOLDERS, so pytest-rhiza's "
-        f"test_docstrings would fall back to `src` and skip (#1517):\n{out[-800:]}"
+    pin = re.search(
+        r"^RHIZA_TASK \?= rhiza-task@(\d+)\.(\d+)\.(\d+)",
+        (_ROOT / "Makefile").read_text(encoding="utf-8"),
+        re.MULTILINE,
     )
-    scope = match.group(1).strip()
-    assert scope, (
-        "`make rhiza-test` exports an empty doctest scope, so the test_docstrings check would "
-        "skip and this repo's docstring examples would go unchecked (#1517)."
-    )
-    assert "utils" in scope, (
-        f"`make rhiza-test` scopes doctests to {scope!r}, which omits utils/ -- where this "
-        f"repo's only non-test Python, and its only docstring examples, live."
+    assert pin, "the shim must pin rhiza-task to an exact version"
+    version = tuple(int(part) for part in pin.groups())
+    assert version >= _SCOPE_PASSTHROUGH_SINCE, (
+        f"rhiza-task is pinned at {'.'.join(map(str, version))}, which does not pass "
+        f"source_folder to the doctest check -- `make rhiza-test` would report ok while "
+        f"test_docstrings skipped with 'No doctest folder found (looked for: src)' (#1517). "
+        f"Either pin >= {'.'.join(map(str, _SCOPE_PASSTHROUGH_SINCE))} or restore the "
+        f"RHIZA_DOCTEST_FOLDERS export in local.mk."
     )
 
 
