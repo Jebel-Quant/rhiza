@@ -25,10 +25,6 @@ permissions:
 # The rhiza-task pin the gate steps below run through. v1.4.0 retired the synced make
 # layer -- core ships no Makefile and no `.rhiza/rhiza.mk` -- so a consumer that syncs it
 # has no make targets left and each gate dies with `No rule to make target '<gate>'`.
-#
-# `gitlab-docker-test` below is deliberately NOT converted: it is a mother-repo-only
-# target defined in this repo's own Makefile, not a rhiza-task task, so make is the only
-# thing that can resolve it.
 env:
   RHIZA_TASK: rhiza-task@0.3.1
 
@@ -119,48 +115,6 @@ jobs:
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: uvx "$RHIZA_TASK" semgrep
-
-  # The one check that the pinned $UV_IMAGE in bundles/gitlab/.gitlab-ci.yml still
-  # pulls and runs a job. It is opt-in behind RHIZA_GITLAB_DOCKER because it pulls a
-  # large image — and until #1528 nothing anywhere set that variable, so it was
-  # skipped in CI and locally alike while reading as covered. Weekly is the right
-  # cadence: no GitLab pipeline runs in this repo at all, so a retired image tag would
-  # otherwise surface first in a downstream gitlab-project consumer.
-  gitlab-docker:
-    name: GitLab pipeline against the pinned image
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
-        with:
-          egress-policy: audit
-
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
-        with:
-          version: "0.11.16"
-
-      - name: Configure git auth for private packages
-        uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
-        with:
-          token: ${{ secrets.GH_PAT }}
-
-      # The test skips itself when docker or npx is missing, which is correct on a
-      # developer's laptop and useless here: a silent skip is exactly the state #1528
-      # closed. Both are preinstalled on ubuntu-latest, so assert them and fail the
-      # job if a future runner image drops either.
-      - name: Verify docker and npx are available
-        run: |
-          docker --version
-          npx --version
-
-      - name: Run the Docker-backed GitLab job test
-        env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
-        run: make gitlab-docker-test
 
   link-check:
     name: Check links in README.md

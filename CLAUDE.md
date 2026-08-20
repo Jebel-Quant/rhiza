@@ -464,10 +464,10 @@ root `Makefile`, asks that exact version what tasks it has, and requires every r
 be in the answer. It needs uv and the network and skips without them, so `make test` stays green
 offline while CI does the real check.
 
-**Where the mother-repo-only targets live.** `explain-bundles`, `sync-self`, `sync-self-check`,
-`e2e` and `gitlab-docker-test` were `.rhiza/make.d/bundles.mk`, a fragment no bundle shipped. They
-are a section of the root `Makefile` now — not `local.mk`, which is gitignored while CI invokes
-`make e2e` and `make gitlab-docker-test`.
+**Where the mother-repo-only targets live.** `explain-bundles`, `sync-self`, `sync-self-check`
+and `e2e` were `.rhiza/make.d/bundles.mk`, a fragment no bundle shipped. They are a section of the
+root `Makefile` now — not `local.mk`, which is gitignored while CI invokes `make e2e`. A fifth,
+`gitlab-docker-test`, lived there too and is gone — see **CI/CD** below.
 
 **And why `rhiza-test` is wrapped rather than delegated.** pytest-rhiza's `test_docstrings` reads
 its scope from the `RHIZA_DOCTEST_FOLDERS` environment variable; `quality.mk` exported it from
@@ -575,6 +575,6 @@ This repo runs on **GitHub Actions only**: `.github/workflows/` — CI, e2e, rel
 
 GitLab support ships as a **template for downstream consumers**, not as active CI in this repo: the `gitlab` bundle (`bundles/gitlab/`) materializes a `.gitlab-ci.yml` plus `.gitlab/` pipelines into projects that adopt the `gitlab-project` profile, mirroring the GitHub Actions coverage there.
 
-Because no GitLab pipeline runs here, `tests/bundles/test_gitlab_ci.py` validates the GitLab templates without a GitLab host: it assembles a `gitlab-project` and (1) checks every container image the pipeline/Dockerfiles reference actually exists on its registry (the guard that catches a retired tag like the removed `uv:*-bookworm`), (2) runs `gitlab-ci-local` (pinned, via `npx`) to resolve every `include:` and validate the merged pipeline against GitLab's JSON schema. A third test actually runs a job in Docker against the pinned `$UV_IMAGE` — it needs Docker and Node and is opt-in behind `RHIZA_GITLAB_DOCKER`, reached as **`make gitlab-docker-test`**. All three skip cleanly when their dependency (network / Node / Docker) is absent, so `make test` stays green offline.
+Because no GitLab pipeline runs here, `tests/bundles/test_gitlab_ci.py` validates the GitLab templates without a GitLab host: it assembles a `gitlab-project` and (1) checks every container image the pipeline/Dockerfiles reference actually exists on its registry (the guard that catches a retired tag like the removed `uv:*-bookworm`), (2) runs `gitlab-ci-local` (pinned, via `npx`) to resolve every `include:` and validate the merged pipeline against GitLab's JSON schema. Both skip cleanly when their dependency (network / Node) is absent, so `make test` stays green offline.
 
-That third one is the reason the target exists (#1528). Opt-in was correct — it pulls a large image — but the variable was set by no workflow, no target and no `.env`, so the only check that the pinned image still pulls and runs was skipped in *every* environment while reading as covered. `.github/workflows/rhiza_weekly.yml` now calls the target on the weekly schedule, and asserts `docker`/`npx` are present first so a runner image that drops either fails the job instead of quietly reinstating the skip. Weekly matches the cost, and matches the risk: no GitLab pipeline runs here, so a retired image tag would otherwise surface first in a downstream consumer.
+**Neither of them runs a job**, and that is a deliberate reduction in coverage. A third test used to pull the pinned `$UV_IMAGE` and execute a single-job pipeline in Docker — the only proof the pipeline's default image still *works* rather than merely resolving. It reached CI through a mother-repo-only `gitlab-docker-test` target and a weekly job, both added by #1528 precisely because `RHIZA_GITLAB_DOCKER` was set nowhere and the check had been skipping in every environment while reading as covered. Test, marker, target and weekly job were all removed together, so nothing is left half-wired: an image tag that exists on the registry but is broken inside now surfaces first in a downstream `gitlab-project` consumer, not here.

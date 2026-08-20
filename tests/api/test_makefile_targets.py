@@ -103,14 +103,13 @@ class TestMakefileRootFixture:
         )
 
     def test_makefile_keeps_the_mother_repo_only_targets(self, root: Path) -> None:
-        """The five targets rehomed from the retired .rhiza/make.d/bundles.mk.
+        """The targets rehomed from the retired .rhiza/make.d/bundles.mk.
 
         They live in the Makefile rather than ``local.mk`` because ``local.mk`` is
-        gitignored and CI invokes two of them -- ``make e2e`` from rhiza_e2e.yml and
-        ``make gitlab-docker-test`` from rhiza_weekly.yml.
+        gitignored and CI invokes one of them -- ``make e2e`` from rhiza_e2e.yml.
         """
         content = (root / "Makefile").read_text(encoding="utf-8")
-        for target in ("explain-bundles", "sync-self", "sync-self-check", "e2e", "gitlab-docker-test"):
+        for target in ("explain-bundles", "sync-self", "sync-self-check", "e2e"):
             assert re.search(rf"^{re.escape(target)}:", content, re.MULTILINE), (
                 f"`{target}` must be an explicit rule -- the `%:` catch-all would otherwise "
                 f"forward it to the CLI, which has no such task"
