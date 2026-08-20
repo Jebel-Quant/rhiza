@@ -40,7 +40,7 @@ to the evidence that already exists in rhiza, so the questionnaire is mostly cop
 | Coding style / static analysis | `ruff`, `ty`, `bandit`, `interrogate` (`make fmt`) |
 | Secured delivery (HTTPS) | GitHub + PyPI over HTTPS |
 | Crypto / no hardcoded secrets | `detect-secrets` pre-commit hook |
-| Dynamic / fuzz analysis | ClusterFuzzLite workflow (`rhiza_fuzzing.yml`) — reusable by consumers; this repo ships no `.clusterfuzzlite/` config, so it runs no fuzzers here |
+| Dynamic / fuzz analysis | Not provided — the ClusterFuzzLite workflow was retired; this repo shipped no `.clusterfuzzlite/` config, so it ran no fuzzers here |
 | Dependency vulnerability monitoring | Dependabot + Renovate (version currency), CodeQL (`rhiza_codeql.yml`), OpenSSF Scorecard (`rhiza_scorecard.yml`), Trivy for images (`rhiza_docker.yml`) |
 | Contribution guide | `CONTRIBUTING.md` |
 | Code review of changes | Branch-protection ruleset (`docs/ops/BRANCH_PROTECTION.md`) |

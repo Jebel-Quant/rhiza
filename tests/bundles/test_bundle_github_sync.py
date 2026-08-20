@@ -16,7 +16,7 @@ down — see :class:`TestRequiredStatusCheckContexts`, which owns that divergenc
 
 The check is driven from the bundle side, restricted to files the mother repo
 actually dogfoods (i.e. a same-path root counterpart exists). Bundle-only files such
-as ISSUE_TEMPLATE/ and DISCUSSION_TEMPLATE/ have no root twin and are skipped.
+as CONFIG.md have no root twin and are skipped.
 """
 
 from __future__ import annotations
@@ -58,7 +58,7 @@ def _github_dogfood_pairs() -> list[tuple[str, Path, Path]]:
             continue  # required-check names differ by design — see TestRequiredStatusCheckContexts
         root_file = _ROOT / ".github" / relative
         if not root_file.exists():
-            continue  # bundle-only file (e.g. ISSUE_TEMPLATE/) — not dogfooded here
+            continue  # bundle-only file (e.g. CONFIG.md) — not dogfooded here
         pairs.append((f".github/{relative}", bundle_file, root_file))
 
     return pairs
