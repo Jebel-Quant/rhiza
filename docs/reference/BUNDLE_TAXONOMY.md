@@ -62,7 +62,7 @@ that matches your platform *and* the feature bundle it pairs with.
 
 | Bundle | Pairs feature → platform |
 |--------|--------------------------|
-| `github-tests` | `tests` → GitHub Actions (CI, CodeQL, mutation) |
+| `github-tests` | `tests` → GitHub Actions (CI, CodeQL, benchmark) |
 | `github-book` | `book` → GitHub Pages publishing |
 | `github-marimo` | `marimo` → GitHub Actions notebook publishing |
 | `github-docker` | `docker` → GitHub Actions lint/build/scan |

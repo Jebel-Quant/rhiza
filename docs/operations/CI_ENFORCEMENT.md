@@ -22,22 +22,12 @@ These fail the pull request when they fail. They run on every PR via
 
 ## Conditional / opt-in gates
 
-### Mutation testing (`rhiza_mutation.yml`)
-
-- **Enforcing when enabled.** `make mutation` exits non-zero on any surviving
-  mutant, and the workflow's *Enforce mutation gate* step propagates that failure,
-  so it is a hard gate equivalent to a 100% mutation-score threshold.
-- **Opt-in, OFF by default.** The `mutation` job only runs when the repository
-  variable `MUTATION_ENABLED` is set to `'true'`; otherwise it skips cleanly and
-  CI stays green. This keeps downstream repos from being forced into mutation
-  testing.
-- **Status in this repo:** `MUTATION_ENABLED` is currently unset, so mutation
-  runs are skipped on `jebel-quant/rhiza` PRs. To turn it into an active gate
-  here, set the variable:
-
-  ```bash
-  gh variable set MUTATION_ENABLED --body true --repo Jebel-Quant/rhiza
-  ```
+None in CI. `rhiza_mutation.yml` was the only one: a reusable workflow here plus a
+stub in `github-tests`, both gated on a `MUTATION_ENABLED` repository variable that
+was unset in this repo and, as far as we can tell, in every consumer — so the whole
+path ran nowhere while carrying badge publishing, a Pages deploy and two test
+modules. `mutation` is still a `rhiza-task` task, so `make mutation` works locally
+for anyone who wants it; what went is the CI wiring nobody switched on.
 
 ## Report-only (monitoring) workflows
 
@@ -62,5 +52,5 @@ not a PR merge gate.
 ## Summary
 
 - **PR merge gates:** `fmt`, `typecheck`, `test`, `rhiza-test`, `deptry`,
-  `docs-coverage`, `security`, CodeQL — plus mutation **iff** `MUTATION_ENABLED=true`.
+  `docs-coverage`, `security`, CodeQL.
 - **Report-only:** Scorecard, weekly.

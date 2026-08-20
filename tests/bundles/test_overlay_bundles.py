@@ -68,8 +68,8 @@ _OVERLAYS: tuple[OverlaySpec, ...] = (
         bundle="github-tests",
         platform="github",
         feature="tests",
-        workflows=("rhiza_ci.yml", "rhiza_codeql.yml", "rhiza_mutation.yml", "rhiza_benchmark.yml"),
-        feature_workflows=("rhiza_ci.yml", "rhiza_codeql.yml", "rhiza_mutation.yml", "rhiza_benchmark.yml"),
+        workflows=("rhiza_ci.yml", "rhiza_codeql.yml", "rhiza_benchmark.yml"),
+        feature_workflows=("rhiza_ci.yml", "rhiza_codeql.yml", "rhiza_benchmark.yml"),
     ),
     OverlaySpec(
         bundle="github-book",
