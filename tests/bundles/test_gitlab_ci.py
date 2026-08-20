@@ -15,10 +15,11 @@ and exercising it the way GitLab would, using tooling that needs no GitLab host:
 * **schema / structure** (``test_pipeline_schema_validates``) — ``gitlab-ci-local``
   resolves every ``include:`` and validates the merged pipeline against GitLab's
   JSON schema, then lists the jobs. Needs Node/``npx``; skips when absent.
-* **real execution** (``test_pinned_uv_image_runs_in_docker``) — the pinned uv
-  image is pulled and a job is run inside it, proving the pipeline's default image
-  actually works. Needs Docker and is opt-in (set ``RHIZA_GITLAB_DOCKER=1``) since
-  it pulls a multi-hundred-MB image; marked ``gitlab_exec``.
+Neither check *runs* a job. A third test used to pull the pinned ``$UV_IMAGE`` and
+execute one under Docker; it was removed along with its ``make gitlab-docker-test``
+entry point and the weekly job that called it. So a tag that exists on the registry
+but is broken inside is no longer caught here — it surfaces in a downstream
+``gitlab-project`` consumer.
 """
 
 from __future__ import annotations
@@ -56,7 +57,6 @@ GITLAB_PROJECT_BUNDLES = [
 GITLAB_CI_LOCAL_VERSION = "4.73.0"
 
 _NPX = shutil.which("npx")
-_DOCKER = shutil.which("docker")
 _GIT = shutil.which("git") or "/usr/bin/git"
 
 # gitlab-ci-local is a POSIX-oriented tool (bash/Docker semantics); it is not a
@@ -382,38 +382,3 @@ def test_pipeline_schema_validates(gitlab_project: Path) -> None:
     # included overlays (tests + pages), not an empty pipeline.
     assert re.search(r"\bci:test:", combined), f"expected ci:test jobs in merged pipeline:\n{combined}"
     assert "pages" in combined, f"expected the book/pages deploy job in merged pipeline:\n{combined}"
-
-
-@pytest.mark.gitlab_exec
-@_skip_on_windows
-@pytest.mark.skipif(_DOCKER is None, reason="docker not available")
-@pytest.mark.skipif(_NPX is None, reason="npx (Node.js) not available")
-@pytest.mark.skipif(
-    not os.environ.get("RHIZA_GITLAB_DOCKER"),
-    reason="opt-in: set RHIZA_GITLAB_DOCKER=1 to run the Docker-backed GitLab job (pulls a large image)",
-)
-def test_pinned_uv_image_runs_in_docker(root: Path, tmp_path: Path) -> None:
-    """The pinned ``$UV_IMAGE`` must actually pull and run a job under gitlab-ci-local.
-
-    Proves the GitLab pipeline works end-to-end despite the repo being on GitHub:
-    a synthetic single-job pipeline pinned to the *real* image from
-    ``bundles/gitlab/.gitlab-ci.yml`` is executed in Docker and must run ``uv``.
-    """
-    variables = _collect_variables(root / "bundles" / "gitlab")
-    uv_image = variables.get("UV_IMAGE")
-    assert uv_image, "UV_IMAGE not found in bundles/gitlab/.gitlab-ci.yml"
-
-    (tmp_path / ".gitlab-ci.yml").write_text(
-        yaml.safe_dump({"smoke": {"image": uv_image, "script": ["uv --version"]}}, sort_keys=False),
-        encoding="utf-8",
-    )
-    subprocess.run([_GIT, "init", "-q", "-b", "main"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
-    subprocess.run([_GIT, "config", "user.email", "ci@example.invalid"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
-    subprocess.run([_GIT, "config", "user.name", "CI Smoke Test"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
-    subprocess.run([_GIT, "add", ".gitlab-ci.yml"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
-    subprocess.run([_GIT, "commit", "-q", "-m", "Initial commit"], cwd=tmp_path, check=True, capture_output=True)  # nosec B603
-
-    result = _run_gitlab_ci_local(tmp_path, "smoke")
-    combined = result.stdout + result.stderr
-    assert result.returncode == 0, f"gitlab-ci-local run of pinned uv image failed:\n{combined}"
-    assert re.search(r"\buv\s+\d+\.\d+", combined), f"uv did not run inside {uv_image}:\n{combined}"

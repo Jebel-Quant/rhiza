@@ -99,10 +99,9 @@ Makefile: ;
 #
 # These were `.rhiza/make.d/bundles.mk`, a fragment no bundle shipped. They land here
 # rather than in `local.mk` for one reason: `local.mk` is gitignored (.gitignore:121) and
-# CI invokes two of them — `make e2e` from rhiza_e2e.yml and `make gitlab-docker-test`
-# from rhiza_weekly.yml — so they need a committed home. An explicit rule beats the `%:`
-# pattern rule above, so they take precedence over the CLI delegation; `install` as a
-# prerequisite still resolves through it.
+# CI invokes one of them — `make e2e` from rhiza_e2e.yml — so they need a committed home.
+# An explicit rule beats the `%:` pattern rule above, so they take precedence over the CLI
+# delegation; `install` as a prerequisite still resolves through it.
 #
 # The folder accumulators this fragment also carried (TYPECHECK_FOLDERS, BANDIT_FOLDERS,
 # DOCSTRING_FOLDERS, DEPTRY_FOLDERS, SEMGREP_FOLDERS, COVERAGE_FOLDERS += utils) are gone,
@@ -113,7 +112,7 @@ Makefile: ;
 # six appends. tests/utils/test_gate_scope.py pins the outcome either way.
 # ==============================================================================
 
-.PHONY: explain-bundles sync-self sync-self-check e2e gitlab-docker-test rhiza-test
+.PHONY: explain-bundles sync-self sync-self-check e2e rhiza-test
 
 # `uv` as well as `uvx`: the astral installer writes both into the same directory, so once
 # $(UVX) exists this does too. The empty recipe satisfies make's remake attempt, the same
@@ -154,21 +153,6 @@ sync-self-check: $(UV) ## fail if any dogfood symlink is stale/missing without w
 e2e: install $(UV) ## run the language-layer end-to-end suite against real toolchains (opt-in)
 	@printf "\033[36m[INFO] Running end-to-end suite: $(E2E_ARGS)\033[0m\n"
 	@RHIZA_E2E=1 $(UV) run --with pytest-timeout pytest $(E2E_ARGS) -v
-
-# The Docker-backed half of the GitLab suite: run a real job under gitlab-ci-local against
-# the pinned $UV_IMAGE from bundles/gitlab/.gitlab-ci.yml.
-#
-# Opt-in for the same reason `e2e` is — it pulls a large image and needs Docker and Node —
-# but opt-in without an entry point is how it came to run nowhere at all (#1528):
-# RHIZA_GITLAB_DOCKER was set by no workflow, no target and no .env, so the one check that
-# the pinned image still pulls and runs was skipped in every environment. rhiza_weekly.yml
-# calls this target; the cadence matches the cost.
-#
-# `-m gitlab_exec` selects by marker (registered in tests/conftest.py) rather than by node
-# id, so a second Docker-backed test is picked up by writing it, not by editing this recipe.
-gitlab-docker-test: install $(UV) ## run the Docker-backed GitLab job test against the pinned image (opt-in)
-	@printf "\033[36m[INFO] Running the Docker-backed GitLab job test\033[0m\n"
-	@RHIZA_GITLAB_DOCKER=1 $(UV) run pytest tests/bundles/test_gitlab_ci.py -m gitlab_exec -v
 
 # `rhiza-test` is wrapped rather than delegated. As of 0.3.1 the wrapper no longer *fixes*
 # anything; it is what makes the fix assertable here.
