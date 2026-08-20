@@ -378,73 +378,114 @@ Run `make help` for a complete list of 40+ available targets.
 <details>
 <summary>Show all available targets</summary>
 
-```makefile
-  ____  _     _
- |  _ \| |__ (_)______ _
- | |_) | '_ \| |_  / _\`|
- |  _ <| | | | |/ / (_| |
- |_| \_\_| |_|_/___\__,_|
-
-Usage:
-  make <target>
-
-Targets:
-
-Rhiza Workflows
-  sync                  sync with template repository as defined in .rhiza/template.yml
-  validate              validate project structure against template repository as defined in .rhiza/template.yml
-
-Bootstrap
-  install-uv            ensure uv/uvx is installed
-  install               install
-  clean                 Clean project artifacts and stale local branches
-
-Quality and Formatting
-  deptry                Run deptry
-  fmt                   check the pre-commit hooks and the linting
-
-Releasing and Versioning
-  bump                  bump version
-  release               create tag and push to remote with prompts
-
-Meta
-  help                  Display this help message
-
-Development and Testing
-  test                  run all tests
-  benchmark             run performance benchmarks
-
-Documentation
-  book                  compile the companion book
-  book                  compile the companion book
-
-Marimo Notebooks
-  marimo-validate       validate all Marimo notebooks can run
-  marimo                fire up Marimo server
-  marimushka            export Marimo notebooks to HTML
-
-Presentation
-  presentation          generate presentation slides from PRESENTATION.md using Marp
-  presentation-pdf      generate PDF presentation from PRESENTATION.md using Marp
-  presentation-serve    serve presentation interactively with Marp
-
-Docker
-  docker-build          build Docker image
-  docker-run            run the Docker container
-  docker-clean          remove Docker image
-
-GitHub Helpers
-  gh-install            check for gh cli existence and install extensions
-  view-prs              list open pull requests
-  view-issues           list open issues
-  failed-workflows      list recent failing workflow runs
-  whoami                check github auth status
-
-Custom Tasks
-  hello-rhiza           a custom greeting task
-  post-install          run custom logic after core install
-
+<!-- MAKE_HELP_START -->
 ```
+ task                section         needs                 does                 
+ book                Book            test benchmark        build the companion  
+                                     stress                book                 
+                                     hypothesis-test                            
+ marimo              Book            install               start the Marimo     
+                                                           editor               
+ marimo-validate     Book            install               check that every     
+                                                           Marimo notebook runs 
+ serve               Book            book                  build the book and   
+                                                           serve it on port     
+                                                           8000                 
+ clean               Dev                                   remove build         
+                                                           artifacts and stale  
+                                                           local branches       
+ doctor              Dev                                   check local          
+                                                           prerequisites        
+ docker-build        Docker                                build the Docker     
+                                                           image                
+ docker-clean        Docker                                remove the Docker    
+                                                           image                
+ docker-run          Docker          docker-build          run the Docker       
+                                                           container            
+ lfs-install         Git LFS                               configure git-lfs    
+                                                           for this repository  
+ lfs-pull            Git LFS                               download the LFS     
+                                                           files for the        
+                                                           current branch       
+ lfs-status          Git LFS                               show the status of   
+                                                           LFS files            
+ lfs-track           Git LFS                               list the patterns    
+                                                           tracked by git-lfs   
+ failed-workflows    GitHub Helpers                        list recent failing  
+                                                           workflow runs        
+ latest-release      GitHub Helpers                        show information     
+                                                           about the latest     
+                                                           GitHub release       
+ view-issues         GitHub Helpers                        list open issues     
+ view-prs            GitHub Helpers                        list open pull       
+                                                           requests             
+ whoami              GitHub Helpers                        check github auth    
+                                                           status               
+ workflow-status     GitHub Helpers                        show recent runs for 
+                                                           the release workflow 
+ paper               Paper                                 compile the LaTeX    
+                                                           paper to PDF         
+ paper-clean         Paper                                 remove the latexmk   
+                                                           build artifacts      
+ presentation        Presentation                          generate the HTML    
+                                                           slides with Marp     
+ presentation-pdf    Presentation                          generate the PDF     
+                                                           slides with Marp     
+ presentation-serve  Presentation                          serve the slides     
+                                                           with Marp's live     
+                                                           preview              
+ all                 Python          fmt deps test         run every gate, as   
+                                     docs-coverage         CI does              
+                                     security license                           
+                                     typecheck rhiza-test                       
+ coverage            Python          install               measure coverage and 
+                                                           write                
+                                                           _tests/coverage.xml  
+ deps                Python          install               run deptry over the  
+                                                           contributed folders  
+ docs-coverage       Python          install               check docstring      
+                                                           coverage with        
+                                                           interrogate          
+ install             Python                                create the venv and  
+                                                           sync dependencies    
+ license             Python          install               scan for copyleft    
+                                                           licences             
+ security            Python          install               run the bandit       
+                                                           security scan        
+ test                Python          install               run all tests        
+ typecheck           Python          install               run ty and/or mypy   
+                                                           (typechecker = ty |  
+                                                           mypy | both)         
+ fmt                 Quality                               run the pre-commit   
+                                                           hooks over all files 
+ test-pyproject      Quality         install               run the              
+                                                           pyproject.toml       
+                                                           structure checks,    
+                                                           verbosely            
+ rhiza-test          Quality         install               run the rhiza        
+                                                           repository checks    
+ semgrep             Quality                               run the semgrep      
+                                                           static analysis      
+                                                           rules                
+ todos               Quality                               list every TODO,     
+                                                           FIXME and HACK       
+                                                           comment              
+ benchmark           Testing extras  install               run the performance  
+                                                           benchmarks           
+ hypothesis-test     Testing extras  install               run the              
+                                                           property-based tests 
+ mutation            Testing extras  install               run mutation testing 
+                                                           with mutmut          
+ stress              Testing extras  install               run the stress and   
+                                                           load tests           
+
+Repo-owned targets:
+  explain-bundles --  print all bundles and profiles with descriptions and dependencies
+  sync-self --  relink root dogfood copies as symlinks into bundles/ (mother repo only)
+  sync-self-check --  fail if any dogfood symlink is stale/missing without writing (local drift check)
+  e2e --  run the language-layer end-to-end suite against real toolchains (opt-in)
+```
+<!-- MAKE_HELP_END -->
 
 </details>
 

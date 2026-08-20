@@ -118,7 +118,7 @@ flowchart LR
 
     subgraph Targets["Main Targets"]
         install[make install]
-        sync[make sync]
+        sync[/rhiza:update]
     end
 
     pre_install --> install --> post_install
@@ -160,7 +160,7 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    upstream[Upstream Rhiza<br/>jebel-quant/rhiza] -->|template.yml| sync[make sync]
+    upstream[Upstream Rhiza<br/>jebel-quant/rhiza] -->|template.yml| sync[/rhiza:update]
     sync -->|updates| downstream[Downstream Project]
 
     subgraph Synced["Synced Files"]
@@ -374,19 +374,13 @@ Section headers in makefiles group related targets in help output:
 
 ### Hook Naming
 
-Hook targets use double-colon syntax and follow a `pre-`/`post-` pattern:
+**Retired with the make layer.** `bootstrap.mk` anchored `pre-install::`/`post-install::`
+and their `sync` counterparts as double-colon no-ops so a consumer could chain onto them,
+and that was the documented way to add project hooks. `uvx rhiza-task install` knows nothing
+about make targets, so there is nothing to chain onto.
 
-```makefile
-pre-install::    # Runs before make install
-post-install::   # Runs after make install
-pre-sync::       # Runs before make sync
-post-sync::      # Runs after make sync
-```
-
-**Key principles**:
-- Always use double-colon (`::`) to allow multiple definitions
-- Hooks are defined as phony targets
-- Empty default implementations use `; @:` syntax
+Shadow the target instead: an explicit `install:` rule in `local.mk` beats the shim's `%:`
+catch-all, so it can call the CLI and then the extra step.
 
 ### File Organization Patterns
 

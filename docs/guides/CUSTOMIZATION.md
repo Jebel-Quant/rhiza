@@ -4,7 +4,7 @@ This guide covers how to extend and adapt Rhiza-based projects without breaking 
 
 ## Safe Extension Points
 
-Rhiza provides three extension mechanisms that survive every `make sync`. **Never edit files inside `.rhiza/` directly** — that directory is template-managed and will be overwritten on the next sync.
+Rhiza provides three extension mechanisms that survive every `/rhiza:update`. **Never edit files inside `.rhiza/` directly** — that directory is template-managed and will be overwritten on the next sync.
 
 | Extension point | Where to add | Committed? | Use for |
 |-----------------|--------------|------------|---------|

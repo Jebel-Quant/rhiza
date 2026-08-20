@@ -14,7 +14,7 @@ Common Rhiza sync failures and quick recovery steps.
   ```bash
   make explain-bundles
   # fix bundle names in .rhiza/template.yml (or your profile selection), then:
-  make sync
+  # then re-run /rhiza:update
   ```
 
 ## 2) File conflict between bundles
@@ -29,7 +29,7 @@ Common Rhiza sync failures and quick recovery steps.
   ```bash
   make explain-bundles
   # remove one conflicting bundle (or use an explicit profile), then:
-  make sync
+  # then re-run /rhiza:update
   ```
 
 ## 3) Sync leaves partial state
@@ -38,7 +38,7 @@ Common Rhiza sync failures and quick recovery steps.
   ```text
   [ERROR] Failed to install dependencies
   ```
-  (or another command failure during `make sync`/`make install`)
+  (or another command failure during `/rhiza:update` or `make install`)
 - **Root cause**  
   Sync applies file changes before later setup/install steps run. A later failure does not roll files back automatically.
 - **Recovery**
@@ -46,5 +46,5 @@ Common Rhiza sync failures and quick recovery steps.
   git status
   git restore .
   git clean -fd
-  make sync
+  # then re-run /rhiza:update
   ```

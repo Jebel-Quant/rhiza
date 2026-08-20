@@ -39,7 +39,7 @@ Rhiza's documentation examples and the companion book.
 3. **Static HTML export**: `marimo export html` produces polished standalone HTML
    pages suitable for the companion book.
 4. **Development server**: `make marimo` starts the Marimo server for interactive
-   development; `make marimushka` exports all notebooks to HTML for the book.
+   development, and `make book` exports the notebooks to HTML as part of the build.
 5. **Bundle**: The `marimo` template bundle includes the Makefile targets, requirements
    file, and a starter notebook.
 6. **CI validation**: The `rhiza_marimo.yml` GitHub Actions workflow validates that all

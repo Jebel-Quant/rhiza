@@ -69,14 +69,14 @@ This workflow is useful for changes such as:
    ```
 
    If you later want a reusable shortcut, wrap the same pattern in a local
-   helper script or a `make diff-bundles VAR=.rhiza/rhiza.mk` target.
+   helper script, since no make target does this.
 
 4. **Run validation**
 
    After editing all bundle copies, run:
 
    ```bash
-   make validate
+   make rhiza-test
    ```
 
    This catches inconsistencies early and exercises the normal validation hook
@@ -87,4 +87,4 @@ This workflow is useful for changes such as:
 - [ ] every intended bundle file was updated
 - [ ] the relative path is still identical across bundles
 - [ ] bundle-to-bundle diffs only show the intended change
-- [ ] `make validate` passes from the repository root
+- [ ] `make rhiza-test` passes from the repository root

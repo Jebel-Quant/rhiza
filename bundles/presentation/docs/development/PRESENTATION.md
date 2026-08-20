@@ -196,7 +196,7 @@ The `sync.yml` workflow keeps your project current:
 make install      # Setup project with uv
 make test         # Run pytest test suite
 make fmt          # Run pre-commit hooks
-make docs         # Generate API documentation
+make book         # Build the companion book
 make book         # Build companion book
 make presentation # Generate slides from PRESENTATION.md
 make marimo       # Launch Marimo notebook server
@@ -244,7 +244,7 @@ Pushing the tag triggers the release workflow. Releasing is not a `make` target.
 ### Check Status
 
 ```bash
-make release-status
+make workflow-status
 # → Shows workflow run history
 # → Shows latest release details
 ```
@@ -293,7 +293,7 @@ sudo apt-get install -y graphviz
 # Your custom setup here
 ```
 
-Runs during: `make install`, `make test`, `make book`, `make docs`
+Runs during: `make install`, `make test`, `make book`
 
 ---
 
@@ -489,7 +489,7 @@ classifiers = [
 - 📖 **Repository**: [github.com/jebel-quant/rhiza](https://github.com/jebel-quant/rhiza)
 - 📚 **Issues**: [github.com/jebel-quant/rhiza/issues](https://github.com/jebel-quant/rhiza/issues)
 - 🚀 **Codespaces**: [Open in GitHub Codespaces](https://codespaces.new/jebel-quant/rhiza)
-- 📝 **Documentation**: Auto-generated with `make docs`
+- 📝 **Documentation**: Auto-generated with `make book`
 
 ---
 
@@ -555,12 +555,12 @@ make test                      # Run tests
 make fmt                       # Format & lint
 
 # Documentation
-make docs                      # API documentation
+make book                      # Companion book
 make book                      # Companion book
 make presentation              # Generate slides
 
 # Release (driven by the rhiza-claude /release command)
-make release-status            # Show release workflow status
+make workflow-status          # Show recent runs for the release workflow
 
 # Notebooks
 make marimo                    # Interactive notebooks
