@@ -1219,7 +1219,6 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - Merge main into release/v0.8.21, keep workflow consolidation
 
 ### Other Changes
-- Delete .rhiza/tests/integration/test_marimushka.py (#915)
 - Add mkdocs and related dependencies to docs.txt (#916)
 - Update uv version and CI configuration for multiple OS (#921)
 - Mkdocs2 (#917)
@@ -1313,7 +1312,6 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 
 ### Other Changes
 - Update uv version and CI configuration for multiple OS (#921)
-- Delete .rhiza/tests/integration/test_marimushka.py (#915)
 - Bump version 0.8.16 → 0.8.17
 
 ## [0.8.16] - 2026-03-22
@@ -1571,7 +1569,6 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - Add sync-experimental target to rhiza.mk (#730)
 - Remove dry-run mode from shell scripts (#700)
 - Fix SBOM missing primary component for NTIA compliance (#734)
-- Update marimushka version requirement to 0.3.3 (#735)
 - Include benchmark results in the compiled book (#741)
 - Add `+RHIZA_SKIP` flag to exclude individual README code blocks from readme tests (#745)
 - Add official Rhiza logo to MkDocs documentation site (#749)
@@ -1989,14 +1986,12 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - Add docker make & align python versions
 - Default version to avoid warning (#289)
 - Replace generate-coverage-badge.sh with Python utility using typer (#284)
-- Remove marimushka.sh shell script and inline logic into Makefile (#282)
 - Replace update-readme-help.sh with uvx rhiza-tools command (#291)
 - Replace local generate_coverage_badge.py with rhiza-tools command (#293)
 - Remove broken update-readme & force rhiza-tools 0.2.0 (#294)
 - Add Makefile tab indentation rules to .editorconfig (#299)
 - More power to the makefile (#296)
 - Introducing marimo.mk
-- Update marimushka tests and Makefile logic (#303)
 - Convergence make and ci/cd (#297)
 - Move agentic make (#304)
 - User overrides included in .rhiza/rhiza.mk (#309)
@@ -2497,8 +2492,6 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - Merge pull request #32 from tschm/30-ignore-outputtxt
 - Marimo results only for topfolder
 - Merge pull request #33 from tschm/31-in-marimo-loop
-- Only top folder for marimushka
-- Merge pull request #35 from tschm/34-only-top-folder-for-marimushka-job
 - Update .gitignore
 - Update cleanup.yml
 - Ruff ignored for {{ }}
@@ -2742,9 +2735,6 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - Read pythoin version as JSON (#273)
 - Bring fixtures needed by test_config_templates into test_config... (#279)
 - Allow customisations for pdocs (#276)
-- Switch to using marimushka for notebook building (#277)
-- Add src to path for build of marimushka (#280)
-- Fix marimushka (#282)
 - Fix typo in pytest.ini comment (#283)
 - Remove test scripts from .gitignore (#284)
 - Replace assertions with warnings in test_structure for missing files/folders (#286)
@@ -2752,7 +2742,6 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 - Handle missing Makefile help section in update-readme-help.sh (#292)
 - Remove gpg signing tests (#295)
 - Allow UV_EXTRA_INDEX_URL to be passed through (#294)
-- Set bin marimushka (#299)
 - Replace uv installation with setup-uv action (#311)
 - Set working directory for subprocess execution (#309)
 - Rename project from Config Templates to Rhiza (#1)

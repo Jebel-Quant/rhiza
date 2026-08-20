@@ -341,9 +341,9 @@ def _make_mention_cases() -> list[tuple[str, str]]:
 
     Every markdown file, not just CLAUDE.md and README.md. Narrowing it to those two is how
     eleven documents came to advertise targets that no longer exist -- `make sync`,
-    `make validate`, `make pre-commit`, `make release-status`, `make docs`, `make marimushka`,
-    `make mkdocs-build` -- years after the make layer that defined them was retired. The two
-    files under test were the two that stayed accurate, which is the wrong half to check.
+    `make validate`, `make pre-commit`, `make release-status`, `make docs`, `make mkdocs-build`
+    -- years after the make layer that defined them was retired. The two files under test were
+    the two that stayed accurate, which is the wrong half to check.
 
     That includes markdown under ``bundles/``, which is stronger than checking the mother
     repo alone: a bundle file is what a consumer *receives*, so a stale `make <target>` there
