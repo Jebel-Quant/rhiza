@@ -177,10 +177,10 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          # Keyed on the scaffold and the pin, not on a make fragment: `go.mk` retired to
-          # rhiza-task, and hashFiles() on a missing path returns an empty string -- so the
-          # key was constant and the cache never invalidated.
-          key: ${{ runner.os }}-go-e2e-${{ hashFiles('tests/e2e/scaffolds.py', 'Makefile') }}
+          # Keyed on the scaffold and on `local.mk`, where the `e2e` recipe lives. Both
+          # must exist: hashFiles() on a missing path returns an empty string, which is how
+          # a key naming the retired `go.mk` stayed constant and never invalidated.
+          key: ${{ runner.os }}-go-e2e-${{ hashFiles('tests/e2e/scaffolds.py', 'local.mk') }}
           restore-keys: |
             ${{ runner.os }}-go-e2e-
 

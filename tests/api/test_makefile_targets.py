@@ -102,15 +102,55 @@ class TestMakefileRootFixture:
             "every gate once the shim has bootstrapped it (rhiza-task#19)"
         )
 
-    def test_makefile_keeps_the_mother_repo_only_targets(self, root: Path) -> None:
+    def test_local_mk_keeps_the_mother_repo_only_targets(self, root: Path) -> None:
         """The targets rehomed from the retired .rhiza/make.d/bundles.mk.
 
-        They live in the Makefile rather than ``local.mk`` because ``local.mk`` is
-        gitignored and CI invokes one of them -- ``make e2e`` from rhiza_e2e.yml.
+        They live in ``local.mk``, which the shim ``-include``s, so the Makefile can stay
+        byte-identical to what ``rhiza-task shim`` prints -- see
+        :meth:`test_makefile_carries_no_repo_owned_rule`. ``local.mk`` is gitignored in
+        ``bundles/core``; this repo carves that file out precisely so these can be
+        committed, because ``make e2e`` is what rhiza_e2e.yml runs.
         """
-        content = (root / "Makefile").read_text(encoding="utf-8")
+        content = (root / "local.mk").read_text(encoding="utf-8")
         for target in ("explain-bundles", "sync-self", "sync-self-check", "e2e"):
             assert re.search(rf"^{re.escape(target)}:", content, re.MULTILINE), (
                 f"`{target}` must be an explicit rule -- the `%:` catch-all would otherwise "
                 f"forward it to the CLI, which has no such task"
             )
+
+    def test_local_mk_is_committed(self, root: Path) -> None:
+        """``local.mk`` must not be ignored here, or CI loses ``make e2e`` silently.
+
+        ``bundles/core/.gitignore`` ignores it, and the root copy is a declared carve-out
+        (``utils/link_dogfood.py`` ``_EXCLUDE``) for this reason. A sync that re-added the
+        rule would not fail anything: the file stays on disk, so every local run keeps
+        working, and only a fresh CI checkout finds no rule to make target `e2e`.
+        """
+        assert (root / "local.mk").is_file()
+        ignored = (root / ".gitignore").read_text(encoding="utf-8")
+        assert not re.search(r"^local\.mk$", ignored, re.MULTILINE), (
+            "local.mk carries this repo's own targets and must stay committed -- "
+            "rhiza_e2e.yml runs `make e2e` in all three language jobs"
+        )
+
+    def test_makefile_carries_no_repo_owned_rule(self, root: Path) -> None:
+        """The Makefile must define nothing beyond the shim's own rules.
+
+        This is what makes a version bump an overwrite rather than a merge: regenerate,
+        and nothing repo-specific is lost because nothing repo-specific is there. The
+        moment a target is appended below the shim again, a bump silently drops it.
+
+        Checked by name rather than by diffing against ``rhiza-task shim`` output, which
+        would need the network and would pin this repo to the *published* shim -- rhiza
+        dogfoods the next one, so the two differ by design between release and adoption.
+        """
+        content = (root / "Makefile").read_text(encoding="utf-8")
+        defined = {
+            match.group(1)
+            for match in re.finditer(r"^([^\s:#=]+)\s*::?(?!=)", content, re.MULTILINE)
+            if not match.group(1).startswith(".")
+        }
+        assert defined <= {"help", "$(UVX)", "FORCE", "local.mk", "Makefile", "%"}, (
+            f"the root Makefile has grown repo-owned rules ({sorted(defined)}) -- they belong "
+            f"in local.mk, or a rhiza-task bump regenerating this file will drop them"
+        )

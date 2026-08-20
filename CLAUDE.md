@@ -465,9 +465,13 @@ be in the answer. It needs uv and the network and skips without them, so `make t
 offline while CI does the real check.
 
 **Where the mother-repo-only targets live.** `explain-bundles`, `sync-self`, `sync-self-check`
-and `e2e` were `.rhiza/make.d/bundles.mk`, a fragment no bundle shipped. They are a section of the
-root `Makefile` now — not `local.mk`, which is gitignored while CI invokes `make e2e`. A fifth,
-`gitlab-docker-test`, lived there too and is gone — see **CI/CD** below.
+and `e2e` were `.rhiza/make.d/bundles.mk`, a fragment no bundle shipped, then a section appended
+below the shim in the root `Makefile`. They are `local.mk` now, so the `Makefile` can stay exactly
+what `rhiza-task shim` prints and a bump is an overwrite rather than a merge —
+`tests/api/test_makefile_targets.py` pins both halves. That needed the root `.gitignore` to stop
+ignoring `local.mk`, unlike `bundles/core`'s: CI invokes `make e2e` in all three language jobs, so
+this repo's copy has to be committed. A fifth, `gitlab-docker-test`, lived there too and is gone —
+see **CI/CD** below.
 
 **And why `rhiza-test` is wrapped rather than delegated.** pytest-rhiza's `test_docstrings` reads
 its scope from the `RHIZA_DOCTEST_FOLDERS` environment variable; `quality.mk` exported it from

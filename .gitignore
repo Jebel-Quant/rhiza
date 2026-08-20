@@ -107,6 +107,9 @@ cover/
 # Cython debug symbols
 cython_debug/
 
+# Makefile -- `local.mk` is deliberately NOT ignored here, unlike in bundles/core:
+# it holds this repo's own targets, and `make e2e` is what rhiza_e2e.yml runs.
+
 .bandit-baseline.json
 
 # Rust (rust-core bundle). Kept in core rather than the language layer because

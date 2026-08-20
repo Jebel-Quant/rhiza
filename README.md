@@ -510,8 +510,9 @@ The `Makefile` is yours. Generate it once with `uvx rhiza-task shim > Makefile`;
 is repo-owned and never synced, so anything you add to it survives every template update. A `%:`
 catch-all forwards unmatched targets to the pinned CLI, and an explicit rule always beats it:
 
-- **Add a target** — write it in the `Makefile`, or in a gitignored `local.mk` for one-off
-  personal helpers.
+- **Add a target** — write it in `local.mk`, which the shim `-include`s and which a
+  `rhiza-task` bump never touches. The `Makefile` is generated, so a target added there is lost
+  the next time it is regenerated.
 - **Extend a task** — shadow it. An explicit `install:` rule wins over the catch-all, so it can
   call `uvx $(RHIZA_TASK) install` and then your extra step. This replaces the
   `pre-install::`/`post-install::` hooks the synced make layer anchored.
