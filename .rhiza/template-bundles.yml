@@ -352,7 +352,7 @@ bundles:
   # GITHUB-TESTS - GitHub Actions workflows for CI
   # ============================================================================
   github-tests:
-    description: "GitHub Actions workflow stubs for CI (rhiza_ci, rhiza_codeql, rhiza_mutation)"
+    description: "GitHub Actions workflow stubs for CI (rhiza_ci, rhiza_codeql, rhiza_benchmark)"
     standalone: true
     requires: [tests, github]
 
