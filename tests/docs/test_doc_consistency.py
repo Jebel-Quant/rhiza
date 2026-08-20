@@ -253,10 +253,10 @@ class TestReadmeBundleList:
 
 
 # The root Makefile and `local.mk`: this repo runs on the rhiza-task shim, so there is no
-# `.rhiza/rhiza.mk` and no `.rhiza/make.d/` here. The Makefile is the shim verbatim and
-# defines only `help`, so `local.mk` is where every target this repo owns actually lives --
-# omit it and `make e2e` in the docs reads as drift. The gates a doc may legitimately
-# mention come from the CLI instead -- see :func:`_defined_make_targets`.
+# `.rhiza/rhiza.mk` and no `.rhiza/make.d/` here. The Makefile is `core`'s (the root copy is a
+# dogfood symlink into it) and defines only `help`, so `local.mk` is where every target this
+# repo owns actually lives -- omit it and `make e2e` in the docs reads as drift. The gates a
+# doc may legitimately mention come from the CLI instead -- see :func:`_defined_make_targets`.
 _MAKE_SOURCES = ("Makefile", "local.mk")
 
 _TARGET_DEF_RE = re.compile(r"^([A-Za-z0-9_.-]+(?:\s+[A-Za-z0-9_.-]+)*)\s*::?(?!=)", re.MULTILINE)

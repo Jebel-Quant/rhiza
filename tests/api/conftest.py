@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.util import setup_rhiza_git_repo, sync_bundles, write_shim
+from tests.util import setup_rhiza_git_repo, sync_bundles
 
 # The bundles these tests assemble into a temp project. Sourced from ``bundles/`` rather
 # than from the repo root, which is the change this repo's own migration forced: rhiza runs
@@ -35,10 +35,9 @@ SANDBOX_BUNDLES = [
 @pytest.fixture(autouse=True)
 def setup_tmp_makefile(logger, root: Path, tmp_path: Path):
     """Copy Makefile and split files into a temp dir and chdir there."""
+    # `core` ships the Makefile, so the assembled project has its front door with no extra
+    # step -- which is the point of the template owning it rather than the CLI printing it.
     sync_bundles(root, SANDBOX_BUNDLES, tmp_path)
-    # core ships no Makefile any more, so the assembled project needs the shim -- exactly what a
-    # consumer does once with `uvx rhiza-task shim > Makefile`.
-    write_shim(tmp_path)
     (tmp_path / ".rhiza").mkdir(exist_ok=True)
 
     if (root / ".python-version").exists():

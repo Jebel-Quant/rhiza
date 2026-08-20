@@ -77,8 +77,8 @@ uv run pytest -v -s
 ## Directory Structure
 
 ```text
-Makefile              # repo-owned shim, generated once by `rhiza-task shim`
-local.mk              # optional, gitignored: personal one-off targets
+Makefile              # synced from `core`: a shim forwarding to the pinned CLI
+local.mk              # optional, committed: this repo's own make targets
 pyproject.toml        # [tool.rhiza-task] settings live here
 .rhiza/
 ├── template.yml      # Sync configuration

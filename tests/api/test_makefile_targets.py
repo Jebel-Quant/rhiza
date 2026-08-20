@@ -41,12 +41,12 @@ def assert_uvx_command_uses_version(output: str, tmp_path, command_fragment: str
 
 
 class TestMakefileRootFixture:
-    """What this repo's own root Makefile must be, now that it is the rhiza-task shim.
+    """What this repo's own root Makefile must be, now that ``core`` ships it.
 
     Every other test in this module runs against a tmp_path assembled from ``bundles/``, so
-    they assert what a *consumer* receives. These two assert what the *mother repo* runs,
-    and the two answers deliberately differ: rhiza migrated to the shim first so the
-    dogfooding proves it before any consumer is affected.
+    they assert what a *consumer* receives. These assert what the *mother repo* runs -- and
+    the two answers converged again when the front door went back into the template: the
+    root file is a dogfood symlink, so there is one copy and both questions have one answer.
 
     The assertion that used to live here grepped the Makefile and its ``.rhiza/make.d``
     fragments for ``install:``/``fmt:``/``test:``/``deps:``. That cannot survive the shim and
@@ -55,17 +55,24 @@ class TestMakefileRootFixture:
     or weakened on every migration; asserting the forwarding contract holds instead.
     """
 
-    def test_makefile_exists_at_root(self, root: Path) -> None:
-        """Makefile should exist at repository root, and be a real file, not a symlink.
+    def test_makefile_is_a_dogfood_symlink_into_core(self, root: Path) -> None:
+        """The root Makefile must be a symlink into ``bundles/core/``.
 
-        It stopped being a dogfood symlink into ``bundles/core/`` when it became the shim:
-        it now carries this repo's own ``e2e``/``sync-self`` targets, which must not ship.
+        It was deliberately a real file for as long as ``uvx rhiza-task shim`` printed it: a
+        link would then have shipped the mother repo's own front door, which at the time
+        carried its ``e2e``/``sync-self`` targets. Those live in ``local.mk`` now and
+        :meth:`test_makefile_carries_no_repo_owned_rule` keeps them there, so the exception
+        had nothing left to protect -- and a real copy of a template file is drift waiting to
+        happen, which is the whole reason for the dogfood invariant.
         """
         makefile = root / "Makefile"
-        assert makefile.is_file()
-        assert not makefile.is_symlink(), (
-            "the root Makefile is repo-owned now -- a symlink into bundles/core/ would ship "
-            "rhiza's own mother-repo targets to every consumer"
+        assert makefile.is_file(), "the root Makefile is missing"
+        assert makefile.is_symlink(), (
+            "the root Makefile is a real file again -- `core` owns the front door, so a copy "
+            "here can diverge from what consumers receive (run `make sync-self`)"
+        )
+        assert makefile.resolve() == (root / "bundles" / "core" / "Makefile").resolve(), (
+            "the root Makefile points somewhere other than bundles/core/Makefile"
         )
 
     def test_makefile_forwards_unknown_targets_to_a_pinned_cli(self, root: Path) -> None:
@@ -105,11 +112,12 @@ class TestMakefileRootFixture:
     def test_local_mk_keeps_the_mother_repo_only_targets(self, root: Path) -> None:
         """The targets rehomed from the retired .rhiza/make.d/bundles.mk.
 
-        They live in ``local.mk``, which the shim ``-include``s, so the Makefile can stay
-        byte-identical to what ``rhiza-task shim`` prints -- see
-        :meth:`test_makefile_carries_no_repo_owned_rule`. ``local.mk`` is gitignored in
-        ``bundles/core``; this repo carves that file out precisely so these can be
-        committed, because ``make e2e`` is what rhiza_e2e.yml runs.
+        They live in ``local.mk``, which the Makefile ``-include``s, so the front door can be
+        a template-owned file with nothing repo-specific in it -- see
+        :meth:`test_makefile_carries_no_repo_owned_rule`. That separation is now load-bearing
+        rather than tidy: the Makefile is synced, so anything put in it is lost at the next
+        ``/rhiza:update``, and ``make e2e`` is what rhiza_e2e.yml runs in all three language
+        jobs.
         """
         content = (root / "local.mk").read_text(encoding="utf-8")
         for target in ("explain-bundles", "sync-self", "sync-self-check", "e2e"):
@@ -121,10 +129,11 @@ class TestMakefileRootFixture:
     def test_local_mk_is_committed(self, root: Path) -> None:
         """``local.mk`` must not be ignored here, or CI loses ``make e2e`` silently.
 
-        ``bundles/core/.gitignore`` ignores it, and the root copy is a declared carve-out
-        (``utils/link_dogfood.py`` ``_EXCLUDE``) for this reason. A sync that re-added the
-        rule would not fail anything: the file stays on disk, so every local run keeps
-        working, and only a fresh CI checkout finds no rule to make target `e2e`.
+        ``bundles/core/.gitignore`` deliberately leaves it committable (#1574), and this is the
+        case that forced it: with the ``Makefile`` synced, ``local.mk`` is the *only* place a
+        repo-owned target can live, so ignoring it would leave a consumer nowhere to put one.
+        A rule re-added there would not fail anything either: the file stays on disk, so every
+        local run keeps working, and only a fresh CI checkout finds no rule to make target `e2e`.
         """
         assert (root / "local.mk").is_file()
         ignored = (root / ".gitignore").read_text(encoding="utf-8")
@@ -136,13 +145,17 @@ class TestMakefileRootFixture:
     def test_makefile_carries_no_repo_owned_rule(self, root: Path) -> None:
         """The Makefile must define nothing beyond the shim's own rules.
 
-        This is what makes a version bump an overwrite rather than a merge: regenerate,
-        and nothing repo-specific is lost because nothing repo-specific is there. The
-        moment a target is appended below the shim again, a bump silently drops it.
+        This is what makes a version bump an overwrite rather than a merge: sync, and nothing
+        repo-specific is lost because nothing repo-specific is there. The moment a target is
+        appended below the shim again, the next ``/rhiza:update`` silently drops it -- and
+        since the file became template-owned, that is a sync away rather than a deliberate
+        regeneration.
 
-        Checked by name rather than by diffing against ``rhiza-task shim`` output, which
-        would need the network and would pin this repo to the *published* shim -- rhiza
-        dogfoods the next one, so the two differ by design between release and adoption.
+        Checked by name rather than by diffing against anything: there is nothing left to
+        diff against. While ``rhiza-task shim`` printed this file, the honest comparison was
+        against the *published* CLI's output -- and this repo ran a hand-carried variant of
+        it (the ``UV`` alias, ``FORCE``, the ``help`` extension), so the diff was noise. One
+        template-owned copy replaces both the generator and the fork of it.
         """
         content = (root / "Makefile").read_text(encoding="utf-8")
         defined = {

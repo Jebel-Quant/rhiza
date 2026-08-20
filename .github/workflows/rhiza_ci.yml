@@ -26,12 +26,14 @@ permissions:
   actions: read
 
 # The rhiza-task pin every gate step below runs through. `make <gate>` was the old
-# interface, and v1.4.0 retired the synced make layer -- core ships no Makefile and no
-# `.rhiza/rhiza.mk` -- so a consumer that syncs it is left with no make targets at all and
-# every gate dies with `No rule to make target 'test'` (seen on Jebel-Quant/greeks#118,
-# where the sync deleted the Makefile and nothing regenerated it). Calling the CLI directly
-# drops the dependency on a front door this workflow does not ship. `make` stays the human
-# entry point in a repo that generates the shim; it is simply no longer what CI relies on.
+# interface, and v1.4.0 retired the synced make layer: `.rhiza/rhiza.mk` and the sixteen
+# fragments became CLI tasks. `core` ships the front door again -- a `Makefile` that
+# forwards to a pinned CLI -- but CI does not go through it, and the reason is the pin
+# below rather than the file's absence. This workflow cannot see a consumer's `RHIZA_TASK`
+# and must not: the gates a build runs would otherwise move under it. Not depending on a
+# front door also survives a repo that has not synced one yet -- Jebel-Quant/greeks#118,
+# where a sync deleted the Makefile in the interval when the CLI generated it and nothing
+# regenerated it, and every gate died with `No rule to make target 'test'`.
 #
 # Pinned here rather than read from a consumer's `RHIZA_TASK`, which this workflow cannot
 # see -- and should not: the gates a build runs must not move under it. It tracks the tag

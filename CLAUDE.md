@@ -53,10 +53,10 @@ The core abstraction is the **bundle** — a named group of configuration files.
 **Feature bundles** — one per capability:
 
 - `core` (required, **language-neutral**): the language-neutral configuration —
-  `.editorconfig`, `cliff.toml`, `.gitignore`, `.rhiza/semgrep.yml` — and uv/uvx as a
-  *tool runner*. It ships no `Makefile` and no make fragments at all: the front door is
-  generated per repo (`uvx rhiza-task shim > Makefile`) and the gates are CLI tasks. It
-  deliberately provides no `install` and no `all` — see **Language layers** below.
+  `.editorconfig`, `cliff.toml`, `.gitignore`, `.rhiza/semgrep.yml` — the `Makefile` front
+  door, and uv/uvx as a *tool runner*. It ships no make *fragments* at all: the Makefile is a
+  71-line shim forwarding to a pinned CLI, and the gates are CLI tasks. It deliberately
+  provides no `install` and no `all` — see **Language layers** below.
 - `python-core` (the Python **language layer**): `.python-version`, `ruff.toml`,
   `.bandit`, the pre-commit config and `pytest.ini`. Its gate set — `install`, `all`,
   `deps`, `license`, `test`, `typecheck`, `security`, `docs-coverage` — is rhiza-task's
@@ -240,16 +240,20 @@ rhiza-task's five-layer order (defaults → `.rhiza/.env` → `pyproject.toml` �
 environment → CLI flags), typed by TOML rather than parsed out of strings. Two caveats
 worth knowing before moving anything there:
 
-- **`rhiza.mk` does not read it.** A repo on the synced make layer resolves settings
-  through `?=`, the root `Makefile` and `.rhiza/.env`; the table is inert until the repo
-  moves to `uvx rhiza-task shim`. So this repo's own `MKDOCS_EXTRA_PACKAGES` override stays
-  in the root `Makefile` — relocating it to `pyproject.toml` today would silently break
-  `make book`. Only the CI `generate-matrix` step reads the table here, because that step
-  is the one caller already going through the CLI.
+- **`rhiza.mk` does not read it**, so the table is inert in a repo still on the synced make
+  layer — it resolves settings through `?=`, its `Makefile` and `.rhiza/.env` — and only
+  starts working when that repo syncs past #1556. The mirror image applies once it has: the
+  `Makefile` is template-owned, so a setting cannot live *there* either, and the surfaces are
+  this table, `.rhiza/.env` (gitignored, so developer-local only) and `RHIZA_*` in the
+  environment — which `local.mk` can `export` for anything that must be committed. This
+  repo's own `MKDOCS_EXTRA_PACKAGES` override made that trip: it sat above the include in the
+  old root `Makefile`, was lost silently when the shim replaced that file, and is
+  `mkdocs-extra-packages` in `pyproject.toml` now.
 - **It is Python-only.** `_from_pyproject` reads `pyproject.toml` and nothing else, so
   `rust-core` and `go-core` have no equivalent — a crate has `Cargo.toml`, a Go module has
-  no manifest at all. Those layers keep `.rhiza/.env` and the root `Makefile` as their only
-  settings surfaces until rhiza-task grows a language-neutral source.
+  no manifest at all. Those layers are left with `.rhiza/.env` and an exported `RHIZA_*` in
+  `local.mk` until rhiza-task grows a language-neutral source — not the `Makefile`, which is
+  synced for them too.
 
 `.rhiza/.env` itself stays supported and `rhiza.mk` still `-include`s it — what changed is
 that the file is now unambiguously **repo-owned**, which also resolves the standing
@@ -408,19 +412,33 @@ still there.
 
 ### What is left of the Makefile system
 
-The synced make layer is **gone**, bundles included. `core` ships no `Makefile` and no
-`.rhiza/rhiza.mk`, `.rhiza/make.d/` no longer exists in any bundle or at the root, and all
-sixteen fragments — 1481 lines — retired with them. Each repository owns its front door
-instead, generated once:
+The synced make layer is **gone**, bundles included: `core` ships no `.rhiza/rhiza.mk`,
+`.rhiza/make.d/` no longer exists in any bundle or at the root, and all sixteen fragments —
+1481 lines — retired with them.
 
-```bash
-uvx rhiza-task shim > Makefile
-```
+What survives is the front door, `bundles/core/Makefile`, 71 lines of it. `make` therefore
+still works and still is what a stranger types, but it no longer *contains* anything: a `%:`
+catch-all forwards every unmatched target to a pinned CLI, and `RHIZA_TASK` is the whole
+version contract. Bumping it is the migration that used to be `/rhiza:update` re-syncing
+sixteen fragments and reconciling whatever had been shadowed — except that the bump now
+*arrives* by sync, because the file is template-owned like the rest of the bundle.
 
-`make` therefore still works and still is what a stranger types, but it no longer *contains*
-anything: a `%:` catch-all forwards every unmatched target to a pinned CLI, and `RHIZA_TASK` is
-the whole version contract. Bumping it is the migration that used to be `/rhiza:update`
-re-syncing sixteen fragments and reconciling whatever had been shadowed.
+**It was repo-owned for one release, and that half is worth knowing.** rhiza-task printed the
+file (`uvx rhiza-task shim > Makefile`) and each repo owned the copy, which put a template
+inside the task runner: the CLI had to know about `local.mk`, the `##` help convention and the
+./bin/uvx bootstrap, and this repo then hand-carried a variant of that output anyway (the `UV`
+alias, `FORCE`, the `help` extension that lists `local.mk`'s targets). The worse half was the
+pin. `shim` wrote the version of whichever CLI printed it, into a file no sync would touch —
+so moving a consumer's gates forward was a per-repo hand edit `/rhiza:update` could not make,
+and every consumer lagged silently. Template ownership restores the property
+`RHIZA_CHECKS_VERSION` already had: a repo synced at a tag runs that tag's gates.
+
+Two things make that safe, and both are recent. Repo-owned *targets* have somewhere to live —
+`local.mk`, which the Makefile `-include`s and core deliberately leaves un-gitignored (#1574),
+so appending below the shim is no longer the only way to commit one. And nothing repo-specific
+is in the file: `tests/api/test_makefile_targets.py::test_makefile_carries_no_repo_owned_rule`
+holds it to the shim's seven rules, which is what makes an overwrite lossless. The root copy is
+a dogfood symlink into `bundles/core/`, so there is one copy of it in this repo, not two.
 
 **The last five went in two steps, and the second is worth knowing about.** Eleven fragments
 retired with rhiza-task 0.2.0. `github.mk`, `docker.mk`, `lfs.mk`, `paper.mk` and
@@ -467,12 +485,12 @@ offline while CI does the real check.
 
 **Where the mother-repo-only targets live.** `explain-bundles`, `sync-self`, `sync-self-check`
 and `e2e` were `.rhiza/make.d/bundles.mk`, a fragment no bundle shipped, then a section appended
-below the shim in the root `Makefile`. They are `local.mk` now, so the `Makefile` can stay exactly
-what `rhiza-task shim` prints and a bump is an overwrite rather than a merge —
-`tests/api/test_makefile_targets.py` pins both halves. That needed the root `.gitignore` to stop
-ignoring `local.mk`, unlike `bundles/core`'s: CI invokes `make e2e` in all three language jobs, so
-this repo's copy has to be committed. A fifth, `gitlab-docker-test`, lived there too and is gone —
-see **CI/CD** below.
+below the shim in the root `Makefile`. They are `local.mk` now, and that move is what let the
+`Makefile` become template-owned at all — `tests/api/test_makefile_targets.py` pins both halves.
+It also needed `local.mk` to be committable, which is why `bundles/core/.gitignore` stopped
+ignoring it (#1574): CI invokes `make e2e` in all three language jobs, so this repo's copy has to
+be committed, and a consumer whose CI calls its own target is in exactly the same position. A
+fifth, `gitlab-docker-test`, lived there too and is gone — see **CI/CD** below.
 
 **And why `rhiza-test` is no longer wrapped.** pytest-rhiza's `test_docstrings` reads its scope
 from the `RHIZA_DOCTEST_FOLDERS` environment variable; `quality.mk` exported it from

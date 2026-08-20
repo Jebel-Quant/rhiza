@@ -67,9 +67,10 @@ jobs:
           # make's own namespace, with `marimo` as the fallback. That put two things into
           # the reusable contract that do not belong in it: a root `Makefile`, and
           # MARIMO_FOLDER living inside make's variable namespace. A consumer that has
-          # replaced the synced make layer with the CLI satisfies neither by default -- it
-          # has to keep an `-include .rhiza/.env` alive in a Makefile it otherwise owns,
-          # purely so this one probe finds something. `rhiza-task print` exists precisely
+          # replaced the synced make layer with the CLI satisfies neither by default -- its
+          # `Makefile` is template-owned and carries no `-include .rhiza/.env` at all, so
+          # there is no supported place to keep one alive purely so this one probe finds
+          # something. `rhiza-task print` exists precisely
           # to replace make's `print-%` pattern rule, and reads `.rhiza/.env` itself, so
           # nothing changes for a repository still on the synced make layer.
           #

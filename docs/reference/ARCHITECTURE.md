@@ -72,21 +72,23 @@ flowchart TD
     registry -.-> env
 ```
 
-There is no make layer left to load. `core` ships no `Makefile` and no `.rhiza/rhiza.mk`,
-and `.rhiza/make.d/` no longer exists: every fragment it once held retired into
+There is no make layer left to load. `core` ships no `.rhiza/rhiza.mk` and `.rhiza/make.d/`
+no longer exists: every fragment it once held retired into
 [rhiza-task](https://github.com/Jebel-Quant/rhiza-task), a pinned CLI, in two steps —
 eleven at 0.2.0 and the last five at 0.3.0.
 
-A repository generates its front door once:
+What `core` does still ship is the front door, `Makefile`, at 71 lines instead of 1481. It
+pins `RHIZA_TASK`, bootstraps uv if the runner has none, and forwards every unmatched target
+to the CLI through a `%:` catch-all. What used to be "which fragments were synced?" is now
+"which tasks does the pinned version have, for the language layers this repository has?" —
+`uvx rhiza-task list` answers it.
 
-```bash
-uvx rhiza-task shim > Makefile
-```
-
-That file is repo-owned from then on. It pins `RHIZA_TASK`, bootstraps uv if the runner has
-none, and forwards every unmatched target to the CLI through a `%:` catch-all. What used to
-be "which fragments were synced?" is now "which tasks does the pinned version have, for the
-language layers this repository has?" — `uvx rhiza-task list` answers it.
+For one release the CLI printed that file itself (`uvx rhiza-task shim > Makefile`) and each
+repo owned the copy. That put a template inside the task runner, and the pin inside a
+generated file: bumping a repo's gates was a hand edit `/rhiza:update` could not make. The
+template owns it again, so `RHIZA_TASK` travels with the sync — the property
+`RHIZA_CHECKS_VERSION` already had. Repo-owned targets live in `local.mk`, which the
+`Makefile` `-include`s and no sync touches.
 
 | was | is |
 | --- | --- |

@@ -1,14 +1,15 @@
-## local.mk (repo-owned) -- rhiza's own targets, which the shim `-include`s.
+## local.mk (repo-owned) -- rhiza's own targets, which the `Makefile` `-include`s.
 #
 # These were `.rhiza/make.d/bundles.mk`, a fragment no bundle shipped, and then a block
-# appended below the shim in the `Makefile`. They live here so that file can be exactly
-# what `uvx rhiza-task shim` prints, making a bump an overwrite rather than a merge.
+# appended below the shim in the `Makefile`. They live here because the `Makefile` is
+# template-owned -- `core` ships it and every sync overwrites it -- so this is the only
+# place in the repo a make target of its own can survive a `/rhiza:update`.
 #
-# Committed, unlike in a consumer repo: `local.mk` is in core's `.gitignore`, and this repo
-# carves that file out (utils/link_dogfood.py `_EXCLUDE`) because `make e2e` is what
-# .github/workflows/rhiza_e2e.yml runs in all three language jobs. An explicit rule beats
-# the shim's `%:` catch-all, so these win over CLI delegation; `install` as a prerequisite
-# still resolves through it, and the `##` comments are what put them in `make help`.
+# Committed, like in any consumer repo: core's `.gitignore` leaves `local.mk` tracked for
+# exactly this reason (#1574), and `make e2e` is what .github/workflows/rhiza_e2e.yml runs
+# in all three language jobs. An explicit rule beats the shim's `%:` catch-all, so these
+# win over CLI delegation; `install` as a prerequisite still resolves through it, and the
+# `##` comments are what put them in `make help`.
 #
 # `$(UV)` comes from the shim, which provisions it alongside `$(UVX)`.
 #

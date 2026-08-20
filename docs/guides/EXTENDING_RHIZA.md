@@ -265,8 +265,10 @@ ci-os-matrix = ["ubuntu-latest", "macos-latest"]
 ```
 
 Note that a repo still on the synced make layer resolves settings through `rhiza.mk`, which
-does not read this table — set those in the root `Makefile` or `.rhiza/.env` until the repo
-moves to `uvx rhiza-task shim`.
+does not read this table — set those in its `Makefile` or `.rhiza/.env` until it syncs a
+template that has no make layer left. Once it has, the `Makefile` is template-owned and
+overwritten by every sync, so this table (or an exported `RHIZA_*` variable in `local.mk`) is
+where a committed setting belongs.
 
 #### In .rhiza/.env
 

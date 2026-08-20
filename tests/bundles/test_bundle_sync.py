@@ -28,19 +28,24 @@ class TestCoreBundleSync:
         sync_bundles(root, ["core"], tmp_path)
         self.project = tmp_path
 
-    def test_core_ships_no_make_layer(self):
-        """Core must ship no ``Makefile``, no ``rhiza.mk`` and no fragments of its own.
+    def test_core_ships_the_front_door_and_none_of_the_make_layer(self):
+        """Core must ship a ``Makefile`` and no ``rhiza.mk`` or fragments of its own.
 
-        The inverse of what this asserted before, and asserted rather than simply deleted so the
-        layer cannot come back by accident. Each repo owns its front door now, generated once with
-        ``uvx rhiza-task shim > Makefile`` -- which is why core must not ship one: a synced
-        Makefile would be template-owned, and ``/rhiza:update`` would clobber whatever the repo
-        had added to it. This repo's own copy carries its ``e2e``/``sync-self`` targets and its
-        ``rhiza-test`` wrapper, so that is not hypothetical.
+        The Makefile half has been asserted in both directions now, and the reason it flipped
+        back is worth keeping. It could not be synced while ``uvx rhiza-task shim`` printed it and
+        a repo owned the copy: a template-owned file would have let ``/rhiza:update`` clobber
+        whatever the repo appended -- which for this repo was its own ``e2e``/``sync-self``
+        targets, so the risk was not hypothetical. Those targets moved to ``local.mk`` (which core
+        deliberately does not ignore) and the CLI stopped defining a template, leaving the front
+        door where every other config file lives.
+
+        The fragments are the half that must never come back: a ``Makefile`` forwarding to a
+        pinned CLI is one file and one version, where ``rhiza.mk`` plus ``make.d/`` was 1481
+        synced lines of recipes.
         """
-        assert not (self.project / "Makefile").exists(), (
-            "core ships a Makefile again; the shim is repo-owned and generated, so syncing one "
-            "would let /rhiza:update overwrite a repo's own targets"
+        assert (self.project / "Makefile").is_file(), (
+            "core ships no Makefile, so a synced project has no front door at all -- `make test` "
+            "reports `No rule to make target` until someone writes one by hand"
         )
         assert not (self.project / ".rhiza" / "rhiza.mk").exists(), "core ships rhiza.mk again"
         stale = sorted((self.project / ".rhiza").rglob("*.mk"))
@@ -105,17 +110,16 @@ class TestCoreIsLanguageNeutral:
 
         core's ``bootstrap.mk`` had an ``install-uv`` target for this, and the reason it was
         core's rather than a layer's has not changed: uvx runs prek, mkdocs and semgrep whatever
-        the language. The job moved to the generated shim, which resolves ``UVX`` to ``./bin/uvx``
-        and has a rule to download it -- so ``make <anything>`` still works on a bare runner,
-        which is what keeps rhiza's own required ``Pre-commit hooks`` check green.
+        the language. The job lives in the shim, which resolves ``UVX`` to ``./bin/uvx`` and has a
+        rule to download it -- so ``make <anything>`` still works on a bare runner, which is what
+        keeps rhiza's own required ``Pre-commit hooks`` check green.
 
-        Asserted against the generated shim rather than a synced file, because that is where the
-        behaviour now lives; ``tests/util.py``'s ``write_shim`` produces the same text a consumer
-        gets.
+        Read from the synced file, which needs no network and no subprocess. While the CLI printed
+        the shim this had to generate it, and *skipped* when ``uvx`` could not be reached -- so the
+        assertion protecting a required status check was the one that quietly stopped running
+        offline.
         """
-        from tests.util import write_shim
-
-        shim = write_shim(self.project).read_text(encoding="utf-8")
+        shim = (self.project / "Makefile").read_text(encoding="utf-8")
         assert "UVX ?=" in shim, "the shim no longer resolves a uvx path"
         assert "astral.sh/uv/install.sh" in shim, (
             "the shim no longer downloads uv, so `make fmt` fails on a runner without it"

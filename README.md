@@ -547,13 +547,14 @@ The `.python-version` file specifies the default Python version for local develo
 
 ### Makefile Customisation
 
-The `Makefile` is yours. Generate it once with `uvx rhiza-task shim > Makefile`; from then on it
-is repo-owned and never synced, so anything you add to it survives every template update. A `%:`
-catch-all forwards unmatched targets to the pinned CLI, and an explicit rule always beats it:
+The `Makefile` comes from the `core` bundle like every other config file, so a sync delivers it
+and a sync overwrites it — nothing you add to it survives. It pins `RHIZA_TASK`, which is the
+whole version contract: syncing a newer template moves your gates forward. A `%:` catch-all
+forwards unmatched targets to the pinned CLI, and an explicit rule always beats it:
 
-- **Add a target** — write it in `local.mk`, which the shim `-include`s and which a
-  `rhiza-task` bump never touches. The `Makefile` is generated, so a target added there is lost
-  the next time it is regenerated.
+- **Add a target** — write it in `local.mk`, which the `Makefile` `-include`s and which no sync
+  touches. It is deliberately not gitignored, so commit it: anything your CI invokes has to be
+  in the repository.
 - **Extend a task** — shadow it. An explicit `install:` rule wins over the catch-all, so it can
   call `uvx $(RHIZA_TASK) install` and then your extra step. This replaces the
   `pre-install::`/`post-install::` hooks the synced make layer anchored.

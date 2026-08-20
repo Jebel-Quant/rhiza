@@ -57,7 +57,6 @@ _EXCLUDE = frozenset(
         ".python-version",  # mother-repo pinned version
         "SECURITY.md",  # mother-repo variant
         "renovate.json",  # mother-repo variant
-        "Makefile",  # the rhiza-task shim, repo-owned
     }
 )
 
@@ -101,14 +100,14 @@ def is_dogfood_carveout(rel: str) -> bool:
         >>> is_dogfood_carveout(".rhiza/semgrep.yml")
         False
 
-        The root ``Makefile`` is carved out, and this one is easy to get wrong. It is the
-        ``rhiza-task`` shim, generated rather than synced -- this repo's own targets moved to
-        ``local.mk`` so it could stay byte-identical to what ``rhiza-task shim`` prints.
-        ``core`` ships no ``Makefile`` at all now, so nothing could link it today; the entry
-        stays because a bundle acquiring one later must not silently clobber the shim:
+        The root ``Makefile`` is *not* carved out, and this one is easy to get wrong. It was,
+        for as long as ``rhiza-task shim`` printed it and each repo owned the copy: linking it
+        would have shipped the mother repo's own front door to every consumer. Those targets
+        moved to ``local.mk``, and ``core`` owns the front door now -- so the root copy is a
+        link into the bundle like every other config file:
 
         >>> is_dogfood_carveout("Makefile")
-        True
+        False
 
         A declared mother-repo override stays a real file, because its content
         deliberately diverges from the bundle it would otherwise point at:

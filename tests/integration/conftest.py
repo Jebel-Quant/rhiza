@@ -4,8 +4,8 @@ These tests live in the mother repo's own tests/ and do not sync downstream.
 
 Two git-repo fixtures are provided:
 
-* ``git_repo`` — a *rich* sandbox: a bare remote + local clone carrying the generated
-  ``rhiza-task`` shim, the files the bundles below contribute, the ``book/`` tree, and
+* ``git_repo`` — a *rich* sandbox: a bare remote + local clone carrying the files the
+  bundles below contribute (``core``'s ``Makefile`` among them), the ``book/`` tree, and
   mock ``uv``/``make`` executables on ``PATH``. Makefile-target integration tests (book,
   docs, virtual-env, marimo, benchmark) drive real ``make`` against it.
 * ``minimal_git_repo`` — a bare git repo with only a ``pyproject.toml`` and the
@@ -27,7 +27,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.util import sync_bundles, write_shim
+from tests.util import sync_bundles
 
 GIT = shutil.which("git") or "/usr/bin/git"
 
@@ -189,12 +189,12 @@ def git_repo(root, tmp_path, monkeypatch) -> Path:
 
     monkeypatch.setenv("PATH", f"{bin_dir}:{os.environ.get('PATH', '')}")
 
-    # Assemble the surviving fragments from the bundles that ship them, then supply the shim:
-    # core ships no Makefile or rhiza.mk now, so without it nothing loads them and every target
-    # they own reports "no rule to make target".
+    # Assemble from the bundles that ship the files, front door included: `core` owns the
+    # Makefile again, so a synced project has one. The fixtures used to generate it here with
+    # `uvx rhiza-task shim`, which cost a subprocess and *skipped* every make-driven test
+    # offline -- the CLI owning a template is what made that necessary.
     (local_dir / ".rhiza").mkdir(parents=True, exist_ok=True)
     sync_bundles(root, SANDBOX_BUNDLES, local_dir)
-    write_shim(local_dir)
 
     book_src = root / "book"
     book_dst = local_dir / "book"

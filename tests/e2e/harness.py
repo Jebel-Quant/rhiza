@@ -36,7 +36,7 @@ import pytest
 from defusedxml import ElementTree
 
 from tests.e2e import scaffolds
-from tests.util import run_make, strip_ansi, sync_bundles, write_shim
+from tests.util import run_make, strip_ansi, sync_bundles
 
 GIT = shutil.which("git") or "/usr/bin/git"
 
@@ -217,11 +217,11 @@ def _sync(root: Path, layer: Layer, project: Path) -> None:
         layer: The layer whose bundles to copy.
         project: Destination project root.
     """
+    # Every profile pairs `core` with a layer, and `core` ships the Makefile -- so the sync
+    # delivers the front door too, and the suite exercises the file a consumer receives. It
+    # used to call `write_shim` here, generating it from the CLI, back when `rhiza-task shim`
+    # printed the template.
     sync_bundles(root, list(layer.bundles), project)
-    # core ships no Makefile any more, so the assembled project has no front door until we give
-    # it one. This is the step a real consumer performs once, and putting it here means the whole
-    # e2e suite exercises the shim a consumer actually gets rather than a synced file.
-    write_shim(project)
 
 
 def assemble(layer: Layer, root: Path, workdir: Path, logger) -> Project:
