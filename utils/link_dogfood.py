@@ -102,10 +102,10 @@ def is_dogfood_carveout(rel: str) -> bool:
         False
 
         The root ``Makefile`` is carved out, and this one is easy to get wrong. It is the
-        ``rhiza-task`` shim: repo-owned, carrying this repo's ``e2e``/``sync-self`` targets and
-        its ``rhiza-test`` wrapper. ``core`` ships no ``Makefile`` at all now, so nothing could
-        link it today -- the entry stays because a bundle acquiring one later must not silently
-        clobber those targets:
+        ``rhiza-task`` shim, generated rather than synced -- this repo's own targets moved to
+        ``local.mk`` so it could stay byte-identical to what ``rhiza-task shim`` prints.
+        ``core`` ships no ``Makefile`` at all now, so nothing could link it today; the entry
+        stays because a bundle acquiring one later must not silently clobber the shim:
 
         >>> is_dogfood_carveout("Makefile")
         True

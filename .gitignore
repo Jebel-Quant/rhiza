@@ -117,8 +117,8 @@ instance/
 # Cython debug symbols
 cython_debug/
 
-# Makefile
-local.mk
+# Makefile -- `local.mk` is deliberately NOT ignored here, unlike in bundles/core:
+# it holds this repo's own targets, and `make e2e` is what rhiza_e2e.yml runs.
 
 .bandit-baseline.json
 

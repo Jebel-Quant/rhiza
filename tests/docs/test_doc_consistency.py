@@ -252,10 +252,12 @@ class TestReadmeBundleList:
         assert len(_readme_profile_names()) > 1, "expected README to list multiple profiles"
 
 
-# Only the root Makefile now: this repo runs on the rhiza-task shim, so there is no
-# `.rhiza/rhiza.mk` and no `.rhiza/make.d/` here. The gates a doc may legitimately mention
-# come from the CLI instead -- see :func:`_defined_make_targets`.
-_MAKE_SOURCES = ("Makefile",)
+# The root Makefile and `local.mk`: this repo runs on the rhiza-task shim, so there is no
+# `.rhiza/rhiza.mk` and no `.rhiza/make.d/` here. The Makefile is the shim verbatim and
+# defines only `help`, so `local.mk` is where every target this repo owns actually lives --
+# omit it and `make e2e` in the docs reads as drift. The gates a doc may legitimately
+# mention come from the CLI instead -- see :func:`_defined_make_targets`.
+_MAKE_SOURCES = ("Makefile", "local.mk")
 
 _TARGET_DEF_RE = re.compile(r"^([A-Za-z0-9_.-]+(?:\s+[A-Za-z0-9_.-]+)*)\s*::?(?!=)", re.MULTILINE)
 _MAKE_MENTION_RE = re.compile(r"\bmake\s+([a-z][A-Za-z0-9_-]*)")
@@ -302,9 +304,9 @@ def _defined_make_targets() -> set[str]:
     """Return every target ``make`` can resolve: explicit rules plus CLI tasks.
 
     Both halves are needed and neither is sufficient. The root Makefile holds only ``help``
-    and this repo's mother-repo-only targets; every gate a doc mentions -- ``test``, ``fmt``,
-    ``typecheck`` -- is a task the shim forwards to. Checking the file alone would fail every
-    such mention; checking the CLI alone would miss ``make e2e``.
+    and ``local.mk`` this repo's mother-repo-only targets; every gate a doc mentions --
+    ``test``, ``fmt``, ``typecheck`` -- is a task the shim forwards to. Checking the files
+    alone would fail every such mention; checking the CLI alone would miss ``make e2e``.
     """
     targets: set[str] = set(_cli_task_names())
     sources = [_ROOT / s for s in _MAKE_SOURCES]
