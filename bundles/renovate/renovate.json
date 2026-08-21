@@ -55,12 +55,12 @@
     },
     {
       "customType": "regex",
-      "description": "The pytest-rhiza pin in core's quality.mk. `make rhiza-test` installs the rhiza repository checks at an exact version so the checks and the template move as one number (#1540); no other manager parses a Makefile, so without this the pin only ages.",
+      "description": "The pytest-rhiza pin in `[tool.rhiza-task]`. `make rhiza-test` installs the rhiza repository checks at an exact version so the checks and the template move as one number (#1540). No built-in manager reads that table -- pep621 sees only the dependency arrays -- so without this the pin only ages. It targeted `RHIZA_CHECKS_VERSION` in `.rhiza/make.d/quality.mk` until #1579, and went silently dead when that file retired -- #1556 for this repo, #1557 for the bundle: a manager whose file pattern matches nothing reports no error, it just stops finding updates.",
       "managerFilePatterns": [
-        "/(^|/)\\.rhiza/make\\.d/quality\\.mk$/"
+        "/(^|/)pyproject\\.toml$/"
       ],
       "matchStrings": [
-        "RHIZA_CHECKS_VERSION\\s*\\?=\\s*(?<currentValue>\\S+)"
+        "pytest-rhiza\\s*=\\s*\"pytest-rhiza==(?<currentValue>[^\"]+)\""
       ],
       "depNameTemplate": "pytest-rhiza",
       "datasourceTemplate": "pypi"
