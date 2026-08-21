@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import json
 import re
-import subprocess  # nosec B404
 import sys
 from pathlib import Path
 
 import pytest
 import yaml
+
+from tests.registry import require as require_registry
 
 MULTI_OS_MATRIX = 'RHIZA_CI_OS_MATRIX=["ubuntu-latest","windows-latest"]'
 WORKFLOW_PATH = Path(".github") / "workflows" / "rhiza_ci.yml"
@@ -93,49 +93,25 @@ def test_ci_jobs_define_timeout_budgets(root):
         assert jobs[job_name]["timeout-minutes"] == timeout
 
 
-def _gates_named_by_all(root: Path) -> list[str]:
+def _gates_named_by_all() -> list[str]:
     """Return the gate names ``all`` depends on, from the rhiza-task registry.
 
-    The registry is keyed ``layer:name`` and populated by the ``@task`` decorator, so the
-    task modules have to be imported before it is read -- via the CLI's own
-    :func:`rhiza_task.cli.load_tasks`, so the set follows the ``rhiza_task.tasks`` entry-point
-    group instead of a module list that ages here. Only this repo's layer is consulted:
-    ``rust:all`` and ``go:all`` name a slightly different set, and asserting a Rust gate runs
-    in a Python repo's CI would be nonsense.
+    Read through :mod:`tests.registry`, the fourth caller of what used to be three copies of
+    the same subprocess (#1583). Only this repo's layer is consulted: ``rust:all`` and
+    ``go:all`` name a slightly different set, and asserting a Rust gate runs in a Python
+    repo's CI would be nonsense.
 
-    Args:
-        root: Repository root, used to locate the Makefile carrying the pin.
+    The ``assert gates`` below is the control this function already had, and it is why the
+    #1580 breakage surfaced here as a red test rather than as a shrinking gate list. It stays
+    even though :func:`tests.registry.load` now anchors on ``python:all`` too: that check says
+    the key exists, this one says it has prerequisites, and an ``all`` that named nothing would
+    make every assertion downstream vacuous.
 
     Returns:
         The prerequisite gate names, in declaration order.
     """
-    pin = re.search(r"^RHIZA_TASK \?= (\S+)", (root / "Makefile").read_text(encoding="utf-8"), re.MULTILINE)
-    assert pin, "the root Makefile no longer pins RHIZA_TASK"
-    name, _, version = pin.group(1).partition("@")
-    script = (
-        "import json;"
-        "from rhiza_task.cli import load_tasks; load_tasks();"
-        "from rhiza_task.spec import REGISTRY;"
-        "print(json.dumps(list(REGISTRY['python:all'].needs)))"
-    )
-    proc = subprocess.run(  # nosec B603
-        [
-            "uv",
-            "run",
-            "--quiet",
-            "--no-project",
-            "--with",
-            f"{name}=={version}" if version else name,
-            "python",
-            "-c",
-            script,
-        ],
-        cwd=root,
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    gates = json.loads(proc.stdout)
+    registry = require_registry()
+    gates = registry["python:all"]
     assert gates, "the registry reports no prerequisites for `all`, so this guard would be inert"
     return gates
 
@@ -154,7 +130,7 @@ def test_every_gate_named_by_make_all_runs_in_ci(root):
     shim it comes from the CLI's task registry instead, which is the same derivation against
     the new source of truth.
     """
-    gates = _gates_named_by_all(root)
+    gates = _gates_named_by_all()
 
     workflows = (root / ".github" / "workflows").glob("*.yml")
     invoked = "\n".join(wf.read_text(encoding="utf-8") for wf in workflows)

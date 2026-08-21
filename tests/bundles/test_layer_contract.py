@@ -16,15 +16,12 @@ Each is a guard against a divergence that already happened once:
 
 from __future__ import annotations
 
-import functools
-import json
-import re
-import subprocess  # nosec B404
 import tomllib
-from pathlib import Path
 
 import pytest
 
+from tests.registry import require as require_registry
+from tests.registry import resolves
 from tests.util import sync_bundles
 
 
@@ -84,69 +81,12 @@ class TestNonPythonLayersShipADiscoverableBumpversionConfig:
         )
 
 
-@pytest.mark.parametrize("layer", ["python-core", "rust-core", "go-core"])
-@functools.lru_cache(maxsize=1)
-def _registry() -> dict[str, list[str]]:
-    """Return the pinned CLI's task registry as ``{key: [prerequisite, ...]}``.
-
-    Keys are ``layer:name`` for a layer-scoped task and bare ``name`` for a neutral one, which
-    is how :mod:`rhiza_task.spec` stores them -- three layers may each define ``test``, and
-    which one answers is decided per repository.
-
-    The task modules must be imported before the registry is read: the ``@task`` decorator
-    populates it at import time, and ``rhiza_task.tasks`` does not pull in its submodules.
-    Loaded through the CLI's own :func:`rhiza_task.cli.load_tasks`, which walks the
-    ``rhiza_task.tasks`` entry-point group, rather than a module list written out here -- such
-    a list silently omits whatever the next release adds, and that is not a hypothetical: it
-    is how ``book``'s ``paper`` prerequisite went unseen when rhiza-task 1.1.0 added it.
-
-    Returns:
-        The registry, or an empty dict when the CLI cannot be reached.
-    """
-    root = Path(__file__).resolve().parents[2]
-    match = re.search(r"^RHIZA_TASK \?= (\S+)", (root / "Makefile").read_text(encoding="utf-8"), re.MULTILINE)
-    if not match:
-        return {}
-    name, _, version = match.group(1).partition("@")
-    script = (
-        "import json;"
-        "from rhiza_task.cli import load_tasks; load_tasks();"
-        "from rhiza_task.spec import REGISTRY;"
-        "print(json.dumps({k: list(v.needs) for k, v in REGISTRY.items()}))"
-    )
-    proc = subprocess.run(  # nosec B603
-        [
-            "uv",
-            "run",
-            "--quiet",
-            "--no-project",
-            "--with",
-            f"{name}=={version}" if version else name,
-            "python",
-            "-c",
-            script,
-        ],
-        cwd=root,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    return json.loads(proc.stdout) if proc.returncode == 0 else {}
-
-
-def _resolves(registry: dict[str, list[str]], layer: str, task: str) -> bool:
-    """Report whether ``task`` resolves for ``layer``: layer-scoped first, then neutral.
-
-    Args:
-        registry: The task registry.
-        layer: ``python``, ``rust`` or ``go``.
-        task: A task name.
-
-    Returns:
-        True when some registered task answers that name for that layer.
-    """
-    return f"{layer}:{task}" in registry or task in registry
-
+# `_registry` and `_resolves` used to live here, and `test_bundle_combinations` imported them
+# from this module by their private names (#1583). They are :mod:`tests.registry` now -- one
+# reader for the four modules that need the same answer, with the anchor check that makes a
+# narrowed derivation fail instead of skip (#1584). The stray
+# `@pytest.mark.parametrize("layer", ...)` that sat on `_registry` went with them: a mark on a
+# module-level helper is never read, so it had been inert since whatever refactor stranded it.
 
 # The CLI's layer names, against the bundle names the rest of this module uses.
 _LAYERS = {"python-core": "python", "rust-core": "rust", "go-core": "go"}
@@ -169,14 +109,12 @@ class TestALayersAllIsSatisfiableOnItsOwn:
     @pytest.mark.parametrize("layer", sorted(_LAYERS))
     def test_every_prerequisite_of_all_resolves(self, layer):
         """Each name in this layer's `all` must resolve to a registered task."""
-        registry = _registry()
-        if not registry:
-            pytest.skip("could not read the rhiza-task registry")
+        registry = require_registry()
         cli_layer = _LAYERS[layer]
         key = f"{cli_layer}:all"
         assert key in registry, f"{layer} defines no `all` task"
 
-        missing = [name for name in registry[key] if not _resolves(registry, cli_layer, name)]
+        missing = [name for name in registry[key] if not resolves(registry, cli_layer, name)]
         assert not missing, (
             f"`all` on {layer} names {missing}, which resolve to no registered task. A gate that "
             f"only resolves once something else happens to be present is not part of the contract."
@@ -204,10 +142,8 @@ class TestEveryLayerDefinesTheSameGateNames:
     @pytest.mark.parametrize("gate", GATES)
     def test_all_three_layers_define_the_gate(self, gate):
         """Each gate name must resolve for every language layer."""
-        registry = _registry()
-        if not registry:
-            pytest.skip("could not read the rhiza-task registry")
-        missing = [b for b, cli in sorted(_LAYERS.items()) if not _resolves(registry, cli, gate)]
+        registry = require_registry()
+        missing = [b for b, cli in sorted(_LAYERS.items()) if not resolves(registry, cli, gate)]
         assert not missing, (
             f"`{gate}` does not resolve for {missing}. A gate the other layers provide under this "
             f"name makes the contract language-specific: a caller has to know what the project is "

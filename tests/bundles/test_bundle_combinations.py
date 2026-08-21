@@ -19,6 +19,8 @@ from pathlib import Path
 import pytest
 import yaml
 
+from tests.registry import require as require_registry
+from tests.registry import resolves
 from tests.util import sync_bundles
 
 
@@ -248,12 +250,8 @@ class TestBenchmarksBundleSync:
         test infrastructure. The fragment retired to rhiza-task, so what matters is that the task
         exists — the dependency is expressed in its registry entry rather than by a file arriving.
         """
-        from tests.bundles.test_layer_contract import _registry, _resolves
-
-        registry = _registry()
-        if not registry:
-            pytest.skip("could not read the rhiza-task registry")
-        assert _resolves(registry, "python", "benchmark"), (
+        registry = require_registry()
+        assert resolves(registry, "python", "benchmark"), (
             "`benchmark` resolves to no registered task, so this bundle's config has no gate to feed"
         )
 
