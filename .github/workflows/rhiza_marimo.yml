@@ -82,7 +82,7 @@ jobs:
           #
           # Pinned for the reason the OS matrix is pinned (#1546): the folder a build
           # discovers notebooks in must not move under a workflow called at a tag.
-          NOTEBOOK_DIR=$(uvx rhiza-task@0.3.1 print marimo_folder)
+          NOTEBOOK_DIR=$(uvx rhiza-task@1.1.0 print marimo_folder)
 
           echo "Searching notebooks in: $NOTEBOOK_DIR"
           # Check if directory exists

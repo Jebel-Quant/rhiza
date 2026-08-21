@@ -133,10 +133,12 @@ The pinned CLI that provides Rhiza's developer tasks — `install`, `test`, `typ
 `.rhiza/rhiza.mk` and the sixteen fragments in `.rhiza/make.d/`, both of which are gone.
 
 ### `Makefile` (the shim)
-A repo-owned file, generated once with `uvx rhiza-task shim > Makefile`. It pins `RHIZA_TASK`,
-bootstraps `uv` on a runner that has none, and forwards every unmatched target to the CLI with a
-`%:` catch-all. Because it is repo-owned rather than synced, anything a project adds to it
-survives a template update.
+A template-owned file, shipped by the `core` bundle. It pins `RHIZA_TASK`, bootstraps `uv` on a
+runner that has none, and forwards every unmatched target to the CLI with a `%:` catch-all.
+Because it is synced, the pin travels with the template — a repo synced at a tag runs that tag's
+gates — and anything appended to the file is overwritten by the next update. Project-specific
+targets go in `local.mk`, which the shim `-include`s. It was repo-owned for one release, printed
+by `uvx rhiza-task shim`; that subcommand was removed in rhiza-task 1.0.0.
 
 ### `.rhiza/template.yml`
 Configuration file defining which files to sync from upstream, include/exclude patterns, and sync behavior.

@@ -428,6 +428,32 @@ _INVOCATION_SOURCES = (
 _CLAIM_GATE_EXEMPT = {"CHANGELOG.md"}
 
 
+# Dumps the pinned CLI's task modules as code with every docstring replaced by ``pass``, so the
+# scan below sees what the tasks *do* and not what their prose says about it. ``ast.unparse``
+# drops comments for free.
+_CLI_CODE_WITHOUT_PROSE = """
+import ast, pathlib, rhiza_task
+
+HOLDS_DOCSTRING = (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+
+
+def strip(tree):
+    for node in ast.walk(tree):
+        if not isinstance(node, HOLDS_DOCSTRING) or not node.body:
+            continue
+        first = node.body[0]
+        if isinstance(first, ast.Expr) and isinstance(first.value, ast.Constant) and isinstance(first.value.value, str):
+            node.body[0] = ast.Pass()
+    return ast.fix_missing_locations(tree)
+
+
+print("\\n".join(
+    ast.unparse(strip(ast.parse(p.read_text())))
+    for p in sorted(pathlib.Path(rhiza_task.__file__).parent.rglob("*.py"))
+))
+"""
+
+
 @functools.lru_cache(maxsize=1)
 def _cli_task_sources() -> str:
     """Return the concatenated source of the pinned CLI's task modules.
@@ -442,6 +468,14 @@ def _cli_task_sources() -> str:
     Read from the installed package rather than listed here, because this class's whole design is
     that the invoked set is derived: adding a tool to a task must re-permit its mentions in the
     same commit, with no list to update.
+
+    **Code only -- docstrings and comments are stripped**, because upstream prose is not an
+    invocation. rhiza-task 1.1.0 documents in ``tasks/python.py`` why pip-audit is deliberately
+    *not* wired up, citing this very module; a raw text scan read that explanation as evidence
+    that the tool runs. The damage was not the one red test: it also silently re-permitted every
+    document here to claim pip-audit runs, which is the #1506 regression this gate exists to
+    catch. A tool named in an argument list survives ``ast.unparse``; a tool named in a sentence
+    about it does not.
 
     Returns:
         The concatenated text, or an empty string if the CLI cannot be located.
@@ -461,8 +495,7 @@ def _cli_task_sources() -> str:
             requirement,
             "python",
             "-c",
-            "import pathlib, rhiza_task;"
-            "print('\\n'.join(p.read_text() for p in pathlib.Path(rhiza_task.__file__).parent.rglob('*.py')))",
+            _CLI_CODE_WITHOUT_PROSE,
         ],
         cwd=_ROOT,
         capture_output=True,
