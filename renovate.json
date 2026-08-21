@@ -63,6 +63,20 @@
       ],
       "depNameTemplate": "pytest-rhiza",
       "datasourceTemplate": "pypi"
+    },
+    {
+      "customType": "regex",
+      "description": "The `RHIZA_TASK` pin: `bundles/core/Makefile` names the CLI that runs every gate, and the five live `.github/workflows/` plus the four GitLab bundle stubs repeat it because a reusable workflow cannot read a consumer's variable. Eleven literals, one dependency -- Renovate groups by dep+version, so they move in one PR, which is the property that matters: a partial bump leaves the shim and the workflows disagreeing about which CLI runs the gates. Without this manager the pin only ages, exactly as the pytest-rhiza one did (#1579): it sat at 0.3.1 while upstream shipped 1.0.0 and 1.1.0, and #1580 had to move all eleven by hand. This entry lives in the *root* renovate.json only, which is an intentional mother-repo override (utils/link_dogfood.py's exclusion list). Shipping it in `bundles/renovate/` would put it in consumers, where it would bump a template-owned file that the next `/rhiza:update` overwrites -- a PR loop, not an update. The bundle GitLab stubs are in scope here because they are authored in this repo, which is where a consumer's copy gets its value. The root `Makefile` is deliberately NOT matched: it is a dogfood symlink into bundles/core/, and writing through that path would replace the link with a regular file. tests/api/test_renovate_managers.py holds every one of these claims.",
+      "managerFilePatterns": [
+        "/^bundles/core/Makefile$/",
+        "/^\\.github/workflows/[^/]+\\.ya?ml$/",
+        "/^bundles/[^/]+/\\.gitlab/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "rhiza-task@(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "rhiza-task",
+      "datasourceTemplate": "pypi"
     }
   ]
 }
