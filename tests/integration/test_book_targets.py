@@ -17,26 +17,15 @@ was absent, so retiring the fragment turned four tests into four silent skips. T
 
 from __future__ import annotations
 
-import json
-import re
 import subprocess  # nosec B404
 from pathlib import Path
 
 import pytest
 
+from tests.registry import require as require_registry
+from tests.registry import resolves
+
 _ROOT = Path(__file__).resolve().parents[2]
-
-
-def _pin() -> str:
-    """Return the pinned rhiza-task spec from the root Makefile.
-
-    Returns:
-        The ``rhiza-task@X.Y.Z`` spec.
-    """
-    match = re.search(r"^RHIZA_TASK \?= (\S+)", (_ROOT / "Makefile").read_text(encoding="utf-8"), re.MULTILINE)
-    if not match:
-        pytest.skip("the root Makefile no longer pins RHIZA_TASK")
-    return match.group(1)
 
 
 @pytest.mark.parametrize("target", ["book", "serve"])
@@ -62,42 +51,18 @@ def test_every_prerequisite_of_book_resolves() -> None:
     property is the same one and its failure mode is identical — `book` dying on a name nothing
     provides.
 
-    Every task module is loaded, through the CLI's own `load_tasks`. Naming them by hand made
-    this test's own coverage depend on a list nobody re-derives: rhiza-task 1.1.0 gave `book` a
-    `paper` prerequisite, `paper` lives in a module the list did not mention, and the assertion
-    reported a missing task where the real gap was the fixture.
+    Read through :mod:`tests.registry`, which was the third copy of this subprocess until
+    #1583. Naming the task modules by hand made this test's own coverage depend on a list
+    nobody re-derives: rhiza-task 1.1.0 gave `book` a `paper` prerequisite, `paper` lives in a
+    module the list did not mention, and the assertion reported a missing task where the real
+    gap was the fixture. The shared reader walks the entry-point group the CLI itself walks,
+    and asserts the registry is plausible before any caller reads it (#1584).
     """
-    name, _, version = _pin().partition("@")
-    script = (
-        "import json;"
-        "from rhiza_task.cli import load_tasks; load_tasks();"
-        "from rhiza_task.spec import REGISTRY;"
-        "print(json.dumps({k: list(v.needs) for k, v in REGISTRY.items()}))"
-    )
-    proc = subprocess.run(  # nosec B603
-        [
-            "uv",
-            "run",
-            "--quiet",
-            "--no-project",
-            "--with",
-            f"{name}=={version}" if version else name,
-            "python",
-            "-c",
-            script,
-        ],
-        cwd=_ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if proc.returncode != 0:
-        pytest.skip("could not read the rhiza-task registry")
-    registry = json.loads(proc.stdout)
+    registry = require_registry()
 
     book = next((v for k, v in registry.items() if k.endswith("book")), None)
     assert book is not None, "`book` is not a registered task"
-    missing = [n for n in book if f"python:{n}" not in registry and n not in registry]
+    missing = [n for n in book if not resolves(registry, "python", n)]
     assert not missing, (
         f"`book` names {missing}, which resolve to no registered task — the failure the no-op `::` "
         f"anchors in book.mk existed to prevent"

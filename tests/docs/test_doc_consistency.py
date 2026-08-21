@@ -397,6 +397,26 @@ class TestProseDrift:
         """Guard against the make-mention scanner silently collecting nothing."""
         assert len(_make_mention_cases()) > 10, "expected CLAUDE.md/README.md to mention make targets"
 
+    def test_the_cli_half_of_the_target_set_was_collected(self) -> None:
+        """The other side of the comparison needs a control too (#1584).
+
+        ``_defined_make_targets`` is CLI tasks plus explicit rules, and this repo's Makefile
+        holds seven rules. So an unreachable CLI does not make the mention gate vacuous -- it
+        makes it fail, on every document that says ``make test``, with a message about the
+        *documentation* being wrong. The gate is safe either way; what this adds is a failure
+        that names the real cause instead of sending the reader to edit correct prose.
+
+        ``fmt`` and ``test`` rather than a count: both are gates every layer defines, so
+        neither disappears without a breaking change upstream.
+        """
+        names = _cli_task_names()
+        if not names:
+            pytest.skip("could not reach the pinned CLI to enumerate its tasks")
+        assert {"fmt", "test"} <= names, (
+            f"the CLI reported {len(names)} task(s) but not the gates every layer defines; "
+            f"the task-name parse is probably reading the wrong column of `rhiza-task list`"
+        )
+
 
 # Tools whose presence in the toolchain is worth keeping the docs honest about. Each is
 # either invoked somewhere in _INVOCATION_SOURCES or it is not; the test below derives
