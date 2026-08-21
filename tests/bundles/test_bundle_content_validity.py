@@ -7,7 +7,8 @@ than sweeping the whole tree:
 - every bundle is described in ``template-bundles.yml`` and documented
 - Makefile fragments expose at least one documented target (``## help`` comment)
 - legal files have real content
-- ``renovate.json`` carries the required schema declaration
+- ``renovate.json`` carries the required schema declaration, and its custom manager for
+  the pytest-rhiza pin still matches where that pin lives
 - each language layer's ``.pre-commit-config.yaml`` names the config both prek entry
   points read (see the prek note in CLAUDE.md)
 - the devcontainer definition is valid and self-consistent
@@ -193,6 +194,46 @@ class TestRenovateBundleContent:
         required = {"pep621", "github-actions", "gitlabci"}
         missing = required - set(enabled)
         assert not missing, f"renovate.json 'enabledManagers' is missing required managers: {sorted(missing)}"
+
+    def test_pytest_rhiza_custom_manager_finds_this_repos_pin(self, renovate_json: dict, root: Path) -> None:
+        """The custom manager for the pytest-rhiza pin must actually match where the pin lives.
+
+        A Renovate custom manager whose ``managerFilePatterns`` match no file is not an
+        error -- it finds no dependency and reports nothing, so the pin it exists to bump
+        simply stops being bumped. That is how this one died: it targeted
+        ``RHIZA_CHECKS_VERSION`` in ``.rhiza/make.d/quality.mk``; that file retired with the
+        make layer (#1556 here, #1557 in the bundle) and the pin then sat at 0.2.1 through
+        two releases of pytest-rhiza (#1579).
+
+        So the assertion is liveness against this repo's own tree, which is where dogfooding
+        earns its keep: the pin lives in ``pyproject.toml``'s ``[tool.rhiza-task]`` table, a
+        file every Python consumer has too. Its sibling manager -- the template.yml/ref pair
+        -- gets no such test on purpose: that file exists only in a *consumer*, never here,
+        so there is nothing to match it against.
+        """
+        managers = renovate_json.get("customManagers", [])
+        assert managers, "renovate.json should declare customManagers"
+
+        pin = [m for m in managers if m.get("depNameTemplate") == "pytest-rhiza"]
+        assert len(pin) == 1, "expected exactly one customManager for the pytest-rhiza pin"
+        manager = pin[0]
+
+        assert manager.get("datasourceTemplate") == "pypi", (
+            "the pin is a PyPI version spec, so the datasource must be pypi -- a git ref "
+            "is not a version Renovate can compare"
+        )
+
+        # Renovate wraps a regex file pattern in slashes and uses JS named groups.
+        patterns = [p.strip("/") for p in manager["managerFilePatterns"]]
+        assert any(re.search(p, "pyproject.toml") for p in patterns), (
+            f"no managerFilePattern in {patterns} matches pyproject.toml, where the pin lives"
+        )
+
+        pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
+        for match_string in manager["matchStrings"]:
+            found = re.search(match_string.replace("(?<", "(?P<"), pyproject)
+            assert found, f"matchString {match_string!r} finds nothing in pyproject.toml"
+            assert found.group("currentValue"), "matchString must capture a currentValue"
 
 
 def _layer_precommit(root: Path, layer: str) -> dict:

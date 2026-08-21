@@ -164,15 +164,20 @@ layers = ["python"]
 # while broken.
 typechecker = "both"
 
-# Preserves the checks version this repo was already running. `quality.mk` had
-# `RHIZA_CHECKS_VERSION ?= 0.2.1`; rhiza-task's default is v0.2.0, so a bare migration would
-# have *downgraded* the conformance checks — which is exactly the drift the pin exists to
-# prevent, since its whole purpose is that a repo runs the assertions of a known release.
+# Pins the conformance checks, which is the entire purpose of the setting: a repo runs the
+# assertions of a known release, not of whatever the checks repo's HEAD says today. The
+# override outlives the bump — rhiza-task 0.3.1 still defaults to v0.2.0, so deleting this
+# line would *downgrade* the checks by three releases rather than track the newest.
 #
-# Deliberately not v0.2.2, which is newer: bumping the checks is an upgrade decision with its
-# own failure modes, and folding it into a migration PR would confuse "this behaves as before"
-# with "this behaves differently but still passes".
-pytest-rhiza = "pytest-rhiza @ git+https://github.com/Jebel-Quant/pytest-rhiza@v0.2.1"
+# A PyPI version spec, not a git URL. The git form was inherited from rhiza-task's default,
+# and it costs a clone on every `rhiza-test` run for no added precision — a tag is as mutable
+# as a version is not. It also put the pin out of reach of the one thing that would have
+# noticed it ageing: `renovate.json`'s custom manager is a pypi datasource, and a git ref is
+# not a version it can compare.
+#
+# 0.3.0 collects the same five modules and the same 34 checks as 0.2.1 on this repo, so this
+# is a bump of the assertions' *implementation*, not of the check set.
+pytest-rhiza = "pytest-rhiza==0.3.0"
 
 # Restores this repo's own book override, which the migration to the shim dropped. The old root
 # Makefile carried `MKDOCS_EXTRA_PACKAGES = --with 'mkdocstrings[python]'` above the include, and
