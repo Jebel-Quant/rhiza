@@ -97,7 +97,9 @@ def _gates_named_by_all(root: Path) -> list[str]:
     """Return the gate names ``all`` depends on, from the rhiza-task registry.
 
     The registry is keyed ``layer:name`` and populated by the ``@task`` decorator, so the
-    task modules have to be imported before it is read. Only this repo's layer is consulted:
+    task modules have to be imported before it is read -- via the CLI's own
+    :func:`rhiza_task.cli.load_tasks`, so the set follows the ``rhiza_task.tasks`` entry-point
+    group instead of a module list that ages here. Only this repo's layer is consulted:
     ``rust:all`` and ``go:all`` name a slightly different set, and asserting a Rust gate runs
     in a Python repo's CI would be nonsense.
 
@@ -111,8 +113,8 @@ def _gates_named_by_all(root: Path) -> list[str]:
     assert pin, "the root Makefile no longer pins RHIZA_TASK"
     name, _, version = pin.group(1).partition("@")
     script = (
-        "import importlib, json;"
-        "[importlib.import_module('rhiza_task.tasks.' + m) for m in ('python', 'quality', 'book', 'extras', 'doctor')];"
+        "import json;"
+        "from rhiza_task.cli import load_tasks; load_tasks();"
         "from rhiza_task.spec import REGISTRY;"
         "print(json.dumps(list(REGISTRY['python:all'].needs)))"
     )

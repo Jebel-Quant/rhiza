@@ -41,7 +41,7 @@ permissions:
 # from a consumer's `RHIZA_TASK`, which this workflow cannot see: it tracks the tag the
 # workflow is called at.
 env:
-  RHIZA_TASK: rhiza-task@0.3.1
+  RHIZA_TASK: rhiza-task@1.1.0
 
 jobs:
   # Build the book on every commit (any branch). This proves the documentation

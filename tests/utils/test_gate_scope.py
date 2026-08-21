@@ -45,12 +45,20 @@ _BUNDLES = _ROOT / "bundles"
 # `paper` for a root `.tex`. Neither is named by `all` and neither reports success on an empty
 # folder: both skip with the folder in the reason, so a wrong value is visible rather than
 # silent. They are listed to acknowledge them, which is what this set is for.
+#
+# ``docs_folder`` arrived with rhiza-task 1.1.0 and scopes the new ``docs-examples`` gate,
+# which executes the fenced examples in the docs tree. This repo does not run it: `all` does
+# not name it, and the fences here are checked by tests/docs/test_doc_consistency.py instead.
+# Acknowledged rather than asserted for that reason -- if `docs-examples` is ever wired in,
+# the folder needs the same existence guard `source_folder` has above, because the gate skips
+# a missing tree rather than failing.
 _KNOWN_FOLDER_SETTINGS = {
     "source_folder",
     "tests_folder",
     "marimo_folder",
     "docker_folder",
     "paper_folder",
+    "docs_folder",
 }
 
 

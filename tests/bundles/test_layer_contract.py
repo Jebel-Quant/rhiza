@@ -95,6 +95,10 @@ def _registry() -> dict[str, list[str]]:
 
     The task modules must be imported before the registry is read: the ``@task`` decorator
     populates it at import time, and ``rhiza_task.tasks`` does not pull in its submodules.
+    Loaded through the CLI's own :func:`rhiza_task.cli.load_tasks`, which walks the
+    ``rhiza_task.tasks`` entry-point group, rather than a module list written out here -- such
+    a list silently omits whatever the next release adds, and that is not a hypothetical: it
+    is how ``book``'s ``paper`` prerequisite went unseen when rhiza-task 1.1.0 added it.
 
     Returns:
         The registry, or an empty dict when the CLI cannot be reached.
@@ -105,9 +109,8 @@ def _registry() -> dict[str, list[str]]:
         return {}
     name, _, version = match.group(1).partition("@")
     script = (
-        "import importlib, json;"
-        "[importlib.import_module('rhiza_task.tasks.' + m)"
-        " for m in ('python', 'rust', 'go', 'quality', 'book', 'extras', 'doctor')];"
+        "import json;"
+        "from rhiza_task.cli import load_tasks; load_tasks();"
         "from rhiza_task.spec import REGISTRY;"
         "print(json.dumps({k: list(v.needs) for k, v in REGISTRY.items()}))"
     )

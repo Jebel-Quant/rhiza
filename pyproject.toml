@@ -166,7 +166,7 @@ typechecker = "both"
 
 # Pins the conformance checks, which is the entire purpose of the setting: a repo runs the
 # assertions of a known release, not of whatever the checks repo's HEAD says today. The
-# override outlives the bump — rhiza-task 0.3.1 still defaults to v0.2.0, so deleting this
+# override outlives the bump — rhiza-task 1.1.0 still defaults to v0.2.0, so deleting this
 # line would *downgrade* the checks by three releases rather than track the newest.
 #
 # A PyPI version spec, not a git URL. The git form was inherited from rhiza-task's default,

@@ -61,12 +61,16 @@ def test_every_prerequisite_of_book_resolves() -> None:
     tasks are registered rather than because a fragment stubbed them. Asserted here because the
     property is the same one and its failure mode is identical — `book` dying on a name nothing
     provides.
+
+    Every task module is loaded, through the CLI's own `load_tasks`. Naming them by hand made
+    this test's own coverage depend on a list nobody re-derives: rhiza-task 1.1.0 gave `book` a
+    `paper` prerequisite, `paper` lives in a module the list did not mention, and the assertion
+    reported a missing task where the real gap was the fixture.
     """
     name, _, version = _pin().partition("@")
     script = (
-        "import importlib, json;"
-        "[importlib.import_module('rhiza_task.tasks.' + m)"
-        " for m in ('python', 'quality', 'book', 'extras', 'doctor')];"
+        "import json;"
+        "from rhiza_task.cli import load_tasks; load_tasks();"
         "from rhiza_task.spec import REGISTRY;"
         "print(json.dumps({k: list(v.needs) for k, v in REGISTRY.items()}))"
     )
