@@ -3,13 +3,19 @@
 Four modules across three test packages need the same answer -- does this task name resolve,
 and what does it depend on -- and until #1583 each had its own copy of the subprocess that
 asks. Three copies drifted independently, and one of them reached into another test module
-for the helpers it was missing:
+for the helpers it was missing: ``test_bundle_combinations`` imported ``_registry`` and
+``_resolves`` from ``tests.bundles.test_layer_contract``, by their private names.
 
-    from tests.bundles.test_layer_contract import _registry, _resolves
+That is what #1583 is about. Two ``test_*`` modules coupled through private names neither
+declared, sharing an ``lru_cache`` across a boundary that does not exist as far as either
+file's reader is concerned.
 
-That import is what #1583 is about. Two ``test_*`` modules coupled through private names
-neither declared, sharing an ``lru_cache`` across a boundary that does not exist as far as
-either file's reader is concerned.
+The import is described here rather than quoted, deliberately (#1587). Quoted as a code
+block it was the only occurrence of that pattern left in the tree, and textually identical
+to the thing it replaced -- so the guard in
+``tests/test_suite_structure.py`` would have needed a carve-out for the very module that
+documents the rule, keyed on a filename, exempting exactly the file where a regression
+would be least visible.
 
 **The deeper problem was #1584, and it is why this module raises rather than returns.** The
 old helper answered an unreachable CLI and an empty registry the *same* way -- with ``{}`` --

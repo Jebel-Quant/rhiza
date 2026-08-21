@@ -47,7 +47,18 @@ def _cli_setting(name: str) -> str:
     )
     if proc.returncode != 0:
         pytest.skip(f"could not read {name} from the CLI: {proc.stderr.strip()[:160]}")
-    return " ".join(proc.stdout.split())
+    value = " ".join(proc.stdout.split())
+    # The control, and it belongs here rather than in each caller (#1588). A setting that
+    # resolves to nothing is not a skip -- the CLI answered -- but it makes a *negative*
+    # assertion on the value pass for the wrong reason: `test_extra_packages_are_bare_specs`
+    # asserts `"--with" not in value`, which an empty string satisfies. Its sibling asserting
+    # `"mkdocstrings" in value` fails safe, so before this the same helper fed one assertion
+    # that could not be fooled and one that could.
+    assert value, (
+        f"the CLI resolved {name!r} to an empty value. Every assertion below is about what "
+        f"that setting *contains*, so an empty answer makes the negative ones vacuous."
+    )
+    return value
 
 
 def test_book_build_still_gets_mkdocstrings() -> None:
