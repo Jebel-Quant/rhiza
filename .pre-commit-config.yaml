@@ -117,11 +117,47 @@ repos:
     hooks:
       # Migrated from rhiza
       - id: check-rhiza-workflow-names
+      # Mother-repo override (#1581). The hook declares `files: ^Makefile$`, and since #1576
+      # the root Makefile is a dogfood symlink into bundles/core/ -- git tracks it as mode
+      # 120000, and prek classifies a symlink as `symlink` rather than `file`, so a hook
+      # carrying pre-commit's default `types: [file]` is never handed it. The pattern
+      # therefore matched nothing even under `--all-files`, and the hook printed
+      # "(no files to check)Skipped" on every `make fmt` -- another line that reads like a
+      # check, the #1535 complaint reached by a different route.
+      #
+      # The block it maintains had already gone stale: #1580 bumped the pin to rhiza-task
+      # 1.1.0, which added `book-nav`, `complexity` and `docs-examples` and gave `book` a
+      # `paper` prerequisite, and none of it reached README.md.
+      #
+      # `always_run` rather than a `types` override, because the hook takes
+      # `pass_filenames: false` -- it does not want the path, only the trigger. That also
+      # makes it fire when the *task list* changes, which is what actually invalidates the
+      # block: the pin lives in the Makefile, but the tasks live in the CLI it names, so
+      # keying regeneration on a file changing was never quite right.
       - id: update-readme-help
+        always_run: true
       # Additional utility hooks
       - id: check-rhiza-config
-      - id: check-makefile-targets
       - id: check-python-version-consistency
+      # check-makefile-targets asserts a Makefile defines `install`, `test`, `fmt` and
+      # `help`, by extracting explicit rules from it. It was enabled here and inert for the
+      # same symlink reason as update-readme-help above (#1581) -- but unlike that hook it
+      # must stay off, because the shim is incompatible with what it measures:
+      #
+      #   $ check-makefile-targets Makefile
+      #   Makefile:
+      #     - Missing recommended targets: fmt, install, test
+      #
+      # All three work here; they are CLI tasks reached through the `%:` catch-all, which is
+      # the whole design of the shim (ADR 0011). A hook that greps for explicit rules cannot
+      # see them, so enabling it would print a false warning on every commit -- and it exits
+      # 0 without `--strict`, so the warning would never fail anything either.
+      #
+      # `always_run: true` is *not* the fix. The hook takes filenames, so with no match it
+      # loops over an empty list and returns 0: the visible "Skipped" becomes an invisible
+      # "Passed", which is strictly worse. tests/api/test_precommit_hook_reachability.py
+      # holds the line for both halves.
+      # - id: check-makefile-targets
       # check-bumpversion-config asserts that bump-my-version can actually discover this
       # repo's version config (issue #1453) — here, the [tool.bumpversion] table in
       # pyproject.toml. It ships as of v1.1.0 and passes on this repo; it stays off only

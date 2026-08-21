@@ -384,6 +384,11 @@ Run `make help` for a complete list of 40+ available targets.
  book                Book            test benchmark        build the companion  
                                      stress                book                 
                                      hypothesis-test                            
+                                     paper                                      
+ book-nav            Book                                  check that every     
+                                                           mkdocs nav entry     
+                                                           resolves in the      
+                                                           built book           
  marimo              Book            install               start the Marimo     
                                                            editor               
  marimo-validate     Book            install               check that every     
@@ -456,8 +461,15 @@ Run `make help` for a complete list of 40+ available targets.
  typecheck           Python          install               run ty and/or mypy   
                                                            (typechecker = ty |  
                                                            mypy | both)         
+ docs-examples       Quality         install               check the fenced     
+                                                           examples in the docs 
+                                                           tree                 
  fmt                 Quality                               run the pre-commit   
                                                            hooks over all files 
+ complexity          Quality                               fail on a block      
+                                                           above the            
+                                                           cyclomatic-complexi… 
+                                                           ceiling              
  test-pyproject      Quality         install               run the              
                                                            pyproject.toml       
                                                            structure checks,    
