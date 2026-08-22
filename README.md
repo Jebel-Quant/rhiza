@@ -29,7 +29,11 @@ In the original Greek, spelt **ῥίζα**, pronounced *ree-ZAH*, and having the
 
 ## 🌟 Why Rhiza?
 
-**Unlike traditional project templates** (like cookiecutter or copier) that generate a one-time snapshot of configuration files, **Rhiza provides living templates** that evolve with your project. Classic templates help you start a project, but once generated, your configuration drifts away from the template as best practices change. Rhiza takes a different approach: it enables **continuous synchronization**, allowing you to selectively pull template updates into your project over time through automated workflows. This means you can benefit from improvements to CI/CD workflows, linting rules, and development tooling without manually tracking upstream changes. Think of it as keeping your project's foundation fresh and aligned with modern practices, while maintaining full control over what gets updated.
+Cookiecutter and copier generate a project once and then let go of it. Rhiza keeps the
+connection: your configuration is **synced** from a template repository, so improvements to CI
+workflows, linting rules and tooling reach every project that follows it — on your schedule, and
+only where you allow. For the full comparison, see
+[Why not copier or cruft?](docs/reference/WHY_NOT_COPIER_CRUFT.md).
 
 ### Rhiza and its companions
 
@@ -55,10 +59,9 @@ In short: **rhiza** is the *what* (the template files you receive); the companio
 
 ### How It Works
 
-Rhiza uses a simple configuration file (`.rhiza/template.yml`) to control which templates sync to your project. The recommended approach is to select a **profile** — a named preset for common project contexts — or to select individual **bundles** for full control:
+One file, `.rhiza/template.yml`, says which template you follow and what you want from it:
 
 ```yaml
-# .rhiza/template.yml — profile-based (recommended)
 repository: "Jebel-Quant/rhiza"
 ref: "v1.5.1"
 
@@ -66,62 +69,28 @@ profiles:
   - github-project
 ```
 
-```yaml
-# .rhiza/template.yml — bundle-based (advanced)
-repository: "Jebel-Quant/rhiza"
-ref: "v1.5.1"
+A **profile** is a named preset that expands to a set of **bundles**; you can add individual
+bundles alongside it, and `include`/`exclude` patterns for the last mile. `ref` is a tag, so
+Renovate can raise it for you — its manager only matches the quoted form shown above, which is
+what `/rhiza:init` writes.
 
-templates:
-  - core
-  - python-core
-  - tests
-  - github
-  - github-tests
-  - docker
-```
+`/rhiza:update` then fetches what your selection owns and three-way merges it into a branch, so
+local edits survive and you review the result as a pull request.
 
-**What you're seeing:**
-- **`repository`** - The upstream template source (**can be any repository, not just Rhiza!**)
-- **`ref`** - Which version tag/branch to sync from (e.g., `v1.5.1` or `main`)
-- **`profiles`** - Named presets that expand to a set of bundles (see [Profiles](#profiles-recommended-starting-point) below)
-- **`templates`** - Individual template bundles for advanced or additional selection
-
-For advanced use cases you can still use explicit `include`/`exclude` file patterns alongside or instead of bundles:
-
-```yaml
-# Advanced: file-pattern based selection
-include: |
-  .github/workflows/*.yml
-  ruff.toml
-
-exclude: |
-  docs/development/DOCKER.md
-```
-
-> **💡 Automated Updates:** When using a version tag (e.g., `v1.5.1`) instead of a branch name, Renovate will automatically create pull requests to update the `ref` field when new versions are released. This keeps your templates up-to-date with minimal manual intervention.
->
-> To enable this in your project, copy the `customManagers` entry that matches `.rhiza/template.yml` from this repository's [`renovate.json`](renovate.json) into your own Renovate configuration.
->
-> **Quote the values.** That manager's `matchStrings` only match `repository: "..."` and
-> `ref: "..."` — an unquoted pin is not an error, it simply never gets found, and the `ref`
-> then ages silently. `/rhiza:init` writes the quoted form for exactly this reason.
-
-When you run `/rhiza:update`, Rhiza fetches only the files your bundle selection owns, skips anything in `exclude`, and three-way merges them into a branch — so local edits survive and you review the result as a pull request. You stay in control of what updates and when.
-
-**💡 Pro Tip:** While you can use `Jebel-Quant/rhiza` directly, **we recommend creating your own template repository** using GitHub's "Use this template" button. This gives you a clean copy to customise for your organisation's specific needs and constraints—adjusting CI workflows, coding standards, or tooling choices—while still benefiting from Rhiza's sync mechanism. Your template repo becomes your team's source of truth, and you can selectively pull updates from upstream Rhiza when desired.
+**The anatomy of that file, the sync lifecycle and the Renovate wiring are
+[rhiza-education](https://github.com/Jebel-Quant/rhiza-education) Lessons 7–9** — this README
+does not try to teach them.
 
 ## 📚 Table of Contents
 
 - [Why Rhiza?](#-why-rhiza)
 - [Quick Start](#-quick-start)
 - [What You Get](#-what-you-get)
-- [Architecture Decision Records](#-architecture-decision-records)
 - [Available Templates](#-available-templates)
 - [Integration Guide](#-integration-guide)
 - [Available Tasks](#-available-tasks)
-- [Advanced Topics](#-advanced-topics)
-- [CI/CD Support](#-cicd-support)
-- [Project Maintainability](#-project-maintainability)
+- [Customising Safely](#-customising-safely)
+- [Documentation Map](#-documentation-map)
 - [Learning Resources](#-learning-resources)
 - [Contributing to Rhiza](#-contributing-to-rhiza)
 
@@ -147,20 +116,9 @@ nothing, so its PR looks almost empty — that is correct. `/rhiza:update` is wh
 workflows, the `Makefile` and the rest, which keeps one code path responsible for
 materialising template files.
 
-See the [Integration Guide](#-integration-guide) for more options, or follow the [step-by-step tutorial](https://github.com/Jebel-Quant/rhiza-education) in rhiza-education (Lessons 6–8).
-
-### For Contributing to Rhiza
-
-If you want to develop Rhiza itself:
-
-```bash
-# Clone the repository
-git clone https://github.com/jebel-quant/rhiza.git
-cd rhiza
-
-# Install dependencies
-make install
-```
+More options are in the [Integration Guide](#-integration-guide); the step-by-step version is
+[rhiza-education Lesson 6](https://github.com/Jebel-Quant/rhiza-education/blob/main/lessons/06-getting-started.md).
+To work on Rhiza itself rather than use it, see [Contributing](#-contributing-to-rhiza).
 
 ## ✨ What You Get
 
@@ -177,39 +135,14 @@ Adopt a Rhiza bundle and your project immediately gains:
 
 ## 📝 Architecture Decision Records
 
-This project maintains Architecture Decision Records (ADRs) to document important architectural and design decisions.
-
-ADRs help preserve the reasoning behind key decisions, making it easier for current and future contributors to understand why the project is structured the way it is.
-
-**Browse ADRs**: See [docs/adr/](docs/adr/) for all architecture decisions.
-
-**Key decisions documented:**
-- [ADR-0001: Use Architecture Decision Records](docs/adr/0001-use-architecture-decision-records.md)
-- [ADR-0002: Use uv for Python Package and Environment Management](docs/adr/0002-use-uv-for-python-package-management.md)
-- [ADR-0003: Use Ruff for Linting and Formatting](docs/adr/0003-use-ruff-for-linting-and-formatting.md)
-- [ADR-0004: Adopt a Modular Makefile Architecture](docs/adr/0004-adopt-modular-makefile-architecture.md) *(superseded by ADR-0011)*
-- [ADR-0005: Separate rhiza Template Repository from rhiza-cli](docs/adr/0005-separate-rhiza-template-from-cli.md)
-- [ADR-0006: Organise Templates into Bundles](docs/adr/0006-organise-templates-into-bundles.md)
-- [ADR-0007: Support Dual CI/CD with GitHub Actions and GitLab CI](docs/adr/0007-support-dual-cicd-github-and-gitlab.md)
-- [ADR-0008: Use Marimo for Interactive Notebooks](docs/adr/0008-use-marimo-for-interactive-notebooks.md)
-- [ADR-0009: Use Pre-commit Hooks for Automated Code Quality Enforcement](docs/adr/0009-use-pre-commit-hooks-for-code-quality.md)
-- [ADR-0010: Introduce a Layered Bundle and Profile Model](docs/adr/0010-layered-bundle-profile-model.md)
-- [ADR-0011: Replace the Synced Make Layer with a Pinned CLI](docs/adr/0011-replace-the-synced-make-layer-with-a-pinned-cli.md)
-
-**Create a new ADR**: Copy the template in [docs/adr/](docs/adr/), give it the next number, and open a pull request for review.
-
-For more information about the ADR format and how to create new records, see the [ADR README](docs/adr/README.md).
+The reasoning behind Rhiza's structural decisions — bundles, the layered profile model, the
+uv/ruff/prek choices, the retirement of the synced make layer — is recorded as ADRs.
+**[docs/adr/](docs/adr/)** holds the index, with each record's status and date.
 
 ## 📁 Available Templates
 
-- 🚀 **CI/CD Templates** - Ready-to-use GitHub Actions and GitLab CI workflows
-- 🧪 **Testing Framework** - Comprehensive test setup with pytest
-- 📚 **Documentation** - Automated documentation site via MkDocs + zensical, with optional Marimo notebook exports
-- 🔍 **Code Quality** - Linting with ruff, formatting, and dependency checking with deptry
-- 📝 **Editor Configuration** - Cross-platform .editorconfig for consistent coding style
-- 📊 **Marimo Integration** - Interactive notebook support for documentation and exploration
-- 🎤 **Presentations** - Generate slides from Markdown using Marp
-- 🐳 **Containerization** - Docker and Dev Container configurations
+Bundles are the atomic unit: each owns a coherent set of files, and any bundle can be selected
+on its own — its dependencies resolve automatically. Profiles compose them for common contexts.
 
 ### Profiles (Recommended Starting Point)
 
@@ -299,91 +232,25 @@ For a complete reference of every file included in each bundle, see [`.rhiza/tem
 
 ## 🧩 Integration Guide
 
-Rhiza provides reusable configuration templates that you can integrate into your existing Python, Rust or Go projects.
+**Prerequisites:** [Claude Code](https://claude.com/claude-code) with the `rhiza` plugin,
+[uv](https://docs.astral.sh/uv/), Git, GNU Make 3.81+, and a toolchain for your language (`uv`
+manages the Python one). A `python-core` project also needs a `[project]` table in
+`pyproject.toml` and a `.python-version`; a Rust or Go project needs neither.
 
-### Prerequisites
+Run `/rhiza:init`, merge, then `/rhiza:update`. Afterwards:
 
-- **[Claude Code](https://claude.com/claude-code)** with the `rhiza` plugin installed — this is the interface
-- **[uv](https://docs.astral.sh/uv/)** - runs the plugin's scripts and every gate, whatever the project's language
-- **Git** - Your project should be a Git repository
-- **A toolchain for your language** - Python 3.11+, a Rust toolchain, or Go; `uv` manages the Python one for you
-- **Backup** - Consider committing any uncommitted changes before integration
+| Command | What it tells you |
+|---------|-------------------|
+| `/rhiza:status` | What the pointer says, and what the last sync actually delivered |
+| `/rhiza:status --check` | Whether the template has moved on — read-only |
+| `/rhiza:update v1.4.2` | Sync a specific release rather than the latest |
+| `/rhiza:quality` | A score for the result, with findings |
+| `/rhiza:detach` | Stop being template-managed, keeping the files |
+| `make doctor` | Whether your local tools and versions are what the gates expect |
 
-### Automated Integration (Recommended)
-
-The fastest way to integrate Rhiza, from your repository's directory in Claude Code:
-
-```text
-/rhiza:init      # writes .rhiza/template.yml, picking a profile from your platform and language
-/rhiza:update    # applies the sync and opens a PR of template-owned files only
-```
-
-**Options:**
-- `/rhiza:update v1.4.2` - sync a specific template release instead of the latest
-- `/rhiza:status` - report what the pointer says and what the last sync actually delivered
-- `/rhiza:status --check` - report upstream drift without changing anything
-- `/rhiza:detach` - stop being template-managed, keeping the files
-
-For a full step-by-step tutorial covering init, bundle selection, first materialise, and the sync lifecycle, see **[rhiza-education Lessons 6–8](https://github.com/Jebel-Quant/rhiza-education)**.
-
-### What to Expect After Integration
-
-- **Automated CI/CD** - GitHub Actions workflows for testing, linting, and releases
-- **Code Quality Tools** - Pre-commit hooks, ruff formatting, and pytest configuration
-- **Task Automation** - Makefile with common development tasks
-- **Dev Container** - Optional VS Code/Codespaces environment
-- **Documentation** - Automated documentation generation
-
-### Downstream Project Requirements
-
-For Rhiza templates to work correctly, your project must satisfy these expectations before and after sync.
-
-**Project structure**
-
-| Requirement | Details |
-|-------------|---------|
-| Git repository | `git init` or cloned — Rhiza does not initialise git |
-| `pyproject.toml` | *(`python-core`)* Must have `[project]` with `name`, `version`, `description`, `readme`, and `requires-python` (all non-empty strings), plus a `[dependency-groups]` table |
-| `.python-version` | *(`python-core`)* Single line specifying the target Python version (e.g. `3.13`) — used by `uv` and CI. A Rust or Go project ships none |
-| `.rhiza/template.yml` | Created by `/rhiza:init` — specifies `repository`, `ref`, and bundle/profile selection |
-| `.rhiza/template.lock` | Written by each sync — the record of what actually arrived, and the list `/rhiza:update` is allowed to stage |
-
-**Tool requirements**
-
-| Tool | Minimum version | Notes |
-|------|-----------------|-------|
-| **GNU Make** | 3.81 | macOS ships BSD make; install via `brew install make` and use `gmake` |
-| **uv** | 0.5.0 | Installed automatically by any `make` target if missing (into `./bin`) |
-| **Python** | 3.11 | *(`python-core`)* Managed automatically by `uv` via `.python-version` |
-
-**What Rhiza owns vs what you own**
-
-| Path | Owner | Notes |
-|------|-------|-------|
-| `.rhiza/` | Rhiza | Template-managed; overwritten on sync — except `.rhiza/.env`, which is yours (and gitignored, so developer-local) |
-| `.github/workflows/rhiza_*.yml` | Rhiza | Template-managed workflow stubs |
-| `Makefile` | Rhiza | Template-managed, and it carries the `RHIZA_TASK` pin — nothing you append to it survives a sync |
-| `ruff.toml`, `.editorconfig`, `.pre-commit-config.yaml` | Rhiza | Template-managed config files |
-| `pyproject.toml` | Yours | Never synced — `/rhiza:init` creates it, then it's yours; `rhiza-test` only checks its structure |
-| `src/` or application code | Yours | Never touched by Rhiza |
-| `tests/` | Yours | Never touched by Rhiza |
-| `local.mk` | Yours | Your own make targets — `-include`d by the `Makefile`, never synced, and deliberately *not* gitignored, so commit it (anything your CI invokes has to be in the repository) |
-
-**Safe extension points** (survive every sync):
-- **`local.mk`** — your own targets. An explicit rule beats the shim's `%:` catch-all, so an `install:` rule here can call `uvx $(RHIZA_TASK) install` and then your extra step. This is what replaced the retired `pre-install::` / `post-install::` hooks
-- **`[tool.rhiza-task]` in `pyproject.toml`** — project settings such as `source-folder`, read by the task runner. `uvx rhiza-task print <setting>` shows what one currently resolves to
-- **`pyproject.toml`** — add dependencies, scripts, and tool configs freely
-
-See [docs/guides/CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md) for worked examples.
-
-### Troubleshooting Integration
-
-- Start with `make doctor` to validate required tools and versions.
-- For bundle sync failures and recovery steps, see [docs/troubleshooting.md](docs/troubleshooting.md).
-- **Makefile conflicts**: Merge targets with existing build scripts
-- **Pre-commit failures**: Run `make fmt` to fix formatting issues
-- **Workflow failures**: Check Python version in `.python-version` and `pyproject.toml`
-- **Dev container issues**: See [.devcontainer/README.md](bundles/devcontainer/.devcontainer/README.md)
+**A worked first run — empty directory to synced, scored repository — is
+[rhiza-education Lesson 6](https://github.com/Jebel-Quant/rhiza-education/blob/main/lessons/06-getting-started.md).**
+For sync failures and recovery, see [docs/troubleshooting.md](docs/troubleshooting.md).
 
 ## 📋 Available Tasks
 
@@ -532,36 +399,44 @@ Repo-owned targets:
 > When you modify Makefile targets, the `update-readme-help` pre-commit hook
 > updates this section automatically.
 
-## 🎯 Advanced Topics
+## 🎯 Customising Safely
 
-### Marimo Notebooks
+Everything a sync delivers is **template-owned and overwritten by the next one** — the
+`Makefile` included, since `core` ships it. Extensions live in four places no sync touches:
 
-This project supports [Marimo](https://marimo.io/) notebooks for interactive documentation and exploration.
+| Where | For |
+|-------|-----|
+| `local.mk` | Your own make targets, and extending a template task by shadowing it |
+| `[tool.rhiza-task]` in `pyproject.toml` (or `rhiza.toml`) | Settings — `source-folder`, `coverage-fail-under`, … |
+| `pyproject.toml` | Dependencies, scripts, other tools' configuration |
+| `.rhiza/.env` | Developer-local overrides (gitignored) |
 
-```bash
-make marimo  # Start Marimo server
-```
+`local.mk` is deliberately **not** gitignored: commit it, because anything CI invokes has to be
+in the repository.
 
-For configuration details including dependency management and pythonpath setup, see the [Marimo documentation](https://marimo.io/).
+### Makefile Customisation
 
-### Presentations
+The `Makefile` pins `RHIZA_TASK`, and that pin is the whole version contract: syncing a newer
+template moves your gates forward. A `%:` catch-all forwards unmatched targets to that CLI, and
+an explicit rule always beats it:
 
-Generate presentation slides using [Marp](https://marp.app/):
+- **Add a target** — write it in `local.mk`, which the `Makefile` `-include`s. A `##` comment
+  puts it in `make help` under *Repo-owned targets*.
+- **Extend a task** — shadow it. An explicit `install:` rule can call `uvx $(RHIZA_TASK) install`
+  and then your extra step. This replaces the `pre-install::` / `post-install::` hooks the synced
+  make layer anchored, which are gone.
+- **Change a setting** — the table above. `uvx rhiza-task list` shows the tasks and
+  `uvx rhiza-task print <setting>` what one currently resolves to.
 
-```bash
-make presentation        # Generate HTML slides
-make presentation-pdf    # Generate PDF slides
-make presentation-serve  # Serve with live reload
-```
-
-For detailed information about creating and customising presentations, see [presentation/README.md](docs/presentations/README.md).
+Worked examples: [CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md) and
+[EXTENDING_RHIZA.md](docs/guides/EXTENDING_RHIZA.md). The tutorial version is
+[rhiza-education Lesson 10](https://github.com/Jebel-Quant/rhiza-education/blob/main/lessons/10-customizing-safely.md).
 
 ### Documentation Examples
 
 README code blocks are executable documentation. With the `tests` bundle selected,
-`make rhiza-test` runs each `python` fence and diffs its output against the `result` block
-that follows, so an example cannot quietly stop working. (`make docs-examples` does the
-same job for the fences under the docs tree.)
+`make rhiza-test` runs each `python` fence and diffs its output against the `result` block that
+follows, so an example cannot quietly stop working.
 
 ```python
 # Example code block
@@ -579,143 +454,67 @@ Hello, World!
 0.71
 ```
 
-### Documentation Customisation
+## 📚 Documentation Map
 
-For information on customising the look and feel of your documentation, see [book/README.md](docs/guides/BOOK.md).
+| Topic | Where |
+|-------|-------|
+| Command and file cheat sheet | [QUICK_REFERENCE.md](docs/guides/QUICK_REFERENCE.md) |
+| Every bundle and profile | [BUNDLE_TAXONOMY.md](docs/reference/BUNDLE_TAXONOMY.md) |
+| Terms used throughout | [GLOSSARY.md](docs/reference/GLOSSARY.md) |
+| The tools in the stack | [TOOLS_REFERENCE.md](docs/reference/TOOLS_REFERENCE.md) |
+| Docs site (MkDocs + zensical) | [BOOK.md](docs/guides/BOOK.md) |
+| Marimo notebooks · Marp slides | [MARIMO.md](docs/development/MARIMO.md) · [PRESENTATION.md](docs/development/PRESENTATION.md) |
+| Dev containers · Docker | [DEVCONTAINER.md](docs/development/DEVCONTAINER.md) · [DOCKER.md](docs/development/DOCKER.md) |
+| Releases and the changelog | [CHANGELOG_GUIDE.md](docs/ops/CHANGELOG_GUIDE.md) |
+| What CI enforces, and where | [CI_ENFORCEMENT.md](docs/operations/CI_ENFORCEMENT.md) |
+| Technical debt · roadmap | [TECHNICAL_DEBT.md](docs/ops/TECHNICAL_DEBT.md) · [PROJECT_BOARD.md](docs/ops/PROJECT_BOARD.md) |
+| One patch across many bundles | [GLOBAL_PATCH.md](docs/ops/GLOBAL_PATCH.md) |
 
-### Python Version Management
-
-The `.python-version` file specifies the default Python version for local development. Tools like `uv` and `pyenv` automatically use this version. Simply update this file to change your local Python version.
-
-### Makefile Customisation
-
-The `Makefile` comes from the `core` bundle like every other config file, so a sync delivers it
-and a sync overwrites it — nothing you add to it survives. It pins `RHIZA_TASK`, which is the
-whole version contract: syncing a newer template moves your gates forward. A `%:` catch-all
-forwards unmatched targets to the pinned CLI, and an explicit rule always beats it:
-
-- **Add a target** — write it in `local.mk`, which the `Makefile` `-include`s and which no sync
-  touches. It is deliberately not gitignored, so commit it: anything your CI invokes has to be
-  in the repository.
-- **Extend a task** — shadow it. An explicit `install:` rule wins over the catch-all, so it can
-  call `uvx $(RHIZA_TASK) install` and then your extra step. This replaces the
-  `pre-install::`/`post-install::` hooks the synced make layer anchored.
-- **Change a setting** — a `[tool.rhiza-task]` table in `pyproject.toml`, or `rhiza.toml` for a
-  project with no Python manifest. See `uvx rhiza-task list` for the tasks and
-  `uvx rhiza-task print <setting>` for what a setting currently resolves to.
-
-### Custom Build Scripts
-
-For system dependencies and custom build steps, see [docs/guides/CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md).
-
-### Private GitHub Packages
-
-Rhiza's template workflows automatically support private GitHub packages from the same organization. Simply add them to your `pyproject.toml`:
-
-**In `pyproject.toml`:**
-```toml
-[tool.uv.sources]
-my-package = { git = "https://github.com/jebel-quant/my-package.git", rev = "v1.0.0" }
-```
-
-**Git authentication is already configured** in all Rhiza workflows (CI, book, release, etc.) using the default `GITHUB_TOKEN`, which automatically provides read access to repositories in the same organization.
-
-For custom workflows or local development setup, see [docs/development/DOCKER.md](docs/development/DOCKER.md).
-
-### Release Management
-
-For information on versioning, tagging, and publishing releases, run `make help` and see the `Releasing and Versioning` section, or refer to [docs/ops/CHANGELOG_GUIDE.md](docs/ops/CHANGELOG_GUIDE.md).
-
-### Dev Container
-
-This repository includes a template Dev Container configuration for seamless development in VS Code and GitHub Codespaces. See [docs/development/DEVCONTAINER.md](docs/development/DEVCONTAINER.md) for setup, configuration, and troubleshooting.
-
-For details about the VS Code extensions configured in the Dev Container, see [docs/development/VSCODE_EXTENSIONS.md](docs/development/VSCODE_EXTENSIONS.md).
+**Private packages:** the workflows already configure git authentication with the default
+`GITHUB_TOKEN`, so a `[tool.uv.sources]` entry pointing at another repository in the same
+organisation works with no extra setup.
 
 ## 🔄 CI/CD Support
 
-### GitHub Actions
+GitHub Actions and GitLab CI have feature parity: tests across operating systems and Python
+versions, hooks and gates, docs publishing, notebooks, containers, releases, security scanning
+and weekly maintenance. Choose the platform by profile — `github-project` or `gitlab-project` —
+and the matching workflow stubs arrive with it. Syncing is not a workflow: `/rhiza:update` runs
+it from your machine and opens the PR.
 
-The `.github/` directory contains comprehensive GitHub Actions workflows for:
-- CI testing across multiple Python versions and operating systems
-- Pre-commit checks and code quality
-- The gates — typecheck, security, licences, dependencies
-- Documentation building, and Marimo notebook publishing
-- Docker and devcontainer validation
-- Release automation, CodeQL, Scorecard, and weekly maintenance
-
-Syncing is not a workflow: `/rhiza:update` performs it from your machine and opens the PR.
-
-### GitLab CI/CD
-
-Rhiza provides GitLab CI/CD workflow configurations with feature parity to GitHub Actions. The `gitlab` bundle materialises a `.gitlab-ci.yml` plus `.gitlab/workflows/` pipelines for CI, quality, documentation, Renovate, paper compilation, weekly maintenance, and releases.
-
-**Quick setup:** select the `gitlab-project` profile in `.rhiza/template.yml` and run `/rhiza:update`:
-
-```yaml
-profiles:
-  - gitlab-project
-```
-
-For complete GitLab setup instructions, configuration variables, and troubleshooting, see **[.gitlab/README.md](bundles/gitlab/.gitlab/README.md)**.
-
-## 📋 Project Maintainability
-
-Rhiza includes comprehensive maintainability features to help track project health and evolution:
-
-### Roadmap & Planning
-
-- **[docs/PROJECT_BOARD.md](docs/ops/PROJECT_BOARD.md)** - Guide for setting up GitHub Project Boards to track enhancements and roadmap items
-- **[docs/GLOBAL_PATCH.md](docs/ops/GLOBAL_PATCH.md)** - Workflow for propagating the same patch across repeated bundle files
-
-### Technical Debt Tracking
-
-- **[docs/TECHNICAL_DEBT.md](docs/ops/TECHNICAL_DEBT.md)** - Scope and standing trade-offs; open items are tracked as GitHub issues labelled `technical-debt`
-- **`make todos`** - Automated scanning for TODO, FIXME, and HACK comments across the codebase
-
-### Changelog Management
-
-- **[docs/CHANGELOG_GUIDE.md](docs/ops/CHANGELOG_GUIDE.md)** - Guide for enhanced changelog generation with PR categorization
-- **[.github/release.yml](.github/release.yml)** - Automated PR categorization for release notes
-
-Run `make todos` to scan for technical debt markers in your codebase, or explore the roadmap and technical debt documents to understand project evolution and planned improvements.
+GitLab specifics (variables, runners, Pages) are in
+**[.gitlab/README.md](bundles/gitlab/.gitlab/README.md)**; what each check enforces and where it
+runs is in [CI_ENFORCEMENT.md](docs/operations/CI_ENFORCEMENT.md).
 
 ## 📖 Learning Resources
 
-For a structured, tutorial-style introduction to Rhiza — covering CI/CD concepts, `uv`, Python project conventions, the sync lifecycle, and the full Rhiza ecosystem — see the companion education repository:
+This README is a reference. The **tutorial** is a separate repository, and the better place to
+start if any of this is new:
 
-**[jebel-quant/rhiza-education](https://github.com/Jebel-Quant/rhiza-education)** · [Rendered site](https://jebel-quant.github.io/rhiza-education/)
+**[jebel-quant/rhiza-education](https://github.com/Jebel-Quant/rhiza-education)** ·
+[rendered site](https://jebel-quant.github.io/rhiza-education/)
 
-The curriculum walks you through twelve lessons in order, from the motivation for living templates all the way to running your first sync, configuring Renovate, and customising safely.
+Twelve lessons in order, from the problem living templates solve to running your first sync:
+CI/CD concepts and `uv` (1–2), Python project conventions (3), why Rhiza and its core concepts
+(4–5), **getting started** (6), configuring `template.yml` (7), the sync lifecycle (8), Renovate
+(9), customising safely (10), the wider ecosystem (11), further reading (12). Appendices cover
+GitLab users and real projects using Rhiza.
 
 ## 🛠️ Contributing to Rhiza
 
-Contributions are welcome! To contribute to Rhiza itself (not using Rhiza in your project):
+To work on Rhiza itself, you need GNU Make, Git and `uv`; `make install` provisions the rest,
+Python included.
 
-### Prerequisites
+```bash
+git clone https://github.com/jebel-quant/rhiza.git
+cd rhiza
+make install
+make test && make fmt
+```
 
-| Tool | Minimum version | Notes |
-|---|---|---|
-| **GNU Make** | 3.81 | Must be GNU Make — macOS ships BSD make; install via `brew install make` and use `gmake` |
-| **uv** | 0.5.0 | Installed automatically by `make install` if missing |
-| **Git** | 2.x | |
-| **Python** | 3.11 | Managed automatically by `uv` |
-
-### Steps
-
-1. Fork the repository
-2. Clone and setup:
-   ```bash
-   git clone https://github.com/your-username/rhiza.git
-   cd rhiza
-   make install
-   ```
-3. Create your feature branch (`git checkout -b feature/amazing-feature`)
-4. Make your changes and test (`make test && make fmt`)
-5. Commit your changes (`git commit -m 'Add some amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
+Branch, commit, open a PR. [CONTRIBUTING.md](.rhiza/CONTRIBUTING.md) has the conventions,
+[TESTS.md](docs/development/TESTS.md) explains the suite's layout, and
+[EXTENDING_RHIZA.md](docs/guides/EXTENDING_RHIZA.md) is the checklist for adding a bundle.
 
 ## 📄 License
 
