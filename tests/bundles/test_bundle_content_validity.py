@@ -322,6 +322,110 @@ class TestLayerPreCommitConfig:
             "template-owned file and lose it at the next sync with no error at any point (#1462)"
         )
 
+    # Groups vocabulary shipped by rhiza.  Any group used in a layer config must
+    # appear here; adding a new group requires updating this set too so the review
+    # surface stays explicit.
+    #
+    # Two things a reader should know before relying on these.
+    #
+    # Nothing in this repository or its bundles passes `--group` or `--no-group` yet: the
+    # tags are the enabling half, and the profiles that would use them are a later step.
+    # That is not the usual rot risk -- a tag is data rather than a check, so it cannot
+    # report success while measuring nothing -- but it does mean the taxonomy is verified
+    # only by the three tests below, not by anything executing it.
+    #
+    # And `--no-group slow`, the advertised quick pass, drops *all* security coverage:
+    # bandit and betterleaks are the two `security` hooks and both are `slow`. That is
+    # what a quick pass means and it is opt-in per invocation, so it is a documented
+    # trade rather than a hole -- but `make fmt` remains the run that checks everything,
+    # and CI must never be narrowed to the quick subset.
+    _VALID_GROUPS: frozenset[str] = frozenset(["fast", "slow", "format", "lint", "security", "python", "rust", "go"])
+
+    @pytest.mark.parametrize("layer", _LAYER_BUNDLES)
+    def test_every_hook_carries_groups(self, root: Path, layer: str) -> None:
+        """Every non-tripwire hook must declare ``groups`` so consumers can filter runs.
+
+        prek's ``--group`` / ``--no-group`` flags let a caller execute a subset of hooks
+        without maintaining a ``--skip`` list that drifts from the hook set.  That is only
+        useful if every hook is tagged: a hook without ``groups`` is invisible to the filter
+        and always runs, silently defeating ``--no-group slow`` or ``--group security``.
+
+        ``language: fail`` hooks (tripwires) are exempt: they exist to match *nothing* in
+        normal use, so a profile that excludes them by group would never run them either and
+        the tagging buys nothing.
+        """
+        missing = []
+        for repo in _layer_precommit(root, layer)["repos"]:
+            for hook in repo["hooks"]:
+                if hook.get("language") == "fail":
+                    continue
+                if not hook.get("groups"):
+                    missing.append(hook["id"])
+        assert not missing, (
+            f"{layer}: hooks without groups (invisible to prek --group / --no-group): "
+            f"{missing}. Add a groups list; see the vocabulary in "
+            f"TestLayerPreCommitConfig._VALID_GROUPS."
+        )
+
+    @pytest.mark.parametrize("layer", _LAYER_BUNDLES)
+    def test_hook_groups_use_defined_vocabulary(self, root: Path, layer: str) -> None:
+        """Every group label must come from the shared vocabulary.
+
+        An ad-hoc label (``["python", "quik"]``) is a typo that neither fails the run nor
+        selects the hook under ``--group fast``.  Gating labels here keeps the set small
+        and discoverable; a label not in ``_VALID_GROUPS`` requires a deliberate update to
+        this test, creating a review surface for the decision.
+        """
+        unknown: list[str] = []
+        for repo in _layer_precommit(root, layer)["repos"]:
+            for hook in repo["hooks"]:
+                for g in hook.get("groups") or []:
+                    if g not in self._VALID_GROUPS:
+                        unknown.append(f"{hook['id']}: {g!r}")
+        assert not unknown, (
+            f"{layer}: hooks use group labels outside the defined vocabulary ({sorted(self._VALID_GROUPS)}): {unknown}"
+        )
+
+    @pytest.mark.parametrize("layer", _LAYER_BUNDLES)
+    def test_every_hook_is_in_exactly_one_speed_group(self, root: Path, layer: str) -> None:
+        """Every non-tripwire hook must be in ``fast`` or ``slow``, but not both.
+
+        ``--no-group slow`` is the idiomatic quick local pass, and the two failure modes it
+        has are opposites -- which is the whole reason to reject both ends rather than just
+        requiring one of them.
+
+        Verified against prek 0.4.14 rather than reasoned about, because the interesting
+        case is counter-intuitive::
+
+            groups: ["fast", "lint"]   --no-group slow ->  runs
+            groups: ["slow", ...]      --no-group slow ->  skipped
+            (no groups at all)         --no-group slow ->  runs
+            groups: ["fast", "slow"]   --no-group slow ->  SKIPPED
+
+        So ``--no-group X`` excludes any hook *carrying* X, not merely one whose only group
+        is X. A hook in neither group is invisible to the filter and always runs -- noisy,
+        but safe. A hook in **both** is silently dropped from the quick pass, which is the
+        dangerous half: tag a security hook that way and it stops running in the pass people
+        actually use, with nothing in the output to say so.
+        """
+        bad = []
+        for repo in _layer_precommit(root, layer)["repos"]:
+            for hook in repo["hooks"]:
+                if hook.get("language") == "fail":
+                    continue
+                groups = set(hook.get("groups") or [])
+                has_fast = "fast" in groups
+                has_slow = "slow" in groups
+                if has_fast == has_slow:  # neither or both
+                    bad.append(
+                        f"{hook['id']!r}: groups={sorted(groups)!r} "
+                        f"({'both fast and slow' if has_fast else 'neither fast nor slow'})"
+                    )
+        assert not bad, (
+            f"{layer}: hooks must be in exactly one of 'fast' or 'slow' so that "
+            f"`prek run --no-group slow` gives a predictable quick-pass subset: {bad}"
+        )
+
     def test_the_mother_repo_does_not_run_check_managed_files(self, root: Path) -> None:
         """The root override must NOT carry the hook, and that is deliberate (#1462).
 
