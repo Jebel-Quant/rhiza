@@ -20,8 +20,10 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-toml
+        groups: ["fast"]
       - id: check-yaml
         args: ['--unsafe']
+        groups: ["fast"]
 
   - repo: local
     hooks:
@@ -30,6 +32,7 @@ repos:
         entry: "bash -c 'find . -type f -name \"*.rej\" | grep -q . && { echo \"ERROR: .rej files detected\"; find . -type f -name \"*.rej\"; exit 1; } || exit 0'"
         language: system
         pass_filenames: false
+        groups: ["fast"]
 
       # `language: system` rather than pre-commit's built-in rust support: the
       # toolchain is already pinned by rust-toolchain.toml, and letting pre-commit
@@ -40,6 +43,7 @@ repos:
         language: system
         types: [rust]
         pass_filenames: false
+        groups: ["rust", "format", "fast"]
 
       - id: cargo-clippy
         name: cargo clippy (warnings as errors)
@@ -47,6 +51,7 @@ repos:
         language: system
         types: [rust]
         pass_filenames: false
+        groups: ["rust", "lint", "slow"]
 
       # The analogue of python-core's uv-lock hook: a Cargo.toml change that does
       # not update Cargo.lock leaves a tree that dirties itself on the next build.
@@ -56,38 +61,47 @@ repos:
         language: system
         files: ^(Cargo\.toml|Cargo\.lock)$
         pass_filenames: false
+        groups: ["rust", "fast"]
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.49.0
     hooks:
       - id: markdownlint
         args: ["--disable", "MD013"]
+        groups: ["lint", "fast"]
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.38.0
     hooks:
       - id: check-renovate
         args: [ "--verbose" ]
+        groups: ["fast"]
 
       - id: check-github-workflows
         args: ["--verbose"]
+        groups: ["fast"]
 
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.12
     hooks:
       - id: actionlint
+        groups: ["lint", "fast"]
 
   - repo: https://github.com/betterleaks/betterleaks
     rev: v1.8.1
     hooks:
       - id: betterleaks
+        groups: ["security", "slow"]
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
     rev: v1.2.0  # Use the latest release
     hooks:
       - id: check-rhiza-workflow-names
+        groups: ["fast"]
       - id: update-readme-help
+        groups: ["fast"]
       - id: check-rhiza-config
+        groups: ["fast"]
       # check-managed-files refuses a commit touching any path in .rhiza/template.lock's
       # `files:` list (minus `exclude:` in template.yml), enforcing the rule every managed
       # repo's CLAUDE.md opens with. Only paths differing from HEAD are reported, so
@@ -95,7 +109,9 @@ repos:
       # gated on the sync commit gaining `SKIP=check-managed-files` -- see CLAUDE.md's
       # "Enforcing template ownership" for why that order is not optional.
       - id: check-managed-files
+        groups: ["fast"]
       - id: check-makefile-targets
+        groups: ["fast"]
       # Fails when rust-toolchain.toml's channel is *below* Cargo.toml's
       # `[package].rust-version`, which is genuinely unbuildable. It does not demand the
       # two be equal — they are different promises, as rust-toolchain.toml's own comment
@@ -103,5 +119,6 @@ repos:
       # shipped `channel = "stable"`, which has no concrete version to compare; it starts
       # working the moment a consumer pins one.
       - id: check-rust-version-consistency
+        groups: ["rust", "fast"]
       # check-python-version-consistency is deliberately absent: there is no
       # .python-version in a Rust repo for it to reconcile.
