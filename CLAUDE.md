@@ -70,8 +70,8 @@ The core abstraction is the **bundle** — a named group of configuration files.
   pre-commit config, `.bumpversion.toml`, and a starter `internal/version/version.go`
   with its `version_test.go`. Its gates are rhiza-task's `go` layer, test targets
   included, like the other two.
-- `tests`: optional Python testing extras — `benchmark`, `hypothesis-test`, `stress`,
-  `mutation` (requires `python-core`; the gates `all` names live in the layer)
+- `tests`: optional Python testing extras — `benchmark`, `hypothesis-test`, `stress`
+  (requires `python-core`; the gates `all` names live in the layer)
 - `benchmarks`: pytest-benchmark infrastructure and reporting
 - `github`: GitHub repository configuration (actions, dependabot, core workflows)
 - `gitlab`: GitLab CI/CD pipeline configuration and core workflows
@@ -267,11 +267,37 @@ alone had an `all` that died on a missing rule (#1475). No shipped profile reach
 which is why it survived; `tests/bundles/test_layer_contract.py::TestALayersAllIsSatisfiableOnItsOwn`
 now pins the property for every layer.
 
-What `tests` still owns is what is genuinely optional — `benchmark`, `hypothesis-test`,
-`stress` and `mutation`, each needing its own tool and folder convention, and none named
-by any `all`. There is still no `rust-tests` or `go-tests` bundle, for the original
-reason: `cargo nextest` and `go test` need no configuration, so such a bundle would own
-nothing at all.
+What `tests` still owns is what is genuinely optional — `benchmark`, `hypothesis-test`
+and `stress`, each needing its own tool and folder convention, and none named by any
+`all`. There is still no `rust-tests` or `go-tests` bundle, for the original reason:
+`cargo nextest` and `go test` need no configuration, so such a bundle would own nothing
+at all.
+
+**Mutation testing is not part of the ecosystem, and that is now a decision rather than
+an omission (#1492).** `mutation` was a fourth extra, and it had been broken in every
+consumer since mutmut 3 shipped: the recipe passed `--paths-to-mutate` and `--tests-dir`
+and called `mutmut html`, all three removed, and installed mutmut unpinned — so the
+breakage was time-triggered, arriving on the day of a release rather than on a sync. It
+survived because nothing invoked it. No `all` names it, and `rhiza_mutation.yml` was
+removed in #1583 after `MUTATION_ENABLED` turned out to be unset here and in every
+consumer we could see, so the only signal was someone typing `make mutation`.
+
+What settled it against a port is that mutmut 3.x resolves source paths *during config
+loading*, with no CLI path at all — so a task cannot pass them, and would instead have to
+require a `[tool.mutmut]` table in every consumer's `pyproject.toml` or write one behind
+their back. On top of that `tests_dir` is itself already deprecated in favour of
+`pytest_add_cli_args_test_selection`, the HTML report the recipe relocated does not exist
+any more (artifacts land in `mutants/`, and `export-cicd-stats` writes the JSON that
+replaces it), and `results` prints nothing when nothing survived. A new config contract
+with consumers, for a gate none of them had switched on. Removing the task is
+Jebel-Quant/rhiza-task#135; until that lands, the pinned CLI still carries it and
+`make mutation` still fails as described.
+
+One consequence: **the `mutation` row in README.md cannot be removed by hand.** That block
+lives between the `MAKE_HELP_START`/`MAKE_HELP_END` markers and is regenerated from
+`make help` by the `update-readme-help` hook on every `make fmt`, so it reports the pinned
+CLI's task list rather than this repo's policy. Deleting the row makes the hook put it
+straight back. It goes when the pin does.
 
 **Where Go differs from both.** A Go module has no manifest: its version *is* the git
 tag, so unlike `pyproject.toml` and `Cargo.toml` there is no file in the tree for
