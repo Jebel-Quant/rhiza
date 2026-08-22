@@ -113,7 +113,7 @@ repos:
         files: ^(utils|tests)/.*\.py$
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v1.2.0  # Use the latest release
+    rev: v1.3.0  # Use the latest release
     hooks:
       # Migrated from rhiza
       - id: check-rhiza-workflow-names
@@ -170,3 +170,15 @@ repos:
       # the template — so the hook is inert here. Disabled in #660 (rhiza-hooks 0.3.0)
       # with no reason recorded.
       # - id: check-template-bundles
+      # check-test-layout is new in v1.3.0 and stays off *here* for the reason the block
+      # above keeps restating: it would report success while measuring nothing. This repo
+      # already carries the `[tool.check_test_layout]` table added in #1513 with
+      # `enforce = false` and a reason — there is no `src/` tree to mirror — so the hook
+      # prints "Test layout OK: parity not enforced by request …" and exits 0 on every run,
+      # whatever the tests do. Verified against v1.3.0, not assumed. A hook whose result
+      # cannot change is the #1535/#1581 shape again, and the table is what makes it so.
+      #
+      # Whether the *bundles* should ship it is a separate call, deliberately not made in a
+      # rev bump: downstream has a real `src/` and the hook would enforce parity there, so
+      # adopting it changes behaviour for every consumer rather than for this repo.
+      # - id: check-test-layout
