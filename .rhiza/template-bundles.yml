@@ -125,7 +125,7 @@ bundles:
 
       It carries the test targets, as all three layers now do — Python's moved into
       `python-core` in #1475. What stays out of every layer is the optional extras
-      the `tests` bundle keeps (benchmarks, hypothesis, stress, mutation), and Rust
+      the `tests` bundle keeps (benchmarks, hypothesis, stress), and Rust
       has no equivalent: `test`, `coverage` and `typecheck` are cargo subcommands
       with nothing to configure, so a `rust-tests` bundle would own no files at all.
 
@@ -325,10 +325,10 @@ bundles:
       ANTHROPIC_API_KEY CI/CD variable is set (masked).
 
   # ============================================================================
-  # TESTS - Optional Python testing extras (benchmarks, hypothesis, stress, mutation)
+  # TESTS - Optional Python testing extras (benchmarks, hypothesis, stress)
   # ============================================================================
   tests:
-    description: "Optional Python testing extras: benchmark, hypothesis-test, stress and mutation gates"
+    description: "Optional Python testing extras: benchmark, hypothesis-test and stress gates"
     standalone: true
     requires:
       - book          # ships docs/development/TESTS.md, which needs the book's docs/ tree
@@ -348,12 +348,26 @@ bundles:
       `test_bundle_sync.py::TestALayersAllIsSatisfiableOnItsOwn` now pins the property
       for every layer.
 
-      What is left is genuinely optional: four gates, each needing its own tool and
-      folder convention (benchmarks, Hypothesis property tests, stress/load tests,
-      mutation testing), plus one line of `RHIZA_CHECKS` naming pytest-rhiza's
+      What is left is genuinely optional: three gates, each needing its own tool and
+      folder convention (benchmarks, Hypothesis property tests, stress/load tests),
+      plus one line of `RHIZA_CHECKS` naming pytest-rhiza's
       `test_readme_validation` — the half of the README checks that only means something
       on a Python project, its neutral half having moved to `core` in #1472. That was a
       synced file until #1540; the ownership is unchanged, only the delivery.
+
+      **There was a fourth, and mutation testing is deliberately not offered any more**
+      (#1492). `mutation` had been broken in every consumer since mutmut 3 shipped: the
+      recipe passed `--paths-to-mutate`, `--tests-dir` and called `mutmut html`, all
+      three removed, and it installed mutmut unpinned — so the breakage was
+      time-triggered rather than arriving by sync. Porting it is not a flag rename.
+      mutmut 3.x resolves source paths during config loading with no CLI path at all, so
+      a task would have to require `[tool.mutmut]` in every consumer's `pyproject.toml`
+      or write one behind their back; `tests_dir` is itself already deprecated in favour
+      of `pytest_add_cli_args_test_selection`; the HTML report the recipe relocated no
+      longer exists; and `results` prints nothing when nothing survived. That is a new
+      config contract with consumers, for a gate no `all` names and no workflow ran —
+      `rhiza_mutation.yml` went in #1583 because `MUTATION_ENABLED` was unset here and
+      everywhere we could see. Removal of the task itself is Jebel-Quant/rhiza-task#135.
 
   # ============================================================================
   # GITHUB-TESTS - GitHub Actions workflows for CI

@@ -57,7 +57,6 @@ _PROVISIONED_ON_THE_FLY = frozenset(
         "prek",
         "deptry",
         "bandit",
-        "mutmut",
         "hypothesis",
         "pip-licenses",
         "pytest-cov",

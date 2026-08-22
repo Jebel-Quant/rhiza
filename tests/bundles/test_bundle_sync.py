@@ -225,10 +225,10 @@ class TestCoreAndTestsBundleSync:
     def test_tests_bundle_ships_no_make_fragment(self):
         """The optional extras are CLI tasks now, not ``test.mk`` targets.
 
-        ``benchmark``, ``hypothesis-test``, ``stress`` and ``mutation`` are what this bundle
-        exists for, and all four are registered tasks — so the fragment that defined them has
-        nothing left to own. What the bundle still ships is its *configuration*, which the
-        assertions below cover.
+        ``benchmark``, ``hypothesis-test`` and ``stress`` are what this bundle exists for, and
+        all three are registered tasks — so the fragment that defined them has nothing left to
+        own. (A fourth, ``mutation``, was dropped outright in #1492 rather than moved.) What the
+        bundle still ships is its *configuration*, which the assertions below cover.
         """
         stale = sorted((self.project / ".rhiza").rglob("*.mk"))
         assert not stale, f"the tests bundle ships make fragments again: {[f.name for f in stale]}"

@@ -26,8 +26,16 @@ None in CI. `rhiza_mutation.yml` was the only one: a reusable workflow here plus
 stub in `github-tests`, both gated on a `MUTATION_ENABLED` repository variable that
 was unset in this repo and, as far as we can tell, in every consumer — so the whole
 path ran nowhere while carrying badge publishing, a Pages deploy and two test
-modules. `mutation` is still a `rhiza-task` task, so `make mutation` works locally
-for anyone who wants it; what went is the CI wiring nobody switched on.
+modules.
+
+The gate behind it went too. This page used to say `make mutation` still worked
+locally for anyone who wanted it, and that was **false**: mutmut 3 removed
+`--paths-to-mutate`, `--tests-dir` and the `html` subcommand, and the recipe
+installed mutmut unpinned, so the target had been failing immediately in every
+consumer since the day mutmut 3 was released (#1492). Nothing caught it, because
+nothing ran it — which is exactly what removing the workflow had established. Rhiza
+no longer offers mutation testing at all; removing the task from the pinned CLI is
+Jebel-Quant/rhiza-task#135.
 
 ## Report-only (monitoring) workflows
 

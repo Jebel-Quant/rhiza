@@ -93,7 +93,7 @@ template owns it again, so `RHIZA_TASK` travels with the sync — the property
 | was | is |
 | --- | --- |
 | `bootstrap.mk` — `install`, uv bootstrap | the `install` task, plus three lines of the shim |
-| `test.mk` — test, coverage, typecheck, stress, mutation | the `python`/`rust`/`go` layers and the testing extras |
+| `test.mk` — test, coverage, typecheck, stress, mutation | the `python`/`rust`/`go` layers and the testing extras — except `mutation`, dropped rather than carried (#1492) |
 | `quality.mk` — `fmt`, lint, `rhiza-test` | the neutral quality tasks |
 | `book.mk`, `marimo.mk` | the `book` and `marimo` tasks |
 | `doctor.mk` | the `doctor` task |
@@ -405,7 +405,7 @@ catch-all, so it can call the CLI and then the extra step.
 
 3. **Dependency provisioning** (no `.rhiza/requirements/`):
    - Libraries the test suite imports live in `pyproject.toml` `[dependency-groups]`
-   - Per-target tooling (pytest plugins, interrogate, mutmut, marimo, zensical, …)
+   - Per-target tooling (pytest plugins, interrogate, marimo, zensical, …)
      is installed on the fly by its `make` target via `uv run --with` / `uvx`
 
 ### Template Bundle and Profile Naming
