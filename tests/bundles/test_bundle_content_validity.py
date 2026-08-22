@@ -301,6 +301,51 @@ class TestLayerPreCommitConfig:
             for repo, pins in sorted(drifted.items())
         )
 
+    @pytest.mark.parametrize("layer", _LAYER_BUNDLES)
+    def test_every_layer_enforces_template_ownership(self, root: Path, layer: str) -> None:
+        """Each layer must run check-managed-files (#1462).
+
+        It is the only thing enforcing the rule every managed repo's CLAUDE.md opens with --
+        managed files are overwritten by the next sync -- and nothing had enforced it since
+        `make validate` was removed after v1.1.3. What it guards against is silent: the edit
+        works, is reviewed, is merged, and disappears.
+
+        Asserted per layer rather than once, because the path is language-layer-owned: there
+        are three configs, so a hook can be dropped from one and kept in the other two, and
+        the consumer who loses it is whichever language that layer serves. The check itself is
+        entirely language-neutral -- it reads `.rhiza/template.lock` and nothing else -- so
+        there is no layer with a reason to opt out.
+        """
+        hook_ids = {hook["id"] for repo in _layer_precommit(root, layer)["repos"] for hook in repo["hooks"]}
+        assert "check-managed-files" in hook_ids, (
+            f"{layer} does not run check-managed-files, so a consumer on that layer can edit a "
+            "template-owned file and lose it at the next sync with no error at any point (#1462)"
+        )
+
+    def test_the_mother_repo_does_not_run_check_managed_files(self, root: Path) -> None:
+        """The root override must NOT carry the hook, and that is deliberate (#1462).
+
+        rhiza has no `.rhiza/template.lock` -- it *is* the template -- so the hook can never
+        fire here. Unlike `check-rhiza-config`, which the reachability test keeps in
+        `_INERT_BY_DESIGN` so that a future `template.yml` starts being checked without an
+        edit, this one will not change: the mother repo is never a consumer of itself.
+
+        The distinction that decides it is how the inertness would *look*. `check-managed-files`
+        declares no `files:` pattern, so prek always hands it the tracked files and it prints
+        **Passed** rather than **Skipped** -- a hook reporting success while measuring nothing,
+        in the output of the gate this repo runs most. That is the shape of #1535 and #1581,
+        and it is worth one assertion to keep it from being added here by symmetry with the
+        bundles.
+        """
+        with (root / ".pre-commit-config.yaml").open(encoding="utf-8") as fh:
+            hook_ids = {hook["id"] for repo in yaml.safe_load(fh)["repos"] for hook in repo["hooks"]}
+        assert "check-managed-files" not in hook_ids, (
+            "the root config adopted check-managed-files, but rhiza has no template.lock so the "
+            "hook can never fire -- and with no `files:` pattern it reports Passed, not Skipped, "
+            "so it would read as a check while measuring nothing. See CLAUDE.md, "
+            "'Enforcing template ownership'."
+        )
+
 
 # ---------------------------------------------------------------------------
 # GitLab CI uv-image single-source pinning

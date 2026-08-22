@@ -591,6 +591,56 @@ default for `mkdocs-extra-packages`, which this repo's `pyproject.toml` now mere
 > is a required status check in `.github/rulesets/main-branch-protection.json`, so
 > renaming it would leave every PR waiting on a context that never reports.
 
+### Enforcing template ownership
+
+Every managed repo's `CLAUDE.md` opens with the same rule — *managed files are overwritten
+by the next sync* — and from the removal of the `validate` gate after v1.1.3 until #1462
+nothing enforced it. (Deliberately not written as a `make` code span: it is a retired
+target, and `test_doc_consistency.py` holds every such span in the docs to a target that
+still resolves.) The failure that leaves is silent and total: the edit works, is
+reviewed, is merged, and disappears at the next sync with no error at any point.
+
+rhiza-hooks' `check-managed-files` closes it, and all three language layers now run it. It
+reads `.rhiza/template.lock`'s `files:` list minus anything under `exclude:` in
+`.rhiza/template.yml`, and reports only paths that **differ from HEAD** — not merely paths
+that are managed and present. That narrowing is what keeps `make fmt` and CI green: both
+pass every tracked file with `--all-files`, and without it the hook would report every
+managed file in the repo on a clean tree.
+
+**Adoption was gated on the sync path first, and the order is not optional.** A sync
+commit rewrites template-owned files wholesale — that is its whole purpose — so it is
+precisely the commit this hook is built to reject, and `/rhiza:update`'s `stage_synced.py`
+stages *exactly* the list the hook reads. The bypass is `SKIP=check-managed-files git
+commit`, landed in rhiza-claude#211 before this was adopted here. Two things are worth
+knowing about that sequencing:
+
+- **The break would have been immediate, not merely future.** prek's git shim reads
+  `.pre-commit-config.yaml` fresh at commit time, so the config is already on disk when
+  the sync commits it. Without the bypass in the plugin, the very sync that *delivers*
+  the hook is the one it rejects. What decouples the two is that the plugin updates
+  independently of a template sync, so consumers can have the fix before this ships.
+- **`SKIP` is honoured by prek, not just pre-commit.** Worth checking rather than
+  assuming, since prek differs from pre-commit elsewhere in this repo (it bakes
+  `--config` into the shim it generates). It works in both `prek run` and the installed
+  shim. One edge: if `SKIP` filters out *every* hook, prek exits non-zero with
+  `No hooks found after filtering with the given selectors` — irrelevant for these
+  twenty-hook configs, but it would bite a minimal one.
+
+**The bypass belongs to the sync commit and nowhere else.** `/rhiza:remote` commits CI
+fixes with `git commit -am`, and in a managed repo the likeliest thing such a fix touches
+is `.github/workflows/*` or `.gitlab-ci.yml` — both template-owned. The hook refusing that
+commit is it working: the fix really would vanish at the next sync. So that flow reports
+the managed path and says the change belongs upstream (or under `exclude:`), rather than
+reaching for `SKIP` and committing an edit with a known expiry date.
+
+**The mother repo's root override deliberately does not carry it.** rhiza has no
+`template.lock` — it *is* the template — so the hook can never fire here, and unlike
+`check-rhiza-config` (kept in `test_precommit_hook_reachability.py`'s `_INERT_BY_DESIGN`
+so a future `template.yml` starts being checked) that will not change. It also declares no
+`files:` pattern, so it would print **Passed** rather than **Skipped**: its inertness would
+be invisible in the output of the gate this repo runs most, which is the shape of #1535 and
+#1581. `TestLayerPreCommitConfig` asserts the three layers carry it and the root does not.
+
 > **Coverage in this repo (mother-repo specifics).** Rhiza has no `src/`, so the default
 > `source_folder` matches nothing and the scope has to be declared: `pyproject.toml`'s
 > `[tool.rhiza-task]` sets `source-folder = "utils"`, the tooling behind `make sync-self` and

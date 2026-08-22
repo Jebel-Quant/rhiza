@@ -88,6 +88,13 @@ repos:
       - id: check-rhiza-workflow-names
       - id: update-readme-help
       - id: check-rhiza-config
+      # check-managed-files refuses a commit touching any path in .rhiza/template.lock's
+      # `files:` list (minus `exclude:` in template.yml), enforcing the rule every managed
+      # repo's CLAUDE.md opens with. Only paths differing from HEAD are reported, so
+      # `make fmt` and CI stay green on a clean tree under --all-files. Its adoption was
+      # gated on the sync commit gaining `SKIP=check-managed-files` -- see CLAUDE.md's
+      # "Enforcing template ownership" for why that order is not optional.
+      - id: check-managed-files
       - id: check-makefile-targets
       # Fails when rust-toolchain.toml's channel is *below* Cargo.toml's
       # `[package].rust-version`, which is genuinely unbuildable. It does not demand the
