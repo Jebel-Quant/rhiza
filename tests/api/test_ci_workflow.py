@@ -235,3 +235,53 @@ def test_ci_workflow_generate_matrix_uses_baipp_classifier_output(root):
     assert "supported_python_classifiers_json_array" in versions_output_step["run"]
     assert generate_matrix["outputs"]["matrix"] == "${{ steps.versions-output.outputs.list }}"
     assert "make -f .rhiza/rhiza.mk -s version-matrix" not in versions_output_step["run"]
+
+
+# Gates that execute the consumer's own code, rather than reading its source as text.
+# `docs-coverage` is not one of them despite the name: the pattern requires the space,
+# so `"$RHIZA_TASK" docs-coverage` does not match `"$RHIZA_TASK" coverage`.
+_RUNS_PROJECT_CODE = re.compile(
+    r'"\$RHIZA_TASK" (test|rhiza-test|coverage|benchmark|stress|hypothesis-test)\b|\bpytest\b'
+)
+
+
+def test_ci_jobs_that_run_project_code_check_out_lfs(root):
+    """Any CI job that executes the consumer's code must fetch its LFS content.
+
+    A checkout without `lfs: true` writes the pointer file — a few lines of text naming
+    an oid — where the payload belongs. Nothing fails at checkout; it fails later, inside
+    whatever opens the file, as a corrupt-content error about the consumer's data rather
+    than about the checkout. Jebel-Quant/trends#256 hit exactly that: `rhiza-test` runs
+    README validation, which executes the ```python fences, and a fence reading the demo
+    parquet that ships with the repo died on
+
+        polars: parquet: File out of specification: The file must end with PAR1
+
+    while `test` — same repo, same file, `lfs: true` since long before — passed. `rhiza-test`
+    was new in #1523, and the job was written from the static-analysis jobs beside it.
+
+    Derived from what each job runs rather than a hand-kept list of job names, so a future
+    job wired to a code-running gate fails here instead of shipping the same bug. The
+    static jobs (typecheck, deps, fmt, security, license, docs-coverage) read the tree as
+    text and are deliberately left alone: LFS content costs bandwidth and a smudge on every
+    file, and none of them open the data.
+    """
+    with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
+        workflow = yaml.safe_load(fh)
+
+    offenders = {}
+    for name, job in workflow["jobs"].items():
+        steps = job.get("steps") or []
+        if not any(_RUNS_PROJECT_CODE.search(step.get("run") or "") for step in steps):
+            continue
+        checkout = next((s for s in steps if "actions/checkout" in str(s.get("uses", ""))), None)
+        assert checkout is not None, f"{name} runs project code but never checks the repository out"
+        if (checkout.get("with") or {}).get("lfs") is not True:
+            offenders[name] = checkout.get("with")
+
+    assert not offenders, (
+        f"these jobs execute the consumer's code but check out without `lfs: true`, so an "
+        f"LFS-tracked fixture reaches the reader as a pointer file: {sorted(offenders)}. "
+        f"The failure surfaces as corrupt data, not as a checkout problem "
+        f"(Jebel-Quant/trends#256)."
+    )

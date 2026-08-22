@@ -228,6 +228,12 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          # Runs the project's own pytest suite, so a repo whose fixtures are LFS-tracked
+          # needs the content here for the same reason `test` does. Passing there and
+          # failing here on identical tests reads as a resolution problem, which is the
+          # one thing this job exists to report.
+          lfs: true
 
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
@@ -335,6 +341,14 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          # README validation executes the ```python fences, and a consumer's example
+          # reads the demo data that ships with the repo. Without this the pointer file
+          # reaches the reader and the check dies on content, not on the repo being wrong
+          # -- polars reports `parquet: File out of specification: The file must end with
+          # PAR1`. The `test` job above has always had it; this job is newer (#1523) and
+          # runs project code the same way, so it needs the same checkout.
+          lfs: true
 
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
