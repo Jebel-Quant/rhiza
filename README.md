@@ -49,13 +49,11 @@ This repository is the *template content* only. Everything that **acts** on that
 
 In short: **rhiza** is the *what* (the template files you receive); the companions are the *how*.
 
-> **⚠️ `rhiza-cli` is retired.** Earlier versions of this README documented `uvx rhiza init`
-> and `uvx rhiza sync`. Those commands no longer work: the package is unpublished and
-> [its repository](https://github.com/Jebel-Quant/rhiza-cli) is archived. The sync is now a
-> stdlib-only script bundled with the Claude Code plugin, so beyond `uv`, `git` and `make`
-> there is nothing to install but the plugin itself. The boundary
-> [ADR-0005](docs/adr/0005-separate-rhiza-template-from-cli.md) drew is unchanged — template
-> content here, engine elsewhere; only the engine moved.
+> **⚠️ `rhiza-cli` is retired.** `uvx rhiza init` and `uvx rhiza sync`, which earlier versions
+> of this README documented, no longer work: the package is unpublished and
+> [its repository](https://github.com/Jebel-Quant/rhiza-cli) archived. Its sync now ships
+> inside the Claude Code plugin, so beyond `uv`, `git` and `make` there is nothing to install
+> but the plugin itself.
 
 ### How It Works
 
@@ -132,12 +130,6 @@ Adopt a Rhiza bundle and your project immediately gains:
 - **Documentation** via MkDocs + zensical, with optional Marimo notebook exports
 - **Release automation** — version bumping, OIDC PyPI publishing, optional grayskull conda recipe generation (`vars.PUBLISH_CONDA`, defaults to `true`), SLSA provenance
 - **Security scanning** — CodeQL, bandit, secret scanning, Dependabot
-
-## 📝 Architecture Decision Records
-
-The reasoning behind Rhiza's structural decisions — bundles, the layered profile model, the
-uv/ruff/prek choices, the retirement of the synced make layer — is recorded as ADRs.
-**[docs/adr/](docs/adr/)** holds the index, with each record's status and date.
 
 ## 📁 Available Templates
 
