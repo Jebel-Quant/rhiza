@@ -138,3 +138,92 @@ class TestReleaseWorkflowStructure:
         upload_step = next((s for s in steps if s.get("name") == "Upload SBOM artifacts"), None)
         assert upload_step is not None, "Upload SBOM artifacts step must exist"
         assert "sbom.cdx.json.sigstore.json" in upload_step["with"]["path"]
+
+
+# ---------------------------------------------------------------------------
+# #1537 -- asserted against *both* copies of the release workflow
+# ---------------------------------------------------------------------------
+
+# The live workflow is what runs here; the bundle copy is what every `github` consumer
+# gets. They are real files rather than symlinks (Actions will not run a symlinked
+# workflow), so a fix applied to one and not the other leaves the bug shipped. This is the
+# pattern test_release_tag_reachability.py already uses for the same pair.
+_RELEASE_WORKFLOWS = [
+    Path(".github") / "workflows" / "rhiza_release.yml",
+    Path("bundles") / "github" / ".github" / "workflows" / "rhiza_release.yml",
+]
+
+
+def _finalise_condition(root: Path, relative: Path) -> str:
+    """Return the ``if`` expression on a release workflow's finalise-release job.
+
+    Args:
+        root: Repository root.
+        relative: Path to the workflow, relative to the root.
+
+    Returns:
+        The condition as written, or the empty string when the job has none.
+    """
+    workflow = yaml.safe_load((root / relative).read_text(encoding="utf-8"))
+    return str(workflow["jobs"]["finalise-release"].get("if", ""))
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_finalise_release_survives_a_failed_conda_job(root, relative):
+    """The condition must name a status function, or the OR inside it is unreachable (#1537).
+
+    GitHub combines a job's own ``if`` with an implicit ``success()`` over every entry in
+    ``needs`` **unless** the expression names one of ``always()``, ``cancelled()``,
+    ``failure()`` or ``success()``. Without one, the OR is evaluated only in runs where conda
+    already succeeded -- so a conda failure skipped ``finalise-release`` however true the OR
+    was. Releasing jointview v0.2.0 is the record of it: PyPI published, grayskull 404'd on
+    metadata that had not propagated, and the release was stranded as the draft
+    ``untagged-547fe31ec1ed6de3ef9b`` holding SBOM and provenance assets nobody could see.
+
+    ``test_finalise_release_includes_conda_signal`` cannot catch this, and that is the point
+    worth remembering: an ``if`` naming ``needs.conda.result`` reads as though it handles a
+    conda failure, and looks identical whether or not it can ever be reached.
+    """
+    condition = _finalise_condition(root, relative)
+    assert any(fn in condition for fn in ("cancelled()", "always()", "failure()")), (
+        f"{relative.as_posix()}: finalise-release's `if` is {condition!r}, which names no "
+        f"status function -- so GitHub adds an implicit success() over needs and a failed "
+        f"`conda` job skips the release finalisation regardless (#1537)."
+    )
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_finalise_release_is_not_unconditional(root, relative):
+    """``always()`` would finalise a release during a run somebody cancelled.
+
+    The counterpart to the test above, and why the fix is ``!cancelled()`` rather than the
+    more obvious ``always()``: a cancelled release run is the one case where publishing is
+    certainly not wanted, and ``always()`` ignores exactly that.
+    """
+    condition = _finalise_condition(root, relative)
+    assert "always()" not in condition, (
+        f"{relative.as_posix()}: finalise-release uses always(), so cancelling a release run "
+        f"still publishes the GitHub release. Use `!cancelled()`, which skips on cancellation "
+        f"but survives a failed conda job (#1537)."
+    )
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_conda_waits_for_pypi_metadata_to_propagate(root, relative):
+    """Grayskull must retry, because PyPI's index lags the upload it just accepted.
+
+    The other half of #1537, and the half that was already fixed before the issue was
+    revisited. A first release has no existing PyPI entry to fall back on, so grayskull 404s
+    on metadata that appears minutes later. Asserted because a retry loop is exactly the kind
+    of thing a later simplification removes as noise -- it reads as defensive clutter until
+    the release it protects is the one that fails.
+    """
+    workflow = yaml.safe_load((root / relative).read_text(encoding="utf-8"))
+    commands = "\n".join(_step_commands(workflow["jobs"]["conda"]))
+    lost_the_retry = (
+        f"{relative.as_posix()}: the conda job no longer retries grayskull. PyPI metadata for "
+        f"a just-published version can lag the upload by minutes, and a first release has "
+        f"nothing to fall back on (#1537)."
+    )
+    assert "MAX_ATTEMPTS" in commands, lost_the_retry
+    assert "sleep" in commands, lost_the_retry
