@@ -46,6 +46,14 @@ _BUNDLES = _ROOT / "bundles"
 # folder: both skip with the folder in the reason, so a wrong value is visible rather than
 # silent. They are listed to acknowledge them, which is what this set is for.
 #
+# That reasoning has since gone half stale for `paper_folder`, and
+# :func:`test_paper_folder_is_inside_the_docs_tree` is the correction. It held while `paper`
+# stood alone -- a skip names its folder, so a wrong value announces itself. rhiza-task 1.1.0
+# made `paper` a prerequisite of `book`, and the PDF reaches the site with no copy step: it is
+# published only because `paper_folder` sits inside `docs_dir` and mkdocs sweeps that tree.
+# Move it out and the paper still compiles, the task still reports ok, and the site simply
+# never gets the file. That half is silent, so it is asserted rather than acknowledged.
+#
 # ``docs_folder`` arrived with rhiza-task 1.1.0 and scopes the new ``docs-examples`` gate,
 # which executes the fenced examples in the docs tree. This repo does not run it: `all` does
 # not name it, and the fences here are checked by tests/docs/test_doc_consistency.py instead.
@@ -321,3 +329,28 @@ def test_interrogate_hook_and_gate_agree_on_the_threshold() -> None:
         assert table.get(flag) is True, (
             f"[tool.interrogate] must set {flag} = true to match the `--{flag}` the docs-coverage recipe passes."
         )
+
+
+def test_paper_folder_is_inside_the_docs_tree() -> None:
+    """``paper_folder`` must sit inside ``docs/``, or the compiled PDF is never published.
+
+    There is no copy step. ``book`` builds the paper, latexmk writes the PDF beside its source,
+    and the file reaches the site because mkdocs copies everything under ``docs_dir``. So the
+    publication depends entirely on where this setting points, and pointing it elsewhere fails
+    in the quietest possible way -- ``paper`` succeeds, ``book`` succeeds, and the artefact is
+    absent from the site with nothing reporting it.
+
+    ``docs`` is spelled out rather than resolved from mkdocs, for the reason rhiza-task spells
+    it out in the same place: ``docs_dir`` is mkdocs's setting, not one the CLI resolves, so
+    both ends assume the default and this test pins that assumption rather than hiding it.
+    """
+    paper = _cli_print("paper_folder")
+    assert paper, "paper_folder resolves to nothing, so `make paper` has no folder to search"
+
+    resolved = (_ROOT / paper).resolve()
+    docs = (_ROOT / "docs").resolve()
+    assert resolved.is_relative_to(docs), (
+        f"paper_folder resolves to {paper!r}, which is outside docs/. The book publishes the "
+        f"PDF only because mkdocs sweeps docs_dir -- from there it would compile, report ok, "
+        f"and never appear in the site."
+    )
