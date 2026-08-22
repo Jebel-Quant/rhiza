@@ -379,7 +379,7 @@ Run `make help` for a complete list of 40+ available targets.
 <summary>Show all available targets</summary>
 
 <!-- MAKE_HELP_START -->
-```
+```text
  task                section         needs                 does                 
  book                Book            test benchmark        build the companion  
                                      stress                book                 
