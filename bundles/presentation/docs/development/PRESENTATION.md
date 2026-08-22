@@ -83,8 +83,8 @@ A curated collection of **battle-tested templates** that:
 <div>
 
 ### 📚 Documentation
-- API docs with pdoc
-- Companion book with minibook
+- Docs site with MkDocs + zensical
+- API docs with mkdocstrings
 - Presentation slides with Marp
 - Interactive notebooks
 
@@ -122,34 +122,27 @@ A curated collection of **battle-tested templates** that:
 - `.github/workflows/` — GitHub Actions
 - Automated testing & releases
 - Documentation generation
-- Template synchronization
+- Security scanning (CodeQL, Scorecard)
 
 ---
 
 ## 🎯 Quick Start
 
-### 1. Automated Injection (Recommended)
+### 1. Install the plugin (once)
 
-```bash
-cd /path/to/your/project
-uvx rhiza .
+```text
+/plugin marketplace add Jebel-Quant/rhiza-claude
+/plugin install rhiza@rhiza-claude
 ```
 
-This creates `.github/template.yml` and syncs templates automatically.
+### 2. Adopt, in two pull requests
 
-### 2. Manual Integration
-
-```bash
-# Clone Rhiza
-git clone https://github.com/jebel-quant/rhiza.git /tmp/rhiza
-
-# Copy sync mechanism
-cp /tmp/rhiza/.github/template.yml .github/
-cp /tmp/rhiza/.rhiza/scripts/sync.sh .rhiza/scripts/
-
-# Sync templates
-./.rhiza/scripts/sync.sh
+```text
+/rhiza:init      # writes .rhiza/template.yml — the pointer. Merge it.
+/rhiza:update    # the first sync: the workflows, the Makefile, the rest
 ```
+
+`/rhiza:init` syncs nothing, so its PR looks almost empty — that is correct.
 
 ---
 
@@ -157,36 +150,33 @@ cp /tmp/rhiza/.rhiza/scripts/sync.sh .rhiza/scripts/
 
 Templates stay up-to-date with Rhiza's latest improvements:
 
-### Configuration: `.github/template.yml`
+### Configuration: `.rhiza/template.yml`
 
 ```yaml
-repository: Jebel-Quant/rhiza
-ref: v0.7.1
+repository: "Jebel-Quant/rhiza"
+ref: "v1.5.1"
 
-include: |
-  .github/workflows/*.yml
-  .pre-commit-config.yaml
-  ruff.toml
-  pytest.ini
+profiles:
+  - github-project
 
 exclude: |
-  .rhiza/scripts/customisations/*
+  docs/development/DOCKER.md
 ```
+
+A profile expands to its bundles; `exclude` opts out of individual files.
 
 ---
 
-## 🔄 Automated Sync Workflow
+## 🔄 Staying Current
 
-The `sync.yml` workflow keeps your project current:
+Syncing is a local command, not a scheduled job — nothing needs a write-scoped
+token on a timer:
 
-- 📅 Runs weekly (configurable)
-- 🔄 Fetches latest templates from Rhiza
-- 🔍 Applies only included files
-- 🎯 Respects exclude patterns
-- 📝 Creates pull request with changes
-- 🤖 Fully automated
-
-**Manual trigger**: GitHub Actions → "Sync Templates" → "Run workflow"
+- 🤖 Renovate opens a PR when the template's `ref` has a newer release
+- 🔄 `/rhiza:update` applies it: fetch the bundles, three-way merge, open the PR
+- 🔍 Only template-owned paths are staged — `.rhiza/template.lock` is the list
+- 🎯 `exclude` patterns and local edits both survive
+- 📋 `/rhiza:status --check` reports drift without changing anything
 
 ---
 
@@ -278,40 +268,40 @@ make workflow-status
 
 ## 🔧 Customization
 
-### Build Extras
+### Your own targets, in `local.mk`
 
-Create `.rhiza/scripts/customisations/build-extras.sh`:
+The `Makefile` is template-owned and `-include`s `local.mk`, which no sync
+touches. An explicit rule beats its `%:` catch-all, so shadowing extends a task:
 
-```bash
-#!/bin/bash
-set -euo pipefail
+```makefile
+# local.mk — committed
+install: $(UVX)
+	@sudo apt-get update && sudo apt-get install -y graphviz
+	@$(UVX) $(RHIZA_TASK) install
 
-# Install system dependencies
-sudo apt-get update
-sudo apt-get install -y graphviz
-
-# Your custom setup here
+train-model: ## Train the ML model
+	@uv run python scripts/train.py
 ```
 
-Runs during: `make install`, `make test`, `make book`
+Settings go in `pyproject.toml`'s `[tool.rhiza-task]` table.
 
 ---
 
 ## 🎨 Documentation Customization
 
-### API Documentation (pdoc)
+### The docs site (MkDocs + zensical)
 
-```bash
-mkdir -p book/pdoc-templates
-# Add custom Jinja2 templates
+Override anything from the base config in your own `mkdocs.yml`:
+
+```yaml
+INHERIT: docs/mkdocs-base.yml
+
+theme:
+  logo: assets/my-logo.png
 ```
 
-### Companion Book (minibook)
-
-```bash
-mkdir -p book/minibook-templates
-# Create custom.html.jinja2
-```
+API pages come from mkdocstrings; extra packages go in the
+`mkdocs-extra-packages` setting.
 
 ### Presentations (Marp)
 
@@ -503,8 +493,8 @@ classifiers = [
 - **Pytest** — Testing framework
 - **Marimo** — Interactive notebooks
 - **Marp** — This presentation!
-- **pdoc** — API documentation
-- **minibook** — Companion book
+- **MkDocs + zensical** — The docs site
+- **mkdocstrings** — API documentation
 
 ---
 
@@ -512,9 +502,9 @@ classifiers = [
 
 ### Three Simple Steps
 
-1. **Try it**: `uvx rhiza .` in your project
-2. **Review**: Check the generated `.github/template.yml`
-3. **Sync**: Run `./.rhiza/scripts/sync.sh`
+1. **Install**: `/plugin install rhiza@rhiza-claude` in Claude Code
+2. **Point**: `/rhiza:init` writes `.rhiza/template.yml` — review and merge
+3. **Sync**: `/rhiza:update` brings the template content in
 
 ### Or Explore First
 
@@ -546,8 +536,9 @@ make test
 ## 📋 Quick Reference Card
 
 ```bash
-# Setup
-uvx rhiza .                    # Auto-inject Rhiza
+# Setup (in Claude Code)
+# /rhiza:init                  # become rhiza-managed
+# /rhiza:update                # sync the template content
 
 # Development
 make install                   # Install dependencies

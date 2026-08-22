@@ -110,7 +110,7 @@ advance.
 | `.python-version` | Default Python version — single line, e.g. `3.13` |
 | `.rhiza/template.yml` | Sync configuration (repository, ref, profiles/bundles) |
 | `ruff.toml` | Linter/formatter configuration |
-| `local.mk` | Local Makefile customizations (not synced, auto-loaded) |
+| `local.mk` | This repo's own make targets — `-include`d by the `Makefile`, never synced, and committed (not gitignored) |
 
 ## Python Execution
 
@@ -135,34 +135,38 @@ uv build                   # Build distribution packages
 | CI | Push, Pull Request |
 | Release | Tag `v*` |
 | Security | Schedule, Push |
-| Sync | Manual |
+| Weekly maintenance | Schedule |
 
 ## Common Patterns
 
 ### Add a custom make target
 
-Add to your root `Makefile` (above the `include .rhiza/rhiza.mk` line):
+Add it to `local.mk` — the `Makefile` is template-owned, so anything appended there is
+overwritten by the next sync:
 ```makefile
-##@ Custom Tasks
 my-target: ## My custom task
 	@echo "Custom target"
 ```
+The `##` comment is what puts it in `make help`, under *Repo-owned targets*.
 
-### Extend a hook (root Makefile)
+### Extend a template task
 
-Add above the `include` line in your root `Makefile`:
+Shadow it in `local.mk` (see **Extending a Task** above) — there are no hook targets:
 ```makefile
-post-install::
+install: $(UVX)
+	@$(UVX) $(RHIZA_TASK) install
 	@echo "Additional setup after install"
 ```
 
-### Extend a hook (local only)
+### Change a setting
 
-Add to `local.mk` (not committed, not synced):
-```makefile
-post-install::
-	@echo "Local developer setup"
+```toml
+# pyproject.toml
+[tool.rhiza-task]
+coverage-fail-under = 80
 ```
+Or `RHIZA_COVERAGE_FAIL_UNDER=80 make test` for one run; `uvx rhiza-task print
+coverage-fail-under` shows what currently resolves.
 
 ### Skip CI on commit
 

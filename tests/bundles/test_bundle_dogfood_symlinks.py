@@ -16,7 +16,7 @@ a same-path bundle counterpart it asserts one of two states holds, and fails oth
 
 The failure that matters most is a byte-identical *plain-file duplicate* that is neither a
 carve-out nor a symlink: that means someone added a bundle file without running
-``make sync-self``, or a ``rhiza sync .`` re-materialised a copy — silently breaking the
+``make sync-self``, or a ``/rhiza:update`` re-materialised a copy — silently breaking the
 single-source-of-truth guarantee. The check is driven by the very same helpers the linker
 uses (:mod:`link_dogfood`), so the guard and the linker can never disagree about the rules.
 """
@@ -101,7 +101,7 @@ class TestDogfoodSymlinks:
         """Each non-carve-out dogfood path must be a symlink into a byte-identical bundle source.
 
         This is the drift catch: a real file here means a bundle twin was left un-linked
-        (add a file then forget ``make sync-self``, or a ``rhiza sync`` re-materialised a
+        (add a file then forget ``make sync-self``, or a ``/rhiza:update`` re-materialised a
         copy), silently forking the single source of truth.
         """
         link = _ROOT / rel

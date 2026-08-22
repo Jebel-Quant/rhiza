@@ -4,7 +4,9 @@ Date: 2024-05-01
 
 ## Status
 
-Accepted
+Accepted. Amended 2026-08-22: the engine half is now the `rhiza` Claude Code plugin
+rather than the `rhiza-cli` PyPI package — see **Amendment: the engine moved** at the end
+of this record. The decision this ADR made, content separated from engine, is unchanged.
 
 ## Context
 
@@ -82,3 +84,34 @@ CLI. The CLI is generic; the template content is specific.
 - **Distributed codebase**: Bugs that span both components (e.g., a sync issue caused
   by CLI logic interacting with a specific template structure) require debugging across
   two repositories.
+
+## Amendment: the engine moved (2026-08-22)
+
+`rhiza-cli` is unpublished and [its repository](https://github.com/Jebel-Quant/rhiza-cli)
+is archived. The engine role it filled belongs to
+[rhiza-claude](https://github.com/Jebel-Quant/rhiza-claude), a Claude Code plugin whose
+`/rhiza:update` reads `.rhiza/template.yml`, fetches the selected bundles at the pinned
+`ref`, three-way merges them into the working tree and records what arrived in
+`.rhiza/template.lock`. That sync is stdlib-only Python shipped inside the plugin, so
+there is no package to install and no `uvx rhiza` entry point at all.
+
+Every property the decision rests on survives the substitution, which is why this is an
+amendment and not a superseding ADR:
+
+- **Two components, versioned independently.** Template tags here, plugin releases there.
+- **Any repository can be the template.** `repository:` is still read from the consumer's
+  own config, so a variant is pointed at rather than forked into.
+- **Nothing of the engine is synced.** A plugin install is the modern form of the
+  no-persistent-installation property `uvx` provided.
+
+Two claims in the record above no longer hold as written:
+
+- **PyPI discoverability is gone**, because the engine is not a PyPI package. The four
+  operations went to three places: `init` and `sync` are `/rhiza:init` and
+  `/rhiza:update`; `bump` and `release` are `/rhiza:release` driving bump-my-version and
+  `rhiza_release.yml`; and the developer tasks that were never this CLI's — `install`,
+  `test`, every gate — are [rhiza-task](https://pypi.org/project/rhiza-task/), pinned as
+  `RHIZA_TASK` in the synced `Makefile`, with the conformance checks in
+  [pytest-rhiza](https://github.com/jebel-quant/pytest-rhiza).
+- **"Two repositories to follow" is now five.** The boundary held; it multiplied. The
+  README's companions table is the current map.

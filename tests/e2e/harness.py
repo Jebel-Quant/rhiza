@@ -10,7 +10,7 @@ test for it could only be written *after* someone ran the gate on a real project
 and watched it fail on the project's own module.
 
 This module closes that gap. For each layer it copies the bundles into a temp
-directory (standing in for a `rhiza-cli` sync), writes the smallest project the
+directory (standing in for a `/rhiza:update` sync), writes the smallest project the
 layer should be green on (see `scaffolds.py`), commits it, and runs `make install`.
 The test modules then drive one gate per test against that project, for real.
 
@@ -209,7 +209,7 @@ def _init_repo(project: Path, version: str) -> None:
 def _sync(root: Path, layer: Layer, project: Path) -> None:
     """Copy the layer's bundles into the project, dereferencing symlinks.
 
-    Mirrors what `rhiza-cli` does on a sync: bundle files land at the paths they
+    Mirrors what a sync does: bundle files land at the paths they
     declare, with dogfood symlinks resolved to real content.
 
     Args:

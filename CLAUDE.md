@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What is Rhiza?
 
-Rhiza is a **collection of reusable configuration templates** for Python projects — not a runtime library. It has no `src/` directory and no runtime dependencies. Its purpose is to provide and continuously synchronize development infrastructure (Makefiles, CI workflows, linting configs, test setups) into downstream projects via the separate `rhiza-cli` tool.
+Rhiza is a **collection of reusable configuration templates** for Python, Rust and Go projects — not a runtime library. It has no `src/` directory and no runtime dependencies. Its purpose is to provide and continuously synchronize development infrastructure (the `Makefile` front door, CI workflows, linting configs, test setups) into downstream projects. The sync is performed by the `rhiza` Claude Code plugin ([rhiza-claude](https://github.com/Jebel-Quant/rhiza-claude)) — `/rhiza:update`. The `rhiza-cli` package that used to do it is unpublished and its repository archived; nothing in this repo depends on it any more.
 
 Downstream projects adopt Rhiza by adding a `.rhiza/template.yml` that lists which bundles to sync from this repository.
 
@@ -89,14 +89,14 @@ The core abstraction is the **bundle** — a named group of configuration files.
 
 ### Dogfooding (root files ↔ bundle sources)
 
-Rhiza dogfoods its own templates: the files it ships in `bundles/<name>/...` also live at the repo root so the mother repo runs on its own infrastructure. `bundles/` is the **single source of truth**, and each root dogfood file is a **relative symlink into its owning bundle** (e.g. `.rhiza/rhiza.mk` → `bundles/core/.rhiza/rhiza.mk`). Edit the bundle file; the root reflects it automatically — no second edit. Run `make sync-self` (mother-repo-only, `utils/link_dogfood.py`) to (re)create links after adding a bundle file.
+Rhiza dogfoods its own templates: the files it ships in `bundles/<name>/...` also live at the repo root so the mother repo runs on its own infrastructure. `bundles/` is the **single source of truth**, and each root dogfood file is a **relative symlink into its owning bundle** (e.g. `Makefile` → `bundles/core/Makefile`). Edit the bundle file; the root reflects it automatically — no second edit. Run `make sync-self` (mother-repo-only, `utils/link_dogfood.py`) to (re)create links after adding a bundle file.
 
 A few files **cannot** be symlinks and stay as **real copies**, kept in sync by tests (`tests/bundles/test_bundle_*_sync.py`) rather than by symlink:
 
 - `.github/*` platform config (Dependabot, release notes, secret scanning, PR template, rulesets) — GitHub reads these blobs directly and does not resolve symlinks. **Live `.github/workflows/*` are also real** (Actions won't run a symlinked workflow) and differ from the bundle stubs by design. So does **`rulesets/main-branch-protection.json`**, and for a subtler reason (#1448): here `rhiza_ci.yml` has `push:`/`pull_request:` triggers, so its jobs run top-level and report bare check-run names, while downstream the `github-tests` stub delegates via `jobs.ci` and GitHub reports them as `ci / <job name>`. The bundle copy therefore prefixes all six required contexts; `tests/bundles/test_bundle_github_sync.py` pins that relationship, including the coupling to the stub's job id.
 - `.rhiza/.gitignore` (and any `.gitignore`/`.gitattributes`) — git opens these with `O_NOFOLLOW`, so a symlink yields an ELOOP warning and the rules are ignored.
 
-Plus intentional mother-repo overrides that deliberately diverge from their bundle source: root `.gitignore`, `.pre-commit-config.yaml`, `.python-version`, `SECURITY.md`, `renovate.json`. The exclusion list lives in `utils/link_dogfood.py`. Downstream consumers are unaffected: `rhiza-cli` sparse-checks-out a bundle and dereferences symlinks on copy, so synced projects always receive real files (guarded by `test_no_symlinks_in_*`).
+Plus intentional mother-repo overrides that deliberately diverge from their bundle source: root `.gitignore`, `.pre-commit-config.yaml`, `.python-version`, `SECURITY.md`, `renovate.json`. The exclusion list lives in `utils/link_dogfood.py`. Downstream consumers are unaffected: the sync checks out a bundle and dereferences symlinks on copy, so synced projects always receive real files (guarded by `test_no_symlinks_in_*`).
 
 **What guards the invariant in CI is `tests/bundles/test_bundle_dogfood_symlinks.py`, not `make sync-self-check`.** The test runs inside `make test` on every push and PR, and it reuses `link_dogfood`'s own carve-out predicate and bundle index, so the guard and the linker cannot disagree about the rules. `sync-self-check` is the *local* equivalent — the same `--check` pass, for running before you commit a new bundle file — and no workflow invokes it. It was described as "the CI drift guard" in four places until #1532, which is the kind of claim that stops anyone checking whether the real guard still exists.
 
@@ -249,11 +249,15 @@ worth knowing before moving anything there:
   repo's own `MKDOCS_EXTRA_PACKAGES` override made that trip: it sat above the include in the
   old root `Makefile`, was lost silently when the shim replaced that file, and is
   `mkdocs-extra-packages` in `pyproject.toml` now.
-- **It is Python-only.** `_from_pyproject` reads `pyproject.toml` and nothing else, so
-  `rust-core` and `go-core` have no equivalent — a crate has `Cargo.toml`, a Go module has
-  no manifest at all. Those layers are left with `.rhiza/.env` and an exported `RHIZA_*` in
-  `local.mk` until rhiza-task grows a language-neutral source — not the `Makefile`, which is
-  synced for them too.
+- **It is no longer Python-only.** It was: `_from_pyproject` read `pyproject.toml` and
+  nothing else, so `rust-core` and `go-core` had no equivalent — a crate has `Cargo.toml`, a
+  Go module has no manifest at all — and those layers were left with `.rhiza/.env` and an
+  exported `RHIZA_*` in `local.mk`. The pinned CLI reads a root **`rhiza.toml`** as well, in
+  either the `[tool.rhiza-task]` or a flat top-level form, which is the language-neutral
+  source that was missing. Where both files exist `pyproject.toml` wins, so a Python repo
+  cannot be surprised by one. Verified against the pin rather than read off a changelog:
+  `uvx rhiza-task print <setting>` in a directory holding only a `rhiza.toml` resolves from
+  it.
 
 `.rhiza/.env` itself stays supported and `rhiza.mk` still `-include`s it — what changed is
 that the file is now unambiguously **repo-owned**, which also resolves the standing
@@ -352,7 +356,7 @@ That is fast, runs everywhere, and catches a renamed target or a gate dropped fr
 it happily.
 
 `tests/e2e/` closes that gap. For each layer it copies the bundles into a temp
-directory (standing in for a `rhiza-cli` sync), writes the smallest project the layer
+directory (standing in for a `/rhiza:update` sync), writes the smallest project the layer
 should be green on (`tests/e2e/scaffolds.py`), commits it, and runs every gate for
 real — `install`, `test`, `coverage`, `typecheck`, `docs-coverage`, `security`,
 `license`, `deps`, `fmt` and the `all` aggregate. The failure mode it exists for is

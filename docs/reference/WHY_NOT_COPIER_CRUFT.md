@@ -129,7 +129,8 @@ are routine, because editing generated files is the expected workflow.
 ### 7. Fork-friendly without forking an engine
 
 Rhiza separates the template content from the sync engine
-([ADR-0005](../adr/0005-separate-rhiza-template-from-cli.md)): `rhiza-cli` is generic, and
+([ADR-0005](../adr/0005-separate-rhiza-template-from-cli.md)): the engine — the `rhiza`
+Claude Code plugin, since the `rhiza-cli` package retired — is generic, and
 `.rhiza/template.yml` can point at any repository. An organisation that wants its own variant
 forks this repository, adjusts files, and keeps pulling upstream improvements with ordinary
 `git merge` — because the files are verbatim, fork maintenance is plain git work, not Jinja

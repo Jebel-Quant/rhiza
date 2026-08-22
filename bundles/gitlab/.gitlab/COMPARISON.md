@@ -160,7 +160,7 @@ script:
 
 | Feature | GitHub Actions | GitLab CI |
 |---------|----------------|-----------|
-| Template sync | ✅ `rhiza sync` | ✅ `rhiza sync` |
+| Template sync | ✅ `/rhiza:update` (run locally) | ✅ `/rhiza:update` (run locally) |
 | PR/MR creation | ✅ Automatic | ⚠️ Manual (API call needed) |
 | Token requirement | PAT_TOKEN | PAT_TOKEN |
 | Scheduling | ✅ Cron syntax | ✅ Pipeline schedules |
