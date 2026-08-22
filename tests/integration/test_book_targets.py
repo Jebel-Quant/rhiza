@@ -77,3 +77,36 @@ def test_the_docs_folder_the_book_builds_from_exists() -> None:
     """
     assert (_ROOT / "mkdocs.yml").is_file(), "mkdocs.yml is missing, so `make book` has no config"
     assert (_ROOT / "docs").is_dir(), "docs/ is missing, so `make book` would build an empty site"
+
+
+def test_the_compiled_paper_is_reachable_from_the_book() -> None:
+    """A paper the book compiles must be linked from the nav, or nobody can find it.
+
+    ``book`` gained ``paper`` as a prerequisite in rhiza-task 1.1.0, and the PDF reaches the
+    site with no copy step at all -- ``paper_folder`` defaults to ``docs/paper``, which is
+    inside ``docs_dir``, so mkdocs sweeps it up as an asset. That is the whole mechanism, and
+    it has no opinion about whether anything *links* to the result.
+
+    So this repo spent a release compiling ``docs/paper/rhiza.tex``, publishing the PDF into
+    the built site, and referencing it from no nav entry in any mkdocs config. Every gate
+    passed: the paper task succeeded, the book built, and ``book-nav`` -- which exists to
+    catch a nav entry resolving to nothing -- had nothing to check, because nothing had been
+    claimed.
+
+    The two halves compose and neither is sufficient. This test says the paper is claimed;
+    ``book-nav`` says the claim resolves in the built site. Asserted against the nav *text*
+    rather than a built file, deliberately: the PDF only exists after ``make paper``, which
+    needs a LaTeX distribution, so requiring the artefact here would make this skip on every
+    machine without latexmk -- which is most of them, including CI's cheaper jobs.
+    """
+    tex = sorted((_ROOT / "docs" / "paper").glob("*.tex"))
+    if not tex:
+        pytest.skip("this repo ships no paper, so there is nothing for the book to link")
+
+    config = (_ROOT / "mkdocs.yml").read_text(encoding="utf-8")
+    unlinked = [t.stem for t in tex if f"paper/{t.stem}.pdf" not in config]
+    assert not unlinked, (
+        f"docs/paper/ holds {unlinked}, compiled by `book`'s `paper` prerequisite and published "
+        f"into the site as an asset, but no nav entry in mkdocs.yml points at "
+        f"paper/{unlinked[0]}.pdf. The build succeeds and the paper is unreachable."
+    )
