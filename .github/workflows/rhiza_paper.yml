@@ -37,8 +37,8 @@ permissions:
 jobs:
   build-pdf:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write   # Needed to push the compiled PDF to the paper branch
+    # No `contents: write`: the write scope existed solely for the retired branch push.
+    # The workflow-level `contents: read` above is all that compiling and uploading needs.
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -100,22 +100,29 @@ jobs:
           path: docs/paper/${{ steps.detect_tex.outputs.pdf_file }}
           retention-days: 30
 
-      - name: Push PDF to paper branch
+      # The PDF used to be pushed to an orphan `paper` branch as well. That step is gone
+      # (issue #1494): `refs/heads/paper` cannot coexist with `refs/heads/paper/anything`,
+      # so the push failed outright in any repository using the branch prefix a
+      # paper-writing team most naturally reaches for -- and it stayed broken after such a
+      # branch was merged, until it was also deleted.
+      #
+      # Renaming the target would have moved the collision rather than removed it, and
+      # would have broken every consumer just as thoroughly while leaving a stale PDF
+      # behind on the old branch. The branch is no longer needed either way: `book` gained
+      # `paper` as a prerequisite in rhiza-task 1.1.0 and `paper_folder` sits inside
+      # `docs_dir`, so the PDF ships as a site asset at a stable URL, guarded by
+      # `book-nav` plus test_the_compiled_paper_is_reachable_from_the_book. The run
+      # artifact above covers the ephemeral case.
+      - name: Note a lingering paper branch
         if: ${{ steps.check_tex.outputs.tex_present == 'true' && github.event_name != 'pull_request' }}
         run: |
-          pdf_file="${{ steps.detect_tex.outputs.pdf_file }}"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          cp "docs/paper/${pdf_file}" "/tmp/${pdf_file}"
-          git fetch origin paper 2>/dev/null || true
-          if git show-ref --verify --quiet refs/remotes/origin/paper; then
-            git checkout -b paper origin/paper
-          else
-            git checkout --orphan paper
-            git rm -rf --quiet . || true
-            git reset
+          # A branch this workflow used to write is now nobody's job to update. Say so
+          # rather than leaving it to rot: silence here is exactly how a consumer ends up
+          # linking a PDF that stopped changing without anything going red.
+          if git ls-remote --exit-code --heads origin refs/heads/paper >/dev/null 2>&1; then
+            msg="The 'paper' branch is no longer updated by this workflow (rhiza #1494)."
+            msg="${msg} The compiled PDF is published by the book instead, and by the run"
+            msg="${msg} artifact above. Delete the branch once nothing links to it:"
+            msg="${msg} git push origin --delete paper"
+            echo "::warning title=Stale paper branch::${msg}"
           fi
-          cp "/tmp/${pdf_file}" "${pdf_file}"
-          git add "${pdf_file}"
-          git diff --staged --quiet || git commit -m "Update ${pdf_file} [skip ci]"
-          git push origin paper
