@@ -325,9 +325,21 @@ class TestLayerPreCommitConfig:
     # Groups vocabulary shipped by rhiza.  Any group used in a layer config must
     # appear here; adding a new group requires updating this set too so the review
     # surface stays explicit.
-    _VALID_GROUPS: frozenset[str] = frozenset(
-        ["fast", "slow", "format", "lint", "security", "python", "rust", "go"]
-    )
+    #
+    # Two things a reader should know before relying on these.
+    #
+    # Nothing in this repository or its bundles passes `--group` or `--no-group` yet: the
+    # tags are the enabling half, and the profiles that would use them are a later step.
+    # That is not the usual rot risk -- a tag is data rather than a check, so it cannot
+    # report success while measuring nothing -- but it does mean the taxonomy is verified
+    # only by the three tests below, not by anything executing it.
+    #
+    # And `--no-group slow`, the advertised quick pass, drops *all* security coverage:
+    # bandit and betterleaks are the two `security` hooks and both are `slow`. That is
+    # what a quick pass means and it is opt-in per invocation, so it is a documented
+    # trade rather than a hole -- but `make fmt` remains the run that checks everything,
+    # and CI must never be narrowed to the quick subset.
+    _VALID_GROUPS: frozenset[str] = frozenset(["fast", "slow", "format", "lint", "security", "python", "rust", "go"])
 
     @pytest.mark.parametrize("layer", _LAYER_BUNDLES)
     def test_every_hook_carries_groups(self, root: Path, layer: str) -> None:
@@ -371,18 +383,30 @@ class TestLayerPreCommitConfig:
                     if g not in self._VALID_GROUPS:
                         unknown.append(f"{hook['id']}: {g!r}")
         assert not unknown, (
-            f"{layer}: hooks use group labels outside the defined vocabulary "
-            f"({sorted(self._VALID_GROUPS)}): {unknown}"
+            f"{layer}: hooks use group labels outside the defined vocabulary ({sorted(self._VALID_GROUPS)}): {unknown}"
         )
 
     @pytest.mark.parametrize("layer", _LAYER_BUNDLES)
     def test_every_hook_is_in_exactly_one_speed_group(self, root: Path, layer: str) -> None:
         """Every non-tripwire hook must be in ``fast`` or ``slow``, but not both.
 
-        ``--no-group slow`` is the idiomatic quick local pass.  A hook in neither group is
-        invisible to that filter; a hook in both is tagged inconsistently and always runs
-        under ``--no-group slow`` (because ``--no-group`` excludes hooks whose *only* groups
-        are the named ones, and ``fast`` keeps it in).
+        ``--no-group slow`` is the idiomatic quick local pass, and the two failure modes it
+        has are opposites -- which is the whole reason to reject both ends rather than just
+        requiring one of them.
+
+        Verified against prek 0.4.14 rather than reasoned about, because the interesting
+        case is counter-intuitive::
+
+            groups: ["fast", "lint"]   --no-group slow ->  runs
+            groups: ["slow", ...]      --no-group slow ->  skipped
+            (no groups at all)         --no-group slow ->  runs
+            groups: ["fast", "slow"]   --no-group slow ->  SKIPPED
+
+        So ``--no-group X`` excludes any hook *carrying* X, not merely one whose only group
+        is X. A hook in neither group is invisible to the filter and always runs -- noisy,
+        but safe. A hook in **both** is silently dropped from the quick pass, which is the
+        dangerous half: tag a security hook that way and it stops running in the pass people
+        actually use, with nothing in the output to say so.
         """
         bad = []
         for repo in _layer_precommit(root, layer)["repos"]:
