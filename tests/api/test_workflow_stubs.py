@@ -18,6 +18,7 @@ verify that:
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -321,3 +322,94 @@ class TestBenchmarkWorkflow:
         assert "workflow_call" in triggers or "workflow_call" in str(triggers), (
             "benchmark workflow must support workflow_call (reusable workflow pattern)"
         )
+
+
+class TestPaperWorkflow:
+    """The paper workflow must not write to the repository (#1494).
+
+    It used to push the compiled PDF to an orphan ``paper`` branch. Git refs are paths, so
+    ``refs/heads/paper`` cannot coexist with ``refs/heads/paper/anything`` -- and the push
+    therefore failed outright in any repository using the branch prefix a paper-writing team
+    reaches for first. Worse, it stayed broken after such a topic branch was merged, until
+    somebody also deleted it.
+
+    Renaming the target (the issue's first suggestion) would have moved the collision rather
+    than removed it, broken every consumer just as thoroughly, and left a stale PDF behind on
+    the old branch with nothing going red. The branch had also stopped being the only durable
+    home: ``book`` gained ``paper`` as a prerequisite in rhiza-task 1.1.0 and ``paper_folder``
+    sits inside ``docs_dir``, so the PDF ships as a site asset -- guarded by ``book-nav`` and
+    by ``test_the_compiled_paper_is_reachable_from_the_book``.
+
+    So the step is gone, and these assertions are about what must not come back.
+    """
+
+    @pytest.fixture
+    def paper_workflow_text(self, workflows_dir: Path) -> str:
+        """Return the paper workflow's raw text, or skip when it is not synced."""
+        path = workflows_dir / "rhiza_paper.yml"
+        if not path.exists():
+            pytest.skip("rhiza_paper.yml not found")
+        return path.read_text(encoding="utf-8")
+
+    def test_the_paper_workflow_pushes_to_no_branch(self, paper_workflow_text: str) -> None:
+        """No `git push` is *executed*: the PDF reaches consumers via the book and the artifact.
+
+        Asserted against the text rather than the parsed document because a `run:` block is an
+        opaque string to YAML -- the thing being forbidden is a shell command, so the shell is
+        what has to be read.
+
+        Matched on a line that *starts* a `git push`, not on any line mentioning one. A naive
+        substring search fails on this very workflow: the stale-branch warning tells the reader
+        to run `git push origin --delete paper`, which is the retired command named as advice
+        rather than run. Comments are skipped for the same reason.
+        """
+        offending = [
+            line.strip()
+            for line in paper_workflow_text.splitlines()
+            if re.match(r"^(?:[^#]*(?:&&|\|\||;)\s*)?git\s+push\b", line.strip())
+        ]
+        assert not offending, (
+            "the paper workflow pushes to a branch again: "
+            f"{offending}. A top-level ref collides with any `paper/<topic>` branch (#1494); "
+            "the PDF is published by the book as a site asset instead."
+        )
+
+    def test_the_paper_workflow_asks_for_no_write_scope(self, workflows_dir: Path) -> None:
+        """`contents: write` existed only for the retired push, so it must not be requested.
+
+        Checked at every level -- workflow and each job -- because a job-level grant would
+        reinstate the capability without touching the top of the file.
+        """
+        path = workflows_dir / "rhiza_paper.yml"
+        if not path.exists():
+            pytest.skip("rhiza_paper.yml not found")
+        doc = _load_workflow(path)
+
+        scopes = [doc.get("permissions") or {}]
+        scopes += [job.get("permissions") or {} for job in (doc.get("jobs") or {}).values()]
+        writers = [scope for scope in scopes if isinstance(scope, dict) and scope.get("contents") == "write"]
+        assert not writers, (
+            "the paper workflow requests `contents: write`, which it needed only for the "
+            "branch push retired in #1494. Compiling a PDF and uploading an artifact need "
+            "no write access to the repository."
+        )
+
+    def test_the_github_paper_stub_grants_no_write_scope(self, root: Path) -> None:
+        """The bundle stub must cap the reusable workflow at `contents: read`.
+
+        The stub is the half a consumer actually syncs, and it carries its own `permissions:`
+        block -- so the live workflow dropping the write scope proves nothing about them. The
+        two travel together: the same release that ships this stub also bumps its
+        `@vX.Y.Z` ref (`[[tool.bumpversion.files]]` globs `bundles/**/.github/workflows/*.yml`),
+        so a consumer never has a read-only stub pointing at a version that still pushes.
+        """
+        path = root / "bundles" / "github-paper" / ".github" / "workflows" / "rhiza_paper.yml"
+        assert path.is_file(), "the github-paper bundle ships no rhiza_paper.yml stub"
+        doc = _load_workflow(path)
+
+        for name, job in (doc.get("jobs") or {}).items():
+            scope = job.get("permissions") or {}
+            assert scope.get("contents") != "write", (
+                f"the github-paper stub grants `contents: write` to job '{name}'. That scope "
+                "existed only for the branch push retired in #1494."
+            )
