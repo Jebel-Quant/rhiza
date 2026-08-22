@@ -5,6 +5,45 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.5.0] - 2026-08-22
+
+### New Features
+- Stop offering mutation testing in the rhiza ecosystem (#1492) (#1600)
+- Enforce template ownership with check-managed-files in all three layers (#1462) (#1601)
+- Tag shipped hooks with prek groups for subset execution (#1602)
+
+### Bug Fixes
+- Revive two silently inert guards, and watch the pin that ages (#1585)
+- Stop a failed conda job stranding the GitHub release as a draft (#1591)
+- Link the compiled paper from the book, and guard the two ways it goes missing (#1598)
+- Stop rhiza_paper pushing to a paper branch, which no repo with a paper/* branch can do (#1494) (#1603)
+
+### Documentation
+- Drop the last marimushka mentions (#1575)
+
+### Dependencies
+- *(deps)* Update pre-commit hook astral-sh/ruff-pre-commit to v0.16.4 (#1592)
+- *(deps)* Batch the six open renovate updates (#1599)
+- *(deps)* Bump rhiza-hooks to v1.3.0, tagging the generated make-help fence (#1589) (#1604)
+
+### Maintenance
+- Retire the fuzzing workflow and the GitHub issue/discussion templates (#1568)
+- Remove the Docker-backed GitLab check and its make target (#1569)
+- Move the mother-repo targets to local.mk, closing the Makefile (#1571)
+- Retire the mutation workflow (#1572)
+- Ship the root .gitignore as core's (#1574)
+- Ship the Makefile front door as core's (#1576)
+- Bump pytest-rhiza to 0.3.0, and revive the pin's Renovate manager (#1579)
+- Bump rhiza-task to 1.1.0, and de-fragilise the tests that read it (#1580)
+- One reader for the task registry, with the control it was missing (#1586)
+- Enforce the two suite invariants that were holding by convention (#1590)
+
+### Other Changes
+- Delete bundles/github/.github/ISSUE_TEMPLATE directory (#1567)
+- Delete bundles/github/.github/DISCUSSION_TEMPLATE directory (#1566)
+- Update .gitignore to refine ignored files (#1570)
+- Refactor/close the shim (#1573)
+
 ## [1.4.2] - 2026-08-19
 
 ### Maintenance
