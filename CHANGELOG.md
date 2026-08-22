@@ -5,6 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.5.1] - 2026-08-22
+
+### Bug Fixes
+- *(ci)* Check out LFS content in the jobs that run project code (#1606)
+
 ## [1.5.0] - 2026-08-22
 
 ### New Features
