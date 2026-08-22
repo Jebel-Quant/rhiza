@@ -4,7 +4,9 @@ Date: 2026-05-02
 
 ## Status
 
-Accepted
+Accepted. Amended 2026-08-22: the engine that expands `profiles:` is the `rhiza` Claude
+Code plugin, not `rhiza-cli` — see the amendment at the end of this record. The
+template-side structure decided here is unchanged.
 
 ## Context
 
@@ -143,3 +145,17 @@ separate concern; this ADR covers the template repository structure and metadata
   resulting bundle list.
 - **Profile maintenance overhead**: Profiles must be kept current as bundles are added
   or renamed. Automated tests enforce that every bundle referenced in a profile exists.
+
+## Amendment: the engine that expands profiles (2026-08-22)
+
+Two places above name `rhiza-cli` as the consumer of this metadata: the *Decision*'s note
+that the CLI expands profiles to bundles, and the *CLI changes required* negative. The
+engine is [rhiza-claude](https://github.com/Jebel-Quant/rhiza-claude) now — `rhiza-cli` is
+unpublished and archived, see the amendment to
+[ADR-0005](0005-separate-rhiza-template-from-cli.md) — and that negative is discharged
+rather than inherited: `/rhiza:init` writes a `profiles:` key chosen from the repo's host
+and language, and `/rhiza:update` expands it, so nobody has to approximate local mode by
+hand-picking bundles.
+
+The `rhiza init` mention in the *Better onboarding* consequence reads `/rhiza:init` today.
+Nothing else about the layered model changed.

@@ -4,84 +4,48 @@ This guide covers how to extend and adapt Rhiza-based projects without breaking 
 
 ## Safe Extension Points
 
-Rhiza provides three extension mechanisms that survive every `/rhiza:update`. **Never edit files inside `.rhiza/` directly** — that directory is template-managed and will be overwritten on the next sync.
+Rhiza provides four extension mechanisms that survive every `/rhiza:update`. **Never edit template-managed files** — `.rhiza/`, the workflow stubs, and (since the make layer retired) the `Makefile` itself are overwritten on the next sync. `check-managed-files` refuses a commit that touches one, so this is enforced rather than merely advised.
 
 | Extension point | Where to add | Committed? | Use for |
 |-----------------|--------------|------------|---------|
-| Root `Makefile` hooks | Root `Makefile`, above `include .rhiza/rhiza.mk` | Yes | Team-wide hooks, custom make targets |
-| `local.mk` | Project root | No | Per-developer shortcuts and local overrides |
+| `local.mk` | Project root | Yes | Your own make targets, and extending a template task |
+| `[tool.rhiza-task]` | `pyproject.toml` | Yes | Settings — `source-folder`, `coverage-fail-under`, … |
 | `pyproject.toml` | Project root | Yes | Dependencies, scripts, tool configuration |
+| `.rhiza/.env` | Project root | No (gitignored) | Per-developer setting overrides |
 
-### `local.mk` — per-developer overrides
+### `local.mk` — the project's own targets
 
-`local.mk` is automatically loaded by `rhiza.mk` if it exists. It is listed in `.gitignore` and never synced. Use it for shortcuts that only make sense on your machine:
+The `Makefile` is template-owned and `-include`s `local.mk`, which no sync touches. It is deliberately **not** gitignored: commit it, because anything CI invokes has to be in the repository.
 
 ```makefile
-# local.mk — not committed
-post-install::
-	@echo "Hi $(USER), local setup done"
-
-my-shortcut: ## Shortcut I use locally
-	@uv run python -m my_debug_script
+# local.mk — committed
+train-model: ## Train the ML model
+	@uv run python scripts/train.py
 ```
 
-## 🛠️ Makefile Hooks & Extensions
+Targets carrying a `##` comment are listed by `make help` under *Repo-owned targets*, so they stay discoverable next to the template's tasks.
 
-Rhiza uses a modular Makefile system with extension points (hooks) that let you customize workflows without modifying core files.
+## 🛠️ Extending a Template Task
 
-**Important**: All customizations should be made in your root `Makefile`, not in `.rhiza/`. The `.rhiza/` directory is template-managed and will be overwritten during sync operations.
-
-### Available Hooks
-
-You can hook into standard workflows using double-colon syntax (`::`) in your root `Makefile`:
-
-- `pre-install / post-install` - Runs around `make install`
-- `pre-sync / post-sync` - Runs around repository synchronization
-- `pre-validate / post-validate` - Runs around validation checks
+The `pre-install::` / `post-install::` hooks the synced make layer anchored are **gone**: the tasks live in the pinned `rhiza-task` CLI, which knows nothing about make targets. The replacement is to **shadow** the target from `local.mk` — an explicit rule always beats the shim's `%:` catch-all, so the rule can call the task and then do the extra work.
 
 ### Example: Installing System Dependencies
 
-Add to your root `Makefile` (before the `include .rhiza/rhiza.mk` line):
-
 ```makefile
-pre-install::
+# local.mk
+install: $(UVX)
 	@if ! command -v dot >/dev/null 2>&1; then \
 		echo "Installing graphviz..."; \
 		sudo apt-get update && sudo apt-get install -y graphviz; \
 	fi
+	@$(UVX) $(RHIZA_TASK) install
 ```
 
-This hook runs automatically before `make install`, ensuring graphviz is available.
+`RHIZA_TASK` and `UVX` are defined by the `Makefile` above the `-include`, so a shadowing rule runs the same pinned CLI the rest of the project does — and naming `$(UVX)` as a prerequisite keeps the bootstrap that installs `uv` on a runner without one. Put the extra step before or after the delegation to get the old `pre-` or `post-` behaviour.
 
-### Example: Post-Sync Tasks
-
-Add to your root `Makefile`:
-
-```makefile
-post-sync::
-	@echo "Running post-sync tasks..."
-	@./scripts/notify-team.sh
-```
-
-This runs automatically after repository synchronization completes.
-
-> Releasing is not a `make` hook. Releases are driven by the rhiza-claude
-> `/release` command, which bumps the version, regenerates `CHANGELOG.md`, and
+> Releasing is not a `make` target at all. Releases are driven by the rhiza-claude
+> `/rhiza:release` command, which bumps the version, regenerates `CHANGELOG.md`, and
 > creates the tag locally; pushing the tag triggers the release workflow.
-
-### Example: Custom Build Steps
-
-Add to your root `Makefile`:
-
-```makefile
-post-install::
-	@echo "Installing specialized dependencies..."
-	@uv pip install some-private-lib
-
-##@ Custom Tasks
-train-model: ## Train the ML model
-	@uv run python scripts/train.py
-```
 
 ## 🔒 CodeQL Configuration
 
@@ -134,30 +98,30 @@ git commit -m "Remove CodeQL workflow"
 
 ## ⚙️ Configuration Variables
 
-You can configure certain aspects of the Makefile by overriding variables. These can be set in your main `Makefile` (before the `include` line), a `local.mk` file (for local developer overrides), or passed as environment variables / command-line arguments.
+Settings belong to the task runner, not to the `Makefile` — which is template-owned, so an assignment there would not survive a sync. `rhiza-task` resolves each one through five layers, later winning over earlier: its defaults, `.rhiza/.env`, `pyproject.toml`, the environment, then CLI flags.
 
-### Global Configuration
+### Project-wide configuration
 
-Add these to your root `Makefile` (before `include .rhiza/rhiza.mk`) or `local.mk`:
+A `[tool.rhiza-task]` table in `pyproject.toml`, typed by TOML rather than parsed out of strings:
 
-```makefile
-# Override default Python version
-PYTHON_VERSION = 3.12
-
-# Override test coverage threshold (default: 90)
-COVERAGE_FAIL_UNDER = 80
-
-# Include the Rhiza API (template-managed)
-include .rhiza/rhiza.mk
+```toml
+[tool.rhiza-task]
+source-folder = "src/my_package"
+coverage-fail-under = 80
 ```
+
+`uvx rhiza-task print coverage-fail-under` shows what a setting currently resolves to, which is the quickest way to tell whether an override is being read at all. A project with no Python manifest uses `.rhiza/.env`, or exports `RHIZA_*` from `local.mk` for anything that must be committed.
+
+### Per-developer configuration
+
+`.rhiza/.env` is gitignored and read as layer 2, so it is the place for values that should not travel with the repository.
 
 ### On-Demand Configuration
 
-You can also pass variables directly to `make` for one-off commands:
+Environment variables outrank both files, so a one-off looks like:
 
 ```bash
-# Run tests requiring only 80% coverage
-make test COVERAGE_FAIL_UNDER=80
+RHIZA_COVERAGE_FAIL_UNDER=80 make test
 ```
 
 ## 🎨 Documentation Customization

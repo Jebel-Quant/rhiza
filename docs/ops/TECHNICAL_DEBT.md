@@ -24,14 +24,18 @@ So: **file an issue.** Use this page only for context that has nowhere else to l
 
 ## Scope — what belongs here, and what does not
 
-Rhiza is a collection of configuration templates. The tool that *syncs* them into
-downstream projects is [`rhiza-cli`](https://github.com/Jebel-Quant/rhiza-cli), a
-separate repository ([ADR 0005](../adr/0005-separate-rhiza-template-from-cli.md)).
+Rhiza is a collection of configuration templates. Nothing here *acts* on them: the sync
+lives in [rhiza-claude](https://github.com/Jebel-Quant/rhiza-claude), the gates in
+[rhiza-task](https://github.com/Jebel-Quant/rhiza-task), the conformance checks in
+[pytest-rhiza](https://github.com/jebel-quant/pytest-rhiza), and the hooks in
+[rhiza-hooks](https://github.com/Jebel-Quant/rhiza-hooks) — the content/engine split of
+[ADR 0005](../adr/0005-separate-rhiza-template-from-cli.md), which outlived the `rhiza-cli`
+package that first implemented the engine half.
 
-Debt in sync behaviour — conflict resolution when a template update collides with local
-changes, sync performance on large repositories, pre-sync validation of a custom
-template — belongs to `rhiza-cli` and should be filed there. The previous version of
-this document tracked three such items against this repository, where no code
+So debt in sync behaviour — conflict resolution when a template update collides with local
+changes, sync performance on large repositories, pre-sync validation of a custom template —
+belongs to rhiza-claude, and debt in a gate's recipe belongs to rhiza-task. The previous
+version of this document tracked three such items against this repository, where no code
 implementing them exists.
 
 ## Current items
@@ -74,6 +78,6 @@ speculative work is a roadmap question, not debt.
 1. Open a GitHub issue describing the limitation and its impact.
 2. Label it `technical-debt`.
 3. If it concerns syncing rather than the templates themselves, file it against
-   `rhiza-cli` instead.
+   rhiza-claude instead — and a gate's behaviour against rhiza-task.
 4. Add a note here **only** if the item needs context that does not fit an issue — and
    link the issue, so the two cannot drift apart.

@@ -5,10 +5,13 @@ A comprehensive glossary of terms used in the Rhiza template system.
 ## Core Concepts
 
 ### rhiza (template repository)
-The GitHub repository (`jebel-quant/rhiza`) that contains the curated set of configuration files, Makefile modules, CI/CD workflows, and other tooling files that downstream projects sync from. This is the *content* — the files you receive. See also: [rhiza-cli](#rhiza-cli).
+The GitHub repository (`jebel-quant/rhiza`) that contains the curated set of configuration files, CI/CD workflow stubs, and other tooling files that downstream projects sync from. This is the *content* — the files you receive. See also: [rhiza-claude](#rhiza-claude), [rhiza-task](#rhiza-task).
 
-### rhiza-cli
-A standalone Python package (published on PyPI as `rhiza-cli`) that provides the `rhiza` command-line interface. It is the *engine* that reads `.rhiza/template.yml` and performs operations such as `init`, `sync`, `bump`, and `release`. Invoked via `uvx rhiza ...` without requiring a permanent installation. Versioned independently from the template repository. See also: [rhiza (template repository)](#rhiza-template-repository).
+### rhiza-claude
+The Claude Code plugin marketplace providing the `rhiza` plugin — the slash commands that drive a managed repo: `/rhiza:init`, `/rhiza:update`, `/rhiza:status`, `/rhiza:quality`, `/rhiza:docs`, `/rhiza:release`, `/rhiza:detach`. It is the *engine*: it reads `.rhiza/template.yml`, fetches the selected bundles and three-way merges them into the working tree, recording what arrived in `.rhiza/template.lock`. Its scripts are stdlib-only Python, so nothing is installed beyond the plugin itself. Versioned independently from the template repository. See also: [rhiza (template repository)](#rhiza-template-repository), [Template Sync](#template-sync).
+
+### rhiza-cli (retired)
+The former PyPI package that provided a `rhiza` command — `init`, `sync`, `bump`, `release` — invoked as `uvx rhiza ...`. The package is unpublished and [its repository](https://github.com/Jebel-Quant/rhiza-cli) is archived; the sync it performed now ships inside [rhiza-claude](#rhiza-claude). The separation of content from engine that [ADR-0005](../adr/0005-separate-rhiza-template-from-cli.md) chose is unchanged — only the engine moved. Listed here because the name still appears in older documents and changelog entries.
 
 ### Living Templates
 A template approach where configuration files remain synchronized with an upstream source over time, as opposed to traditional "one-shot" template generators (like cookiecutter or copier) that generate files once and then disconnect from the source.
@@ -84,6 +87,7 @@ flowchart LR
 
     python_core --> core
     rust_core --> core
+    go_core --> core
     github --> core
     gitlab --> core
     book --> core
@@ -125,7 +129,7 @@ flowchart LR
 ## Directory Structure
 
 ### `.rhiza/`
-The core directory containing Rhiza's template system files. This directory is synced from upstream and should generally not be modified directly.
+The core directory containing Rhiza's template system files. Synced from upstream, so its contents are overwritten by the next sync and should not be edited — with one exception: `.rhiza/.env` is repo-owned, read by [rhiza-task](#rhiza-task) as layer 2 of its settings order, and gitignored, so it holds developer-local values only.
 
 ### `rhiza-task`
 The pinned CLI that provides Rhiza's developer tasks — `install`, `test`, `typecheck`, `book`,
@@ -141,24 +145,21 @@ targets go in `local.mk`, which the shim `-include`s. It was repo-owned for one 
 by `uvx rhiza-task shim`; that subcommand was removed in rhiza-task 1.0.0.
 
 ### `.rhiza/template.yml`
-Configuration file defining which files to sync from upstream, include/exclude patterns, and sync behavior.
+The *pointer*: which template repository this project follows, at which `ref`, and which bundles or profiles it selects (plus any `include`/`exclude` patterns). Written by `/rhiza:init`, and the file Renovate bumps.
+
+### `.rhiza/template.lock`
+The *record*: what a sync actually delivered — repository, ref, commit SHA, timestamp, strategy, and every managed file. The pointer and the record answer different questions and can disagree, which is why `/rhiza:status` reports both, and why `/rhiza:update` stages precisely the recorded file list rather than everything that changed.
 
 ### `local.mk`
-Optional file for project-specific Makefile extensions. Not synced from upstream, allowing local customization without conflicts.
+The project's own make targets, `-include`d by the [shim](#makefile-the-shim) and never synced. Deliberately **not** gitignored: anything CI invokes has to be committed. This is where a repo's targets live now that the `Makefile` is template-owned.
 
 ## Makefile System
 
-### Double-Colon Targets (`::`)
-Make targets defined with `::` instead of `:`. These are "hook" targets that can be extended by downstream projects without overriding the original implementation.
-
-### Hook Targets
-Extension points in the Makefile system. Available hooks:
-- `pre-install::` / `post-install::` - Before/after dependency installation
-- `pre-sync::` / `post-sync::` - Before/after template sync
-- `pre-validate::` / `post-validate::` - Before/after project validation
-
 ### Make Target
-A named command in the Makefile (e.g., `make test`, `make fmt`). Rhiza provides 40+ targets out of the box.
+A named command reached through `make` (e.g., `make test`, `make fmt`). Rhiza provides 40+ of them out of the box, and nearly all are tasks of [rhiza-task](#rhiza-task) rather than rules in a file: the [shim](#makefile-the-shim) forwards every unmatched target to the pinned CLI.
+
+### Hook Targets (retired)
+The synced make layer anchored `pre-install::` / `post-install::` and similar double-colon no-ops, so a project could chain work onto a template target without overriding it. The CLI knows nothing about make targets, so those hooks are gone. The replacement is to **shadow** the target: an explicit rule in `local.mk` beats the shim's `%:` catch-all, so an `install:` rule there can call `uvx $(RHIZA_TASK) install` and then the extra step.
 
 ### `make doctor`
 A diagnostic target that validates required tools, checks versions, and reports environment issues. Run this first when something is wrong with your setup.
@@ -221,7 +222,7 @@ A security linter for Python code. Finds common security issues. Integrated in p
 GitHub's semantic code analysis engine. Scans for security vulnerabilities in Python code and GitHub Actions workflows.
 
 ### Marimo
-A reactive Python notebook format. Rhiza includes support for marimo notebooks in the `book/` directory.
+A reactive Python notebook format. Rhiza includes support for marimo notebooks; the `marimo` bundle keeps them in `docs/notebooks` (the `marimo-folder` setting), inside the docs tree so the book can publish them.
 
 ## Configuration Files
 
@@ -263,8 +264,8 @@ Continuous Integration workflow that runs tests on every push and pull request.
 ### Release Workflow
 Multi-phase workflow triggered by version tags. Builds packages, creates GitHub releases, publishes to PyPI, optionally generates a conda recipe with grayskull, and can publish devcontainer images.
 
-### Sync Workflow
-Workflow that synchronizes template files from upstream Rhiza repository.
+### Sync Workflow (retired)
+Syncing is no longer a CI job in either platform's bundle: `/rhiza:update` runs it from a developer's machine and opens the pull request, so nothing needs a write-scoped token on a schedule.
 
 ### Security Workflow
 Workflow running security scans (bandit, semgrep, CodeQL) on the codebase.

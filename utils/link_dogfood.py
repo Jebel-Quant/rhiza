@@ -14,9 +14,9 @@ Only root files that are byte-identical to exactly one bundle source are linked.
 Intentional mother-repo overrides (files that deliberately diverge from their bundle
 source) and root-only files are listed in ``_EXCLUDE`` and left untouched. The script
 is idempotent: correct symlinks are left as-is, and a copy that reappears (e.g. after
-a local ``rhiza sync .``) is re-linked.
+a local ``/rhiza:update``) is re-linked.
 
-It is mother-repo-only tooling. Downstream consumers never run it — ``rhiza sync``
+It is mother-repo-only tooling. Downstream consumers never run it — the sync
 resolves symlinks to real content, so synced projects only ever receive real files.
 
 Example:

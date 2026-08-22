@@ -273,13 +273,17 @@ _PROSE_GATE_EXEMPT = {"CHANGELOG.md"}
 
 # Words that follow a literal `make` without naming a target of this repository, and so
 # cannot be checked against the CLI. Each is a documented category, not a leak:
-#   - metasyntax: `make <target>` rendered without the angle brackets, and the mermaid node
-#     label `make commands`
+#   - metasyntax: `make <target>`/`make <targets>` rendered without the angle brackets, and
+#     the mermaid node label `make commands`
 #   - a package list: `apt-get install -y make git curl`
-#   - worked examples of a *consumer's* own targets, in the guide about adding them
-_MAKE_MENTION_EXEMPT = frozenset(
-    {"target", "targets", "variables", "commands", "git", "deploy", "deploy-dev", "deploy-prod", "deploy-staging"}
-)
+#
+# The `deploy`/`deploy-dev`/`deploy-staging`/`deploy-prod` and `variables` entries went when
+# EXTENDING_RHIZA.md was rewritten: they existed for that guide's worked examples of a
+# *consumer's* own targets, which is a category an exemption cannot distinguish from a stale
+# mention of a real target. The guide now shows such targets as makefile rules rather than as
+# `make <name>` invocations, so nothing needs excusing.
+# ``test_every_make_mention_exemption_is_still_needed`` keeps the list from re-accumulating.
+_MAKE_MENTION_EXEMPT = frozenset({"target", "targets", "commands", "git"})
 
 
 @functools.lru_cache(maxsize=1)
@@ -396,6 +400,27 @@ class TestProseDrift:
     def test_make_mentions_were_collected(self) -> None:
         """Guard against the make-mention scanner silently collecting nothing."""
         assert len(_make_mention_cases()) > 10, "expected CLAUDE.md/README.md to mention make targets"
+
+    @pytest.mark.parametrize("word", sorted(_MAKE_MENTION_EXEMPT))
+    def test_every_make_mention_exemption_is_still_needed(self, word: str) -> None:
+        """Each exempt word must actually appear after `make` in some doc's code region.
+
+        An exemption outlives the text it was written for -- five of them did, for worked
+        examples that a rewrite removed -- and each one that lingers is a real target name the
+        drift check can no longer see. `make deploy` was excused here while `deploy` was also
+        a plausible task name, so a doc promising it would have passed.
+        """
+        found = {
+            match.group(1)
+            for doc in _markdown_files()
+            if doc.name not in _PROSE_GATE_EXEMPT
+            for region in _CODE_REGION_RE.findall(doc.read_text(encoding="utf-8", errors="replace"))
+            for match in _MAKE_MENTION_RE.finditer(region)
+        }
+        assert word in found, (
+            f"'{word}' is exempt from the make-mention check but no document uses it -- "
+            "remove it from _MAKE_MENTION_EXEMPT rather than leaving a real target name unchecked"
+        )
 
     def test_the_cli_half_of_the_target_set_was_collected(self) -> None:
         """The other side of the comparison needs a control too (#1584).
