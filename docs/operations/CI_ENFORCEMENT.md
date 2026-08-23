@@ -28,14 +28,16 @@ was unset in this repo and, as far as we can tell, in every consumer — so the 
 path ran nowhere while carrying badge publishing, a Pages deploy and two test
 modules.
 
-The gate behind it went too. This page used to say `make mutation` still worked
+The gate behind it went too. This page used to say the `mutation` target still worked
 locally for anyone who wanted it, and that was **false**: mutmut 3 removed
 `--paths-to-mutate`, `--tests-dir` and the `html` subcommand, and the recipe
 installed mutmut unpinned, so the target had been failing immediately in every
 consumer since the day mutmut 3 was released (#1492). Nothing caught it, because
 nothing ran it — which is exactly what removing the workflow had established. Rhiza
-no longer offers mutation testing at all; removing the task from the pinned CLI is
-Jebel-Quant/rhiza-task#135.
+no longer offers mutation testing at all. The task was removed from the CLI in
+rhiza-task v1.2.0 (Jebel-Quant/rhiza-task#135) and this repo's pin reached it at
+v1.3.1, so asking the shim for `mutation` now exits with the CLI's unknown-task error
+rather than failing inside a broken recipe.
 
 ## Report-only (monitoring) workflows
 
