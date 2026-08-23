@@ -16,6 +16,7 @@
 #   - 📖 Build documentation site via zensical
 #   - 🧪 Run tests and generate coverage reports
 #   - 🚀 Deploy combined documentation to GitHub Pages
+#   - 📄 Publish the compiled paper to the `paper` branch (default branch only)
 
 name: "(RHIZA) BOOK"
 
@@ -32,6 +33,9 @@ jobs:
     uses: jebel-quant/rhiza/.github/workflows/rhiza_book.yml@v1.5.1
     secrets: inherit
     permissions:
-      contents: read
+      # `write` for the paper-branch job only: a called workflow cannot exceed what the
+      # caller grants, and that job force-pushes the compiled PDF to `paper`. The build
+      # and deploy jobs inside the reusable workflow keep `contents: read`.
+      contents: write
       pages: write
       id-token: write

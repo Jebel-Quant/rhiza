@@ -413,3 +413,77 @@ class TestPaperWorkflow:
                 f"the github-paper stub grants `contents: write` to job '{name}'. That scope "
                 "existed only for the branch push retired in #1494."
             )
+
+
+class TestBookPublishesThePaper:
+    """The book compiles the paper and publishes it to an otherwise empty `paper` branch.
+
+    The three properties tested here are the ones that made the previous attempt at this
+    (retired in #1494) fail, or would let it fail silently again: that a TeX distribution is
+    actually present so the PDF exists, that the ref collision is handled rather than fatal,
+    and that the write scope is confined to the job that needs it.
+    """
+
+    @pytest.fixture
+    def book_workflow(self, workflows_dir: Path) -> dict:
+        """The reusable book workflow document."""
+        path = workflows_dir / "rhiza_book.yml"
+        if not path.exists():
+            pytest.skip("rhiza_book.yml not found")
+        return _load_workflow(path)
+
+    @pytest.fixture
+    def book_workflow_text(self, workflows_dir: Path) -> str:
+        """The reusable book workflow as text, for assertions about its shell steps."""
+        path = workflows_dir / "rhiza_book.yml"
+        if not path.exists():
+            pytest.skip("rhiza_book.yml not found")
+        return path.read_text(encoding="utf-8")
+
+    def test_the_book_installs_latexmk(self, book_workflow_text: str) -> None:
+        """Without latexmk the `paper` prerequisite skips and no PDF is ever written.
+
+        A skipped prerequisite does not block its dependent, so the book kept building and
+        the site shipped the paper's source beside a 404. That is invisible to every other
+        gate, which is why it is asserted here rather than left to a reviewer.
+        """
+        assert "latexmk" in book_workflow_text, (
+            "the book workflow installs no latexmk, so `rhiza-task book` will skip its "
+            "`paper` prerequisite and publish a site with no PDF in it"
+        )
+
+    def test_only_the_paper_branch_job_may_write(self, book_workflow: dict) -> None:
+        """`contents: write` is confined to the job that force-pushes the branch."""
+        jobs = book_workflow.get("jobs") or {}
+        writers = {name for name, job in jobs.items() if (job.get("permissions") or {}).get("contents") == "write"}
+        assert writers == {"paper-branch"}, (
+            f"jobs holding `contents: write`: {sorted(writers)}. Only `paper-branch` should: "
+            "the build job runs project code and the deploy job holds `pages: write`, and "
+            "neither needs to be able to rewrite a ref."
+        )
+
+    def test_the_paper_branch_job_publishes_only_from_the_default_branch(self, book_workflow: dict) -> None:
+        """A feature branch must not overwrite the published PDF."""
+        job = (book_workflow.get("jobs") or {}).get("paper-branch")
+        assert job, "rhiza_book.yml declares no `paper-branch` job"
+        condition = str(job.get("if") or "")
+        assert "default_branch" in condition, (
+            f"the paper-branch job's condition is {condition!r}; it must publish only from "
+            "the repository's default branch, or a feature branch overwrites the published PDF"
+        )
+        assert "fork" in condition, (
+            f"the paper-branch job's condition is {condition!r}; it must never publish from a fork"
+        )
+
+    def test_the_paper_branch_job_handles_the_ref_collision(self, book_workflow_text: str) -> None:
+        """#1494's failure mode must degrade to a warning, not a failed run.
+
+        `refs/heads/paper` cannot coexist with any `refs/heads/paper/<topic>`. The previous
+        implementation discovered that by failing the push, in exactly the repositories most
+        likely to open such a branch. Detecting it first is the whole reason this is allowed
+        back, so the check is pinned by a test.
+        """
+        assert "refs/heads/paper/*" in book_workflow_text, (
+            "the paper-branch job does not check for a colliding `paper/<topic>` branch "
+            "before pushing (#1494); without it the push fails and takes the run with it"
+        )

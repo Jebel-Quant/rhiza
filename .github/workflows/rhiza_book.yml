@@ -16,6 +16,7 @@
 #   - 📖 Build documentation site via zensical
 #   - 🧪 Run tests and generate coverage reports
 #   - 🚀 Deploy combined documentation to GitHub Pages
+#   - 📄 Publish the compiled paper to an otherwise empty `paper` branch
 
 name: "(RHIZA) BOOK"
 
@@ -55,6 +56,11 @@ jobs:
     permissions:
       contents: read
 
+    # Lets `paper-branch` be skipped outright in a repository with no paper, rather than
+    # spinning up a runner to discover there is nothing to publish.
+    outputs:
+      tex_present: ${{ steps.check_tex.outputs.tex_present }}
+
     steps:
       # Check out the repository code
       - name: Harden the runner (Audit all outbound calls)
@@ -84,6 +90,33 @@ jobs:
           # will just use .python-version?
           uv sync --all-extras --all-groups --frozen
 
+      # `rhiza-task book` gets the paper's PDF by running `paper`, which is guarded on
+      # `latexmk`. With no TeX distribution here that guard *skips* -- and a skipped
+      # prerequisite does not block its dependent -- so the book built happily while
+      # `docs/paper/main.pdf` was never written. The site then shipped the paper's
+      # source next to a 404 where the PDF should be, green the whole way. Installed
+      # only when there is a paper to compile, so a repository without one pays a
+      # single `compgen` test. The path mirrors `rhiza_paper.yml`'s own guard; a repo
+      # that moves `paper-folder` elsewhere is not covered by either.
+      - name: Detect docs/paper/*.tex presence
+        id: check_tex
+        run: |
+          if compgen -G "docs/paper/*.tex" > /dev/null 2>&1; then
+            echo "tex_present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "tex_present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install TeX Live
+        if: ${{ steps.check_tex.outputs.tex_present == 'true' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-bibtex-extra \
+            latexmk
+
       - name: Cache MkDocs plugin cache
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
         with:
@@ -111,12 +144,104 @@ jobs:
           path: _book/
           retention-days: 30
 
+      # Handed to the `paper-branch` job below, which runs with `contents: write` and
+      # must not also hold this job's build environment. One day of retention: it is a
+      # hand-off inside one run, not a published artifact -- the book's own artifact
+      # above already carries a copy of the PDF for anyone who wants to download it.
+      - name: Upload the compiled paper for publication
+        if: ${{ steps.check_tex.outputs.tex_present == 'true' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: paper-pdf
+          path: docs/paper/*.pdf
+          if-no-files-found: warn
+          retention-days: 1
+
       # Package the site as a Pages artifact so the deploy job can publish it.
       # Uploading on every commit is cheap; only the deploy job ever consumes it.
       - name: Upload static files as artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: _book/  # Path to the directory containing all artifacts to deploy
+
+  # Publish the compiled paper to an otherwise empty `paper` branch, from the default
+  # branch only and never from a fork.
+  #
+  # This restores a push that rhiza #1494 removed, and the reason it was removed still
+  # applies: git refs are paths, so `refs/heads/paper` cannot exist while any
+  # `refs/heads/paper/<topic>` does. The mitigation is that the collision is now
+  # *detected* rather than fatal -- a repository with such a branch gets a warning
+  # naming the problem and the book still deploys, where previously the push failed and
+  # took the run with it. The branch is a single orphan commit, force-pushed, so it
+  # never accumulates binary history.
+  #
+  # Its own job, so `build` keeps `contents: read`: the scope that can rewrite a branch
+  # is held only by a job that checks nothing out and runs no project code.
+  paper-branch:
+    needs: build
+    if: >-
+      ${{ needs.build.outputs.tex_present == 'true'
+          && github.ref_name == github.event.repository.default_branch
+          && !github.event.repository.fork }}
+    runs-on: "ubuntu-latest"
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        with:
+          egress-policy: audit
+
+      - name: Download the compiled paper
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: paper-pdf
+          path: paper-pdf
+
+      # `tex_present` gates the job, so a paper is expected here -- but latexmk can still
+      # have failed to produce a PDF, and that must not turn the book red. Reported as a
+      # notice: the compile failure itself is already visible in the build job's log.
+      - name: Publish to the paper branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if [ ! -d paper-pdf ] || [ -z "$(find paper-pdf -name '*.pdf' -print -quit)" ]; then
+            echo "::notice title=No paper to publish::this run compiled no PDF; nothing pushed"
+            exit 0
+          fi
+
+          REMOTE="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}"
+
+          # rhiza #1494: `refs/heads/paper` and `refs/heads/paper/<topic>` cannot coexist.
+          # Warn and stop rather than letting the push fail the workflow -- that failure
+          # mode, in exactly the repositories most likely to open a `paper/...` branch, is
+          # why the push was removed in the first place.
+          if git ls-remote --heads "$REMOTE" 'refs/heads/paper/*' | grep -q .; then
+            msg="A 'paper/<topic>' branch exists, so refs/heads/paper cannot be created"
+            msg="${msg} (rhiza #1494). The PDF is still in the book and in this run's"
+            msg="${msg} artifact. Rename or delete that branch to enable publishing."
+            echo "::warning title=paper branch not updated::${msg}"
+            exit 0
+          fi
+
+          WORK="$(mktemp -d)"
+          find paper-pdf -name '*.pdf' -exec cp {} "$WORK/" \;
+
+          cd "$WORK"
+          git init -q -b paper
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- '*.pdf'
+          git commit -q -m "docs: publish the compiled paper from ${GITHUB_SHA:0:7}"
+          git push -q --force "$REMOTE" paper
+
+          published=""
+          for pdf in ./*.pdf; do published="${published}$(basename "$pdf") "; done
+          echo "Published ${published}to the 'paper' branch" >> "$GITHUB_STEP_SUMMARY"
 
   # Publish to GitHub Pages only from the default branch, and never from a fork.
   # Referencing the github-pages environment here (not in build) keeps the build
