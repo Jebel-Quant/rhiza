@@ -316,7 +316,7 @@ Run `make help` for a complete list of 40+ available targets.
                                                            the release workflow 
  paper               Paper                                 compile the LaTeX    
                                                            paper to PDF         
- paper-clean         Paper                                 remove the latexmk   
+ paper-clean         Paper                                 remove the LaTeX     
                                                            build artifacts      
  presentation        Presentation                          generate the HTML    
                                                            slides with Marp     
@@ -372,8 +372,6 @@ Run `make help` for a complete list of 40+ available targets.
                                                            benchmarks           
  hypothesis-test     Testing extras  install               run the              
                                                            property-based tests 
- mutation            Testing extras  install               run mutation testing 
-                                                           with mutmut          
  stress              Testing extras  install               run the stress and   
                                                            load tests           
 
