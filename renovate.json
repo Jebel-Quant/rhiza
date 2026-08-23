@@ -12,6 +12,7 @@
   "enabledManagers": [
     "pep621",
     "pre-commit",
+    "github-actions",
     "gitlabci",
     "devcontainer",
     "dockerfile",
@@ -39,6 +40,26 @@
         "jebel-quant/rhiza"
       ],
       "automerge": false
+    },
+    {
+      "description": "The live workflows stay Dependabot's, so Renovate does not open a second PR for the same bump. `managerFilePatterns` above is merged with the manager's defaults rather than replacing them, so this is the half that actually draws the line.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchFileNames": [
+        ".github/workflows/**"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "rhiza's own reusable workflows are not a dependency to bump: `[[tool.bumpversion.files]]` rewrites `@vX.Y.Z` across the bundle stubs on every release, so a Renovate PR here would fight the release and pin consumers to a tag ahead of the template they synced.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchPackageNames": [
+        "jebel-quant/rhiza"
+      ],
+      "enabled": false
     }
   ],
   "customManagers": [
@@ -78,5 +99,11 @@
       "depNameTemplate": "rhiza-task",
       "datasourceTemplate": "pypi"
     }
-  ]
+  ],
+  "github-actions": {
+    "description": "The action pins in the workflows rhiza *ships*. The manager's default file patterns are anchored at the repository root (`^\\.github/workflows/`), so nothing matched `bundles/*/.github/workflows/*.yml` and those pins only aged -- `actions/checkout` sat at v6.0.2 while the live copies were three releases ahead (#1610). Dependabot could not cover them either: its `github-actions` ecosystem reads `.github/workflows` under the configured directory and nothing else.",
+    "managerFilePatterns": [
+      "/^bundles/[^/]+/\\.github/workflows/[^/]+\\.ya?ml$/"
+    ]
+  }
 }

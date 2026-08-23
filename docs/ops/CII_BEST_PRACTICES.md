@@ -45,7 +45,7 @@ to the evidence that already exists in rhiza, so the questionnaire is mostly cop
 | Contribution guide | `CONTRIBUTING.md` |
 | Code review of changes | Branch-protection ruleset (`docs/ops/BRANCH_PROTECTION.md`) |
 | Continuous integration | GitHub Actions + GitLab CI |
-| Supply-chain hardening | SHA-pinned actions, OpenSSF Scorecard workflow |
+| Supply-chain hardening | SHA-pinned actions — in the workflows rhiza runs *and* the ones it ships (#1611) — plus runner hardening (`step-security/harden-runner`, audit mode) on every job here, and the OpenSSF Scorecard workflow |
 
 ## Related
 
