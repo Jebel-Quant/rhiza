@@ -277,6 +277,41 @@ and `stress`, each needing its own tool and folder convention, and none named by
 `cargo nextest` and `go test` need no configuration, so such a bundle would own nothing
 at all.
 
+**The benchmark gate measures something here now, and both halves of why it did not are
+worth knowing.** `rhiza_benchmark.yml` runs `benchmark` on every push to `main`, and the
+task's guard globs `tests_folder` for `benchmarks/*.py` — so with no `tests/benchmarks/`
+in this repo it printed `skipped  benchmark  no benchmarks folder`, exited 0, and wrote a
+duration into the step summary for a run that measured nothing. Same silent-green shape as
+#1505, #1511, #1516 and #1535, reached through an absent folder.
+`tests/benchmarks/test_dogfood_linker.py` fills it, and deliberately not with the bundle's
+blueprint: those placeholders time string concatenation and `dict` insertion, so a
+regression in them would be a story about CPython. What it times instead is
+`utils/link_dogfood.py` — the index walk over `bundles/`, the carve-out predicate, and the
+classification pass — the only code here whose cost grows with the template. Each
+benchmark asserts the size of its own workload, because an input that narrows to nothing
+gets *faster*, and faster reads as an improvement in the very report meant to catch
+regressions.
+
+The second half is that the `benchmarks` bundle's `conftest.py` broke the gate it ships
+with, in every consumer. It defined `pytest_html_report_title` while `benchmark` injects
+only `pytest-benchmark` and `pygal` — it writes a histogram and a JSON file, not an HTML
+report — and pluggy validates hook *names* at collection, so pytest raised
+`PluginValidationError: unknown hook` as an INTERNALERROR and exited 3 before collecting a
+thing. `make book` went with it, since `book` needs `benchmark`. Two things hid it: the
+`test` gate passes `--ignore=$(tests_folder)/benchmarks`, so the file is never collected by
+the gate everything else runs, and the mother repo had no benchmarks folder, so dogfooding
+never reached it either. The fix keeps the path rather than deleting the file — a sync that
+stops delivering a file does not remove a consumer's copy, so overwriting it is what
+repairs a repo that already has the broken one. `test_bundle_combinations.py`'s
+`test_the_synced_scaffolding_declares_no_hook_the_gate_cannot_provide` asserts the rule and
+not that one name, deriving pytest's own hookspec list rather than restating it.
+
+A related trap for anyone adding to `tests/benchmarks/`: **do not reuse the bundle's
+filenames.** `conftest.py` and `test_benchmarks.py` are paths the `benchmarks` bundle
+claims, and a root file whose path has a bundle twin must be a symlink into it
+(`test_bundle_dogfood_symlinks.py`). A same-path copy that merely diverges is classified as
+an undeclared mother-repo override and left alone — silently.
+
 **Mutation testing is not part of the ecosystem, and that is now a decision rather than
 an omission (#1492).** `mutation` was a fourth extra, and it had been broken in every
 consumer since mutmut 3 shipped: the recipe passed `--paths-to-mutate` and `--tests-dir`
