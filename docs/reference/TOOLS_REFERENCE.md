@@ -684,7 +684,8 @@ PYTHON_VERSION = 3.12
 
 ### General
 
-- **Always use `make` targets when available** (they include hooks and validation)
+- **Always use `make` targets when available** (they resolve to the pinned CLI, so everyone
+  runs the same gate)
 - **Always use `uv run` for Python commands** (never call `.venv/bin/python` directly)
 - **Use `DRY_RUN=1` for safe previews** of releases and bumps
 - **Run `make fmt` before every commit** to maintain code quality
@@ -694,9 +695,9 @@ PYTHON_VERSION = 3.12
 ### Development
 
 - Use `git --no-pager` commands in scripts to avoid interactive pagers
-- Create `local.mk` for personal shortcuts (it's gitignored)
-- Use hooks (`post-install::`, etc.) for custom setup steps
-- Keep the root `Makefile` small and focused
+- Put your own targets in `local.mk` — committed, and `-include`d by the `Makefile`
+- Wrap a task by shadowing its name in `local.mk`: an explicit rule beats the `%:` catch-all
+- Never edit the `Makefile` — `core` ships it, and the next sync overwrites it
 
 ### Dependencies
 

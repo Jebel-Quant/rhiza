@@ -21,11 +21,44 @@ import subprocess  # nosec B404
 from pathlib import Path
 
 import pytest
+import yaml
 
 from tests.registry import require as require_registry
 from tests.registry import resolves
 
 _ROOT = Path(__file__).resolve().parents[2]
+_DOCS = _ROOT / "docs"
+
+# Pages deliberately outside the nav, each with the reason it is unreachable on purpose.
+# Empty is the expected state: a page nobody can navigate to is a page nobody reads, and
+# `test_every_nav_exclusion_is_still_needed` makes an entry here cost an explanation that
+# stops being true the moment somebody links the page.
+_NOT_IN_THE_NAV: dict[str, str] = {}
+
+
+def _nav_pages() -> set[str]:
+    """Return every docs-relative path the nav in ``mkdocs.yml`` points at.
+
+    Returns:
+        The string leaves of the ``nav:`` tree -- ``guides/DEMO.md``, ``paper/rhiza.pdf`` --
+        with section titles and nesting flattened away.
+    """
+    nav = yaml.safe_load((_ROOT / "mkdocs.yml").read_text(encoding="utf-8")).get("nav", [])
+    pages: set[str] = set()
+
+    def walk(node: object) -> None:
+        """Add every string leaf of ``node`` to ``pages``."""
+        if isinstance(node, str):
+            pages.add(node)
+        elif isinstance(node, list):
+            for item in node:
+                walk(item)
+        elif isinstance(node, dict):
+            for value in node.values():
+                walk(value)
+
+    walk(nav)
+    return pages
 
 
 @pytest.mark.parametrize("target", ["book", "serve"])
@@ -110,3 +143,49 @@ def test_the_compiled_paper_is_reachable_from_the_book() -> None:
         f"into the site as an asset, but no nav entry in mkdocs.yml points at "
         f"paper/{unlinked[0]}.pdf. The build succeeds and the paper is unreachable."
     )
+
+
+def test_every_docs_page_is_reachable_from_the_nav() -> None:
+    """A page the book publishes must be linked from the nav, or nobody can find it.
+
+    The general case of :func:`test_the_compiled_paper_is_reachable_from_the_book`, and it
+    was failing for four pages when it was written (#1612): ``guides/CUSTOMIZATION.md`` and
+    ``troubleshooting.md`` -- both edited that same week -- plus
+    ``operations/CI_PERFORMANCE.md`` and ``presentations/README.md``.
+
+    mkdocs builds every markdown file under ``docs_dir`` whether the nav claims it or not, so
+    an unlinked page is published and unreachable rather than missing. Nothing caught it from
+    either side: ``book-nav`` checks that each nav *entry* resolves in the built site, which is
+    this property in the other direction and passes vacuously on a page no entry mentions.
+
+    Asserted against ``mkdocs.yml`` rather than the built site, for the reason the paper test
+    gives: building needs zensical and the paper needs latexmk, so reading the config keeps
+    this honest on a machine that has neither.
+    """
+    linked = _nav_pages()
+    orphans = sorted(
+        rel
+        for rel in (str(p.relative_to(_DOCS)) for p in _DOCS.rglob("*.md"))
+        if rel not in linked and rel not in _NOT_IN_THE_NAV
+    )
+    assert not orphans, (
+        f"docs/ holds {orphans}, which mkdocs publishes but no nav entry in mkdocs.yml points "
+        f"at. Add a nav entry, delete the page, or record it in _NOT_IN_THE_NAV with the "
+        f"reason it is unreachable on purpose."
+    )
+
+
+def test_every_nav_exclusion_is_still_needed() -> None:
+    """Each exclusion must name a page that exists and is still absent from the nav.
+
+    Written as one test over the dict rather than a parametrization of it, because the dict is
+    expected to be empty: parametrizing would report `got empty parameter set` -- a skip line
+    in every run, for the state that is correct.
+    """
+    linked = _nav_pages()
+    stale = {
+        rel: ("no longer exists" if not (_DOCS / rel).is_file() else "is linked from the nav now")
+        for rel in _NOT_IN_THE_NAV
+        if not (_DOCS / rel).is_file() or rel in linked
+    }
+    assert not stale, f"_NOT_IN_THE_NAV entries that {stale} — drop them"

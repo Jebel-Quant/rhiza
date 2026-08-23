@@ -7,8 +7,9 @@ This workflow is useful for changes such as:
 
 - adopting a new tool across all relevant bundles
 - updating the same workflow stub in multiple overlays
-- changing a shared Makefile fragment or configuration file that appears in many
-  bundle directories
+- changing a configuration file that several bundles own at the same relative path —
+  `.pre-commit-config.yaml` in each of the three language layers, `.bumpversion.toml` in
+  two of them
 
 ## Workflow
 
@@ -18,7 +19,7 @@ This workflow is useful for changes such as:
    that owns that path.
 
    ```bash
-   FILE=.rhiza/rhiza.mk
+   FILE=.pre-commit-config.yaml
    find bundles -path "*/${FILE}" | sort
    ```
 
@@ -37,7 +38,7 @@ This workflow is useful for changes such as:
    small helper script compares every match against the first bundle copy:
 
    ```bash
-   FILE=.rhiza/rhiza.mk
+   FILE=.pre-commit-config.yaml
    python - <<'PY' "$FILE"
    from pathlib import Path
    import difflib
@@ -76,15 +77,19 @@ This workflow is useful for changes such as:
    After editing all bundle copies, run:
 
    ```bash
-   make rhiza-test
+   make test          # the bundle contract: tests/bundles/
+   make sync-self-check   # dogfood symlinks, if you added a bundle file
    ```
 
-   This catches inconsistencies early and exercises the normal validation hook
-   chain before you move on to a larger test or release workflow.
+   `make test` is the one that matters here: `tests/bundles/` asserts the bundle contract,
+   including the copies that cannot be symlinks and are kept in step by a test instead
+   (`test_bundle_github_sync.py`, `test_bundle_rhiza_sync.py`). `make rhiza-test` is a
+   different gate — it runs pytest-rhiza's checks *about a repository*, and knows nothing
+   about bundle-to-bundle drift.
 
 ## Review Checklist
 
 - [ ] every intended bundle file was updated
 - [ ] the relative path is still identical across bundles
 - [ ] bundle-to-bundle diffs only show the intended change
-- [ ] `make rhiza-test` passes from the repository root
+- [ ] `make test` passes from the repository root

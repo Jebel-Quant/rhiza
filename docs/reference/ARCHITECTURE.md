@@ -12,7 +12,7 @@ flowchart TB
     end
 
     subgraph Core["Task layer"]
-        shim[Makefile<br/>repo-owned shim]
+        shim[Makefile<br/>template-owned shim]
         cli[rhiza-task<br/>pinned CLI]
         template[template-bundles.yml<br/>Bundle Config]
     end
@@ -27,8 +27,8 @@ flowchart TB
     subgraph CI["GitHub Actions"]
         ci[CI Workflow]
         release[Release Workflow]
-        security[Security Workflow]
-        sync[Sync Workflow]
+        e2e[E2E Workflow]
+        weekly[Weekly Workflow]
     end
 
     make --> shim
@@ -37,8 +37,8 @@ flowchart TB
     cli --> pyproject
     ci --> make
     release --> make
-    security --> make
-    sync --> template
+    e2e --> make
+    weekly --> make
 ```
 
 ## Makefile Hierarchy
@@ -46,7 +46,7 @@ flowchart TB
 ```mermaid
 flowchart TD
     subgraph Entry["Entry Point"]
-        Makefile[Makefile<br/>repo-owned shim]
+        Makefile[Makefile<br/>template-owned shim]
     end
 
     subgraph CLI["Pinned CLI"]
@@ -60,7 +60,7 @@ flowchart TD
     end
 
     subgraph Local["Local Customization"]
-        localmk[local.mk<br/>Not synced]
+        localmk[local.mk<br/>Repo-owned]
         shadow[explicit rules<br/>shadow a task]
     end
 
@@ -99,33 +99,35 @@ template owns it again, so `RHIZA_TASK` travels with the sync — the property
 | `doctor.mk` | the `doctor` task |
 | `releasing.mk` | `/rhiza:release` and bump-my-version |
 | `docker.mk`, `github.mk`, `lfs.mk`, `paper.mk`, `presentation.mk` | tasks of the same names, added in rhiza-task 0.3.0 |
-| `custom-env.mk`, `custom-task.mk` — example stubs | the repo-owned `Makefile`, or a gitignored `local.mk` |
-| `bundles.mk` — mother-repo only | a section of rhiza's own `Makefile` |
+| `custom-env.mk`, `custom-task.mk` — example stubs | `local.mk`, which core ships un-ignored so a repo can commit its own targets (#1574) |
+| `bundles.mk` — mother-repo only | rhiza's own `local.mk` |
 
 Bundles still own capabilities; what a bundle contributes is now configuration and
 documentation rather than make recipes. The `docker` bundle ships the `Dockerfile`, `paper`
 ships the `docs/paper/` convention, and their targets come from the CLI whatever bundles a
 project selected.
 
-## Hook System
+## Extending a Task
 
 ```mermaid
 flowchart LR
-    subgraph Hooks["Double-Colon Targets"]
-        pre_install[pre-install::]
-        post_install[post-install::]
-        pre_sync[pre-sync::]
-        post_sync[post-sync::]
+    subgraph Local["local.mk (repo-owned)"]
+        rule["install:<br/>explicit rule"]
+        extra[the extra step]
     end
 
-    subgraph Targets["Main Targets"]
-        install[make install]
-        sync[/rhiza:update]
+    subgraph CLI["Pinned CLI"]
+        task["uvx rhiza-task install"]
     end
 
-    pre_install --> install --> post_install
-    pre_sync --> sync --> post_sync
+    invocation[make install] --> rule
+    rule -->|calls| task
+    rule -->|then| extra
 ```
+
+An explicit rule beats the shim's `%:` catch-all, so a rule of the same name in `local.mk`
+intercepts the invocation and decides what the task is wrapped in. This replaces the
+double-colon anchors of the make layer — see [Hook Naming](#hook-naming).
 
 ## Release Pipeline
 
@@ -192,7 +194,7 @@ flowchart TD
     root --> src[src/]
     root --> tests[tests/]
     root --> docs[docs/]
-    root --> book[book/]
+    root --> book[_book/<br/>build output]
 
     root --> shim[Makefile<br/>rhiza-task shim]
     rhiza --> semgrep[semgrep.yml]
@@ -201,8 +203,8 @@ flowchart TD
     github --> workflows[workflows/]
     workflows --> ci[rhiza_ci.yml]
     workflows --> release[rhiza_release.yml]
-    workflows --> security[rhiza_security.yml]
-    workflows --> more[... 11 more]
+    workflows --> e2e[rhiza_e2e.yml]
+    workflows --> more[... one per feature]
 
     shim --> tasks[uvx rhiza-task &lt;task&gt;]
 ```
@@ -211,55 +213,47 @@ flowchart TD
 
 ```mermaid
 flowchart TB
-    subgraph rhiza[".rhiza/ Directory"]
+    subgraph rhiza[".rhiza/ (template-owned)"]
         direction TB
-        
-        subgraph core["Core Files"]
-            env[.env<br/>Environment]
-            bundles[template-bundles.yml<br/>Bundle Definitions]
-            semgrep[semgrep.yml<br/>Static analysis rules]
-        end
-        
-        subgraph requirements["requirements/ (4 files)"]
-            direction LR
-            tests_txt[tests.txt<br/>pytest, coverage]
-            marimo_txt[marimo.txt<br/>notebooks]
-            docs_txt[docs.txt<br/>pdoc]
-            tools_txt[tools.txt<br/>pre-commit]
-        end
-        
-        subgraph tests_dir["tests/ (23 files)"]
-            direction LR
-            api[api/<br/>Makefile Tests]
-            integration[integration/<br/>E2E Tests]
-            structure[structure/<br/>Layout Tests]
-            sync[sync/<br/>Sync Tests]
-            deps[deps/<br/>Dependency Tests]
-        end
-        
-        subgraph other["Other Directories"]
-            direction LR
-            docs_dir[docs/<br/>guides and reference]
-            utils_dir[utils/<br/>sync-self tooling]
-        end
+        pointer[template.yml<br/>which bundles to sync]
+        lock[template.lock<br/>what was synced]
+        semgrep[semgrep.yml<br/>static analysis rules]
+        env[".env (optional, gitignored)<br/>developer-local settings"]
     end
-    
-    subgraph project["Project Files"]
-        Makefile[Makefile<br/>Entry Point]
-        pyproject[pyproject.toml<br/>Dependencies]
-        ruff_toml[ruff.toml<br/>Linting]
-        pytest_ini[pytest.ini<br/>Test Config]
-        python_version[.python-version<br/>Python 3.13]
+
+    subgraph project["Project Files (repo-owned)"]
+        direction TB
+        Makefile[Makefile<br/>template-owned shim]
+        localmk[local.mk<br/>own targets]
+        pyproject["pyproject.toml<br/>[tool.rhiza-task] settings"]
+        ruff_toml[ruff.toml<br/>linting]
+        pytest_ini[pytest.ini<br/>test config]
+        python_version[.python-version<br/>the Python to fetch]
     end
-    
+
+    cli[uvx rhiza-task]
+
     Makefile -->|forwards to| cli
+    localmk -.->|shadows a task| cli
     cli -->|reads| pyproject
+    cli -.->|reads| env
     cli -->|reads| python_version
     cli -->|uses| pytest_ini
     cli -->|uses| ruff_toml
-    cli -->|reads| env
-    tests_dir -->|validates| core
+    pointer -->|drives| sync[/rhiza:update]
+    sync -->|records| lock
 ```
+
+Two directories that earlier versions of this diagram showed are gone, and both went for the
+same reason — code and dependency lists distributed by file-copy became dependencies:
+
+- **`.rhiza/requirements/`** — retired: four `.txt` files that pinned per-target tooling.
+  Every tool is provisioned where it is used now (`uv run --with`, `uvx`), so a target's
+  tooling travels with the target (#1380).
+- **`.rhiza/tests/`** — retired: the conformance checks a consumer's repository is held to,
+  formerly synced as seven modules plus a `conftest.py`. They are the `pytest-rhiza` dependency of
+  `make rhiza-test` now, pinned by `[tool.rhiza-task]`'s `pytest-rhiza` (#1540). A repo that
+  synced before that keeps the folder on disk, inert — the gate names modules, not paths.
 
 ## CI/CD Workflow Triggers
 
@@ -275,23 +269,29 @@ flowchart TD
 
     subgraph Workflows
         ci[CI]
-        security[Security]
+        e2e[E2E]
         codeql[CodeQL]
         release[Release]
-        deptry[Deptry]
-        precommit[Pre-commit]
+        weekly[Weekly]
+        scorecard[Scorecard]
     end
 
     push --> ci
-    push --> security
+    push --> e2e
     push --> codeql
     pr --> ci
-    pr --> deptry
-    pr --> precommit
-    schedule --> security
+    pr --> e2e
+    pr --> codeql
+    schedule --> weekly
+    schedule --> scorecard
     manual --> ci
     tag --> release
 ```
+
+Every gate a pull request must pass is a **job** of `rhiza_ci.yml` — the pre-commit hooks,
+`deptry`, `docs-coverage`, the security scan, the licence scan — not a workflow of its own.
+That is what the required status checks in `.github/rulesets/main-branch-protection.json`
+name, and why renaming a job breaks branch protection.
 
 ## Python Execution Model
 
@@ -309,14 +309,14 @@ flowchart LR
 
     subgraph Tools
         pytest[pytest]
-        ruff[ruff]
-        hatch[hatch]
+        prek[prek]
+        deptry[deptry]
     end
 
     make --> uv_run
     uv_run --> pytest
-    uv_run --> ruff
-    uvx --> hatch
+    uvx --> prek
+    uvx --> deptry
 
     direct -.->|Never| pytest
 
@@ -356,23 +356,24 @@ Make targets follow consistent patterns:
 3. **Namespace prefixes**: Related targets share a common prefix
    - Docker: `docker-build`, `docker-run`, `docker-clean`
    - LFS: `lfs-install`, `lfs-pull`, `lfs-track`, `lfs-status`
-   - GitHub: `gh-install`, `view-prs`, `view-issues`, `failed-workflows`
+   - GitHub: `view-prs`, `view-issues`, `failed-workflows`, `workflow-status`
 
-### Section Headers (`##@`)
+### Help Text
 
-Section headers in makefiles group related targets in help output:
+`make help` is the shim's one non-delegating rule, and it prints two lists:
 
-1. **Title Case**: Section names use Title Case
-   - `##@ Bootstrap`
-   - `##@ GitHub Helpers`
-   - `##@ Marimo Notebooks`
+1. **The CLI's tasks**, grouped by the section each declares, from `uvx rhiza-task list`.
+   Nothing in the repository states those groups — see [Task Naming](#task-naming-rhiza-task).
 
-2. **Descriptive grouping**: Sections group logically related commands
-   - **Bootstrap** - Installation and setup
-   - **Development and Testing** - Core dev workflow
-   - **Documentation** - Doc generation
-   - **GitHub Helpers** - GitHub CLI integrations
-   - **Quality and Formatting** - Code quality tools
+2. **Repo-owned targets**, scraped from a `##` comment on the rule itself:
+
+   ```makefile
+   e2e: install $(UV) ## run the language-layer end-to-end suite against real toolchains
+   ```
+
+   The shim greps `$(MAKEFILE_LIST)`, so this is what lets a repo move its targets into
+   `local.mk` without losing them from `make help`. The `##@` section headers of the make
+   layer are gone with the layer that parsed them.
 
 ### Hook Naming
 
@@ -403,7 +404,7 @@ catch-all, so it can call the CLI and then the extra step.
    held to used to be synced into `.rhiza/tests/`; they are the `pytest-rhiza` dependency
    of `make rhiza-test` now (#1540).
 
-3. **Dependency provisioning** (no `.rhiza/requirements/`):
+3. **Dependency provisioning** (the `.rhiza/requirements/` lists are gone):
    - Libraries the test suite imports live in `pyproject.toml` `[dependency-groups]`
    - Per-target tooling (pytest plugins, interrogate, marimo, zensical, …)
      is installed on the fly by its `make` target via `uv run --with` / `uvx`
@@ -439,21 +440,24 @@ catch-all, so it can call the CLI and then the extra step.
    - `description` - Clear summary of the intended context
    - `bundles` - Ordered list of bundles this profile expands to
 
-### Variable Naming
+### Setting Naming
 
-Makefile variables follow these patterns:
+The make layer's forty-odd `SCREAMING_SNAKE_CASE` variables — the `_BIN` paths, the
+`_FOLDER` accumulators, the colour codes — are settings of the pinned CLI now, and the
+naming follows the surface they are written on:
 
-1. **SCREAMING_SNAKE_CASE**: All uppercase with underscores
-   - `INSTALL_DIR`, `UV_BIN`, `PYTHON_VERSION`, `VENV`
+1. **`kebab-case` in TOML**: `source-folder`, `pytest-rhiza`, `mkdocs-extra-packages` in
+   `[tool.rhiza-task]` (`pyproject.toml`, or `rhiza.toml` for a project with no Python
+   manifest).
 
-2. **Suffix patterns**:
-   - `_BIN` - Executable paths: `UV_BIN`, `UVX_BIN`, `COPILOT_BIN`
-   - `_DIR` - Directory paths: `INSTALL_DIR`, `DOCKER_FOLDER`
-   - `_VERSION` - Version strings: `PYTHON_VERSION`
+2. **`RHIZA_`-prefixed `SCREAMING_SNAKE_CASE` in the environment**: the same setting, upper
+   cased and prefixed — `RHIZA_SOURCE_FOLDER`, `RHIZA_CI_OS_MATRIX`. This is the surface a
+   CI job or a `local.mk` `export` uses.
 
-3. **Namespace prefixes**: Related variables share prefixes
-   - UV tooling: `UV_BIN`, `UVX_BIN`, `UV_LINK_MODE`
-   - Color codes: `BLUE`, `GREEN`, `RED`, `YELLOW`, `RESET`, `BOLD`
+3. **Resolution order**: defaults → `.rhiza/.env` → the TOML table → `RHIZA_*` → CLI flags.
+
+Three make variables survive, all in the shim and all about reaching the CLI at all:
+`RHIZA_TASK` (the pin), `INSTALL_DIR` and `UVX`/`UV`.
 
 ### Documentation Naming
 
@@ -471,8 +475,8 @@ GitHub Actions workflows use the pattern `rhiza_<feature>.yml`:
 
 - `rhiza_ci.yml` - Continuous integration
 - `rhiza_release.yml` - Release automation
-- `rhiza_security.yml` - Security scanning
-- `rhiza_deptry.yml` - Dependency checking
+- `rhiza_e2e.yml` - One real toolchain run per language layer
+- `rhiza_codeql.yml` - CodeQL analysis
 
 **Rationale**: The `rhiza_` prefix clearly identifies template-managed workflows, distinguishing them from user-defined workflows.
 
@@ -486,12 +490,15 @@ GitHub Actions workflows use the pattern `rhiza_<feature>.yml`:
 
 ### 2. Catch-All Delegation
 
-The generated `Makefile` forwards anything it cannot resolve itself:
+The `Makefile` forwards anything it cannot resolve itself:
 
 ```makefile
-%: $(UVX)
-	@$(UVX) $(RHIZA_TASK) $@
+%: $(UVX) FORCE
+	@$(UVX) $(RHIZA_TASK) $(RHIZA_TASK_GOAL)
 ```
+
+`FORCE` is what keeps every task phony — `.PHONY` takes no patterns, but a phony
+prerequisite is never up to date, so `make book` still runs next to a `book/` directory.
 
 This allows:
 - New tasks to arrive with a version bump, not a file sync
@@ -500,21 +507,34 @@ This allows:
 
 ### 3. Extension Points
 
-Users can extend Rhiza without modifying template files:
+Users can extend Rhiza without modifying template files — and the `Makefile` is now one of
+the files they must not modify, since `core` ships it and every sync overwrites it:
 
-1. **Root Makefile**: Add custom targets before `include .rhiza/rhiza.mk`
-2. **local.mk**: Local shortcuts (not committed, auto-loaded)
-3. **Hooks**: Use double-colon targets (`post-install::`, etc.)
+1. **`local.mk`**: own targets, and wrapping a task by shadowing its name. The `Makefile`
+   `-include`s it and `core` leaves it un-ignored, so it is committed like any source file.
+2. **`[tool.rhiza-task]`**: settings, in `pyproject.toml` or `rhiza.toml`.
+3. **`RHIZA_*` in the environment**: the same settings for a CI job, or for a `local.mk`
+   `export` when the value must be committed.
+4. **`exclude:` in `.rhiza/template.yml`**: opting a managed file out of the sync entirely.
+
+The full account, with the failure mode of each, is the
+[Customization Guide](../guides/CUSTOMIZATION.md).
 
 ### 4. Fail-Safe Defaults
 
-- Missing tools are detected and installation offered
-- Missing directories are created automatically
+- Missing `uv` is installed by the shim, into `./bin`, before any task runs
+- A layer's toolchain absence skips the e2e suite with a reason rather than failing it
 - Graceful degradation when optional features are unavailable
+
+The one place that principle is deliberately *not* applied: a path-scoped gate skips a
+`source_folder` that does not exist, so it reports success having measured nothing. That is
+why a repository whose source root is not `src/` must declare it — see #1505, #1511, #1516,
+and the `source-folder` line in this repository's own `pyproject.toml`.
 
 ### 5. Documentation as Code
 
-- Every target has a `##` help comment
-- Section headers (`##@`) organize help output
+- Every repo-owned target carries a `##` help comment, enforced by a pre-commit hook
+- Every architectural decision has an [ADR](../adr/README.md)
 - README files in every major directory
-- Comprehensive INDEX.md for quick reference
+- Docs are gated: links resolve, bundles are documented, and every `make` target a document
+  names must exist (`tests/docs/test_doc_consistency.py`)

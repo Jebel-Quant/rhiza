@@ -90,11 +90,12 @@ conflict.
 
 Rhiza instead draws a hard boundary:
 
-- **Template-managed files** (everything under `.rhiza/`, synced workflow stubs) are owned by
-  the template and overwritten on every sync. You do not edit them.
-- **User space** is explicit and survives every sync: hook targets (`pre-install::`,
-  `post-sync::`) and custom targets in the root `Makefile`, per-developer overrides in
-  `local.mk`, project configuration in `pyproject.toml`. See the
+- **Template-managed files** (everything under `.rhiza/`, the synced workflow stubs, and
+  since v1.4.0 the `Makefile` itself) are owned by the template and overwritten on every
+  sync. You do not edit them — and `check-managed-files` refuses a commit that does.
+- **User space** is explicit and survives every sync: your own targets in `local.mk`, which
+  is committed and can also shadow a template task to wrap it; settings in
+  `[tool.rhiza-task]`; `RHIZA_*` in the environment. See the
   [Customization Guide](../guides/CUSTOMIZATION.md).
 - A file you genuinely must diverge on can be excluded from sync, or the change can be
   upstreamed — to this repository or to your organisation's fork.

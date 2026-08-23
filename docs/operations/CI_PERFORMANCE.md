@@ -1,7 +1,5 @@
 # CI Performance Budgets and Caching
 
-Last audited: 2026-05-28
-
 ## Job time budgets
 
 | Job type | Budget |
