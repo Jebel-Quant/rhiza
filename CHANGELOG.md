@@ -5,6 +5,19 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.5.2] - 2026-08-23
+
+### New Features
+- Move the RHIZA_TASK pin to rhiza-task 1.3.1 (#1619)
+
+### Bug Fixes
+- Quote validate-pyproject rev so pre-commit accepts it (#1608)
+- Make the benchmark gate measure something, and stop its scaffolding breaking it (#1617)
+
+### Documentation
+- Retire rhiza-cli from the docs, shorten the README, and rewrite the two guides built on the make layer (#1609)
+- Link every page from the nav, and stop documenting the retired make layer (#1615)
+
 ## [1.5.1] - 2026-08-22
 
 ### Bug Fixes
