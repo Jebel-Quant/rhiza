@@ -15,6 +15,8 @@ nav:
     - Demo: guides/DEMO.md
     - Book (Docs Site): guides/BOOK.md
     - Extending Rhiza: guides/EXTENDING_RHIZA.md
+    - Customization: guides/CUSTOMIZATION.md
+    - Troubleshooting: troubleshooting.md
   - Reference:
     - Architecture: reference/ARCHITECTURE.md
     - Bundle Taxonomy: reference/BUNDLE_TAXONOMY.md
@@ -30,9 +32,11 @@ nav:
     - VSCode Extensions: development/VSCODE_EXTENSIONS.md
     - Marimo: development/MARIMO.md
     - Presentation: development/PRESENTATION.md
+    - Building the Slides: presentations/README.md
     - Git LFS: lfs/LFS.md
   - Operations:
     - CI Enforcement Model: operations/CI_ENFORCEMENT.md
+    - CI Performance Budgets: operations/CI_PERFORMANCE.md
     - Global Patch Workflow: ops/GLOBAL_PATCH.md
     - Changelog Guide: ops/CHANGELOG_GUIDE.md
     - Project Board: ops/PROJECT_BOARD.md

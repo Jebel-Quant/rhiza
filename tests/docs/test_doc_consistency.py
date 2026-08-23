@@ -609,3 +609,138 @@ class TestToolClaims:
             "pip-audit is invoked again — that is fine, but this test and the docs that "
             "were pruned in #1506 should be revisited together."
         )
+
+
+# Mechanisms that retired with the synced make layer (v1.4.0) and its predecessors. Each is a
+# path or a convention that no longer exists anywhere in the ecosystem, so a document naming
+# one is either recording history or telling the reader to do something impossible.
+# Each entry is (pattern, what it was, is_path): a path can be checked against the bundle tree
+# by `test_every_retired_path_is_really_retired`, a convention cannot -- `##@` and a hook
+# anchor are shapes inside a file, and searching bundle *contents* for them flags the comments
+# that explain the retirement. Marked rather than mixed, so no case reads as covered while
+# asserting nothing.
+_RETIRED_MECHANISMS: tuple[tuple[re.Pattern[str], str, bool], ...] = (
+    (re.compile(r"\.rhiza/rhiza\.mk"), "`.rhiza/rhiza.mk` — the make layer's entry point", True),
+    (re.compile(r"\.rhiza/make\.d"), "`.rhiza/make.d/` — the fragment directory", True),
+    (re.compile(r"\.rhiza/requirements"), "`.rhiza/requirements/` — the per-target pin lists", True),
+    (re.compile(r"\.rhiza/tests"), "`.rhiza/tests/` — the synced conformance checks (#1540)", True),
+    (
+        re.compile(
+            r"(?<![\w/.-])(?:bootstrap|test|quality|book|marimo|doctor|releasing|docker"
+            r"|github|lfs|paper|presentation|custom-env|custom-task|bundles)\.mk\b"
+        ),
+        "a make.d fragment",
+        True,
+    ),
+    (re.compile(r"\b(?:pre|post)-(?:install|sync)::"), "a double-colon hook anchor", False),
+    (re.compile(r"##@"), "the `##@` help-section convention", False),
+    (re.compile(r"\buvx rhiza (?:init|sync|bump|release)\b"), "a rhiza-cli command", False),
+)
+
+# A line naming a retired mechanism is legal when it says on that line that the mechanism is
+# history. Line-local on purpose: a marker two paragraphs up is not something the next editor
+# of the line will see, which is how ARCHITECTURE.md ended up contradicting itself 130 lines
+# apart -- `### Hook Naming` said the anchors were retired while `### 3. Extension Points`
+# told the reader to write one.
+_HISTORICAL_MARKER = re.compile(
+    r"\b(?:old|former|formerly|retired|retirement|gone|was|were|used to|no longer|removed"
+    r"|deleted|dropped|never|instead of|replaced)\b|does not exist",
+    re.IGNORECASE,
+)
+
+_LIST_ITEM_RE = re.compile(r"^\s*(?:[-*+]|\d+\.)\s")
+_FENCE_RE = re.compile(r"^\s*```")
+
+
+def _instructional_lines(text: str) -> list[tuple[int, str]]:
+    """Return the (1-based line number, text) of every line that instructs the reader.
+
+    Two contexts qualify, and the choice is the whole point of the gate below: a fenced block
+    is what a reader *runs*, and a list item is what a reader is *told to do*. Paragraphs and
+    tables are where a document says what happened -- ARCHITECTURE.md's `was | is` migration
+    table has to name all sixteen fragments to explain them, and the glossary has to name the
+    files it defines as gone.
+
+    Args:
+        text: The markdown document.
+
+    Returns:
+        One entry per instructional line, in file order.
+    """
+    out: list[tuple[int, str]] = []
+    in_fence = False
+    for number, line in enumerate(text.splitlines(), start=1):
+        if _FENCE_RE.match(line):
+            in_fence = not in_fence
+            continue
+        if in_fence or _LIST_ITEM_RE.match(line):
+            out.append((number, line))
+    return out
+
+
+def _retired_mechanism_cases() -> list[tuple[str, Path]]:
+    """Return (label, file) for every markdown file the retired-mechanism gate covers."""
+    return [
+        (str(md.relative_to(_ROOT)), md)
+        for md in _markdown_files()
+        if md.name not in _PROSE_GATE_EXEMPT and "adr" not in md.relative_to(_ROOT).parts
+    ]
+
+
+class TestRetiredMechanisms:
+    """No document may instruct the reader to use a mechanism that no longer exists.
+
+    The failure this gates is silent and total. `docs/reference/ARCHITECTURE.md` told readers
+    to "add custom targets before ``include .rhiza/rhiza.mk``" for four releases after that
+    include stopped existing; `docs/ops/GLOBAL_PATCH.md` taught its whole workflow with
+    ``FILE=.rhiza/rhiza.mk``, so the tutorial's first command returned nothing; and
+    `TOOLS_REFERENCE.md` and `WHY_NOT_COPIER_CRUFT.md` still offered double-colon hooks as an
+    extension point (#1613). Every existing docs gate passed throughout: the links resolved,
+    the bundles were documented, and the `make` targets named were real -- none of them asks
+    whether the *mechanism* a sentence describes is still there.
+
+    ADRs and the changelog are exempt by design. They are the record of what was decided and
+    what shipped; rewriting them to match today's code would destroy the only account of how
+    the code got here.
+    """
+
+    @pytest.mark.parametrize(
+        ("label", "md_file"), _retired_mechanism_cases(), ids=lambda v: v if isinstance(v, str) else ""
+    )
+    def test_no_instruction_names_a_retired_mechanism(self, label: str, md_file: Path) -> None:
+        """Code blocks and list items must not name a retired mechanism as current."""
+        offences = [
+            f"{label}:{number} names {what} — {line.strip()[:80]}"
+            for number, line in _instructional_lines(md_file.read_text(encoding="utf-8", errors="replace"))
+            for pattern, what, _ in _RETIRED_MECHANISMS
+            if pattern.search(line) and not _HISTORICAL_MARKER.search(line)
+        ]
+        assert not offences, (
+            "\n".join(offences) + "\n\nThese mechanisms are gone. Describe what replaced them, or — if the "
+            "line is recording history — say so on the line itself."
+        )
+
+    def test_the_instructional_scan_found_something(self) -> None:
+        """Positive control: a broken fence tracker would make the gate above vacuous."""
+        sampled = _instructional_lines((_ROOT / "CLAUDE.md").read_text(encoding="utf-8"))
+        assert len(sampled) > 50, f"expected CLAUDE.md to hold many list and code lines, got {len(sampled)}"
+
+    @pytest.mark.parametrize(
+        ("pattern", "what"),
+        [(pattern, what) for pattern, what, is_path in _RETIRED_MECHANISMS if is_path],
+        ids=lambda v: v if isinstance(v, str) else "",
+    )
+    def test_every_retired_path_is_really_retired(self, pattern: re.Pattern[str], what: str) -> None:
+        """A watched path must be absent from the bundles, or the gate is lying.
+
+        The mirror of the gate above, and the reason the list cannot rot into a set of stale
+        prohibitions: if a bundle ever ships one of these paths again, the mechanism is back
+        and the entry must go — rather than the docs being forbidden to mention what the
+        template now delivers.
+        """
+        shipped = [
+            str(path.relative_to(_ROOT))
+            for path in (_ROOT / "bundles").rglob("*")
+            if path.is_file() and pattern.search(str(path.relative_to(_ROOT)))
+        ]
+        assert not shipped, f"{what} is shipped again by {shipped} — drop it from _RETIRED_MECHANISMS"
