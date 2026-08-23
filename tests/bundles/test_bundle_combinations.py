@@ -13,15 +13,26 @@ and the dependency-group assertions to ``test_dependency_groups.py``.
 
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 
 import pytest
 import yaml
 
+# pytest's own hookspecs, read rather than listed: the alternative is a hand-written set of
+# names that goes stale silently. Private, so the anchor assertion in the test using it is
+# what turns a pytest reorganisation into a failure instead of a check that accepts anything.
+from _pytest import hookspec
+
 from tests.registry import require as require_registry
 from tests.registry import resolves
 from tests.util import sync_bundles
+
+# Hook-name prefixes the `benchmark` gate does provide, because its own plugin declares them.
+# The gate runs `pytest` with `pytest-benchmark` and `pygal`; pygal is a charting library and
+# contributes no hooks.
+_GATE_PLUGIN_HOOK_PREFIXES = ("pytest_benchmark_",)
 
 
 class TestDockerBundleSync:
@@ -260,3 +271,50 @@ class TestBenchmarksBundleSync:
         benchmarks_dir = self.project / "tests" / "benchmarks"
         has_setup = (benchmarks_dir / "conftest.py").is_file() or (benchmarks_dir / "__init__.py").is_file()
         assert has_setup, "tests/benchmarks/ has no conftest.py or __init__.py"
+
+    def test_the_synced_scaffolding_declares_no_hook_the_gate_cannot_provide(self) -> None:
+        """No synced benchmark module may implement a hook from a plugin the gate does not install.
+
+        This is the one way a *template* file can break the gate it ships with, and it did.
+        ``conftest.py`` defined ``pytest_html_report_title`` while the ``benchmark`` task injects
+        only ``pytest-benchmark`` and ``pygal`` — it writes a histogram and a JSON file, not an
+        HTML report. pluggy validates hook *names* at ``perform_collect``, so this is not an
+        unused function: pytest raises ``PluginValidationError: unknown hook`` as an
+        INTERNALERROR and exits 3 having collected nothing. Every consumer of this bundle whose
+        environment did not happen to carry pytest-html had a ``make benchmark`` that could not
+        run, and — since ``book`` needs ``benchmark`` — no ``make book`` either.
+
+        Two properties made it survivable for so long, and both argue for a guard rather than a
+        fixed assertion about that one name. The ``test`` gate passes
+        ``--ignore=$(tests_folder)/benchmarks``, so the file is never collected by the gate
+        everything else runs; and the mother repo shipped no ``tests/benchmarks/`` of its own, so
+        the benchmark gate skipped here and dogfooding never reached it either. The check is
+        therefore written against the *rule* — the gate's environment is pytest plus
+        pytest-benchmark — so the next borrowed hook fails as well.
+
+        The core hookspec list is derived rather than written down, so it cannot rot into a set of
+        names pytest no longer has; the anchor assertion is what keeps that derivation from
+        narrowing to nothing and passing everything.
+        """
+        core_hooks = frozenset(name for name in dir(hookspec) if name.startswith("pytest_"))
+        assert "pytest_collection_modifyitems" in core_hooks, (
+            "pytest's hookspec module yielded no recognisable hook names, so this check would "
+            "accept anything — pytest moved them and this derivation needs updating"
+        )
+
+        offenders: list[str] = []
+        for path in sorted((self.project / "tests" / "benchmarks").glob("*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            offenders += [
+                f"{path.name}::{node.name}"
+                for node in tree.body
+                if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
+                and node.name.startswith("pytest_")
+                and node.name not in core_hooks
+                and not node.name.startswith(_GATE_PLUGIN_HOOK_PREFIXES)
+            ]
+
+        assert not offenders, (
+            f"synced benchmark scaffolding implements hooks the `benchmark` gate provides no "
+            f"plugin for, which makes pytest exit 3 before collecting anything: {offenders}"
+        )

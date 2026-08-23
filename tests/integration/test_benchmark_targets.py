@@ -55,15 +55,16 @@ def test_extra_target_resolves(target: str) -> None:
 def test_the_benchmark_gate_has_something_to_measure_or_is_known_not_to() -> None:
     """Record whether `benchmark` has any input in *this* repo.
 
-    Written as an observation rather than a demand, because the answer here is "no": rhiza ships
-    configuration, so it has no ``tests/benchmarks/`` — while ``rhiza_benchmark.yml`` runs
-    ``make benchmark`` on every push. That gate therefore measures nothing on this repo, and has
-    for as long as the folder has been absent. It predates the rhiza-task migration and is not its
-    doing.
+    The answer used to be "no", which is why this is written as an observation with two branches
+    rather than a plain demand: rhiza ships configuration, had no ``tests/benchmarks/``, and
+    ``rhiza_benchmark.yml`` ran ``make benchmark`` on every push to ``main`` regardless — so the
+    gate printed ``skipped  benchmark  no benchmarks folder``, exited 0, and wrote a duration into
+    the step summary for a run that measured nothing.
 
-    Asserted this way round so the fact is visible in the suite instead of being something a reader
-    has to notice: if a benchmarks folder is ever added, the second branch takes over and starts
-    requiring content, and if the workflow is dropped the first branch stops being reachable.
+    The folder exists now (``tests/benchmarks/test_dogfood_linker.py``), so the second branch is
+    the live one and this is a demand after all: the gate has input, and must keep it. The first
+    branch stays reachable for the case that removes the folder again, which would otherwise turn
+    the workflow green-and-empty without a single assertion changing.
     """
     folder = Path(__file__).resolve().parents[2] / "tests" / "benchmarks"
     if not folder.is_dir():
