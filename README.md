@@ -392,11 +392,12 @@ Repo-owned targets:
 ## 🎯 Customising Safely
 
 Everything a sync delivers is **template-owned and overwritten by the next one** — the
-`Makefile` included, since `core` ships it. Extensions live in four places no sync touches:
+`Makefile` included, since `core` ships it. Extensions live in five places no sync touches:
 
 | Where | For |
 |-------|-----|
 | `local.mk` | Your own make targets, and extending a template task by shadowing it |
+| `local-setup.sh` | Native binaries your project needs before any gate can run |
 | `[tool.rhiza-task]` in `pyproject.toml` (or `rhiza.toml`) | Settings — `source-folder`, `coverage-fail-under`, … |
 | `pyproject.toml` | Dependencies, scripts, other tools' configuration |
 | `.rhiza/.env` | Developer-local overrides (gitignored) |

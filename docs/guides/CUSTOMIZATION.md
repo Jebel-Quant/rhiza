@@ -9,6 +9,7 @@ Rhiza provides four extension mechanisms that survive every `/rhiza:update`. **N
 | Extension point | Where to add | Committed? | Use for |
 |-----------------|--------------|------------|---------|
 | `local.mk` | Project root | Yes | Your own make targets, and extending a template task |
+| `local-setup.sh` | Project root | Yes | Native binaries the project needs before any gate runs |
 | `[tool.rhiza-task]` | `pyproject.toml` | Yes | Settings — `source-folder`, `coverage-fail-under`, … |
 | `pyproject.toml` | Project root | Yes | Dependencies, scripts, tool configuration |
 | `.rhiza/.env` | Project root | No (gitignored) | Per-developer setting overrides |
@@ -29,19 +30,44 @@ Targets carrying a `##` comment are listed by `make help` under *Repo-owned targ
 
 The `pre-install::` / `post-install::` hooks the synced make layer anchored are **gone**: the tasks live in the pinned `rhiza-task` CLI, which knows nothing about make targets. The replacement is to **shadow** the target from `local.mk` — an explicit rule always beats the shim's `%:` catch-all, so the rule can call the task and then do the extra work.
 
-### Example: Installing System Dependencies
-
 ```makefile
 # local.mk
-install: $(UVX)
-	@if ! command -v dot >/dev/null 2>&1; then \
-		echo "Installing graphviz..."; \
-		sudo apt-get update && sudo apt-get install -y graphviz; \
-	fi
-	@$(UVX) $(RHIZA_TASK) install
+report: $(UVX)
+	@$(UVX) $(RHIZA_TASK) test
+	@./scripts/publish-test-report.sh
 ```
 
-`RHIZA_TASK` and `UVX` are defined by the `Makefile` above the `-include`, so a shadowing rule runs the same pinned CLI the rest of the project does — and naming `$(UVX)` as a prerequisite keeps the bootstrap that installs `uv` on a runner without one. Put the extra step before or after the delegation to get the old `pre-` or `post-` behaviour.
+`RHIZA_TASK` and `UVX` are defined by the `Makefile` above the `-include`, so a shadowing rule runs the same pinned CLI the rest of the project does — and naming `$(UVX)` as a prerequisite keeps the bootstrap that installs `uv` on a runner without one.
+
+**Shadowing only reaches a task that make resolves.** An explicit rule wins when you type its name, or when another make rule names it as a prerequisite. It does not win when the CLI reaches the task internally: `test` needs `install`, but the shim forwards the goal `test` to `rhiza-task`, which resolves `install` in its own task graph — no make rule of that name is consulted. And CI never invokes make at all; every workflow calls `uvx "$RHIZA_TASK" <gate>` directly.
+
+So shadowing adds work around a task **you invoke**. Work that has to happen before every gate belongs in the setup hook.
+
+## 🧰 Installing System Dependencies
+
+A project may need a native binary before any gate can run — graphviz for a docs plugin, `libpq` for psycopg, pandoc, an ODBC driver. Put it in an executable `local-setup.sh` at the repository root:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v dot >/dev/null 2>&1; then
+    echo "Installing graphviz..."
+    sudo apt-get update && sudo apt-get install -y graphviz
+fi
+```
+
+```bash
+chmod +x local-setup.sh
+```
+
+Every language layer's `install` runs it first, and `install` is the prerequisite of essentially every gate — so this one file covers a local `make test`, GitHub Actions, GitLab CI and the devcontainer, with no workflow edit anywhere. Commit it: `core` leaves it un-ignored for the same reason it leaves `local.mk` un-ignored — anything CI invokes has to be in the repository.
+
+Three things worth knowing:
+
+- **Guard the expensive part yourself**, as above. The hook runs on every fresh CI job and on every local invocation of a gate.
+- **A non-executable hook fails**, with a `chmod +x` hint — a provisioning step someone wrote and believed was running is exactly what must not pass quietly. Having no hook at all simply succeeds, so a project that needs nothing pays nothing, `--strict` runs included.
+- **It is a shell script rather than a list of package names**, because a list cannot survive contact with more than one package manager — `graphviz` is spelled the same on apt and brew, `libgl1-mesa-glx` is not — and cannot express "download this tarball" at all. The script puts platform detection with the people who know which platforms they build on.
 
 > Releasing is not a `make` target at all. Releases are driven by the rhiza-claude
 > `/rhiza:release` command, which bumps the version, regenerates `CHANGELOG.md`, and

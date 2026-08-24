@@ -512,10 +512,15 @@ the files they must not modify, since `core` ships it and every sync overwrites 
 
 1. **`local.mk`**: own targets, and wrapping a task by shadowing its name. The `Makefile`
    `-include`s it and `core` leaves it un-ignored, so it is committed like any source file.
-2. **`[tool.rhiza-task]`**: settings, in `pyproject.toml` or `rhiza.toml`.
-3. **`RHIZA_*` in the environment**: the same settings for a CI job, or for a `local.mk`
+   Shadowing reaches a task make resolves — not one the CLI reaches internally, and not CI,
+   which never runs make.
+2. **`local-setup.sh`**: a native binary the project needs before any gate. Every layer's
+   `install` runs it, which is what puts it on the path of local make, both CI platforms and
+   the devcontainer at once. Committed, un-ignored by `core` for the same reason `local.mk` is.
+3. **`[tool.rhiza-task]`**: settings, in `pyproject.toml` or `rhiza.toml`.
+4. **`RHIZA_*` in the environment**: the same settings for a CI job, or for a `local.mk`
    `export` when the value must be committed.
-4. **`exclude:` in `.rhiza/template.yml`**: opting a managed file out of the sync entirely.
+5. **`exclude:` in `.rhiza/template.yml`**: opting a managed file out of the sync entirely.
 
 The full account, with the failure mode of each, is the
 [Customization Guide](../guides/CUSTOMIZATION.md).
