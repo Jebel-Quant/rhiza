@@ -325,22 +325,24 @@ class TestBenchmarkWorkflow:
 
 
 class TestPaperWorkflow:
-    """The paper workflow must not write to the repository (#1494).
+    """The paper workflow delegates the compile and publishes the PDF on the `paper` branch.
 
-    It used to push the compiled PDF to an orphan ``paper`` branch. Git refs are paths, so
-    ``refs/heads/paper`` cannot coexist with ``refs/heads/paper/anything`` -- and the push
-    therefore failed outright in any repository using the branch prefix a paper-writing team
-    reaches for first. Worse, it stayed broken after such a topic branch was merged, until
-    somebody also deleted it.
+    **Delegation.** The workflow used to carry its own LaTeX driver: an apt install of four
+    guessed ``texlive-*`` packages, a root-document choice that preferred one downstream
+    repository's filename, and a ``latexmk`` invocation with its own flag set. All three
+    already existed in the pinned CLI's ``paper`` task -- the one ``make paper`` runs
+    locally and the one ``book`` takes as a prerequisite -- so the workflow was a second,
+    silently diverging definition of how this repository builds a paper. It had in fact
+    already diverged: the task drives tectonic, not latexmk. What is left here is putting
+    the engine on the runner and publishing the output.
 
-    Renaming the target (the issue's first suggestion) would have moved the collision rather
-    than removed it, broken every consumer just as thoroughly, and left a stale PDF behind on
-    the old branch with nothing going red. The branch had also stopped being the only durable
-    home: ``book`` gained ``paper`` as a prerequisite in rhiza-task 1.1.0 and ``paper_folder``
-    sits inside ``docs_dir``, so the PDF ships as a site asset -- guarded by ``book-nav`` and
-    by ``test_the_compiled_paper_is_reachable_from_the_book``.
-
-    So the step is gone, and these assertions are about what must not come back.
+    **The branch.** ``refs/heads/paper`` cannot coexist with a ``paper/<topic>`` branch,
+    because git refs are paths -- the collision behind #1494, which retired the push. The
+    publish is back by request, so the collision is handled rather than avoided: a preflight
+    step names the offending ref and fails, instead of leaving a push error that names
+    neither branch. The PDF also reaches consumers as a run artifact and, through the book,
+    as a site asset; the branch is the stable path that needs neither a build nor an
+    unexpired run.
     """
 
     @pytest.fixture
@@ -351,65 +353,142 @@ class TestPaperWorkflow:
             pytest.skip("rhiza_paper.yml not found")
         return path.read_text(encoding="utf-8")
 
-    def test_the_paper_workflow_pushes_to_no_branch(self, paper_workflow_text: str) -> None:
-        """No `git push` is *executed*: the PDF reaches consumers via the book and the artifact.
+    def test_the_compile_is_the_tasks_and_nothing_elses(self, paper_workflow_text: str) -> None:
+        """The workflow must reach the CLI, under `--strict`, and drive no engine itself.
 
-        Asserted against the text rather than the parsed document because a `run:` block is an
-        opaque string to YAML -- the thing being forbidden is a shell command, so the shell is
-        what has to be read.
-
-        Matched on a line that *starts* a `git push`, not on any line mentioning one. A naive
-        substring search fails on this very workflow: the stale-branch warning tells the reader
-        to run `git push origin --delete paper`, which is the retired command named as advice
-        rather than run. Comments are skipped for the same reason.
+        `--strict` is half the assertion and the less obvious half. The task guards on
+        tectonic being installed and on the folder existing, and a failed guard is a *skip*
+        that exits 0 -- so without the flag a runner that never got the engine would report
+        `skipped  paper` and a green tick, for a workflow whose only purpose is that a PDF
+        got built. That is the shape of #1505, #1511, #1516 and #1535.
         """
-        offending = [
-            line.strip()
-            for line in paper_workflow_text.splitlines()
-            if re.match(r"^(?:[^#]*(?:&&|\|\||;)\s*)?git\s+push\b", line.strip())
-        ]
-        assert not offending, (
-            "the paper workflow pushes to a branch again: "
-            f"{offending}. A top-level ref collides with any `paper/<topic>` branch (#1494); "
-            "the PDF is published by the book as a site asset instead."
+        assert 'uvx "$RHIZA_TASK" paper --strict' in paper_workflow_text, (
+            'the paper workflow does not compile through `uvx "$RHIZA_TASK" paper --strict`. '
+            "The task owns the engine, the flags and the choice of root document; a second "
+            "copy here diverges silently, as the retired latexmk recipe did."
+        )
+        assert "latexmk" not in paper_workflow_text, (
+            "the paper workflow names latexmk. The pinned task drives tectonic, so this is "
+            "either a second engine or a stale one -- either way the compile belongs to the task."
         )
 
-    def test_the_paper_workflow_asks_for_no_write_scope(self, workflows_dir: Path) -> None:
-        """`contents: write` existed only for the retired push, so it must not be requested.
+    def test_the_workflow_names_no_root_document(self, paper_workflow_text: str) -> None:
+        """No `<name>.tex` literal: choosing the root document is the task's job.
 
-        Checked at every level -- workflow and each job -- because a job-level grant would
-        reinstate the capability without touching the top of the file.
+        The retired recipe preferred `basanos.tex`, one downstream repository's paper, in a
+        template every consumer syncs; the GitLab twin preferred `rhiza.tex`, this one's.
+        `main_document` in the task tries `main.tex`, then `paper.tex`, then alphabetical
+        order -- and a workflow that names a file at all is a third rule competing with it.
+
+        Globs are not filenames, so `*.tex` and `docs/paper/**/*.tex` pass: they say *any
+        document*, which is the opposite of a preference.
+        """
+        named = re.findall(r"\b\w[\w-]*\.tex\b", paper_workflow_text)
+        assert not named, (
+            f"the paper workflow names {sorted(set(named))}. Which document is the root is "
+            f"decided by the task (main.tex, then paper.tex, then alphabetical); a filename "
+            f"here is a competing rule, and in the retired recipes it was somebody else's."
+        )
+
+    def test_the_pdf_is_published_on_the_paper_branch(self, paper_workflow_text: str) -> None:
+        """The publish must actually push, to `paper`, and never from a pull request.
+
+        Asserted against the text rather than the parsed document because a `run:` block is
+        an opaque string to a YAML loader -- the thing being asserted is a shell command, so
+        the shell is what has to be read.
+
+        A pull request from a fork has no write token and no business rewriting the branch,
+        so the step carrying the push must be gated on the event. The gate is checked on the
+        step, not the job: the compile and the artifact upload must keep running on PRs.
+        """
+        assert re.search(r"^\s*git push origin paper\b", paper_workflow_text, re.MULTILINE), (
+            "the paper workflow no longer pushes the PDF to the `paper` branch. That branch "
+            "is the stable path a reader can link without building the book or catching an "
+            "unexpired run artifact."
+        )
+
+        doc = yaml.safe_load(paper_workflow_text)
+        steps = [s for job in doc["jobs"].values() for s in job.get("steps", [])]
+        pushing = [s for s in steps if "git push origin paper" in (s.get("run") or "")]
+        assert len(pushing) == 1, f"expected exactly one pushing step, found {len(pushing)}"
+        assert "github.event_name != 'pull_request'" in (pushing[0].get("if") or ""), (
+            "the step that pushes to `paper` is not gated on the event. A pull request run "
+            "would try to rewrite the branch, and a fork's run has no token to do it with."
+        )
+
+    def test_the_push_is_preceded_by_a_collision_check(self, paper_workflow_text: str) -> None:
+        """A `paper/<topic>` ref must be diagnosed before the push, not by it.
+
+        This is the whole of #1494 as a step: git refs are paths, so `refs/heads/paper`
+        cannot be created while `refs/heads/paper/overview` exists. Git's own message on
+        that failure names neither branch, which is why the check is here rather than left
+        to the push -- and why it must come *first*, ordered by position in the step list.
+
+        It deliberately sits after the artifact upload, so a repository in that state still
+        collects its PDF while it decides which branch to rename.
+        """
+        doc = yaml.safe_load(paper_workflow_text)
+        steps = [s for job in doc["jobs"].values() for s in job.get("steps", [])]
+        runs = [s.get("run") or "" for s in steps]
+
+        checking = [i for i, r in enumerate(runs) if "git ls-remote --heads origin 'paper/*'" in r]
+        pushing = [i for i, r in enumerate(runs) if "git push origin paper" in r]
+        assert checking, (
+            "no step checks for a colliding `paper/*` ref before pushing. Without it the "
+            "failure is git's, and it names neither the branch it wanted nor the one in the "
+            "way (#1494)."
+        )
+        assert pushing, "no step pushes to the `paper` branch, so nothing here is being guarded"
+        assert max(checking) < min(pushing), (
+            "the collision check does not run before the push, so the push fails first and the diagnosis never prints."
+        )
+
+    def test_the_paper_workflow_gets_the_write_scope_it_needs(self, workflows_dir: Path) -> None:
+        """`contents: write` must be granted, and by the job rather than the workflow.
+
+        The token needs write access to push the branch, and only the pushing job does. The
+        workflow-level default stays `read` so a future job added here starts without it --
+        least privilege being a property of the default, not of the grant.
         """
         path = workflows_dir / "rhiza_paper.yml"
         if not path.exists():
             pytest.skip("rhiza_paper.yml not found")
         doc = _load_workflow(path)
 
-        scopes = [doc.get("permissions") or {}]
-        scopes += [job.get("permissions") or {} for job in (doc.get("jobs") or {}).values()]
-        writers = [scope for scope in scopes if isinstance(scope, dict) and scope.get("contents") == "write"]
-        assert not writers, (
-            "the paper workflow requests `contents: write`, which it needed only for the "
-            "branch push retired in #1494. Compiling a PDF and uploading an artifact need "
-            "no write access to the repository."
+        assert (doc.get("permissions") or {}).get("contents") == "read", (
+            "the paper workflow's top-level `permissions` should stay `contents: read`; the "
+            "write scope belongs to the job that pushes."
+        )
+        writers = [
+            name
+            for name, job in (doc.get("jobs") or {}).items()
+            if (job.get("permissions") or {}).get("contents") == "write"
+        ]
+        assert writers, (
+            "no job in the paper workflow is granted `contents: write`, so the push to the "
+            "`paper` branch cannot succeed -- it would fail on every default-branch run."
         )
 
-    def test_the_github_paper_stub_grants_no_write_scope(self, root: Path) -> None:
-        """The bundle stub must cap the reusable workflow at `contents: read`.
+    def test_the_github_paper_stub_grants_the_write_scope(self, root: Path) -> None:
+        """The stub is the half a consumer syncs, and it caps the reusable workflow.
 
-        The stub is the half a consumer actually syncs, and it carries its own `permissions:`
-        block -- so the live workflow dropping the write scope proves nothing about them. The
-        two travel together: the same release that ships this stub also bumps its
-        `@vX.Y.Z` ref (`[[tool.bumpversion.files]]` globs `bundles/**/.github/workflows/*.yml`),
-        so a consumer never has a read-only stub pointing at a version that still pushes.
+        A called workflow cannot hold more permission than its caller grants, so a stub left
+        at `contents: read` turns the publish into a red push in every consumer while the
+        live workflow looks correct. The two travel together: the same release that ships
+        this stub rewrites its `@vX.Y.Z` ref (`[[tool.bumpversion.files]]` globs
+        `bundles/**/.github/workflows/*.yml`), so nobody holds a read-only stub pointing at
+        a version that pushes.
         """
         path = root / "bundles" / "github-paper" / ".github" / "workflows" / "rhiza_paper.yml"
         assert path.is_file(), "the github-paper bundle ships no rhiza_paper.yml stub"
         doc = _load_workflow(path)
 
-        for name, job in (doc.get("jobs") or {}).items():
+        jobs = doc.get("jobs") or {}
+        assert jobs, "the github-paper stub declares no jobs"
+        for name, job in jobs.items():
             scope = job.get("permissions") or {}
-            assert scope.get("contents") != "write", (
-                f"the github-paper stub grants `contents: write` to job '{name}'. That scope "
-                "existed only for the branch push retired in #1494."
+            assert scope.get("contents") == "write", (
+                f"the github-paper stub does not grant `contents: write` to job '{name}'. The "
+                f"reusable workflow it calls pushes the compiled PDF to the `paper` branch, and "
+                f"a caller cannot grant less than the callee needs."
             )

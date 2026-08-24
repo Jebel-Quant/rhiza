@@ -3,9 +3,16 @@
 #
 # Workflow: Paper
 #
-# Purpose: Compile the LaTeX paper (docs/paper/*.tex) to a PDF and publish
-#          it as a downloadable workflow artifact.
-#          Only active when a *.tex file exists under docs/paper/.
+# Purpose: Compile the LaTeX paper to a PDF and publish it three ways: as a
+#          downloadable workflow artifact, as a site asset via the book (the
+#          paper folder sits inside the docs tree), and on the dedicated `paper`
+#          branch, which holds nothing but the compiled PDF.
+#
+#          The compile itself is not implemented here. `uvx "$RHIZA_TASK" paper`
+#          is the same task `make paper` runs locally and the same one `book`
+#          takes as a prerequisite, so the engine, the flag set and the choice of
+#          root document have exactly one definition. This workflow's job is to
+#          put the engine on the runner and to publish what comes out.
 #
 # Trigger: On push and pull requests to main/master branches, or whenever
 #          files under docs/paper/ change.  Also supports manual dispatch.
@@ -34,11 +41,28 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # The rhiza-task pin the compile runs through. Pinned rather than read from a consumer's
+  # `RHIZA_TASK`, which a reusable workflow cannot see: it tracks the tag this workflow is
+  # called at, so a repository synced at a release compiles with that release's task.
+  RHIZA_TASK: rhiza-task@1.3.1
+
+  # The LaTeX engine the `paper` task drives. tectonic is a single static binary that
+  # resolves what a document cites out of its own web bundle, which is why this workflow no
+  # longer provisions a TeX distribution and a guessed list of texlive-* packages.
+  #
+  # Pinned, and watched by a custom manager in renovate.json -- an unmanaged pin only ages
+  # (#1579). Deliberately *not* checksum-verified: nothing can keep a digest in step with an
+  # automated version bump, so a pinned digest turns every Renovate PR into a red paper
+  # build in every consumer. The download is an HTTPS release asset from the upstream
+  # project's own repository.
+  TECTONIC_VERSION: "0.17.0"
+
 jobs:
   build-pdf:
     runs-on: ubuntu-latest
-    # No `contents: write`: the write scope existed solely for the retired branch push.
-    # The workflow-level `contents: read` above is all that compiling and uploading needs.
+    permissions:
+      contents: write   # Needed to push the compiled PDF to the paper branch
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -49,80 +73,142 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - name: Detect docs/paper/*.tex presence
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.11.16"
+
+      - name: Resolve the paper folder and look for a document
         id: check_tex
         run: |
-          if compgen -G "docs/paper/*.tex" > /dev/null 2>&1; then
+          # The folder comes from the CLI rather than being hard-coded, because `paper-folder`
+          # is a documented setting and the task honours it -- a workflow that assumed
+          # docs/paper would compile nothing, or the wrong thing, in a repository that moved it.
+          folder=$(uvx "$RHIZA_TASK" print paper-folder)
+          echo "folder=${folder}" >> "$GITHUB_OUTPUT"
+
+          # Presence is still decided here, not by the task, and that is deliberate: a repo
+          # that adopts the `github-paper` bundle before it has written anything gets a notice
+          # and a green run, while a repo that *does* have a document compiles under
+          # `--strict` below, where a skip is a failure. Reversing that -- letting the task
+          # decide -- would make "no paper at all" and "paper the engine silently skipped"
+          # the same green run.
+          if compgen -G "${folder}/*.tex" > /dev/null 2>&1; then
             echo "tex_present=true" >> "$GITHUB_OUTPUT"
           else
             echo "tex_present=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Skip notice (no docs/paper/*.tex present)
+      - name: Skip notice (no *.tex present)
         if: ${{ steps.check_tex.outputs.tex_present != 'true' }}
-        run: echo "No docs/paper/*.tex found; skipping LaTeX compilation."
+        run: echo "No *.tex found under ${{ steps.check_tex.outputs.folder }}; skipping LaTeX compilation."
 
-      - name: Install TeX Live
+      - name: Install tectonic
         if: ${{ steps.check_tex.outputs.tex_present == 'true' }}
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            texlive-latex-extra \
-            texlive-fonts-recommended \
-            texlive-bibtex-extra \
-            latexmk
+          # The musl build, not the gnu one: it is statically linked, so it needs nothing
+          # from the runner image. The gnu tarball wants libgraphite2.so.3, which is not a
+          # guaranteed part of any runner or container this template targets.
+          url="https://github.com/tectonic-typesetting/tectonic/releases/download"
+          url="${url}/tectonic%40${TECTONIC_VERSION}/tectonic-${TECTONIC_VERSION}-x86_64-unknown-linux-musl.tar.gz"
+          curl -fsSL "$url" -o /tmp/tectonic.tar.gz
+          sudo tar xzf /tmp/tectonic.tar.gz -C /usr/local/bin tectonic
+          tectonic --version
 
-      - name: Detect paper entry point
-        id: detect_tex
+      - name: Cache the tectonic bundle
+        if: ${{ steps.check_tex.outputs.tex_present == 'true' }}
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ~/.cache/tectonic
+          # `hashFiles` takes no expression, so the source glob is the conventional folder
+          # even though the compile honours `paper-folder`. A repository that moved the
+          # folder hashes nothing and falls back to the version-only key below; the cache
+          # only ever affects how much of the bundle is re-fetched, never the output.
+          key: tectonic-${{ runner.os }}-${{ env.TECTONIC_VERSION }}-${{ hashFiles('docs/paper/**/*.tex') }}
+          restore-keys: |
+            tectonic-${{ runner.os }}-${{ env.TECTONIC_VERSION }}-
+
+      - name: Compile the paper
         if: ${{ steps.check_tex.outputs.tex_present == 'true' }}
         run: |
-          # Prefer basanos.tex if it exists; otherwise pick the first *.tex file found.
-          if [ -f docs/paper/basanos.tex ]; then
-            tex_file="basanos.tex"
-          else
-            tex_file=$(find docs/paper -maxdepth 1 -name "*.tex" | head -1 | xargs basename)
-          fi
-          pdf_file="${tex_file%.tex}.pdf"
-          echo "tex_file=${tex_file}" >> "$GITHUB_OUTPUT"
-          echo "pdf_file=${pdf_file}" >> "$GITHUB_OUTPUT"
-
-      - name: Compile LaTeX document
-        if: ${{ steps.check_tex.outputs.tex_present == 'true' }}
-        working-directory: docs/paper
-        run: |
-          latexmk -pdf -interaction=nonstopmode "${{ steps.detect_tex.outputs.tex_file }}"
+          # `--strict` turns a skip into a failure. Without it a missing tectonic or an
+          # unreadable folder would report `skipped  paper` and exit 0 -- a green run for a
+          # workflow whose entire purpose is that a PDF got built.
+          uvx "$RHIZA_TASK" paper --strict
 
       - name: Upload PDF artifact
         if: ${{ steps.check_tex.outputs.tex_present == 'true' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ steps.detect_tex.outputs.pdf_file }}
-          path: docs/paper/${{ steps.detect_tex.outputs.pdf_file }}
+          # A fixed artifact name holding whatever the folder's top-level PDFs are called.
+          # Naming the artifact after the document would mean re-deriving the task's own
+          # choice of root document here, which is the duplication this workflow exists to
+          # remove.
+          name: paper
+          path: ${{ steps.check_tex.outputs.folder }}/*.pdf
           retention-days: 30
+          if-no-files-found: error
 
-      # The PDF used to be pushed to an orphan `paper` branch as well. That step is gone
-      # (issue #1494): `refs/heads/paper` cannot coexist with `refs/heads/paper/anything`,
-      # so the push failed outright in any repository using the branch prefix a
-      # paper-writing team most naturally reaches for -- and it stayed broken after such a
-      # branch was merged, until it was also deleted.
+      # tectonic runs with `--keep-logs`, so a failed compile leaves the log beside the
+      # source. It is the only thing worth reading after a LaTeX failure and it never
+      # reaches the artifact above, because that step does not run when this job is red.
+      - name: Upload the TeX log (compile failed)
+        if: ${{ failure() && steps.check_tex.outputs.tex_present == 'true' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: paper-log
+          path: ${{ steps.check_tex.outputs.folder }}/*.log
+          retention-days: 30
+          if-no-files-found: ignore
+
+      # Git refs are paths, so `refs/heads/paper` cannot exist while `refs/heads/paper/x`
+      # does -- and the push below then fails with a message about a lock, naming neither
+      # branch. That is the failure #1494 was filed for. Checking first turns it into a
+      # sentence saying which ref is in the way.
       #
-      # Renaming the target would have moved the collision rather than removed it, and
-      # would have broken every consumer just as thoroughly while leaving a stale PDF
-      # behind on the old branch. The branch is no longer needed either way: `book` gained
-      # `paper` as a prerequisite in rhiza-task 1.1.0 and `paper_folder` sits inside
-      # `docs_dir`, so the PDF ships as a site asset at a stable URL, guarded by
-      # `book-nav` plus test_the_compiled_paper_is_reachable_from_the_book. The run
-      # artifact above covers the ephemeral case.
-      - name: Note a lingering paper branch
+      # Placed after the upload on purpose: a repository in this state still gets its PDF as
+      # a run artifact while it decides which branch to rename.
+      - name: Check for a colliding paper/* branch
         if: ${{ steps.check_tex.outputs.tex_present == 'true' && github.event_name != 'pull_request' }}
         run: |
-          # A branch this workflow used to write is now nobody's job to update. Say so
-          # rather than leaving it to rot: silence here is exactly how a consumer ends up
-          # linking a PDF that stopped changing without anything going red.
-          if git ls-remote --exit-code --heads origin refs/heads/paper >/dev/null 2>&1; then
-            msg="The 'paper' branch is no longer updated by this workflow (rhiza #1494)."
-            msg="${msg} The compiled PDF is published by the book instead, and by the run"
-            msg="${msg} artifact above. Delete the branch once nothing links to it:"
-            msg="${msg} git push origin --delete paper"
-            echo "::warning title=Stale paper branch::${msg}"
+          colliding=$(git ls-remote --heads origin 'paper/*' | awk '{print $2}')
+          if [ -n "$colliding" ]; then
+            msg="The compiled PDF is published on the 'paper' branch, and this repository has"
+            msg="${msg} $(echo "$colliding" | tr '\n' ' ')-- git refs are paths, so"
+            msg="${msg} refs/heads/paper cannot exist alongside them. Rename the topic"
+            msg="${msg} branch(es), or drop this workflow's publish step. The PDF is also a run"
+            msg="${msg} artifact, and a site asset if you build the book."
+            echo "::error title=paper branch collision::${msg}"
+            exit 1
           fi
+
+      # The `paper` branch holds the compiled PDF and nothing else, so a reader can link one
+      # stable path without building the book or digging through expired run artifacts.
+      # Every top-level PDF in the paper folder goes up, which keeps the naming of the root
+      # document the task's business rather than this workflow's.
+      - name: Publish the PDF to the paper branch
+        if: ${{ steps.check_tex.outputs.tex_present == 'true' && github.event_name != 'pull_request' }}
+        run: |
+          folder="${{ steps.check_tex.outputs.folder }}"
+          staged=$(mktemp -d)
+          cp "${folder}"/*.pdf "${staged}/"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Reuse the branch when it exists so the PDF keeps a history; create it as an
+          # orphan otherwise, with the tree emptied, so it never carries a copy of the
+          # repository.
+          git fetch origin paper 2>/dev/null || true
+          if git show-ref --verify --quiet refs/remotes/origin/paper; then
+            git checkout -b paper origin/paper
+          else
+            git checkout --orphan paper
+            git rm -rf --quiet . || true
+            git reset
+          fi
+
+          cp "${staged}"/*.pdf .
+          git add ./*.pdf
+          git diff --staged --quiet || git commit -m "Update the compiled paper [skip ci]"
+          git push origin paper

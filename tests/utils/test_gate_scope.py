@@ -334,7 +334,7 @@ def test_interrogate_hook_and_gate_agree_on_the_threshold() -> None:
 def test_paper_folder_is_inside_the_docs_tree() -> None:
     """``paper_folder`` must sit inside ``docs/``, or the compiled PDF is never published.
 
-    There is no copy step. ``book`` builds the paper, latexmk writes the PDF beside its source,
+    There is no copy step. ``book`` builds the paper, tectonic writes the PDF beside its source,
     and the file reaches the site because mkdocs copies everything under ``docs_dir``. So the
     publication depends entirely on where this setting points, and pointing it elsewhere fails
     in the quietest possible way -- ``paper`` succeeds, ``book`` succeeds, and the artefact is

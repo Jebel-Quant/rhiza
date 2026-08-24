@@ -3,34 +3,64 @@
 #
 # Workflow: Paper (GitLab CI)
 #
-# Purpose: Compile the LaTeX paper (docs/paper/*.tex) to a PDF and publish
-#          it as a downloadable pipeline artifact.
-#          Only active when a *.tex file exists under docs/paper/.
+# Purpose: Compile the LaTeX paper to a PDF and publish it as a downloadable
+#          pipeline artifact.
+#
+#          The compile is `uvx "$RHIZA_TASK" paper`, the same task `make paper`
+#          runs locally and the same one the GitHub workflow calls, so the engine,
+#          its flags and the choice of root document are defined once. This job
+#          only puts the engine on the runner and collects the output.
+#
+#          Unlike the GitHub workflow it publishes no `paper` branch: pushing back
+#          to the repository needs a token GitLab's CI_JOB_TOKEN cannot stand in
+#          for, so a branch publish here would depend on a project secret this
+#          template does not set up. The artifact, and the book's copy of the PDF,
+#          are the two durable homes on this platform.
 #
 # Trigger: On push to main/master or when files under docs/paper/ change.
+
+# RHIZA_TASK is the pin the compile runs through; TECTONIC_VERSION is the LaTeX engine the
+# task drives -- a single static binary that resolves what a document cites out of its own
+# web bundle, which is why this job installs no TeX distribution and guesses at no list of
+# texlive-* packages. Both are watched by custom managers in the mother repo's
+# renovate.json; an unmanaged pin only ages (#1579).
+variables:
+  RHIZA_TASK: "rhiza-task@1.3.1"
+  TECTONIC_VERSION: "0.17.0"
 
 paper:build:
   stage: build
   needs: []
   image: $UV_IMAGE
   before_script:
-    - apt-get update && apt-get install -y texlive-latex-extra texlive-fonts-recommended texlive-bibtex-extra latexmk
+    # The musl build, not the gnu one: it is statically linked, so it runs in whatever
+    # container $UV_IMAGE happens to be. The gnu tarball wants libgraphite2.so.3, which a
+    # slim image does not carry.
+    - |
+      url="https://github.com/tectonic-typesetting/tectonic/releases/download"
+      url="${url}/tectonic%40${TECTONIC_VERSION}/tectonic-${TECTONIC_VERSION}-x86_64-unknown-linux-musl.tar.gz"
+      curl -fsSL "$url" -o /tmp/tectonic.tar.gz
+      tar xzf /tmp/tectonic.tar.gz -C /usr/local/bin tectonic
+      tectonic --version
   script:
     - |
-      if ! compgen -G "docs/paper/*.tex" > /dev/null 2>&1; then
-        echo "No docs/paper/*.tex found; skipping LaTeX compilation."
+      # The folder is a documented setting (`paper-folder`), so it is read from the CLI
+      # rather than assumed: a hard-coded docs/paper compiles nothing in a project that
+      # moved it. Presence is decided here so a project that adopts the bundle before
+      # writing anything gets a green pipeline, while a project that has a document
+      # compiles under `--strict`, where a skip is a failure.
+      folder=$(uvx "$RHIZA_TASK" print paper-folder)
+      if [ -z "$(find "${folder}" -maxdepth 1 -name '*.tex' 2>/dev/null | head -1)" ]; then
+        echo "No *.tex found under ${folder}; skipping LaTeX compilation."
         exit 0
       fi
 
-      if [ -f docs/paper/rhiza.tex ]; then
-        tex_file="rhiza.tex"
-      else
-        tex_file=$(find docs/paper -maxdepth 1 -name "*.tex" | head -1 | xargs basename)
-      fi
-      pdf_file="${tex_file%.tex}.pdf"
+      uvx "$RHIZA_TASK" paper --strict
 
-      cd docs/paper && latexmk -pdf -interaction=nonstopmode "${tex_file}"
-      cp "${pdf_file}" "../../${pdf_file}"
+      # Collected at the project root because GitLab artifact paths are literal, and the
+      # PDF's name is the task's business rather than this job's. Every top-level PDF the
+      # folder holds comes along, so nothing here re-derives which document is the root.
+      cp "${folder}"/*.pdf .
   artifacts:
     paths:
       - "*.pdf"
