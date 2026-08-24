@@ -45,7 +45,12 @@ pages:
       fi
   script:
     - |
-      # Build the book
+      # Build the book. SOURCE_DATE_EPOCH keeps the paper the book publishes
+      # byte-identical between builds of one revision -- tectonic otherwise embeds the
+      # build time in the PDF `/ID`.
+      SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+      export SOURCE_DATE_EPOCH
+
       make book
 
       # zensical reports `No issues found` for a nav entry whose target does not exist, so

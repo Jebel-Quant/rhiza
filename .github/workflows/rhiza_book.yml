@@ -139,6 +139,13 @@ jobs:
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: |
+          # Same reason as rhiza_paper.yml: tectonic embeds the build time in the PDF `/ID`,
+          # so without this the paper the book publishes differs on every build. Here the cost
+          # is not commit churn but a site asset whose bytes change for no reason, which
+          # defeats caching and makes two builds of one revision impossible to compare.
+          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          export SOURCE_DATE_EPOCH
+
           START=$(date +%s)
           uvx "$RHIZA_TASK" book
           echo "Docs build: $(($(date +%s) - START))s" >> "$GITHUB_STEP_SUMMARY"

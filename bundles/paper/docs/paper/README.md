@@ -99,6 +99,11 @@ The PDF is published three ways, which is deliberate — they fail differently:
    whether or not the paper changed. The source commit each PDF was built from is named in
    the commit message instead.
 
+   For the same reason the compile pins `SOURCE_DATE_EPOCH` to the source commit's time.
+   tectonic otherwise stamps the PDF `/ID` from the build time, so an unchanged document
+   compiles to different bytes on every run — which would commit every time regardless of
+   the README. With it, a rebuild of a revision you have already published is a no-op.
+
    Nothing needs to be tracked for this to work — the template gitignores
    `docs/paper/*.pdf`. If you commit your PDF anyway, the publish still works; it discards
    the freshly compiled copy from the working tree after staging it, which is the only way

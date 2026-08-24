@@ -131,6 +131,20 @@ jobs:
       - name: Compile the paper
         if: ${{ steps.check_tex.outputs.tex_present == 'true' }}
         run: |
+          # Measured, not assumed: two tectonic runs over an unchanged document produce
+          # different bytes, differing only in the PDF `/ID` field, which derives from the
+          # build time. That made every publish below rewrite the PDF and commit, so the
+          # branch history recorded runs rather than revisions -- and the `git diff --staged`
+          # guard, which exists to skip a rebuild of an unchanged paper, could never hold.
+          #
+          # SOURCE_DATE_EPOCH is the reproducible-builds convention and tectonic honours it:
+          # with the same value the output is byte-identical. The value is the source commit's
+          # own committer time, so it is a property of what was built rather than of when the
+          # runner happened to build it, and it needs no deeper checkout than the default.
+          SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          export SOURCE_DATE_EPOCH
+          echo "SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}"
+
           # `--strict` turns a skip into a failure. Without it a missing tectonic or an
           # unreadable folder would report `skipped  paper` and exit 0 -- a green run for a
           # workflow whose entire purpose is that a PDF got built.
