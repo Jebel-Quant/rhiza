@@ -76,17 +76,20 @@ def _tracked_files() -> tuple[str, ...]:
     return tuple(out)
 
 
-@functools.lru_cache(maxsize=1)
-def _manager() -> dict:
-    """Return the custom manager that watches the rhiza-task pin.
+@functools.cache
+def _manager(dep: str = "rhiza-task") -> dict:
+    """Return the custom manager that watches one pin.
+
+    Args:
+        dep: The manager's ``depNameTemplate``.
 
     Returns:
         The manager mapping from ``renovate.json``.
     """
     config = json.loads(_RENOVATE.read_text(encoding="utf-8"))
-    managers = [m for m in config.get("customManagers", []) if m.get("depNameTemplate") == "rhiza-task"]
+    managers = [m for m in config.get("customManagers", []) if m.get("depNameTemplate") == dep]
     assert len(managers) == 1, (
-        f"expected exactly one custom manager for rhiza-task in renovate.json, found {len(managers)}. "
+        f"expected exactly one custom manager for {dep} in renovate.json, found {len(managers)}. "
         f"Two managers for one dependency race each other; none means the pin only ages (#1579, #1582)."
     )
     return managers[0]
@@ -229,3 +232,81 @@ def test_every_pin_names_the_same_version() -> None:
         f"{ {v: sorted(p) for v, p in versions.items()} }. Every literal must name one "
         f"version, or the shim and CI run different gates."
     )
+
+
+# The tectonic pin, as the workflows spell it: `TECTONIC_VERSION: "0.17.0"`.
+_TECTONIC = re.compile(r'TECTONIC_VERSION:\s*"(\d+\.\d+\.\d+)"')
+
+
+def _tectonic_files() -> list[str]:
+    """Return the tracked files carrying a tectonic pin.
+
+    Returns:
+        Repo-relative paths, prose and history excluded.
+    """
+    out = []
+    for path in _tracked_files():
+        if path in _NOT_THE_MANAGER_S_JOB or path.startswith(_PROSE_PREFIXES):
+            continue
+        if _TECTONIC.search((_ROOT / path).read_text(encoding="utf-8", errors="replace")):
+            out.append(path)
+    return sorted(out)
+
+
+class TestTheTectonicPin:
+    """The engine pin gets the same treatment as the CLI pin, for the same reason.
+
+    tectonic is not on any runner or in any container this template targets, so each caller
+    downloads a pinned release asset. Two callers today: the paper workflows compile with it,
+    and the book workflows need it because ``paper`` is a prerequisite of ``book`` -- a
+    prerequisite that *skips* without the engine, which publishes a nav entry with no asset
+    behind it and a green tick over the top.
+
+    The failure mode being guarded is not a broken build but a silent one: an unmanaged pin
+    ages, and the paper compiles fine on an old engine for a long time before it doesn't.
+    """
+
+    def test_the_scan_finds_the_pins_at_all(self) -> None:
+        """Positive control: no files would make the assertions below vacuous."""
+        found = _tectonic_files()
+        assert len(found) >= 2, (
+            f"found only {len(found)} file(s) carrying a tectonic pin: {found}. The paper "
+            f"workflow and the book workflow both install the engine, so the scan is looking "
+            f"in the wrong place."
+        )
+
+    @pytest.mark.parametrize("path", _tectonic_files())
+    def test_every_pinned_file_is_matched_by_the_manager(self, path: str) -> None:
+        """A pin no ``managerFilePatterns`` entry matches is a pin Renovate never bumps."""
+        patterns = [_as_regex(p) for p in _manager("tectonic-typesetting/tectonic")["managerFilePatterns"]]
+        assert any(p.search(path) for p in patterns), (
+            f"{path} carries a TECTONIC_VERSION pin that no managerFilePatterns entry "
+            f"matches, so Renovate will never bump it."
+        )
+
+    @pytest.mark.parametrize("path", _tectonic_files())
+    def test_the_match_string_captures_every_occurrence(self, path: str) -> None:
+        """Matching the file is not enough: the regex must capture each pin's version."""
+        match_strings = [_match_string(s) for s in _manager("tectonic-typesetting/tectonic")["matchStrings"]]
+        text = (_ROOT / path).read_text(encoding="utf-8")
+        occurrences = _TECTONIC.findall(text)
+        assert any([m.group("currentValue") for m in regex.finditer(text)] == occurrences for regex in match_strings), (
+            f"{path} carries {len(occurrences)} tectonic pin(s) but no matchStrings entry captures all of them."
+        )
+
+    def test_every_pin_names_the_same_version(self) -> None:
+        """Two engines across the workflows is a difference nothing would report.
+
+        The paper workflow's PDF and the book's copy of it would be built by different
+        versions, which is the kind of divergence that shows up as a rendering difference
+        between the artifact and the published site rather than as a failure.
+        """
+        versions: dict[str, set[str]] = {}
+        for path in _tectonic_files():
+            for version in _TECTONIC.findall((_ROOT / path).read_text(encoding="utf-8")):
+                versions.setdefault(version, set()).add(path)
+        assert len(versions) == 1, (
+            f"the tectonic pin disagrees with itself across files: "
+            f"{ {v: sorted(p) for v, p in versions.items()} }. The paper artifact and the "
+            f"book's copy of it would be built by different engines."
+        )

@@ -15,6 +15,14 @@
 #   - 🧪 Run tests and generate coverage reports
 #   - 🚀 Deploy combined documentation to GitLab Pages
 
+# The LaTeX engine `book`'s `paper` prerequisite needs. Without it that prerequisite skips
+# -- `skipped  paper  tectonic not found` -- and `book` still reports ok, so the site
+# deploys with the paper in its nav and no such asset: a 404 in the book's own navigation,
+# green the whole way. Installed only when the project has a paper. Pinned and managed by a
+# custom manager in the mother repo's renovate.json.
+variables:
+  TECTONIC_VERSION: "0.17.0"
+
 pages:
   stage: deploy
   needs: []
@@ -25,10 +33,26 @@ pages:
     - apt-get update && apt-get install -y git-lfs make
     - git lfs pull
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
+    - |
+      # The musl build: statically linked, so it runs in whatever container $UV_IMAGE is.
+      folder=$(uvx rhiza-task@1.3.1 print paper-folder)
+      if [ -n "$(find "${folder}" -maxdepth 1 -name '*.tex' 2>/dev/null | head -1)" ]; then
+        url="https://github.com/tectonic-typesetting/tectonic/releases/download"
+        url="${url}/tectonic%40${TECTONIC_VERSION}/tectonic-${TECTONIC_VERSION}-x86_64-unknown-linux-musl.tar.gz"
+        curl -fsSL "$url" -o /tmp/tectonic.tar.gz
+        tar xzf /tmp/tectonic.tar.gz -C /usr/local/bin tectonic
+        tectonic --version
+      fi
   script:
     - |
       # Build the book
       make book
+
+      # zensical reports `No issues found` for a nav entry whose target does not exist, so
+      # this is the only check that asks whether what was *published* holds together. It is
+      # deliberately not a prerequisite of `book` -- a project that cannot build its paper
+      # locally must still be able to build its book -- so the deploying pipeline names it.
+      make book-nav
 
       # GitLab Pages expects artifacts in the "public" directory
       # Move _book to public for GitLab Pages

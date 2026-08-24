@@ -492,3 +492,92 @@ class TestPaperWorkflow:
                 f"reusable workflow it calls pushes the compiled PDF to the `paper` branch, and "
                 f"a caller cannot grant less than the callee needs."
             )
+
+
+class TestBookWorkflow:
+    """The workflow that deploys the book must be able to build every asset its nav claims.
+
+    This class exists because of a published 404. `book` takes `paper` as a prerequisite and
+    the PDF needs no copy step -- tectonic writes it beside its source, inside `docs_dir`, so
+    mkdocs sweeps it up as a site asset. But the workflow installed no engine, so the
+    prerequisite reported `skipped  paper  tectonic not found`, `book` reported ok, and the
+    site deployed with `- Paper: paper/rhiza.pdf` in its navigation and no such file. Green
+    the whole way, on every run, for as long as nobody clicked the entry.
+
+    Two halves, and neither is sufficient. Installing the engine makes the asset exist;
+    `book-nav` is what notices when an asset does *not*, and it had been invoked by nothing
+    at all -- upstream's own docstring says it is "named by rhiza_book.yml", which was the
+    claim rather than the fact. zensical reports `No issues found` for a nav entry whose
+    target is missing, so without that gate nothing anywhere asks the question.
+    """
+
+    @pytest.fixture
+    def book_workflow_text(self, workflows_dir: Path) -> str:
+        """Return the book workflow's raw text, or skip when it is not synced."""
+        path = workflows_dir / "rhiza_book.yml"
+        if not path.exists():
+            pytest.skip("rhiza_book.yml not found")
+        return path.read_text(encoding="utf-8")
+
+    def test_the_book_workflow_installs_the_engine_the_paper_needs(self, book_workflow_text: str) -> None:
+        """Without tectonic the `paper` prerequisite skips, and a skip publishes a 404.
+
+        Asserted on the download rather than on the word: an `env:` pin with no step using it
+        would satisfy a looser check and install nothing.
+        """
+        assert "TECTONIC_VERSION" in book_workflow_text, (
+            "the book workflow pins no tectonic version, so `book`'s `paper` prerequisite "
+            "cannot compile and the PDF the nav claims is never built."
+        )
+        assert "tectonic-typesetting/tectonic/releases/download" in book_workflow_text, (
+            "the book workflow names a tectonic version but never installs it. The `paper` "
+            "prerequisite skips without the binary on PATH -- and a skipped prerequisite is "
+            "exactly what deployed a 404 in the book's own nav."
+        )
+
+    def test_the_book_workflow_names_the_nav_gate(self, book_workflow_text: str) -> None:
+        """`book-nav` must run in the job that builds, after the build.
+
+        It is deliberately not a prerequisite of `book` -- a consumer that cannot compile its
+        paper locally must still be able to build its book -- so the only place the check can
+        live is the pipeline that deploys. Asserted by step order: run before the build and it
+        reads a `_book/` from nowhere and skips, which is a pass that proves nothing.
+        """
+        doc = yaml.safe_load(book_workflow_text)
+        for job in doc["jobs"].values():
+            runs = [s.get("run") or "" for s in job.get("steps", [])]
+            building = [i for i, r in enumerate(runs) if 'uvx "$RHIZA_TASK" book' in r and "book-nav" not in r]
+            checking = [i for i, r in enumerate(runs) if 'uvx "$RHIZA_TASK" book-nav' in r]
+            if not building:
+                continue
+            assert checking, (
+                "the job that builds the book never runs `book-nav`, so a nav entry with no "
+                "asset behind it deploys as a 404. zensical reports `No issues found` for "
+                "exactly that case, so nothing else asks."
+            )
+            assert min(checking) > max(building), (
+                "`book-nav` runs before the book is built, so it skips for want of a built "
+                "site -- a pass that measures nothing."
+            )
+            return
+        pytest.fail("no job in the book workflow builds the book")
+
+    def test_the_gitlab_book_pipeline_checks_the_nav_too(self, root: Path) -> None:
+        """The GitLab twin deploys the same site and needs the same two halves.
+
+        A consumer on the `gitlab-project` profile publishes Pages from this job, so a gap
+        here is the same published 404 -- just in somebody else's repository, where it is
+        harder to notice.
+        """
+        path = root / "bundles" / "gitlab-book" / ".gitlab" / "workflows" / "rhiza_book.yml"
+        assert path.is_file(), "the gitlab-book bundle ships no rhiza_book.yml"
+        text = path.read_text(encoding="utf-8")
+
+        assert "tectonic-typesetting/tectonic/releases/download" in text, (
+            "the GitLab book pipeline installs no LaTeX engine, so `book`'s `paper` "
+            "prerequisite skips and the nav entry for the paper resolves to nothing."
+        )
+        assert "book-nav" in text, (
+            "the GitLab book pipeline never checks that its nav resolves, so it can deploy a "
+            "404 in the published navigation with nothing going red."
+        )
