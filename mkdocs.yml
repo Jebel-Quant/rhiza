@@ -32,7 +32,7 @@ nav:
     - VSCode Extensions: development/VSCODE_EXTENSIONS.md
     - Marimo: development/MARIMO.md
     - Presentation: development/PRESENTATION.md
-    - Building the Slides: presentations/README.md
+    - Building the Slides: presentations/index.md
     - Git LFS: lfs/LFS.md
   - Operations:
     - CI Enforcement Model: operations/CI_ENFORCEMENT.md
@@ -46,7 +46,7 @@ nav:
     - Branch Protection: ops/BRANCH_PROTECTION.md
     - OpenSSF Best Practices Badge: ops/CII_BEST_PRACTICES.md
   - Architecture Decision Records:
-    - Overview: adr/README.md
+    - Overview: adr/index.md
     - ADR-0001 Use Architecture Decision Records: adr/0001-use-architecture-decision-records.md
     - ADR-0002 Use uv for Python Package Management: adr/0002-use-uv-for-python-package-management.md
     - ADR-0003 Use Ruff for Linting and Formatting: adr/0003-use-ruff-for-linting-and-formatting.md

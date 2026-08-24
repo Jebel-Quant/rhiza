@@ -534,7 +534,7 @@ and the `source-folder` line in this repository's own `pyproject.toml`.
 ### 5. Documentation as Code
 
 - Every repo-owned target carries a `##` help comment, enforced by a pre-commit hook
-- Every architectural decision has an [ADR](../adr/README.md)
+- Every architectural decision has an [ADR](../adr/index.md)
 - README files in every major directory
 - Docs are gated: links resolve, bundles are documented, and every `make` target a document
   names must exist (`tests/docs/test_doc_consistency.py`)

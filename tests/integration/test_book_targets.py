@@ -151,7 +151,7 @@ def test_every_docs_page_is_reachable_from_the_nav() -> None:
     The general case of :func:`test_the_compiled_paper_is_reachable_from_the_book`, and it
     was failing for four pages when it was written (#1612): ``guides/CUSTOMIZATION.md`` and
     ``troubleshooting.md`` -- both edited that same week -- plus
-    ``operations/CI_PERFORMANCE.md`` and ``presentations/README.md``.
+    ``operations/CI_PERFORMANCE.md`` and ``presentations/index.md``.
 
     mkdocs builds every markdown file under ``docs_dir`` whether the nav claims it or not, so
     an unlinked page is published and unreachable rather than missing. Nothing caught it from

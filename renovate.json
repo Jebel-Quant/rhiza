@@ -80,10 +80,10 @@
     },
     {
       "customType": "regex",
-      "description": "The tectonic pin the paper workflows install. tectonic is the LaTeX engine rhiza-task's `paper` task drives, and neither pipeline can assume a runner has it -- so each downloads a pinned release asset. No built-in manager reads a `TECTONIC_VERSION` variable, and an unmanaged pin only ages, which is the lesson of #1579 (the pytest-rhiza manager) and #1582 (RHIZA_TASK, which had no manager at all). Upstream tags releases `tectonic@X.Y.Z`, hence extractVersionTemplate; the workflows re-encode the `@` for the download URL. The asset is deliberately not checksum-verified: nothing can keep a digest in step with an automated bump, so a pinned digest would turn each of these PRs into a red paper build in every consumer.",
+      "description": "The tectonic pin the paper and book workflows install (the book needs it because `paper` is a prerequisite of `book`, and a skipped prerequisite publishes a nav entry with no asset behind it). tectonic is the LaTeX engine rhiza-task's `paper` task drives, and neither pipeline can assume a runner has it -- so each downloads a pinned release asset. The file patterns are the whole workflow folders rather than the two filenames, so a third caller is watched the day it is added rather than the day somebody notices. No built-in manager reads a `TECTONIC_VERSION` variable, and an unmanaged pin only ages, which is the lesson of #1579 (the pytest-rhiza manager) and #1582 (RHIZA_TASK, which had no manager at all). Upstream tags releases `tectonic@X.Y.Z`, hence extractVersionTemplate; the workflows re-encode the `@` for the download URL. The asset is deliberately not checksum-verified: nothing can keep a digest in step with an automated bump, so a pinned digest would turn each of these PRs into a red paper build in every consumer.",
       "managerFilePatterns": [
-        "/^\\.github/workflows/rhiza_paper\\.yml$/",
-        "/^bundles/[^/]+/\\.gitlab/workflows/rhiza_paper\\.yml$/"
+        "/^\\.github/workflows/[^/]+\\.ya?ml$/",
+        "/^bundles/[^/]+/\\.gitlab/.*\\.ya?ml$/"
       ],
       "matchStrings": [
         "TECTONIC_VERSION:\\s*\"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
