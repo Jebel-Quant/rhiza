@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
-## [1.5.2] - 2026-08-23
+## [1.5.2] - 2026-08-24
 
 ### New Features
 - Move the RHIZA_TASK pin to rhiza-task 1.3.1 (#1619)
@@ -17,6 +17,9 @@ and entries are generated from [Conventional Commits](https://www.conventionalco
 ### Documentation
 - Retire rhiza-cli from the docs, shorten the README, and rewrite the two guides built on the make layer (#1609)
 - Link every page from the nav, and stop documenting the retired make layer (#1615)
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1621)
 
 ## [1.5.1] - 2026-08-22
 
