@@ -129,8 +129,8 @@ def test_the_compiled_paper_is_reachable_from_the_book() -> None:
     The two halves compose and neither is sufficient. This test says the paper is claimed;
     ``book-nav`` says the claim resolves in the built site. Asserted against the nav *text*
     rather than a built file, deliberately: the PDF only exists after ``make paper``, which
-    needs a LaTeX distribution, so requiring the artefact here would make this skip on every
-    machine without latexmk -- which is most of them, including CI's cheaper jobs.
+    needs a LaTeX engine, so requiring the artefact here would make this skip on every
+    machine without tectonic -- which is most of them, including CI's cheaper jobs.
     """
     tex = sorted((_ROOT / "docs" / "paper").glob("*.tex"))
     if not tex:
@@ -159,7 +159,7 @@ def test_every_docs_page_is_reachable_from_the_nav() -> None:
     this property in the other direction and passes vacuously on a page no entry mentions.
 
     Asserted against ``mkdocs.yml`` rather than the built site, for the reason the paper test
-    gives: building needs zensical and the paper needs latexmk, so reading the config keeps
+    gives: building needs zensical and the paper needs tectonic, so reading the config keeps
     this honest on a machine that has neither.
     """
     linked = _nav_pages()
