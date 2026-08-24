@@ -500,6 +500,27 @@ class TestPaperWorkflow:
             "revision the PDF was built from -- and the README deliberately does not carry it."
         )
 
+    def test_the_compile_is_reproducible(self, paper_workflow_text: str) -> None:
+        """The compile must pin `SOURCE_DATE_EPOCH`, or the publish commits on every run.
+
+        Measured rather than reasoned about: two tectonic runs over an unchanged document
+        produce different bytes, differing only in the PDF ``/ID`` field, which derives from
+        the build time. With ``SOURCE_DATE_EPOCH`` set to the same value the output is
+        byte-identical.
+
+        That makes this the other half of
+        :meth:`test_the_branch_readme_carries_no_per_run_value`. Keeping per-run values out of
+        the README is pointless while the PDF beside it changes every run: the
+        ``git diff --staged`` guard never holds, every publish commits, and the branch history
+        records runs rather than revisions. Both halves are needed for either to mean
+        anything -- which is why this assertion lives next to that one.
+        """
+        assert "SOURCE_DATE_EPOCH" in paper_workflow_text, (
+            "the paper workflow does not pin SOURCE_DATE_EPOCH, so tectonic stamps each build "
+            "with its own time and the published PDF differs on every run. The commit guard "
+            "below then never holds and the `paper` branch collects a commit per publish."
+        )
+
     def test_the_paper_workflow_gets_the_write_scope_it_needs(self, workflows_dir: Path) -> None:
         """`contents: write` must be granted, and by the job rather than the workflow.
 
@@ -618,6 +639,18 @@ class TestBookWorkflow:
             )
             return
         pytest.fail("no job in the book workflow builds the book")
+
+    def test_the_book_build_is_reproducible(self, book_workflow_text: str) -> None:
+        """The book must pin `SOURCE_DATE_EPOCH` too, for the asset rather than for a commit.
+
+        `book` compiles the paper through the same task, so without this the PDF the site
+        publishes has different bytes on every build. Nothing goes red -- it just defeats
+        caching and makes two builds of one revision impossible to compare.
+        """
+        assert "SOURCE_DATE_EPOCH" in book_workflow_text, (
+            "the book workflow does not pin SOURCE_DATE_EPOCH, so the paper it publishes as a "
+            "site asset is rebuilt with different bytes on every run."
+        )
 
     def test_the_gitlab_book_pipeline_checks_the_nav_too(self, root: Path) -> None:
         """The GitLab twin deploys the same site and needs the same two halves.

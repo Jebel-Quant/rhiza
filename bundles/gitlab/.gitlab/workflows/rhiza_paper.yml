@@ -55,6 +55,13 @@ paper:build:
         exit 0
       fi
 
+      # tectonic embeds the build time in the PDF `/ID`, so two runs over an unchanged
+      # document differ. SOURCE_DATE_EPOCH is the reproducible-builds convention and
+      # tectonic honours it; the source commit's own time makes the output a property of
+      # the revision rather than of the runner.
+      SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+      export SOURCE_DATE_EPOCH
+
       uvx "$RHIZA_TASK" paper --strict
 
       # Collected at the project root because GitLab artifact paths are literal, and the
