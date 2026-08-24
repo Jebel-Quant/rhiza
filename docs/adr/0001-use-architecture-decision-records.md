@@ -30,7 +30,7 @@ We will maintain Architecture Decision Records (ADRs) for architecturally signif
 1. **Location**: ADRs will be stored in `docs/adr/` directory
 2. **Format**: Each ADR will follow the template defined in `.github/agents/0000-adr-template.md`
 3. **Naming**: Files will be named `XXXX-title-with-hyphens.md` with sequential 4-digit numbering (e.g., `0002-example-decision.md`)
-4. **Index**: The `docs/adr/README.md` will maintain an index of all ADRs
+4. **Index**: The `docs/adr/index.md` will maintain an index of all ADRs
 5. **Immutability**: Once accepted, ADRs should not be modified; instead, create new ADRs that supersede old ones
 6. **Review**: ADRs should be reviewed and discussed before being marked as "Accepted"
 
