@@ -88,9 +88,21 @@ The PDF is published three ways, which is deliberate — they fail differently:
      - Paper: paper/main.pdf
    ```
 
-3. **The `paper` branch**, which holds the compiled PDF and nothing else. Pushed on
-   every default-branch run, never from a pull request. This is the copy you can link
-   without building the site and without an unexpired run.
+3. **The `paper` branch**, which holds the compiled PDF and a generated `README.md`
+   explaining what the branch is — and nothing else. Pushed on every default-branch run,
+   never from a pull request. This is the copy you can link without building the site and
+   without an unexpired run.
+
+   The README is written by the workflow, so anything you commit there by hand is
+   overwritten on the next run. It deliberately carries no run number or timestamp: that
+   would make the file differ every time, and the branch would collect a commit per push
+   whether or not the paper changed. The source commit each PDF was built from is named in
+   the commit message instead.
+
+   Nothing needs to be tracked for this to work — the template gitignores
+   `docs/paper/*.pdf`. If you commit your PDF anyway, the publish still works; it discards
+   the freshly compiled copy from the working tree after staging it, which is the only way
+   to switch branches with a modified tracked file in the way.
 
 The GitLab pipeline publishes the first two. It does not push the branch: that needs a
 token `CI_JOB_TOKEN` cannot stand in for, and this template sets up no project secret.
