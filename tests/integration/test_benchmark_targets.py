@@ -53,28 +53,25 @@ def test_extra_target_resolves(target: str) -> None:
 
 
 def test_the_benchmark_gate_has_something_to_measure_or_is_known_not_to() -> None:
-    """Record whether `benchmark` has any input in *this* repo.
+    """A live benchmark workflow must have benchmark inputs, and no longer skip this check.
 
-    The answer used to be "no", which is why this is written as an observation with two branches
-    rather than a plain demand: rhiza ships configuration, had no ``tests/benchmarks/``, and
-    ``rhiza_benchmark.yml`` ran ``make benchmark`` on every push to ``main`` regardless — so the
-    gate printed ``skipped  benchmark  no benchmarks folder``, exited 0, and wrote a duration into
-    the step summary for a run that measured nothing.
-
-    The folder exists now (``tests/benchmarks/test_dogfood_linker.py``), so the second branch is
-    the live one and this is a demand after all: the gate has input, and must keep it. The first
-    branch stays reachable for the case that removes the folder again, which would otherwise turn
-    the workflow green-and-empty without a single assertion changing.
+    This used to skip when ``tests/benchmarks/`` was absent, documenting a known hole without
+    enforcing that it got fixed. The check is now strict: if the live workflow still runs the
+    benchmark gate, this repository must keep benchmark modules for it to collect.
     """
-    folder = Path(__file__).resolve().parents[2] / "tests" / "benchmarks"
-    if not folder.is_dir():
-        pytest.skip(
-            "this repo has no tests/benchmarks/, so `make benchmark` measures nothing here — "
-            "a pre-existing gap in rhiza_benchmark.yml, not a consequence of retiring test.mk"
+    root = Path(__file__).resolve().parents[2]
+    workflow = root / ".github" / "workflows" / "rhiza_benchmark.yml"
+    benchmark_folder = root / "tests" / "benchmarks"
+
+    benchmark_is_invoked = workflow.is_file() and " benchmark" in workflow.read_text(encoding="utf-8")
+    if benchmark_is_invoked:
+        assert benchmark_folder.is_dir(), (
+            "rhiza_benchmark.yml invokes benchmark but tests/benchmarks/ is missing, so the gate "
+            "measures nothing on this repo"
         )
-    assert sorted(folder.glob("test_*.py")), (
-        "tests/benchmarks/ exists but holds no benchmark modules, so the gate collects nothing"
-    )
+        assert sorted(benchmark_folder.glob("test_*.py")), (
+            "tests/benchmarks/ exists but holds no benchmark modules, so the gate collects nothing"
+        )
 
 
 def test_no_bundle_offers_a_mutation_gate() -> None:
