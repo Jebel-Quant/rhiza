@@ -182,10 +182,10 @@ jobs:
             exit 1
           fi
 
-      # The `paper` branch holds the compiled PDF and nothing else, so a reader can link one
-      # stable path without building the book or digging through expired run artifacts.
-      # Every top-level PDF in the paper folder goes up, which keeps the naming of the root
-      # document the task's business rather than this workflow's.
+      # The `paper` branch holds the compiled PDF and a generated README, so a reader can
+      # link one stable path without building the book or digging through expired run
+      # artifacts. Every top-level PDF in the paper folder goes up, which keeps the naming of
+      # the root document the task's business rather than this workflow's.
       - name: Publish the PDF to the paper branch
         if: ${{ steps.check_tex.outputs.tex_present == 'true' && github.event_name != 'pull_request' }}
         run: |
@@ -199,16 +199,81 @@ jobs:
           # Reuse the branch when it exists so the PDF keeps a history; create it as an
           # orphan otherwise, with the tree emptied, so it never carries a copy of the
           # repository.
+          #
+          # `-f` because the compile has just written a PDF into the working tree. The
+          # template gitignores `docs/paper/*.pdf`, so for a synced project that file is
+          # untracked and the switch is quiet -- but a project that commits its PDF instead
+          # has a *modified tracked* file, and git then refuses to switch branches at all.
+          # That would fail the publish immediately after a successful compile. Discarding is
+          # safe here and nowhere else: the PDFs were copied to ${staged} above, which is the
+          # only reason this step no longer needs the working tree.
           git fetch origin paper 2>/dev/null || true
           if git show-ref --verify --quiet refs/remotes/origin/paper; then
-            git checkout -b paper origin/paper
+            git checkout -f -b paper origin/paper
           else
-            git checkout --orphan paper
+            git checkout -f --orphan paper
             git rm -rf --quiet . || true
             git reset
           fi
 
           cp "${staged}"/*.pdf .
-          git add ./*.pdf
-          git diff --staged --quiet || git commit -m "Update the compiled paper [skip ci]"
+
+          # A branch holding one binary and no explanation is a puzzle for whoever finds it:
+          # it looks abandoned, it looks hand-committed, and nothing on it says where the file
+          # came from or that editing it is pointless. So the README is written here rather
+          # than committed once by hand -- a hand-written one would be overwritten by the next
+          # run anyway, which is exactly what it has to say about itself.
+          #
+          # Deliberately free of per-run values: no commit SHA, no run number, no timestamp.
+          # Any of those would make the file differ on every run, so the `git diff --staged`
+          # test below would never hold and the branch would collect a commit per push whether
+          # or not the paper had changed. Provenance goes in the commit message, which is only
+          # written when there is something to commit.
+          #
+          # `printf` with one argument per line rather than a heredoc: a heredoc terminator
+          # has to sit at column 0, which is not a place a line inside a YAML block scalar can
+          # be. Single-quoted arguments keep the shell away from the markdown backticks, which
+          # is also why the prose below carries no apostrophes.
+          {
+            printf '%s\n' \
+              '# The compiled paper' \
+              '' \
+              'This branch is written by a machine. It carries the PDF built from the LaTeX' \
+              'sources of [${{ github.repository }}](${{ github.server_url }}/${{ github.repository }})' \
+              'and nothing else: no code, no project history, no relation to any other branch.' \
+              '' \
+              '**Do not edit it and do not merge it anywhere.** The next run of the workflow' \
+              'that publishes it overwrites whatever is here.' \
+              '' \
+              '## What is here' \
+              ''
+            for pdf in *.pdf; do
+              # No backticks around the name: shellcheck reads a backtick inside single
+              # quotes as a command substitution that will not expand (SC2016), and a code
+              # span adds nothing inside a link anyway.
+              printf -- '- [%s](%s)\n' "$pdf" "$pdf"
+            done
+            printf '%s\n' \
+              '' \
+              '## Where it comes from' \
+              '' \
+              'The ${{ github.workflow }} workflow compiles the paper on every push to the' \
+              'default branch and pushes the result here. The message of each commit names the' \
+              'source commit it was built from, so the log of this branch is the history of the' \
+              'document. Edit the LaTeX sources on the default branch, not here.' \
+              '' \
+              '## Why a branch at all' \
+              '' \
+              'The same PDF is published in two other places, and the three fail differently:' \
+              '' \
+              '- as a **run artifact** on the workflow run, which is immediate but expires;' \
+              '- as a **site asset** in the documentation, if the project builds a book, which is' \
+              '  durable but needs the site to build.' \
+              '' \
+              'This branch is the copy that needs neither: a stable path anyone can link, fetch' \
+              'or clone without a build and without an unexpired run.'
+          } > README.md
+
+          git add ./*.pdf README.md
+          git diff --staged --quiet || git commit -m "Update the compiled paper from ${GITHUB_SHA:0:8} [skip ci]"
           git push origin paper

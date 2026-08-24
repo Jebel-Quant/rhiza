@@ -443,6 +443,63 @@ class TestPaperWorkflow:
             "the collision check does not run before the push, so the push fails first and the diagnosis never prints."
         )
 
+    def test_the_branch_explains_itself(self, paper_workflow_text: str) -> None:
+        """The publish must write a README, not just a PDF.
+
+        A branch holding one binary and no prose is a puzzle for whoever finds it: it looks
+        abandoned, it looks hand-committed, and nothing on it says where the file came from or
+        that editing it is pointless. Generated rather than committed once by hand, because a
+        hand-written one would be overwritten by the next run anyway -- which is the main
+        thing it has to say about itself.
+        """
+        doc = yaml.safe_load(paper_workflow_text)
+        steps = [s for job in doc["jobs"].values() for s in job.get("steps", [])]
+        pushing = next(s for s in steps if "git push origin paper" in (s.get("run") or ""))
+        run = pushing["run"]
+
+        assert "> README.md" in run, (
+            "the publish step writes no README to the `paper` branch. The branch is then a "
+            "bare PDF with nothing saying what wrote it or that edits do not survive."
+        )
+        assert "git add ./*.pdf README.md" in run, (
+            "the README is written but not staged, so the branch never receives it."
+        )
+
+    def test_the_branch_readme_carries_no_per_run_value(self, paper_workflow_text: str) -> None:
+        """A timestamp or run id in the README would commit on every push.
+
+        The step commits only when `git diff --staged` reports a change, which is what keeps a
+        rebuild of an unchanged paper from adding an empty commit. A README carrying the run
+        number, the date or the source SHA differs on *every* run, so that test would never
+        hold again and the branch would grow a commit per push whether or not the document
+        moved.
+
+        Provenance is not lost by that -- it goes in the commit message, which is written only
+        when there is something to commit. So this asserts both halves: the README region has
+        no per-run value, and the commit message does.
+        """
+        doc = yaml.safe_load(paper_workflow_text)
+        steps = [s for job in doc["jobs"].values() for s in job.get("steps", [])]
+        run = next(s["run"] for s in steps if "git push origin paper" in (s.get("run") or ""))
+
+        readme_region = run.split("> README.md")[0].rsplit("\n{\n", 1)[-1]
+        volatile = [
+            token
+            for token in ("github.sha", "github.run_id", "github.run_number", "GITHUB_SHA", "$(date")
+            if token in readme_region
+        ]
+        assert not volatile, (
+            f"the generated README embeds {volatile}, which differs on every run. The commit "
+            f"guard would never hold again and the branch would collect a commit per push "
+            f"even when the paper had not changed."
+        )
+
+        commit_line = next(line for line in run.splitlines() if "git commit -m" in line)
+        assert "GITHUB_SHA" in commit_line or "github.sha" in commit_line, (
+            "the commit message names no source commit, so nothing on the branch says which "
+            "revision the PDF was built from -- and the README deliberately does not carry it."
+        )
+
     def test_the_paper_workflow_gets_the_write_scope_it_needs(self, workflows_dir: Path) -> None:
         """`contents: write` must be granted, and by the job rather than the workflow.
 
