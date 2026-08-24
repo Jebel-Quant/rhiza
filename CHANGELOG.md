@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.6.0] - 2026-08-24
+
+### New Features
+- Make rhiza_paper call the rhiza-task, and publish the PDF on the paper branch (#1623)
+- Give the paper branch a README explaining what it is (#1626)
+
+### Bug Fixes
+- Build the paper in the book workflow, and check the nav actually resolves (#1624)
+- Make the compiled paper reproducible, so the branch records revisions not runs (#1627)
+- Stop the changelog dropping a commit that merely mentions the CI-skip marker
+
+### Other Changes
+- Enforce non-empty benchmark input invariant for live benchmark workflow (#1625)
+
 ## [1.5.2] - 2026-08-24
 
 ### New Features
