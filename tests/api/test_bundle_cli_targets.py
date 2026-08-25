@@ -103,6 +103,27 @@ def test_the_pinned_cli_still_provides_the_bundles_targets(bundle: str, cli_task
     )
 
 
+def test_the_pinned_cli_still_carries_the_setup_hook(cli_tasks: set[str]) -> None:
+    """`setup` is what runs a consumer's `local-setup.sh`, and its loss would be silent.
+
+    Its own case rather than a sixth `BUNDLE_TARGETS` entry, because it is not a retired
+    fragment's target -- no bundle ever shipped a `setup` recipe. It is guarded here for a
+    sharper reason than the five above. Those fail loudly when someone types the target; this
+    one is never typed at all. Every layer's `install` names it as a prerequisite, and an
+    unresolvable prerequisite is *skipped* rather than an error -- so a pin that stopped
+    carrying it would leave every consumer's `install` quietly running no provisioning hook,
+    with every gate still green and a missing native binary as the only symptom.
+
+    Args:
+        cli_tasks: What the pinned rhiza-task exposes.
+    """
+    assert "setup" in cli_tasks, (
+        f"{pinned_cli()} has no `setup` task, so `local-setup.sh` would never run. Consumers "
+        f"reach it only as a prerequisite of `install`, and a prerequisite the CLI cannot "
+        f"resolve is skipped rather than failed -- nothing would report this at run time."
+    )
+
+
 @pytest.mark.parametrize("target", ALL_TARGETS)
 def test_the_shim_forwards_each_target_to_the_cli(logger, target: str) -> None:
     """`make <target>` resolves and delegates rather than failing on a missing rule.

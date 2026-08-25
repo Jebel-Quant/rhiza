@@ -287,6 +287,9 @@ Run `make help` for a complete list of 40+ available targets.
                                                            local branches       
  doctor              Dev                                   check local          
                                                            prerequisites        
+ setup               Dev                                   run the repository's 
+                                                           own environment      
+                                                           setup hook           
  docker-build        Docker                                build the Docker     
                                                            image                
  docker-clean        Docker                                remove the Docker    
@@ -337,7 +340,7 @@ Run `make help` for a complete list of 40+ available targets.
  docs-coverage       Python          install               check docstring      
                                                            coverage with        
                                                            interrogate          
- install             Python                                create the venv and  
+ install             Python          setup                 create the venv and  
                                                            sync dependencies    
  license             Python          install               scan for copyleft    
                                                            licences             
@@ -392,11 +395,12 @@ Repo-owned targets:
 ## 🎯 Customising Safely
 
 Everything a sync delivers is **template-owned and overwritten by the next one** — the
-`Makefile` included, since `core` ships it. Extensions live in four places no sync touches:
+`Makefile` included, since `core` ships it. Extensions live in five places no sync touches:
 
 | Where | For |
 |-------|-----|
 | `local.mk` | Your own make targets, and extending a template task by shadowing it |
+| `local-setup.sh` | Native binaries your project needs before any gate can run |
 | `[tool.rhiza-task]` in `pyproject.toml` (or `rhiza.toml`) | Settings — `source-folder`, `coverage-fail-under`, … |
 | `pyproject.toml` | Dependencies, scripts, other tools' configuration |
 | `.rhiza/.env` | Developer-local overrides (gitignored) |

@@ -88,12 +88,7 @@ call the task itself wherever you want it in the sequence:
 ```makefile
 # local.mk
 
-# The old `pre-install::` — extra work first, then the real task.
-install: $(UVX)
-	@command -v dot >/dev/null 2>&1 || sudo apt-get install -y graphviz
-	@$(UVX) $(RHIZA_TASK) install
-
-# The old `post-install::` — the real task first, then the extra work.
+# The real task first, then the extra work.
 test: $(UVX)
 	@$(UVX) $(RHIZA_TASK) test
 	@./scripts/publish-test-report.sh
@@ -103,8 +98,41 @@ test: $(UVX)
 shadowing rule always drives the same pinned CLI as everything else. Naming `$(UVX)` as a
 prerequisite keeps the bootstrap that installs `uv` on a runner that has none.
 
-This is strictly more capable than the hooks were: it works for **every** task rather than the
-six that happened to have anchors, and the order is written down rather than implied.
+> **Shadowing reaches a task only when make is what resolves it.** A shadowing rule fires
+> when you type its name, or when another *make* rule names it as a prerequisite. It does
+> **not** fire when the task is reached as a prerequisite inside the CLI: `test` needs
+> `install`, but the shim forwards the goal `test` to `rhiza-task`, which resolves `install`
+> in its own task graph and never consults a make rule of that name. CI never runs make at
+> all — every workflow invokes `uvx "$RHIZA_TASK" <gate>` directly.
+>
+> So shadowing is for adding work around a task **you invoke**. For work that must happen
+> before every gate — installing a native binary, say — use the setup hook below, which is
+> anchored where the CLI can see it.
+
+### Provide a native binary
+
+Some projects need a tool on the machine before any gate can run: graphviz for a docs
+plugin, `libpq` for psycopg, pandoc. Put it in an executable `local-setup.sh` at the
+repository root:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+command -v dot >/dev/null 2>&1 || sudo apt-get update && sudo apt-get install -y graphviz
+```
+
+Every language layer's `install` runs it, and `install` is the prerequisite of essentially
+every gate — so one file covers a local `make test`, both CI platforms and the devcontainer,
+with no workflow edit anywhere. Commit it, like `local.mk`: `core` leaves it un-ignored
+because anything CI invokes has to be in the repository.
+
+Guard the expensive part yourself, as above — it runs on each fresh CI job, and on every
+local invocation. Two behaviours worth knowing: a hook that exists and is **not executable
+fails** with a `chmod +x` hint, because a provisioning step someone wrote and believed was
+running is exactly what must not pass quietly — while having no hook at all simply succeeds,
+so a project that needs nothing pays nothing.
+
+The hook is POSIX shell; a Windows-only project needs its own arrangement.
 
 ### Change a setting
 
