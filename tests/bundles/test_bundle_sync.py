@@ -297,6 +297,23 @@ class TestProfileLocalSync:
         assert (self.project / "docs" / "index.md").is_file()
         assert (self.project / "docs" / "mkdocs-base.yml").is_file()
 
+    def test_the_brand_asset_is_not_copied_into_consumers(self):
+        r"""Rhiza's logo is served from its docs site, not synced (#1637).
+
+        It was 81 lines of SVG, byte-identical in every downstream repo, with nothing
+        substituting into it — and referenced by nothing local: `mkdocs-base.yml` sets no
+        `logo:` or `favicon:`, `index.md` does not use it, and the paper has no
+        `\includegraphics`. The three places that do show it already used an absolute URL.
+
+        It lives at `docs/assets/` in this repository, which mkdocs publishes, so
+        <https://jebel-quant.github.io/rhiza/assets/rhiza-logo.svg> is the reference. A site
+        URL rather than a tagged raw-GitHub one because it needs no bump-my-version entry to
+        stay current — the alternative was a third version literal to keep in step.
+        """
+        assets = self.project / "docs" / "assets"
+        stray = sorted(path.name for path in assets.rglob("*")) if assets.is_dir() else []
+        assert not stray, f"the sync delivered brand assets a consumer cannot use: {stray}"
+
     def test_no_github_workflows_injected(self):
         """Local profile must not produce any .github/workflows/ files."""
         workflows_dir = self.project / ".github" / "workflows"
