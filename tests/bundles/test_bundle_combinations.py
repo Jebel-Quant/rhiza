@@ -44,17 +44,35 @@ class TestDockerBundleSync:
         sync_bundles(root, ["core", "docker"], tmp_path)
         self.project = tmp_path
 
-    def test_dockerfile_exists(self) -> None:
-        """Dockerfile must be present after syncing the docker bundle."""
-        assert (self.project / "Dockerfile").is_file()
+    def test_dockerfile_lands_where_its_consumers_look(self) -> None:
+        """The Dockerfile must be at ``docker/``, which is where both consumers look.
 
-    def test_dockerignore_exists(self) -> None:
-        """A .dockerignore file must be present."""
-        # The docker bundle uses Dockerfile.dockerignore name convention
-        dockerignore = self.project / "Dockerfile.dockerignore"
-        alt_dockerignore = self.project / ".dockerignore"
-        assert dockerignore.is_file() or alt_dockerignore.is_file(), (
-            "Neither Dockerfile.dockerignore nor .dockerignore found"
+        It used to be asserted at the repository root, and that is exactly what let #1641
+        stand: ``rhiza_docker.yml`` tests ``docker/Dockerfile`` and ``rhiza-task
+        docker-build`` builds ``<docker_folder>/Dockerfile`` with ``docker_folder``
+        defaulting to ``docker``, so a root Dockerfile was linted, built and scanned by
+        nothing -- both consumers skipping rather than failing. The path is the whole
+        contract here, which is why this asserts it rather than mere presence.
+        """
+        assert (self.project / "docker" / "Dockerfile").is_file()
+        assert not (self.project / "Dockerfile").exists(), (
+            "a root Dockerfile is the #1641 layout: nothing lints, builds or scans it"
+        )
+
+    def test_dockerignore_sits_beside_the_dockerfile(self) -> None:
+        """The ignore file must be next to the Dockerfile, or it does not apply.
+
+        BuildKit resolves ``--file <path>/Dockerfile`` to ``<path>/Dockerfile.dockerignore``
+        and only then falls back to the context's ``.dockerignore``. A copy left at the root
+        under the ``Dockerfile.dockerignore`` name matches neither rule, so the build context
+        would silently stop being scoped -- the allowlist is what keeps `**` from shipping the
+        whole tree into the image.
+        """
+        scoped = self.project / "docker" / "Dockerfile.dockerignore"
+        context_wide = self.project / ".dockerignore"
+        assert scoped.is_file() or context_wide.is_file(), (
+            f"no ignore file docker will read: expected {scoped.relative_to(self.project)} "
+            f"beside the Dockerfile, or a context-wide .dockerignore"
         )
 
     def test_docker_ships_no_make_fragment(self) -> None:

@@ -79,6 +79,10 @@ _CONTROLS = {
     # The fixture narrowing makes every `missing` assertion fail rather than pass, so the
     # control is structural: there is no direction in which a thinner task list reads as green.
     "tests/api/test_bundle_cli_targets.py": "cli_tasks",
+    # `docker_folder` is compared against the bundle's deploy path, and an empty resolution
+    # would fail that comparison only by accident of the bundle's current layout -- so the
+    # non-emptiness is asserted on its own rather than left to it.
+    "tests/bundles/test_docker_paths_agree.py": "test_the_docker_folder_setting_resolves_to_something",
     # The control module for the shared reader. It is a deriver like any other -- it calls
     # `load()` -- so it declares itself rather than being exempted for being the control.
     "tests/test_registry.py": "test_the_registry_loads_and_carries_its_anchors",
