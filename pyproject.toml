@@ -177,7 +177,7 @@ typechecker = "both"
 #
 # 0.3.0 collects the same five modules and the same 34 checks as 0.2.1 on this repo, so this
 # is a bump of the assertions' *implementation*, not of the check set.
-pytest-rhiza = "pytest-rhiza==0.4.0"
+pytest-rhiza = "pytest-rhiza==0.5.0"
 
 # Restores this repo's own book override, which the migration to the shim dropped. The old root
 # Makefile carried `MKDOCS_EXTRA_PACKAGES = --with 'mkdocstrings[python]'` above the include, and
