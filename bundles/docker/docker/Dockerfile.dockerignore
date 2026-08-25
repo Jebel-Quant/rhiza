@@ -1,0 +1,25 @@
+# Sits beside the Dockerfile it belongs to, which is what makes it apply. BuildKit resolves
+# `--file <path>/Dockerfile` to `<path>/Dockerfile.dockerignore` before falling back to the
+# context's own `.dockerignore`, so this scopes the build context for *this* Dockerfile
+# without claiming the root `.dockerignore` that other tooling may want.
+#
+# The header used to describe a root symlink pointing here. There was no such symlink, and
+# there had been no `docker/` folder either: the bundle deployed both files to the repository
+# root while the workflow and `rhiza-task docker-build` both looked in `docker/`, so nothing
+# ever linted, built or scanned the image (#1641).
+#
+# Patterns below are relative to the build *context* -- the repository root, not this folder.
+# See: https://docs.docker.com/build/concepts/context/#dockerignore-files
+
+# Ignore Everything
+**
+
+# but don't ignore those files/folders
+!pyproject.toml
+!uv.lock
+!README.md
+!src/
+
+# In those folders make sure those files are not included
+**/__pycache__
+**/*.pyc
