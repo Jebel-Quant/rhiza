@@ -1,11 +1,17 @@
 # Docker Build Configuration
 
-This directory contains the Dockerfile and related configuration for building container images.
+The `docker/` folder at the repository root holds the Dockerfile and related configuration
+for building container images.
 
 ## Files
 
-- Dockerfile — Multi-stage Docker build configuration
-- Dockerfile.dockerignore — Build-context ignore rules scoped to this Dockerfile (see Notes)
+- `docker/Dockerfile` — Multi-stage Docker build configuration
+- `docker/Dockerfile.dockerignore` — Build-context ignore rules scoped to that Dockerfile (see Notes)
+
+The folder is not cosmetic: `rhiza-task docker-build` builds `<docker_folder>/Dockerfile`
+with `docker_folder` defaulting to `docker`, and `rhiza_docker.yml` names the same path. Both
+*skip* a Dockerfile they cannot find rather than failing, so a copy kept anywhere else is
+linted, built and scanned by nothing — which is what #1641 was.
 
 ## Python Version
 

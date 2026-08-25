@@ -82,8 +82,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-prek-e2e-python-
 
+      # `test_setup_hook_e2e.py` rides along here rather than getting a job of its own:
+      # `setup` is language-neutral, and its scaffold needs exactly what this job already
+      # installs (uv and git). Named explicitly because E2E_ARGS narrows to a file list --
+      # a module no job names is collected by nothing, and the suite still reports green.
+      # `tests/api/test_e2e_coverage.py` is what keeps that from happening silently again.
       - name: Run the Python layer end to end
-        run: make e2e E2E_ARGS=tests/e2e/test_python_layer_e2e.py
+        run: make e2e E2E_ARGS="tests/e2e/test_python_layer_e2e.py tests/e2e/test_setup_hook_e2e.py"
 
   rust:
     name: Rust layer
