@@ -70,17 +70,13 @@ The core abstraction is the **bundle** — a named group of configuration files.
   pre-commit config, `.bumpversion.toml`, and a starter `internal/version/version.go`
   with its `version_test.go`. Its gates are rhiza-task's `go` layer, test targets
   included, like the other two.
-- `tests`: optional Python testing extras — `benchmark`, `hypothesis-test`, `stress`
-  (requires `python-core`; the gates `all` names live in the layer)
 - `benchmarks`: pytest-benchmark infrastructure and reporting
 - `github`: GitHub repository configuration (actions, dependabot, core workflows)
 - `gitlab`: GitLab CI/CD pipeline configuration and core workflows
 - `docker`, `devcontainer`: containerisation
 - `vscode`: recommended VS Code extensions and workspace settings for local (non-container) editing
-- `marimo`: interactive notebooks
 - `book`: documentation with [MkDocs](https://www.mkdocs.org/) + [zensical](https://pypi.org/project/zensical/)
 - `presentation`: Marp slides
-- `paper`: LaTeX paper compilation
 - `lfs`, `legal`, `renovate`: miscellaneous tooling
 
 **Platform overlay bundles** — CI workflow stubs that pair a feature with a platform: `github-tests`, `github-book`, `github-marimo`, `github-docker`, `github-devcontainer`, `github-paper`, `github-quality-review`, `gitlab-tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-quality-review`.
@@ -264,18 +260,27 @@ that the file is now unambiguously **repo-owned**, which also resolves the stand
 contradiction with "never modify files in `.rhiza/`".
 
 All three layers carry `test`/`coverage`/`typecheck` themselves. Python's used to live
-in the separate `tests` bundle, and that was a real inconsistency rather than a
+in a separate `tests` bundle, and that was a real inconsistency rather than a
 considered asymmetry: `python.mk`'s own `all` named them while `tests` defined them, and
 nothing made `tests` arrive — the dependency runs the other way, so `core + python-core`
 alone had an `all` that died on a missing rule (#1475). No shipped profile reached it,
 which is why it survived; `tests/bundles/test_layer_contract.py::TestALayersAllIsSatisfiableOnItsOwn`
 now pins the property for every layer.
 
-What `tests` still owns is what is genuinely optional — `benchmark`, `hypothesis-test`
-and `stress`, each needing its own tool and folder convention, and none named by any
-`all`. There is still no `rust-tests` or `go-tests` bundle, for the original reason:
+**That bundle is gone (#1632), along with `marimo` and `paper`, and the reason is the same
+for all three: each had been reduced to a single documentation page.** `benchmark`,
+`hypothesis-test`, `stress`, `marimo`, `marimo-validate`, `paper` and `paper-clean` are
+tasks in the pinned CLI — reachable through the shim's catch-all whatever a project
+synced — so what the bundles still delivered was 567 lines of rhiza's own prose, copied
+into every consumer and referenced by nothing there. The pages live on rhiza's docs site;
+the capabilities were never theirs to lose. The overlays that paired with them
+(`github-tests`, `github-marimo`, `github-paper`, and the GitLab two) still exist, because
+a CI workflow stub *is* a file — they now require the language layer their gates run,
+which is what the feature bundle used to supply transitively.
+
+There is still no `rust-tests` or `go-tests` bundle, for the original reason:
 `cargo nextest` and `go test` need no configuration, so such a bundle would own nothing
-at all.
+at all — which, as it turns out, is the same test the three removed bundles finally failed.
 
 **The benchmark gate measures something here now, and both halves of why it did not are
 worth knowing.** `rhiza_benchmark.yml` runs `benchmark` on every push to `main`, and the
@@ -537,10 +542,13 @@ Three consequences of *that* step, all of them things a reader will otherwise tr
   `npx --yes` rather than `npm install -g`; and `paper` picks its root document by
   `main.tex` → `paper.tex` → alphabetical instead of preferring one downstream repo's
   `basanos.tex`.
-- **The `paper` bundle's only file was its fragment.** It ships `docs/paper/README.md` now — the
-  folder convention, the root-document rule and the `paper-folder` setting — which is the shape
-  `docker`, `lfs` and `presentation` already had. Without it the bundle would be an empty
-  directory, and `test_all_bundle_dirs_are_non_empty` says so.
+- **The `paper` bundle's only file was its fragment**, and after the fragment went its only
+  file was `docs/paper/README.md` — the folder convention, the root-document rule and the
+  `paper-folder` setting. A bundle whose whole payload is one page of rhiza's own prose is a
+  bundle that owns nothing, so #1632 removed it (with `tests` and `marimo`, for the same
+  reason); the page is `docs/development/PAPER.md` on rhiza's docs site now. `paper` and
+  `paper-clean` were never the bundle's — they are CLI tasks — and `github-paper` still ships
+  the workflow stub, requiring `core` and `github` rather than a bundle that no longer exists.
 
 **Hook targets are gone**, and that predates this step. `bootstrap.mk` anchored
 `pre-install::`/`post-install::` as no-ops so a consumer could chain onto them, and that was *the*

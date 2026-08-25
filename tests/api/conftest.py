@@ -23,9 +23,7 @@ from tests.util import setup_rhiza_git_repo, sync_bundles
 SANDBOX_BUNDLES = [
     "core",
     "python-core",
-    "tests",
     "book",
-    "marimo",
     "presentation",
     "github",
     "docker",

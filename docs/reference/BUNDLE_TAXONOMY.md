@@ -31,12 +31,9 @@ the source of truth for the exact set. See
 | `python-core` | The Python language layer: virtualenv and `uv sync` (`install`), `.python-version`, `ruff.toml`, `.bandit`, pre-commit config, `deptry` and licence scans, and the `all` aggregate. Exactly one language layer per repo. |
 | `rust-core` | The Rust language layer: rustup and `cargo fetch` (`install`), `rust-toolchain.toml`, `rustfmt.toml`, `clippy.toml`, `deny.toml`, pre-commit config, and the test/coverage/lint gates. Carries its own test targets — in Rust they are cargo subcommands with nothing to configure. |
 | `go-core` | The Go language layer: `go mod download` (`install`), `.golangci.yml`, `revive.toml`, pre-commit config, a `version.Version` constant for the release flow (with the one test file that keeps `make test` from passing vacuously), and the test/coverage/lint gates. Carries its own test targets — `go test` and `go tool cover` need no configuration. |
-| `tests` | Local testing: pytest, coverage, and type checking. |
-| `benchmarks` | Performance benchmarking with `pytest-benchmark` and reporting (builds on `tests`). |
+| `benchmarks` | Performance benchmarking with `pytest-benchmark` and reporting. |
 | `book` | Documentation site with MkDocs + zensical. |
-| `marimo` | Interactive Marimo notebooks for exploration and docs. |
 | `presentation` | Slides built from `PRESENTATION.md` with Marp. |
-| `paper` | LaTeX paper compilation targets (`make paper`). |
 | `docker` | Docker containerization support. |
 | `devcontainer` | VS Code Dev Container for reproducible environments. |
 | `vscode` | Recommended VS Code extensions and workspace settings for local (non-container) editing. |
@@ -48,30 +45,34 @@ the source of truth for the exact set. See
 
 Bundles declare relationships in `.rhiza/template-bundles.yml`:
 
-- `requires` — hard dependencies pulled in automatically (e.g. `tests` requires
-  `core` and `book`).
-- `recommends` — soft companions you may want (e.g. `book` recommends `tests`
-  and `marimo`).
-- `standalone` — whether the bundle is usable on its own (`benchmarks` and
-  `marimo` are not).
+- `requires` — hard dependencies pulled in automatically (e.g. `benchmarks`
+  requires `core` and `python-core`).
+- `recommends` — soft companions you may want.
+- `standalone` — whether the bundle is usable on its own (`benchmarks` is not).
 
 ## Platform-overlay bundles
 
-Each overlay adds the hosted-CI workflow stub for a feature. Pick the overlay
-that matches your platform *and* the feature bundle it pairs with.
+Each overlay adds the hosted-CI workflow stub for a capability. Pick the overlay
+that matches your platform.
 
-| Bundle | Pairs feature → platform |
-|--------|--------------------------|
-| `github-tests` | `tests` → GitHub Actions (CI, CodeQL, benchmark) |
+Not every capability has a bundle of its own. `tests`, `marimo` and `paper` were removed
+in #1632 — each had been reduced to a single documentation page, while the gates their
+overlays run (`benchmark`, `marimo`, `paper`) live in the pinned CLI and are reachable
+whatever a project synced. Those overlays require the language layer their workflows
+exercise instead.
+
+| Bundle | Capability → platform |
+|--------|------------------------|
+| `github-tests` | CI, CodeQL and benchmark → GitHub Actions |
 | `github-book` | `book` → GitHub Pages publishing |
-| `github-marimo` | `marimo` → GitHub Actions notebook publishing |
+| `github-marimo` | Notebook publishing → GitHub Actions |
 | `github-docker` | `docker` → GitHub Actions lint/build/scan |
 | `github-devcontainer` | `devcontainer` → GitHub Actions image build validation |
-| `github-paper` | `paper` → GitHub Actions LaTeX build + PDF publishing |
+| `github-paper` | LaTeX build + PDF publishing → GitHub Actions |
 | `github-quality-review` | `core` → GitHub Actions advisory Claude design review of PR diffs (opt-in) |
-| `gitlab-tests` | `tests` → GitLab CI |
+| `gitlab-tests` | CI → GitLab CI |
 | `gitlab-book` | `book` → GitLab Pages publishing |
-| `gitlab-marimo` | `marimo` → GitLab CI notebook execution |
+| `gitlab-marimo` | Notebook execution → GitLab CI |
 | `gitlab-quality-review` | `core` → GitLab CI advisory Claude design review of MR diffs (opt-in) |
 
 ## Profiles (meta-presets)

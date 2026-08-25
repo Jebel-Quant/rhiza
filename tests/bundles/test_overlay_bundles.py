@@ -41,7 +41,16 @@ class OverlaySpec:
     Attributes:
         bundle: The overlay bundle name (e.g. ``github-tests``).
         platform: The platform bundle it overlays (``github`` or ``gitlab``).
-        feature: The feature bundle it overlays (e.g. ``tests``).
+        feature: The feature bundle it overlays (e.g. ``book``), or None when the
+            capability has no bundle of its own. Three of them no longer do: `tests`,
+            `marimo` and `paper` each shipped a single documentation page and nothing
+            else, so #1632 removed them. The *tasks* those overlays' workflows run --
+            `benchmark`, `marimo`, `paper` -- were never theirs; they live in the pinned
+            CLI and are reachable whatever a project synced.
+        requires: The overlay's expected ``requires``, when it is not simply the feature
+            and the platform. An overlay with no feature bundle still needs a closure --
+            the language layer whose gates its workflow invokes -- and that has to be
+            written down rather than inferred, or this test would accept any of it.
         workflows: Workflow file basenames the overlay must ship.
         feature_workflows: For GitHub overlays, the reusable feature workflows
             each shipped workflow must delegate to (basename, without path).
@@ -50,9 +59,21 @@ class OverlaySpec:
 
     bundle: str
     platform: str
-    feature: str
+    feature: str | None
     workflows: tuple[str, ...]
     feature_workflows: tuple[str, ...] = ()
+    requires: tuple[str, ...] = ()
+
+    @property
+    def expected_requires(self) -> set[str]:
+        """Return the exact ``requires`` set this overlay must declare.
+
+        Returns:
+            The explicit list when one is given, else the feature and the platform.
+        """
+        if self.requires:
+            return set(self.requires)
+        return {self.feature, self.platform} if self.feature else {self.platform}
 
 
 # The platform-specific directory each platform's overlays write workflows into.
@@ -67,7 +88,8 @@ _OVERLAYS: tuple[OverlaySpec, ...] = (
     OverlaySpec(
         bundle="github-tests",
         platform="github",
-        feature="tests",
+        feature=None,
+        requires=("core", "python-core", "github"),
         workflows=("rhiza_ci.yml", "rhiza_codeql.yml", "rhiza_benchmark.yml"),
         feature_workflows=("rhiza_ci.yml", "rhiza_codeql.yml", "rhiza_benchmark.yml"),
     ),
@@ -81,7 +103,8 @@ _OVERLAYS: tuple[OverlaySpec, ...] = (
     OverlaySpec(
         bundle="github-marimo",
         platform="github",
-        feature="marimo",
+        feature=None,
+        requires=("core", "python-core", "github"),
         workflows=("rhiza_marimo.yml",),
         feature_workflows=("rhiza_marimo.yml",),
     ),
@@ -102,7 +125,8 @@ _OVERLAYS: tuple[OverlaySpec, ...] = (
     OverlaySpec(
         bundle="github-paper",
         platform="github",
-        feature="paper",
+        feature=None,
+        requires=("core", "github"),
         workflows=("rhiza_paper.yml",),
         feature_workflows=("rhiza_paper.yml",),
     ),
@@ -116,7 +140,8 @@ _OVERLAYS: tuple[OverlaySpec, ...] = (
     OverlaySpec(
         bundle="gitlab-tests",
         platform="gitlab",
-        feature="tests",
+        feature=None,
+        requires=("core", "python-core", "gitlab"),
         workflows=("rhiza_ci.yml",),
     ),
     OverlaySpec(
@@ -128,7 +153,8 @@ _OVERLAYS: tuple[OverlaySpec, ...] = (
     OverlaySpec(
         bundle="gitlab-marimo",
         platform="gitlab",
-        feature="marimo",
+        feature=None,
+        requires=("core", "python-core", "gitlab"),
         workflows=("rhiza_marimo.yml",),
     ),
     OverlaySpec(
@@ -184,12 +210,17 @@ class TestOverlayBundleComposition:
 
     @pytest.mark.parametrize("spec", _OVERLAYS, ids=_OVERLAY_IDS)
     def test_overlay_requires_feature_and_platform(self, spec: OverlaySpec, template_bundles: dict) -> None:
-        """The overlay's ``requires`` must be exactly its feature bundle and platform bundle."""
+        """The overlay's ``requires`` must be exactly what its spec declares.
+
+        Still exact rather than a subset check. An overlay that over-requires drags
+        bundles into a consumer's sync that its workflows never use, and that is precisely
+        the drift #1632 removed -- `github-tests` required `tests` for a documentation page
+        while what it actually needed was the layer underneath it.
+        """
         definition = template_bundles["bundles"][spec.bundle]
         requires = set(definition.get("requires", []))
-        assert requires == {spec.feature, spec.platform}, (
-            f"overlay '{spec.bundle}' should require exactly "
-            f"{{{spec.feature!r}, {spec.platform!r}}}, got {sorted(requires)}"
+        assert requires == spec.expected_requires, (
+            f"overlay '{spec.bundle}' should require exactly {sorted(spec.expected_requires)}, got {sorted(requires)}"
         )
 
 

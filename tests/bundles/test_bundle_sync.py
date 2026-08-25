@@ -205,7 +205,7 @@ class TestCoreAndTestsBundleSync:
     @pytest.fixture(autouse=True)
     def synced(self, tmp_path, root):
         """Sync core, python-core and tests bundles into a fresh directory."""
-        sync_bundles(root, ["core", "python-core", "tests"], tmp_path)
+        sync_bundles(root, ["core", "python-core"], tmp_path)
         self.project = tmp_path
 
     def test_pytest_ini_exists(self):
@@ -256,7 +256,7 @@ class TestGithubOverlaySync:
     @pytest.fixture(autouse=True)
     def synced(self, tmp_path, root):
         """Sync core, github, and github-tests bundles."""
-        sync_bundles(root, ["core", "github", "tests", "github-tests"], tmp_path)
+        sync_bundles(root, ["core", "python-core", "github", "github-tests"], tmp_path)
         self.project = tmp_path
 
     def test_ci_workflow_exists(self):
@@ -282,9 +282,9 @@ class TestGithubOverlaySync:
 
 
 class TestProfileLocalSync:
-    """Syncing the 'local' profile (book + marimo + tests) injects no workflow files."""
+    """Syncing the 'local' profile injects no workflow files."""
 
-    LOCAL_BUNDLES = ["book", "marimo", "tests", "core"]  # transitive closure of 'local' profile
+    LOCAL_BUNDLES = ["core", "python-core", "book"]  # transitive closure of 'local' profile
 
     @pytest.fixture(autouse=True)
     def synced(self, tmp_path, root):
