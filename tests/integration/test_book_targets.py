@@ -189,3 +189,58 @@ def test_every_nav_exclusion_is_still_needed() -> None:
         if not (_DOCS / rel).is_file() or rel in linked
     }
     assert not stale, f"_NOT_IN_THE_NAV entries that {stale} — drop them"
+
+
+def test_the_root_mkdocs_inherits_the_base_config() -> None:
+    """This repo's own `mkdocs.yml` must carry the `INHERIT:` that reads the base config.
+
+    `bundles/book/` ships `docs/mkdocs-base.yml` and nothing makes a consumer read it: mkdocs
+    merges it only when the root config names it in `INHERIT:`, and a config that omits the key
+    builds a perfectly good site without it. `chebpy/chebpy` is in exactly that state, which is
+    what #1633 reported -- 120 synced lines that nothing there reads.
+
+    Measured against a bare config, what the omission costs under zensical is the light/dark
+    palette toggle, the whole `theme.features` list, the back-to-top button and `pymdownx.snippets`
+    resolution. None of that fails a build; the site simply comes out plainer, on every run.
+
+    A downstream `mkdocs.yml` is repo-owned, so this repo cannot assert the key is there. What it
+    can do is not be the counter-example: rhiza publishes the theme it ships to everyone else.
+    """
+    config = (_ROOT / "mkdocs.yml").read_text(encoding="utf-8")
+    base = "docs/mkdocs-base.yml"
+    assert (_ROOT / base).is_file(), f"{base} is missing, so the root config inherits from nothing"
+    assert f"INHERIT: {base}" in config, (
+        f"mkdocs.yml does not inherit {base}, so the theme rhiza ships to every consumer is "
+        f"absent from rhiza's own book -- silently, because the build succeeds either way"
+    )
+
+
+def test_the_base_config_cannot_be_built_on_its_own() -> None:
+    """The base config must declare no site, and its header must not offer a standalone build.
+
+    Its header documented one for years -- `mkdocs serve -f docs/mkdocs-base.yml` -- and the
+    command cannot work: with no `site_name`, mkdocs aborts with `Config value 'site_name':
+    Required configuration not provided.` The absence is deliberate, because the site metadata is
+    the consumer's, so the fix is to stop documenting the invocation rather than to add a name.
+
+    The second retired claim was that `book` picks this file up when no root-level `mkdocs.yml` is
+    found. It did under `book.mk`; rhiza-task's task prints `skipped  book  no mkdocs.yml` instead,
+    measured against the pinned version. Both were shipped to every consumer, in the header of the
+    file they describe, and nothing read either one.
+
+    Asserted as an absence, the way `test_fmt_target_no_longer_needs_python_version` is: what
+    matters is that the header stops telling a reader to run a command that aborts.
+    """
+    text = (_ROOT / "docs" / "mkdocs-base.yml").read_text(encoding="utf-8")
+    header = "\n".join(line for line in text.splitlines() if line.startswith("#"))
+    body = "\n".join(line for line in text.splitlines() if not line.startswith("#"))
+
+    assert "site_name" not in body, (
+        "the base config declares a site_name, so every consumer inheriting it publishes rhiza's "
+        "site metadata as its own"
+    )
+    offered = [claim for claim in ("mkdocs serve -f", "mkdocs build -f", "will pick this file up") if claim in header]
+    assert not offered, (
+        f"the header offers {offered}, which no longer works: a standalone build aborts for want "
+        f"of site_name, and `book` skips without a root mkdocs.yml (#1633)"
+    )
