@@ -297,6 +297,47 @@ class TestProfileLocalSync:
         assert (self.project / "docs" / "index.md").is_file()
         assert (self.project / "docs" / "mkdocs-base.yml").is_file()
 
+    def test_a_consumer_is_pointed_back_at_the_documentation(self):
+        """The sync leaves one page linking to the docs it no longer copies (#1632).
+
+        880 lines of rhiza's own prose used to be delivered into every consumer, linked from
+        nothing there. Dropping them is right; dropping them *silently* is not, because a new
+        consumer would have no thread back to documentation that describes the tooling it is
+        running. Twelve-odd lines of pointer is the whole cost.
+        """
+        pointer = self.project / "docs" / "development" / "rhiza.md"
+        assert pointer.is_file(), (
+            "the sync delivers no pointer to rhiza's documentation, so a consumer has nothing "
+            "linking the tooling it runs to the pages that describe it"
+        )
+
+    @pytest.mark.parametrize(
+        "page",
+        [
+            "development/TESTS",
+            "development/DEVCONTAINER",
+            "development/VSCODE_EXTENSIONS",
+            "development/MARIMO",
+            "development/PAPER",
+        ],
+    )
+    def test_every_page_the_pointer_names_exists_here(self, page, root):
+        """A link in the pointer must resolve to a page this repository actually publishes.
+
+        Checked against the source tree rather than over HTTP, so it holds offline and fails
+        at the moment of a rename rather than the next time someone clicks. The pointer is
+        synced into every consumer, so a page renamed here without updating it turns into a
+        404 in each of them at once -- with nothing upstream reporting it, since lychee only
+        reads README.md.
+        """
+        pointer = (self.project / "docs" / "development" / "rhiza.md").read_text(encoding="utf-8")
+        url = f"https://jebel-quant.github.io/rhiza/{page}/"
+        assert url in pointer, f"the pointer no longer links {page}"
+        assert (root / "docs" / f"{page}.md").is_file(), (
+            f"the pointer links {url}, but docs/{page}.md does not exist in this repository -- "
+            f"every consumer's copy of that link is a 404"
+        )
+
     def test_the_brand_asset_is_not_copied_into_consumers(self):
         r"""Rhiza's logo is served from its docs site, not synced (#1637).
 
