@@ -45,8 +45,6 @@ from tests.util import sync_bundles
 GITLAB_PROJECT_BUNDLES = [
     "core",
     "book",
-    "marimo",
-    "tests",
     "gitlab",
     "gitlab-book",
     "gitlab-marimo",

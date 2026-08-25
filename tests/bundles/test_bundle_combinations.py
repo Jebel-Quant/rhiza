@@ -260,12 +260,12 @@ class TestRenovateBundleSync:
 
 
 class TestBenchmarksBundleSync:
-    """Syncing core + tests + benchmarks produces benchmark scaffolding."""
+    """Syncing core + python-core + benchmarks produces benchmark scaffolding."""
 
     @pytest.fixture(autouse=True)
     def synced(self, tmp_path: Path, root: Path) -> None:
-        """Sync core, book, tests, and benchmarks bundles (transitive closure)."""
-        sync_bundles(root, ["core", "book", "tests", "benchmarks"], tmp_path)
+        """Sync core, python-core, book and benchmarks (transitive closure)."""
+        sync_bundles(root, ["core", "python-core", "book", "benchmarks"], tmp_path)
         self.project = tmp_path
 
     def test_benchmarks_test_directory_exists(self) -> None:

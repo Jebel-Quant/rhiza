@@ -85,15 +85,16 @@ class Layer:
 # default so `make book` works without a test bundle, and a layer's own `test::`
 # rule has to coexist with it. Syncing book is what makes `make test` prove that.
 #
-# marimo is left out of the Python set even though the `local` profile includes it:
-# the bundle ships marimo.mk but no notebooks, and marimo.mk appends
-# $(MARIMO_FOLDER) to DEPTRY_FOLDERS, so `make deps` would be pointed at a
-# folder no sync creates. A real consumer writes notebooks there; a scaffold has
-# none, and inventing some would test marimo rather than the language layer.
+# The set is now exactly the `local` profile. It used to carry `tests` as a fourth entry
+# and deliberately omit `marimo`; both bundles were removed in #1632, each having shipped a
+# single documentation page and nothing else. Nothing is lost from this suite by their
+# going: the gates they were credited with -- `benchmark`, `hypothesis-test`, `stress`,
+# `marimo-validate` -- are tasks in the pinned CLI, and none of them is named by `all`, so
+# no assertion here ever reached one.
 PYTHON = Layer(
     name="python",
     profile="local",
-    bundles=("core", "python-core", "book", "tests"),
+    bundles=("core", "python-core", "book"),
     tools=("git", "uv"),
     version="0.1.0",
     files=scaffolds.PYTHON_FILES,

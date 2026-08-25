@@ -31,6 +31,7 @@ nav:
     - Dev Container: development/DEVCONTAINER.md
     - VSCode Extensions: development/VSCODE_EXTENSIONS.md
     - Marimo: development/MARIMO.md
+    - Paper: development/PAPER.md
     - Presentation: development/PRESENTATION.md
     - Building the Slides: presentations/index.md
     - Git LFS: lfs/LFS.md

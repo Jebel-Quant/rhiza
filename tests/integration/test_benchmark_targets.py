@@ -23,7 +23,8 @@ import yaml
 
 _ROOT = Path(__file__).resolve().parents[2]
 
-# What the `tests` bundle exists to provide. None is named by `all` — they are the opt-in extras,
+# The opt-in testing extras. The `tests` bundle used to be credited with these; it never defined
+# them once the make layer retired, and #1632 removed it. None is named by `all` — they are extras,
 # each needing its own tool and folder convention. `mutation` was a fourth until #1492; rhiza no
 # longer offers mutation testing, and `test_no_bundle_offers_a_mutation_gate` below pins that.
 _EXTRA_TARGETS = ("benchmark", "hypothesis-test", "stress")

@@ -142,11 +142,11 @@ Rhiza provides **profiles** — named presets that select a sensible set of bund
 
 | Profile | Description | Includes |
 |---------|-------------|---------|
-| `local` | Local-first development with no hosted CI/CD workflow files | `core`, `python-core`, `book`, `marimo`, `tests` |
+| `local` | Local-first development with no hosted CI/CD workflow files | `core`, `python-core`, `book` |
 | `rust-local` | Local-first Rust development, no hosted CI/CD (hosted profiles arrive with the Rust workflows) | `core`, `rust-core`, `book` |
 | `go-local` | Local-first Go development, no hosted CI/CD (hosted profiles arrive with the Go workflows) | `core`, `go-core`, `book` |
-| `github-project` | GitHub-hosted project with CI/CD and release automation | `core`, `python-core`, `github`, `book`, `marimo`, `tests`, `github-book`, `github-marimo`, `github-tests` |
-| `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `core`, `python-core`, `gitlab`, `book`, `marimo`, `tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-tests` |
+| `github-project` | GitHub-hosted project with CI/CD and release automation | `core`, `python-core`, `github`, `book`, `github-book`, `github-marimo`, `github-tests` |
+| `gitlab-project` | GitLab-hosted project with GitLab CI/CD pipelines | `core`, `python-core`, `gitlab`, `book`, `gitlab-book`, `gitlab-marimo`, `gitlab-tests` |
 
 Declare a profile in `.rhiza/template.yml`:
 
@@ -184,15 +184,12 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 | `python-core` | Python language layer (`install`/`all`, virtualenv, ruff, bandit, deptry) | `core` |
 | `rust-core` | Rust language layer (`install`/`all`, cargo, clippy, nextest, llvm-cov, cargo-deny) | `core` |
 | `go-core` | Go language layer (`install`/`all`, go test, golangci-lint, govulncheck, revive) | `core` |
-| `tests` | Optional Python testing extras — the `benchmark`, `hypothesis-test` and `stress` gates (`test`, `coverage` and `typecheck` live in the language layer) | `book`, `core`, `python-core` |
 | `book` | Comprehensive documentation book (API docs, coverage, notebooks) | `core` |
-| `marimo` | Interactive Marimo notebooks for data exploration and documentation | `book`, `core`, `python-core` |
-| `benchmarks` | Performance benchmarking with pytest-benchmark and reporting | `tests` |
+| `benchmarks` | Performance benchmarking with pytest-benchmark and reporting | `core`, `python-core` |
 | `docker` | Docker containerization support | — |
 | `devcontainer` | VS Code DevContainer configuration | — |
 | `vscode` | VS Code recommended extensions and workspace settings for local editing | — |
 | `presentation` | Presentation building using Marp | — |
-| `paper` | LaTeX paper compilation targets (`make paper`, `make paper-clean`) | — |
 | `lfs` | Git LFS (Large File Storage) support | — |
 | `legal` | Legal and community files (LICENSE, CONTRIBUTING, CODE_OF_CONDUCT) | — |
 | `renovate` | Renovate bot configuration for automated dependency updates | — |
@@ -202,12 +199,12 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 | Bundle | Description | Auto-installs |
 |--------|-------------|---------------|
 | `github` | Base GitHub repository automation (sync, release, dependabot) | `core` |
-| `github-tests` | GitHub Actions workflows for test automation (CI, CodeQL, weekly) | `github`, `tests`, `core` |
+| `github-tests` | GitHub Actions workflows for test automation (CI, CodeQL, weekly) | `github`, `python-core`, `core` |
 | `github-book` | GitHub Actions workflow for documentation publishing | `github`, `book`, `core` |
-| `github-marimo` | GitHub Actions workflow for Marimo notebook automation | `github`, `marimo`, `book`, `core` |
+| `github-marimo` | GitHub Actions workflow for Marimo notebook automation | `github`, `python-core`, `core` |
 | `github-docker` | GitHub Actions workflow for Docker image building and publishing | `github`, `docker`, `core` |
 | `github-devcontainer` | GitHub Actions workflow for DevContainer image publishing | `github`, `devcontainer`, `core` |
-| `github-paper` | GitHub Actions workflow for LaTeX paper compilation — the PDF is a run artifact, and ships durably as a book asset | `github`, `paper`, `core` |
+| `github-paper` | GitHub Actions workflow for LaTeX paper compilation — the PDF is a run artifact, and ships durably as a book asset | `github`, `core` |
 | `github-quality-review` | Advisory Claude design review of PR diffs — architecture, complexity, test gaps (opt-in) | `github`, `core` |
 
 **Platform bundles — GitLab**
@@ -215,8 +212,8 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 | Bundle | Description | Auto-installs |
 |--------|-------------|---------------|
 | `gitlab` | GitLab CI/CD pipeline configuration and core workflows | `core` |
-| `gitlab-tests` | GitLab CI pipeline for test automation | `gitlab`, `tests`, `core` |
-| `gitlab-marimo` | GitLab CI pipeline for Marimo notebook execution | `gitlab`, `marimo`, `book`, `core` |
+| `gitlab-tests` | GitLab CI pipeline for test automation | `gitlab`, `python-core`, `core` |
+| `gitlab-marimo` | GitLab CI pipeline for Marimo notebook execution | `gitlab`, `python-core`, `core` |
 | `gitlab-book` | GitLab CI pipeline for documentation publishing to GitLab Pages | `gitlab`, `book`, `core` |
 | `gitlab-quality-review` | Advisory Claude design review of MR diffs — architecture, complexity, test gaps (opt-in) | `gitlab`, `core` |
 
@@ -428,8 +425,7 @@ Worked examples: [CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md) and
 
 ### Documentation Examples
 
-README code blocks are executable documentation. With the `tests` bundle selected,
-`make rhiza-test` runs each `python` fence and diffs its output against the `result` block that
+README code blocks are executable documentation. `make rhiza-test` runs each `python` fence and diffs its output against the `result` block that
 follows, so an example cannot quietly stop working.
 
 ```python

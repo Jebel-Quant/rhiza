@@ -105,12 +105,10 @@ class TestGitlabProjectProfileSync:
     """The 'gitlab-project' profile produces CI pipelines but zero .github/ files."""
 
     # Transitive closure of gitlab-project: gitlab-book, gitlab-marimo, gitlab-tests
-    # which require book, marimo, tests, gitlab, core
+    # which require book, python-core, gitlab, core
     GITLAB_PROJECT_BUNDLES = [
         "core",
         "book",
-        "marimo",
-        "tests",
         "gitlab",
         "gitlab-book",
         "gitlab-marimo",
@@ -237,8 +235,6 @@ class TestGithubProjectProfileSync:
     GITHUB_PROJECT_BUNDLES = [
         "core",
         "book",
-        "marimo",
-        "tests",
         "github",
         "github-book",
         "github-marimo",

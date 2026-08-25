@@ -205,7 +205,7 @@ class TestCoreAndTestsBundleSync:
     @pytest.fixture(autouse=True)
     def synced(self, tmp_path, root):
         """Sync core, python-core and tests bundles into a fresh directory."""
-        sync_bundles(root, ["core", "python-core", "tests"], tmp_path)
+        sync_bundles(root, ["core", "python-core"], tmp_path)
         self.project = tmp_path
 
     def test_pytest_ini_exists(self):
@@ -256,7 +256,7 @@ class TestGithubOverlaySync:
     @pytest.fixture(autouse=True)
     def synced(self, tmp_path, root):
         """Sync core, github, and github-tests bundles."""
-        sync_bundles(root, ["core", "github", "tests", "github-tests"], tmp_path)
+        sync_bundles(root, ["core", "python-core", "github", "github-tests"], tmp_path)
         self.project = tmp_path
 
     def test_ci_workflow_exists(self):
@@ -282,9 +282,9 @@ class TestGithubOverlaySync:
 
 
 class TestProfileLocalSync:
-    """Syncing the 'local' profile (book + marimo + tests) injects no workflow files."""
+    """Syncing the 'local' profile injects no workflow files."""
 
-    LOCAL_BUNDLES = ["book", "marimo", "tests", "core"]  # transitive closure of 'local' profile
+    LOCAL_BUNDLES = ["core", "python-core", "book"]  # transitive closure of 'local' profile
 
     @pytest.fixture(autouse=True)
     def synced(self, tmp_path, root):
@@ -296,6 +296,47 @@ class TestProfileLocalSync:
         """Base documentation files from the book bundle are present."""
         assert (self.project / "docs" / "index.md").is_file()
         assert (self.project / "docs" / "mkdocs-base.yml").is_file()
+
+    def test_a_consumer_is_pointed_back_at_the_documentation(self):
+        """The sync leaves one page linking to the docs it no longer copies (#1632).
+
+        880 lines of rhiza's own prose used to be delivered into every consumer, linked from
+        nothing there. Dropping them is right; dropping them *silently* is not, because a new
+        consumer would have no thread back to documentation that describes the tooling it is
+        running. Twelve-odd lines of pointer is the whole cost.
+        """
+        pointer = self.project / "docs" / "development" / "rhiza.md"
+        assert pointer.is_file(), (
+            "the sync delivers no pointer to rhiza's documentation, so a consumer has nothing "
+            "linking the tooling it runs to the pages that describe it"
+        )
+
+    @pytest.mark.parametrize(
+        "page",
+        [
+            "development/TESTS",
+            "development/DEVCONTAINER",
+            "development/VSCODE_EXTENSIONS",
+            "development/MARIMO",
+            "development/PAPER",
+        ],
+    )
+    def test_every_page_the_pointer_names_exists_here(self, page, root):
+        """A link in the pointer must resolve to a page this repository actually publishes.
+
+        Checked against the source tree rather than over HTTP, so it holds offline and fails
+        at the moment of a rename rather than the next time someone clicks. The pointer is
+        synced into every consumer, so a page renamed here without updating it turns into a
+        404 in each of them at once -- with nothing upstream reporting it, since lychee only
+        reads README.md.
+        """
+        pointer = (self.project / "docs" / "development" / "rhiza.md").read_text(encoding="utf-8")
+        url = f"https://jebel-quant.github.io/rhiza/{page}/"
+        assert url in pointer, f"the pointer no longer links {page}"
+        assert (root / "docs" / f"{page}.md").is_file(), (
+            f"the pointer links {url}, but docs/{page}.md does not exist in this repository -- "
+            f"every consumer's copy of that link is a 404"
+        )
 
     def test_the_brand_asset_is_not_copied_into_consumers(self):
         r"""Rhiza's logo is served from its docs site, not synced (#1637).

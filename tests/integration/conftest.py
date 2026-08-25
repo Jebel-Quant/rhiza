@@ -34,18 +34,20 @@ GIT = shutil.which("git") or "/usr/bin/git"
 # The bundles these fixtures assemble into the sandbox. It was "the bundles whose make layer
 # these fixtures assemble" while `.rhiza/make.d/` existed; none of them contributes a make
 # fragment any more, so what they contribute now is ordinary files -- the Dockerfile, the
-# notebook folder, the docs tree. Kept as one list because the sandbox is shared and a test
-# added later should find the same project the others do.
+# docs tree. Kept as one list because the sandbox is shared and a test added later should
+# find the same project the others do.
+#
+# `tests`, `marimo` and `paper` are absent because they no longer exist: each shipped exactly
+# one documentation page and nothing else, so #1632 removed them rather than keep a bundle
+# whose only payload was rhiza's own prose. Their *targets* were never theirs -- `benchmark`,
+# `marimo` and `paper` are tasks in the pinned CLI, reachable whatever a project synced.
 SANDBOX_BUNDLES = [
     "core",
     "python-core",
-    "tests",
     "book",
     "docker",
     "github",
     "lfs",
-    "marimo",
-    "paper",
     "presentation",
 ]
 

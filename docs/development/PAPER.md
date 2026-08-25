@@ -1,7 +1,11 @@
 # LaTeX Paper
 
-This folder is where the `paper` bundle expects your LaTeX sources. `make paper`
-compiles them to a PDF, and `make paper-clean` removes the build artifacts.
+`make paper` compiles a LaTeX document to a PDF, and `make paper-clean` removes the build
+artifacts. Both are tasks in the pinned `rhiza-task` CLI, so they work in any rhiza-managed
+repository without syncing anything — there is no `paper` bundle to select (#1632).
+
+Create the folder yourself and put your sources in it. It is `docs/paper/` by default; set
+`paper-folder` in `[tool.rhiza-task]` to move it.
 
 ## Layout
 
