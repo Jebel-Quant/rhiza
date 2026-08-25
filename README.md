@@ -287,6 +287,9 @@ Run `make help` for a complete list of 40+ available targets.
                                                            local branches       
  doctor              Dev                                   check local          
                                                            prerequisites        
+ setup               Dev                                   run the repository's 
+                                                           own environment      
+                                                           setup hook           
  docker-build        Docker                                build the Docker     
                                                            image                
  docker-clean        Docker                                remove the Docker    
@@ -337,7 +340,7 @@ Run `make help` for a complete list of 40+ available targets.
  docs-coverage       Python          install               check docstring      
                                                            coverage with        
                                                            interrogate          
- install             Python                                create the venv and  
+ install             Python          setup                 create the venv and  
                                                            sync dependencies    
  license             Python          install               scan for copyleft    
                                                            licences             

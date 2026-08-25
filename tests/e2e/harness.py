@@ -66,6 +66,10 @@ class Layer:
             that the release config can still find the version it is about to
             rewrite — would never run.
         files: Project files to write after the sync, keyed by relative path.
+        executables: Paths within `files` to mark executable before `install` runs.
+            A real consumer's script carries its execute bit in git; a scaffold
+            writes plain text, so a layer that needs one has to say so. Empty for
+            all three language layers — `local-setup.sh` is the only user.
     """
 
     name: str
@@ -74,6 +78,7 @@ class Layer:
     tools: tuple[str, ...]
     version: str
     files: dict[str, str] = field(repr=False)
+    executables: frozenset[str] = frozenset()
 
 
 # `book` is in every set on purpose: book.mk declares `test:: ; @:` as a no-op
@@ -250,6 +255,11 @@ def assemble(layer: Layer, root: Path, workdir: Path, logger) -> Project:
         target = project / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content, encoding="utf-8")
+
+    # Before `_init_repo`, so the bit is what gets committed -- which is how a real
+    # consumer's hook arrives, and what `setup` refuses to run without.
+    for relative in layer.executables:
+        (project / relative).chmod(0o755)
 
     _init_repo(project, layer.version)
     logger.info("assembled %s project at %s from bundles %s", layer.name, project, ", ".join(layer.bundles))
