@@ -5,6 +5,31 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.7.0] - 2026-08-26
+
+### New Features
+- A working seam for native binary dependencies (#1629)
+- Stop syncing the generic developer docs, and the bundles that only held them (#1644)
+
+### Bug Fixes
+- Run the setup-hook e2e in CI, and guard against a module running nowhere (#1640)
+- Deploy the Dockerfile to docker/, where both its consumers look (#1642)
+- Serve the logo from the docs site instead of syncing it (#1643)
+
+### Documentation
+- Correct three false claims in mkdocs-base.yml's header, and guard them (#1633) (#1647)
+
+### Dependencies
+- *(deps)* Update dependency plotly to v7 (#1648)
+- *(deps)* Update dependency pytest-rhiza to v0.5.0 (#1594)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.12.6 (#1593)
+
+### Maintenance
+- Chore(deps)(deps): bump the github-actions group across 1 directory with 6 updates (#1630)
+
+### Other Changes
+- Feat/local setup hook (#1639)
+
 ## [1.6.0] - 2026-08-24
 
 ### New Features
