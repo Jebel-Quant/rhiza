@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.7.1] - 2026-08-27
+
+### Dependencies
+- *(deps)* Update dependency rhiza-task to v1.4.1 (#1652)
+
+### Other Changes
+- Add logo and favicon to mkdocs configuration (#1650)
+
 ## [1.7.0] - 2026-08-26
 
 ### New Features
