@@ -39,7 +39,7 @@ permissions:
 # see -- and should not: the gates a build runs must not move under it. It tracks the tag
 # this workflow is called at, the same rule the OS-matrix step below states for its pin.
 env:
-  RHIZA_TASK: rhiza-task@1.4.0
+  RHIZA_TASK: rhiza-task@1.4.1
 
 on:
   push:
@@ -130,7 +130,7 @@ jobs:
             ${{ github.repository == 'jebel-quant/rhiza'
                 && '["ubuntu-latest","macos-latest"]' || '' }}
         run: |
-          OS_MATRIX=$(uvx rhiza-task@1.4.0 ci-os-matrix)
+          OS_MATRIX=$(uvx rhiza-task@1.4.1 ci-os-matrix)
           echo "list=$OS_MATRIX" >> "$GITHUB_OUTPUT"
 
       - name: Debug OS matrix
