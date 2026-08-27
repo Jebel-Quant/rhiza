@@ -41,7 +41,7 @@ permissions:
 # from a consumer's `RHIZA_TASK`, which this workflow cannot see: it tracks the tag the
 # workflow is called at.
 env:
-  RHIZA_TASK: rhiza-task@1.4.0
+  RHIZA_TASK: rhiza-task@1.4.1
 
   # The LaTeX engine `book`'s `paper` prerequisite needs. Without it that prerequisite
   # *skips* -- `skipped  paper  tectonic not found` -- and `book` still reports ok, so the
