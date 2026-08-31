@@ -728,6 +728,10 @@ class TestBookWorkflow:
                         "so artifact-only consumers still pay for a Pages upload that "
                         "nothing consumes."
                     )
+                    assert "github.event_name != 'workflow_call'" in guard, (
+                        "the Pages-artifact upload guard must enable Pages on non-reusable "
+                        "triggers explicitly instead of relying on an empty workflow input."
+                    )
                     pages_upload_guarded = True
         assert pages_upload_guarded, "no `upload-pages-artifact` step found to gate"
 
@@ -738,6 +742,10 @@ class TestBookWorkflow:
             "the `deploy` job is not gated on `inputs.deploy-pages`, so artifact-only mode "
             "still tries to publish to GitHub Pages -- which is exactly what the input "
             "exists to prevent."
+        )
+        assert "github.event_name != 'workflow_call'" in deploy_if, (
+            "the deploy guard must enable Pages on non-reusable triggers explicitly instead "
+            "of relying on an empty workflow input."
         )
 
     def test_the_github_book_stub_documents_artifact_only_mode(self, root: Path) -> None:
