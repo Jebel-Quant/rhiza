@@ -131,3 +131,117 @@ Omitting the `nav` key causes MkDocs to generate navigation automatically from t
 |----------|---------|-------------|
 | `BOOK_OUTPUT` | `_book` | Output directory for `make book` |
 | `MKDOCS_CONFIG` | `mkdocs.yml` | Path to the MkDocs config file |
+
+## Deployment
+
+The reusable `rhiza_book.yml` workflow builds `_book/`, uploads it as a generic
+`book` workflow artifact, and — by default — packages it as a GitHub Pages
+artifact and deploys it to Pages from the repository's default branch.
+
+### GitHub Pages (default)
+
+The `github-book` overlay bundle wires this up out of the box: adopt the bundle
+and the workflow deploys to Pages with no further configuration.
+
+### Artifact-only mode
+
+GitHub Pages requires GitHub Enterprise Cloud for private repositories, which
+may be disproportionate for a small private project. The book output is a
+portable static site, so the reusable workflow accepts a `deploy-pages` input
+that turns off the Pages-specific artifact upload and deploy job. The generic
+`book` artifact is still uploaded, so a consumer-owned job can download it and
+deploy anywhere.
+
+```yaml
+jobs:
+  book:
+    uses: jebel-quant/rhiza/.github/workflows/rhiza_book.yml@<version>
+    with:
+      deploy-pages: false
+    secrets: inherit
+
+  deploy:
+    needs: book
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: book
+          path: _book
+
+      # Consumer-specific deployment to Cloudflare, Azure, S3, ...
+```
+
+Rhiza does not implement provider-specific deployment: its responsibility is to
+build, validate and expose the portable `book` artifact. Deployment credentials
+and provider-specific configuration stay in the consumer repository, which
+keeps the interface general and avoids coupling Rhiza to any one host.
+
+### Example: Cloudflare Pages
+
+One-time Cloudflare setup:
+
+1. Create a Cloudflare Pages project using **Direct Upload** (do not ask
+   Cloudflare to build the repository). Give it a name such as
+   `my-project-book`.
+2. Optionally attach a custom domain such as `docs.example.com`.
+3. Create a scoped Cloudflare API token with `Account → Cloudflare Pages →
+   Edit` on the relevant account.
+4. Add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` to the consumer
+   repository's GitHub Actions secrets.
+
+Then in the consumer workflow:
+
+```yaml
+name: "(RHIZA) BOOK"
+
+on:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: read
+
+jobs:
+  book:
+    uses: jebel-quant/rhiza/.github/workflows/rhiza_book.yml@<version>
+    with:
+      deploy-pages: false
+    secrets: inherit
+    permissions:
+      contents: read
+
+  deploy-cloudflare:
+    name: Deploy book to Cloudflare Pages
+    needs: book
+    # Publish only the default branch. Feature branches still build and
+    # validate the book, but do not replace the production documentation.
+    if: >-
+      github.ref_name == github.event.repository.default_branch &&
+      !github.event.repository.fork
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download Rhiza book artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: book
+          path: _book
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            pages deploy _book
+            --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+```
+
+If the documentation must stay private, Cloudflare Access can be enabled for
+the Pages hostname to require authentication via a corporate identity
+provider, an email-domain rule or an explicit allow-list. That configuration
+lives entirely on Cloudflare's side; Rhiza neither handles user authentication
+nor embeds credentials in the generated book.

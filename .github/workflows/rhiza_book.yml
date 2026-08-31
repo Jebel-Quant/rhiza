@@ -25,6 +25,16 @@ on:
       - main
       - master
   workflow_call:
+    inputs:
+      deploy-pages:
+        description: >-
+          Deploy the generated book to GitHub Pages. Set to `false` for
+          artifact-only mode: the generic `book` artifact is still uploaded so a
+          consumer-owned job can download it and deploy to another static host
+          (Cloudflare Pages, Azure Static Web Apps, S3/CloudFront, an internal
+          web server, ...). See docs/guides/BOOK.md for an example.
+        type: boolean
+        default: true
 
 # Cancel superseded in-progress runs of this workflow for the same ref.
 concurrency:
@@ -174,7 +184,13 @@ jobs:
 
       # Package the site as a Pages artifact so the deploy job can publish it.
       # Uploading on every commit is cheap; only the deploy job ever consumes it.
+      # Skipped in artifact-only mode: a consumer passing `deploy-pages: false`
+      # downloads the generic `book` artifact above and deploys it themselves.
+      # `inputs.deploy-pages` is empty on the `push:` trigger (workflow inputs
+      # only bind under `workflow_call`); an empty value is treated as truthy so
+      # the mother repo keeps publishing on push to main.
       - name: Upload static files as artifact
+        if: ${{ inputs.deploy-pages || inputs.deploy-pages == '' }}
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: _book/  # Path to the directory containing all artifacts to deploy
@@ -182,9 +198,13 @@ jobs:
   # Publish to GitHub Pages only from the default branch, and never from a fork.
   # Referencing the github-pages environment here (not in build) keeps the build
   # job runnable on every branch even when the environment restricts deployments.
+  # Skipped entirely in artifact-only mode -- see the input definition above.
   deploy:
     needs: build
-    if: ${{ github.ref_name == github.event.repository.default_branch && !github.event.repository.fork }}
+    if: >-
+      (inputs.deploy-pages || inputs.deploy-pages == '') &&
+      github.ref_name == github.event.repository.default_branch &&
+      !github.event.repository.fork
     runs-on: "ubuntu-latest"
 
     environment:
