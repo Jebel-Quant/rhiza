@@ -17,7 +17,7 @@ move, and the job ran for the first time. Same silent-green shape as #1505, #151
 and #1535, and the same lesson: the fix is not enough on its own, because nothing here was
 ever *asking* the question.
 
-So this module asks it three ways, and only one of them needs docker:
+So this module asks it four ways, and only one of them needs docker:
 
 * **The lint contract.** The threshold the step declares, not the one its comment claimed.
   hadolint-action's own default is `info`, so the commented-out `failure-threshold: error`
@@ -26,6 +26,8 @@ So this module asks it three ways, and only one of them needs docker:
 * **The SARIF consumers.** Derived: whichever step *writes* the report is the step the
   uploads must wait for. Naming the producing step rather than the file keeps this true
   through a rename of either.
+* **The source tree's landing path**, which is the next red step in the same job for
+  the same reason -- a template-owned file failing in a repo that did not write it.
 * **The shipped Dockerfile itself**, run through the real linter. The offline assertion
   about numeric UIDs pins the rule that actually fired (DL3066); the docker-gated one is
   the only thing here that would notice a *different* rule firing tomorrow.
@@ -68,6 +70,10 @@ _ACTION_DOCKERFILE = "https://raw.githubusercontent.com/{repo}/{ref}/Dockerfile"
 # `USER 10001`, not `USER app_user`: a name exists only inside the image, which is what
 # DL3066 says and what Kubernetes' runAsNonRoot enforces by refusing to admit the pod.
 _USER = re.compile(r"^\s*USER\s+(\S+)", re.MULTILINE)
+
+# A source pattern reaching for the project's source tree. Docker copies a directory's
+# *contents*, so where this lands depends entirely on the destination beside it.
+_SRC_COPY = re.compile(r"^\s*COPY\s+(?:--\S+\s+)*(?P<sources>.*?)\s+(?P<dest>\S+)\s*$", re.MULTILINE)
 
 
 @functools.lru_cache(maxsize=1)
@@ -168,6 +174,27 @@ def test_every_user_instruction_names_a_numeric_uid() -> None:
         f"hadolint reports DL3066 at info level and Kubernetes' runAsNonRoot cannot verify "
         f"it (#1651). Give useradd a `-u <uid>` and name the number here."
     )
+
+
+def test_the_source_tree_is_copied_into_a_folder_that_keeps_its_name() -> None:
+    """Docker copies a directory's contents, not the directory.
+
+    `COPY pyproject.toml uv.lock README.md src* ./` therefore lands `src/pkg/` at `/app/pkg/`,
+    and every src-layout build backend then fails with `Expected a Python module at
+    src/pkg/__init__.py` -- the next red step after the lint one, in the same job, on the
+    same file nobody downstream wrote. The destination is what fixes it, so the destination
+    is what this asserts.
+    """
+    for match in _SRC_COPY.finditer(_DOCKERFILE.read_text(encoding="utf-8")):
+        sources = match.group("sources").split()
+        if not any(source.rstrip("*/") == "src" for source in sources):
+            continue
+        dest = match.group("dest")
+        assert dest.rstrip("/").endswith("src"), (
+            f"`COPY {' '.join(sources)} {dest}` flattens the source tree: docker copies a "
+            f"directory's contents, so with a bare destination `src/pkg/` arrives as "
+            f"`pkg/` and the build backend cannot find the module. Copy it into `./src/`."
+        )
 
 
 @functools.lru_cache(maxsize=1)

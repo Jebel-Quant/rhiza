@@ -23,8 +23,15 @@ RUN useradd -m -u 10001 app_user && chown app_user:app_user /app
 # Use non-root user
 USER 10001
 
-# Copy application code if the folder src exists
-COPY --chown=app_user:app_user pyproject.toml uv.lock README.md src* ./
+# Copy the manifest, then the source tree if there is one. Two instructions rather than
+# one, because docker copies a directory's *contents* and not the directory: with `src*`
+# among several sources and `./` as the destination, `src/pkg/` landed at `/app/pkg/` and
+# every src-layout build backend then failed with `Expected a Python module at
+# src/pkg/__init__.py`. A trailing `./src/` puts the contents back where the manifest says
+# they are, and a `src*` that matches nothing is still not an error, which is what keeps a
+# project without one building.
+COPY --chown=app_user:app_user pyproject.toml uv.lock README.md ./
+COPY --chown=app_user:app_user src* ./src/
 
 # Install dependencies into .venv (no dev deps)
 RUN uv sync --frozen --no-dev --no-cache && \
