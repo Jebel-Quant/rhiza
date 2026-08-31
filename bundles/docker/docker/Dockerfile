@@ -14,11 +14,14 @@ FROM ghcr.io/astral-sh/uv:0.11.16-python${PYTHON_VERSION}-trixie-slim AS builder
 
 WORKDIR /app
 
-# Create non-root user
-RUN useradd -m app_user && chown app_user:app_user /app
+# Create non-root user. The UID is numeric and explicit because a name only exists inside
+# the image: hadolint's DL3066 -- reported by rhiza_docker.yml's lint step -- asks for a
+# number, and Kubernetes' runAsNonRoot refuses to admit a pod whose image names a
+# non-numeric user because the kubelet cannot verify it is not root.
+RUN useradd -m -u 10001 app_user && chown app_user:app_user /app
 
 # Use non-root user
-USER app_user
+USER 10001
 
 # Copy application code if the folder src exists
 COPY --chown=app_user:app_user pyproject.toml uv.lock README.md src* ./
@@ -67,8 +70,9 @@ RUN apt-get update && \
 RUN pip install --no-cache-dir --upgrade pip==26.1 && \
     pip install --no-cache-dir setuptools==82.0.0
 
-# Create non-root user
-RUN useradd -m app_user && chown app_user:app_user /app
+# Create non-root user, with the same numeric UID as the builder stage so the files copied
+# from it keep their owner.
+RUN useradd -m -u 10001 app_user && chown app_user:app_user /app
 
 # Copy stripped .venv and app from builder
 COPY --from=builder --chown=app_user:app_user /app/.venv /app/.venv
@@ -78,7 +82,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Switch to non-root
-USER app_user
+USER 10001
 
 # Default application start command (replace module/script as appropriate)
 CMD ["python", "-m", "src"]
