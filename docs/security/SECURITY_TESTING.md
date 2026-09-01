@@ -238,6 +238,7 @@ api_key = "sk_live_abc123..."
 ```python
 # GOOD - load from environment
 import os
+
 api_key = os.environ.get("API_KEY")
 ```
 
@@ -253,9 +254,11 @@ result = eval(user_input)
 ```python
 # GOOD - safe alternatives
 import json
+
 result = json.loads(user_input)  # For JSON data
 
 import ast
+
 result = ast.literal_eval(user_input)  # For Python literals
 ```
 
