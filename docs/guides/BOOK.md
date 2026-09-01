@@ -152,13 +152,27 @@ that turns off the Pages-specific artifact upload and deploy job. The generic
 `book` artifact is still uploaded, so a consumer-owned job can download it and
 deploy anywhere.
 
+GitHub validates permissions requested by every job in a reusable workflow
+before evaluating job conditions. Consequently, an artifact-only caller must
+still grant the `book` job `pages: write` and `id-token: write`, even though
+the disabled deploy job never receives them at runtime:
+
 ```yaml
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   book:
     uses: jebel-quant/rhiza/.github/workflows/rhiza_book.yml@<version>
     with:
       deploy-pages: false
     secrets: inherit
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
 
   deploy:
     needs: book
@@ -177,18 +191,36 @@ build, validate and expose the portable `book` artifact. Deployment credentials
 and provider-specific configuration stay in the consumer repository, which
 keeps the interface general and avoids coupling Rhiza to any one host.
 
+### Trying an unreleased Rhiza workflow
+
+To test an unreleased workflow change, exclude
+`.github/workflows/rhiza_book.yml` in `.rhiza/template.yml`, add a
+consumer-owned replacement workflow, and point its `uses:` reference at the
+branch under test. This limits the experiment to one file. Pointing
+`template.yml` at a work-in-progress branch and running a full sync instead
+updates every managed file from that branch.
+
+Remove the exclusion and restore a released Rhiza reference once the feature
+is available in a release.
+
 ### Example: Cloudflare Pages
 
 One-time Cloudflare setup:
 
-1. Create a Cloudflare Pages project using **Direct Upload** (do not ask
-   Cloudflare to build the repository). Give it a name such as
-   `my-project-book`.
+1. In **Workers & Pages → Create application**, select **Continue to Pages**,
+   then create a **Direct Upload** project. Do not use **Upload your static
+   files** from the initial screen: it creates a Workers static-assets project,
+   which `wrangler pages deploy` cannot deploy to. Give the Pages project a
+   name such as `my-project-book`; upload a placeholder file for its first
+   deployment.
 2. Optionally attach a custom domain such as `docs.example.com`.
-3. Create a scoped Cloudflare API token with `Account → Cloudflare Pages →
-   Edit` on the relevant account.
-4. Add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` to the consumer
-   repository's GitHub Actions secrets.
+3. At `dash.cloudflare.com/profile/api-tokens`, create a custom scoped token
+   with `Account → Cloudflare Pages → Edit` for the relevant account.
+4. Find the account ID in the **Account details** panel of the **Workers &
+   Pages** overview.
+5. Add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` to the consumer
+   repository's GitHub Actions secrets, and add `CLOUDFLARE_PAGES_PROJECT`
+   (for example, `my-project-book`) as an Actions variable.
 
 Then in the consumer workflow:
 
@@ -202,6 +234,8 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
   book:
@@ -211,6 +245,10 @@ jobs:
     secrets: inherit
     permissions:
       contents: read
+      # GitHub validates the reusable workflow's disabled Pages job before
+      # evaluating `deploy-pages`; these permissions are required to start it.
+      pages: write
+      id-token: write
 
   deploy-cloudflare:
     name: Deploy book to Cloudflare Pages
