@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.7.2] - 2026-09-02
+
+### Bug Fixes
+- Stop the docker job failing on the Dockerfile the template ships (#1651) (#1658)
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1655)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.12.7 (#1657)
+- *(deps)* Update pre-commit hook astral-sh/ruff-pre-commit to v0.16.5 (#1656)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.12.9 (#1662)
+- *(deps)* Update dependency rhiza-task to v1.5.0 (#1663)
+
+### Maintenance
+- Chore(deps)(deps): bump the github-actions group with 6 updates (#1661)
+
+### Other Changes
+- [WIP] Add artifact-only deployment option for book workflow (#1660)
+- Update .pre-commit-config.yaml (#1664)
+
 ## [1.7.1] - 2026-08-27
 
 ### Dependencies
