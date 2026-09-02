@@ -14,14 +14,24 @@ FROM ghcr.io/astral-sh/uv:0.11.16-python${PYTHON_VERSION}-trixie-slim AS builder
 
 WORKDIR /app
 
-# Create non-root user
-RUN useradd -m app_user && chown app_user:app_user /app
+# Create non-root user. The UID is numeric and explicit because a name only exists inside
+# the image: hadolint's DL3066 -- reported by rhiza_docker.yml's lint step -- asks for a
+# number, and Kubernetes' runAsNonRoot refuses to admit a pod whose image names a
+# non-numeric user because the kubelet cannot verify it is not root.
+RUN useradd -m -u 10001 app_user && chown app_user:app_user /app
 
 # Use non-root user
-USER app_user
+USER 10001
 
-# Copy application code if the folder src exists
-COPY --chown=app_user:app_user pyproject.toml uv.lock README.md src* ./
+# Copy the manifest, then the source tree if there is one. Two instructions rather than
+# one, because docker copies a directory's *contents* and not the directory: with `src*`
+# among several sources and `./` as the destination, `src/pkg/` landed at `/app/pkg/` and
+# every src-layout build backend then failed with `Expected a Python module at
+# src/pkg/__init__.py`. A trailing `./src/` puts the contents back where the manifest says
+# they are, and a `src*` that matches nothing is still not an error, which is what keeps a
+# project without one building.
+COPY --chown=app_user:app_user pyproject.toml uv.lock README.md ./
+COPY --chown=app_user:app_user src* ./src/
 
 # Install dependencies into .venv (no dev deps)
 RUN uv sync --frozen --no-dev --no-cache && \
@@ -67,8 +77,9 @@ RUN apt-get update && \
 RUN pip install --no-cache-dir --upgrade pip==26.1 && \
     pip install --no-cache-dir setuptools==82.0.0
 
-# Create non-root user
-RUN useradd -m app_user && chown app_user:app_user /app
+# Create non-root user, with the same numeric UID as the builder stage so the files copied
+# from it keep their owner.
+RUN useradd -m -u 10001 app_user && chown app_user:app_user /app
 
 # Copy stripped .venv and app from builder
 COPY --from=builder --chown=app_user:app_user /app/.venv /app/.venv
@@ -78,7 +89,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Switch to non-root
-USER app_user
+USER 10001
 
 # Default application start command (replace module/script as appropriate)
 CMD ["python", "-m", "src"]
