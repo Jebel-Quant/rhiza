@@ -652,6 +652,117 @@ class TestBookWorkflow:
             "site asset is rebuilt with different bytes on every run."
         )
 
+    def test_the_book_workflow_exposes_a_deploy_pages_toggle(self, book_workflow_text: str) -> None:
+        """The reusable workflow must accept `deploy-pages` so consumers can go artifact-only.
+
+        Closes #1659. GitHub Pages requires GitHub Enterprise Cloud for private
+        repositories, which is disproportionate for a small private project. The
+        book output is a portable static site, so a consumer must be able to
+        turn off the Pages-specific upload + deploy and download the generic
+        `book` artifact themselves (Cloudflare Pages, Azure, S3, ...).
+
+        Asserted on the parsed workflow_call inputs rather than on the word so
+        that an unrelated mention in a comment cannot satisfy it. The default
+        must be true so existing consumers keep deploying to Pages unchanged.
+        """
+        doc = yaml.safe_load(book_workflow_text)
+        on = doc.get("on") or doc.get(True) or {}
+        # PyYAML parses the unquoted key `on:` as the boolean True. Handle both.
+        workflow_call = on.get("workflow_call") if isinstance(on, dict) else None
+        assert workflow_call is not None, "the book workflow declares no workflow_call trigger"
+        inputs = (workflow_call or {}).get("inputs") or {}
+        assert "deploy-pages" in inputs, (
+            "the book workflow does not expose a `deploy-pages` input, so a consumer that "
+            "wants artifact-only mode (Cloudflare Pages, Azure, S3, ...) has no way to "
+            "disable the Pages-specific artifact upload and deploy job."
+        )
+        spec = inputs["deploy-pages"]
+        assert spec.get("type") == "boolean", (
+            "the `deploy-pages` input must be a boolean; anything else forces consumers to "
+            "quote a string on every call."
+        )
+        assert spec.get("default") is True, (
+            "the `deploy-pages` input must default to true so existing consumers keep "
+            "deploying to Pages without a workflow edit."
+        )
+
+    def test_the_generic_book_artifact_upload_is_unconditional(self, book_workflow_text: str) -> None:
+        """The generic `book` artifact must upload in both modes.
+
+        Artifact-only mode exists so a consumer-owned job can download the built
+        book and deploy it elsewhere. If the generic upload were gated on
+        `deploy-pages` too, `deploy-pages: false` would leave the consumer with
+        nothing to download -- defeating the point.
+        """
+        doc = yaml.safe_load(book_workflow_text)
+        for job in doc["jobs"].values():
+            for step in job.get("steps") or ():
+                uses = step.get("uses") or ""
+                name = step.get("name") or ""
+                if "actions/upload-artifact" in uses and (step.get("with") or {}).get("name") == "book":
+                    assert "if" not in step, (
+                        f"the generic `book` artifact upload step ({name!r}) carries an "
+                        f"`if:` guard. In artifact-only mode the consumer's downstream job "
+                        f"downloads this artifact, so gating it would leave them with "
+                        f"nothing to deploy."
+                    )
+                    return
+        pytest.fail("no step uploads the generic `book` artifact")
+
+    def test_the_pages_upload_and_deploy_are_gated_on_the_toggle(self, book_workflow_text: str) -> None:
+        """Pages-specific steps must skip when `deploy-pages` is false.
+
+        Both halves matter: the `upload-pages-artifact` step feeds the deploy
+        job, and the deploy job itself declares the `github-pages` environment.
+        Skipping neither would leave a Pages upload with no deploy (harmless
+        but wasteful) or a deploy of a stale artifact (worse).
+        """
+        doc = yaml.safe_load(book_workflow_text)
+        pages_upload_guarded = False
+        for job in doc["jobs"].values():
+            for step in job.get("steps") or ():
+                if "actions/upload-pages-artifact" in (step.get("uses") or ""):
+                    guard = step.get("if") or ""
+                    assert "deploy-pages" in guard, (
+                        "the Pages-artifact upload step is not gated on `inputs.deploy-pages`, "
+                        "so artifact-only consumers still pay for a Pages upload that "
+                        "nothing consumes."
+                    )
+                    assert "github.event_name != 'workflow_call'" in guard, (
+                        "the Pages-artifact upload guard must enable Pages on non-reusable "
+                        "triggers explicitly instead of relying on an empty workflow input."
+                    )
+                    pages_upload_guarded = True
+        assert pages_upload_guarded, "no `upload-pages-artifact` step found to gate"
+
+        deploy = doc["jobs"].get("deploy")
+        assert deploy is not None, "the book workflow declares no `deploy` job"
+        deploy_if = deploy.get("if") or ""
+        assert "deploy-pages" in deploy_if, (
+            "the `deploy` job is not gated on `inputs.deploy-pages`, so artifact-only mode "
+            "still tries to publish to GitHub Pages -- which is exactly what the input "
+            "exists to prevent."
+        )
+        assert "github.event_name != 'workflow_call'" in deploy_if, (
+            "the deploy guard must enable Pages on non-reusable triggers explicitly instead "
+            "of relying on an empty workflow input."
+        )
+
+    def test_the_github_book_stub_documents_artifact_only_mode(self, root: Path) -> None:
+        """The overlay stub must show a consumer how to reach the new mode.
+
+        Discoverability: a downstream consumer reads the stub in their own tree,
+        not the reusable workflow in jebel-quant/rhiza. If the toggle is only
+        mentioned upstream, artifact-only mode is invisible from where they
+        edit.
+        """
+        path = root / "bundles" / "github-book" / ".github" / "workflows" / "rhiza_book.yml"
+        text = path.read_text(encoding="utf-8")
+        assert "deploy-pages" in text, (
+            "the github-book stub never mentions `deploy-pages`, so a consumer editing "
+            "their own workflow has no signposting to artifact-only mode."
+        )
+
     def test_the_gitlab_book_pipeline_checks_the_nav_too(self, root: Path) -> None:
         """The GitLab twin deploys the same site and needs the same two halves.
 
