@@ -25,7 +25,7 @@
 # texlive-* packages. Both are watched by custom managers in the mother repo's
 # renovate.json; an unmanaged pin only ages (#1579).
 variables:
-  RHIZA_TASK: "rhiza-task@1.4.1"
+  RHIZA_TASK: "rhiza-task@1.5.0"
   TECTONIC_VERSION: "0.17.0"
 
 paper:build:

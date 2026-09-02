@@ -18,7 +18,7 @@
 # on a front door it neither ships nor can verify.
 
 variables:
-  RHIZA_TASK: "rhiza-task@1.4.1"
+  RHIZA_TASK: "rhiza-task@1.5.0"
 
 quality:deptry:
   stage: test

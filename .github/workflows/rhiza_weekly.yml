@@ -27,7 +27,7 @@ permissions:
 # CLI rather than `core`'s `Makefile` so they do not depend on a front door this workflow
 # neither ships nor can verify.
 env:
-  RHIZA_TASK: rhiza-task@1.4.1
+  RHIZA_TASK: rhiza-task@1.5.0
 
 on:
   #push:
