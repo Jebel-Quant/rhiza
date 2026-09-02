@@ -35,7 +35,7 @@ pages:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
     - |
       # The musl build: statically linked, so it runs in whatever container $UV_IMAGE is.
-      folder=$(uvx rhiza-task@1.4.1 print paper-folder)
+      folder=$(uvx rhiza-task@1.5.0 print paper-folder)
       if [ -n "$(find "${folder}" -maxdepth 1 -name '*.tex' 2>/dev/null | head -1)" ]; then
         url="https://github.com/tectonic-typesetting/tectonic/releases/download"
         url="${url}/tectonic%40${TECTONIC_VERSION}/tectonic-${TECTONIC_VERSION}-x86_64-unknown-linux-musl.tar.gz"
