@@ -69,6 +69,34 @@ def test_ci_security_job_runs_security_scans(root):
     assert any('uvx "$RHIZA_TASK" security' in run for run in run_steps)
 
 
+def test_ci_lowest_deps_job_reaches_pytest_through_the_task_graph(root):
+    """The floors job must delegate to ``test-lowest`` rather than calling ``uv`` itself.
+
+    This is #1666, and the assertion is about the *route* rather than the resolution flags.
+    The job used to run ``uv sync --resolution lowest-direct`` and then
+    ``uv run ... pytest`` directly, which reaches the suite without passing through
+    ``install`` -- and therefore without ``setup``, the single insertion point a
+    repository's ``local-setup.sh`` hangs off. A project whose tests need a native binary
+    got a green ``test`` and a red job here on the same commit, blaming a dependency floor
+    for a tool that was never installed.
+
+    So a bare ``uv`` call is what this forbids. Asserting only the presence of
+    ``test-lowest`` would still pass on a job that ran both, which is the state that
+    reintroduces the bug while looking fixed.
+    """
+    with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
+        workflow = yaml.safe_load(fh)
+
+    run_steps = [step.get("run", "") for step in workflow["jobs"]["lowest-deps"].get("steps", [])]
+
+    assert any('uvx "$RHIZA_TASK" test-lowest' in run for run in run_steps), (
+        "the floors job must delegate to rhiza-task's `test-lowest`"
+    )
+    assert not any(re.search(r"(?<![-\w])uv (sync|run)\b", run) for run in run_steps), (
+        "a bare `uv sync`/`uv run` here bypasses `install`, and `setup` with it -- see #1666"
+    )
+
+
 def test_ci_jobs_define_timeout_budgets(root):
     """CI jobs must define explicit timeout budgets."""
     with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
