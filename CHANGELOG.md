@@ -5,6 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.7.3] - 2026-09-04
+
+### Dependencies
+- *(deps)* Update rhiza-task to v1.6.0, closing #1666, #1667 and #1668 (#1669)
+
 ## [1.7.2] - 2026-09-02
 
 ### Bug Fixes
