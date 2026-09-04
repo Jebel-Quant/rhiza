@@ -344,6 +344,10 @@ Run `make help` for a complete list of 40+ available targets.
  security            Python          install               run the bandit       
                                                            security scan        
  test                Python          install               run all tests        
+ test-lowest         Python          install               run the tests        
+                                                           against the oldest   
+                                                           dependencies the     
+                                                           manifest allows      
  typecheck           Python          install               run ty and/or mypy   
                                                            (typechecker = ty |  
                                                            mypy | both)         
@@ -368,6 +372,9 @@ Run `make help` for a complete list of 40+ available targets.
  todos               Quality                               list every TODO,     
                                                            FIXME and HACK       
                                                            comment              
+ update              Template                              sync the rhiza       
+                                                           template into this   
+                                                           repository           
  benchmark           Testing extras  install               run the performance  
                                                            benchmarks           
  hypothesis-test     Testing extras  install               run the              

@@ -37,7 +37,7 @@ marimo:notebooks:
       #
       # The version is pinned rather than read from RHIZA_TASK: this pipeline cannot see a
       # consumer's Makefile, and a value a job depends on must not move under it.
-      NOTEBOOK_DIR=$(uvx rhiza-task@1.5.0 print marimo_folder 2>/dev/null || echo "marimo")
+      NOTEBOOK_DIR=$(uvx rhiza-task@1.6.0 print marimo_folder 2>/dev/null || echo "marimo")
       echo "Searching notebooks in: $NOTEBOOK_DIR"
 
       if [ ! -d "$NOTEBOOK_DIR" ]; then
