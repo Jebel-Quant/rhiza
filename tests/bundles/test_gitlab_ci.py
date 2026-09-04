@@ -54,6 +54,30 @@ GITLAB_PROJECT_BUNDLES = [
 # Pinned so a gitlab-ci-local release cannot silently change validation behaviour.
 GITLAB_CI_LOCAL_VERSION = "4.73.0"
 
+# What the pinned tool is allowed, and what the subprocess call below passes.
+GITLAB_CI_LOCAL_TIMEOUT = 600
+
+# The pytest-timeout budget for the two network-bound tests in this module, and the reason
+# it is declared here rather than inherited.
+#
+# pytest.ini sets a global ``timeout = 60``. That is right for a suite which is almost
+# entirely in-process, and wrong for these two, whose work is a package download and a
+# series of registry round-trips. ``npx --yes`` fetches gitlab-ci-local before it validates
+# anything -- measured at 67s on a cold cache -- so the global budget could not cover the
+# *setup* of the check, never mind the check. The image test sums the same way: one
+# ``_manifest_status`` call is up to three requests at 20s each, per image, and there are
+# currently more than seven images.
+#
+# **The ordering is the whole point: this must exceed the inner allowances, not sit under
+# them.** While the subprocess was allowed 600s and the test 60, the inner number was
+# decoration -- pytest-timeout always won, and what it left behind was a traceback into
+# ``subprocess._communicate`` naming neither the command nor its captured output, where
+# ``subprocess.run``'s own ``TimeoutExpired`` reports both. A slow npm day therefore failed
+# every job in the matrix with a diagnosis that pointed at pytest. The job's
+# ``timeout-minutes`` is the backstop against a genuine hang; that is its job, not this
+# marker's.
+NETWORK_TEST_TIMEOUT = GITLAB_CI_LOCAL_TIMEOUT + 60
+
 _NPX = shutil.which("npx")
 _GIT = shutil.which("git") or "/usr/bin/git"
 
@@ -319,7 +343,7 @@ def _run_gitlab_ci_local(project: Path, *args: str) -> subprocess.CompletedProce
         cwd=project,
         capture_output=True,
         text=True,
-        timeout=600,
+        timeout=GITLAB_CI_LOCAL_TIMEOUT,
     )
 
 
@@ -328,6 +352,7 @@ def _run_gitlab_ci_local(project: Path, *args: str) -> subprocess.CompletedProce
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.timeout(NETWORK_TEST_TIMEOUT)
 def test_pipeline_images_exist(gitlab_project: Path, root: Path) -> None:
     """Every container image the GitLab pipeline / Dockerfiles reference must exist.
 
@@ -363,6 +388,7 @@ def test_pipeline_images_exist(gitlab_project: Path, root: Path) -> None:
 
 @_skip_on_windows
 @pytest.mark.skipif(_NPX is None, reason="npx (Node.js) not available; gitlab-ci-local cannot run")
+@pytest.mark.timeout(NETWORK_TEST_TIMEOUT)
 def test_pipeline_schema_validates(gitlab_project: Path) -> None:
     """gitlab-ci-local must resolve every include and validate the merged schema.
 
