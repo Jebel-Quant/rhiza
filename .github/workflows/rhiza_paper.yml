@@ -45,7 +45,7 @@ env:
   # The rhiza-task pin the compile runs through. Pinned rather than read from a consumer's
   # `RHIZA_TASK`, which a reusable workflow cannot see: it tracks the tag this workflow is
   # called at, so a repository synced at a release compiles with that release's task.
-  RHIZA_TASK: rhiza-task@1.5.0
+  RHIZA_TASK: rhiza-task@1.6.0
 
   # The LaTeX engine the `paper` task drives. tectonic is a single static binary that
   # resolves what a document cites out of its own web bundle, which is why this workflow no

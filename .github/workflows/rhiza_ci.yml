@@ -39,7 +39,7 @@ permissions:
 # see -- and should not: the gates a build runs must not move under it. It tracks the tag
 # this workflow is called at, the same rule the OS-matrix step below states for its pin.
 env:
-  RHIZA_TASK: rhiza-task@1.5.0
+  RHIZA_TASK: rhiza-task@1.6.0
 
 on:
   push:
@@ -130,7 +130,7 @@ jobs:
             ${{ github.repository == 'jebel-quant/rhiza'
                 && '["ubuntu-latest","macos-latest"]' || '' }}
         run: |
-          OS_MATRIX=$(uvx rhiza-task@1.5.0 ci-os-matrix)
+          OS_MATRIX=$(uvx rhiza-task@1.6.0 ci-os-matrix)
           echo "list=$OS_MATRIX" >> "$GITHUB_OUTPUT"
 
       - name: Debug OS matrix
@@ -245,15 +245,22 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
-      - name: Install project with lowest-direct resolution
+      - name: Run the suite at the declared dependency floors (test-lowest gate)
+        # Delegated to rhiza-task's `test-lowest`, which is what closes #1666. The two
+        # steps this replaced called plain `uv`, so they bypassed the task graph -- and
+        # `setup` with it, which is the single insertion point a repository's
+        # `local-setup.sh` hangs off. A project whose suite needs a native binary
+        # (Graphviz's `dot`, in the report) therefore got a green `test` and a red job
+        # here on identical code, reporting a resolution problem that was really a
+        # missing tool on the runner: the inverted silent-green shape, where the
+        # diagnosis points at the wrong thing rather than at nothing.
+        #
+        # Arriving through `install` also means the gate shares `_pytest_args` instead of
+        # restating it. The copy had already drifted -- it omitted `-n auto`, so this job
+        # ran single-process while `test` ran under xdist.
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
-        run: uv sync --all-extras --all-groups --resolution lowest-direct
-
-      - name: Run tests with lowest-direct resolution
-        env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
-        run: uv run --all-extras --all-groups --resolution lowest-direct pytest tests -q --ignore=tests/stress --ignore=tests/benchmarks
+        run: uvx "$RHIZA_TASK" test-lowest
 
   typecheck:
     name: Type checking (Python ${{ matrix.python-version }})
