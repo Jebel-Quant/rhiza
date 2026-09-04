@@ -547,18 +547,35 @@ jobs:
           egress-policy: audit
 
       - name: Verify test, typecheck, lowest-deps and rhiza-test succeeded
+        # The ::error:: annotation names the jobs that did not succeed, and their
+        # results. That annotation is what appears in the checks list and in the PR's
+        # merge box, so "and/or" spent a click sending the reader into the job log to
+        # learn something this step had already computed.
+        #
+        # "cancelled" is still accepted alongside "success", deliberately and
+        # unchanged: see tests/api/test_workflow_stubs.py::
+        # test_ci_gate_tolerates_cancelled_results and the run it cites. Rejecting it
+        # is a separate question from how the failure is reported.
         run: |
-          echo "test result:        ${{ needs.test.result }}"
-          echo "typecheck result:   ${{ needs.typecheck.result }}"
-          echo "lowest-deps result: ${{ needs.lowest-deps.result }}"
-          echo "rhiza-test result:  ${{ needs.rhiza-test.result }}"
-          # Accept "success" or "cancelled" (transient runner cancellation).
-          # Reject "failure" (real failure) and "skipped" (job never ran).
-          if [[ "${{ needs.test.result }}" != "success" && "${{ needs.test.result }}" != "cancelled" \
-             || "${{ needs.typecheck.result }}" != "success" && "${{ needs.typecheck.result }}" != "cancelled" \
-             || "${{ needs.lowest-deps.result }}" != "success" && "${{ needs.lowest-deps.result }}" != "cancelled" \
-             || "${{ needs.rhiza-test.result }}" != "success" && "${{ needs.rhiza-test.result }}" != "cancelled" ]]; then
-            echo "::error::test, typecheck, lowest-deps and/or rhiza-test did not succeed; failing the CI gate."
+          failed=""
+          for entry in \
+            "test:${{ needs.test.result }}" \
+            "typecheck:${{ needs.typecheck.result }}" \
+            "lowest-deps:${{ needs.lowest-deps.result }}" \
+            "rhiza-test:${{ needs.rhiza-test.result }}"; do
+            name="${entry%%:*}"
+            result="${entry#*:}"
+            printf '%-12s result: %s\n' "$name" "$result"
+            # Accept "success" or "cancelled" (transient runner cancellation).
+            # Reject "failure" (real failure) and "skipped" (job never ran).
+            case "$result" in
+              success|cancelled) ;;
+              *) failed="${failed:+$failed, }$name ($result)" ;;
+            esac
+          done
+
+          if [ -n "$failed" ]; then
+            echo "::error::CI gate failed -- $failed. See those job(s) for the cause."
             exit 1
           fi
           echo "All required CI jobs succeeded."
