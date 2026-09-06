@@ -1,0 +1,39 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Book Deploy
+# Purpose: Publishes this repository's own book to GitHub Pages on pushes to
+#          the default branch, by calling the reusable `rhiza_book.yml` locally
+#          with `deploy-pages: true`.
+#
+# Why a separate wrapper: `rhiza_book.yml` is reusable-only (`workflow_call`)
+# and gates its Pages artifact upload and deploy job solely on the
+# `deploy-pages` input -- deliberately, since `github.event_name` inside a
+# called workflow reflects the caller's triggering event rather than
+# `workflow_call`, and cannot be used to distinguish a direct invocation from a
+# reusable call. A push trigger therefore has to live in a wrapper that passes
+# the input explicitly, rather than in the reusable workflow itself. Every
+# other consumer of `rhiza_book.yml` (via the `github-book` overlay bundle)
+# follows the same pattern with its own wrapper workflow.
+
+name: "(RHIZA) BOOK DEPLOY"
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  book:
+    uses: ./.github/workflows/rhiza_book.yml
+    secrets: inherit
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    with:
+      deploy-pages: true
