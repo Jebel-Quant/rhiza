@@ -772,11 +772,12 @@ class TestBookWorkflow:
         """
         doc = yaml.safe_load(book_workflow_text)
         on = doc.get("on") or doc.get(True) or {}
-        assert isinstance(on, dict) and "push" not in on, (
+        assert isinstance(on, dict), "the book workflow's `on:` block did not parse as a mapping"
+        assert "push" not in on, (
             "the reusable book workflow declares a `push` trigger, which reintroduces the "
             "ambiguity that made `github.event_name` unusable for gating `deploy-pages`."
         )
-        assert isinstance(on, dict) and "workflow_call" in on, "the book workflow lost its workflow_call trigger"
+        assert "workflow_call" in on, "the book workflow lost its workflow_call trigger"
 
     def test_the_book_deploy_wrapper_publishes_this_repository_on_push(self, workflows_dir: Path) -> None:
         """This repository's own Pages deployment must run through the wrapper.
@@ -789,16 +790,15 @@ class TestBookWorkflow:
             pytest.skip("rhiza_book_deploy.yml not found")
         doc = yaml.safe_load(path.read_text(encoding="utf-8"))
         on = doc.get("on") or doc.get(True) or {}
-        assert isinstance(on, dict) and "push" in on, "the book-deploy wrapper declares no `push` trigger"
+        assert isinstance(on, dict), "the book-deploy wrapper's `on:` block did not parse as a mapping"
+        assert "push" in on, "the book-deploy wrapper declares no `push` trigger"
 
         jobs = doc.get("jobs") or {}
         uses_refs = [job.get("uses") for job in jobs.values() if job.get("uses")]
         assert any(ref == "./.github/workflows/rhiza_book.yml" for ref in uses_refs), (
             "the book-deploy wrapper does not call the local reusable book workflow"
         )
-        deploying_jobs = [
-            job for job in jobs.values() if job.get("uses") == "./.github/workflows/rhiza_book.yml"
-        ]
+        deploying_jobs = [job for job in jobs.values() if job.get("uses") == "./.github/workflows/rhiza_book.yml"]
         assert any((job.get("with") or {}).get("deploy-pages") is True for job in deploying_jobs), (
             "the book-deploy wrapper never passes `deploy-pages: true`, so this repository's "
             "own site is never published to GitHub Pages"
