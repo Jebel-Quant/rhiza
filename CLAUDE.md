@@ -172,7 +172,36 @@ Two things do not follow from it, and both are worth knowing before reaching for
   rather than fail: a clone with no tags derives `0.1.dev1+g<sha>`, so a distribution built
   from a shallow checkout is published at a version nobody asked for, with a green build and
   no error anywhere — the same silent shape as #1505, #1511, #1516 and #1535, reached through
-  a checkout depth. Any job that builds a distribution needs `fetch-depth: 0`.
+  a checkout depth. Any job that builds a distribution needs `fetch-depth: 0`, and the
+  release workflow now *checks* that rather than only documenting it — see below.
+
+**rhiza itself derives its version now, and adopting the shape it documents meant fixing
+the release path first.** The mother repo is the thin end of the case: it is a uv *virtual*
+project — no `[build-system]`, nothing built, nothing published — so there is no backend to
+derive a version *for* anything, and none is needed. Git's tag was already the only source
+`/rhiza:release` and the `@vX.Y.Z` stub pins read. What changes is that the number stops
+being written down: `[project]` carries `dynamic = ["version"]`, `[tool.bumpversion]` keeps
+its table and loses `current_version` (the newest tag matching `tag_name` answers instead,
+exactly as in rust-core's and go-core's synced configs), the `[[files]]` entry for
+pyproject.toml goes with the line it used to rewrite, and `uv lock` records `(dynamic)`
+where it recorded a version.
+
+**`rhiza_release.yml` was what blocked it, for every consumer as much as here.** Its
+`Verify version matches tag` step called `uv version --short` unconditionally — and on a
+dynamic project that does not return a number that differs, it exits **2** ("We cannot get
+or set dynamic project versions"). So the workflow rhiza ships failed *every* release of a
+repo that adopted the shape the section above declares legal, in the one job whose failure
+means no release at all. The step now probes the declaration and, when it is dynamic, says
+so and skips; the tag-versus-version comparison moves to a second step, **`Verify built
+distribution matches the tag`**, which parses the version out of what `uv build` wrote into
+`dist/`. That is the honest place for it: a derived version cannot disagree with the file
+(there is none) but it can very much be *wrong*, and being wrong looks exactly like the
+`0.1.dev1+g<sha>` fallback in the bullet above. It runs for a written version too, since it
+costs one filename parse and closes the gap between what the earlier step read and what the
+build actually produced — and it does not run at all for a project that builds nothing,
+which is why this repo's own release is verified by the tag job alone.
+`tests/api/test_release_version_verification.py` runs both scripts, lifted out of the YAML,
+against fixture projects in all three shapes; the GitLab twin carries the same two halves.
 
 `/rhiza:release` handles the shape, and needed a fix to: it tells its two phases apart by
 comparing the declared version against the highest tag, and on a derived version the two are
@@ -762,7 +791,7 @@ be invisible in the output of the gate this repo runs most, which is the shape o
 
 This repo runs on **GitHub Actions only**: `.github/workflows/` — CI, e2e, release, docker, CodeQL, weekly, sync. There is no root `.gitlab-ci.yml` here.
 
-`rhiza_release.yml`'s `Validate Tag` job is the only gate the release path has, so all three of its checks are behavioural, not advisory: the release must not already exist, the version must be strictly newer than every published tag (#1126), and the tagged commit must be reachable from a branch (#1454). The last one exists because a release cut on a branch that is then squash-merged leaves its tag on the pre-squash commit, which nothing contains — `git describe` skips the release and a git-cliff regeneration *deletes* that version's CHANGELOG section, silently. A tag on a non-default branch (a maintenance release) warns rather than fails; only a genuinely orphaned commit is refused. `tests/api/test_release_tag_reachability.py` lifts that guard's shell out of the YAML and runs it against purpose-built repositories, so the logic is tested rather than the step name.
+`rhiza_release.yml`'s `Validate Tag` job is the only gate the release path has before anything is built, so all three of its checks are behavioural, not advisory: the release must not already exist, the version must be strictly newer than every published tag (#1126), and the tagged commit must be reachable from a branch (#1454). The last one exists because a release cut on a branch that is then squash-merged leaves its tag on the pre-squash commit, which nothing contains — `git describe` skips the release and a git-cliff regeneration *deletes* that version's CHANGELOG section, silently. A tag on a non-default branch (a maintenance release) warns rather than fails; only a genuinely orphaned commit is refused. `tests/api/test_release_tag_reachability.py` lifts that guard's shell out of the YAML and runs it against purpose-built repositories, so the logic is tested rather than the step name.
 
 `rhiza_e2e.yml` is separate from `rhiza_ci.yml` rather than more jobs inside it: it installs three toolchains CI does not otherwise need, costs minutes per layer against CI's ≤20 min test budget, and is the only place the Rust and Go layers execute at all (see **Language layers** above).
 

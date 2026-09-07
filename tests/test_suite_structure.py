@@ -93,6 +93,10 @@ _CONTROLS = {
 _NOT_DERIVERS = {
     "tests/integration/test_sbom.py": "runs `uvx cyclonedx-bom`; the pin is not involved",
     "tests/security/test_security_patterns.py": "runs `uvx bandit` out-of-tree; the pin is not involved",
+    # It runs the release workflow's own `run:` blocks, which reach for `uv run --with
+    # tomli/packaging`. Nothing about the pinned CLI, and nothing derived: every expectation
+    # is a literal version written into a fixture project.
+    "tests/api/test_release_version_verification.py": "runs `uv run --with tomli`; the pin is not involved",
     # This module matches its own detector: `_NAMES_UV` and `_TOUCHES_THE_PIN` are literals in
     # the source above. It reads files and never runs anything.
     "tests/test_suite_structure.py": "holds the detector's own patterns as string literals",

@@ -19,7 +19,10 @@
 #   - For custom feeds, use PYPI_REPOSITORY_URL and PYPI_TOKEN variables
 #
 # 📄 Requirements:
-#   - pyproject.toml with top-level version field (for Python packages)
+#   - pyproject.toml declaring a version (for Python packages): either written as
+#     `[project].version`, or listed in `[project].dynamic` for the build backend to
+#     derive from the VCS (hatch-vcs, setuptools-scm). A derived version is checked
+#     against the tag on the built distribution rather than in the file.
 #   - PYPI_TOKEN variable for PyPI publishing
 #
 # ✅ To Trigger:
@@ -144,19 +147,80 @@ release:build:
       # Verify version matches tag
       if [ -f "pyproject.toml" ]; then
         TAG_VERSION="${CI_COMMIT_TAG#v}"
-        PROJECT_VERSION=$(uv version --short)
 
-        if [ "$PROJECT_VERSION" != "$TAG_VERSION" ]; then
-          echo "❌ Version mismatch: pyproject.toml has '$PROJECT_VERSION' but tag is '$TAG_VERSION'"
-          exit 1
-        fi
-        echo "✅ Version verified: $PROJECT_VERSION matches tag"
+        # A project may derive its version from the VCS rather than write one: PEP 621's
+        # `dynamic = ["version"]` with a backend plugin such as hatch-vcs. There is then no
+        # number in the file to compare, and `uv version --short` does not return a
+        # differing one -- it exits 2 ("We cannot get or set dynamic project versions"),
+        # which would fail every release of such a project. The check moves to the built
+        # distribution below, which is where a derived version can actually be wrong.
+        DYNAMIC=$(uv run --with tomli --no-project python3 -c "
+        import pathlib, tomli
+        project = tomli.loads(pathlib.Path('pyproject.toml').read_text()).get('project') or {}
+        print('dynamic' if 'version' in (project.get('dynamic') or []) else 'written')")
+
+        case "$DYNAMIC" in
+          dynamic)
+            echo "ℹ️ [project].version is dynamic: derived from the VCS, so there is no written number to compare against $TAG_VERSION"
+            ;;
+          written)
+            PROJECT_VERSION=$(uv version --short)
+            if [ "$PROJECT_VERSION" != "$TAG_VERSION" ]; then
+              echo "❌ Version mismatch: pyproject.toml has '$PROJECT_VERSION' but tag is '$TAG_VERSION'"
+              exit 1
+            fi
+            echo "✅ Version verified: $PROJECT_VERSION matches tag"
+            ;;
+          *)
+            # Never assume "written": that would call `uv version --short` on a dynamic
+            # project and fail with an error about the probe, not about the release.
+            echo "❌ Could not tell whether [project].version is written or dynamic (probe returned '$DYNAMIC')"
+            exit 1
+            ;;
+        esac
       fi
 
       # Detect buildable Python package
       if [ -f "pyproject.toml" ] && grep -q '^\[build-system\]' pyproject.toml; then
         echo "📦 Building package..."
         uv build
+
+        # The only place a version *derived* from the VCS can be caught being wrong:
+        # hatch-vcs and setuptools-scm fall back rather than fail, so a shallow clone
+        # builds `0.1.dev1+g<sha>` and publishes it with a green pipeline and no error
+        # anywhere. GIT_DEPTH must therefore reach the tag; this is what says so out loud.
+        uv run --with packaging --no-project python3 -c '
+        import pathlib
+        import sys
+
+        from packaging.utils import parse_sdist_filename, parse_wheel_filename
+        from packaging.version import Version
+
+        expected = Version(sys.argv[1])
+        dist = pathlib.Path("dist")
+        built = sorted(dist.glob("*.whl")) + sorted(dist.glob("*.tar.gz"))
+        if not built:
+            print("❌ uv build produced no distribution in dist/ -- there is nothing to publish or verify")
+            sys.exit(1)
+
+        mismatched = []
+        for artifact in built:
+            parse = parse_wheel_filename if artifact.name.endswith(".whl") else parse_sdist_filename
+            found = parse(artifact.name)[1]
+            print(f"{artifact.name}: {found}")
+            if found != expected:
+                mismatched.append(f"{artifact.name} carries {found}")
+
+        if mismatched:
+            print(
+                f"❌ Built distribution does not carry the release version {expected}: "
+                + ", ".join(mismatched)
+                + ". A version derived from the VCS falls back to a dev version when the tag "
+                "is not visible to the build -- check GIT_DEPTH and that tags were fetched."
+            )
+            sys.exit(1)
+        print(f"✅ Built distribution verified at {expected}")
+        ' "${CI_COMMIT_TAG#v}"
       else
         echo "⏭️ No buildable package detected, skipping build"
         mkdir -p dist  # Create empty dist directory
