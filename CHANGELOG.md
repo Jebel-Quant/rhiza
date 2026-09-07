@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.8.0] - 2026-09-07
+
+### New Features
+- Derive rhiza's own version from the git tag (#1681)
+
+### Documentation
+- Record dynamic versioning as a second legal shape for python-core (#1679)
+
+### Dependencies
+- *(deps)* Update pre-commit hook astral-sh/ruff-pre-commit to v0.16.6 (#1671)
+- *(deps)* Lock file maintenance (#1673)
+- *(deps)* Update pre-commit hook igorshubovych/markdownlint-cli to v0.49.1 (#1672)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.12.10 (#1675)
+- *(deps)* Lock file maintenance (#1676)
+- *(deps)* Update rhiza-task to v1.7.0 and pytest-rhiza to v0.6.0 (#1680)
+
 ## [1.7.3] - 2026-09-04
 
 ### Dependencies
