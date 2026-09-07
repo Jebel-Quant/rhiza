@@ -145,6 +145,42 @@ was inert in every downstream repo (#1453), and the placement now differs by lay
 Both non-Python configs set `commit = false` and `tag = false`: `/rhiza:release` commits
 and tags itself so the changelog lands in the bump commit.
 
+**A Python project may also derive its version from the tag**, and this is recent: PEP 621's
+`dynamic = ["version"]` with a backend plugin such as hatch-vcs. It used to be *rejected*
+rather than merely undocumented — `test_pyproject` listed `version` among the required
+`[project]` fields and matched it against a semver pattern, so the check rhiza ships failed
+any repo that adopted it (pytest-rhiza#96). Six of its assertions are about a *written*
+version and now skip on such a project, which costs nothing: every one of them catches a
+disagreement between a number in a file and a number in git, and a version derived from git
+cannot disagree with git. Declaring neither, or both, is still an error.
+
+What that buys is the version existing in exactly one place. rhiza-task carried it in three —
+`[project].version`, `__version__` and `uv.lock` — and a release had to update all three
+before it tagged; v1.0.0 shipped with `uv.lock` left behind and every gate failed, because
+`uv lock --check` is the first thing `install` runs (rhiza-task#160). With hatch-vcs there is
+no copy left to fall behind, and `uv` stops recording a version for the root package at all.
+
+Two things do not follow from it, and both are worth knowing before reaching for it:
+
+- **It does not make a release one step**, though it removes most of the steps. Anything the
+  repo pins to its own version — a `rhiza-task@X.Y.Z` in a README, a `@vX.Y.Z` in a
+  self-referencing CI stub — is a *documentation* pin that has to be correct in the commit
+  the tag names, so it cannot be derived from a tag that does not exist yet. Those keep
+  their `[[tool.bumpversion.files]]` entries, and a release still commits before it tags —
+  which `main`'s required-`pull_request` rule would force anyway.
+- **The failure mode gets quieter, not louder.** setuptools-scm and hatch-vcs both fall back
+  rather than fail: a clone with no tags derives `0.1.dev1+g<sha>`, so a distribution built
+  from a shallow checkout is published at a version nobody asked for, with a green build and
+  no error anywhere — the same silent shape as #1505, #1511, #1516 and #1535, reached through
+  a checkout depth. Any job that builds a distribution needs `fetch-depth: 0`.
+
+`/rhiza:release` handles the shape, and needed a fix to: it tells its two phases apart by
+comparing the declared version against the highest tag, and on a derived version the two are
+the same number by construction — so a merged-but-untagged release read as phase A and would
+have been bumped again, stranding the release already on the default branch. It compares the
+newest `CHANGELOG.md` heading there instead (rhiza-claude#225).
+
+
 **Gate parity between layers.** Same target names, different engines:
 
 | target | python-core | rust-core | go-core |
