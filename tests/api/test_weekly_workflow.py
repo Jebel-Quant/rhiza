@@ -109,6 +109,78 @@ class TestWeeklyWorkflowStructure:
 
 
 # ---------------------------------------------------------------------------
+# Link check — the two-pass retry that absorbs a transient 5xx
+# ---------------------------------------------------------------------------
+
+
+class TestLinkCheckRetry:
+    """Pin the shape of link-check's retry.
+
+    lychee cannot retry this failure itself: ``RetryExt for ErrorKind``
+    (lychee-lib/src/retry.rs) retries a rejected status code only when it is 429, so a
+    504 that arrives as a well-formed response is ``RejectedStatusCode(504)`` and fails
+    on the first try whatever ``--max-retries`` says. The retry is therefore two passes
+    of the action, and each half is asserted here: an advisory first pass, a pause, and
+    a deciding second pass that runs only when the first found something. Dropping any
+    one of them turns the job either flaky again or permanently green.
+    """
+
+    @pytest.fixture
+    def link_check(self, root):
+        """Return the link-check job."""
+        workflow = _load_workflow(root)
+        assert "link-check" in workflow["jobs"], "weekly workflow must define a link-check job"
+        return workflow["jobs"]["link-check"]
+
+    @pytest.fixture
+    def lychee_steps(self, link_check):
+        """Return the job's lychee steps, in order."""
+        steps = [step for step in link_check.get("steps", []) if "lychee-action" in step.get("uses", "")]
+        assert len(steps) == 2, f"expected two lychee passes, got {len(steps)}"
+        return steps
+
+    def test_first_pass_does_not_fail_the_job(self, lychee_steps):
+        """The first pass reports without deciding, so one transient 5xx cannot go red."""
+        first = lychee_steps[0]
+        assert first["with"]["fail"] is False
+        assert first.get("id"), "first pass needs an id so the retry can read its exit_code"
+
+    def test_second_pass_decides(self, lychee_steps):
+        """The second pass is the one that fails the job."""
+        assert lychee_steps[1]["with"]["fail"] is True
+
+    def test_second_pass_runs_only_after_a_failure(self, link_check, lychee_steps):
+        """The retry is guarded on the first pass's exit code, not run unconditionally.
+
+        Unconditional would double every weekly run's link traffic, and against a rate
+        limiter that is how you manufacture the 429 the accept list is there to forgive.
+        """
+        first_id = lychee_steps[0]["id"]
+        guard = f"steps.{first_id}.outputs.exit_code"
+        assert guard in lychee_steps[1].get("if", ""), f"retry must be guarded on {guard}"
+
+    def test_a_pause_separates_the_two_passes(self, link_check, lychee_steps):
+        """A retry that fires immediately re-asks a server that is still failing."""
+        steps = link_check["steps"]
+        between = steps[steps.index(lychee_steps[0]) + 1 : steps.index(lychee_steps[1])]
+        sleeps = [step for step in between if "sleep" in step.get("run", "")]
+        assert sleeps, "the retry must wait before re-checking"
+        assert steps.index(lychee_steps[0]) < steps.index(lychee_steps[1])
+
+    def test_both_passes_check_the_same_links(self, link_check, lychee_steps):
+        """Both passes take one argument list, so the deciding pass cannot check less.
+
+        A second pass with its own copy of the arguments is a second thing to keep in
+        step, and the failure mode is silent: the pass that fails the job checks a
+        narrower set than the one that found the problem.
+        """
+        args = {step["with"]["args"] for step in lychee_steps}
+        assert len(args) == 1, f"the two passes disagree about their arguments: {args}"
+        assert "env.LYCHEE_ARGS" in args.pop(), "argument list should come from the job's env"
+        assert "LYCHEE_ARGS" in link_check.get("env", {})
+
+
+# ---------------------------------------------------------------------------
 # Makefile dry-run tests — verify the targets invoked by the workflow compile
 # ---------------------------------------------------------------------------
 
