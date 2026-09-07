@@ -1,6 +1,24 @@
 [project]
 name = "rhiza"
-version = "1.7.3"
+# Derived from the git tag, not written here — the second shape python-core permits, and
+# the one that leaves this repo's version in exactly one place. There is no build backend
+# to derive it *for* a consumer of the metadata, and nothing needs one: rhiza is a uv
+# *virtual* project (no `[build-system]`, nothing built, nothing published — see the
+# kill-switch classifier below), so the only thing that ever read a written number was the
+# release path, which now reads the tag it is cutting.
+#
+# Two consequences worth knowing before touching this. `uv lock` records `(dynamic)` where
+# it used to record a version, so the third copy that used to fall behind a release cannot
+# exist. And `uv version` exits 2 by design ("We cannot get or set dynamic project
+# versions"), which is why rhiza_release.yml's "Verify version matches tag" step detects a
+# dynamic declaration and skips rather than calling it — the tag-versus-version comparison
+# lives in "Verify built distribution matches the tag", the step that only runs for a
+# project that builds one.
+#
+# PEP 621 allows a version to be written or listed in `dynamic`, never both and never
+# neither; pytest-rhiza's `test_pyproject` asserts exactly that, and skips its six
+# written-version assertions here because a version read from git cannot disagree with git.
+dynamic = ["version"]
 description = "Reusable configuration templates for modern Python projects"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -70,7 +88,15 @@ Issues = "https://github.com/jebel-quant/rhiza/issues"
 # python-core bundle no longer ships a `.rhiza/.cfg.toml` copy of this block; the
 # Rust and Go layers ship a root `.bumpversion.toml` instead, since neither
 # language has a discoverable file of its own.
-current_version = "1.7.3"
+#
+# No `current_version`, deliberately, since [project].version is dynamic: there is no
+# written number for it to agree with, and a second copy here is exactly the drift the
+# dynamic declaration removes. bump-my-version then reads the current version from the
+# newest tag matching `tag_name` (default `v{new_version}`) — the same mechanism
+# rust-core's and go-core's synced `.bumpversion.toml` rely on, and the signal
+# `/rhiza:release` reads to tell a tag-derived repo from one with a written version.
+# Before the first tag it fails with "Unable to determine the current version", which is
+# a declared location with nothing in it yet, not a missing config.
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(?:[-]?(?P<release>[a-z]+)[\\.]?(?P<pre_n>\\d+))?(?:\\+build\\.(?P<build_n>\\d+))?"
 serialize = [
     "{major}.{minor}.{patch}-{release}.{pre_n}+build.{build_n}",
@@ -88,13 +114,11 @@ tag = false
 optional_value = "prod"
 values = ["dev", "alpha", "a", "beta", "b", "rc", "prod"]
 
-# Anchored to the [project] table: an unanchored `version = "..."` search would
-# also rewrite any [tool.*] table that happens to share the current number.
-[[tool.bumpversion.files]]
-filename = "pyproject.toml"
-regex = true
-search = '(?ms)^\[project\]((?:(?!^\[)[\s\S])*?)^version = "{current_version}"'
-replace = '[project]\1version = "{new_version}"'
+# pyproject.toml is deliberately absent from the list below: [project] carries
+# `dynamic = ["version"]`, so there is no `version = "..."` line for a bump to rewrite.
+# The entry that used to sit here was anchored to the [project] table precisely so an
+# unanchored search could not also rewrite a [tool.*] table sharing the number — a hazard
+# that goes away with the line it was guarding.
 
 # The live workflows under .github/workflows/ are deliberately NOT listed, and
 # neither is any pin of jebel-quant/actions. configure-git-auth lives in that
@@ -180,9 +204,10 @@ typechecker = "both"
 # it can compare. So this line's job is now to keep the pin managed, not to keep it ahead.
 #
 # 0.6.0 collects the same five modules and the same 35 checks as 0.5.0 on this repo. Its one
-# behavioural change is a *relaxation* of a check the mother repo does not exercise:
-# `test_pyproject` now accepts a `[project].version` derived from the VCS, and this repo
-# declares a literal one.
+# behavioural change is what makes the dynamic `[project].version` above legal at all:
+# `test_pyproject` accepts a version derived from the VCS, where 0.5.0 required a written
+# one and matched it against a semver pattern. So this pin is a floor for this repo rather
+# than only a managed number — reverting it below 0.6.0 fails `make rhiza-test`.
 pytest-rhiza = "pytest-rhiza==0.6.0"
 
 # Restores this repo's own book override, which the migration to the shim dropped. The old root
