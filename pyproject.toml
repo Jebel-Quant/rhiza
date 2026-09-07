@@ -165,19 +165,25 @@ layers = ["python"]
 typechecker = "both"
 
 # Pins the conformance checks, which is the entire purpose of the setting: a repo runs the
-# assertions of a known release, not of whatever the checks repo's HEAD says today. The
-# override outlives the bump — rhiza-task 1.1.0 still defaults to v0.2.0, so deleting this
-# line would *downgrade* the checks by three releases rather than track the newest.
+# assertions of a known release, not of whatever the checks repo's HEAD says today.
 #
-# A PyPI version spec, not a git URL. The git form was inherited from rhiza-task's default,
-# and it costs a clone on every `rhiza-test` run for no added precision — a tag is as mutable
-# as a version is not. It also put the pin out of reach of the one thing that would have
-# noticed it ageing: `renovate.json`'s custom manager is a pypi datasource, and a git ref is
-# not a version it can compare.
+# What the override is *for* has narrowed, and it is worth knowing which half survived. It used
+# to buy a newer version as well: rhiza-task defaulted to v0.2.0 for six releases, so deleting
+# the line would have downgraded the checks rather than tracked the newest. rhiza-task 1.7.0
+# moved its own default to v0.6.0, so the versions now agree and only the *form* differs —
+# which is the half that still matters.
 #
-# 0.3.0 collects the same five modules and the same 34 checks as 0.2.1 on this repo, so this
-# is a bump of the assertions' *implementation*, not of the check set.
-pytest-rhiza = "pytest-rhiza==0.5.0"
+# A PyPI version spec, not a git URL. The git form is what rhiza-task's default still is, and
+# it costs a clone on every `rhiza-test` run for no added precision — a tag is as mutable
+# as a version is not. It also puts the pin out of reach of the one thing that would notice it
+# ageing: `renovate.json`'s custom manager is a pypi datasource, and a git ref is not a version
+# it can compare. So this line's job is now to keep the pin managed, not to keep it ahead.
+#
+# 0.6.0 collects the same five modules and the same 35 checks as 0.5.0 on this repo. Its one
+# behavioural change is a *relaxation* of a check the mother repo does not exercise:
+# `test_pyproject` now accepts a `[project].version` derived from the VCS, and this repo
+# declares a literal one.
+pytest-rhiza = "pytest-rhiza==0.6.0"
 
 # Restores this repo's own book override, which the migration to the shim dropped. The old root
 # Makefile carried `MKDOCS_EXTRA_PACKAGES = --with 'mkdocstrings[python]'` above the include, and
