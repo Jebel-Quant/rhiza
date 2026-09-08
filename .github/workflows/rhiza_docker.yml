@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
@@ -122,7 +122,7 @@ jobs:
       # `always()` is still needed -- without it a *later* step's failure would suppress
       # the upload of a scan that did run.
       - name: Upload Trivy scan results to GitHub Security
-        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         if: always() && steps.trivy.outcome == 'success'
         with:
           sarif_file: 'trivy-results.sarif'
