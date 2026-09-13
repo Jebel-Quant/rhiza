@@ -145,6 +145,71 @@ was inert in every downstream repo (#1453), and the placement now differs by lay
 Both non-Python configs set `commit = false` and `tag = false`: `/rhiza:release` commits
 and tags itself so the changelog lands in the bump commit.
 
+**A Python project may also derive its version from the tag**, and this is recent: PEP 621's
+`dynamic = ["version"]` with a backend plugin such as hatch-vcs. It used to be *rejected*
+rather than merely undocumented — `test_pyproject` listed `version` among the required
+`[project]` fields and matched it against a semver pattern, so the check rhiza ships failed
+any repo that adopted it (pytest-rhiza#96). Six of its assertions are about a *written*
+version and now skip on such a project, which costs nothing: every one of them catches a
+disagreement between a number in a file and a number in git, and a version derived from git
+cannot disagree with git. Declaring neither, or both, is still an error.
+
+What that buys is the version existing in exactly one place. rhiza-task carried it in three —
+`[project].version`, `__version__` and `uv.lock` — and a release had to update all three
+before it tagged; v1.0.0 shipped with `uv.lock` left behind and every gate failed, because
+`uv lock --check` is the first thing `install` runs (rhiza-task#160). With hatch-vcs there is
+no copy left to fall behind, and `uv` stops recording a version for the root package at all.
+
+Two things do not follow from it, and both are worth knowing before reaching for it:
+
+- **It does not make a release one step**, though it removes most of the steps. Anything the
+  repo pins to its own version — a `rhiza-task@X.Y.Z` in a README, a `@vX.Y.Z` in a
+  self-referencing CI stub — is a *documentation* pin that has to be correct in the commit
+  the tag names, so it cannot be derived from a tag that does not exist yet. Those keep
+  their `[[tool.bumpversion.files]]` entries, and a release still commits before it tags —
+  which `main`'s required-`pull_request` rule would force anyway.
+- **The failure mode gets quieter, not louder.** setuptools-scm and hatch-vcs both fall back
+  rather than fail: a clone with no tags derives `0.1.dev1+g<sha>`, so a distribution built
+  from a shallow checkout is published at a version nobody asked for, with a green build and
+  no error anywhere — the same silent shape as #1505, #1511, #1516 and #1535, reached through
+  a checkout depth. Any job that builds a distribution needs `fetch-depth: 0`, and the
+  release workflow now *checks* that rather than only documenting it — see below.
+
+**rhiza itself derives its version now, and adopting the shape it documents meant fixing
+the release path first.** The mother repo is the thin end of the case: it is a uv *virtual*
+project — no `[build-system]`, nothing built, nothing published — so there is no backend to
+derive a version *for* anything, and none is needed. Git's tag was already the only source
+`/rhiza:release` and the `@vX.Y.Z` stub pins read. What changes is that the number stops
+being written down: `[project]` carries `dynamic = ["version"]`, `[tool.bumpversion]` keeps
+its table and loses `current_version` (the newest tag matching `tag_name` answers instead,
+exactly as in rust-core's and go-core's synced configs), the `[[files]]` entry for
+pyproject.toml goes with the line it used to rewrite, and `uv lock` records `(dynamic)`
+where it recorded a version.
+
+**`rhiza_release.yml` was what blocked it, for every consumer as much as here.** Its
+`Verify version matches tag` step called `uv version --short` unconditionally — and on a
+dynamic project that does not return a number that differs, it exits **2** ("We cannot get
+or set dynamic project versions"). So the workflow rhiza ships failed *every* release of a
+repo that adopted the shape the section above declares legal, in the one job whose failure
+means no release at all. The step now probes the declaration and, when it is dynamic, says
+so and skips; the tag-versus-version comparison moves to a second step, **`Verify built
+distribution matches the tag`**, which parses the version out of what `uv build` wrote into
+`dist/`. That is the honest place for it: a derived version cannot disagree with the file
+(there is none) but it can very much be *wrong*, and being wrong looks exactly like the
+`0.1.dev1+g<sha>` fallback in the bullet above. It runs for a written version too, since it
+costs one filename parse and closes the gap between what the earlier step read and what the
+build actually produced — and it does not run at all for a project that builds nothing,
+which is why this repo's own release is verified by the tag job alone.
+`tests/api/test_release_version_verification.py` runs both scripts, lifted out of the YAML,
+against fixture projects in all three shapes; the GitLab twin carries the same two halves.
+
+`/rhiza:release` handles the shape, and needed a fix to: it tells its two phases apart by
+comparing the declared version against the highest tag, and on a derived version the two are
+the same number by construction — so a merged-but-untagged release read as phase A and would
+have been bumped again, stranding the release already on the default branch. It compares the
+newest `CHANGELOG.md` heading there instead (rhiza-claude#225).
+
+
 **Gate parity between layers.** Same target names, different engines:
 
 | target | python-core | rust-core | go-core |
@@ -726,9 +791,12 @@ be invisible in the output of the gate this repo runs most, which is the shape o
 
 This repo runs on **GitHub Actions only**: `.github/workflows/` — CI, e2e, release, docker, CodeQL, weekly, sync. There is no root `.gitlab-ci.yml` here.
 
-`rhiza_release.yml`'s `Validate Tag` job is the only gate the release path has, so all three of its checks are behavioural, not advisory: the release must not already exist, the version must be strictly newer than every published tag (#1126), and the tagged commit must be reachable from a branch (#1454). The last one exists because a release cut on a branch that is then squash-merged leaves its tag on the pre-squash commit, which nothing contains — `git describe` skips the release and a git-cliff regeneration *deletes* that version's CHANGELOG section, silently. A tag on a non-default branch (a maintenance release) warns rather than fails; only a genuinely orphaned commit is refused. `tests/api/test_release_tag_reachability.py` lifts that guard's shell out of the YAML and runs it against purpose-built repositories, so the logic is tested rather than the step name.
+`rhiza_release.yml`'s `Validate Tag` job is the only gate the release path has before anything is built, so all three of its checks are behavioural, not advisory: the release must not already exist, the version must be strictly newer than every published tag (#1126), and the tagged commit must be reachable from a branch (#1454). The last one exists because a release cut on a branch that is then squash-merged leaves its tag on the pre-squash commit, which nothing contains — `git describe` skips the release and a git-cliff regeneration *deletes* that version's CHANGELOG section, silently. A tag on a non-default branch (a maintenance release) warns rather than fails; only a genuinely orphaned commit is refused. `tests/api/test_release_tag_reachability.py` lifts that guard's shell out of the YAML and runs it against purpose-built repositories, so the logic is tested rather than the step name.
 
 `rhiza_e2e.yml` is separate from `rhiza_ci.yml` rather than more jobs inside it: it installs three toolchains CI does not otherwise need, costs minutes per layer against CI's ≤20 min test budget, and is the only place the Rust and Go layers execute at all (see **Language layers** above).
+
+`rhiza_weekly.yml`'s **link-check runs lychee twice, and `--max-retries` is not what makes it stable.** lychee retries a *rejected status code* only when it is 429 — `RetryExt for ErrorKind` in `lychee-lib/src/retry.rs`; the `is_server_error()` branch just above it classifies reqwest's own errors, not a response that arrived intact and failed the `--accept` list. So a `504 Gateway Timeout` from github.com is `ErrorKind::RejectedStatusCode(504)`, fails on the first response, and no retry flag reaches it. That is what turned one gateway blip on a README badge link into a red weekly run (chebpy/chebpy run 34130824491, green on a plain re-run, nothing having changed). A 5xx is also never the failure this job exists to find: a README link to a page that is genuinely gone answers 404, which fails both passes. Hence the shape — an advisory pass (`fail: false`), a 30s pause, and a deciding pass that runs only when the first found something. `TestLinkCheckRetry` in `tests/api/test_weekly_workflow.py` pins all three, plus the single `LYCHEE_ARGS` both passes read: two copies of the argument list would let the pass that fails the job check less than the pass that found the problem, silently. The alternative — adding `500,502,503,504` to `--accept` — costs the same runtime and buys a check that stays green through a real outage.
+
 
 `rhiza_paper.yml` **implements no LaTeX driver.** It used to: an apt install of four guessed `texlive-*` packages, a root-document rule that preferred `basanos.tex` (one downstream repo's paper, in a template every consumer syncs), and a `latexmk` call with its own flag set. All three already existed in rhiza-task's `paper` task — the one `make paper` runs and the one `book` takes as a prerequisite — so the workflow was a second definition of how a paper gets built, free to diverge. It had already diverged: the task drives **tectonic**, not latexmk, so the two halves of this repo disagreed about the engine. What is left is `uvx "$RHIZA_TASK" paper --strict`, plus getting the engine onto the runner.
 

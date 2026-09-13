@@ -25,7 +25,7 @@ permissions:
 # from a consumer's `RHIZA_TASK`, which this workflow cannot see: it tracks the tag the
 # workflow is called at.
 env:
-  RHIZA_TASK: rhiza-task@1.6.0
+  RHIZA_TASK: rhiza-task@1.7.0
 
 on:
   push:
@@ -44,7 +44,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
