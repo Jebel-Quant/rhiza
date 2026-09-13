@@ -26,10 +26,11 @@
 #   7. 🐳 Publish Devcontainer - Build and publish devcontainer image (conditional)
 #   8. ✅ Finalize Release - Publish the GitHub release with links
 #
-# 📄 CHANGELOG: not updated here. The release process (rhiza-claude `/release`)
-# folds a freshly generated CHANGELOG.md into the version-bump commit before the
-# tag is pushed, so the tagged commit already carries the changelog — no separate
-# post-tag commit.
+# 📄 CHANGELOG: not updated here. Prepare the release commit with the
+# forge-agnostic steps in docs/ops/CHANGELOG_GUIDE.md before pushing the tag:
+# regenerate CHANGELOG.md, fold it into the version-bump commit, and tag that
+# reachable commit. The rhiza-claude `/release` command is one harness for those
+# steps, not the workflow's only contract.
 #
 # 📦 SBOM Generation:
 #   - Generated using CycloneDX format (industry standard for software supply chain security)

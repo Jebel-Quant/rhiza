@@ -48,6 +48,36 @@ Documentation, Performance, Maintenance, Reverts, and Other Changes — based on
 their [Conventional Commits](https://www.conventionalcommits.org/) prefix.
 Releases are detected via the `tag_pattern = "v[0-9].*"` convention.
 
+## Agent-agnostic release preparation
+
+The release workflow is intentionally tag-triggered: it validates the tag,
+builds artifacts, drafts release notes, and publishes, but it does not create a
+post-tag changelog commit. Any human, CLI script, or coding-agent harness should
+therefore prepare the same pre-tag state before pushing `vX.Y.Z`:
+
+1. Start from a clean branch containing the version bump that will be released.
+2. Regenerate the checked-in changelog from the same history the tag will see:
+
+   ```bash
+   uvx git-cliff --output CHANGELOG.md
+   ```
+
+3. Commit the version bump and regenerated `CHANGELOG.md` together.
+4. Tag that exact commit, then verify the tag is reachable from the release
+   branch before pushing:
+
+   ```bash
+   git tag vX.Y.Z
+   git branch --contains vX.Y.Z
+   ```
+
+5. Push the branch and tag only after the reachable tagged commit already
+   carries the changelog entry.
+
+Claude Code's `/rhiza:release` command may automate these steps, but it is not a
+separate release contract. Other agents and humans should follow the sequence
+above rather than reconstructing hidden Claude Code-only behavior.
+
 The shipped `cliff.toml` is intentionally forge-agnostic: it leaves `(#123)`
 references intact rather than hard-coding repository URLs, and both GitHub and
 GitLab auto-link those references when rendering the file in a repository. To
