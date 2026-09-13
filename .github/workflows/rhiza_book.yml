@@ -6,10 +6,16 @@
 #          It combines API documentation, test coverage reports, test results, and
 #          interactive notebooks into a single GitHub Pages site.
 #
-# Trigger: The build runs on every push (and via workflow_call), so every commit
-#          validates that the book still builds. The deploy job publishes to
-#          GitHub Pages only from the repository's default branch and never from
-#          a fork; feature branches build and upload an artifact but never publish.
+# Trigger: This workflow is reusable-only (`workflow_call`); it defines no push
+#          trigger of its own, deliberately. Within a called workflow,
+#          `github.event_name` reflects the *caller's* triggering event rather
+#          than `workflow_call`, so a condition built on it cannot tell a direct
+#          invocation apart from a reusable call whose caller happened to run on
+#          push -- deploying regardless of what the caller passed as
+#          `deploy-pages`. Gating is therefore driven only by the `deploy-pages`
+#          input. `rhiza_book_deploy.yml` is this repository's own
+#          push-triggered wrapper, calling this file locally with
+#          `deploy-pages: true`.
 #
 # Components:
 #   - 📓 Process Marimo notebooks
@@ -20,10 +26,6 @@
 name: "(RHIZA) BOOK"
 
 on:
-  push:
-    branches:
-      - main
-      - master
   workflow_call:
     inputs:
       deploy-pages:
@@ -187,7 +189,7 @@ jobs:
       # Skipped in artifact-only mode: a consumer passing `deploy-pages: false`
       # downloads the generic `book` artifact above and deploys it themselves.
       - name: Upload static files as artifact
-        if: ${{ github.event_name != 'workflow_call' || inputs.deploy-pages }}
+        if: ${{ inputs.deploy-pages }}
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: _book/  # Path to the directory containing all artifacts to deploy
@@ -199,7 +201,7 @@ jobs:
   deploy:
     needs: build
     if: >-
-      (github.event_name != 'workflow_call' || inputs.deploy-pages) &&
+      inputs.deploy-pages &&
       github.ref_name == github.event.repository.default_branch &&
       !github.event.repository.fork
     runs-on: "ubuntu-latest"

@@ -716,6 +716,13 @@ class TestBookWorkflow:
         job, and the deploy job itself declares the `github-pages` environment.
         Skipping neither would leave a Pages upload with no deploy (harmless
         but wasteful) or a deploy of a stale artifact (worse).
+
+        Gating must rest on `inputs.deploy-pages` alone. `github.event_name`
+        cannot help: inside a called workflow it reflects the caller's
+        triggering event rather than `workflow_call`, so a condition built on
+        it cannot tell a direct invocation apart from a reusable call whose
+        caller happened to run on push -- which is exactly the bug this test
+        guards against (jebel-quant/rhiza#1677).
         """
         doc = yaml.safe_load(book_workflow_text)
         pages_upload_guarded = False
@@ -728,9 +735,11 @@ class TestBookWorkflow:
                         "so artifact-only consumers still pay for a Pages upload that "
                         "nothing consumes."
                     )
-                    assert "github.event_name != 'workflow_call'" in guard, (
-                        "the Pages-artifact upload guard must enable Pages on non-reusable "
-                        "triggers explicitly instead of relying on an empty workflow input."
+                    assert "event_name" not in guard, (
+                        "the Pages-artifact upload guard must not consult `github.event_name` -- "
+                        "inside a called workflow it reflects the caller's event, not "
+                        "`workflow_call`, so it cannot distinguish a direct trigger from a "
+                        "reusable call and silently re-enables Pages regardless of the input."
                     )
                     pages_upload_guarded = True
         assert pages_upload_guarded, "no `upload-pages-artifact` step found to gate"
@@ -743,9 +752,56 @@ class TestBookWorkflow:
             "still tries to publish to GitHub Pages -- which is exactly what the input "
             "exists to prevent."
         )
-        assert "github.event_name != 'workflow_call'" in deploy_if, (
-            "the deploy guard must enable Pages on non-reusable triggers explicitly instead "
-            "of relying on an empty workflow input."
+        assert "event_name" not in deploy_if, (
+            "the deploy guard must not consult `github.event_name` -- inside a called "
+            "workflow it reflects the caller's event, not `workflow_call`, so it cannot "
+            "distinguish a direct trigger from a reusable call and silently re-enables "
+            "deployment regardless of the input."
+        )
+
+    def test_the_book_workflow_declares_no_push_trigger(self, book_workflow_text: str) -> None:
+        """The reusable workflow must be workflow_call-only.
+
+        A `push` trigger alongside `workflow_call` would tempt a condition back
+        onto `github.event_name` to distinguish the two -- exactly the mechanism
+        that broke `deploy-pages: false` for reusable callers (#1677), since the
+        event name inside a called workflow reflects the caller's own event
+        rather than `workflow_call`. This repository's own push-triggered
+        deployment lives in the `rhiza_book_deploy.yml` wrapper instead, which
+        calls this workflow locally with `deploy-pages: true`.
+        """
+        doc = yaml.safe_load(book_workflow_text)
+        on = doc.get("on") or doc.get(True) or {}
+        assert isinstance(on, dict), "the book workflow's `on:` block did not parse as a mapping"
+        assert "push" not in on, (
+            "the reusable book workflow declares a `push` trigger, which reintroduces the "
+            "ambiguity that made `github.event_name` unusable for gating `deploy-pages`."
+        )
+        assert "workflow_call" in on, "the book workflow lost its workflow_call trigger"
+
+    def test_the_book_deploy_wrapper_publishes_this_repository_on_push(self, workflows_dir: Path) -> None:
+        """This repository's own Pages deployment must run through the wrapper.
+
+        `rhiza_book.yml` is reusable-only (previous test), so something in this
+        repository still has to trigger on push and opt in to `deploy-pages`.
+        """
+        path = workflows_dir / "rhiza_book_deploy.yml"
+        if not path.exists():
+            pytest.skip("rhiza_book_deploy.yml not found")
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        on = doc.get("on") or doc.get(True) or {}
+        assert isinstance(on, dict), "the book-deploy wrapper's `on:` block did not parse as a mapping"
+        assert "push" in on, "the book-deploy wrapper declares no `push` trigger"
+
+        jobs = doc.get("jobs") or {}
+        uses_refs = [job.get("uses") for job in jobs.values() if job.get("uses")]
+        assert any(ref == "./.github/workflows/rhiza_book.yml" for ref in uses_refs), (
+            "the book-deploy wrapper does not call the local reusable book workflow"
+        )
+        deploying_jobs = [job for job in jobs.values() if job.get("uses") == "./.github/workflows/rhiza_book.yml"]
+        assert any((job.get("with") or {}).get("deploy-pages") is True for job in deploying_jobs), (
+            "the book-deploy wrapper never passes `deploy-pages: true`, so this repository's "
+            "own site is never published to GitHub Pages"
         )
 
     def test_the_github_book_stub_documents_artifact_only_mode(self, root: Path) -> None:

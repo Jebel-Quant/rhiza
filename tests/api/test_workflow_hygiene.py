@@ -84,14 +84,18 @@ def _uses_refs(workflow: dict) -> list[str]:
 def _delegates_to_reusable(workflow: dict) -> bool:
     """True if the workflow is a thin caller that delegates to a reusable workflow.
 
-    Such stubs have a job-level ``uses:`` pointing at a reusable workflow file
-    (``.../.github/workflows/<name>.yml@<ref>``). They must not declare their
-    own ``concurrency`` block — the called workflow already does, and a shared
-    group deadlocks the run.
+    Such stubs have a job-level ``uses:`` pointing at a reusable workflow file,
+    either a remote one (``.../.github/workflows/<name>.yml@<ref>``) or a local
+    one in the same repository (``./.github/workflows/<name>.yml``, which
+    carries no ``@ref`` because a local call always runs at the caller's own
+    commit). They must not declare their own ``concurrency`` block — the
+    called workflow already does, and a shared group deadlocks the run.
     """
     for job in (workflow.get("jobs") or {}).values():
         uses = job.get("uses")
-        if uses and ".github/workflows/" in uses and ".yml@" in uses:
+        if not uses or ".github/workflows/" not in uses:
+            continue
+        if ".yml@" in uses or (uses.startswith("./") and uses.endswith(".yml")):
             return True
     return False
 
