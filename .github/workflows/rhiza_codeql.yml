@@ -21,6 +21,9 @@ on:
   schedule:
     - cron: '27 1 * * 1'
   workflow_call:
+    secrets:
+      GH_PAT:
+        required: false
 
 # Cancel superseded in-progress runs of this workflow for the same ref.
 concurrency:

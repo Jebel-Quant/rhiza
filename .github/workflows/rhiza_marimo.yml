@@ -31,6 +31,11 @@ on:
   pull_request:
     branches: [ main, master ]
   workflow_call:
+    secrets:
+      GH_PAT:
+        required: false
+      UV_EXTRA_INDEX_URL:
+        required: false
 
 jobs:
   # Build a matrix of notebooks to test
