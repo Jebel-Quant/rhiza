@@ -197,6 +197,32 @@ def test_the_source_tree_is_copied_into_a_folder_that_keeps_its_name() -> None:
         )
 
 
+def test_pull_request_build_does_not_receive_build_secrets() -> None:
+    """PR-controlled Dockerfiles must only run the secret-free build."""
+    steps = _job_steps()
+    public = next(step for step in steps if step.get("id") == "docker_build")
+    trusted = next(step for step in steps if step.get("id") == "docker_build_trusted")
+
+    assert "github.event_name != 'push'" in str(public.get("if", ""))
+    assert "secrets" not in public
+    assert "--secret" not in str(public.get("run", ""))
+    trusted_if = str(trusted.get("if", ""))
+    assert "github.event_name == 'push' || github.event_name == 'workflow_call'" in trusted_if
+    assert "github.ref == 'refs/heads/main'" in trusted_if
+    assert "github.ref == 'refs/heads/master'" in trusted_if
+    assert set(trusted["env"]) == {"GH_PAT", "UV_EXTRA_INDEX_URL"}
+    assert "--secret id=gh_pat,env=GH_PAT" in str(trusted.get("run", ""))
+    assert "--secret id=uv_extra_index_url,env=UV_EXTRA_INDEX_URL" in str(trusted.get("run", ""))
+
+
+def test_dockerfile_secret_mounts_are_guarded() -> None:
+    """Missing credentials must preserve the public dependency path."""
+    dockerfile = _DOCKERFILE.read_text(encoding="utf-8")
+    for secret in ("gh_pat", "uv_extra_index_url"):
+        assert f"--mount=type=secret,id={secret},uid=10001" in dockerfile
+        assert f"[ -s /run/secrets/{secret} ]" in dockerfile
+
+
 @functools.lru_cache(maxsize=1)
 def _hadolint_image() -> str:
     """Return the hadolint image the pinned action runs, read from the action itself.
