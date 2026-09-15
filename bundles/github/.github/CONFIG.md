@@ -61,3 +61,14 @@ optional depending on which release features you use:
 | `UV_EXTRA_INDEX_URL` | Extra package index URL (with credentials) for private dependencies. |
 
 `GITHUB_TOKEN` is provided automatically by GitHub Actions and needs no configuration.
+
+`GH_PAT` and `UV_EXTRA_INDEX_URL` are read by the CI, benchmark, CodeQL, marimo, book and
+weekly workflows too. The stubs that call those reusable workflows forward each secret by
+name rather than with `secrets: inherit`, because GitHub only honours `inherit` when the
+caller sits in the same organisation or enterprise as `jebel-quant/rhiza` — from any other
+organisation the secrets simply never arrived, and private dependencies failed to install
+with `could not read Password for 'https://***@github.com'` (#1689). A secret that is not
+defined is forwarded empty and the workflow falls back to `github.token`, so nothing is
+required for a project with no private dependencies. Pull requests from forks never receive
+secrets at all, so a fork PR that needs a private dependency fails at install; that is
+GitHub's rule rather than a rhiza setting.
