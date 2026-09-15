@@ -795,6 +795,25 @@ This repo runs on **GitHub Actions only**: `.github/workflows/` — CI, e2e, rel
 
 `rhiza_e2e.yml` is separate from `rhiza_ci.yml` rather than more jobs inside it: it installs three toolchains CI does not otherwise need, costs minutes per layer against CI's ≤20 min test budget, and is the only place the Rust and Go layers execute at all (see **Language layers** above).
 
+**The stubs forward secrets by name, and `secrets: inherit` is banned in them (#1689).** GitHub
+honours `inherit` only when the caller is in the same organisation or enterprise as the reusable
+workflow, so for every consumer outside `jebel-quant` the keyword forwarded nothing: `GH_PAT`
+arrived empty, `configure-git-auth` fell back to `github.token`, and a private dependency in another
+repository failed with `could not read Password` — a real failure this time, not a silent green,
+but one whose cause was two files away from the error. Dropping `inherit` makes a rule out of what
+used to be implicit: a caller can only map a secret the called workflow *declares*, and GitHub
+refuses the run at parse time otherwise, so every secret a reusable workflow reads must be declared
+under `workflow_call.secrets` (`required: false`, so a repo without it still runs on the fallback)
+and mapped in its stub. Three of them declared nothing — `rhiza_marimo.yml`, `rhiza_codeql.yml`
+and `rhiza_book.yml` read `GH_PAT` off `inherit` alone — and four stubs inherited secrets into
+workflows that read none. `TestSecretForwarding` in `tests/api/test_workflow_hygiene.py` derives
+the read set from each reusable workflow's text and holds the declaration and the stub's map to it,
+so a new `secrets.FOO` reference upstream fails until both halves exist. The two halves cannot
+drift in a release either: a stub's `@vX.Y.Z` pin and the workflow it calls ship in the same tag.
+`persist-credentials: false`, which the issue also suggested, is deliberately not part of this:
+checkout's credential lives in the checked-out repo's local git config, and uv clones dependencies
+into its own cache where only the global `insteadOf` rewrite applies, so the two never compete.
+
 `rhiza_weekly.yml`'s **link-check runs lychee twice, and `--max-retries` is not what makes it stable.** lychee retries a *rejected status code* only when it is 429 — `RetryExt for ErrorKind` in `lychee-lib/src/retry.rs`; the `is_server_error()` branch just above it classifies reqwest's own errors, not a response that arrived intact and failed the `--accept` list. So a `504 Gateway Timeout` from github.com is `ErrorKind::RejectedStatusCode(504)`, fails on the first response, and no retry flag reaches it. That is what turned one gateway blip on a README badge link into a red weekly run (chebpy/chebpy run 34130824491, green on a plain re-run, nothing having changed). A 5xx is also never the failure this job exists to find: a README link to a page that is genuinely gone answers 404, which fails both passes. Hence the shape — an advisory pass (`fail: false`), a 30s pause, and a deciding pass that runs only when the first found something. `TestLinkCheckRetry` in `tests/api/test_weekly_workflow.py` pins all three, plus the single `LYCHEE_ARGS` both passes read: two copies of the argument list would let the pass that fails the job check less than the pass that found the problem, silently. The alternative — adding `500,502,503,504` to `--accept` — costs the same runtime and buys a check that stays green through a real outage.
 
 

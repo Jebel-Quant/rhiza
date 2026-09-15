@@ -168,7 +168,9 @@ jobs:
     uses: jebel-quant/rhiza/.github/workflows/rhiza_book.yml@<version>
     with:
       deploy-pages: false
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
     permissions:
       contents: read
       pages: write
@@ -242,7 +244,9 @@ jobs:
     uses: jebel-quant/rhiza/.github/workflows/rhiza_book.yml@<version>
     with:
       deploy-pages: false
-    secrets: inherit
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
     permissions:
       contents: read
       # GitHub validates the reusable workflow's disabled Pages job before

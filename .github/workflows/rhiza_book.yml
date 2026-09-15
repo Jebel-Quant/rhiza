@@ -37,6 +37,11 @@ on:
           web server, ...). See docs/guides/BOOK.md for an example.
         type: boolean
         default: true
+    secrets:
+      GH_PAT:
+        required: false
+      UV_EXTRA_INDEX_URL:
+        required: false
 
 # Cancel superseded in-progress runs of this workflow for the same ref.
 concurrency:
