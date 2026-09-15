@@ -57,6 +57,28 @@ docker buildx build \
 
 This is the same approach used by the CI workflow (see .github/workflows/rhiza_docker.yml).
 
+## Private dependencies
+
+The Docker workflow supports private GitHub dependencies and private Python package indexes
+through the optional `GH_PAT` and `UV_EXTRA_INDEX_URL` secrets. They are mounted as BuildKit
+secrets only during the dependency installation step and are never passed as build arguments.
+
+For security, pull requests build without credentials and therefore validate only public
+dependencies. Authenticated dependency builds run on trusted pushes to `main` or `master`.
+Local builds must provide the BuildKit secrets explicitly:
+
+```bash
+GH_PAT="$GH_PAT" UV_EXTRA_INDEX_URL="$UV_EXTRA_INDEX_URL" \
+docker buildx build \
+  --file docker/Dockerfile \
+  --build-arg PYTHON_VERSION=$(cat .python-version) \
+  --secret id=gh_pat,env=GH_PAT \
+  --secret id=uv_extra_index_url,env=UV_EXTRA_INDEX_URL \
+  --tag <image-name> \
+  --load \
+  .
+```
+
 ## Notes on Dockerfile.dockerignore
 
 - Docker/BuildKit supports a per-Dockerfile ignore file located next to the Dockerfile, named `Dockerfile.dockerignore`.

@@ -7,6 +7,8 @@
 #          and scan it for security vulnerabilities with Trivy.
 #
 # Trigger: On push and pull_request to main/master.
+# Pull requests build without credentials; authenticated dependency builds run only on
+# trusted pushes to main/master.
 
 name: "(RHIZA) DOCKER"
 
@@ -22,6 +24,9 @@ on:
 jobs:
   docker:
     uses: jebel-quant/rhiza/.github/workflows/rhiza_docker.yml@v1.8.0
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
     permissions:
       contents: read
       security-events: write

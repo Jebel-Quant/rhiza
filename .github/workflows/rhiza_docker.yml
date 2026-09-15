@@ -9,6 +9,8 @@
 #          CRITICAL or HIGH severity vulnerabilities.
 #
 # Trigger: On push to main/master and pull requests when Dockerfile or workflow changes.
+#          Pull requests build without credentials; authenticated dependency builds run only
+#          on trusted pushes to main/master.
 
 name: "(RHIZA) DOCKER"
 
@@ -26,6 +28,11 @@ on:
   pull_request:
     branches: [ main, master ]
   workflow_call:
+    secrets:
+      GH_PAT:
+        required: false
+      UV_EXTRA_INDEX_URL:
+        required: false
 
 jobs:
   lint_and_build:
@@ -87,9 +94,9 @@ jobs:
             echo "::warning::.python-version not found, using default 3.12"
           fi
 
-      - name: Build container image with Docker Buildx (validation only)
+      - name: Build container image without secrets (pull request validation)
         id: docker_build
-        if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
+        if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' && github.event_name != 'push' }}
         run: |
           # Derive image tag from repository name and sanitize (remove '.' and '_')
           REPO_NAME="${GITHUB_REPOSITORY##*/}"
@@ -102,12 +109,32 @@ jobs:
             .
           echo "image_name=${REPO_NAME}:ci" >> "$GITHUB_OUTPUT"
 
+      - name: Build container image with private dependencies (trusted push)
+        id: docker_build_trusted
+        if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' && (github.event_name == 'push' || github.event_name == 'workflow_call') && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+        run: |
+          # Derive image tag from repository name and sanitize (remove '.' and '_')
+          REPO_NAME="${GITHUB_REPOSITORY##*/}"
+          REPO_NAME="${REPO_NAME//[._]/}"
+          docker buildx build \
+            --file docker/Dockerfile \
+            --build-arg PYTHON_VERSION=${{ steps.python_version.outputs.version }} \
+            --secret id=gh_pat,env=GH_PAT \
+            --secret id=uv_extra_index_url,env=UV_EXTRA_INDEX_URL \
+            --tag "${REPO_NAME}:ci" \
+            --load \
+            .
+          echo "image_name=${REPO_NAME}:ci" >> "$GITHUB_OUTPUT"
+
       - name: Scan Docker Image with Trivy
         id: trivy
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
         with:
-          image-ref: '${{ steps.docker_build.outputs.image_name }}'
+          image-ref: '${{ steps.docker_build.outputs.image_name || steps.docker_build_trusted.outputs.image_name }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
           exit-code: '0'  # Don't fail on vulnerabilities - rely on SARIF upload to GitHub Security

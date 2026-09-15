@@ -14,6 +14,11 @@ FROM ghcr.io/astral-sh/uv:0.11.16-python${PYTHON_VERSION}-trixie-slim AS builder
 
 WORKDIR /app
 
+# Git is required for dependencies declared as Git sources in `[tool.uv.sources]`.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git=1:2.47.* && \
+    rm -rf /var/lib/apt/lists/*
+
 # Create non-root user. The UID is numeric and explicit because a name only exists inside
 # the image: hadolint's DL3066 -- reported by rhiza_docker.yml's lint step -- asks for a
 # number, and Kubernetes' runAsNonRoot refuses to admit a pod whose image names a
@@ -33,8 +38,19 @@ USER 10001
 COPY --chown=app_user:app_user pyproject.toml uv.lock README.md ./
 COPY --chown=app_user:app_user src* ./src/
 
-# Install dependencies into .venv (no dev deps)
-RUN uv sync --frozen --no-dev --no-cache && \
+# Install dependencies into .venv (no dev deps). BuildKit secrets are mounted only for this
+# instruction. Missing secrets keep the public-dependency path unchanged.
+RUN --mount=type=secret,id=gh_pat,uid=10001 \
+    --mount=type=secret,id=uv_extra_index_url,uid=10001 \
+    if [ -s /run/secrets/gh_pat ]; then \
+      export GIT_CONFIG_COUNT=1 \
+        GIT_CONFIG_KEY_0=url.https://$(cat /run/secrets/gh_pat)@github.com/.insteadOf \
+        GIT_CONFIG_VALUE_0=https://github.com/; \
+    fi && \
+    if [ -s /run/secrets/uv_extra_index_url ]; then \
+      export UV_EXTRA_INDEX_URL="$(cat /run/secrets/uv_extra_index_url)"; \
+    fi && \
+    uv sync --frozen --no-dev --no-cache && \
     # Install the package itself (non-editable, so src/ is not required afterwards) \
     uv pip install --no-deps .
 
@@ -93,4 +109,3 @@ USER 10001
 
 # Default application start command (replace module/script as appropriate)
 CMD ["python", "-m", "src"]
-
