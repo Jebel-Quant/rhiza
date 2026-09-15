@@ -123,7 +123,15 @@ def test_custom_action_is_required(workflow, tmp_path, action):
     [
         ("https://packages.example.org/upload/", "opaque", True),
         ("https://upload.pypi.org/legacy/", "opaque", True),
-        ("https://packages.example.org/upload/", "", False),
+        ("https://upload.pypi.org/legacy/", "", True),
+        ("https://packages.example.org/upload/", "", True),
+        ("https://test.pypi.org/legacy/", "", True),
+        ("https://packages/upload/", "", True),
+        ("https://packages:8443/upload/", "opaque", True),
+        ("https://packages.internal./upload/", "opaque", True),
+        ("https://10.0.0.1/upload/", "opaque", True),
+        ("https://[fd00::1]:8443/upload/", "opaque", True),
+        ("https://packages/upload/?channel=stable", "opaque", True),
         ("http://packages.example.org/upload/", "opaque", False),
         ("not-a-url", "opaque", False),
         ("******example.org", "opaque", False),
@@ -133,7 +141,7 @@ def test_custom_action_is_required(workflow, tmp_path, action):
     ],
 )
 def test_legacy_endpoint_configuration(workflow, tmp_path, endpoint, token, valid):
-    """Legacy feeds stay token-based and never advertise public PyPI or feed conda."""
+    """Fixed endpoints support tokens or OIDC and never advertise public PyPI or feed conda."""
     step = _step(workflow, "pypi", "Validate publisher configuration")
     (tmp_path / "pyproject.toml").write_text('[project]\nname="demo"\n')
     result, text = _run(
@@ -152,6 +160,29 @@ def test_legacy_endpoint_configuration(workflow, tmp_path, endpoint, token, vali
     else:
         assert not text
         assert endpoint not in result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("mode", ["", "pypi"])
+@pytest.mark.parametrize(("buildable", "private"), [("false", False), ("false", True), ("true", True)])
+@pytest.mark.parametrize("endpoint", ["invalid unused endpoint", "https://packages.example.org/upload/"])
+def test_skipped_pypi_does_not_validate_unused_endpoint(workflow, tmp_path, mode, buildable, private, endpoint):
+    """Private and unbuildable packages skip without needing valid unused endpoint settings."""
+    _plan(workflow, tmp_path, mode=mode, buildable=buildable, private=private)
+    if buildable == "false":
+        (tmp_path / "pyproject.toml").unlink()
+    result, output = _run(
+        _step(workflow, "pypi", "Validate publisher configuration"),
+        tmp_path,
+        RELEASE_PUBLISHER=mode,
+        BUILDABLE=buildable,
+        TAG="v1.2.3",
+        PYPI_REPOSITORY_URL=endpoint,
+    )
+    assert result.returncode == 0, result.stderr
+    decision = _outputs(output)
+    assert decision["publisher"] == "pypi"
+    assert decision["should_publish"] == "false"
+    assert decision["public_pypi"] == "false"
 
 
 @pytest.mark.parametrize(
@@ -223,6 +254,8 @@ def test_safe_optional_url(workflow, tmp_path, url):
         "https://[invalid]/",
         "https://localhost/",
         "https://127.0.0.1/",
+        "https://127.1/",
+        "https://999.999.999.999/",
         "https://10.0.0.1/",
         "https://[::1]/",
         "https://packages.local/",
@@ -326,6 +359,9 @@ def test_publisher_contract_and_order(workflow):
     ]
     assert [names.index(name) for name in ordered] == sorted(names.index(name) for name in ordered)
     download = _step(workflow, "pypi", "Download dist artifact")
+    draft_download = _step(workflow, "draft-release", "Download dist artifact")
+    assert not draft_download.get("continue-on-error")
+    assert draft_download["if"] == "needs.build.outputs.buildable == 'true'"
     action = _step(workflow, "pypi", "Publish with repository action")
     assert download["with"] == {"name": "dist", "path": "${{ github.workspace }}/release-dist"}
     assert action["uses"] == "./.github/actions/release-publish"
@@ -348,6 +384,8 @@ def test_publisher_contract_and_order(workflow):
     assert publisher["outputs"]["artifact_url"] == "${{ steps.artifact_url.outputs.artifact_url }}"
     assert publisher["outputs"]["publisher"] == "${{ steps.publisher.outputs.publisher }}"
     pypi = _step(workflow, "pypi", "Publish to PyPI")
+    configuration = _step(workflow, "pypi", "Validate publisher configuration")
+    assert "PYPI_TOKEN" not in configuration.get("env", {})
     assert pypi["with"]["repository-url"] == "${{ vars.PYPI_REPOSITORY_URL }}"
     assert pypi["with"]["password"] == "${{ secrets.PYPI_TOKEN }}"  # noqa: S105 - Actions expression, not a token
     for mode, publish in itertools.product(("pypi", "custom", "none"), ("true", "false")):
@@ -422,3 +460,70 @@ def test_no_placeholder_publisher_is_shipped():
     """Selecting custom without a repository implementation must never pass via a stub."""
     assert not (_ROOT / ".github/actions/release-publish").exists()
     assert not (_ROOT / "bundles/github/.github/actions/release-publish").exists()
+
+
+@pytest.mark.parametrize(("mode", "buildable", "success"), [("", "false", True), ("none", "true", True)])
+def test_no_package_metadata_is_required_when_disabled(workflow, tmp_path, mode, buildable, success):
+    """Non-package projects can finalise without installing a Python project."""
+    result, text = _run(
+        _step(workflow, "pypi", "Validate publisher configuration"),
+        tmp_path,
+        RELEASE_PUBLISHER=mode,
+        BUILDABLE=buildable,
+        TAG="v1.2.3",
+        PYPI_REPOSITORY_URL="",
+        PYPI_TOKEN="",
+    )
+    assert (result.returncode == 0) == success
+    assert _outputs(text)["should_publish"] == "false"
+    finalise = workflow["jobs"]["finalise-release"]
+    assert all("uv sync" not in step.get("run", "") for step in finalise["steps"])
+    assert _condition(finalise["if"], {f"needs.{job}.result": "success" for job in finalise["needs"]})
+
+
+@pytest.mark.parametrize("mode", ["custom", "none"])
+def test_other_modes_ignore_stale_pypi_settings(workflow, tmp_path, mode):
+    """Unrelated legacy credentials/config cannot redirect custom uploads to PyPI."""
+    _plan(workflow, tmp_path, mode=mode)
+    result, text = _run(
+        _step(workflow, "pypi", "Validate publisher configuration"),
+        tmp_path,
+        RELEASE_PUBLISHER=mode,
+        BUILDABLE="true",
+        TAG="v1.2.3",
+        PYPI_REPOSITORY_URL="invalid old feed",
+        PYPI_TOKEN="",
+    )
+    assert result.returncode == 0
+    assert _outputs(text)["publisher"] == mode
+    assert _outputs(text)["public_pypi"] == "false"
+
+
+def test_failed_custom_composite_leaves_release_draft(workflow, tmp_path):
+    """A failing repository-owned upload propagates through the finalisation condition."""
+    result, _ = _plan(workflow, tmp_path, mode="custom")
+    assert result.returncode == 0
+    action = yaml.safe_load((tmp_path / ".github/actions/release-publish/action.yml").read_text())
+    upload, _ = _run(action["runs"]["steps"][0], tmp_path)
+    assert upload.returncode == 1
+    step = _step(workflow, "pypi", "Publish with repository action")
+    assert not step.get("continue-on-error")
+    finalise = workflow["jobs"]["finalise-release"]
+    values = {f"needs.{job}.result": "success" for job in finalise["needs"]}
+    values["needs.pypi.result"] = "failure" if upload.returncode else "success"
+    assert not _condition(finalise["if"], values)
+
+
+@pytest.mark.parametrize("endpoint", ["", "https://packages.example.org/upload/"])
+def test_legacy_and_public_pypi_notes(workflow, tmp_path, endpoint):
+    """The legacy feed link remains compatible while default uploads link to PyPI."""
+    (tmp_path / "pyproject.toml").write_text('[project]\nname="demo"\n')
+    result, output = _run(
+        _step(workflow, "finalise-release", "Generate PyPI Link"),
+        tmp_path,
+        TAG="v1.2.3",
+        REPO_URL=endpoint,
+    )
+    assert result.returncode == 0
+    assert (endpoint or "https://pypi.org/project/demo/1.2.3/") in output
+    assert ("Custom Feed Package" if endpoint else "PyPI Package") in output
