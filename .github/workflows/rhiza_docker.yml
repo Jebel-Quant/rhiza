@@ -8,6 +8,12 @@
 #          for validation only and is never pushed to a registry. Fails on
 #          CRITICAL or HIGH severity vulnerabilities.
 #
+# Private dependencies: GH_PAT and UV_EXTRA_INDEX_URL reach the build as BuildKit secrets,
+#          not build args, so they exist only for the `uv sync` instruction and land in no
+#          image layer (#1691). The runner-side `configure-git-auth` step the other
+#          workflows use cannot help here: a build stage has its own filesystem, and a
+#          `git config --global` on the runner is invisible inside it.
+#
 # Trigger: On push to main/master and pull requests when Dockerfile or workflow changes.
 
 name: "(RHIZA) DOCKER"
@@ -26,6 +32,11 @@ on:
   pull_request:
     branches: [ main, master ]
   workflow_call:
+    secrets:
+      GH_PAT:
+        required: false
+      UV_EXTRA_INDEX_URL:
+        required: false
 
 jobs:
   lint_and_build:
@@ -90,6 +101,12 @@ jobs:
       - name: Build container image with Docker Buildx (validation only)
         id: docker_build
         if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
+        env:
+          # Forwarded into the build as secrets (see the header). An undefined secret is an
+          # empty variable, which BuildKit mounts as an empty file, and the Dockerfile's
+          # `[ -s ... ]` guard leaves the build exactly as it was.
+          GH_PAT: ${{ secrets.GH_PAT }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
         run: |
           # Derive image tag from repository name and sanitize (remove '.' and '_')
           REPO_NAME="${GITHUB_REPOSITORY##*/}"
@@ -97,6 +114,8 @@ jobs:
           docker buildx build \
             --file docker/Dockerfile \
             --build-arg PYTHON_VERSION=${{ steps.python_version.outputs.version }} \
+            --secret id=gh_pat,env=GH_PAT \
+            --secret id=uv_extra_index_url,env=UV_EXTRA_INDEX_URL \
             --tag "${REPO_NAME}:ci" \
             --load \
             .
