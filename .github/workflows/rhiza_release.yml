@@ -10,7 +10,7 @@
 #   2. 🏗️ Build - Build Python package with Hatch (if [build-system] is defined in pyproject.toml)
 #   3. 📦 Generate SBOM - Create Software Bill of Materials (CycloneDX format)
 #   4. 📝 Draft Release - Create draft GitHub release with build artifacts and SBOM
-#   5. 🚀 Publish to PyPI - Publish package using OIDC or custom feed
+#   5. 🚀 Publish package - PyPI-compatible upload, repository-owned action, or none
 #   6. 📦 Generate Conda Recipe - Generate conda-forge recipe with grayskull (conditional)
 #   7. 🐳 Publish Devcontainer - Build and publish devcontainer image (conditional)
 #   8. ✅ Finalize Release - Publish the GitHub release with links
@@ -36,15 +36,18 @@
 #   - Config file: Always .devcontainer/devcontainer.json
 #   - Adds devcontainer image link to GitHub release notes
 #
-# 🚀 PyPI Publishing:
-#   - Skipped if no dist/ artifacts exist
-#   - Skipped if pyproject.toml contains "Private :: Do Not Upload"
-#   - Uses Trusted Publishing (OIDC) for PyPI (no stored credentials)
-#   - For custom feeds, use PYPI_REPOSITORY_URL and PYPI_TOKEN secrets
-#   - Adds PyPI/custom feed link to GitHub release notes
+# 🚀 Package Publishing:
+#   - RELEASE_PUBLISHER: pypi (default), custom, or none; unknown modes fail closed
+#   - pypi retains the private classifier skip and OIDC/token-based feed support
+#   - custom explicitly permits private distributions and requires the repo-owned
+#     .github/actions/release-publish composite action; no implementation is shipped
+#   - custom receives artifacts-dir, tag, version, and optional opaque credentials
+#   - the action uploads already-built distributions, not provenance, and may return
+#     artifact-url (one public credential-free HTTPS URL) for the release notes
+#   - required downloads and failed uploads fail the release; none skips package upload
 #
 # 📦 Conda Recipe Generation:
-#   - Runs only when PyPI publishing is enabled and succeeds
+#   - Runs only when publishing to the default public PyPI endpoint succeeds
 #   - Uses grayskull to generate a conda-forge compatible recipe from PyPI metadata
 #   - Uploads conda-recipe/meta.yaml as a workflow artifact for downstream feedstock updates
 #
@@ -97,6 +100,8 @@ on:
         required: false
       PYPI_TOKEN:
         required: false
+      RELEASE_PUBLISH_CREDENTIALS:
+        required: false
 
 # Queue runs instead of cancelling: a release or sync must never be
 # interrupted mid-publish or mid-push.
@@ -130,11 +135,17 @@ jobs:
 
       - name: Set Tag Variable
         id: set_tag
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
-          if [[ -n "${{ inputs.tag }}" ]]; then
-            TAG="${{ inputs.tag }}"
+          if [[ -n "$INPUT_TAG" ]]; then
+            TAG="$INPUT_TAG"
           else
             TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          if [[ ! "$TAG" =~ ^v[0-9]+(\.[0-9]+)*([a-zA-Z0-9.+-]*)$ ]]; then
+            echo "::error::Invalid release tag"
+            exit 1
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
@@ -249,6 +260,8 @@ jobs:
       contents: read
       id-token: write       # OIDC for attestation signing
       attestations: write   # SLSA provenance + SBOM attestations (public repos only)
+    outputs:
+      buildable: ${{ steps.buildable.outputs.buildable }}
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -258,6 +271,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          ref: refs/tags/${{ needs.tag.outputs.tag }}
           fetch-depth: 0
 
       - name: Install uv
@@ -470,6 +484,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          ref: refs/tags/${{ needs.tag.outputs.tag }}
           fetch-depth: 0
 
       - name: Install uv
@@ -507,15 +522,18 @@ jobs:
 
   # Decide at step-level whether to publish
   pypi:
-    name: Publish to PyPI
+    name: Publish package
     runs-on: ubuntu-latest
     environment: release
     needs: [tag, build, draft-release]
     permissions:
       contents: read
-      id-token: write   # OIDC Trusted Publishing to PyPI (no stored credentials)
+      id-token: write   # PyPI or the explicitly selected repository-owned publisher
     outputs:
-      should_publish: ${{ steps.check_dist.outputs.should_publish }}
+      should_publish: ${{ steps.publisher.outputs.should_publish }}
+      public_pypi: ${{ steps.publisher.outputs.public_pypi }}
+      publisher: ${{ steps.publisher.outputs.publisher }}
+      artifact_url: ${{ steps.artifact_url.outputs.artifact_url }}
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -526,42 +544,165 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          ref: refs/tags/${{ needs.tag.outputs.tag }}
+          persist-credentials: false
           fetch-depth: 0
 
+      - name: Validate publisher configuration
+        id: publisher
+        env:
+          RELEASE_PUBLISHER: ${{ vars.RELEASE_PUBLISHER }}
+          PYPI_REPOSITORY_URL: ${{ vars.PYPI_REPOSITORY_URL }}
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+          BUILDABLE: ${{ needs.build.outputs.buildable }}
+          TAG: ${{ needs.tag.outputs.tag }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import tomllib
+          from pathlib import Path
+          from urllib.parse import urlsplit
+
+          def fail(message):
+              raise SystemExit("::error::" + message)
+
+          mode = os.environ["RELEASE_PUBLISHER"] or "pypi"
+          if mode not in {"pypi", "custom", "none"}:
+              fail("RELEASE_PUBLISHER must be pypi, custom, or none")
+          buildable = os.environ["BUILDABLE"]
+          if buildable not in {"true", "false"}:
+              fail("Missing or invalid buildable output")
+          endpoint = os.environ["PYPI_REPOSITORY_URL"]
+          if mode == "pypi" and endpoint:
+              try:
+                  url = urlsplit(endpoint)
+                  host = url.hostname or ""
+                  valid = (
+                      url.scheme == "https" and url.netloc and not url.username
+                      and not url.password and "@" not in url.netloc
+                      and len(host) <= 253
+                      and all(re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", label)
+                              for label in host.split("."))
+                      and "." in host and not url.fragment and not url.query
+                      and not any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in endpoint)
+                      and (url.port is None or 1 <= url.port <= 65535)
+                      and not url.netloc.endswith(":")
+                  )
+              except ValueError:
+                  valid = False
+              if not valid:
+                  fail("Invalid PYPI_REPOSITORY_URL; expected a credential-free HTTPS endpoint")
+              if not os.environ["PYPI_TOKEN"]:
+                  fail("PYPI_TOKEN is required with PYPI_REPOSITORY_URL")
+          publish = mode != "none" and buildable == "true"
+          if mode == "custom":
+              if not publish:
+                  fail("Custom publishing requires a buildable Python package")
+              action = Path(".github/actions/release-publish")
+              if not any((action / name).is_file() for name in ("action.yml", "action.yaml")):
+                  fail("Custom publishing requires .github/actions/release-publish/action.yml or action.yaml")
+          if mode == "pypi" and publish:
+              with Path("pyproject.toml").open("rb") as stream:
+                  project = tomllib.load(stream).get("project", {})
+              publish = "Private :: Do Not Upload" not in project.get("classifiers", [])
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              print(f"publisher={mode}", file=output)
+              print(f"should_publish={str(publish).lower()}", file=output)
+              print(f"public_pypi={str(publish and mode == 'pypi' and not endpoint).lower()}", file=output)
+              print(f"version={os.environ['TAG'].removeprefix('v')}", file=output)
+          PY
+
       - name: Download dist artifact
+        if: steps.publisher.outputs.should_publish == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: dist
-          path: dist
-        # Continue if dist folder is not found. Don't fail the job.
-        continue-on-error: true
+          path: ${{ github.workspace }}/release-dist
 
-      - name: Check if dist contains artifacts and not marked as private
-        id: check_dist
+      - name: Require built distributions
+        if: steps.publisher.outputs.should_publish == 'true'
+        env:
+          ARTIFACTS_DIR: ${{ github.workspace }}/release-dist
         run: |
-          if [[ ! -d dist ]]; then
-            echo "::warning::No folder dist/. Skipping PyPI publish."
-            echo "should_publish=false" >> "$GITHUB_OUTPUT"
-          else
-            if grep -R "Private :: Do Not Upload" pyproject.toml; then
-              echo "should_publish=false" >> "$GITHUB_OUTPUT"
-            else
-              echo "should_publish=true" >> "$GITHUB_OUTPUT"
-            fi
-          fi
-          cat "$GITHUB_OUTPUT"
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
 
-      # this should not take place, as "Private :: Do Not Upload" set in pyproject.toml
-      # repository-url and password only used for custom feeds, not for PyPI with OIDC
+          dist = Path(os.environ["ARTIFACTS_DIR"])
+          if not any(p.is_file() for pattern in ("*.whl", "*.tar.gz") for p in dist.glob(pattern)):
+              raise SystemExit("::error::Required dist artifact contains no wheel or sdist")
+          PY
+
+      - name: Remove non-distribution files before publish
+        # The provenance belongs to the GitHub release, not the package index.
+        if: steps.publisher.outputs.should_publish == 'true' && steps.publisher.outputs.publisher == 'pypi'
+        env:
+          ARTIFACTS_DIR: ${{ github.workspace }}/release-dist
+        run: rm -f "$ARTIFACTS_DIR"/*.intoto.jsonl
+
       - name: Publish to PyPI
-        if: ${{ steps.check_dist.outputs.should_publish == 'true' }}
+        if: steps.publisher.outputs.should_publish == 'true' && steps.publisher.outputs.publisher == 'pypi'
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
-          packages-dir: dist/
+          packages-dir: ${{ github.workspace }}/release-dist/
           skip-existing: true
           repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
           password: ${{ secrets.PYPI_TOKEN }}
 
+      - name: Publish with repository action
+        id: custom_publish
+        if: steps.publisher.outputs.should_publish == 'true' && steps.publisher.outputs.publisher == 'custom'
+        uses: ./.github/actions/release-publish
+        with:
+          artifacts-dir: ${{ github.workspace }}/release-dist
+          tag: ${{ needs.tag.outputs.tag }}
+          version: ${{ steps.publisher.outputs.version }}
+          credentials: ${{ secrets.RELEASE_PUBLISH_CREDENTIALS }}
+
+      - name: Validate publisher artifact URL
+        id: artifact_url
+        if: steps.publisher.outputs.should_publish == 'true' && steps.publisher.outputs.publisher == 'custom'
+        env:
+          ARTIFACT_URL: ${{ steps.custom_publish.outputs.artifact-url }}
+        run: |
+          python3 - <<'PY'
+          import ipaddress
+          import os
+          import re
+          from urllib.parse import unquote, urlsplit
+
+          value = os.environ["ARTIFACT_URL"]
+          if not value:
+              raise SystemExit(0)
+          try:
+              url = urlsplit(value)
+              host = url.hostname or ""
+              try:
+                  valid_host = ipaddress.ip_address(host).is_global
+              except ValueError:
+                  valid_host = (
+                      len(host) <= 253 and "." in host and not host.endswith(".")
+                      and re.search(r"[A-Za-z]", host.rsplit(".", 1)[-1])
+                      and not host.endswith((".localhost", ".local", ".internal"))
+                      and all(re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", label)
+                              for label in host.split("."))
+                  )
+              valid = (
+                  value.startswith("https://") and url.scheme == "https" and valid_host
+                  and not url.username and not url.password and "@" not in url.netloc
+                  and (url.port is None or 1 <= url.port <= 65535)
+                  and not url.netloc.endswith(":")
+                  and not any(c.isspace() or ord(c) < 32 or ord(c) == 127 or c in '<>\\`"'
+                              for c in unquote(value))
+              )
+          except ValueError:
+              valid = False
+          if not valid:
+              raise SystemExit("::error::Publisher artifact-url must be one public credential-free HTTPS URL")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              print(f"artifact_url={value}", file=output)
+          PY
 
   conda:
     name: Generate Conda Recipe
@@ -581,15 +722,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          ref: refs/tags/${{ needs.tag.outputs.tag }}
           fetch-depth: 0
 
       - name: Check if conda recipe should be generated
         id: check_conda
         env:
           PUBLISH_CONDA: ${{ vars.PUBLISH_CONDA }}
+          SHOULD_PUBLISH: ${{ needs.pypi.outputs.should_publish }}
+          PUBLIC_PYPI: ${{ needs.pypi.outputs.public_pypi }}
+          PUBLISH_RESULT: ${{ needs.pypi.result }}
         run: |
           PUBLISH_CONDA="${PUBLISH_CONDA:-true}"
-          if [[ "$PUBLISH_CONDA" == "true" ]] && [[ "${{ needs.pypi.outputs.should_publish }}" == "true" ]] && [[ "${{ needs.pypi.result }}" == "success" ]]; then
+          if [[ "$PUBLISH_CONDA" == "true" && "$SHOULD_PUBLISH" == "true" && "$PUBLIC_PYPI" == "true" && "$PUBLISH_RESULT" == "success" ]]; then
             echo "should_generate=true" >> "$GITHUB_OUTPUT"
           else
             echo "should_generate=false" >> "$GITHUB_OUTPUT"
@@ -665,6 +810,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          ref: refs/tags/${{ needs.tag.outputs.tag }}
           fetch-depth: 0
 
       - name: Check if devcontainer should be published
@@ -744,7 +890,7 @@ jobs:
   finalise-release:
     name: Finalise Release
     runs-on: ubuntu-latest
-    needs: [tag, pypi, conda, devcontainer]
+    needs: [tag, build, draft-release, pypi, conda, devcontainer]
     # `!cancelled() &&` is what makes the rest of this condition mean anything (#1537).
     # GitHub combines a job's own `if` with an implicit `success()` over every entry in
     # `needs` *unless* the expression names a status function -- so the OR below was
@@ -758,11 +904,9 @@ jobs:
     # release during a run somebody had cancelled, which is the one case where publishing is
     # certainly wrong. A cancelled run still skips this job.
     #
-    # The OR is unchanged, so the failure modes it encodes are too: if every publishing job
-    # fails or is skipped there is nothing to finalise, and this job skips. Recipe generation
-    # is the only one of the three that is a downstream convenience -- the workflow header
-    # has always called it optional, and now the failure path agrees.
-    if: ${{ !cancelled() && (needs.pypi.result == 'success' || needs.conda.result == 'success' || needs.devcontainer.result == 'success') }}
+    # Only conda is optional. A failed upload must leave the release as a draft, even
+    # when another publisher succeeds. Disabled uploads complete their jobs successfully.
+    if: ${{ !cancelled() && needs.tag.result == 'success' && needs.build.result == 'success' && needs.draft-release.result == 'success' && needs.pypi.result == 'success' && needs.devcontainer.result == 'success' }}
     permissions:
       contents: write   # Needed to undraft/publish the GitHub release
     steps:
@@ -774,28 +918,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          ref: refs/tags/${{ needs.tag.outputs.tag }}
           fetch-depth: 0
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
-        with:
-          version: "0.11.16"
-
-      - name: "Sync the virtual environment for ${{ github.repository }}"
-        shell: bash
-        run: |
-          export UV_EXTRA_INDEX_URL="${{ secrets.uv_extra_index_url }}"
-          # will just use .python-version?
-          uv sync --all-extras --all-groups --frozen
-
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
 
       - name: Generate Devcontainer Link
         id: devcontainer_link
         if: needs.devcontainer.outputs.should_publish == 'true' && needs.devcontainer.result == 'success'
+        env:
+          IMAGE_NAME: ${{ needs.devcontainer.outputs.image_name }}
+          TAG: ${{ needs.tag.outputs.tag }}
         run: |
-          FULL_IMAGE="${{ needs.devcontainer.outputs.image_name }}:${{ needs.tag.outputs.tag }}"
+          FULL_IMAGE="$IMAGE_NAME:$TAG"
           {
             echo "message<<EOF"
             echo "### Devcontainer Image"
@@ -806,13 +939,15 @@ jobs:
 
       - name: Generate PyPI Link
         id: pypi_link
-        if: needs.pypi.outputs.should_publish == 'true' && needs.pypi.result == 'success'
+        if: needs.pypi.outputs.should_publish == 'true' && needs.pypi.outputs.publisher == 'pypi' && needs.pypi.result == 'success'
+        env:
+          TAG: ${{ needs.tag.outputs.tag }}
+          REPO_URL: ${{ vars.PYPI_REPOSITORY_URL }}
         run: |
-          PACKAGE_NAME=$(uv run python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['name'])")
-          VERSION="${{ needs.tag.outputs.tag }}"
+          PACKAGE_NAME=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['name'])")
+          VERSION="$TAG"
           VERSION=${VERSION#v}
 
-          REPO_URL="${{ vars.PYPI_REPOSITORY_URL || '' }}"
           if [ -z "$REPO_URL" ]; then
              LINK="https://pypi.org/project/$PACKAGE_NAME/$VERSION/"
              NAME="PyPI Package"
@@ -826,6 +961,18 @@ jobs:
             echo "### $NAME"
             echo ""
             echo "[$PACKAGE_NAME]($LINK)"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Generate Custom Publisher Link
+        id: custom_link
+        if: needs.pypi.outputs.publisher == 'custom' && needs.pypi.result == 'success' && needs.pypi.outputs.artifact_url != ''
+        env:
+          ARTIFACT_URL: ${{ needs.pypi.outputs.artifact_url }}
+        run: |
+          {
+            echo "message<<EOF"
+            printf '### Published Package\n\n<%s>\n' "$ARTIFACT_URL"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
@@ -847,6 +994,7 @@ jobs:
           TAG: ${{ needs.tag.outputs.tag }}
           DEVCONTAINER_MSG: ${{ steps.devcontainer_link.outputs.message }}
           PYPI_MSG: ${{ steps.pypi_link.outputs.message }}
+          CUSTOM_MSG: ${{ steps.custom_link.outputs.message }}
           CONDA_MSG: ${{ steps.conda_link.outputs.message }}
         run: |
           # Get existing auto-generated release notes (gracefully handle missing release)
@@ -855,9 +1003,11 @@ jobs:
           # Append links to release body
           {
             printf '%s' "$EXISTING"
-            [ -n "$DEVCONTAINER_MSG" ] && printf '\n\n%s' "$DEVCONTAINER_MSG"
-            [ -n "$PYPI_MSG" ] && printf '\n\n%s' "$PYPI_MSG"
-            [ -n "$CONDA_MSG" ] && printf '\n\n%s' "$CONDA_MSG"
-          } > /tmp/notes.md
+            for message in "$DEVCONTAINER_MSG" "$PYPI_MSG" "$CUSTOM_MSG" "$CONDA_MSG"; do
+              if [ -n "$message" ]; then
+                printf '\n\n%s' "$message"
+              fi
+            done
+          } > release-notes.md
 
-          gh release edit "$TAG" --draft=false --notes-file /tmp/notes.md
+          gh release edit "$TAG" --draft=false --notes-file release-notes.md

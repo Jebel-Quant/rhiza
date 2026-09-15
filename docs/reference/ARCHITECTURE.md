@@ -136,29 +136,105 @@ flowchart TD
     tag[Push Tag v*] --> validate[Validate Tag]
     validate --> build[Build Package]
     build --> draft[Draft GitHub Release]
-    draft --> pypi[Publish to PyPI]
-    pypi --> conda[Generate Conda Recipe<br/>with grayskull]
+    draft --> publisher{RELEASE_PUBLISHER}
+    publisher -->|pypi - default| pypi[PyPI-compatible upload]
+    publisher -->|custom| custom[Repository-owned publisher]
+    publisher -->|none| finalize[Finalize Release]
+    pypi -->|Public PyPI only| conda[Generate Conda Recipe<br/>with grayskull]
     draft --> devcontainer[Publish Devcontainer]
-    pypi --> finalize[Finalize Release]
+    pypi --> finalize
+    custom --> finalize
     conda --> finalize
     devcontainer --> finalize
-
-    subgraph Conditions
-        pypi_cond{Has dist/ &<br/>not Private?}
-        conda_cond{PyPI publish<br/>succeeded?}
-        dev_cond{PUBLISH_DEVCONTAINER<br/>= true?}
-    end
-
-    draft --> pypi_cond
-    pypi_cond -->|yes| pypi
-    pypi_cond -->|no| finalize
-    pypi --> conda_cond
-    conda_cond -->|yes| conda
-    conda_cond -->|no| finalize
-    draft --> dev_cond
-    dev_cond -->|yes| devcontainer
-    dev_cond -->|no| finalize
 ```
+
+### Choosing a publisher
+
+The GitHub release workflow separates building from publishing: tag validation, package
+building, version verification, SBOM and provenance generation remain Rhiza-owned. The
+publisher uploads the existing `dist` artifact rather than rebuilding the release.
+This extends **destinations and authentication**, not the build system: the standard
+package build still produces Python wheels and source distributions.
+
+Set the GitHub Actions repository variable `RELEASE_PUBLISHER`:
+
+| Value | Behaviour |
+| --- | --- |
+| Unset or `pypi` | Publish through the existing PyPI action. With no feed overrides, use public PyPI Trusted Publishing (OIDC), without stored credentials. |
+| `custom` | Invoke the repository-owned action at `.github/actions/release-publish/action.yml` (or `action.yaml`). Never invoke the PyPI publisher as a fallback. |
+| `none` | Skip package publication while retaining the other release outputs. |
+
+Unknown values fail the publishing job rather than silently selecting PyPI.
+The existing `PYPI_REPOSITORY_URL` **variable** and `PYPI_TOKEN` **secret** remain
+supported under `pypi` for compatible upload endpoints. Changing a URL does not make
+that publisher support another upload protocol or a provider's login sequence.
+
+`Private :: Do Not Upload` continues to suppress the built-in PyPI publisher,
+including its legacy custom-endpoint path. Explicit `custom` selection permits
+private distributions; the repository-owned action is responsible for choosing a safe
+destination. With the default publisher, a project without a buildable distribution
+continues to skip publication. Selecting `custom` without a buildable package, a
+publishing action, or actual distribution files is an error. An expected artifact
+that fails to download is also an error, not a successful skip.
+
+### Repository-owned publishing action
+
+Commit a composite action at `.github/actions/release-publish/action.yml` in the
+consuming repository, then select `RELEASE_PUBLISHER=custom`. Rhiza does not ship or
+sync an action at this path, so subsequent template updates leave it intact. The
+release job checks out the validated release tag: the action must exist in that
+revision, not just on the default branch.
+
+The workflow calls the action with these inputs:
+
+| Input | Contract |
+| --- | --- |
+| `artifacts-dir` | Absolute path to the downloaded `dist` directory containing the verified release artifacts. |
+| `tag` | Validated release tag, including its leading `v`. |
+| `version` | Tag with the leading `v` removed, not a separately resolved package version. |
+| `credentials` | Optional opaque value from the `RELEASE_PUBLISH_CREDENTIALS` secret; its format is owned by the extension. |
+
+The action owns tool installation, provider configuration, authentication and upload.
+It may invoke provider-specific actions, request short-lived credentials through OIDC,
+or consume the optional credentials input. For example, a CodeArtifact extension can
+assume a publisher role, obtain and immediately mask a short-lived authorization
+token, then upload the downloaded distributions. No provider-specific dependencies or
+long-lived cloud access keys are required by Rhiza.
+
+The job runs on Ubuntu in the `release` environment with `contents: read` and
+`id-token: write`. Configure the provider's trust policy for the appropriate
+repository and release environment, and protect release tags and environment access.
+Authentication happens **in the publishing job**, not in a prerequisite job.
+The extension does not receive all repository secrets: only the explicit credentials
+input is forwarded. When invoking the workflow through `workflow_call`, pass that
+secret explicitly if needed. Mask generated secrets immediately, keep credentials
+out of logs and public outputs, and pin external actions used by the extension.
+
+Upload only the intended distribution files; `artifacts-dir` can also contain
+provenance. Do not rebuild or silently ignore authentication/upload failures.
+The action must fail when any required upload fails. If it publishes to several
+destinations, it must wait for all required uploads before reporting success.
+
+An optional `artifact-url` output may name a **public HTTPS page** for the published
+artifact. Rhiza validates it and appends it to the GitHub release notes. It must not
+contain credentials, signed access tokens, or private endpoints. Omit it when no safe
+public link exists; Rhiza does not infer a custom feed URL or expose credentials in
+release notes.
+
+### Completion and platform scope
+
+Release finalization waits for the selected publisher and the devcontainer job;
+neither may fail and still allow the release to be finalized. Explicit package skips
+remain successful, and cancellation never finalizes the release.
+Conda recipe generation remains optional and only follows successful **public PyPI**
+publication with no `PYPI_REPOSITORY_URL` override. A custom or legacy private-feed
+upload must not trigger a lookup on public PyPI. A failed optional Conda recipe does
+not prevent finalization.
+
+This extension contract is **GitHub Actions-only**. The GitLab release template retains
+its existing token/URL publishing behaviour. It also does not configure private-feed
+**consumption** in build, test or documentation jobs: those jobs need their own
+authentication before resolving dependencies, because job credentials are not shared.
 
 ## Template Sync Flow
 

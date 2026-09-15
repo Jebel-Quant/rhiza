@@ -108,14 +108,16 @@ class TestReleaseWorkflowStructure:
         assert "pypi" in conda_job.get("needs", []), "Conda job must depend on pypi job output"
         commands = "\n".join(_step_commands(conda_job))
         assert "PUBLISH_CONDA" in commands
-        assert "needs.pypi.outputs.should_publish" in commands
+        decision = next(step for step in conda_job["steps"] if step.get("id") == "check_conda")
+        assert decision["env"]["SHOULD_PUBLISH"] == "${{ needs.pypi.outputs.should_publish }}"
+        assert decision["env"]["PUBLIC_PYPI"] == "${{ needs.pypi.outputs.public_pypi }}"
         assert "grayskull pypi" in commands
 
     def test_finalise_release_includes_conda_signal(self, workflow):
         """Final release gating should account for conda recipe generation."""
         finalise_job = workflow["jobs"]["finalise-release"]
         assert "conda" in finalise_job.get("needs", [])
-        assert "needs.conda.result == 'success'" in str(finalise_job.get("if", ""))
+        assert "needs.conda.result" not in str(finalise_job.get("if", ""))
 
     def test_sbom_attestation_is_staged_as_release_signature(self, workflow):
         """Non-buildable repos must still ship a recognised signature asset.

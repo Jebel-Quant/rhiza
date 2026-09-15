@@ -57,7 +57,43 @@ optional depending on which release features you use:
 | Secret | Purpose |
 | --- | --- |
 | `PYPI_TOKEN` | Publish the built package to PyPI. Not needed when using trusted publishing (OIDC). |
+| `RELEASE_PUBLISH_CREDENTIALS` | Optional credentials input for a repository-owned custom publisher. Not needed when the extension uses OIDC. |
 | `GH_PAT` | Git authentication for installing private dependencies during the release build. |
 | `UV_EXTRA_INDEX_URL` | Extra package index URL (with credentials) for private dependencies. |
 
 `GITHUB_TOKEN` is provided automatically by GitHub Actions and needs no configuration.
+
+## Release publisher selection
+
+Set the Actions **variable** `RELEASE_PUBLISHER` to choose package deployment:
+
+| Value | Behaviour |
+| --- | --- |
+| Unset or `pypi` | Existing PyPI Trusted Publishing. `PYPI_REPOSITORY_URL` (variable) and `PYPI_TOKEN` (secret) still support PyPI-compatible custom endpoints. |
+| `custom` | Run your repository-owned composite action at `.github/actions/release-publish/action.yml` (or `action.yaml`). No fallback to public PyPI. |
+| `none` | Skip package publishing, retaining the other release outputs. |
+
+Rhiza never syncs the custom action path. Commit the action before tagging the release;
+it runs from that release revision with the `release` environment, `contents: read` and
+`id-token: write`. It receives `artifacts-dir` (absolute path to the downloaded build
+artifacts), `tag`, `version` (tag without `v`) and the optional `credentials` input.
+It owns provider login, tool setup and upload, and must fail on unsuccessful publication.
+Use the existing distributions rather than rebuilding them; the directory can also
+contain provenance files.
+
+For OIDC-capable feeds, obtain and immediately mask short-lived credentials in this
+action. Otherwise, supply the optional `RELEASE_PUBLISH_CREDENTIALS` secret in the
+format your action expects. Only that explicit secret is forwarded to the extension.
+An optional `artifact-url` output supplies a public HTTPS artifact link for release notes;
+omit it for private destinations and never include credentials or signed access tokens.
+
+The private-package classifier still suppresses built-in PyPI uploads; `custom`
+explicitly permits private distributions. Invalid modes, missing custom actions and
+missing expected distributions fail closed. Failed required uploads prevent release
+finalization. Conda recipes are generated only after successful public PyPI publication
+with no `PYPI_REPOSITORY_URL` override.
+
+This is a GitHub publishing extension, not private dependency-consumption setup or a
+GitLab feature. See the
+[publisher contract](https://jebel-quant.github.io/rhiza/reference/ARCHITECTURE/#repository-owned-publishing-action)
+for details.
