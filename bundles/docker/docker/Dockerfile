@@ -14,6 +14,14 @@ FROM ghcr.io/astral-sh/uv:0.11.16-python${PYTHON_VERSION}-trixie-slim AS builder
 
 WORKDIR /app
 
+# A dependency declared as a Git source in `[tool.uv.sources]` is fetched by shelling out
+# to git, and the slim base image ships none -- so without this, `uv sync` fails on such a
+# project with `git: command not found` before any credential is even consulted. Builder
+# stage only; the runtime stage below never sees it.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git=1:2.47.* && \
+    rm -rf /var/lib/apt/lists/*
+
 # Create non-root user. The UID is numeric and explicit because a name only exists inside
 # the image: hadolint's DL3066 -- reported by rhiza_docker.yml's lint step -- asks for a
 # number, and Kubernetes' runAsNonRoot refuses to admit a pod whose image names a
@@ -33,8 +41,28 @@ USER 10001
 COPY --chown=app_user:app_user pyproject.toml uv.lock README.md ./
 COPY --chown=app_user:app_user src* ./src/
 
-# Install dependencies into .venv (no dev deps)
-RUN uv sync --frozen --no-dev --no-cache && \
+# Install dependencies into .venv (no dev deps).
+#
+# Private dependencies: `rhiza_docker.yml` passes GH_PAT and UV_EXTRA_INDEX_URL as BuildKit
+# *secrets* (`--secret id=gh_pat,env=GH_PAT`), which exist only for this instruction and land
+# in no layer -- a `--build-arg` would be baked into the image and readable with
+# `docker history` (#1691). The mounts carry the build user's uid because BuildKit mounts a
+# secret root-owned and mode 0400 by default, which `USER 10001` cannot read. Git is
+# configured through its GIT_CONFIG_* environment rather than a file, so there is nothing to
+# scrub afterwards. An absent secret is an empty (or missing) file: neither branch fires and
+# the build behaves exactly as it did before, which is what a project with no private
+# dependencies needs -- and what a fork PR gets, since forks receive no secrets.
+RUN --mount=type=secret,id=gh_pat,uid=10001 \
+    --mount=type=secret,id=uv_extra_index_url,uid=10001 \
+    if [ -s /run/secrets/gh_pat ]; then \
+      GIT_CONFIG_KEY_0="url.https://$(cat /run/secrets/gh_pat)@github.com/.insteadOf"; \
+      export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0="https://github.com/"; \
+    fi && \
+    if [ -s /run/secrets/uv_extra_index_url ]; then \
+      UV_EXTRA_INDEX_URL="$(cat /run/secrets/uv_extra_index_url)"; \
+      export UV_EXTRA_INDEX_URL; \
+    fi && \
+    uv sync --frozen --no-dev --no-cache && \
     # Install the package itself (non-editable, so src/ is not required afterwards) \
     uv pip install --no-deps .
 
