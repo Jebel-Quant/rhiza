@@ -83,7 +83,7 @@ jobs:
 
       - name: Set up Docker Buildx
         if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Read Python version from .python-version
         if: ${{ steps.check_dockerfile.outputs.docker_present == 'true' }}
@@ -141,7 +141,7 @@ jobs:
       # `always()` is still needed -- without it a *later* step's failure would suppress
       # the upload of a scan that did run.
       - name: Upload Trivy scan results to GitHub Security
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         if: always() && steps.trivy.outcome == 'success'
         with:
           sarif_file: 'trivy-results.sarif'
