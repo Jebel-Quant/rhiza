@@ -109,7 +109,7 @@ runs:
         allowed-account-ids: ${{ steps.validate.outputs.account }}
         audience: ${{ steps.validate.outputs.audience }}
         unset-current-credentials: "true"
-        use-existing-credentials: "false"
+        # Omit use-existing-credentials: v6.3.0 treats even "false" as truthy.
         force-skip-oidc: "false"
         role-chaining: "false"
         translate-env-variables: "false"

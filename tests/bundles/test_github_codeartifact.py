@@ -173,7 +173,6 @@ def test_oidc_order_and_pin():
     assert inputs["output-env-credentials"] == "true"
     for name in (
         "translate-env-variables",
-        "use-existing-credentials",
         "force-skip-oidc",
         "role-chaining",
         "output-credentials",
@@ -196,6 +195,12 @@ def test_oidc_order_and_pin():
     assert "GITHUB_ENV" not in _UPLOAD["run"]
     assert "GITHUB_OUTPUT" not in _UPLOAD["run"]
     assert "aws codeartifact login" not in _UPLOAD["run"]
+
+
+def test_credential_reuse_input_is_omitted():
+    """Pinned v6.3.0 dist/index.js uses getInput and string truthiness: even 'false' enables reuse."""
+    assert "use-existing-credentials" not in _AUTH["with"]
+    assert _AUTH["with"]["translate-env-variables"] == "false"
 
 
 @pytest.mark.parametrize(
