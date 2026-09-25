@@ -16,9 +16,10 @@ the source of truth for the exact set. See
 1. **Feature bundles** — one per capability. They are *local-first*: a feature
    bundle never ships hosted-CI workflow files, so it works the same whether or
    not you use GitHub or GitLab.
-2. **Platform-overlay bundles** — thin CI stubs that pair a feature with a
-   hosting platform (`github-<feature>`, `gitlab-<feature>`). Each delegates to a
-   reusable workflow in `jebel-quant/rhiza`.
+2. **Platform-overlay bundles** — CI integrations that pair a feature with a
+   hosting platform (`github-<feature>`, `gitlab-<feature>`). Most ship thin stubs
+   delegating to reusable workflows in `jebel-quant/rhiza`; the draft
+   `github-codeartifact` overlay ships actions instead.
 3. **Profiles** — higher-level presets (sometimes called *meta-bundles*) that
    expand to a curated set of bundles for a stable intent (local-only,
    GitHub-hosted, GitLab-hosted).
@@ -52,8 +53,11 @@ Bundles declare relationships in `.rhiza/template-bundles.yml`:
 
 ## Platform-overlay bundles
 
-Each overlay adds the hosted-CI workflow stub for a capability. Pick the overlay
-that matches your platform.
+Most overlays add the hosted-CI workflow stub for a capability. Pick the overlay
+that matches your platform. **Do not release or adopt the draft `github-codeartifact`
+exception:** its managed publisher adapter can overwrite repo-owned actions until
+rhiza-claude implements pre-write ownership safeguards. It ships no workflow and is
+excluded from every profile.
 
 Not every capability has a bundle of its own. `tests`, `marimo` and `paper` were removed
 in #1632 — each had been reduced to a single documentation page, while the gates their
@@ -63,6 +67,7 @@ exercise instead.
 
 | Bundle | Capability → platform |
 |--------|------------------------|
+| `github-codeartifact` | **DRAFT — release blocked:** `github` + `python-core` → CodeArtifact publisher actions; requires external sync ownership safeguards before adoption |
 | `github-tests` | CI, CodeQL and benchmark → GitHub Actions |
 | `github-book` | `book` → GitHub Pages publishing |
 | `github-marimo` | Notebook publishing → GitHub Actions |

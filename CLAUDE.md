@@ -81,6 +81,15 @@ The core abstraction is the **bundle** — a named group of configuration files.
 
 **Platform overlay bundles** — CI workflow stubs that pair a feature with a platform: `github-tests`, `github-book`, `github-marimo`, `github-docker`, `github-devcontainer`, `github-paper`, `github-quality-review`, `gitlab-tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-quality-review`.
 
+**DRAFT action-only overlay — DO NOT RELEASE OR ADOPT:** `github-codeartifact` requires
+`github` and `python-core`, but is excluded from every profile. It supplies the managed
+`.github/actions/release-publish/action.yml` adapter and separate
+`.github/actions/codeartifact-publish/action.yml` provider, not another workflow or build.
+Release is blocked until rhiza-claude checks ownership collisions before writing newly
+managed paths, including first sync, adding a bundle, missing merge bases and an existing
+`action.yaml` alternate. The current sync can overwrite a repo-owned publisher; this
+repository does not implement the missing safeguard.
+
 **Meta-bundles** — curated compositions of other bundles: `github-project`, `gitlab-project`, `local` (no hosted CI), and the single-language local profiles `rust-local` and `go-local`.
 
 ### Dogfooding (root files ↔ bundle sources)

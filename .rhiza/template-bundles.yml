@@ -193,6 +193,10 @@ bundles:
       because composite metadata does not support the vars context.
       The adapter accepts artifacts-dir, tag, version and unused credentials;
       the provider uploads only the already-verified wheels and source archives.
+      This bundle deliberately requires the workflow event's GITHUB_REF to match
+      the supplied release tag. A workflow_call from main with an explicit tag,
+      although supported by the generic workflow, is rejected by this provider.
+      Dispatch on the release tag (not main); pull-request events are never allowed.
       Requires an Ubuntu runner with AWS CLI, id-token: write and the release
       environment. Restrict the role trust to the exact repository's
       repo:OWNER/REPO:environment:release subject and protect that environment

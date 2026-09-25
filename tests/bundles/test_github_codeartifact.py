@@ -138,7 +138,8 @@ def test_adapter_contract_and_configuration(tmp_path):
         assert steps[1]["with"][name] == "${{ inputs." + name + " }}"
     assert "credentials" not in steps[1]["with"]
     for action in (_ADAPTER, _PROVIDER):
-        assert "vars." not in str(action) and "secrets." not in str(action)
+        assert "vars." not in str(action)
+        assert "secrets." not in str(action)
         assert "artifact-url" not in action.get("outputs", {})
         for step in action["runs"]["steps"]:
             assert not step.get("continue-on-error")
@@ -153,6 +154,16 @@ def test_invalid_adapter_config_is_not_written(tmp_path, config):
     assert not output
 
 
+@pytest.mark.parametrize("name", _VARIABLES)
+@pytest.mark.parametrize("value", ["", None, 123, "valid\ninjected=value", "valid\rinjected=value"])
+def test_adapter_rejects_each_invalid_variable(tmp_path, name, value):
+    """Each required variable is validated before any configuration output is written."""
+    config = {**_VARIABLES, name: value}
+    result, output = _run(_ADAPTER["runs"]["steps"][0], tmp_path, {"RHIZA_RELEASE_PUBLISH_VARS": json.dumps(config)})
+    assert result.returncode != 0
+    assert not output
+
+
 def test_oidc_order_and_pin():
     """Validation precedes OIDC; no static keys, fallback authentication or credential outputs."""
     assert _VALIDATE["id"] == "validate"
@@ -160,23 +171,40 @@ def test_oidc_order_and_pin():
     inputs = _AUTH["with"]
     assert inputs["unset-current-credentials"] == "true"
     assert inputs["output-env-credentials"] == "true"
-    for name in ("translate-env-variables", "use-existing-credentials", "force-skip-oidc",
-                 "role-chaining", "output-credentials"):
+    for name in (
+        "translate-env-variables",
+        "use-existing-credentials",
+        "force-skip-oidc",
+        "role-chaining",
+        "output-credentials",
+    ):
         assert inputs[name] == "false"
-    assert "aws-access-key-id" not in inputs and "aws-secret-access-key" not in inputs
+    assert "aws-access-key-id" not in inputs
+    assert "aws-secret-access-key" not in inputs
     assert inputs["allowed-account-ids"] == "${{ steps.validate.outputs.account }}"
     assert inputs["audience"] == "${{ steps.validate.outputs.audience }}"
+    assert _AUTH["env"]["AWS_IGNORE_CONFIGURED_ENDPOINT_URLS"] == "true"
+    assert _AUTH["env"]["AWS_ENDPOINT_URL"] == ""
+    assert _AUTH["env"]["AWS_ENDPOINT_URL_STS"] == ""
+    assert _UPLOAD["env"]["AWS_IGNORE_CONFIGURED_ENDPOINT_URLS"] == "true"
+    assert _UPLOAD["env"]["AWS_ENDPOINT_URL"] == ""
+    assert _UPLOAD["env"]["AWS_ENDPOINT_URL_CODEARTIFACT"] == ""
     workflow = yaml.safe_load((_ROOT / ".github/workflows/rhiza_release.yml").read_text())
     setup = next(step for step in workflow["jobs"]["build"]["steps"] if step["name"] == "Install uv")
-    assert _UV["uses"] == setup["uses"] and _UV["with"] == setup["with"]
-    assert "GITHUB_ENV" not in _UPLOAD["run"] and "GITHUB_OUTPUT" not in _UPLOAD["run"]
+    assert _UV["uses"] == setup["uses"]
+    assert _UV["with"] == setup["with"]
+    assert "GITHUB_ENV" not in _UPLOAD["run"]
+    assert "GITHUB_OUTPUT" not in _UPLOAD["run"]
     assert "aws codeartifact login" not in _UPLOAD["run"]
 
 
 @pytest.mark.parametrize(
     ("partition", "region", "suffix"),
-    [("aws", "eu-west-1", "amazonaws.com"), ("aws-cn", "cn-north-1", "amazonaws.com.cn"),
-     ("aws-us-gov", "us-gov-west-1", "amazonaws.com")],
+    [
+        ("aws", "eu-west-1", "amazonaws.com"),
+        ("aws-cn", "cn-north-1", "amazonaws.com.cn"),
+        ("aws-us-gov", "us-gov-west-1", "amazonaws.com"),
+    ],
 )
 def test_validation_and_partition(tmp_path, publish_env, partition, region, suffix):
     """Commercial, China and GovCloud roles derive the appropriate endpoint suffix and audience."""
@@ -187,15 +215,40 @@ def test_validation_and_partition(tmp_path, publish_env, partition, region, suff
     assert not (tmp_path / "aws-calls").exists()
 
 
+@pytest.mark.parametrize("event", ["push", "workflow_dispatch", "release"])
+@pytest.mark.parametrize("ref", ["refs/tags/v1.2.3", "refs/heads/main", "refs/tags/v1.2.2"])
+def test_publisher_requires_matching_tag_context(tmp_path, publish_env, event, ref):
+    """Reusable callers inherit their event/ref: an explicit tag cannot authorize a main dispatch."""
+    publish_env.update(GITHUB_EVENT_NAME=event, GITHUB_REF=ref)
+    result, output = _run(_VALIDATE, tmp_path, publish_env)
+    assert (result.returncode == 0) == (ref == "refs/tags/v1.2.3")
+    if result.returncode:
+        assert not output
+    assert not (tmp_path / "aws-calls").exists()
+
+
 @pytest.mark.parametrize(
     ("key", "value"),
-    [("REGION", ""), ("REGION", "eu-west-1\n"), ("REGION", "cn-north-1"),
-     ("ROLE", ""), ("ROLE", "arn:aws:iam::123:role/publish"), ("DOMAIN", "-bad"),
-     ("OWNER", "123"), ("REPOSITORY", "bad/path"), ("REPOSITORY", "python\n"),
-     ("TAG", "main"), ("VERSION", "1.2.4"), ("GITHUB_REF", "refs/heads/main"),
-     ("GITHUB_EVENT_NAME", "pull_request"), ("GITHUB_EVENT_NAME", "pull_request_target"),
-     ("ACTIONS_ID_TOKEN_REQUEST_TOKEN", ""), ("ACTIONS_ID_TOKEN_REQUEST_URL", ""),
-     ("ARTIFACTS_DIR", "relative"), ("ARTIFACTS_DIR", "/nonexistent-codeartifact-fixture")],
+    [
+        ("REGION", ""),
+        ("REGION", "eu-west-1\n"),
+        ("REGION", "cn-north-1"),
+        ("ROLE", ""),
+        ("ROLE", "arn:aws:iam::123:role/publish"),
+        ("DOMAIN", "-bad"),
+        ("OWNER", "123"),
+        ("REPOSITORY", "bad/path"),
+        ("REPOSITORY", "python\n"),
+        ("TAG", "main"),
+        ("VERSION", "1.2.4"),
+        ("GITHUB_REF", "refs/heads/main"),
+        ("GITHUB_EVENT_NAME", "pull_request"),
+        ("GITHUB_EVENT_NAME", "pull_request_target"),
+        ("ACTIONS_ID_TOKEN_REQUEST_TOKEN", ""),
+        ("ACTIONS_ID_TOKEN_REQUEST_URL", ""),
+        ("ARTIFACTS_DIR", "relative"),
+        ("ARTIFACTS_DIR", "/nonexistent-codeartifact-fixture"),
+    ],
 )
 def test_invalid_inputs_fail_before_auth(tmp_path, publish_env, key, value):
     """Invalid or absent configuration fails before credentials or any provider command."""
@@ -239,10 +292,22 @@ def test_upload_only_verified_distributions(tmp_path, publish_env):
     assert result.stdout == f"::add-mask::{publish_env['TEST_TOKEN']}\n"
     assert not output
     args = json.loads((tmp_path / "uv-call").read_text())
-    assert args[:11] == ["publish", "--no-config", "--no-cache", "--publish-url", publish_env["ENDPOINT"],
-                         "--username", "aws", "--trusted-publishing", "never", "--keyring-provider", "disabled"]
-    assert {Path(path).suffix for path in args[11:]} == {".whl", ".gz"}
-    assert all(Path(path).read_bytes() == b"original verified bytes" for path in args[11:])
+    assert args[:12] == [
+        "publish",
+        "--no-config",
+        "--no-cache",
+        "--publish-url",
+        publish_env["ENDPOINT"],
+        "--username",
+        "aws",
+        "--trusted-publishing",
+        "never",
+        "--keyring-provider",
+        "disabled",
+        "--no-attestations",
+    ]
+    assert {Path(path).suffix for path in args[12:]} == {".whl", ".gz"}
+    assert all(Path(path).read_bytes() == b"original verified bytes" for path in args[12:])
     calls = [json.loads(line) for line in (tmp_path / "aws-calls").read_text().splitlines()]
     assert [call[1] for call in calls] == ["get-repository-endpoint", "get-authorization-token"]
     assert calls[1][calls[1].index("--duration-seconds") + 1] == "0"
@@ -251,15 +316,24 @@ def test_upload_only_verified_distributions(tmp_path, publish_env):
             assert publish_env["TEST_TOKEN"] not in path.read_text()
 
 
-@pytest.mark.parametrize("endpoint", ["", "None", "https://upload.pypi.org/legacy/",
-                                     "http://packages.example.org/", "https://example.org/\ninjected",
-                                     "https://packages-987654321012.d.codeartifact.eu-west-1.amazonaws.com.evil/pypi/python/"])
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "",
+        "None",
+        "https://upload.pypi.org/legacy/",
+        "http://packages.example.org/",
+        "https://example.org/\ninjected",
+        "https://packages-987654321012.d.codeartifact.eu-west-1.amazonaws.com.evil/pypi/python/",
+    ],
+)
 def test_untrusted_endpoint_stops_before_token(tmp_path, publish_env, endpoint):
     """Only the exact expected HTTPS AWS repository endpoint receives a token."""
     publish_env["ENDPOINT"] = endpoint
     result, output = _run(_UPLOAD, tmp_path, publish_env)
     assert result.returncode != 0
-    assert not output and not (tmp_path / "uv-call").exists()
+    assert not output
+    assert not (tmp_path / "uv-call").exists()
     assert len((tmp_path / "aws-calls").read_text().splitlines()) == 1
 
 
@@ -271,7 +345,8 @@ def test_invalid_token_is_masked_and_not_used(tmp_path, publish_env, token):
     assert result.returncode != 0
     assert result.stdout.startswith("::add-mask::")
     assert len(result.stdout.splitlines()) == 2
-    assert not output and not (tmp_path / "uv-call").exists()
+    assert not output
+    assert not (tmp_path / "uv-call").exists()
 
 
 @pytest.mark.parametrize("failure", ["get-repository-endpoint", "get-authorization-token", "uv"])
@@ -279,7 +354,8 @@ def test_provider_failures_propagate_without_credentials(tmp_path, publish_env, 
     """Authentication/upload errors fail closed without leaking provider diagnostics."""
     publish_env["FAIL_UV" if failure == "uv" else "FAIL_AWS"] = failure
     result, output = _run(_UPLOAD, tmp_path, publish_env)
-    assert result.returncode != 0 and not output
+    assert result.returncode != 0
+    assert not output
     assert "sensitive provider diagnostic" not in result.stdout + result.stderr
     assert publish_env["TEST_TOKEN"] not in result.stderr
     assert publish_env["TEST_TOKEN"] not in result.stdout.replace(f"::add-mask::{publish_env['TEST_TOKEN']}", "")

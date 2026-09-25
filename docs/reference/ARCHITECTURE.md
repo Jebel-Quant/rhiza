@@ -274,6 +274,11 @@ source distributions, not provenance files. It does not rebuild or fall back to
 public PyPI. Missing settings, missing artifacts, failed authentication and failed
 uploads are errors and prevent release finalization.
 
+The CodeArtifact publisher requires the workflow event's ref to be the same
+release tag as the validated `tag` input. A reusable-workflow call or manual
+dispatch from `main` with a separate tag argument is rejected; invoke it in the
+tag's context instead. Pull-request events are never accepted.
+
 #### AWS trust and permissions
 
 Create a GitHub OIDC provider and a dedicated publisher role, not long-lived access

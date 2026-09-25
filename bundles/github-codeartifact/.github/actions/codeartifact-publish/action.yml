@@ -99,6 +99,9 @@ runs:
         AWS_CONFIG_FILE: /dev/null
         AWS_SHARED_CREDENTIALS_FILE: /dev/null
         AWS_EC2_METADATA_DISABLED: "true"
+        AWS_IGNORE_CONFIGURED_ENDPOINT_URLS: "true"
+        AWS_ENDPOINT_URL: ""
+        AWS_ENDPOINT_URL_STS: ""
         AWS_SKIP_CLEANUP_STEP: "false"
       with:
         aws-region: ${{ inputs.aws-region }}
@@ -125,6 +128,8 @@ runs:
         AWS_CONFIG_FILE: /dev/null
         AWS_SHARED_CREDENTIALS_FILE: /dev/null
         AWS_IGNORE_CONFIGURED_ENDPOINT_URLS: "true"
+        AWS_ENDPOINT_URL: ""
+        AWS_ENDPOINT_URL_CODEARTIFACT: ""
         AWS_EC2_METADATA_DISABLED: "true"
         AWS_PAGER: ""
       run: |
@@ -155,7 +160,8 @@ runs:
           [[ -f "$file" && ! -L "$file" && -s "$file" ]] || fail "Unsafe distribution"
         done
         # Credentials stay in this process, not outputs, config files or later steps.
+        unset UV_PUBLISH_INDEX UV_PUBLISH_TOKEN UV_PUBLISH_CHECK_URL UV_CONFIG_FILE
         UV_PUBLISH_PASSWORD="$token" uv publish --no-config --no-cache \
           --publish-url "$endpoint" --username aws --trusted-publishing never \
-          --keyring-provider disabled "${files[@]}" >/dev/null 2>&1 \
+          --keyring-provider disabled --no-attestations "${files[@]}" >/dev/null 2>&1 \
           || fail "CodeArtifact upload failed"

@@ -42,6 +42,10 @@ A thin injected workflow file that delegates to a reusable workflow in `jebel-qu
 ### Bundle Dependency Map
 Solid arrows show `requires` dependencies; dotted arrows show `recommends` relationships.
 
+**DRAFT — do not release or adopt `github-codeartifact`:** the action-only publisher is
+excluded from every profile until rhiza-claude implements pre-write ownership collision
+checks. Its presence in this inventory is not an adoption recommendation.
+
 ```mermaid
 flowchart LR
     subgraph Foundation["Foundation"]
@@ -75,6 +79,7 @@ flowchart LR
         github_marimo["github-marimo"]
         github_book["github-book"]
         github_quality_review["github-quality-review"]
+        github_codeartifact["github-codeartifact (DRAFT: release blocked)"]
     end
 
     subgraph GitLab["GitLab base and overlays"]
@@ -112,6 +117,8 @@ flowchart LR
     github_book --> github
     github_quality_review --> core
     github_quality_review --> github
+    github_codeartifact --> github
+    github_codeartifact --> python_core
     gitlab_tests --> tests
     gitlab_tests --> gitlab
     gitlab_marimo --> marimo
