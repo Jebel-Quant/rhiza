@@ -1,0 +1,167 @@
+name: Publish built Python distributions to CodeArtifact (DRAFT)
+description: Assume an AWS role with GitHub OIDC and upload existing artifacts without rebuilding.
+inputs:
+  artifacts-dir:
+    description: Absolute, symlink-free path to verified distributions
+    required: true
+  tag:
+    description: Validated release tag
+    required: true
+  version:
+    description: Release version without the v prefix
+    required: true
+  aws-region:
+    description: AWS region hosting CodeArtifact
+    required: true
+  role-to-assume:
+    description: IAM role ARN trusted for the repository's release environment
+    required: true
+  domain:
+    description: CodeArtifact domain name
+    required: true
+  domain-owner:
+    description: Twelve-digit AWS account owning the domain
+    required: true
+  repository:
+    description: CodeArtifact repository name
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Validate configuration and artifacts before authentication
+      id: validate
+      shell: bash
+      env:
+        ARTIFACTS_DIR: ${{ inputs.artifacts-dir }}
+        TAG: ${{ inputs.tag }}
+        VERSION: ${{ inputs.version }}
+        REGION: ${{ inputs.aws-region }}
+        ROLE: ${{ inputs.role-to-assume }}
+        DOMAIN: ${{ inputs.domain }}
+        OWNER: ${{ inputs.domain-owner }}
+        REPOSITORY: ${{ inputs.repository }}
+      run: |
+        python3 - <<'PY'
+        import os
+        import re
+        import shutil
+        import sys
+        from pathlib import Path
+
+        def require(condition, message):
+            if not condition:
+                sys.exit(f"::error::{message}")
+
+        env = os.environ
+        require(shutil.which("aws"), "AWS CLI is required on the release runner")
+        require(env.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN") and env.get("ACTIONS_ID_TOKEN_REQUEST_URL"),
+                "GitHub OIDC with id-token: write is required")
+        require(env.get("GITHUB_EVENT_NAME") in {"push", "workflow_dispatch", "release"}
+                and env.get("GITHUB_REF") == "refs/tags/" + env["TAG"],
+                "CodeArtifact publishing requires a release tag, never a pull request")
+        require(re.fullmatch(r"v[0-9]+(?:\.[0-9]+)*(?:[a-zA-Z0-9.+-]*)", env["TAG"])
+                and env["TAG"] == "v" + env["VERSION"], "Invalid release tag/version")
+        role = re.fullmatch(r"arn:(aws|aws-cn|aws-us-gov):iam::([0-9]{12}):role/([A-Za-z0-9_+=,.@/-]+)",
+                            env["ROLE"])
+        require(role, "Invalid AWS publishing role ARN")
+        partition, account, _ = role.groups()
+        region_patterns = {
+            "aws": r"(?:af|ap|ca|eu|il|me|mx|sa|us)-(?!gov-)[a-z]+-[0-9]+",
+            "aws-cn": r"cn-[a-z]+-[0-9]+",
+            "aws-us-gov": r"us-gov-[a-z]+-[0-9]+",
+        }
+        require(re.fullmatch(region_patterns[partition], env["REGION"]), "Invalid region for AWS partition")
+        require(re.fullmatch(r"[0-9]{12}", env["OWNER"]), "Invalid CodeArtifact domain owner")
+        require(re.fullmatch(r"[a-z][a-z0-9-]{0,48}[a-z0-9]", env["DOMAIN"]), "Invalid CodeArtifact domain")
+        require(re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{1,99}", env["REPOSITORY"]),
+                "Invalid CodeArtifact repository")
+        directory = Path(env["ARTIFACTS_DIR"])
+        require(directory.is_absolute() and directory.is_dir() and directory.resolve() == directory
+                and not any(path.is_symlink() for path in (directory, *directory.parents)),
+                "Artifacts directory must be absolute, existing and symlink-free")
+        files = [*directory.glob("*.whl"), *directory.glob("*.tar.gz")]
+        require(files, "No built distributions to publish")
+        require(all(path.is_file() and not path.is_symlink() and path.stat().st_size > 0 for path in files),
+                "Distributions must be nonempty regular files, not symlinks")
+        suffix = "amazonaws.com.cn" if partition == "aws-cn" else "amazonaws.com"
+        with open(env["GITHUB_OUTPUT"], "a") as output:
+            print(f"account={account}", file=output)
+            print(f"audience=sts.{suffix}", file=output)
+            print(f"suffix={suffix}", file=output)
+        PY
+    - name: Install uv
+      uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+      with:
+        version: "0.11.16"
+    - name: Assume publishing role with GitHub OIDC
+      uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+      env:
+        AWS_CONFIG_FILE: /dev/null
+        AWS_SHARED_CREDENTIALS_FILE: /dev/null
+        AWS_EC2_METADATA_DISABLED: "true"
+        AWS_IGNORE_CONFIGURED_ENDPOINT_URLS: "true"
+        AWS_ENDPOINT_URL: ""
+        AWS_ENDPOINT_URL_STS: ""
+        AWS_SKIP_CLEANUP_STEP: "false"
+      with:
+        aws-region: ${{ inputs.aws-region }}
+        role-to-assume: ${{ inputs.role-to-assume }}
+        allowed-account-ids: ${{ steps.validate.outputs.account }}
+        audience: ${{ steps.validate.outputs.audience }}
+        unset-current-credentials: "true"
+        # Omit use-existing-credentials: v6.3.0 treats even "false" as truthy.
+        force-skip-oidc: "false"
+        role-chaining: "false"
+        translate-env-variables: "false"
+        output-credentials: "false"
+        output-env-credentials: "true"
+        mask-aws-account-id: "true"
+    - name: Upload built distributions
+      shell: bash
+      env:
+        ARTIFACTS_DIR: ${{ inputs.artifacts-dir }}
+        REGION: ${{ inputs.aws-region }}
+        DOMAIN: ${{ inputs.domain }}
+        OWNER: ${{ inputs.domain-owner }}
+        REPOSITORY: ${{ inputs.repository }}
+        DNS_SUFFIX: ${{ steps.validate.outputs.suffix }}
+        AWS_CONFIG_FILE: /dev/null
+        AWS_SHARED_CREDENTIALS_FILE: /dev/null
+        AWS_IGNORE_CONFIGURED_ENDPOINT_URLS: "true"
+        AWS_ENDPOINT_URL: ""
+        AWS_ENDPOINT_URL_CODEARTIFACT: ""
+        AWS_EC2_METADATA_DISABLED: "true"
+        AWS_PAGER: ""
+      run: |
+        set +x
+        set -euo pipefail
+        fail() { echo "::error::$1"; exit 1; }
+        endpoint=$(aws codeartifact get-repository-endpoint --region "$REGION" \
+          --domain "$DOMAIN" --domain-owner "$OWNER" --repository "$REPOSITORY" \
+          --format pypi --query repositoryEndpoint --output text 2>/dev/null) \
+          || fail "Cannot resolve CodeArtifact endpoint"
+        expected="https://${DOMAIN}-${OWNER}.d.codeartifact.${REGION}.${DNS_SUFFIX}/pypi/${REPOSITORY}/"
+        [[ "$endpoint" == "$expected" ]] || fail "Invalid CodeArtifact HTTPS endpoint"
+        token=$(aws codeartifact get-authorization-token --region "$REGION" \
+          --domain "$DOMAIN" --domain-owner "$OWNER" --duration-seconds 0 \
+          --query authorizationToken --output text 2>/dev/null) \
+          || fail "Cannot obtain CodeArtifact authorization token"
+        # Escape workflow-command data before masking even a malformed response.
+        masked=${token//'%'/'%25'}
+        masked=${masked//$'\r'/'%0D'}
+        masked=${masked//$'\n'/'%0A'}
+        echo "::add-mask::$masked"
+        [[ "$token" =~ ^[A-Za-z0-9_+=./-]+$ && "$token" != "None" ]] \
+          || fail "Invalid CodeArtifact authorization token"
+        shopt -s nullglob
+        files=("$ARTIFACTS_DIR"/*.whl "$ARTIFACTS_DIR"/*.tar.gz)
+        ((${#files[@]})) || fail "No built distributions to publish"
+        for file in "${files[@]}"; do
+          [[ -f "$file" && ! -L "$file" && -s "$file" ]] || fail "Unsafe distribution"
+        done
+        # Credentials stay in this process, not outputs, config files or later steps.
+        unset UV_PUBLISH_INDEX UV_PUBLISH_TOKEN UV_PUBLISH_CHECK_URL UV_CONFIG_FILE
+        UV_PUBLISH_PASSWORD="$token" uv publish --no-config --no-cache \
+          --publish-url "$endpoint" --username aws --trusted-publishing never \
+          --keyring-provider disabled --no-attestations "${files[@]}" >/dev/null 2>&1 \
+          || fail "CodeArtifact upload failed"

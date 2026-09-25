@@ -174,6 +174,34 @@ bundles:
     standalone: true
     requires: [core]
 
+  github-codeartifact:
+    description: "DRAFT: opt-in AWS CodeArtifact publisher for the existing release pipeline"
+    standalone: true
+    requires: [github, python-core]
+    notes: |
+      DRAFT / DO NOT RELEASE until rhiza-claude's sync adoption safeguard exists.
+      Its _rhiza_merge.merge_one currently overwrites newly managed paths
+      unconditionally; selecting this bundle can destroy an existing repo-owned
+      .github/actions/release-publish/action.yml. No safeguard is implemented here.
+
+      Explicit adoption installs a managed release-publish adapter plus a separate
+      codeartifact-publish provider action, not a workflow or another build.
+      Never included in a default profile. Set RELEASE_PUBLISHER=custom and the
+      repository/environment variables AWS_REGION, AWS_ROLE_TO_ASSUME_PUBLISH,
+      CODEARTIFACT_DOMAIN, CODEARTIFACT_DOMAIN_OWNER, CODEARTIFACT_REPOSITORY.
+      The generic release step forwards vars as RHIZA_RELEASE_PUBLISH_VARS JSON
+      because composite metadata does not support the vars context.
+      The adapter accepts artifacts-dir, tag, version and unused credentials;
+      the provider uploads only the already-verified wheels and source archives.
+      This bundle deliberately requires the workflow event's GITHUB_REF to match
+      the supplied release tag. A workflow_call from main with an explicit tag,
+      although supported by the generic workflow, is rejected by this provider.
+      Dispatch on the release tag (not main); pull-request events are never allowed.
+      Requires an Ubuntu runner with AWS CLI, id-token: write and the release
+      environment. Restrict the role trust to the exact repository's
+      repo:OWNER/REPO:environment:release subject and protect that environment
+      against untrusted branches/tags. No static AWS keys or private artifact URL.
+
   # ============================================================================
   # RENOVATE - Automated dependency updates
   # ============================================================================

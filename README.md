@@ -172,7 +172,7 @@ templates:
 
 ### Available Template Bundles
 
-Bundles are the atomic building blocks. Feature bundles are **local-first** — they do not include hosted workflow files. Platform overlay bundles (prefixed `github-` or `gitlab-`) add the CI/CD workflows for a given feature.
+Bundles are the atomic building blocks. Feature bundles are **local-first** — they do not include hosted workflow files. Platform overlay bundles (prefixed `github-` or `gitlab-`) add CI/CD integration for a given feature, usually workflow stubs.
 
 Any bundle can be selected on its own — its dependencies are resolved and installed automatically. The *Auto-installs* column shows which bundles are pulled in transitively when you select that bundle.
 
@@ -199,6 +199,7 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 | Bundle | Description | Auto-installs |
 |--------|-------------|---------------|
 | `github` | Base GitHub repository automation (sync, release, dependabot) | `core` |
+| `github-codeartifact` | **DRAFT — DO NOT RELEASE OR ADOPT:** action-only CodeArtifact publisher; blocked on external sync ownership safeguards, excluded from all profiles ([details](docs/reference/ARCHITECTURE.md)) | `github`, `python-core`, `core` |
 | `github-tests` | GitHub Actions workflows for test automation (CI, CodeQL, weekly) | `github`, `python-core`, `core` |
 | `github-book` | GitHub Actions workflow for documentation publishing | `github`, `book`, `core` |
 | `github-marimo` | GitHub Actions workflow for Marimo notebook automation | `github`, `python-core`, `core` |

@@ -136,29 +136,204 @@ flowchart TD
     tag[Push Tag v*] --> validate[Validate Tag]
     validate --> build[Build Package]
     build --> draft[Draft GitHub Release]
-    draft --> pypi[Publish to PyPI]
-    pypi --> conda[Generate Conda Recipe<br/>with grayskull]
+    draft --> publisher{RELEASE_PUBLISHER}
+    publisher -->|pypi - default| pypi[PyPI-compatible upload]
+    publisher -->|custom| custom[Repository-owned publisher]
+    publisher -->|none| finalize[Finalize Release]
+    pypi -->|Public PyPI only| conda[Generate Conda Recipe<br/>with grayskull]
     draft --> devcontainer[Publish Devcontainer]
-    pypi --> finalize[Finalize Release]
+    pypi --> finalize
+    custom --> finalize
     conda --> finalize
     devcontainer --> finalize
-
-    subgraph Conditions
-        pypi_cond{Has dist/ &<br/>not Private?}
-        conda_cond{PyPI publish<br/>succeeded?}
-        dev_cond{PUBLISH_DEVCONTAINER<br/>= true?}
-    end
-
-    draft --> pypi_cond
-    pypi_cond -->|yes| pypi
-    pypi_cond -->|no| finalize
-    pypi --> conda_cond
-    conda_cond -->|yes| conda
-    conda_cond -->|no| finalize
-    draft --> dev_cond
-    dev_cond -->|yes| devcontainer
-    dev_cond -->|no| finalize
 ```
+
+### Choosing a publisher
+
+The GitHub release workflow separates building from publishing: tag validation, package
+building, version verification, SBOM and provenance generation remain Rhiza-owned. The
+publisher uploads the existing `dist` artifact rather than rebuilding the release.
+This extends **destinations and authentication**, not the build system: the standard
+package build still produces Python wheels and source distributions.
+
+Set the GitHub Actions repository variable `RELEASE_PUBLISHER`:
+
+| Value | Behaviour |
+| --- | --- |
+| Unset or `pypi` | Publish through the existing PyPI action. With no feed overrides, use public PyPI Trusted Publishing (OIDC), without stored credentials. |
+| `custom` | Invoke the repository-owned action at `.github/actions/release-publish/action.yml` (or `action.yaml`). Never invoke the PyPI publisher as a fallback. |
+| `none` | Skip package publication while retaining the other release outputs. |
+
+Unknown values fail the publishing job rather than silently selecting PyPI.
+The existing `PYPI_REPOSITORY_URL` **variable** and `PYPI_TOKEN` **secret** remain
+supported under `pypi` for compatible upload endpoints. Changing a URL does not make
+that publisher support another upload protocol or a provider's login sequence.
+
+`Private :: Do Not Upload` continues to suppress the built-in PyPI publisher,
+including its legacy custom-endpoint path. Explicit `custom` selection permits
+private distributions; the repository-owned action is responsible for choosing a safe
+destination. With the default publisher, a project without a buildable distribution
+continues to skip publication. Selecting `custom` without a buildable package, a
+publishing action, or actual distribution files is an error. An expected artifact
+that fails to download is also an error, not a successful skip.
+
+### Repository-owned publishing action
+
+Commit a composite action at `.github/actions/release-publish/action.yml` in the
+consuming repository, then select `RELEASE_PUBLISHER=custom`. The default bundles do
+not own this path, so subsequent template updates leave it intact. The optional
+`github-codeartifact` bundle is an explicit ownership exception: it manages this
+adapter for users choosing its ready-made publisher (see the draft warning below). The
+release job checks out the validated release tag: the action must exist in that
+revision, not just on the default branch.
+
+The workflow calls the action with these inputs:
+
+| Input | Contract |
+| --- | --- |
+| `artifacts-dir` | Absolute path to the downloaded `dist` directory containing the verified release artifacts. |
+| `tag` | Validated release tag, including its leading `v`. |
+| `version` | Tag with the leading `v` removed, not a separately resolved package version. |
+| `credentials` | Optional opaque value from the `RELEASE_PUBLISH_CREDENTIALS` secret; its format is owned by the extension. |
+
+The custom-publisher step also provides `RHIZA_RELEASE_PUBLISH_VARS`, a JSON
+object containing the Actions `vars` context, because composite action metadata
+cannot reference that context directly. This is **non-secret configuration**, not
+the `secrets` context; keep credentials in secrets or obtain them through OIDC.
+
+The action owns tool installation, provider configuration, authentication and upload.
+It may invoke provider-specific actions, request short-lived credentials through OIDC,
+or consume the optional credentials input. For example, a CodeArtifact extension can
+assume a publisher role, obtain and immediately mask a short-lived authorization
+token, then upload the downloaded distributions. No provider-specific dependencies or
+long-lived cloud access keys are required by Rhiza.
+
+The job runs on Ubuntu in the `release` environment with `contents: read` and
+`id-token: write`. Configure the provider's trust policy for the appropriate
+repository and release environment, and protect release tags and environment access.
+Authentication happens **in the publishing job**, not in a prerequisite job.
+The extension does not receive all repository secrets: only the explicit credentials
+input is forwarded. When invoking the workflow through `workflow_call`, pass that
+secret explicitly if needed. Mask generated secrets immediately, keep credentials
+out of logs and public outputs, and pin external actions used by the extension.
+
+Upload only the intended distribution files; `artifacts-dir` can also contain
+provenance. Do not rebuild or silently ignore authentication/upload failures.
+The action must fail when any required upload fails. If it publishes to several
+destinations, it must wait for all required uploads before reporting success.
+
+An optional `artifact-url` output may name a **public HTTPS page** for the published
+artifact. Rhiza validates it and appends it to the GitHub release notes. It must not
+contain credentials, signed access tokens, or private endpoints. Omit it when no safe
+public link exists; Rhiza does not infer a custom feed URL or expose credentials in
+release notes.
+
+### CodeArtifact publishing bundle (draft — release blocked)
+
+**Do not release or adopt `github-codeartifact` yet.** Safe adoption requires a
+change in the separate `rhiza-claude` sync engine first. Its current
+`_rhiza_merge.merge_one` copies newly introduced template paths over existing local
+files without checking ownership; first sync also copies unconditionally.
+Selecting this bundle could therefore overwrite a bespoke publisher before any
+bundle-provided check can run.
+
+The release prerequisite is a **pre-write collision check in the sync engine**:
+detect existing unmanaged publisher files (including the alternate `action.yaml`
+spelling), leave them unchanged, and stop for an explicit ownership migration.
+That protection must cover first sync, adding a bundle, and missing-base recovery;
+subsequent updates to already managed files must continue to work. A warning or a
+test inside this template repository cannot enforce that downstream prerequisite.
+This draft intentionally does not claim the safeguard is implemented.
+
+Once that prerequisite is available, adoption will be:
+
+1. Select `github-codeartifact` in the `templates` list of
+   `.rhiza/template.yml`. It is not included in any default profile.
+2. If a custom publisher already exists, explicitly migrate or retain it before
+   transferring ownership. Preserve a copy in git history; do not merely accept
+   an automatic overwrite. Projects retaining bespoke publishers should not select
+   this bundle.
+3. Sync the bundle and commit its managed actions before tagging a release.
+4. Configure the following GitHub Actions variables and select the custom publisher:
+
+| Variable | Value |
+| --- | --- |
+| `RELEASE_PUBLISHER` | `custom` |
+| `AWS_REGION` | AWS region containing the CodeArtifact repository |
+| `AWS_ROLE_TO_ASSUME_PUBLISH` | IAM role ARN for OIDC publishing |
+| `CODEARTIFACT_DOMAIN` | CodeArtifact domain name |
+| `CODEARTIFACT_DOMAIN_OWNER` | Twelve-digit AWS account ID owning the domain |
+| `CODEARTIFACT_REPOSITORY` | Target CodeArtifact repository name |
+
+The bundle supplies `.github/actions/release-publish/action.yml` as the adapter
+and `.github/actions/codeartifact-publish/action.yml` as its implementation.
+Both are template-managed after explicit adoption; fixes arrive with ordinary
+template updates. No second release workflow is installed. The existing release
+job hands over its verified artifacts, and the publisher uploads only wheels and
+source distributions, not provenance files. It does not rebuild or fall back to
+public PyPI. Missing settings, missing artifacts, failed authentication and failed
+uploads are errors and prevent release finalization.
+
+The CodeArtifact publisher requires the workflow event's ref to be the same
+release tag as the validated `tag` input. A reusable-workflow call or manual
+dispatch from `main` with a separate tag argument is rejected; invoke it in the
+tag's context instead. Pull-request events are never accepted.
+
+#### AWS trust and permissions
+
+Create a GitHub OIDC provider and a dedicated publisher role, not long-lived access
+keys. For the usual AWS partition, require audience `sts.amazonaws.com` and an
+exact subject such as `repo:OWNER/REPOSITORY:environment:release`. **The `release`
+environment replaces the tag-ref subject**: an IAM policy restricted only to
+`ref:refs/tags/...` will not match this job. If immutable GitHub subjects are
+enabled, use the corresponding organization/repository IDs in the subject and
+ensure GitHub's setting and IAM's condition agree; do not broaden trust to work
+around a mismatch.
+
+Protect the `release` environment with allowed release tags and appropriate
+approvals, and restrict who can create those tags or change the actions. Do not
+allow untrusted pull requests to assume the publisher role.
+
+The role needs:
+
+- `sts:GetServiceBearerToken`, with `sts:AWSServiceName` restricted to
+  `codeartifact.amazonaws.com` (this STS permission uses resource `*`).
+- `codeartifact:GetAuthorizationToken` on the selected domain.
+- `codeartifact:GetRepositoryEndpoint` on the selected repository.
+- `codeartifact:PublishPackageVersion` and `codeartifact:PutPackageMetadata`
+  on the intended PyPI package resources.
+
+For cross-account publishing, configure the corresponding domain/repository
+resource policies as well. Scope resource ARNs to the required region, account,
+domain, repository and packages. Provider partitions may require different OIDC
+audiences and endpoints; validate the supported partition before deployment.
+
+Authentication and upload occur in the same job. The action requests a short-lived
+CodeArtifact token, masks it immediately, and does not expose it as a job output or
+persist it as a repository secret. No `PYPI_TOKEN` or `RELEASE_PUBLISH_CREDENTIALS`
+is needed. Private endpoints are not returned as public artifact links.
+
+This bundle covers **publishing only**. It does not authenticate the earlier build
+or SBOM job, or any test/documentation job that consumes private dependencies.
+Named uv-index authentication with separate reader roles and fork-PR safeguards
+remains a separate part of issue #1685. A real AWS OIDC publishing run remains
+necessary before release; mocked workflow tests cannot verify an adopter's IAM
+trust and resource policies.
+
+### Completion and platform scope
+
+Release finalization waits for the selected publisher and the devcontainer job;
+neither may fail and still allow the release to be finalized. Explicit package skips
+remain successful, and cancellation never finalizes the release.
+Conda recipe generation remains optional and only follows successful **public PyPI**
+publication with no `PYPI_REPOSITORY_URL` override. A custom or legacy private-feed
+upload must not trigger a lookup on public PyPI. A failed optional Conda recipe does
+not prevent finalization.
+
+This extension contract is **GitHub Actions-only**. The GitLab release template retains
+its existing token/URL publishing behaviour. It also does not configure private-feed
+**consumption** in build, test or documentation jobs: those jobs need their own
+authentication before resolving dependencies, because job credentials are not shared.
 
 ## Template Sync Flow
 
