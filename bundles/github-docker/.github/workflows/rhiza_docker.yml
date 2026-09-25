@@ -22,7 +22,13 @@ on:
 jobs:
   docker:
     uses: jebel-quant/rhiza/.github/workflows/rhiza_docker.yml@v1.8.0
-    secrets: inherit
+    # Forwarded explicitly: `secrets: inherit` only reaches a reusable workflow in the
+    # caller's own organisation or enterprise (#1689). The build receives them as BuildKit
+    # secrets, never as build args (#1691); a secret this repository has not defined
+    # arrives empty and the image builds exactly as it did without one.
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
     permissions:
       contents: read
       security-events: write

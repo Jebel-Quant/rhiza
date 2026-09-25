@@ -57,6 +57,36 @@ docker buildx build \
 
 This is the same approach used by the CI workflow (see .github/workflows/rhiza_docker.yml).
 
+## Private dependencies
+
+A dependency fetched from a private Git repository or a private package index needs a
+credential *inside* the build, because `uv sync` runs in the builder stage and nothing the
+host has configured -- a `git config --global`, a `~/.netrc` -- is visible there. The
+Dockerfile therefore accepts two BuildKit secrets, `gh_pat` and `uv_extra_index_url`, and
+mounts them for the single `RUN` that installs dependencies. A secret is never a
+`--build-arg`: an argument is baked into the image and readable with `docker history`,
+whereas a secret mount exists only while that instruction runs and lands in no layer.
+
+`rhiza_docker.yml` passes the `GH_PAT` and `UV_EXTRA_INDEX_URL` repository secrets this way
+(#1691). Locally, export the same variables and pass them as secrets:
+
+```bash
+export GH_PAT=<token>                      # a PAT with read access to the private repositories
+docker buildx build \
+  --file docker/Dockerfile \
+  --build-arg PYTHON_VERSION=$(cat .python-version) \
+  --secret id=gh_pat,env=GH_PAT \
+  --secret id=uv_extra_index_url,env=UV_EXTRA_INDEX_URL \
+  --tag <image-name> \
+  --load \
+  .
+```
+
+Both are optional. An unset variable is mounted as an empty file, the Dockerfile's guard
+does not fire, and the build runs exactly as it does for a project with no private
+dependencies. The builder stage also installs `git`, which a Git source needs and the slim
+base image does not carry; the runtime stage is unaffected.
+
 ## Notes on Dockerfile.dockerignore
 
 - Docker/BuildKit supports a per-Dockerfile ignore file located next to the Dockerfile, named `Dockerfile.dockerignore`.
