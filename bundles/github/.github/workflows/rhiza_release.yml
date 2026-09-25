@@ -652,6 +652,9 @@ jobs:
         id: custom_publish
         if: steps.publisher.outputs.should_publish == 'true' && steps.publisher.outputs.publisher == 'custom'
         uses: ./.github/actions/release-publish
+        env:
+          # Composite metadata cannot read vars; pass non-secret publisher configuration.
+          RHIZA_RELEASE_PUBLISH_VARS: ${{ toJSON(vars) }}
         with:
           artifacts-dir: ${{ github.workspace }}/release-dist
           tag: ${{ needs.tag.outputs.tag }}

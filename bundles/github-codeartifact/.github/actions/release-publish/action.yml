@@ -1,0 +1,58 @@
+name: CodeArtifact release adapter (DRAFT)
+description: Managed opt-in adapter for Rhiza's custom release publisher; do not release before sync adoption is safe.
+inputs:
+  artifacts-dir:
+    description: Absolute path to the verified, already-built distributions
+    required: true
+  tag:
+    description: Validated release tag
+    required: true
+  version:
+    description: Release version without the v prefix
+    required: true
+  credentials:
+    description: Generic publisher compatibility input; unused (OIDC only)
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: Read publisher configuration
+      id: config
+      shell: bash
+      run: |
+        python3 - <<'PY'
+        import json
+        import os
+        import sys
+
+        try:
+            config = json.loads(os.environ.get("RHIZA_RELEASE_PUBLISH_VARS", ""))
+            names = {
+                "region": "AWS_REGION",
+                "role": "AWS_ROLE_TO_ASSUME_PUBLISH",
+                "domain": "CODEARTIFACT_DOMAIN",
+                "owner": "CODEARTIFACT_DOMAIN_OWNER",
+                "repository": "CODEARTIFACT_REPOSITORY",
+            }
+            values = {key: config.get(name) for key, name in names.items()}
+            if any(not isinstance(value, str) or not value or not value.isascii()
+                   or any(ord(char) < 33 or ord(char) == 127 for char in value)
+                   for value in values.values()):
+                raise ValueError
+        except (ValueError, AttributeError):
+            sys.exit("::error::Missing or invalid CodeArtifact publisher variables")
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+            for key, value in values.items():
+                print(f"{key}={value}", file=output)
+        PY
+    - name: Publish verified distributions
+      uses: ./.github/actions/codeartifact-publish
+      with:
+        artifacts-dir: ${{ inputs.artifacts-dir }}
+        tag: ${{ inputs.tag }}
+        version: ${{ inputs.version }}
+        aws-region: ${{ steps.config.outputs.region }}
+        role-to-assume: ${{ steps.config.outputs.role }}
+        domain: ${{ steps.config.outputs.domain }}
+        domain-owner: ${{ steps.config.outputs.owner }}
+        repository: ${{ steps.config.outputs.repository }}

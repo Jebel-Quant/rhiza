@@ -86,6 +86,12 @@ _WORKFLOW_DIR = {
 # contents of bundles/<overlay>/ as of this commit; update alongside the bundles.
 _OVERLAYS: tuple[OverlaySpec, ...] = (
     OverlaySpec(
+        bundle="github-codeartifact",
+        platform="github",
+        feature="python-core",
+        workflows=(),
+    ),
+    OverlaySpec(
         bundle="github-tests",
         platform="github",
         feature=None,
@@ -231,6 +237,9 @@ class TestOverlayBundleFiles:
     def test_ships_expected_workflows(self, spec: OverlaySpec, root: Path) -> None:
         """Every expected workflow file exists under the platform-specific workflows dir."""
         workflows_dir = root / "bundles" / spec.bundle / _WORKFLOW_DIR[spec.platform]
+        if not spec.workflows:
+            assert not workflows_dir.exists(), "Action-only overlays must not add a release workflow"
+            return
         assert workflows_dir.is_dir(), f"overlay '{spec.bundle}' is missing {_WORKFLOW_DIR[spec.platform]}/"
         for wf in spec.workflows:
             assert (workflows_dir / wf).is_file(), (

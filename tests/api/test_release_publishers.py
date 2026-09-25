@@ -371,7 +371,7 @@ def test_publisher_contract_and_order(workflow):
         "version": "${{ steps.publisher.outputs.version }}",
         "credentials": "${{ secrets.RELEASE_PUBLISH_CREDENTIALS }}",
     }
-    assert not action.get("env")
+    assert action["env"] == {"RHIZA_RELEASE_PUBLISH_VARS": "${{ toJSON(vars) }}"}
     assert not publisher.get("env")
     for step in steps:
         assert not step.get("continue-on-error")
