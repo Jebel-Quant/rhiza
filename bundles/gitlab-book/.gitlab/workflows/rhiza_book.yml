@@ -30,6 +30,15 @@ pages:
   variables:
     GIT_LFS_SKIP_SMUDGE: "0"
   before_script:
+    - |
+      # `book` skips without a root mkdocs.yml, so `_book/` never exists and the job would
+      # otherwise fail at `mv _book public`, nowhere near the cause (#1699).
+      # docs/mkdocs-base.yml is read only through `INHERIT:` from that root file.
+      if [ ! -f mkdocs.yml ]; then
+        echo "No root mkdocs.yml: the book cannot be built. Add one starting with"
+        echo "'INHERIT: docs/mkdocs-base.yml' -- see the header of docs/mkdocs-base.yml."
+        exit 1
+      fi
     - apt-get update && apt-get install -y git-lfs make
     - git lfs pull
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
