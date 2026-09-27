@@ -237,11 +237,25 @@ def test_conda_waits_for_pypi_metadata_to_propagate(root, relative):
 
 _GRAYSKULL_STEP = "Generate conda recipe with grayskull"
 
-# Stands in for grayskull. For its first ``MISSING`` calls it does what the real one does on
-# a PyPI 404 -- prints the error and exits 0 having written nothing -- then writes a recipe.
+# Stands in for grayskull 3.2.0, reproducing the three behaviours the step has to tell apart:
+#
+# * without ``--no-use-v1-format`` it writes a V1 ``recipe.yaml`` and then crashes, as the real
+#   one does when conda-recipe-manager is not installed (the second half of #1701);
+# * with ``CRASH`` set it fails outright, standing in for any other real error;
+# * for its first ``MISSING`` calls it does what the real one does on a PyPI 404 -- prints the
+#   error and exits 0 having written nothing -- then writes a ``meta.yaml``.
 _FAKE_GRAYSKULL = """#!/usr/bin/env bash
 calls=$(( $(cat "$STATE/calls" 2>/dev/null || echo 0) + 1 ))
 echo "$calls" > "$STATE/calls"
+if [[ -n "${CRASH:-}" ]]; then
+  echo "Traceback (most recent call last):" >&2
+  exit 1
+fi
+if [[ " $* " != *" --no-use-v1-format "* ]]; then
+  mkdir -p "$2" && echo "schema_version: 1" > "$2/recipe.yaml"
+  echo "ImportError: Please install conda-recipe-manager from conda-forge to enable support for the V1 format." >&2
+  exit 1
+fi
 if [[ "$calls" -le "$MISSING" ]]; then
   echo "Package seems to be missing."
   echo "Exception: It was not possible to recover package metadata for $2."
@@ -256,7 +270,7 @@ echo "$1" >> "$STATE/sleeps"
 """
 
 
-def _run_grayskull_step(root: Path, relative: Path, tmp_path: Path, missing: int):
+def _run_grayskull_step(root: Path, relative: Path, tmp_path: Path, missing: int, crash: bool = False):
     """Run the workflow's grayskull step against a fake grayskull that 404s ``missing`` times.
 
     Args:
@@ -264,6 +278,7 @@ def _run_grayskull_step(root: Path, relative: Path, tmp_path: Path, missing: int
         relative: Path to the workflow, relative to the root.
         tmp_path: Scratch directory for the fake project, tools and recipe.
         missing: How many calls the fake grayskull answers with the exit-0 404.
+        crash: Make every call fail with a non-zero exit, like a real grayskull error.
 
     Returns:
         The completed process and the scratch ``state`` directory.
@@ -290,6 +305,9 @@ def _run_grayskull_step(root: Path, relative: Path, tmp_path: Path, missing: int
         "MISSING": str(missing),
         "GITHUB_WORKSPACE": str(workspace),
     }
+    env.pop("CRASH", None)
+    if crash:
+        env["CRASH"] = "1"
     result = subprocess.run(
         ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script],
         cwd=workspace,
@@ -326,3 +344,44 @@ def test_conda_gives_up_after_max_attempts_without_a_recipe(root, relative, tmp_
     assert (state / "calls").read_text().strip() == "5"
     assert len((state / "sleeps").read_text().split()) == 4
     assert "produced no meta.yaml after 5 attempts" in result.stdout
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_conda_fails_fast_when_grayskull_itself_fails(root, relative, tmp_path):
+    """A non-zero exit is a real error, not PyPI lag, so it must not be retried (#1701).
+
+    Retrying every failure as if it were propagation is what turned grayskull 3.2.0's
+    conda-recipe-manager ImportError into five attempts, four minutes of ``sleep 60`` and an
+    error blaming PyPI -- on ducktide v0.0.1, after PyPI had long caught up.
+    """
+    result, state = _run_grayskull_step(root, relative, tmp_path, missing=0, crash=True)
+    assert result.returncode == 1
+    assert (state / "calls").read_text().strip() == "1"
+    assert not (state / "sleeps").exists()
+    assert "not a PyPI propagation delay" in result.stdout
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_conda_asks_grayskull_for_a_meta_yaml(root, relative):
+    """Grayskull >= 3.2 writes a V1 ``recipe.yaml`` by default; this job ships ``meta.yaml`` (#1701).
+
+    Without the flag, 3.2.0 crashes for want of conda-recipe-manager -- and even with that
+    installed, the V1 file it writes is not the ``meta.yaml`` the step looks for and uploads.
+    """
+    workflow = yaml.safe_load((root / relative).read_text(encoding="utf-8"))
+    step = next(s for s in workflow["jobs"]["conda"]["steps"] if s.get("name") == _GRAYSKULL_STEP)
+    assert "--no-use-v1-format" in step["run"], (
+        f"{relative.as_posix()}: grayskull is not asked for the v0 format, so 3.2+ writes a V1 "
+        f"recipe.yaml instead of the meta.yaml this job uploads (#1701)."
+    )
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_grayskull_is_pinned(root, relative):
+    """An unpinned grayskull changed this job's output format under it once already (#1701)."""
+    workflow = yaml.safe_load((root / relative).read_text(encoding="utf-8"))
+    install = next(s for s in workflow["jobs"]["conda"]["steps"] if s.get("name") == "Install grayskull")
+    assert "grayskull==" in install["run"], (
+        f"{relative.as_posix()}: grayskull is installed unpinned, so a new release can change "
+        f"its default output (as 3.2.0 did) without anyone noticing (#1701)."
+    )
