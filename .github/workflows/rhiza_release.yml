@@ -616,24 +616,25 @@ jobs:
           # PyPI metadata for a just-published release — especially the first
           # release of a new package — can lag the upload by several minutes,
           # so retry before giving up.
+          #
+          # Success is judged by the recipe on disk, not by grayskull's exit
+          # status: `grayskull pypi` prints "Package seems to be missing" on a
+          # PyPI 404 and still exits 0, so an exit-code loop breaks on the very
+          # first attempt and never retries (#1701).
           MAX_ATTEMPTS=5
           for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-            if grayskull pypi "$PACKAGE_NAME" --strict-conda-forge; then
+            grayskull pypi "$PACKAGE_NAME" --strict-conda-forge || true
+            RECIPE_PATH=$(find . -type f -path "*/meta.yaml" | head -n 1)
+            if [[ -n "$RECIPE_PATH" ]]; then
               break
             fi
             if [[ "$attempt" -eq "$MAX_ATTEMPTS" ]]; then
-              echo "::error::grayskull failed after $MAX_ATTEMPTS attempts — PyPI metadata for $PACKAGE_NAME may not be available yet"
+              echo "::error::grayskull produced no meta.yaml after $MAX_ATTEMPTS attempts — PyPI metadata for $PACKAGE_NAME may not be available yet"
               exit 1
             fi
-            echo "grayskull attempt $attempt/$MAX_ATTEMPTS failed — waiting 60s for PyPI metadata to propagate"
+            echo "grayskull attempt $attempt/$MAX_ATTEMPTS produced no recipe — waiting 60s for PyPI metadata to propagate"
             sleep 60
           done
-
-          RECIPE_PATH=$(find . -type f -path "*/meta.yaml" | head -n 1)
-          if [[ -z "$RECIPE_PATH" ]]; then
-            echo "::error::grayskull did not produce a meta.yaml file"
-            exit 1
-          fi
 
           mkdir -p "$GITHUB_WORKSPACE/conda-recipe"
           cp "$RECIPE_PATH" "$GITHUB_WORKSPACE/conda-recipe/meta.yaml"

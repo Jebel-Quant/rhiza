@@ -8,6 +8,8 @@ the changelog and the workflow no longer commits it separately.
 
 from __future__ import annotations
 
+import os
+import subprocess  # nosec B404 - running the workflow's own shell against a fake grayskull
 from pathlib import Path
 
 import pytest
@@ -227,3 +229,100 @@ def test_conda_waits_for_pypi_metadata_to_propagate(root, relative):
     )
     assert "MAX_ATTEMPTS" in commands, lost_the_retry
     assert "sleep" in commands, lost_the_retry
+
+
+# ---------------------------------------------------------------------------
+# #1701 -- the retry loop must actually retry
+# ---------------------------------------------------------------------------
+
+_GRAYSKULL_STEP = "Generate conda recipe with grayskull"
+
+# Stands in for grayskull. For its first ``MISSING`` calls it does what the real one does on
+# a PyPI 404 -- prints the error and exits 0 having written nothing -- then writes a recipe.
+_FAKE_GRAYSKULL = """#!/usr/bin/env bash
+calls=$(( $(cat "$STATE/calls" 2>/dev/null || echo 0) + 1 ))
+echo "$calls" > "$STATE/calls"
+if [[ "$calls" -le "$MISSING" ]]; then
+  echo "Package seems to be missing."
+  echo "Exception: It was not possible to recover package metadata for $2."
+  echo "Error code: 404"
+  exit 0
+fi
+mkdir -p "$2" && echo "package: {name: $2}" > "$2/meta.yaml"
+"""
+
+_FAKE_SLEEP = """#!/usr/bin/env bash
+echo "$1" >> "$STATE/sleeps"
+"""
+
+
+def _run_grayskull_step(root: Path, relative: Path, tmp_path: Path, missing: int):
+    """Run the workflow's grayskull step against a fake grayskull that 404s ``missing`` times.
+
+    Args:
+        root: Repository root.
+        relative: Path to the workflow, relative to the root.
+        tmp_path: Scratch directory for the fake project, tools and recipe.
+        missing: How many calls the fake grayskull answers with the exit-0 404.
+
+    Returns:
+        The completed process and the scratch ``state`` directory.
+    """
+    workflow = yaml.safe_load((root / relative).read_text(encoding="utf-8"))
+    step = next(s for s in workflow["jobs"]["conda"]["steps"] if s.get("name") == _GRAYSKULL_STEP)
+    recipe_dir = tmp_path / "recipe"
+    script = step["run"].replace("/tmp/conda-recipe", str(recipe_dir))  # noqa: S108 -- replacing it, not using it
+    assert script != step["run"], "the step no longer builds its recipe in /tmp/conda-recipe"
+
+    bin_dir, state, workspace = tmp_path / "bin", tmp_path / "state", tmp_path / "workspace"
+    for d in (bin_dir, state, workspace):
+        d.mkdir()
+    for name, body in (("grayskull", _FAKE_GRAYSKULL), ("sleep", _FAKE_SLEEP)):
+        tool = bin_dir / name
+        tool.write_text(body, encoding="utf-8")
+        tool.chmod(0o755)
+    (workspace / "pyproject.toml").write_text('[project]\nname = "ducktide"\n', encoding="utf-8")
+
+    env = {
+        **os.environ,
+        "PATH": f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
+        "STATE": str(state),
+        "MISSING": str(missing),
+        "GITHUB_WORKSPACE": str(workspace),
+    }
+    result = subprocess.run(
+        ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script],
+        cwd=workspace,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result, state
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_conda_retries_when_grayskull_exits_zero_on_a_404(root, relative, tmp_path):
+    """A 404 that exits 0 must still be retried (#1701).
+
+    ``grayskull pypi`` reports a missing package and exits 0, so a loop that trusted the exit
+    status broke out on the first attempt and failed on the ``meta.yaml`` check after it --
+    the retry written for exactly this case never ran. ducktide v0.0.1 is the record of it.
+    ``test_conda_waits_for_pypi_metadata_to_propagate`` passed throughout, because the words
+    ``MAX_ATTEMPTS`` and ``sleep`` were there; only running the loop shows whether it loops.
+    """
+    result, state = _run_grayskull_step(root, relative, tmp_path, missing=2)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert (state / "calls").read_text().strip() == "3"
+    assert (state / "sleeps").read_text().split() == ["60", "60"]
+    assert (tmp_path / "workspace" / "conda-recipe" / "meta.yaml").is_file()
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_conda_gives_up_after_max_attempts_without_a_recipe(root, relative, tmp_path):
+    """Metadata that never appears fails the job after the last attempt, not before it."""
+    result, state = _run_grayskull_step(root, relative, tmp_path, missing=99)
+    assert result.returncode == 1
+    assert (state / "calls").read_text().strip() == "5"
+    assert len((state / "sleeps").read_text().split()) == 4
+    assert "produced no meta.yaml after 5 attempts" in result.stdout
