@@ -5,6 +5,31 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.9.0] - 2026-09-27
+
+### New Features
+- *(github)* Ship a pull request template (#1695)
+
+### Bug Fixes
+- *(ci)* Retry link-check once, so a transient 5xx cannot fail the weekly run (#1683)
+- *(github)* Forward GH_PAT and UV_EXTRA_INDEX_URL to reusable workflows by name (#1690)
+- *(docker)* Pass GH_PAT and UV_EXTRA_INDEX_URL into the image build as BuildKit secrets (#1692)
+- *(book)* Fail early with a clear message when there is no root mkdocs.yml (#1700)
+- *(release)* Retry grayskull on a missing recipe, not on its exit code (#1702)
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1688)
+- *(deps)* Lock file maintenance (#1696)
+
+### Maintenance
+- Chore(deps)(deps): bump the github-actions group with 5 updates (#1684)
+- Chore(deps)(deps): bump the github-actions group with 5 updates (#1693)
+- Chore(deps)(deps): bump the github-actions group with 6 updates (#1698)
+- Chore(deps-dev)(deps-dev): bump plotly in the python-dependencies group (#1697)
+
+### Other Changes
+- Fix `deploy-pages: false` being ignored by reusable book workflow (#1678)
+
 ## [1.8.0] - 2026-09-07
 
 ### New Features
