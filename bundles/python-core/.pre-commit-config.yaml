@@ -90,7 +90,7 @@ repos:
         groups: ["security", "slow"]
 
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.12.10
+    rev: 0.12.20
     hooks:
       - id: uv-lock
         groups: ["python", "fast"]
@@ -104,7 +104,7 @@ repos:
         groups: ["python", "lint", "slow"]
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v1.3.0  # Use the latest release
+    rev: v1.3.1  # Use the latest release
     hooks:
       # Migrated from rhiza
       - id: check-rhiza-workflow-names
