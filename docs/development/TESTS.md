@@ -11,9 +11,10 @@ Rhiza now includes two additional types of testing:
 
 ## README Code Block Testing
 
-`make rhiza-test` automatically executes every `python` code block in `README.md` and checks
-that its output matches the adjacent ` ```result ` block. It also syntax-checks every `bash`
-block using `bash -n`.
+`make rhiza-test` automatically runs every `pycon` code block in `README.md` as a doctest, so
+the output written under each `>>>` prompt must match what the code actually prints. Write
+examples as interpreter transcripts rather than `python` blocks followed by a ` ```result `
+block. It also syntax-checks every `bash` block using `bash -n`.
 
 Both halves are checks in [pytest-rhiza](https://github.com/jebel-quant/pytest-rhiza), the
 package that gate installs: `test_readme_validation` (contributed by this bundle, since running
@@ -27,11 +28,11 @@ To exclude a specific code block from being executed or syntax-checked, append `
 the opening fence line:
 
 ~~~markdown
-```python +RHIZA_SKIP
-# This block will NOT be executed or syntax-checked by the readme tests.
-# Use it for illustrative examples, environment-specific code, or incomplete snippets.
-from my_env import some_function
-some_function()
+```pycon +RHIZA_SKIP
+>>> # This block will NOT be executed by the readme tests.
+>>> # Use it for illustrative examples, environment-specific code, or incomplete snippets.
+>>> from my_env import some_function
+>>> some_function()
 ```
 
 ```bash +RHIZA_SKIP

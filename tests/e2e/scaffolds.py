@@ -39,10 +39,10 @@ profiles:
   - {profile}
 """
 
-# No ```python fence, and one ```bash fence, for two different reasons.
+# No ```pycon fence, and one ```bash fence, for two different reasons.
 #
-# No Python: `rhiza-test` runs pytest-rhiza's test_readme_validation check, which executes
-# every ```python block and diffs it against the following ```result block. An empty
+# No Python: `rhiza-test` runs pytest-rhiza's test_readme_validation check, which runs
+# every ```pycon block as a doctest. An empty
 # set of blocks passes that trivially, which keeps the README about the scaffold
 # rather than about satisfying a test — and on a Rust or Go scaffold there is no
 # Python to demonstrate anyway.
