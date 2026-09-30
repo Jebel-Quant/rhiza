@@ -46,7 +46,7 @@ repos:
         args: ["--disable", "MD013"]
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.38.0
+    rev: 0.38.2
     hooks:
       - id: check-renovate
         args: [ "--verbose" ]
@@ -88,7 +88,7 @@ repos:
       - id: betterleaks
 
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.12.10
+    rev: 0.12.20
     hooks:
       - id: uv-lock
 
