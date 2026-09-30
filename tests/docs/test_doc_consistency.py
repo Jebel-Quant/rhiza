@@ -294,9 +294,16 @@ def _cli_task_names() -> frozenset[str]:
     much "make targets" as an explicit rule is -- ``make test`` works because ``test`` is a
     task, not because anything in the Makefile mentions it.
 
-    Read from the CLI rather than listed here, and *in this repository* rather than
-    generically: the task set is layer-dependent, so a hand-written list would drift on the
+    Read from the CLI rather than listed here, so a hand-written list cannot drift on the
     next rhiza-task release.
+
+    ``--all``, because the docs checked here describe what rhiza *ships*, not only what
+    this repo runs. Since 1.8.1 a bare ``list`` leaves out tasks whose bundle the repository
+    does not use, and this repo has no Dockerfile, git-lfs setup or slide deck -- so the
+    ``docker``, ``lfs`` and ``presentation`` bundle pages were reported as advertising
+    targets that do not exist, while every one of them works in a consumer that synced the
+    bundle. The price is that another layer's tasks (``cargo-tools``, ``go-tools``) count as
+    defined too, which is right for the rust-core and go-core pages that name them.
 
     Returns:
         The task names, or an empty set if the CLI cannot be reached.
@@ -305,7 +312,7 @@ def _cli_task_names() -> frozenset[str]:
     if not match:
         return frozenset()
     proc = subprocess.run(  # nosec B603
-        ["uvx", match.group(1), "list"],
+        ["uvx", match.group(1), "list", "--all"],
         cwd=_ROOT,
         capture_output=True,
         text=True,
