@@ -208,7 +208,12 @@ typechecker = "both"
 # `test_pyproject` accepts a version derived from the VCS, where 0.5.0 required a written
 # one and matched it against a semver pattern. So this pin is a floor for this repo rather
 # than only a managed number — reverting it below 0.6.0 fails `make rhiza-test`.
-pytest-rhiza = "pytest-rhiza==0.6.0"
+#
+# 0.7.0 adds the check that makes this README's examples tested at all: `test_readme_validation`
+# doctests every ```pycon fence, which is the shape the README moved to in #1711. Under 0.6.0
+# the pycon fences pass `rhiza-test` without being run, because 0.6.0 only knows the legacy
+# ```python + ```result pair and finds none of them left.
+pytest-rhiza = "pytest-rhiza==0.7.0"
 
 # Restores this repo's own book override, which the migration to the shim dropped. The old root
 # Makefile carried `MKDOCS_EXTRA_PACKAGES = --with 'mkdocstrings[python]'` above the include, and
