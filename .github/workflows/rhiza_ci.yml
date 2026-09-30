@@ -349,7 +349,7 @@ jobs:
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          # README validation executes the ```python fences, and a consumer's example
+          # README validation doctests the ```pycon fences, and a consumer's example
           # reads the demo data that ships with the repo. Without this the pointer file
           # reaches the reader and the check dies on content, not on the repo being wrong
           # -- polars reports `parquet: File out of specification: The file must end with
