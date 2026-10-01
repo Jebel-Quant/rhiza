@@ -103,9 +103,9 @@ and named Python gates in `all`. That half now lives in a **language layer** bun
 and every profile pairs `core` with exactly one: `python-core`, `rust-core` or
 `go-core`.
 
-The contract between them is a set of **target names**. `book.mk`, `test.mk`, the CI
-workflows and the release pipeline all call `make install` without knowing what the
-project is written in, so a layer must define:
+The contract between them is a set of **target names**. The CI workflows and the release
+pipeline call `make install` without knowing what the project is written in — as the
+retired `book.mk` and `test.mk` fragments did — so a layer must define:
 
 | target | owned by | means |
 | --- | --- | --- |
@@ -234,11 +234,12 @@ list instead (the source folder, plus the marimo folder when the marimo tasks ar
 and `DEPTRY_IGNORE` survives as the `deptry-ignore` setting because it names deptry's own
 arguments rather than a scope.
 
-**Where each Python gate looks, and how to add a folder.** python-core's four path-scoped
-gates take their folder list from an accumulator, all seeded from `SOURCE_FOLDER` when it
-exists: `TYPECHECK_FOLDERS`, `BANDIT_FOLDERS`, `DOCSTRING_FOLDERS` and the older
-`DEPTRY_FOLDERS`/`DEPTRY_IGNORE` pair. A bundle or a consuming `Makefile`/`local.mk` adds
-a folder by appending, the way marimo.mk contributes its notebooks.
+**Where each Python gate looked under the make layer, and how a folder was added.**
+python-core's four path-scoped gates took their folder list from an accumulator, all seeded
+from `SOURCE_FOLDER` when it existed: `TYPECHECK_FOLDERS`, `BANDIT_FOLDERS`,
+`DOCSTRING_FOLDERS` and the older `DEPTRY_FOLDERS`/`DEPTRY_IGNORE` pair. A bundle or a
+consuming `Makefile`/`local.mk` added a folder by appending, the way the retired marimo.mk
+contributed its notebooks.
 
 Only `deps` had that shape before #1505; the other three hard-coded `SOURCE_FOLDER`, so
 Python kept *outside* the source root was unreachable by three of the four static gates.
@@ -249,25 +250,26 @@ behind `make sync-self` and the `sync-self-check` drift check) was contributed f
 `.rhiza/make.d/bundles.mk`, a mother-repo-only fragment, because the root `Makefile` could
 not hold it while it was a dogfood symlink into `bundles/core/`.
 
-**All of that is now history for this repo**, though the accumulators still ship. rhiza runs
+**All of that is now history**, and the accumulators no longer ship: core carries no `.mk`
+fragment at all. rhiza runs
 on the rhiza-task shim, whose config has no accumulators at all: every path-scoped gate reads
 one `source_folder`, and `pyproject.toml` declares `source-folder = "utils"`. Six `+=` lines
 became one setting. `tests/utils/test_gate_scope.py` still asserts the outcome rather than the
 wiring — the folder must exist and hold Python — which is why it survived the migration when
 the assertions it made did not.
 
-One consequence worth knowing when reading `make -n`: the folder list is expanded by
-**make**, not by the recipe's shell, so a dry run shows the real scope. The `[ -d ... ]`
-form it replaced printed its warning whether or not the branch would fire, which made a
+One consequence that mattered when reading `make -n` on that layer: the folder list was
+expanded by **make**, not by the recipe's shell, so a dry run showed the real scope. The
+`[ -d ... ]` form it replaced printed its warning whether or not the branch would fire, which made a
 dry run's warnings meaningless as evidence either way. Note that this cuts both ways when
 writing an assertion: a dry run prints *both* arms of an `if`, so the presence of a skip
 message proves nothing — only the expanded folder list does.
 
-**The `SOURCE_FOLDER` seed is deferred, and where you set the variable no longer matters.**
-Each accumulator appends `$(wildcard $(SOURCE_FOLDER))` rather than sitting inside an
-`ifneq ($(wildcard $(SOURCE_FOLDER)),)`. `?=` makes these *recursive* variables, so the
-appended text is expanded when a gate reads it — after every makefile has been parsed —
-whereas an `ifneq` is decided where it is written, while python.mk is still being read.
+**The `SOURCE_FOLDER` seed was deferred, so where you set the variable stopped mattering.**
+Each accumulator appended `$(wildcard $(SOURCE_FOLDER))` rather than sitting inside an
+`ifneq ($(wildcard $(SOURCE_FOLDER)),)`. `?=` made these *recursive* variables, so the
+appended text was expanded when a gate read it — after every makefile had been parsed —
+whereas an `ifneq` is decided where it is written, while python.mk was still being read.
 
 That difference was load-bearing until #1534, because the root `Makefile` reads `local.mk`
 *after* `include .rhiza/rhiza.mk`. A project whose source root is not `src/` and which set
@@ -281,13 +283,13 @@ include — is read *before* python.mk is parsed, so none of them could see it.
 `tests/api/test_make_variable_overrides.py::TestSourceFolderFromLocalMk` now pins all five
 gates against a `local.mk`-declared source root.
 
-Appending has always worked from `local.mk` and still does; it was only *setting*
-`SOURCE_FOLDER` that was position-dependent.
+Appending always worked from `local.mk`; it was only *setting* `SOURCE_FOLDER` that was
+position-dependent.
 
 **Where a project's settings live — and why core ships no `.rhiza/.env`.** It used to,
 and the file was pure liability. Its entire payload was `SOURCE_FOLDER=src` and
-`MARIMO_FOLDER=docs/notebooks`, both *identical* to the `?=` defaults in `rhiza.mk`
-directly below the include — so it carried no information any reader could act on. What it
+`MARIMO_FOLDER=docs/notebooks`, both *identical* to the `?=` defaults the retired
+`rhiza.mk` declared directly below the include — so it carried no information any reader could act on. What it
 did carry was precedence: a makefile assignment outranks an exported environment variable
 in GNU make (only a command-line `make VAR=...` beats it), so naming a variable in that
 file took it out of reach of every caller that exported it. That is the whole mechanism of
@@ -301,8 +303,8 @@ rhiza-task's five-layer order (defaults → `.rhiza/.env` → `pyproject.toml` �
 environment → CLI flags), typed by TOML rather than parsed out of strings. Two caveats
 worth knowing before moving anything there:
 
-- **`rhiza.mk` does not read it**, so the table is inert in a repo still on the synced make
-  layer — it resolves settings through `?=`, its `Makefile` and `.rhiza/.env` — and only
+- **The retired `rhiza.mk` never read it**, so the table is inert in a consumer still on the
+  synced make layer — it resolves settings through `?=`, its `Makefile` and `.rhiza/.env` — and only
   starts working when that repo syncs past #1556. The mirror image applies once it has: the
   `Makefile` is template-owned, so a setting cannot live *there* either, and the surfaces are
   this table, `.rhiza/.env` (gitignored, so developer-local only) and `RHIZA_*` in the
@@ -320,7 +322,8 @@ worth knowing before moving anything there:
   `uvx rhiza-task print <setting>` in a directory holding only a `rhiza.toml` resolves from
   it.
 
-`.rhiza/.env` itself stays supported and `rhiza.mk` still `-include`s it — what changed is
+`.rhiza/.env` itself stays supported — rhiza-task reads it, as `rhiza.mk` used
+to `-include` it — and what changed is
 that the file is now unambiguously **repo-owned**, which also resolves the standing
 contradiction with "never modify files in `.rhiza/`".
 
@@ -504,22 +507,26 @@ synced into `.rhiza/tests/`, one file per bundle that owned an assertion. They a
 [pytest-rhiza](https://github.com/jebel-quant/pytest-rhiza), installed by the gate. What
 changed is only the delivery — the ownership model is identical, and deliberately so.
 
-**Ownership still lives with the bundle, as a `RHIZA_CHECKS` accumulator.** core's
-`quality.mk` declares it and seeds the two language-neutral checks; `python-core`,
-`rust-core`, `go-core` and `tests` each append their own. One `+=` line per bundle replaces
-one synced file per bundle, so which checks apply is still resolved *at sync time* by which
-bundles a project selected — nothing sniffs the manifest at runtime to decide, which is
-what keeps a misconfigured repo going red instead of quietly skipping a check.
+**Ownership follows the language layer, and it is a derivation in rhiza-task now.** Under
+the make layer it was a `RHIZA_CHECKS` accumulator: core's `quality.mk` declared it and
+seeded the language-neutral checks, and `python-core`, `rust-core`, `go-core` and the
+since-removed `tests` bundle each appended their own — one `+=` line per bundle in place of
+one synced file per bundle. rhiza-task replaced the accumulator with `rhiza_checks_for()`:
+three neutral checks plus the ones each active layer contributes. The layer set comes from
+the `layers` setting, or — when that is unset — from detecting which manifests are present,
+which is the runtime manifest-sniffing the sync-time accumulator used to avoid. This repo
+therefore declares `layers = ["python"]` in `[tool.rhiza-task]`, so a misconfigured
+checkout goes red rather than quietly getting a different check set.
 
-| check | contributed by | replaces |
+| check | selected for | replaces |
 | --- | --- | --- |
-| `test_readme` | core | `.rhiza/tests/test_readme.py` |
-| `test_release_tags` | core | `.rhiza/tests/test_release_tags.py` |
-| `test_pyproject` | python-core | `.rhiza/tests/test_pyproject.py` |
-| `test_docstrings` | python-core | `.rhiza/tests/test_docstrings.py` |
-| `test_readme_validation` | tests | `.rhiza/tests/test_readme_validation.py` |
-| `test_cargo_toml` | rust-core | `.rhiza/tests/test_cargo_toml.py` |
-| `test_go_module` | go-core | `.rhiza/tests/test_go_module.py` |
+| `test_readme` | neutral | `.rhiza/tests/test_readme.py` |
+| `test_release_tags` | neutral | `.rhiza/tests/test_release_tags.py` |
+| `test_readme_validation` | neutral (the removed `tests` bundle's, before #1632) | `.rhiza/tests/test_readme_validation.py` |
+| `test_pyproject` | python layer | `.rhiza/tests/test_pyproject.py` |
+| `test_docstrings` | python layer | `.rhiza/tests/test_docstrings.py` |
+| `test_cargo_toml` | rust layer | `.rhiza/tests/test_cargo_toml.py` |
+| `test_go_module` | go layer | `.rhiza/tests/test_go_module.py` |
 
 Five costs of the copy went with it: seven template-owned files in every consumer's tree;
 `pythonpath = .rhiza/tests` in `pytest.ini`, which existed only so the synced suite could
@@ -541,9 +548,12 @@ Three details are worth knowing before editing this:
   both halves resolve.
 - **The version is pinned, and the pin travels in the template.** File-copy delivery had
   one virtue: a repo synced at a release ran exactly that release's assertions.
-  `RHIZA_CHECKS_VERSION` in `quality.mk` keeps that property — one number, bumped here and
+  `RHIZA_CHECKS_VERSION` in the retired `quality.mk` kept that property; rhiza-task's
+  `pytest-rhiza` setting keeps it now. Its default is fixed per rhiza-task release, so the
+  `RHIZA_TASK` pin in the template-owned `Makefile` carries it — one number, bumped here and
   delivered by the next sync — rather than letting the checks and the template drift on two
-  independent version axes. A consumer who wants to lead or lag overrides it.
+  independent version axes. A consumer who wants to lead or lag sets `pytest-rhiza` in
+  `[tool.rhiza-task]`, as this repo does.
 - **The gate prints its resolved check list, and the tests assert on that line.** Under
   `--pyargs`, pytest reports node ids with **no file name at all**, so grepping a run's
   output for a module's filename proves nothing either way — which is what the e2e and
@@ -640,7 +650,7 @@ be committed, and a consumer whose CI calls its own target is in exactly the sam
 fifth, `gitlab-docker-test`, lived there too and is gone — see **CI/CD** below.
 
 **And why `rhiza-test` is no longer wrapped.** pytest-rhiza's `test_docstrings` reads its scope
-from the `RHIZA_DOCTEST_FOLDERS` environment variable; `quality.mk` exported it from
+from the `RHIZA_DOCTEST_FOLDERS` environment variable; the retired `quality.mk` exported it from
 `DOCSTRING_FOLDERS`, and rhiza-task 0.3.0 did not (Jebel-Quant/rhiza-task#18). On a bare delegation
 the check reported `SKIPPED  No doctest folder found (looked for: src)` while the gate still said
 `ok rhiza-test` — #1517 exactly, this repo's only doctest examples unchecked behind a green gate.
@@ -673,8 +683,8 @@ default for `mkdocs-extra-packages`, which this repo's `pyproject.toml` now mere
 > **The hook runner is [prek](https://github.com/j178/prek), not pre-commit.** It reads the
 > same `.pre-commit-config.yaml` — all four of them are unchanged, and Renovate still
 > manages hook versions from that file — so this is a runner swap, not a config change
-> (ADR 0009 carries the amendment). Two things are worth knowing before editing
-> `quality.mk`:
+> (ADR 0009 carries the amendment). Some history worth knowing before changing how `fmt`
+> invokes prek (the recipe lived in `quality.mk` then; it is rhiza-task's `fmt` task now):
 >
 > - **`make fmt` passes `--config .pre-commit-config.yaml` deliberately.** prek otherwise
 >   treats *every* nested `.pre-commit-config.yaml` as a separate project and runs each
