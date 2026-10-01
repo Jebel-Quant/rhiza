@@ -367,23 +367,10 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
-      # RHIZA_DOCTEST_FOLDERS is exported rather than left to pytest-rhiza's own
-      # fallback, which is SOURCE_FOLDER in `.rhiza/.env` and then the literal `src`.
-      # rhiza-task does not pass its resolved `source_folder` through to the check
-      # (Jebel-Quant/rhiza-task#18), so without this `test_docstrings` reports
-      #
-      #   SKIPPED  No doctest folder found (looked for: src)
-      #
-      # while the gate still exits 0 -- #1517 exactly: doctest examples unchecked behind a
-      # green gate. The mother repo's Makefile wraps the target for this reason, but that
-      # wrapper is repo-owned and no consumer ever had it, so every consumer running this
-      # workflow had the silent skip. Doing it here fixes it for all of them at once.
       - name: Run the rhiza repository checks
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
-        run: |
-          RHIZA_DOCTEST_FOLDERS="$(uvx "$RHIZA_TASK" print source_folder)" \
-            uvx "$RHIZA_TASK" rhiza-test
+        run: uvx "$RHIZA_TASK" rhiza-test
 
   pre-commit:
     name: Pre-commit hooks
