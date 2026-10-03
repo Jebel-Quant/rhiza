@@ -433,23 +433,20 @@ Worked examples: [CUSTOMIZATION.md](docs/guides/CUSTOMIZATION.md) and
 
 ### Documentation Examples
 
-README code blocks are executable documentation. `make rhiza-test` runs each `python` fence and diffs its output against the `result` block that
-follows, so an example cannot quietly stop working.
+README code blocks are executable documentation. Examples are `pycon` fences in `>>>` notation, and `make rhiza-test` runs
+them as a doctest, so the output shown under each prompt is checked and an example cannot quietly stop working.
 
-```python
-# Example code block
-import math
+```pycon
+>>> # Example code block
+>>> import math
 
-print("Hello, World!")
-print(1 + 1)
-print(round(math.pi, 2))
-print(round(math.cos(math.pi / 4.0), 2))
-```
-
-```result
+>>> print("Hello, World!")
 Hello, World!
+>>> print(1 + 1)
 2
+>>> print(round(math.pi, 2))
 3.14
+>>> print(round(math.cos(math.pi / 4.0), 2))
 0.71
 ```
 

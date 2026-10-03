@@ -18,7 +18,9 @@ Three invariants:
 2. Every ``uses:`` reference is pinned to an exact version — a full
    ``vX.Y.Z``-style tag or a 40-character commit SHA — so upgrades only
    happen through reviewed dependency-update PRs. Local actions (``./...``)
-   are exempt.
+   are exempt. A synced workflow that runs its own steps rather than delegating
+   (``rhiza_release.yml``) is held to more: full commit SHAs only, and every job
+   starts with ``step-security/harden-runner`` (#1713).
 3. Every caller stub forwards secrets **by name**, never with ``secrets: inherit``,
    and forwards exactly the secrets the called workflow declares — which in turn
    must be exactly the secrets it reads. GitHub honours ``inherit`` only when the
@@ -172,6 +174,61 @@ class TestActionPinning:
     def test_workflows_were_collected(self) -> None:
         """Guard against the collector silently matching nothing."""
         assert len(_WORKFLOWS) >= 20, "expected to collect rhiza and bundle workflows"
+
+
+# --- Invariant 2b: synced workflows that run their own steps -----------------
+#
+# A stub's only third-party code is the reusable workflow it calls, pinned by tag
+# to a rhiza release, so the exact-tag rule above is enough for it. A synced
+# workflow that is *not* a stub runs its actions in the consumer's repository with
+# the consumer's credentials — `rhiza_release.yml` holds `id-token: write` and
+# publishes to PyPI, and cannot be a stub because Trusted Publishing validates the
+# calling file's path. A tag is mutable; a SHA is not. #1577 SHA-pinned and hardened
+# only the live `.github/workflows/` copy, which no consumer receives, so the
+# bundle copy kept tag pins that then aged behind the live ones (#1713).
+#
+# Deliberately no assertion that the bundle's SHAs *equal* the live copy's: Dependabot
+# watches only `/`, so it bumps the live file alone, and an equality test would turn
+# every one of its github-actions PRs red. Keeping the two in step is #1610's question.
+
+_FULL_SHA_RE = re.compile(r"@[0-9a-f]{40}$")
+_HARDEN_RUNNER = "step-security/harden-runner@"
+
+_SELF_RUNNING_SYNCED = [
+    path for path in _WORKFLOWS if path.is_relative_to(_ROOT / "bundles") and not _delegates_to_reusable(_load(path))
+]
+_SELF_RUNNING_IDS = [str(p.relative_to(_ROOT)) for p in _SELF_RUNNING_SYNCED]
+
+
+class TestSelfRunningSyncedWorkflows:
+    """Synced workflows that run their own steps are SHA-pinned and harden every job."""
+
+    def test_self_running_synced_workflows_were_collected(self) -> None:
+        """The invariant is vacuous if discovery finds nothing — rhiza_release.yml must be found."""
+        names = {p.name for p in _SELF_RUNNING_SYNCED}
+        assert "rhiza_release.yml" in names, f"expected rhiza_release.yml among {sorted(names)}"
+
+    @pytest.mark.parametrize("workflow_file", _SELF_RUNNING_SYNCED, ids=_SELF_RUNNING_IDS)
+    def test_uses_refs_are_full_shas(self, workflow_file: Path) -> None:
+        """Every third-party uses: ref is a 40-character commit SHA, never a tag."""
+        unpinned = [
+            ref for ref in _uses_refs(_load(workflow_file)) if not ref.startswith("./") and not _FULL_SHA_RE.search(ref)
+        ]
+        assert not unpinned, (
+            f"{workflow_file.relative_to(_ROOT)}: {unpinned} are not SHA-pinned. This workflow runs "
+            f"its steps in every consumer with their credentials, so pin each to a full commit SHA "
+            f"with a `# vX.Y.Z` comment, as the live .github/workflows/ copy does"
+        )
+
+    @pytest.mark.parametrize("workflow_file", _SELF_RUNNING_SYNCED, ids=_SELF_RUNNING_IDS)
+    def test_every_job_hardens_the_runner_first(self, workflow_file: Path) -> None:
+        """Each step-running job's first step is step-security/harden-runner."""
+        unhardened = [
+            job_id
+            for job_id, job in (_load(workflow_file).get("jobs") or {}).items()
+            if job.get("steps") and not job["steps"][0].get("uses", "").startswith(_HARDEN_RUNNER)
+        ]
+        assert not unhardened, f"{workflow_file.relative_to(_ROOT)}: jobs {unhardened} do not start with harden-runner"
 
 
 # --- Invariant 3: secrets are forwarded by name ------------------------------

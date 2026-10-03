@@ -58,7 +58,7 @@ permissions:
 # from a consumer's `RHIZA_TASK`, which this workflow cannot see: it tracks the tag the
 # workflow is called at.
 env:
-  RHIZA_TASK: rhiza-task@1.7.0
+  RHIZA_TASK: rhiza-task@1.8.1
 
   # The LaTeX engine `book`'s `paper` prerequisite needs. Without it that prerequisite
   # *skips* -- `skipped  paper  tectonic not found` -- and `book` still reports ok, so the
@@ -90,6 +90,34 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           lfs: true
+
+      # `book` requires a root `mkdocs.yml` and, without one, *skips* -- `skipped  book  no
+      # mkdocs.yml`, exit 0 -- so `_book/` is never written and the first thing to notice is
+      # an upload step's `tar: _book/: Cannot open`, two steps and one tool away from the
+      # cause (#1699). `docs/mkdocs-base.yml` does not stand in for it: it is read only
+      # through `INHERIT:` from a root config and declares no site of its own (#1633).
+      # Failing here rather than skipping the rest of the job is deliberate: a repository
+      # that runs this workflow has asked for a book, and a green run that published none
+      # is the silent-green shape of #1505 and #1516.
+      - name: Require a root mkdocs.yml
+        run: |
+          if [ ! -f mkdocs.yml ]; then
+            msg="No root mkdocs.yml: the book cannot be built. Add one that inherits the synced base config -- see the header of docs/mkdocs-base.yml."
+            echo "::error file=mkdocs.yml::${msg}"
+            {
+              echo "### Book not built"
+              echo
+              echo "${msg}"
+              echo
+              echo '```yaml'
+              echo 'INHERIT: docs/mkdocs-base.yml'
+              echo 'site_name: My Project'
+              echo 'nav:'
+              echo '  - Home: index.md'
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
 
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0

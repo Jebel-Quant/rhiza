@@ -77,7 +77,7 @@ repos:
         groups: ["lint", "fast"]
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.38.0
+    rev: 0.38.2
     hooks:
       - id: check-renovate
         args: [ "--verbose" ]
@@ -94,13 +94,13 @@ repos:
         groups: ["lint", "fast"]
 
   - repo: https://github.com/betterleaks/betterleaks
-    rev: v1.8.1
+    rev: v1.9.0
     hooks:
       - id: betterleaks
         groups: ["security", "slow"]
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v1.3.0  # Use the latest release
+    rev: v1.3.1  # Use the latest release
     hooks:
       - id: check-rhiza-workflow-names
         groups: ["fast"]

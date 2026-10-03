@@ -30,12 +30,21 @@ pages:
   variables:
     GIT_LFS_SKIP_SMUDGE: "0"
   before_script:
+    - |
+      # `book` skips without a root mkdocs.yml, so `_book/` never exists and the job would
+      # otherwise fail at `mv _book public`, nowhere near the cause (#1699).
+      # docs/mkdocs-base.yml is read only through `INHERIT:` from that root file.
+      if [ ! -f mkdocs.yml ]; then
+        echo "No root mkdocs.yml: the book cannot be built. Add one starting with"
+        echo "'INHERIT: docs/mkdocs-base.yml' -- see the header of docs/mkdocs-base.yml."
+        exit 1
+      fi
     - apt-get update && apt-get install -y git-lfs make
     - git lfs pull
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
     - |
       # The musl build: statically linked, so it runs in whatever container $UV_IMAGE is.
-      folder=$(uvx rhiza-task@1.7.0 print paper-folder)
+      folder=$(uvx rhiza-task@1.8.1 print paper-folder)
       if [ -n "$(find "${folder}" -maxdepth 1 -name '*.tex' 2>/dev/null | head -1)" ]; then
         url="https://github.com/tectonic-typesetting/tectonic/releases/download"
         url="${url}/tectonic%40${TECTONIC_VERSION}/tectonic-${TECTONIC_VERSION}-x86_64-unknown-linux-musl.tar.gz"

@@ -19,6 +19,7 @@ verify that:
 from __future__ import annotations
 
 import re
+import subprocess  # nosec B404 - runs the workflow's own guard script
 from pathlib import Path
 
 import pytest
@@ -838,3 +839,56 @@ class TestBookWorkflow:
             "the GitLab book pipeline never checks that its nav resolves, so it can deploy a "
             "404 in the published navigation with nothing going red."
         )
+
+    @staticmethod
+    def _run_guard(script: str, cwd: Path) -> subprocess.CompletedProcess[str]:
+        """Run a guard lifted out of a workflow in ``cwd``, with a scratch step summary."""
+        summary = cwd / "summary.md"
+        return subprocess.run(  # nosec B603 B607 - fixed interpreter, script from our own workflow
+            ["bash", "-c", script],
+            cwd=cwd,
+            env={"PATH": "/usr/bin:/bin", "GITHUB_STEP_SUMMARY": str(summary)},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def test_the_book_workflow_requires_a_root_mkdocs_yml_before_building(
+        self, book_workflow_text: str, tmp_path: Path
+    ) -> None:
+        """Without a root `mkdocs.yml` the job must fail up front, saying why (#1699).
+
+        `book` *skips* in that case, so `_book/` is never written and the job used to die at
+        the Pages upload with `tar: _book/: Cannot open` -- two steps and one tool away from
+        the cause, and red on the first PR of every freshly synced `github-project` repo.
+        The guard is run rather than grepped for, in both states, and must precede the build.
+        """
+        steps = yaml.safe_load(book_workflow_text)["jobs"]["build"]["steps"]
+        runs = [s.get("run") or "" for s in steps]
+        guards = [i for i, r in enumerate(runs) if "mkdocs.yml" in r and "exit 1" in r]
+        builds = [i for i, r in enumerate(runs) if 'uvx "$RHIZA_TASK" book' in r and "book-nav" not in r]
+        assert guards, "the book workflow never checks for a root mkdocs.yml before building"
+        assert builds, "no step in the build job builds the book"
+        assert min(guards) < min(builds), "the mkdocs.yml check runs after the build it guards"
+
+        missing = self._run_guard(runs[guards[0]], tmp_path)
+        assert missing.returncode != 0, "the guard passes a repository with no mkdocs.yml"
+        assert "mkdocs.yml" in missing.stdout
+        assert "INHERIT: docs/mkdocs-base.yml" in (tmp_path / "summary.md").read_text(encoding="utf-8"), (
+            "the step summary does not show the root config the consumer has to add"
+        )
+
+        (tmp_path / "mkdocs.yml").write_text("INHERIT: docs/mkdocs-base.yml\nsite_name: x\n", encoding="utf-8")
+        present = self._run_guard(runs[guards[0]], tmp_path)
+        assert present.returncode == 0, f"the guard fails a repository that has mkdocs.yml: {present.stdout}"
+
+    def test_the_gitlab_book_pipeline_requires_a_root_mkdocs_yml(self, root: Path, tmp_path: Path) -> None:
+        """The GitLab twin failed the same way, at `mv _book public`, and gets the same guard."""
+        path = root / "bundles" / "gitlab-book" / ".gitlab" / "workflows" / "rhiza_book.yml"
+        before = yaml.safe_load(path.read_text(encoding="utf-8"))["pages"]["before_script"]
+        guards = [line for line in before if "mkdocs.yml" in line and "exit 1" in line]
+        assert guards, "the GitLab book pipeline never checks for a root mkdocs.yml"
+
+        assert self._run_guard(guards[0], tmp_path).returncode != 0
+        (tmp_path / "mkdocs.yml").write_text("site_name: x\n", encoding="utf-8")
+        assert self._run_guard(guards[0], tmp_path).returncode == 0

@@ -39,7 +39,7 @@ permissions:
 # see -- and should not: the gates a build runs must not move under it. It tracks the tag
 # this workflow is called at, the same rule the OS-matrix step below states for its pin.
 env:
-  RHIZA_TASK: rhiza-task@1.7.0
+  RHIZA_TASK: rhiza-task@1.8.1
 
 on:
   push:
@@ -130,7 +130,7 @@ jobs:
             ${{ github.repository == 'jebel-quant/rhiza'
                 && '["ubuntu-latest","macos-latest"]' || '' }}
         run: |
-          OS_MATRIX=$(uvx rhiza-task@1.7.0 ci-os-matrix)
+          OS_MATRIX=$(uvx rhiza-task@1.8.1 ci-os-matrix)
           echo "list=$OS_MATRIX" >> "$GITHUB_OUTPUT"
 
       - name: Debug OS matrix
@@ -349,7 +349,7 @@ jobs:
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          # README validation executes the ```python fences, and a consumer's example
+          # README validation doctests the ```pycon fences, and a consumer's example
           # reads the demo data that ships with the repo. Without this the pointer file
           # reaches the reader and the check dies on content, not on the repo being wrong
           # -- polars reports `parquet: File out of specification: The file must end with
@@ -367,23 +367,10 @@ jobs:
         with:
           token: ${{ secrets.GH_PAT }}
 
-      # RHIZA_DOCTEST_FOLDERS is exported rather than left to pytest-rhiza's own
-      # fallback, which is SOURCE_FOLDER in `.rhiza/.env` and then the literal `src`.
-      # rhiza-task does not pass its resolved `source_folder` through to the check
-      # (Jebel-Quant/rhiza-task#18), so without this `test_docstrings` reports
-      #
-      #   SKIPPED  No doctest folder found (looked for: src)
-      #
-      # while the gate still exits 0 -- #1517 exactly: doctest examples unchecked behind a
-      # green gate. The mother repo's Makefile wraps the target for this reason, but that
-      # wrapper is repo-owned and no consumer ever had it, so every consumer running this
-      # workflow had the silent skip. Doing it here fixes it for all of them at once.
       - name: Run the rhiza repository checks
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
-        run: |
-          RHIZA_DOCTEST_FOLDERS="$(uvx "$RHIZA_TASK" print source_folder)" \
-            uvx "$RHIZA_TASK" rhiza-test
+        run: uvx "$RHIZA_TASK" rhiza-test
 
   pre-commit:
     name: Pre-commit hooks
