@@ -17,17 +17,21 @@ _PATHS = (
     ".github/workflows/rhiza_release.yml",
     "bundles/github/.github/workflows/rhiza_release.yml",
 )
+_HELPER = Path("bundles/github/.rhiza/scripts/release_publish.py")
 
 
 @pytest.fixture(params=_PATHS)
 def workflow(request, tmp_path):
-    """Load each workflow and materialize its own checked-out helper as sync does."""
-    source = _ROOT if request.param == _PATHS[0] else _ROOT / "bundles/github"
-    script = Path(".rhiza/scripts/release_publish.py")
-    (tmp_path / script).parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(source / script, tmp_path / script)
-    assert not (tmp_path / script).is_symlink()
-    return yaml.safe_load((_ROOT / request.param).read_text())
+    """Load each workflow and materialize its independent sparse tooling checkout."""
+    definition = yaml.safe_load((_ROOT / request.param).read_text())
+    checkout = _step(definition, "pypi", "Checkout publisher guards")["with"]
+    script = tmp_path / checkout["path"] / _HELPER
+    script.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(_ROOT / _HELPER, script)
+    assert not script.is_symlink()
+    # The API autouse fixture syncs today's bundles; model an older caller instead.
+    (tmp_path / ".rhiza/scripts/release_publish.py").unlink(missing_ok=True)
+    return definition
 
 
 def _step(workflow, job, name):
@@ -358,6 +362,7 @@ def test_publisher_contract_and_order(workflow):
     names = [step["name"] for step in steps]
     ordered = [
         "Checkout Code",
+        "Checkout publisher guards",
         "Validate publisher configuration",
         "Download dist artifact",
         "Require built distributions",
@@ -370,7 +375,9 @@ def test_publisher_contract_and_order(workflow):
         ("Require built distributions", "require-distributions"),
         ("Validate publisher artifact URL", "validate-artifact-url"),
     ):
-        assert _step(workflow, "pypi", name)["run"].strip() == f"python3 .rhiza/scripts/release_publish.py {command}"
+        assert _step(workflow, "pypi", name)["run"].strip() == (
+            f"python3 .rhiza-release-tools/bundles/github/.rhiza/scripts/release_publish.py {command}"
+        )
     download = _step(workflow, "pypi", "Download dist artifact")
     draft_download = _step(workflow, "draft-release", "Download dist artifact")
     assert not draft_download.get("continue-on-error")
@@ -497,6 +504,66 @@ def test_no_package_metadata_is_required_when_disabled(workflow, tmp_path, mode,
     finalise = workflow["jobs"]["finalise-release"]
     assert all("uv sync" not in step.get("run", "") for step in finalise["steps"])
     assert _condition(finalise["if"], {f"needs.{job}.result": "success" for job in finalise["needs"]})
+
+
+@pytest.mark.parametrize("caller_helper", [None, "raise RuntimeError('wrong caller helper')\n"])
+@pytest.mark.parametrize("mode", ["", "custom", "none"])
+def test_caller_helper_is_never_required_or_executed(workflow, tmp_path, caller_helper, mode):
+    """Old tags and unsynced or incompatible caller helpers cannot break publishing guards."""
+    helper = tmp_path / ".rhiza/scripts/release_publish.py"
+    if caller_helper is not None:
+        helper.parent.mkdir(parents=True, exist_ok=True)
+        helper.write_text(caller_helper)
+    result, output = _plan(workflow, tmp_path, mode=mode)
+    assert result.returncode == 0, result.stderr
+    assert output["publisher"] == (mode or "pypi")
+    assert output["should_publish"] == str(mode != "none").lower()
+    assert helper.exists() == (caller_helper is not None)
+    if caller_helper is not None:
+        assert helper.read_text() == caller_helper
+
+
+def test_tooling_checkout_is_immutable_and_independent(workflow):
+    """The already-published provider revision is distinct from the caller's tag checkout."""
+    caller = _step(workflow, "pypi", "Checkout Code")
+    tools = _step(workflow, "pypi", "Checkout publisher guards")
+    assert tools["uses"] == caller["uses"]
+    assert tools["with"] == {
+        "repository": "jebel-quant/rhiza",
+        "ref": tools["with"]["ref"],
+        "path": ".rhiza-release-tools",
+        "sparse-checkout": "bundles/github/.rhiza/scripts",
+        "persist-credentials": False,
+    }
+    assert re.fullmatch(r"[0-9a-f]{40}", tools["with"]["ref"])
+    assert "path" not in caller["with"]
+    assert caller["with"]["ref"] == "refs/tags/${{ needs.tag.outputs.tag }}"
+    assert not tools.get("if")
+    assert not tools.get("continue-on-error")
+    assert not workflow.get("defaults", {}).get("run", {}).get("working-directory")
+    assert not workflow["jobs"]["pypi"].get("defaults", {}).get("run", {}).get("working-directory")
+    for step in workflow["jobs"]["pypi"]["steps"]:
+        assert "working-directory" not in step
+
+
+def test_pinned_helper_matches_tested_source(workflow):
+    """When history is available, the immutable tooling pin must contain the tested implementation."""
+    revision = _step(workflow, "pypi", "Checkout publisher guards")["with"]["ref"]
+    available = subprocess.run(
+        ["git", "cat-file", "-e", f"{revision}^{{commit}}"],
+        cwd=_ROOT,
+        capture_output=True,
+        check=False,
+    )
+    if available.returncode:
+        pytest.skip("Pinned tooling commit unavailable in this checkout; requires full git history")
+    result = subprocess.run(
+        ["git", "show", f"{revision}:{_HELPER.as_posix()}"],
+        cwd=_ROOT,
+        capture_output=True,
+        check=True,
+    )
+    assert result.stdout == (_ROOT / _HELPER).read_bytes()
 
 
 @pytest.mark.parametrize("mode", ["custom", "none"])

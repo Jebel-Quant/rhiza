@@ -559,6 +559,17 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
+      - name: Checkout publisher guards
+        # Independent of the caller's release tag: old tags need not contain helpers.
+        # Upgrade only to an already-published immutable script revision, never a future release tag.
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          repository: jebel-quant/rhiza
+          ref: 3819c35933d428626076e87345de59b81bb161ed
+          path: .rhiza-release-tools
+          sparse-checkout: bundles/github/.rhiza/scripts
+          persist-credentials: false
+
       - name: Validate publisher configuration
         id: publisher
         env:
@@ -567,7 +578,7 @@ jobs:
           BUILDABLE: ${{ needs.build.outputs.buildable }}
           TAG: ${{ needs.tag.outputs.tag }}
         run: |
-          python3 .rhiza/scripts/release_publish.py validate-publisher
+          python3 .rhiza-release-tools/bundles/github/.rhiza/scripts/release_publish.py validate-publisher
 
       - name: Download dist artifact
         if: steps.publisher.outputs.should_publish == 'true'
@@ -581,7 +592,7 @@ jobs:
         env:
           ARTIFACTS_DIR: ${{ github.workspace }}/release-dist
         run: |
-          python3 .rhiza/scripts/release_publish.py require-distributions
+          python3 .rhiza-release-tools/bundles/github/.rhiza/scripts/release_publish.py require-distributions
 
       - name: Remove non-distribution files before publish
         # The dist artifact also carries the SLSA provenance bundle (staged for
@@ -620,7 +631,7 @@ jobs:
         env:
           ARTIFACT_URL: ${{ steps.custom_publish.outputs.artifact-url }}
         run: |
-          python3 .rhiza/scripts/release_publish.py validate-artifact-url
+          python3 .rhiza-release-tools/bundles/github/.rhiza/scripts/release_publish.py validate-artifact-url
 
   conda:
     name: Generate Conda Recipe

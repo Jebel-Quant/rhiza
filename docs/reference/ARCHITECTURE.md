@@ -178,12 +178,19 @@ publishing action, or actual distribution files is an error. An expected artifac
 that fails to download is also an error, not a successful skip.
 
 Publisher selection, distribution-presence checks and public artifact-URL validation
-live in `.rhiza/scripts/release_publish.py`, delivered by the `github` bundle.
-The authoritative source is `bundles/github/.rhiza/scripts/release_publish.py`;
-the mother repository uses a relative symlink to that source. Both release workflows
-call the same command-line entry point rather than embedding Python implementations
-in YAML. The module can be imported by unit tests and scanned as ordinary Python,
-while workflow integration tests check the commands and downstream file delivery.
+are implemented in `bundles/github/.rhiza/scripts/release_publish.py`; the mother
+repository's `.rhiza/scripts/release_publish.py` is a relative symlink to that source.
+Both release workflows independently sparse-check out an already-published, immutable
+Rhiza commit into `.rhiza-release-tools`, with credentials persistence disabled, and
+invoke its helper without changing the caller's working directory. Old release tags
+and callers that have not synced the helper therefore remain supported; a caller's
+own helper is never used. To upgrade the guards, first publish the new script revision,
+then update the tooling checkout SHA in both workflows. This pin is deliberately not
+an automatically bumped self-referential release tag.
+
+The dependency-free module is directly unit-tested and scanned as ordinary Python.
+Workflow integration tests exercise the commands with absent or incompatible caller
+helpers and verify the independent checkout contract.
 
 ### Repository-owned publishing action
 
