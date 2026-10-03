@@ -457,9 +457,10 @@ def test_reusable_tag_is_passed_without_shell_interpolation(workflow, tmp_path, 
 
 
 def test_no_placeholder_publisher_is_shipped():
-    """Selecting custom without a repository implementation must never pass via a stub."""
+    """Every bundle leaves both custom-action metadata paths owned by the repository."""
     assert not (_ROOT / ".github/actions/release-publish").exists()
-    assert not (_ROOT / "bundles/github/.github/actions/release-publish").exists()
+    for bundle in (_ROOT / "bundles").iterdir():
+        assert not (bundle / ".github/actions/release-publish").exists()
 
 
 @pytest.mark.parametrize(("mode", "buildable", "success"), [("", "false", True), ("none", "true", True)])
