@@ -177,6 +177,14 @@ continues to skip publication. Selecting `custom` without a buildable package, a
 publishing action, or actual distribution files is an error. An expected artifact
 that fails to download is also an error, not a successful skip.
 
+Publisher selection, distribution-presence checks and public artifact-URL validation
+live in `.rhiza/scripts/release_publish.py`, delivered by the `github` bundle.
+The authoritative source is `bundles/github/.rhiza/scripts/release_publish.py`;
+the mother repository uses a relative symlink to that source. Both release workflows
+call the same command-line entry point rather than embedding Python implementations
+in YAML. The module can be imported by unit tests and scanned as ordinary Python,
+while workflow integration tests check the commands and downstream file delivery.
+
 ### Repository-owned publishing action
 
 Commit a composite action at `.github/actions/release-publish/action.yml` in the

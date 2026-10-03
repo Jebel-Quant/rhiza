@@ -556,67 +556,7 @@ jobs:
           BUILDABLE: ${{ needs.build.outputs.buildable }}
           TAG: ${{ needs.tag.outputs.tag }}
         run: |
-          python3 - <<'PY'
-          import ipaddress
-          import os
-          import re
-          import tomllib
-          from pathlib import Path
-          from urllib.parse import urlsplit
-
-          def fail(message):
-              raise SystemExit("::error::" + message)
-
-          mode = os.environ["RELEASE_PUBLISHER"] or "pypi"
-          if mode not in {"pypi", "custom", "none"}:
-              fail("RELEASE_PUBLISHER must be pypi, custom, or none")
-          buildable = os.environ["BUILDABLE"]
-          if buildable not in {"true", "false"}:
-              fail("Missing or invalid buildable output")
-          publish = mode != "none" and buildable == "true"
-          if mode == "pypi" and publish:
-              with Path("pyproject.toml").open("rb") as stream:
-                  project = tomllib.load(stream).get("project", {})
-              publish = "Private :: Do Not Upload" not in project.get("classifiers", [])
-          endpoint = os.environ["PYPI_REPOSITORY_URL"]
-          if mode == "pypi" and publish and endpoint:
-              try:
-                  url = urlsplit(endpoint)
-                  host = url.hostname or ""
-                  try:
-                      ipaddress.ip_address(host)
-                      valid_host = True
-                  except ValueError:
-                      valid_host = (
-                          len(host) <= 253
-                          and all(re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", label)
-                                  for label in host.removesuffix(".").split("."))
-                      )
-                  valid = (
-                      url.scheme == "https" and url.netloc and not url.username
-                      and not url.password and "@" not in url.netloc
-                      and valid_host
-                      and not any(c.isspace() or ord(c) < 32 or ord(c) == 127 or c in '<>\\`"'
-                                  for c in endpoint)
-                      and (url.port is None or 1 <= url.port <= 65535)
-                      and not url.netloc.endswith(":")
-                  )
-              except ValueError:
-                  valid = False
-              if not valid:
-                  fail("Invalid PYPI_REPOSITORY_URL; expected a credential-free HTTPS endpoint")
-          if mode == "custom":
-              if not publish:
-                  fail("Custom publishing requires a buildable Python package")
-              action = Path(".github/actions/release-publish")
-              if not any((action / name).is_file() for name in ("action.yml", "action.yaml")):
-                  fail("Custom publishing requires .github/actions/release-publish/action.yml or action.yaml")
-          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              print(f"publisher={mode}", file=output)
-              print(f"should_publish={str(publish).lower()}", file=output)
-              print(f"public_pypi={str(publish and mode == 'pypi' and not endpoint).lower()}", file=output)
-              print(f"version={os.environ['TAG'].removeprefix('v')}", file=output)
-          PY
+          python3 .rhiza/scripts/release_publish.py validate-publisher
 
       - name: Download dist artifact
         if: steps.publisher.outputs.should_publish == 'true'
@@ -630,14 +570,7 @@ jobs:
         env:
           ARTIFACTS_DIR: ${{ github.workspace }}/release-dist
         run: |
-          python3 - <<'PY'
-          import os
-          from pathlib import Path
-
-          dist = Path(os.environ["ARTIFACTS_DIR"])
-          if not any(p.is_file() for pattern in ("*.whl", "*.tar.gz") for p in dist.glob(pattern)):
-              raise SystemExit("::error::Required dist artifact contains no wheel or sdist")
-          PY
+          python3 .rhiza/scripts/release_publish.py require-distributions
 
       - name: Remove non-distribution files before publish
         # The provenance belongs to the GitHub release, not the package index.
@@ -674,43 +607,7 @@ jobs:
         env:
           ARTIFACT_URL: ${{ steps.custom_publish.outputs.artifact-url }}
         run: |
-          python3 - <<'PY'
-          import ipaddress
-          import os
-          import re
-          from urllib.parse import unquote, urlsplit
-
-          value = os.environ["ARTIFACT_URL"]
-          if not value:
-              raise SystemExit(0)
-          try:
-              url = urlsplit(value)
-              host = url.hostname or ""
-              try:
-                  valid_host = ipaddress.ip_address(host).is_global
-              except ValueError:
-                  valid_host = (
-                      len(host) <= 253 and "." in host and not host.endswith(".")
-                      and re.search(r"[A-Za-z]", host.rsplit(".", 1)[-1])
-                      and not host.endswith((".localhost", ".local", ".internal"))
-                      and all(re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", label)
-                              for label in host.split("."))
-                  )
-              valid = (
-                  value.startswith("https://") and url.scheme == "https" and valid_host
-                  and not url.username and not url.password and "@" not in url.netloc
-                  and (url.port is None or 1 <= url.port <= 65535)
-                  and not url.netloc.endswith(":")
-                  and not any(c.isspace() or ord(c) < 32 or ord(c) == 127 or c in '<>\\`"'
-                              for c in unquote(value))
-              )
-          except ValueError:
-              valid = False
-          if not valid:
-              raise SystemExit("::error::Publisher artifact-url must be one public credential-free HTTPS URL")
-          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              print(f"artifact_url={value}", file=output)
-          PY
+          python3 .rhiza/scripts/release_publish.py validate-artifact-url
 
   conda:
     name: Generate Conda Recipe

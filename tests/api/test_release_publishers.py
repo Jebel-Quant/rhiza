@@ -5,6 +5,7 @@ from __future__ import annotations
 import itertools
 import os
 import re
+import shutil
 import subprocess  # nosec B404 - executes repository-owned workflow scripts in fixture projects
 from pathlib import Path
 
@@ -19,8 +20,13 @@ _PATHS = (
 
 
 @pytest.fixture(params=_PATHS)
-def workflow(request):
-    """Load each real workflow copy independently."""
+def workflow(request, tmp_path):
+    """Load each workflow and materialize its own checked-out helper as sync does."""
+    source = _ROOT if request.param == _PATHS[0] else _ROOT / "bundles/github"
+    script = Path(".rhiza/scripts/release_publish.py")
+    (tmp_path / script).parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source / script, tmp_path / script)
+    assert not (tmp_path / script).is_symlink()
     return yaml.safe_load((_ROOT / request.param).read_text())
 
 
@@ -351,6 +357,7 @@ def test_publisher_contract_and_order(workflow):
     steps = publisher["steps"]
     names = [step["name"] for step in steps]
     ordered = [
+        "Checkout Code",
         "Validate publisher configuration",
         "Download dist artifact",
         "Require built distributions",
@@ -358,6 +365,12 @@ def test_publisher_contract_and_order(workflow):
         "Validate publisher artifact URL",
     ]
     assert [names.index(name) for name in ordered] == sorted(names.index(name) for name in ordered)
+    for name, command in (
+        ("Validate publisher configuration", "validate-publisher"),
+        ("Require built distributions", "require-distributions"),
+        ("Validate publisher artifact URL", "validate-artifact-url"),
+    ):
+        assert _step(workflow, "pypi", name)["run"].strip() == f"python3 .rhiza/scripts/release_publish.py {command}"
     download = _step(workflow, "pypi", "Download dist artifact")
     draft_download = _step(workflow, "draft-release", "Download dist artifact")
     assert not draft_download.get("continue-on-error")
@@ -393,6 +406,10 @@ def test_publisher_contract_and_order(workflow):
         assert _condition(action["if"], values) == (mode == "custom" and publish == "true")
         assert _condition(pypi["if"], values) == (mode == "pypi" and publish == "true")
         assert _condition(download["if"], values) == (publish == "true")
+        assert _condition(_step(workflow, "pypi", "Require built distributions")["if"], values) == (publish == "true")
+        assert _condition(_step(workflow, "pypi", "Validate publisher artifact URL")["if"], values) == (
+            mode == "custom" and publish == "true"
+        )
 
 
 @pytest.mark.parametrize("message", ["", "### Published Package\n\n<https://packages.example.org/demo>"])
