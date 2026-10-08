@@ -193,6 +193,102 @@ build, validate and expose the portable `book` artifact. Deployment credentials
 and provider-specific configuration stay in the consumer repository, which
 keeps the interface general and avoids coupling Rhiza to any one host.
 
+### Consumer-owned build setup (opt-in)
+
+Set `book-setup: true` to run your own composite action at
+`.github/actions/rhiza-book-setup/action.yml`. Rhiza checks out the caller's
+`github.sha`, not the Rhiza workflow revision or a configurable branch. Setup runs
+in the build job before dependency resolution, cache restoration, and book
+generation. Values exported through `GITHUB_ENV` are available to subsequent
+steps in that job, not to a separate deployment job.
+
+The only setup credential Rhiza accepts is the optional `BOOK_SETUP_TOKEN`
+secret, passed as the action's `token` input. Map just the credential your action
+needs; do not use `secrets: inherit` or serialize the secrets context. Keep
+non-secret configuration in your consumer-owned action. Rhiza does not sync or
+provide this action. If you customize the template-owned caller stub, exclude
+`.github/workflows/rhiza_book.yml` in `.rhiza/template.yml` so a sync preserves it.
+
+For example, a notebook can read a private API using a read-only token. In your
+consumer caller (with the permissions shown above):
+
+```yaml
+jobs:
+  book:
+    uses: jebel-quant/rhiza/.github/workflows/rhiza_book.yml@<version>
+    with:
+      deploy-pages: false
+      book-setup: true
+    secrets:
+      BOOK_SETUP_TOKEN: ${{ secrets.PRIVATE_API_READ_TOKEN }}
+```
+
+Create the consumer-owned `.github/actions/rhiza-book-setup/action.yml`:
+
+```yaml
+name: Prepare private API access
+description: Configure the documentation notebook's read-only API access
+inputs:
+  token:
+    description: Read-only private API credential
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        API_TOKEN: ${{ inputs.token }}
+      run: |
+        if [ -z "$API_TOKEN" ] || [[ "$API_TOKEN" == *$'\n'* || "$API_TOKEN" == *$'\r'* ]]; then
+          echo "::error::A single-line private API token is required."
+          exit 1
+        fi
+        # Escape workflow-command characters before masking.
+        masked="${API_TOKEN//%/%25}"
+        masked="${masked//$'\r'/%0D}"
+        masked="${masked//$'\n'/%0A}"
+        printf '::add-mask::%s\n' "$masked"
+        printf 'PRIVATE_API_TOKEN=%s\n' "$API_TOKEN" >> "$GITHUB_ENV"
+        echo 'PRIVATE_API_URL=https://api.example.invalid' >> "$GITHUB_ENV"
+```
+
+The notebook reads the environment without displaying credentials:
+
+```python
+import os
+from urllib.request import Request, urlopen
+
+request = Request(
+    os.environ["PRIVATE_API_URL"] + "/public-summary",
+    headers={"Authorization": "Bearer " + os.environ["PRIVATE_API_TOKEN"]},
+)
+with urlopen(request, timeout=30) as response:
+    summary = response.read()  # Publish only data approved for documentation.
+```
+
+Use a released workflow version that includes this extension. The example URL
+and secret name are placeholders; provision the token in your own repository.
+GitHub masks passed secrets, but your action must also mask any derived
+credentials before logging or exporting them. Never enable shell tracing, echo
+tokens, embed them in notebook output, or write them into artifacts, caches, or
+committed configuration. Masking logs does **not** redact generated files.
+
+Setup is disabled by default; existing consumers need no action or token.
+Opting in without the action, or failing any setup step (including checking for
+a required token), fails the build and prevents artifact upload and deployment.
+The optional secret may be empty, so actions needing it must check it explicitly:
+an action's `required: true` input alone is not a runtime check.
+
+When setup is enabled, fork `pull_request` events and **all**
+`pull_request_target` events are rejected before checkout or secret delivery to
+the action. This remains true even if repository settings allow sending secrets
+to fork workflows. Do not work around it by checking out PR code in a privileged
+event. Use a separate uncredentialed validation call with `book-setup: false`
+(and `deploy-pages: false`) for fork PRs, or build credentialed documentation
+only on trusted pushes. Same-repository PRs may run setup: protect write access
+and review changes to the action and notebooks as credential-bearing code.
+Runs in fork repositories remain skipped by the existing build-job guard.
+
 ### Trying an unreleased Rhiza workflow
 
 To test an unreleased workflow change, exclude

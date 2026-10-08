@@ -36,6 +36,7 @@ jobs:
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+      BOOK_SETUP_TOKEN: ${{ secrets.BOOK_SETUP_TOKEN }}
     permissions:
       contents: read
       pages: write
@@ -47,3 +48,4 @@ jobs:
     # full Cloudflare Pages example.
     # with:
     #   deploy-pages: false
+    #   book-setup: true  # Opt in to the consumer-owned local setup action.
