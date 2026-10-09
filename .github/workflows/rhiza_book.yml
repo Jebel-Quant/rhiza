@@ -37,10 +37,20 @@ on:
           web server, ...). See docs/guides/BOOK.md for an example.
         type: boolean
         default: true
+      book-setup:
+        description: >-
+          Run the caller-owned .github/actions/rhiza-book-setup/action.yml
+          composite action before dependency resolution. Disabled by default;
+          rejects fork pull requests and pull_request_target. See docs/guides/BOOK.md.
+        type: boolean
+        default: false
     secrets:
       GH_PAT:
         required: false
       UV_EXTRA_INDEX_URL:
+        required: false
+      BOOK_SETUP_TOKEN:
+        description: Optional credential passed only to the consumer setup action's token input.
         required: false
 
 # Cancel superseded in-progress runs of this workflow for the same ref.
@@ -87,9 +97,37 @@ jobs:
         with:
           egress-policy: audit
 
+      - name: Validate consumer setup event
+        if: ${{ inputs.book-setup }}
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer book setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           lfs: true
+          ref: ${{ github.sha }}
+
+      - name: Require consumer setup action
+        if: ${{ inputs.book-setup }}
+        run: |
+          if [ ! -f .github/actions/rhiza-book-setup/action.yml ]; then
+            echo "::error::book-setup requires .github/actions/rhiza-book-setup/action.yml at the caller revision."
+            exit 1
+          fi
+
+      - name: Run consumer book setup
+        if: ${{ inputs.book-setup }}
+        uses: ./.github/actions/rhiza-book-setup
+        with:
+          token: ${{ secrets.BOOK_SETUP_TOKEN }}
 
       # `book` requires a root `mkdocs.yml` and, without one, *skips* -- `skipped  book  no
       # mkdocs.yml`, exit 0 -- so `_book/` is never written and the first thing to notice is
