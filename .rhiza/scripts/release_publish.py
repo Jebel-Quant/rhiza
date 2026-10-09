@@ -1,0 +1,1 @@
+../../bundles/github/.rhiza/scripts/release_publish.py
