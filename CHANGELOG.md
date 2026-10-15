@@ -5,6 +5,43 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.10.0] - 2026-10-15
+
+### New Features
+- Make release publishing extensible with PyPI defaults (#1694)
+
+### Bug Fixes
+- *(github)* SHA-pin and harden the shipped rhiza_release.yml (#1718)
+
+### Documentation
+- Write README examples as pycon doctests (#1711)
+- Describe the retired make layer in CLAUDE.md as history (#1714) (#1717)
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1704)
+- *(deps)* Update pre-commit hook astral-sh/ruff-pre-commit to v0.16.9 (#1706)
+- *(deps)* Update pre-commit hook jebel-quant/rhiza-hooks to v1.3.1 (#1708)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.12.20 (#1707)
+- *(deps)* Update pre-commit hook python-jsonschema/check-jsonschema to v0.38.2 (#1709)
+- *(deps)* Update dependency rhiza-task to v1.8.1 (#1710)
+- *(deps)* Update pytest-rhiza to v0.7.0 (#1712)
+- *(deps)* Update pre-commit hook betterleaks/betterleaks to v1.9.0 (#1720)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.12.21 (#1719)
+- *(deps)* Lock file maintenance (#1721)
+- *(deps)* Lock file maintenance (#1723)
+- *(deps)* Lock file maintenance (#1726)
+- *(deps)* Update pre-commit hook astral-sh/ruff-pre-commit to v0.17.0 (#1729)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.13.1 (#1730)
+
+### Maintenance
+- Chore(deps)(deps): bump the github-actions group with 5 updates (#1705)
+- Drop the obsolete RHIZA_DOCTEST_FOLDERS export from rhiza-test (#1715) (#1716)
+- Chore(deps)(deps): bump the github-actions group with 2 updates (#1724)
+- Chore(deps)(deps): bump the github-actions group with 9 updates (#1728)
+
+### Other Changes
+- Add opt-in consumer setup to the reusable book workflow (#1725)
+
 ## [1.9.0] - 2026-09-27
 
 ### New Features
