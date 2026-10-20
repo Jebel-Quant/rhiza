@@ -582,6 +582,7 @@ GitHub Actions workflows use the pattern `rhiza_<feature>.yml`:
 
 - `rhiza_ci.yml` - Continuous integration
 - `rhiza_release.yml` - Release automation
+- `rhiza_sync.yml` - Daily check for a newer template release; opens a sync PR
 - `rhiza_e2e.yml` - One real toolchain run per language layer
 - `rhiza_codeql.yml` - CodeQL analysis
 
