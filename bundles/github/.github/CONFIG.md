@@ -117,3 +117,60 @@ The docker workflow is the one place the runner's git configuration cannot reach
 BuildKit secrets instead, which exist only for that one instruction and are written into no
 layer; a build argument would be readable with `docker history` (#1691). See
 `docs/development/DOCKER.md` for building such an image locally.
+
+## Opt-in AWS CodeArtifact dependency consumption
+
+Rhiza now ships an optional helper action at
+`.github/actions/rhiza-codeartifact-consume/action.yml` for read-only dependency
+authentication through AWS OIDC. It is disabled by default and independent of
+`RELEASE_PUBLISHER`.
+
+Enable it with this repository variable:
+
+| Variable | Meaning |
+| --- | --- |
+| `CODEARTIFACT_CONSUMPTION_ENABLED` | Set to `true` to enable OIDC + CodeArtifact dependency credentials in supported jobs. Any other value keeps it off. |
+
+When enabled, these variables are required:
+
+| Variable | Meaning |
+| --- | --- |
+| `AWS_REGION` | AWS region for STS and CodeArtifact API calls. |
+| `AWS_ROLE_TO_ASSUME_READ` | IAM role ARN used only for dependency reads. |
+| `CODEARTIFACT_DOMAIN` | CodeArtifact domain name. |
+| `CODEARTIFACT_DOMAIN_OWNER` | AWS account ID owning the domain. |
+| `CODEARTIFACT_UV_INDEX` | uv named index to authenticate (must match your explicit index mapping). |
+
+The helper assumes the role via OIDC, requests a fresh CodeArtifact token, masks it,
+and exports:
+
+- `UV_INDEX_<NORMALIZED_INDEX>_USERNAME=aws`
+- `UV_INDEX_<NORMALIZED_INDEX>_PASSWORD=<token>`
+
+where `<NORMALIZED_INDEX>` is uppercased and non-alphanumeric characters are replaced by
+`_` to match uv's environment-variable convention.
+
+### Trust, permissions, and failure mode
+
+- Credentials are refused on `pull_request_target` and on fork pull requests.
+- Supported consuming jobs declare `id-token: write`; non-enabled runs do not assume the
+  AWS role.
+- Missing required settings or failed role/token acquisition fail closed.
+- The helper never rewrites index URLs, `pyproject.toml`, or `uv.lock`.
+
+### Workflow support matrix
+
+Supported now:
+
+- `rhiza_ci.yml` (`test`, `lowest-deps`, `typecheck`, `deptry`, `rhiza-test`,
+  `pre-commit`, `docs-coverage`, `security`, `license`)
+- `rhiza_book.yml` (book build job)
+- `rhiza_marimo.yml` (notebook execution job)
+- `rhiza_benchmark.yml`
+- `rhiza_weekly.yml` (`dep-compat-test`, `semgrep`)
+- `rhiza_release.yml` (build + SBOM dependency sync path)
+
+Not supported by this helper in this change:
+
+- `rhiza_docker.yml` and release devcontainer builds, which resolve dependencies inside
+  container builds and require BuildKit secret forwarding instead of host `GITHUB_ENV`.

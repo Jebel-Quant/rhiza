@@ -24,6 +24,7 @@ concurrency:
 permissions:
   contents: read
   actions: read
+  id-token: write
 
 # The rhiza-task pin every gate step below runs through. `make <gate>` was the old
 # interface, and v1.4.0 retired the synced make layer: `.rhiza/rhiza.mk` and the sixteen
@@ -174,6 +175,17 @@ jobs:
           version: "0.11.16"
           python-version: ${{ matrix.python-version }}
 
+      - name: Configure CodeArtifact credentials for uv named indexes
+        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-codeartifact-consume
+        with:
+          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
+          aws-region: ${{ vars.AWS_REGION }}
+          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
+          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
+          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
+          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
         with:
@@ -240,6 +252,17 @@ jobs:
         with:
           version: "0.11.16"
 
+      - name: Configure CodeArtifact credentials for uv named indexes
+        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-codeartifact-consume
+        with:
+          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
+          aws-region: ${{ vars.AWS_REGION }}
+          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
+          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
+          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
+          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
         with:
@@ -287,6 +310,17 @@ jobs:
           version: "0.11.16"
           python-version: ${{ matrix.python-version }}
 
+      - name: Configure CodeArtifact credentials for uv named indexes
+        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-codeartifact-consume
+        with:
+          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
+          aws-region: ${{ vars.AWS_REGION }}
+          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
+          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
+          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
+          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
         with:
@@ -318,6 +352,17 @@ jobs:
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           version: "0.11.16"
+
+      - name: Configure CodeArtifact credentials for uv named indexes
+        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-codeartifact-consume
+        with:
+          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
+          aws-region: ${{ vars.AWS_REGION }}
+          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
+          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
+          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
+          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -362,6 +407,17 @@ jobs:
         with:
           version: "0.11.16"
 
+      - name: Configure CodeArtifact credentials for uv named indexes
+        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-codeartifact-consume
+        with:
+          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
+          aws-region: ${{ vars.AWS_REGION }}
+          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
+          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
+          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
+          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
         with:
@@ -385,6 +441,17 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Configure CodeArtifact credentials for uv named indexes
+        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-codeartifact-consume
+        with:
+          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
+          aws-region: ${{ vars.AWS_REGION }}
+          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
+          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
+          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
+          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -430,6 +497,17 @@ jobs:
         with:
           version: "0.11.16"
 
+      - name: Configure CodeArtifact credentials for uv named indexes
+        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-codeartifact-consume
+        with:
+          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
+          aws-region: ${{ vars.AWS_REGION }}
+          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
+          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
+          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
+          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
         with:
@@ -460,6 +538,17 @@ jobs:
         with:
           version: "0.11.16"
 
+      - name: Configure CodeArtifact credentials for uv named indexes
+        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-codeartifact-consume
+        with:
+          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
+          aws-region: ${{ vars.AWS_REGION }}
+          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
+          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
+          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
+          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
         with:
@@ -488,6 +577,17 @@ jobs:
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
           version: "0.11.16"
+
+      - name: Configure CodeArtifact credentials for uv named indexes
+        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-codeartifact-consume
+        with:
+          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
+          aws-region: ${{ vars.AWS_REGION }}
+          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
+          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
+          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
+          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1

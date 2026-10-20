@@ -241,16 +241,25 @@ contain credentials, signed access tokens, or private endpoints. Omit it when no
 public link exists; Rhiza does not infer a custom feed URL or expose credentials in
 release notes.
 
-### CodeArtifact follow-up
+### CodeArtifact publishing and dependency consumption
 
-No managed CodeArtifact publisher ships with this contract. That follow-up requires
-pre-write ownership collision protection in
-[rhiza-claude#267](https://github.com/Jebel-Quant/rhiza-claude/issues/267)
-and real AWS OIDC/upload validation before adoption. The removed provider and its tests
-remain recoverable from [PR #1694](https://github.com/Jebel-Quant/rhiza/pull/1694)'s
-[earlier commit](https://github.com/Jebel-Quant/rhiza/commit/52580cd1908aac769310421e08b6fc1105b86e98).
-Private dependency consumption is separate follow-up work in
-[#1685](https://github.com/Jebel-Quant/rhiza/issues/1685), not part of this publishing contract.
+Rhiza still does **not** ship a managed CodeArtifact **publisher**. Publishing remains
+repository-owned through `RELEASE_PUBLISHER=custom` and
+`.github/actions/release-publish`.
+
+Dependency **consumption** is now covered separately by a shared helper action:
+`.github/actions/rhiza-codeartifact-consume/action.yml`.
+
+- opt-in only (`CODEARTIFACT_CONSUMPTION_ENABLED=true`)
+- assumes a read-only AWS role through GitHub OIDC
+- obtains and masks a short-lived CodeArtifact token per job
+- exports uv named-index credentials via `UV_INDEX_<NORMALIZED>_USERNAME/PASSWORD`
+- fails closed on missing configuration, trust-guard violations, or auth failures
+- rejects fork pull requests and `pull_request_target`
+
+Supported dependency-consuming workflow paths: CI gates, book, marimo, benchmark,
+weekly compatibility/semgrep, and release build/SBOM sync. Container-build paths use
+separate BuildKit secret forwarding contracts and are not configured through this helper.
 
 ### Completion and platform scope
 
@@ -263,9 +272,8 @@ upload must not trigger a lookup on public PyPI. A failed optional Conda recipe 
 not prevent finalization.
 
 This extension contract is **GitHub Actions-only**. The GitLab release template retains
-its existing token/URL publishing behaviour. It also does not configure private-feed
-**consumption** in build, test or documentation jobs: those jobs need their own
-authentication before resolving dependencies, because job credentials are not shared.
+its existing token/URL publishing behaviour. GitLab private-feed dependency consumption
+remains repository-owned and must authenticate each job before dependency resolution.
 
 ## Template Sync Flow
 

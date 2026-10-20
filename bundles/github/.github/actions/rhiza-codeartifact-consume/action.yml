@@ -1,0 +1,127 @@
+name: Rhiza CodeArtifact dependency consumption
+description: Assume a read-only AWS role via OIDC and export uv named-index credentials.
+
+inputs:
+  enabled:
+    description: Enable CodeArtifact dependency consumption.
+    required: false
+    default: "false"
+  aws-region:
+    description: AWS region for STS and CodeArtifact API calls.
+    required: false
+    default: ""
+  aws-role-to-assume-read:
+    description: ARN of the read-only role to assume for dependency consumption.
+    required: false
+    default: ""
+  codeartifact-domain:
+    description: CodeArtifact domain name.
+    required: false
+    default: ""
+  codeartifact-domain-owner:
+    description: AWS account ID owning the CodeArtifact domain.
+    required: false
+    default: ""
+  codeartifact-uv-index:
+    description: uv named index to authenticate.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Validate CodeArtifact consumption configuration
+      id: validate
+      shell: bash
+      env:
+        INPUT_ENABLED: ${{ inputs.enabled }}
+        INPUT_AWS_REGION: ${{ inputs.aws-region }}
+        INPUT_AWS_ROLE_TO_ASSUME_READ: ${{ inputs.aws-role-to-assume-read }}
+        INPUT_CODEARTIFACT_DOMAIN: ${{ inputs.codeartifact-domain }}
+        INPUT_CODEARTIFACT_DOMAIN_OWNER: ${{ inputs.codeartifact-domain-owner }}
+        INPUT_CODEARTIFACT_UV_INDEX: ${{ inputs.codeartifact-uv-index }}
+        EVENT_NAME: ${{ github.event_name }}
+        HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+        CALLER_REPOSITORY: ${{ github.repository }}
+      run: |
+        if [ "$INPUT_ENABLED" != "true" ]; then
+          echo "enabled=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        if [ "$EVENT_NAME" = "pull_request_target" ] ||
+           { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+          echo "::error::CodeArtifact dependency authentication is not allowed on fork pull requests or pull_request_target."
+          exit 1
+        fi
+
+        missing=()
+        for name in \
+          INPUT_AWS_REGION \
+          INPUT_AWS_ROLE_TO_ASSUME_READ \
+          INPUT_CODEARTIFACT_DOMAIN \
+          INPUT_CODEARTIFACT_DOMAIN_OWNER \
+          INPUT_CODEARTIFACT_UV_INDEX
+        do
+          if [ -z "${!name}" ]; then
+            missing+=("${name#INPUT_}")
+          fi
+        done
+
+        if [ "${#missing[@]}" -gt 0 ]; then
+          printf -v joined '%s, ' "${missing[@]}"
+          echo "::error::CODEARTIFACT_CONSUMPTION_ENABLED is true but required settings are missing: ${joined%, }."
+          exit 1
+        fi
+
+        normalized=$(printf '%s' "$INPUT_CODEARTIFACT_UV_INDEX" |
+          tr '[:lower:]' '[:upper:]' |
+          sed -E 's/[^A-Z0-9]+/_/g; s/^_+//; s/_+$//')
+        if [ -z "$normalized" ]; then
+          echo "::error::CODEARTIFACT_UV_INDEX must contain at least one alphanumeric character."
+          exit 1
+        fi
+
+        echo "enabled=true" >> "$GITHUB_OUTPUT"
+        echo "normalized_index=$normalized" >> "$GITHUB_OUTPUT"
+
+    - name: Configure AWS credentials for CodeArtifact reads
+      if: steps.validate.outputs.enabled == 'true'
+      uses: aws-actions/configure-aws-credentials@v4.0.2
+      with:
+        role-to-assume: ${{ inputs.aws-role-to-assume-read }}
+        aws-region: ${{ inputs.aws-region }}
+        role-session-name: rhiza-codeartifact-consume
+
+    - name: Export uv named-index credentials
+      if: steps.validate.outputs.enabled == 'true'
+      shell: bash
+      env:
+        AWS_REGION: ${{ inputs.aws-region }}
+        CODEARTIFACT_DOMAIN: ${{ inputs.codeartifact-domain }}
+        CODEARTIFACT_DOMAIN_OWNER: ${{ inputs.codeartifact-domain-owner }}
+        NORMALIZED_INDEX: ${{ steps.validate.outputs.normalized_index }}
+      run: |
+        token=$(
+          aws codeartifact get-authorization-token \
+            --domain "$CODEARTIFACT_DOMAIN" \
+            --domain-owner "$CODEARTIFACT_DOMAIN_OWNER" \
+            --region "$AWS_REGION" \
+            --query authorizationToken \
+            --output text
+        )
+
+        if [ -z "$token" ] || [ "$token" = "None" ]; then
+          echo "::error::Failed to obtain a CodeArtifact authorization token."
+          exit 1
+        fi
+
+        escaped=${token//'%'/'%25'}
+        escaped=${escaped//$'\n'/'%0A'}
+        escaped=${escaped//$'\r'/'%0D'}
+        echo "::add-mask::$escaped"
+
+        {
+          echo "UV_INDEX_${NORMALIZED_INDEX}_USERNAME=aws"
+          echo "UV_INDEX_${NORMALIZED_INDEX}_PASSWORD=$token"
+        } >> "$GITHUB_ENV"

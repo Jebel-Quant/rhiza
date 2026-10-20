@@ -19,6 +19,7 @@ name: "(RHIZA) CI"
 permissions:
   contents: read
   actions: read
+  id-token: write
 
 on:
   push:
