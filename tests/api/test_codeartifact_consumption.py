@@ -48,7 +48,9 @@ def test_action_is_opt_in_and_exports_uv_named_index_credentials() -> None:
     assert inputs["enabled"]["default"] == "false"
     assert "CODEARTIFACT_CONSUMPTION_ENABLED" in _ACTION.read_text(encoding="utf-8")
 
-    export_step = next(step for step in action["runs"]["steps"] if step.get("name") == "Export uv named-index credentials")
+    export_step = next(
+        step for step in action["runs"]["steps"] if step.get("name") == "Export uv named-index credentials"
+    )
     script = export_step["run"]
     assert "aws codeartifact get-authorization-token" in script
     assert "UV_INDEX_${NORMALIZED_INDEX}_USERNAME=aws" in script
@@ -97,7 +99,11 @@ def test_action_validation_script_guards_and_normalizes(tmp_path: Path) -> None:
     assert "not allowed on fork pull requests or pull_request_target" in fork_pr.stdout
 
     output.write_text("", encoding="utf-8")
-    valid_env = {**base_env, "INPUT_ENABLED": "true", "INPUT_CODEARTIFACT_UV_INDEX": "private.feed-v2"}
+    valid_env = {
+        **base_env,
+        "INPUT_ENABLED": "true",
+        "INPUT_CODEARTIFACT_UV_INDEX": "private.feed-v2",
+    }
     valid = _run(script, tmp_path, **valid_env)
     assert valid.returncode == 0
     action_output = output.read_text(encoding="utf-8")
@@ -135,14 +141,21 @@ def test_consuming_workflows_authenticate_before_private_dependency_resolution()
 
     marimo = _load_yaml(_ROOT / ".github/workflows/rhiza_marimo.yml")
     steps = marimo["jobs"]["test-notebooks"]["steps"]
-    assert steps.index(_step(marimo, "test-notebooks", helper)) < steps.index(_step(marimo, "test-notebooks", "Run notebook"))
+    assert steps.index(_step(marimo, "test-notebooks", helper)) < steps.index(
+        _step(marimo, "test-notebooks", "Run notebook")
+    )
 
     book = _load_yaml(_ROOT / ".github/workflows/rhiza_book.yml")
     steps = book["jobs"]["build"]["steps"]
-    assert steps.index(_step(book, "build", helper)) < steps.index(_step(book, "build", "Sync the virtual environment for ${{ github.repository }}"))
+    assert steps.index(_step(book, "build", helper)) < steps.index(
+        _step(book, "build", "Sync the virtual environment for ${{ github.repository }}")
+    )
 
     weekly = _load_yaml(_ROOT / ".github/workflows/rhiza_weekly.yml")
-    for job, step_name in [("dep-compat-test", "Resolve and install latest compatible dependencies"), ("semgrep", "Run Semgrep")]:
+    for job, step_name in [
+        ("dep-compat-test", "Resolve and install latest compatible dependencies"),
+        ("semgrep", "Run Semgrep"),
+    ]:
         steps = weekly["jobs"][job]["steps"]
         assert steps.index(_step(weekly, job, helper)) < steps.index(_step(weekly, job, step_name))
 
