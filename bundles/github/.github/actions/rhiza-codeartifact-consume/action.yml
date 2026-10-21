@@ -76,7 +76,7 @@ runs:
 
         normalized=$(printf '%s' "$INPUT_CODEARTIFACT_UV_INDEX" |
           tr '[:lower:]' '[:upper:]' |
-          sed -E 's/[^A-Z0-9]+/_/g; s/^_+//; s/_+$//')
+          sed -E 's/[^A-Z0-9]/_/g')
         if [ -z "$normalized" ]; then
           echo "::error::CODEARTIFACT_UV_INDEX must contain at least one alphanumeric character."
           exit 1

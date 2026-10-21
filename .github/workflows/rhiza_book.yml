@@ -90,6 +90,7 @@ jobs:
 
     permissions:
       contents: read
+      id-token: write
 
     steps:
       # Check out the repository code

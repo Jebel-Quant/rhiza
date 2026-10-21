@@ -111,6 +111,49 @@ def test_action_validation_script_guards_and_normalizes(tmp_path: Path) -> None:
     assert "normalized_index=PRIVATE_FEED_V2" in action_output
 
 
+@pytest.mark.parametrize(
+    ("index_name", "normalized"),
+    [
+        ("private--feed", "PRIVATE__FEED"),
+        ("_private.feed-", "_PRIVATE_FEED_"),
+        ("private._-feed", "PRIVATE___FEED"),
+    ],
+)
+def test_index_normalization_preserves_each_separator(tmp_path: Path, index_name: str, normalized: str) -> None:
+    """Match uv's character-by-character environment variable normalization."""
+    action = _load_yaml(_ACTION)
+    script = next(step for step in action["runs"]["steps"] if step.get("id") == "validate")["run"]
+    output = tmp_path / "out"
+    result = _run(
+        script,
+        tmp_path,
+        GITHUB_OUTPUT=str(output),
+        INPUT_ENABLED="true",
+        INPUT_AWS_REGION="eu-west-2",
+        INPUT_AWS_ROLE_TO_ASSUME_READ="arn:aws:iam::123456789012:role/rhiza-read",
+        INPUT_CODEARTIFACT_DOMAIN="example-domain",
+        INPUT_CODEARTIFACT_DOMAIN_OWNER="123456789012",
+        INPUT_CODEARTIFACT_UV_INDEX=index_name,
+        EVENT_NAME="push",
+        HEAD_REPOSITORY="acme/project",
+        CALLER_REPOSITORY="acme/project",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert f"normalized_index={normalized}" in output.read_text(encoding="utf-8").splitlines()
+
+
+def test_book_build_grants_oidc_permission() -> None:
+    """The job's explicit permissions must allow CodeArtifact OIDC authentication."""
+    workflow = _load_yaml(_ROOT / ".github/workflows/rhiza_book.yml")
+    assert workflow["jobs"]["build"]["permissions"]["id-token"] == "write"
+
+
+def test_shipped_action_matches_repository_action() -> None:
+    """Consumers must receive the same credential helper as the reusable workflows."""
+    shipped = _ROOT / "bundles/github/.github/actions/rhiza-codeartifact-consume/action.yml"
+    assert shipped.read_bytes() == _ACTION.read_bytes()
+
+
 def test_consuming_workflows_authenticate_before_private_dependency_resolution() -> None:
     """Supported jobs must run the helper before their first relevant dependency step."""
     helper = "Configure CodeArtifact credentials for uv named indexes"
