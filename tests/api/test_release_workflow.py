@@ -20,7 +20,7 @@ EXPECTED_JOBS = {
     "tag",
     "build",
     "draft-release",
-    "pypi",
+    "publish",
     "conda",
     "devcontainer",
     "finalise-release",
@@ -107,12 +107,12 @@ class TestReleaseWorkflowStructure:
     def test_conda_job_depends_on_pypi(self, workflow):
         """Conda recipe generation should only run after PyPI publish decision."""
         conda_job = workflow["jobs"]["conda"]
-        assert "pypi" in conda_job.get("needs", []), "Conda job must depend on pypi job output"
+        assert "publish" in conda_job.get("needs", []), "Conda job must depend on pypi job output"
         commands = "\n".join(_step_commands(conda_job))
         assert "PUBLISH_CONDA" in commands
         decision = next(step for step in conda_job["steps"] if step.get("id") == "check_conda")
-        assert decision["env"]["SHOULD_PUBLISH"] == "${{ needs.pypi.outputs.should_publish }}"
-        assert decision["env"]["PUBLIC_PYPI"] == "${{ needs.pypi.outputs.public_pypi }}"
+        assert decision["env"]["SHOULD_PUBLISH"] == "${{ needs.publish.outputs.should_publish }}"
+        assert decision["env"]["PUBLIC_PYPI"] == "${{ needs.publish.outputs.public_pypi }}"
         assert "grayskull pypi" in commands
 
     def test_finalise_release_includes_conda_signal(self, workflow):

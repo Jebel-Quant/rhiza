@@ -47,6 +47,8 @@ on:
   pull_request:
   workflow_call:
     secrets:
+      RHIZA_SETUP_CREDENTIALS:
+        required: false
       GH_PAT:
         required: false
       UV_EXTRA_INDEX_URL:
@@ -69,6 +71,17 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           lfs: true
+
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-consumer-setup
+        env:
+          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
+        with:
+          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+
 
       - id: versions
         name: Build package metadata and extract supported Python classifiers
@@ -175,16 +188,15 @@ jobs:
           version: "0.11.16"
           python-version: ${{ matrix.python-version }}
 
-      - name: Configure CodeArtifact credentials for uv named indexes
-        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-codeartifact-consume
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-consumer-setup
+        env:
+          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
         with:
-          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
-          aws-region: ${{ vars.AWS_REGION }}
-          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
-          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
-          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
-          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -252,16 +264,15 @@ jobs:
         with:
           version: "0.11.16"
 
-      - name: Configure CodeArtifact credentials for uv named indexes
-        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-codeartifact-consume
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-consumer-setup
+        env:
+          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
         with:
-          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
-          aws-region: ${{ vars.AWS_REGION }}
-          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
-          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
-          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
-          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -310,16 +321,15 @@ jobs:
           version: "0.11.16"
           python-version: ${{ matrix.python-version }}
 
-      - name: Configure CodeArtifact credentials for uv named indexes
-        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-codeartifact-consume
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-consumer-setup
+        env:
+          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
         with:
-          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
-          aws-region: ${{ vars.AWS_REGION }}
-          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
-          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
-          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
-          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -353,16 +363,15 @@ jobs:
         with:
           version: "0.11.16"
 
-      - name: Configure CodeArtifact credentials for uv named indexes
-        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-codeartifact-consume
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-consumer-setup
+        env:
+          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
         with:
-          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
-          aws-region: ${{ vars.AWS_REGION }}
-          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
-          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
-          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
-          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -407,16 +416,15 @@ jobs:
         with:
           version: "0.11.16"
 
-      - name: Configure CodeArtifact credentials for uv named indexes
-        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-codeartifact-consume
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-consumer-setup
+        env:
+          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
         with:
-          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
-          aws-region: ${{ vars.AWS_REGION }}
-          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
-          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
-          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
-          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -442,16 +450,15 @@ jobs:
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
-      - name: Configure CodeArtifact credentials for uv named indexes
-        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-codeartifact-consume
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-consumer-setup
+        env:
+          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
         with:
-          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
-          aws-region: ${{ vars.AWS_REGION }}
-          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
-          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
-          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
-          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -497,16 +504,15 @@ jobs:
         with:
           version: "0.11.16"
 
-      - name: Configure CodeArtifact credentials for uv named indexes
-        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-codeartifact-consume
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-consumer-setup
+        env:
+          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
         with:
-          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
-          aws-region: ${{ vars.AWS_REGION }}
-          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
-          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
-          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
-          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -538,16 +544,15 @@ jobs:
         with:
           version: "0.11.16"
 
-      - name: Configure CodeArtifact credentials for uv named indexes
-        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-codeartifact-consume
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-consumer-setup
+        env:
+          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
         with:
-          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
-          aws-region: ${{ vars.AWS_REGION }}
-          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
-          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
-          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
-          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -578,16 +583,15 @@ jobs:
         with:
           version: "0.11.16"
 
-      - name: Configure CodeArtifact credentials for uv named indexes
-        if: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-codeartifact-consume
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-consumer-setup
+        env:
+          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
         with:
-          enabled: ${{ vars.CODEARTIFACT_CONSUMPTION_ENABLED }}
-          aws-region: ${{ vars.AWS_REGION }}
-          aws-role-to-assume-read: ${{ vars.AWS_ROLE_TO_ASSUME_READ }}
-          codeartifact-domain: ${{ vars.CODEARTIFACT_DOMAIN }}
-          codeartifact-domain-owner: ${{ vars.CODEARTIFACT_DOMAIN_OWNER }}
-          codeartifact-uv-index: ${{ vars.CODEARTIFACT_UV_INDEX }}
+          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1

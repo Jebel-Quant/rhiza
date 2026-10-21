@@ -49,55 +49,43 @@ gh secret set PAT_TOKEN
 A PAT expires; when sync pushes start failing with a `refusing to allow ... workflow` error,
 regenerate the token and update the secret.
 
-## Release workflow secrets (optional)
+## Consumer setup and publishing
 
-The release workflow (`.github/workflows/rhiza_release.yml`) supports additional secrets, all
-optional depending on which release features you use:
-
-| Secret | Purpose |
+| Setting | Purpose |
 | --- | --- |
-| `PYPI_TOKEN` | Publish the built package to PyPI. Not needed when using trusted publishing (OIDC). |
-| `RELEASE_PUBLISH_CREDENTIALS` | Optional credentials input for a repository-owned custom publisher. Not needed when the extension uses OIDC. |
-| `GH_PAT` | Git authentication for installing private dependencies during the release build. |
-| `UV_EXTRA_INDEX_URL` | Extra package index URL (with credentials) for private dependencies. |
+| `RHIZA_SETUP_ENABLED` variable | Set to `true` to run your `.github/actions/rhiza-setup` action before dependency resolution in supported jobs. |
+| `RHIZA_SETUP_CREDENTIALS` secret | Optional opaque credential passed only to that setup action. Omit when using OIDC. |
+| `RELEASE_PUBLISHER` variable | Set to `custom` to run your `.github/actions/release-publish` action. Unset or `none` disables package uploads. |
+| `RELEASE_PUBLISH_CREDENTIALS` secret | Optional opaque credential passed only to the publishing action. |
 
-`GITHUB_TOKEN` is provided automatically by GitHub Actions and needs no configuration.
+Setup receives `purpose` and `credentials` inputs and non-secret variables as JSON in
+`RHIZA_SETUP_VARS`. Publishing receives `artifacts-dir`, `tag`, `version`, `credentials`,
+and non-secret variables as JSON in `RHIZA_RELEASE_PUBLISH_VARS`. Neither consumer action
+is template-owned. Commit them before releasing; publisher code is loaded from the release
+tag. Missing configured actions and failed setup/uploads fail closed. Failed publication
+leaves the release draft. OIDC callers must grant `id-token: write`.
 
-## Release publisher selection
+PyPI is an optional implementation of the same publishing contract. Copy
+`examples/publishing/pypi/action.yml` from Rhiza into your publishing action path and select
+`custom`. For Trusted Publishing, use the directly triggered release workflow; PyPA does
+not support OIDC publishing inside reusable workflows. Reusable callers can pass a PyPI
+API token through `RELEASE_PUBLISH_CREDENTIALS` instead. The example rejects private-package
+metadata and excludes provenance files from uploads.
 
-Set the Actions **variable** `RELEASE_PUBLISHER` to choose package deployment:
+**Migration:** implicit PyPI publishing and `RELEASE_PUBLISHER=pypi` have been removed.
+Adopt the example and select `custom` before upgrading. Move `PYPI_TOKEN` to
+`RELEASE_PUBLISH_CREDENTIALS`; put any custom endpoint configuration inside your own action.
+There is no fallback upload destination. Existing `custom` publishers retain their inputs.
 
-| Value | Behaviour |
-| --- | --- |
-| Unset or `pypi` | Existing PyPI Trusted Publishing. `PYPI_REPOSITORY_URL` (variable) and `PYPI_TOKEN` (secret) still support PyPI-compatible custom endpoints. |
-| `custom` | Run your repository-owned composite action at `.github/actions/release-publish/action.yml` (or `action.yaml`). No fallback to public PyPI. |
-| `none` | Skip package publishing, retaining the other release outputs. |
+For AWS private dependencies, copy `examples/dependency-setup/codeartifact/action.yml`
+into your setup action path and set `RHIZA_SETUP_ENABLED=true`. All AWS settings and token
+handling live in that consumer action, outside reusable workflows. The former
+`CODEARTIFACT_CONSUMPTION_ENABLED` switch is replaced by this generic opt-in.
+Setup refuses fork pull requests and `pull_request_target`. Container builds need separate
+BuildKit secret forwarding.
 
-No bundle syncs the custom action path: it remains repository-owned.
-Commit the action before tagging the release;
-it runs from that release revision with the `release` environment, `contents: read` and
-`id-token: write`. It receives `artifacts-dir` (absolute path to the downloaded build
-artifacts), `tag`, `version` (tag without `v`) and the optional `credentials` input.
-It owns provider login, tool setup and upload, and must fail on unsuccessful publication.
-Use the existing distributions rather than rebuilding them; the directory can also
-contain provenance files.
-
-For OIDC-capable feeds, obtain and immediately mask short-lived credentials in this
-action. Otherwise, supply the optional `RELEASE_PUBLISH_CREDENTIALS` secret in the
-format your action expects. Only that explicit secret is forwarded to the extension.
-An optional `artifact-url` output supplies a public HTTPS artifact link for release notes;
-omit it for private destinations and never include credentials or signed access tokens.
-
-The private-package classifier still suppresses built-in PyPI uploads; `custom`
-explicitly permits private distributions. Invalid modes, missing custom actions and
-missing expected distributions fail closed. Failed required uploads prevent release
-finalization. Conda recipes are generated only after successful public PyPI publication
-with no `PYPI_REPOSITORY_URL` override.
-
-This is a GitHub publishing extension, not private dependency-consumption setup or a
-GitLab feature. See the
-[publisher contract](https://jebel-quant.github.io/rhiza/reference/ARCHITECTURE/#repository-owned-publishing-action)
-for details.
+See the [extension contract](https://jebel-quant.github.io/rhiza/reference/ARCHITECTURE/#consumer-owned-setup-and-publishing)
+for configuration, example requirements, output contracts, and migration details.
 
 ## Private dependency secrets in other workflows
 
@@ -117,60 +105,3 @@ The docker workflow is the one place the runner's git configuration cannot reach
 BuildKit secrets instead, which exist only for that one instruction and are written into no
 layer; a build argument would be readable with `docker history` (#1691). See
 `docs/development/DOCKER.md` for building such an image locally.
-
-## Opt-in AWS CodeArtifact dependency consumption
-
-Rhiza now ships an optional helper action at
-`.github/actions/rhiza-codeartifact-consume/action.yml` for read-only dependency
-authentication through AWS OIDC. It is disabled by default and independent of
-`RELEASE_PUBLISHER`.
-
-Enable it with this repository variable:
-
-| Variable | Meaning |
-| --- | --- |
-| `CODEARTIFACT_CONSUMPTION_ENABLED` | Set to `true` to enable OIDC + CodeArtifact dependency credentials in supported jobs. Any other value keeps it off. |
-
-When enabled, these variables are required:
-
-| Variable | Meaning |
-| --- | --- |
-| `AWS_REGION` | AWS region for STS and CodeArtifact API calls. |
-| `AWS_ROLE_TO_ASSUME_READ` | IAM role ARN used only for dependency reads. |
-| `CODEARTIFACT_DOMAIN` | CodeArtifact domain name. |
-| `CODEARTIFACT_DOMAIN_OWNER` | AWS account ID owning the domain. |
-| `CODEARTIFACT_UV_INDEX` | uv named index to authenticate (must match your explicit index mapping). |
-
-The helper assumes the role via OIDC, requests a fresh CodeArtifact token, masks it,
-and exports:
-
-- `UV_INDEX_<NORMALIZED_INDEX>_USERNAME=aws`
-- `UV_INDEX_<NORMALIZED_INDEX>_PASSWORD=<token>`
-
-where `<NORMALIZED_INDEX>` is uppercased and non-alphanumeric characters are replaced by
-`_` to match uv's environment-variable convention.
-
-### Trust, permissions, and failure mode
-
-- Credentials are refused on `pull_request_target` and on fork pull requests.
-- Supported consuming jobs declare `id-token: write`; non-enabled runs do not assume the
-  AWS role.
-- Missing required settings or failed role/token acquisition fail closed.
-- The helper never rewrites index URLs, `pyproject.toml`, or `uv.lock`.
-
-### Workflow support matrix
-
-Supported now:
-
-- `rhiza_ci.yml` (`test`, `lowest-deps`, `typecheck`, `deptry`, `rhiza-test`,
-  `pre-commit`, `docs-coverage`, `security`, `license`)
-- `rhiza_book.yml` (book build job)
-- `rhiza_marimo.yml` (notebook execution job)
-- `rhiza_benchmark.yml`
-- `rhiza_weekly.yml` (`dep-compat-test`, `semgrep`)
-- `rhiza_release.yml` (build + SBOM dependency sync path)
-
-Not supported by this helper in this change:
-
-- `rhiza_docker.yml` and release devcontainer builds, which resolve dependencies inside
-  container builds and require BuildKit secret forwarding instead of host `GITHUB_ENV`.

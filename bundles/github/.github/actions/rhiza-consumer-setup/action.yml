@@ -1,0 +1,39 @@
+name: Rhiza consumer setup
+description: Run the opt-in repository-owned setup action before dependency resolution.
+inputs:
+  enabled:
+    description: Enable repository-owned setup.
+    default: "false"
+  purpose:
+    description: Job using the dependency setup.
+    required: true
+  credentials:
+    description: Optional opaque credential forwarded only to the setup action.
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: Validate consumer setup
+      shell: bash
+      env:
+        ENABLED: ${{ inputs.enabled }}
+        EVENT_NAME: ${{ github.event_name }}
+        HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+        CALLER_REPOSITORY: ${{ github.repository }}
+      run: |
+        if [ "$ENABLED" != "true" ]; then exit 0; fi
+        if [ "$EVENT_NAME" = "pull_request_target" ] ||
+           { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+          echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+          exit 1
+        fi
+        if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+          echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+          exit 1
+        fi
+    - name: Run repository setup
+      if: inputs.enabled == 'true'
+      uses: ./.github/actions/rhiza-setup
+      with:
+        purpose: ${{ inputs.purpose }}
+        credentials: ${{ inputs.credentials }}

@@ -1,0 +1,61 @@
+name: Configure private dependency access
+description: Optional consumer-owned AWS setup; copy to .github/actions/rhiza-setup/action.yml.
+inputs:
+  purpose:
+    description: Job requesting setup.
+    required: true
+  credentials:
+    description: Unused; this example authenticates with OIDC.
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: Validate AWS configuration
+      id: configuration
+      shell: bash
+      run: |
+        python3 - <<'PY'
+        import json
+        import os
+        import re
+
+        configuration = json.loads(os.environ['RHIZA_SETUP_VARS'])
+        keys = ['AWS_REGION', 'AWS_ROLE_TO_ASSUME_READ', 'CODEARTIFACT_DOMAIN',
+                'CODEARTIFACT_DOMAIN_OWNER', 'CODEARTIFACT_UV_INDEX']
+        if any(not configuration.get(k) or '\n' in configuration[k] or '\r' in configuration[k] for k in keys):
+            raise SystemExit('Missing or invalid CodeArtifact configuration')
+        index = configuration['CODEARTIFACT_UV_INDEX']
+        if not re.fullmatch(r'[a-zA-Z0-9_.-]+', index):
+            raise SystemExit('Invalid uv index name')
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+            for key in keys:
+                print(f'{key}={configuration[key]}', file=output)
+            print(f'normalized_index={re.sub("[^A-Z0-9]", "_", index.upper())}', file=output)
+        PY
+    - name: Assume dependency read role
+      uses: aws-actions/configure-aws-credentials@5579c002bb4778aa43395ef1df492868a9a1c83f # v4.0.2
+      with:
+        role-to-assume: ${{ steps.configuration.outputs.AWS_ROLE_TO_ASSUME_READ }}
+        aws-region: ${{ steps.configuration.outputs.AWS_REGION }}
+    - name: Export uv credentials
+      shell: bash
+      env:
+        AWS_REGION: ${{ steps.configuration.outputs.AWS_REGION }}
+        DOMAIN: ${{ steps.configuration.outputs.CODEARTIFACT_DOMAIN }}
+        OWNER: ${{ steps.configuration.outputs.CODEARTIFACT_DOMAIN_OWNER }}
+        INDEX: ${{ steps.configuration.outputs.normalized_index }}
+      run: |
+        token=$(aws codeartifact get-authorization-token --domain "$DOMAIN" --domain-owner "$OWNER" \
+          --region "$AWS_REGION" --query authorizationToken --output text)
+        if [ -z "$token" ] || [ "$token" = "None" ]; then
+          echo "::error::Failed to obtain CodeArtifact credentials."
+          exit 1
+        fi
+        escaped=${token//'%'/'%25'}
+        escaped=${escaped//$'\n'/'%0A'}
+        escaped=${escaped//$'\r'/'%0D'}
+        echo "::add-mask::$escaped"
+        {
+          echo "UV_INDEX_${INDEX}_USERNAME=aws"
+          echo "UV_INDEX_${INDEX}_PASSWORD=$token"
+        } >> "$GITHUB_ENV"
