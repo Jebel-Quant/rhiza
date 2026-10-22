@@ -334,9 +334,14 @@ on the domain and `codeartifact:GetRepositoryEndpoint` plus
 `sts:GetServiceBearerToken` with `sts:AWSServiceName=codeartifact.amazonaws.com`.
 The role trust must allow `sts:AssumeRoleWithWebIdentity` through GitHub's OIDC provider,
 require audience `sts.amazonaws.com`, and restrict the subject to your repository and
-trusted refs, such as `repo:ORG/REPO:ref:refs/heads/main`. Release builds use the
-`release` environment subject (`repo:ORG/REPO:environment:release`); protect that
-environment and its allowed refs. Do not grant package publishing permissions. See AWS's
+trusted refs, such as `repo:ORG/REPO:ref:refs/heads/main`. The release build job
+declares no environment, so reader trust must also allow approved release-tag
+subjects, such as `repo:ORG/REPO:ref:refs/tags/v1.2.3`. The publishing job uses the
+`release` environment subject (`repo:ORG/REPO:environment:release`); restrict that
+subject to the separate publisher role and protect the environment's allowed refs.
+These examples use GitHub's default subject format; if your organisation customizes
+OIDC subjects, use the corresponding configured format in both roles' trust policies.
+Do not grant the reader role package publishing permissions. See AWS's
 [token permissions](https://docs.aws.amazon.com/codeartifact/latest/ug/tokens-authentication.html)
 and [repository permissions](https://docs.aws.amazon.com/codeartifact/latest/ug/repo-policies.html).
 
