@@ -48,7 +48,14 @@
 #   - Adds devcontainer image link to GitHub release notes
 #
 # 🚀 Package Publishing:
-#   - RELEASE_PUBLISHER: custom (repository-owned publisher) or none (default)
+#   - RELEASE_PUBLISHER: pypi (default), custom, or none; unknown modes fail closed
+#   - pypi retains the private classifier skip and OIDC/token-based feed support
+#   - custom explicitly permits private distributions and requires the repo-owned
+#     .github/actions/release-publish composite action; no implementation is shipped
+#   - custom receives artifacts-dir, tag, version, and optional opaque credentials
+#   - the action uploads already-built distributions, not provenance, and may return
+#     artifact-url (one public credential-free HTTPS URL) for the release notes
+#   - required downloads and failed uploads fail the release; none skips package upload
 #
 # 📦 Conda Recipe Generation:
 #   - Runs only when publishing to the default public PyPI endpoint succeeds
@@ -56,7 +63,8 @@
 #   - Uploads conda-recipe/meta.yaml as a workflow artifact for downstream feedstock updates
 #
 # 🔐 Security:
-#   - Package authentication and upload are owned by the consumer publishing action
+#   - No PyPI credentials stored; relies on Trusted Publishing via GitHub OIDC
+#   - For custom feeds, PYPI_TOKEN secret is used with default username __token__
 #   - Container registry uses GITHUB_TOKEN for authentication
 #   - SLSA provenance attestations generated for build artifacts (public repos only)
 #   - SBOM attestations generated for supply chain transparency (public repos only)
@@ -102,6 +110,8 @@ on:
       GH_PAT:
         required: false
       UV_EXTRA_INDEX_URL:
+        required: false
+      PYPI_TOKEN:
         required: false
       RELEASE_PUBLISH_CREDENTIALS:
         required: false
@@ -282,13 +292,28 @@ jobs:
         with:
           version: "0.11.16"
 
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
       - name: Run consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-consumer-setup
-        env:
-          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
+        uses: ./.github/actions/rhiza-setup
         with:
-          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
           purpose: ${{ github.job }}
           credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
@@ -534,18 +559,18 @@ jobs:
           allowUpdates: true
           artifacts: "sbom/*,dist/provenance.intoto.jsonl"
 
-  # Publication is explicitly configured by the consumer
-  publish:
+  # Decide at step-level whether to publish
+  pypi:
     name: Publish package
     runs-on: ubuntu-latest
     environment: release
     needs: [tag, build, draft-release]
     permissions:
       contents: read
-      id-token: write   # Authentication owned by the repository publishing action
+      id-token: write   # PyPI or the explicitly selected repository-owned publisher
     outputs:
       should_publish: ${{ steps.publisher.outputs.should_publish }}
-      public_pypi: ${{ steps.custom_publish.outputs.public-pypi }}
+      public_pypi: ${{ steps.publisher.outputs.public_pypi }}
       publisher: ${{ steps.publisher.outputs.publisher }}
       artifact_url: ${{ steps.artifact_url.outputs.artifact_url }}
 
@@ -568,7 +593,7 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           repository: jebel-quant/rhiza
-          ref: bfe1d97416b0f85c9e04989ee90cc363c714f994
+          ref: 3819c35933d428626076e87345de59b81bb161ed
           path: .rhiza-release-tools
           sparse-checkout: bundles/github/.rhiza/scripts
           persist-credentials: false
@@ -577,22 +602,11 @@ jobs:
         id: publisher
         env:
           RELEASE_PUBLISHER: ${{ vars.RELEASE_PUBLISHER }}
+          PYPI_REPOSITORY_URL: ${{ vars.PYPI_REPOSITORY_URL }}
           BUILDABLE: ${{ needs.build.outputs.buildable }}
           TAG: ${{ needs.tag.outputs.tag }}
         run: |
           python3 .rhiza-release-tools/bundles/github/.rhiza/scripts/release_publish.py validate-publisher
-
-      - name: Report disabled package publication
-        if: steps.publisher.outputs.should_publish != 'true'
-        shell: bash
-        run: |
-          echo "::warning::Package publication is disabled. This release will not upload a package. Set RELEASE_PUBLISHER=custom and install a publishing adapter to enable uploads."
-          {
-            echo "## Package publication disabled"
-            echo ""
-            echo "No package will be uploaded. The GitHub release can still complete."
-            echo "Upgrading from implicit PyPI publishing? Adopt the github-pypi bundle and set RELEASE_PUBLISHER=custom."
-          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Download dist artifact
         if: steps.publisher.outputs.should_publish == 'true'
@@ -608,9 +622,27 @@ jobs:
         run: |
           python3 .rhiza-release-tools/bundles/github/.rhiza/scripts/release_publish.py require-distributions
 
+      - name: Remove non-distribution files before publish
+        # The dist artifact also carries the SLSA provenance bundle (staged for
+        # the GitHub release). twine/pypi-publish rejects it as an unknown
+        # distribution format, so strip it here before publishing.
+        if: steps.publisher.outputs.should_publish == 'true' && steps.publisher.outputs.publisher == 'pypi'
+        env:
+          ARTIFACTS_DIR: ${{ github.workspace }}/release-dist
+        run: rm -f "$ARTIFACTS_DIR"/*.intoto.jsonl
+
+      - name: Publish to PyPI
+        if: steps.publisher.outputs.should_publish == 'true' && steps.publisher.outputs.publisher == 'pypi'
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: ${{ github.workspace }}/release-dist/
+          skip-existing: true
+          repository-url: ${{ vars.PYPI_REPOSITORY_URL }}
+          password: ${{ secrets.PYPI_TOKEN }}
+
       - name: Publish with repository action
         id: custom_publish
-        if: steps.publisher.outputs.should_publish == 'true'
+        if: steps.publisher.outputs.should_publish == 'true' && steps.publisher.outputs.publisher == 'custom'
         uses: ./.github/actions/release-publish
         env:
           # Composite metadata cannot read vars; pass non-secret publisher configuration.
@@ -623,7 +655,7 @@ jobs:
 
       - name: Validate publisher artifact URL
         id: artifact_url
-        if: steps.publisher.outputs.should_publish == 'true'
+        if: steps.publisher.outputs.should_publish == 'true' && steps.publisher.outputs.publisher == 'custom'
         env:
           ARTIFACT_URL: ${{ steps.custom_publish.outputs.artifact-url }}
         run: |
@@ -632,7 +664,7 @@ jobs:
   conda:
     name: Generate Conda Recipe
     runs-on: ubuntu-latest
-    needs: [tag, publish]
+    needs: [tag, pypi]
     permissions:
       contents: read   # Generates a recipe and uploads it as a workflow artifact only
     outputs:
@@ -654,9 +686,9 @@ jobs:
         id: check_conda
         env:
           PUBLISH_CONDA: ${{ vars.PUBLISH_CONDA }}
-          SHOULD_PUBLISH: ${{ needs.publish.outputs.should_publish }}
-          PUBLIC_PYPI: ${{ needs.publish.outputs.public_pypi }}
-          PUBLISH_RESULT: ${{ needs.publish.result }}
+          SHOULD_PUBLISH: ${{ needs.pypi.outputs.should_publish }}
+          PUBLIC_PYPI: ${{ needs.pypi.outputs.public_pypi }}
+          PUBLISH_RESULT: ${{ needs.pypi.result }}
         run: |
           PUBLISH_CONDA="${PUBLISH_CONDA:-true}"
           if [[ "$PUBLISH_CONDA" == "true" && "$SHOULD_PUBLISH" == "true" && "$PUBLIC_PYPI" == "true" && "$PUBLISH_RESULT" == "success" ]]; then
@@ -832,13 +864,13 @@ jobs:
   finalise-release:
     name: Finalise Release
     runs-on: ubuntu-latest
-    needs: [tag, build, draft-release, publish, conda, devcontainer]
+    needs: [tag, build, draft-release, pypi, conda, devcontainer]
     # A status function overrides GitHub's implicit success() over all dependencies:
     # optional conda failures must not strand a published package's release (#1537).
     # !cancelled() also prevents finalisation after cancellation, unlike always().
     # Only conda is optional. A failed upload must leave the release as a draft, even
     # when another publisher succeeds. Disabled uploads complete their jobs successfully.
-    if: ${{ !cancelled() && needs.tag.result == 'success' && needs.build.result == 'success' && needs.draft-release.result == 'success' && needs.publish.result == 'success' && needs.devcontainer.result == 'success' }}
+    if: ${{ !cancelled() && needs.tag.result == 'success' && needs.build.result == 'success' && needs.draft-release.result == 'success' && needs.pypi.result == 'success' && needs.devcontainer.result == 'success' }}
     permissions:
       contents: write   # Needed to undraft/publish the GitHub release
     steps:
@@ -869,11 +901,38 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Generate Publisher Link
-        id: custom_link
-        if: needs.publish.result == 'success' && needs.publish.outputs.artifact_url != ''
+      - name: Generate PyPI Link
+        id: pypi_link
+        if: needs.pypi.outputs.should_publish == 'true' && needs.pypi.outputs.publisher == 'pypi' && needs.pypi.result == 'success'
         env:
-          ARTIFACT_URL: ${{ needs.publish.outputs.artifact_url }}
+          TAG: ${{ needs.tag.outputs.tag }}
+          REPO_URL: ${{ vars.PYPI_REPOSITORY_URL }}
+        run: |
+          PACKAGE_NAME=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['name'])")
+          VERSION="$TAG"
+          VERSION=${VERSION#v}
+
+          if [ -z "$REPO_URL" ]; then
+             LINK="https://pypi.org/project/$PACKAGE_NAME/$VERSION/"
+             NAME="PyPI Package"
+          else
+             LINK="$REPO_URL"
+             NAME="Custom Feed Package"
+          fi
+
+          {
+            echo "message<<EOF"
+            echo "### $NAME"
+            echo ""
+            echo "[$PACKAGE_NAME]($LINK)"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Generate Custom Publisher Link
+        id: custom_link
+        if: needs.pypi.outputs.publisher == 'custom' && needs.pypi.result == 'success' && needs.pypi.outputs.artifact_url != ''
+        env:
+          ARTIFACT_URL: ${{ needs.pypi.outputs.artifact_url }}
         run: |
           {
             echo "message<<EOF"
@@ -898,6 +957,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.tag.outputs.tag }}
           DEVCONTAINER_MSG: ${{ steps.devcontainer_link.outputs.message }}
+          PYPI_MSG: ${{ steps.pypi_link.outputs.message }}
           CUSTOM_MSG: ${{ steps.custom_link.outputs.message }}
           CONDA_MSG: ${{ steps.conda_link.outputs.message }}
         run: |
@@ -907,7 +967,7 @@ jobs:
           # Append links to release body
           {
             printf '%s' "$EXISTING"
-            for message in "$DEVCONTAINER_MSG" "$CUSTOM_MSG" "$CONDA_MSG"; do
+            for message in "$DEVCONTAINER_MSG" "$PYPI_MSG" "$CUSTOM_MSG" "$CONDA_MSG"; do
               if [ -n "$message" ]; then
                 printf '\n\n%s' "$message"
               fi

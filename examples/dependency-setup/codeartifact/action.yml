@@ -13,15 +13,22 @@ runs:
     - name: Validate AWS configuration
       id: configuration
       shell: bash
+      # Replace these placeholders in your consumer-owned action (or call a pinned
+      # organisation action with explicit inputs). No repository variables are forwarded.
+      env:
+        AWS_REGION: eu-west-2
+        AWS_ROLE_TO_ASSUME_READ: arn:aws:iam::123456789012:role/dependency-reader
+        CODEARTIFACT_DOMAIN: example
+        CODEARTIFACT_DOMAIN_OWNER: "123456789012"
+        CODEARTIFACT_UV_INDEX: private
       run: |
         python3 - <<'PY'
-        import json
         import os
         import re
 
-        configuration = json.loads(os.environ['RHIZA_SETUP_VARS'])
         keys = ['AWS_REGION', 'AWS_ROLE_TO_ASSUME_READ', 'CODEARTIFACT_DOMAIN',
                 'CODEARTIFACT_DOMAIN_OWNER', 'CODEARTIFACT_UV_INDEX']
+        configuration = {k: os.environ.get(k, '') for k in keys}
         if any(not configuration.get(k) or '\n' in configuration[k] or '\r' in configuration[k] for k in keys):
             raise SystemExit('Missing or invalid CodeArtifact configuration')
         index = configuration['CODEARTIFACT_UV_INDEX']

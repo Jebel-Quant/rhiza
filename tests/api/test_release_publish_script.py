@@ -25,7 +25,7 @@ _SPEC.loader.exec_module(publisher)
 
 @pytest.mark.parametrize(
     ("mode", "buildable", "private"),
-    itertools.product(("", "custom", "none"), ("true", "false"), (True, False)),
+    itertools.product(("", "pypi", "custom", "none"), ("true", "false"), (True, False)),
 )
 def test_decisions(tmp_path, mode, buildable, private):
     """Exercise every publisher/private/buildable combination directly under coverage."""
@@ -36,13 +36,14 @@ def test_decisions(tmp_path, mode, buildable, private):
     action.write_text("name: publisher\n")
     if mode == "custom" and buildable == "false":
         with pytest.raises(publisher.PublisherError, match="requires a buildable"):
-            publisher.validate_publisher(mode, buildable, "v1.2.3", tmp_path)
+            publisher.validate_publisher(mode, buildable, "", "v1.2.3", tmp_path)
         return
-    expected_mode = mode or "none"
-    publish = expected_mode != "none" and buildable == "true"
-    assert publisher.validate_publisher(mode, buildable, "v1.2.3", tmp_path) == {
+    expected_mode = mode or "pypi"
+    publish = expected_mode != "none" and buildable == "true" and (expected_mode == "custom" or not private)
+    assert publisher.validate_publisher(mode, buildable, "", "v1.2.3", tmp_path) == {
         "publisher": expected_mode,
         "should_publish": str(publish).lower(),
+        "public_pypi": str(publish and expected_mode == "pypi").lower(),
         "version": "1.2.3",
     }
 
@@ -51,8 +52,8 @@ def test_decisions(tmp_path, mode, buildable, private):
     ("mode", "buildable", "endpoint", "message"),
     [
         ("unknown", "true", "", "RELEASE_PUBLISHER"),
-        ("custom", "", "", "buildable"),
-        ("pypi", "true", "", "RELEASE_PUBLISHER"),
+        ("pypi", "", "", "buildable"),
+        ("pypi", "true", "http://private.example", "PYPI_REPOSITORY_URL"),
         ("custom", "true", "", "action.yml or action.yaml"),
     ],
 )
@@ -60,7 +61,34 @@ def test_invalid_configuration(tmp_path, mode, buildable, endpoint, message):
     """Invalid configuration never returns partial outputs."""
     (tmp_path / "pyproject.toml").write_text("[project]\n")
     with pytest.raises(publisher.PublisherError, match=message):
-        publisher.validate_publisher(mode, buildable, "v1.2.3", tmp_path)
+        publisher.validate_publisher(mode, buildable, endpoint, "v1.2.3", tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("url", "valid"),
+    [
+        ("https://packages/upload/", True),
+        ("https://packages.internal./upload/", True),
+        ("https://10.0.0.1/upload/", True),
+        ("https://[fd00::1]:8443/upload/", True),
+        ("https://packages.example.org/upload/?channel=stable", True),
+        ("******example.org", False),
+        ("https://@example.org", False),
+        ("https://bad_host.example.org", False),
+        ("https://[invalid]/", False),
+        ("https://example.org:65536", False),
+        ("https://example.org:0", False),
+        ("https://example.org:", False),
+        ("https://example.org/\n", False),
+        ("https://example.org/a\x7fb", False),
+        ("http://example.org", False),
+        ("not-a-url", False),
+        ("https://" + "a" * 254 + "/", False),
+    ],
+)
+def test_endpoint(url, valid):
+    """Endpoint syntax is checked without rejecting private package indexes."""
+    assert publisher.valid_endpoint(url) is valid
 
 
 @pytest.mark.parametrize(
@@ -125,6 +153,17 @@ def test_missing_environment(command, capsys):
     assert captured.err == "::error::Missing or invalid publisher configuration or output file\n"
 
 
+@pytest.mark.parametrize("contents", [None, "credential = [broken", "project = 1", "[project]\nclassifiers = 1"])
+def test_bad_metadata(tmp_path, monkeypatch, capsys, contents):
+    """Missing/malformed metadata fails cleanly without printing its contents."""
+    monkeypatch.chdir(tmp_path)
+    if contents is not None:
+        (tmp_path / "pyproject.toml").write_text(contents)
+    environment = {"RELEASE_PUBLISHER": "", "BUILDABLE": "true", "PYPI_REPOSITORY_URL": "", "TAG": "v1.2.3"}
+    assert publisher.main(["validate-publisher"], environment) == 1
+    assert capsys.readouterr().err == "::error::Missing or invalid publisher configuration or output file\n"
+
+
 def test_main_outputs_and_errors(tmp_path, monkeypatch, capsys):
     """The CLI appends validated outputs only, with a safe diagnostic on expected failures."""
     monkeypatch.chdir(tmp_path)
@@ -138,7 +177,9 @@ def test_main_outputs_and_errors(tmp_path, monkeypatch, capsys):
         "GITHUB_OUTPUT": str(output),
     }
     assert publisher.main(["validate-publisher"], environment) == 0
-    assert output.read_text() == ("existing=value\npublisher=none\nshould_publish=false\nversion=1.2.3\n")
+    assert output.read_text() == (
+        "existing=value\npublisher=none\nshould_publish=false\npublic_pypi=false\nversion=1.2.3\n"
+    )
     assert publisher.main(["validate-artifact-url"], {"ARTIFACT_URL": ""}) == 0
     assert publisher.main(["validate-artifact-url"], {"ARTIFACT_URL": "******example.org"}) == 1
     assert capsys.readouterr().err == ("::error::Publisher artifact-url must be one public credential-free HTTPS URL\n")

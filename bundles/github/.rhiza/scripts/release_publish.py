@@ -12,6 +12,7 @@ import ipaddress
 import os
 import re
 import sys
+import tomllib
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -31,6 +32,31 @@ def _valid_hostname(host: str) -> bool:
 def _unsafe_characters(value: str) -> bool:
     """Detect characters unsafe for the single-line URL output contract."""
     return any(c.isspace() or ord(c) < 32 or ord(c) == 127 or c in '<>\\`"' for c in value)
+
+
+def valid_endpoint(value: str) -> bool:
+    """Accept credential-free HTTPS upload endpoints, including private hosts."""
+    try:
+        url = urlsplit(value)
+        host = url.hostname or ""
+        try:
+            ipaddress.ip_address(host)
+            valid_host = True
+        except ValueError:
+            valid_host = len(host) <= 253 and _valid_hostname(host.removesuffix("."))
+        return bool(
+            url.scheme == "https"
+            and url.netloc
+            and not url.username
+            and not url.password
+            and "@" not in url.netloc
+            and valid_host
+            and not _unsafe_characters(value)
+            and (url.port is None or 1 <= url.port <= 65535)
+            and not url.netloc.endswith(":")
+        )
+    except ValueError:
+        return False
 
 
 def validate_artifact_url(value: str) -> dict[str, str]:
@@ -69,18 +95,25 @@ def validate_artifact_url(value: str) -> dict[str, str]:
     return {"artifact_url": value}
 
 
-def validate_publisher(mode: str, buildable: str, tag: str, root: Path = Path(".")) -> dict[str, str]:
-    """Validate opt-in publication through one repository-owned action."""
-    mode = mode or "none"
-    if mode not in {"custom", "none"}:
-        message = "RELEASE_PUBLISHER must be custom or none; migrate PyPI to .github/actions/release-publish"
+def validate_publisher(mode: str, buildable: str, endpoint: str, tag: str, root: Path = Path(".")) -> dict[str, str]:
+    """Resolve publisher outputs, checking metadata and custom-action availability."""
+    mode = mode or "pypi"
+    if mode not in {"pypi", "custom", "none"}:
+        message = "RELEASE_PUBLISHER must be pypi, custom, or none"
         raise PublisherError(message)
     if buildable not in {"true", "false"}:
         message = "Missing or invalid buildable output"
         raise PublisherError(message)
-    publish = mode == "custom"
-    if publish:
-        if buildable != "true":
+    publish = mode != "none" and buildable == "true"
+    if mode == "pypi" and publish:
+        with (root / "pyproject.toml").open("rb") as stream:
+            project = tomllib.load(stream).get("project", {})
+        publish = "Private :: Do Not Upload" not in project.get("classifiers", [])
+    if mode == "pypi" and publish and endpoint and not valid_endpoint(endpoint):
+        message = "Invalid PYPI_REPOSITORY_URL; expected a credential-free HTTPS endpoint"
+        raise PublisherError(message)
+    if mode == "custom":
+        if not publish:
             message = "Custom publishing requires a buildable Python package"
             raise PublisherError(message)
         action = root / ".github/actions/release-publish"
@@ -90,6 +123,7 @@ def validate_publisher(mode: str, buildable: str, tag: str, root: Path = Path(".
     return {
         "publisher": mode,
         "should_publish": str(publish).lower(),
+        "public_pypi": str(publish and mode == "pypi" and not endpoint).lower(),
         "version": tag.removeprefix("v"),
     }
 
@@ -110,7 +144,9 @@ def main(argv: Sequence[str] | None = None, environment: Mapping[str, str] | Non
     try:
         outputs = {}
         if args.command == "validate-publisher":
-            outputs = validate_publisher(env["RELEASE_PUBLISHER"], env["BUILDABLE"], env["TAG"])
+            outputs = validate_publisher(
+                env["RELEASE_PUBLISHER"], env["BUILDABLE"], env["PYPI_REPOSITORY_URL"], env["TAG"]
+            )
         elif args.command == "require-distributions":
             require_distributions(Path(env["ARTIFACTS_DIR"]))
         else:

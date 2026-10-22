@@ -1,11 +1,5 @@
 # GitHub Actions Configuration
 
-> **Upgrade warning:** Package uploads are now disabled when `RELEASE_PUBLISHER` is unset.
-> A GitHub release can succeed without publishing a package. Before upgrading a PyPI
-> consumer, adopt the opt-in `github-pypi` bundle and set `RELEASE_PUBLISHER=custom`.
-> Existing `RELEASE_PUBLISHER=pypi` configurations require the same migration.
-
-
 This document describes the secrets used by the Rhiza-provided GitHub Actions workflows
 (`.github/workflows/rhiza_*.yml`) and how to configure them.
 
@@ -55,51 +49,55 @@ gh secret set PAT_TOKEN
 A PAT expires; when sync pushes start failing with a `refusing to allow ... workflow` error,
 regenerate the token and update the secret.
 
-## Consumer setup and publishing
+## Release workflow secrets (optional)
 
-| Setting | Purpose |
+The release workflow (`.github/workflows/rhiza_release.yml`) supports additional secrets, all
+optional depending on which release features you use:
+
+| Secret | Purpose |
 | --- | --- |
-| `RHIZA_SETUP_ENABLED` variable | Set to `true` to run your `.github/actions/rhiza-setup` action before dependency resolution in supported jobs. |
-| `RHIZA_SETUP_CREDENTIALS` secret | Optional opaque credential passed only to that setup action. Omit when using OIDC. |
-| `RELEASE_PUBLISHER` variable | Set to `custom` to run your `.github/actions/release-publish` action. Unset or `none` disables package uploads. |
-| `RELEASE_PUBLISH_CREDENTIALS` secret | Optional opaque credential passed only to the publishing action. |
+| `PYPI_TOKEN` | Publish the built package to PyPI. Not needed when using trusted publishing (OIDC). |
+| `RELEASE_PUBLISH_CREDENTIALS` | Optional credentials input for a repository-owned custom publisher. Not needed when the extension uses OIDC. |
+| `GH_PAT` | Git authentication for installing private dependencies during the release build. |
+| `UV_EXTRA_INDEX_URL` | Extra package index URL (with credentials) for private dependencies. |
 
-Setup receives `purpose` and `credentials` inputs and non-secret variables as JSON in
-`RHIZA_SETUP_VARS`. Publishing receives `artifacts-dir`, `tag`, `version`, `credentials`,
-and non-secret variables as JSON in `RHIZA_RELEASE_PUBLISH_VARS`. The setup action is consumer-owned; the publishing action may be consumer-owned
-or maintained by the opt-in github-pypi bundle. Commit them before releasing; publisher code is loaded from the release
-tag. Missing configured actions and failed setup/uploads fail closed. Failed publication
-leaves the release draft. OIDC callers must grant `id-token: write`.
+`GITHUB_TOKEN` is provided automatically by GitHub Actions and needs no configuration.
 
-## PyPI quick-start (Trusted Publishing)
+## Release publisher selection
 
-1. Add `github-pypi` to `templates` in `.rhiza/template.yml` alongside your existing
-   GitHub profile or bundles, then sync. This installs the maintained, opt-in
-   `.github/actions/release-publish/action.yml` adapter with its pinned PyPA action.
-2. Set the repository variable `RELEASE_PUBLISHER=custom`.
-3. Register your repository on PyPI as a Trusted Publisher with workflow filename
-   `rhiza_release.yml` and environment `release`.
-4. Trigger the synced `.github/workflows/rhiza_release.yml` directly using
-   `workflow_dispatch`. Keep its `id-token: write` permission. No PyPI token is needed.
+Set the Actions **variable** `RELEASE_PUBLISHER` to choose package deployment:
 
-Reusable-workflow callers cannot use this PyPI OIDC configuration. Supply a PyPI API
-token through `RELEASE_PUBLISH_CREDENTIALS`, or use a separate caller-owned publishing
-job. The adapter rejects private packages and uploads only verified wheels and sdists.
+| Value | Behaviour |
+| --- | --- |
+| Unset or `pypi` | Existing PyPI Trusted Publishing. `PYPI_REPOSITORY_URL` (variable) and `PYPI_TOKEN` (secret) still support PyPI-compatible custom endpoints. |
+| `custom` | Run your repository-owned composite action at `.github/actions/release-publish/action.yml` (or `action.yaml`). No fallback to public PyPI. |
+| `none` | Skip package publishing, retaining the other release outputs. |
 
-**Migration:** implicit PyPI publishing and `RELEASE_PUBLISHER=pypi` have been removed.
-Adopt `github-pypi` (or your own adapter) and select `custom` before upgrading. Move `PYPI_TOKEN` to
-`RELEASE_PUBLISH_CREDENTIALS`; put any custom endpoint configuration inside your own action.
-There is no fallback upload destination. Existing `custom` publishers retain their inputs.
+No bundle syncs the custom action path: it remains repository-owned.
+Commit the action before tagging the release;
+it runs from that release revision with the `release` environment, `contents: read` and
+`id-token: write`. It receives `artifacts-dir` (absolute path to the downloaded build
+artifacts), `tag`, `version` (tag without `v`) and the optional `credentials` input.
+It owns provider login, tool setup and upload, and must fail on unsuccessful publication.
+Use the existing distributions rather than rebuilding them; the directory can also
+contain provenance files.
 
-For AWS private dependencies, copy `examples/dependency-setup/codeartifact/action.yml`
-into your setup action path and set `RHIZA_SETUP_ENABLED=true`. All AWS settings and token
-handling live in that consumer action, outside reusable workflows. The former
-`CODEARTIFACT_CONSUMPTION_ENABLED` switch is replaced by this generic opt-in.
-Setup refuses fork pull requests and `pull_request_target`. Container builds need separate
-BuildKit secret forwarding.
+For OIDC-capable feeds, obtain and immediately mask short-lived credentials in this
+action. Otherwise, supply the optional `RELEASE_PUBLISH_CREDENTIALS` secret in the
+format your action expects. Only that explicit secret is forwarded to the extension.
+An optional `artifact-url` output supplies a public HTTPS artifact link for release notes;
+omit it for private destinations and never include credentials or signed access tokens.
 
-See the [extension contract](https://jebel-quant.github.io/rhiza/reference/ARCHITECTURE/#consumer-owned-setup-and-publishing)
-for configuration, example requirements, output contracts, and migration details.
+The private-package classifier still suppresses built-in PyPI uploads; `custom`
+explicitly permits private distributions. Invalid modes, missing custom actions and
+missing expected distributions fail closed. Failed required uploads prevent release
+finalization. Conda recipes are generated only after successful public PyPI publication
+with no `PYPI_REPOSITORY_URL` override.
+
+This is a GitHub publishing extension, not private dependency-consumption setup or a
+GitLab feature. See the
+[publisher contract](https://jebel-quant.github.io/rhiza/reference/ARCHITECTURE/#repository-owned-publishing-action)
+for details.
 
 ## Private dependency secrets in other workflows
 
@@ -119,3 +117,24 @@ The docker workflow is the one place the runner's git configuration cannot reach
 BuildKit secrets instead, which exist only for that one instruction and are written into no
 layer; a build argument would be readable with `docker history` (#1691). See
 `docs/development/DOCKER.md` for building such an image locally.
+
+## Private dependency setup (opt-in)
+
+Set `RHIZA_SETUP_ENABLED=true` and commit a consumer-owned
+`.github/actions/rhiza-setup/action.yml` (or `action.yaml`). The action receives
+`purpose` and the optional `RHIZA_SETUP_CREDENTIALS` secret as `credentials`.
+Keep provider settings inside that action; no repository variables are forwarded.
+Setup exports through `GITHUB_ENV` survive an unset legacy `UV_EXTRA_INDEX_URL`
+secret. Publication is independent: built-in PyPI remains the default.
+
+OIDC consumers must explicitly grant `id-token: write` on their calling job;
+setup jobs inherit that grant, and default wrappers add none for setup.
+Pages deployment and release signing retain their existing separate permissions.
+Fork PRs and `pull_request_target` fail when setup is enabled, before the action runs.
+
+For the CodeArtifact example, IAM/OIDC configuration, workflow coverage, book-hook
+migration and deferred container/AWS validation work, see the
+[setup contract](https://jebel-quant.github.io/rhiza/reference/ARCHITECTURE/#consumer-owned-dependency-setup).
+Rename the former book action to `rhiza-setup`, its `token` input to `credentials`,
+and `BOOK_SETUP_TOKEN` to `RHIZA_SETUP_CREDENTIALS`; remove `with.book-setup` and set
+`RHIZA_SETUP_ENABLED=true` instead.

@@ -51,7 +51,6 @@ class OverlaySpec:
             and the platform. An overlay with no feature bundle still needs a closure --
             the language layer whose gates its workflow invokes -- and that has to be
             written down rather than inferred, or this test would accept any of it.
-        actions: Platform-relative action metadata paths the overlay must ship.
         workflows: Workflow file basenames the overlay must ship.
         feature_workflows: For GitHub overlays, the reusable feature workflows
             each shipped workflow must delegate to (basename, without path).
@@ -64,7 +63,6 @@ class OverlaySpec:
     workflows: tuple[str, ...]
     feature_workflows: tuple[str, ...] = ()
     requires: tuple[str, ...] = ()
-    actions: tuple[str, ...] = ()
 
     @property
     def expected_requires(self) -> set[str]:
@@ -87,14 +85,6 @@ _WORKFLOW_DIR = {
 # Authoritative expectation for every overlay bundle.  Grounded in the actual
 # contents of bundles/<overlay>/ as of this commit; update alongside the bundles.
 _OVERLAYS: tuple[OverlaySpec, ...] = (
-    OverlaySpec(
-        bundle="github-pypi",
-        platform="github",
-        feature=None,
-        requires=("core", "python-core", "github"),
-        workflows=(),
-        actions=("actions/release-publish/action.yml",),
-    ),
     OverlaySpec(
         bundle="github-tests",
         platform="github",
@@ -241,13 +231,7 @@ class TestOverlayBundleFiles:
     def test_ships_expected_workflows(self, spec: OverlaySpec, root: Path) -> None:
         """Every expected workflow file exists under the platform-specific workflows dir."""
         workflows_dir = root / "bundles" / spec.bundle / _WORKFLOW_DIR[spec.platform]
-        if spec.workflows:
-            assert workflows_dir.is_dir(), f"overlay '{spec.bundle}' is missing {_WORKFLOW_DIR[spec.platform]}/"
-        for action in spec.actions:
-            action_path = root / "bundles" / spec.bundle / f".{spec.platform}" / action
-            assert action_path.is_file(), f"overlay '{spec.bundle}' is missing {action}"
-            definition = _load_workflow_doc(action_path)
-            assert definition["runs"]["using"] == "composite"
+        assert workflows_dir.is_dir(), f"overlay '{spec.bundle}' is missing {_WORKFLOW_DIR[spec.platform]}/"
         for wf in spec.workflows:
             assert (workflows_dir / wf).is_file(), (
                 f"overlay '{spec.bundle}' should ship {_WORKFLOW_DIR[spec.platform] / wf}"

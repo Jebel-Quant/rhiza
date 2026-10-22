@@ -52,7 +52,7 @@ Bundles declare relationships in `.rhiza/template-bundles.yml`:
 
 ## Platform-overlay bundles
 
-Each overlay adds hosted-CI workflows or actions for a capability. Pick the overlay
+Each overlay adds the hosted-CI workflow stub for a capability. Pick the overlay
 that matches your platform.
 
 Not every capability has a bundle of its own. `tests`, `marimo` and `paper` were removed
@@ -63,7 +63,6 @@ exercise instead.
 
 | Bundle | Capability → platform |
 |--------|------------------------|
-| `github-pypi` | Opt-in maintained PyPI publishing action; requires `core`, `python-core`, and `github`. Enable with `RELEASE_PUBLISHER=custom`; excluded from default profiles. |
 | `github-tests` | CI, CodeQL and benchmark → GitHub Actions |
 | `github-book` | `book` → GitHub Pages publishing |
 | `github-marimo` | Notebook publishing → GitHub Actions |

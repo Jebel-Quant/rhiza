@@ -70,7 +70,6 @@ flowchart LR
         github["github"]
         github_devcontainer["github-devcontainer"]
         github_docker["github-docker"]
-        github_pypi["github-pypi"]
         github_paper["github-paper"]
         github_tests["github-tests"]
         github_marimo["github-marimo"]
@@ -89,9 +88,6 @@ flowchart LR
     python_core --> core
     rust_core --> core
     go_core --> core
-    github_pypi --> core
-    github_pypi --> python_core
-    github_pypi --> github
     github --> core
     gitlab --> core
     book --> core

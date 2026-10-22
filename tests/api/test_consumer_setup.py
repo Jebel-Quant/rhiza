@@ -10,33 +10,33 @@ import pytest
 import yaml
 
 _ROOT = Path(__file__).resolve().parents[2]
-_ACTION = _ROOT / ".github/actions/rhiza-consumer-setup/action.yml"
+_WORKFLOW = _ROOT / ".github/workflows/rhiza_ci.yml"
 
 
 @pytest.mark.parametrize(
-    ("enabled", "event", "head", "exists", "success"),
+    ("event", "head", "exists", "success"),
     [
-        ("false", "push", "", False, True),
-        ("true", "push", "", False, False),
-        ("true", "push", "", True, True),
-        ("true", "pull_request", "acme/project", True, True),
-        ("true", "pull_request", "fork/project", True, False),
-        ("true", "pull_request_target", "acme/project", True, False),
+        ("push", "", False, False),
+        ("push", "", True, True),
+        ("pull_request", "acme/project", True, True),
+        ("pull_request", "fork/project", True, False),
+        ("pull_request_target", "acme/project", True, False),
     ],
 )
-def test_setup_guard(tmp_path, enabled, event, head, exists, success):
+def test_setup_guard(tmp_path, event, head, exists, success):
     """Enabled setup requires a caller action and refuses untrusted events."""
     if exists:
         action = tmp_path / ".github/actions/rhiza-setup/action.yaml"
         action.parent.mkdir(parents=True)
         action.write_text("name: setup\n")
-    definition = yaml.safe_load(_ACTION.read_text())
+    steps = yaml.safe_load(_WORKFLOW.read_text())["jobs"]["test"]["steps"]
+    guard = next(s for s in steps if s.get("name") == "Validate consumer dependency setup")
+    call = next(s for s in steps if s.get("name") == "Run consumer dependency setup")
     result = subprocess.run(
-        ["bash", "-e", "-o", "pipefail", "-c", definition["runs"]["steps"][0]["run"]],
+        ["bash", "-e", "-o", "pipefail", "-c", guard["run"]],
         cwd=tmp_path,
         env={
             **os.environ,
-            "ENABLED": enabled,
             "EVENT_NAME": event,
             "HEAD_REPOSITORY": head,
             "CALLER_REPOSITORY": "acme/project",
@@ -46,9 +46,8 @@ def test_setup_guard(tmp_path, enabled, event, head, exists, success):
         check=False,
     )
     assert (result.returncode == 0) == success, result.stdout + result.stderr
-    call = definition["runs"]["steps"][1]
     assert call["uses"] == "./.github/actions/rhiza-setup"
-    assert call["if"] == "inputs.enabled == 'true'"
+    assert call["if"] == "${{ vars.RHIZA_SETUP_ENABLED == 'true' }}"
     assert not call.get("continue-on-error")
 
 
@@ -64,7 +63,6 @@ def test_setup_before_dependency_resolution():
                     "typecheck",
                     "deptry",
                     "rhiza-test",
-                    "pre-commit",
                     "docs-coverage",
                     "security",
                     "license",
@@ -78,6 +76,7 @@ def test_setup_before_dependency_resolution():
         "weekly": {"dep-compat-test": "Resolve and install latest compatible dependencies", "semgrep": "Run Semgrep"},
         "release": {"build": "Build"},
     }
+    tested_guard = None
     for workflow, consumers in jobs.items():
         definition = yaml.safe_load((_ROOT / f".github/workflows/rhiza_{workflow}.yml").read_text())
         for job, dependency in consumers.items():
@@ -85,10 +84,18 @@ def test_setup_before_dependency_resolution():
             names = [s.get("name") for s in steps]
             assert names.index("Run consumer dependency setup") < names.index(dependency)
             call = steps[names.index("Run consumer dependency setup")]
-            assert call["env"] == {"RHIZA_SETUP_VARS": "${{ toJSON(vars) }}"}
+            guard = steps[names.index("Validate consumer dependency setup")]
+            if tested_guard is None:
+                tested_guard = guard
+            assert guard == tested_guard
+            assert steps.index(guard) < steps.index(call)
+            assert guard["if"] == call["if"]
+            assert "env" not in call
+            assert call["uses"] == "./.github/actions/rhiza-setup"
             assert call["with"]["credentials"] == "${{ secrets.RHIZA_SETUP_CREDENTIALS }}"
-            permissions = definition["jobs"][job].get("permissions", definition["permissions"])
-            assert permissions["id-token"] == "write"
+            if workflow != "release":
+                assert "permissions" not in definition
+                assert "permissions" not in definition["jobs"][job]
         text = str(definition)
         assert "CODEARTIFACT_" not in text
         assert "AWS_ROLE_TO_ASSUME_READ" not in text
@@ -96,15 +103,20 @@ def test_setup_before_dependency_resolution():
         assert triggers["workflow_call"]["secrets"]["RHIZA_SETUP_CREDENTIALS"]["required"] is False
 
 
-def test_shipped_setup_matches_repository_action():
-    """Template consumers receive the tested dispatcher, leaving their own hooks untouched."""
-    assert (
-        _ROOT / "bundles/github/.github/actions/rhiza-consumer-setup/action.yml"
-    ).read_bytes() == _ACTION.read_bytes()
+def test_setup_has_no_synced_dispatcher_or_provider_configuration():
+    """Consumers own setup code; guards travel with the versioned reusable workflow."""
     for bundle in (_ROOT / "bundles").iterdir():
-        assert not (bundle / ".github/actions/rhiza-setup").exists()
-        if bundle.name != "github-pypi":
-            assert not (bundle / ".github/actions/release-publish").exists()
+        for action in ("rhiza-setup", "rhiza-consumer-setup", "release-publish"):
+            assert not (bundle / f".github/actions/{action}").exists()
+    for workflow in ("ci", "book", "marimo", "benchmark", "weekly", "release"):
+        text = (_ROOT / f".github/workflows/rhiza_{workflow}.yml").read_text()
+        assert "RHIZA_SETUP_VARS" not in text
+        assert "rhiza-consumer-setup" not in text
+    ci = yaml.safe_load(_WORKFLOW.read_text())
+    assert not any("consumer dependency setup" in s.get("name", "") for s in ci["jobs"]["pre-commit"]["steps"])
+    for path in (_ROOT / "bundles").glob("*/.github/workflows/*.yml"):
+        if path.name in {"rhiza_ci.yml", "rhiza_benchmark.yml", "rhiza_marimo.yml", "rhiza_weekly.yml"}:
+            assert "id-token: write" not in path.read_text()
 
 
 @pytest.mark.parametrize(
@@ -112,8 +124,6 @@ def test_shipped_setup_matches_repository_action():
 )
 def test_codeartifact_example_preserves_uv_index_names(tmp_path, index, expected):
     """The optional provider example follows uv's character-by-character naming convention."""
-    import json
-
     action = yaml.safe_load((_ROOT / "examples/dependency-setup/codeartifact/action.yml").read_text())
     output = tmp_path / "output"
     configuration = {
@@ -126,7 +136,7 @@ def test_codeartifact_example_preserves_uv_index_names(tmp_path, index, expected
     result = subprocess.run(
         ["bash", "-e", "-o", "pipefail", "-c", action["runs"]["steps"][0]["run"]],
         cwd=tmp_path,
-        env={**os.environ, "RHIZA_SETUP_VARS": json.dumps(configuration), "GITHUB_OUTPUT": str(output)},
+        env={**os.environ, **configuration, "GITHUB_OUTPUT": str(output)},
         capture_output=True,
         text=True,
         check=False,

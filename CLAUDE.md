@@ -81,11 +81,6 @@ The core abstraction is the **bundle** — a named group of configuration files.
 
 **Platform overlay bundles** — CI workflow stubs that pair a feature with a platform: `github-tests`, `github-book`, `github-marimo`, `github-docker`, `github-devcontainer`, `github-paper`, `github-quality-review`, `gitlab-tests`, `gitlab-book`, `gitlab-marimo`, `gitlab-quality-review`.
 
-**Opt-in publishing bundle:** `github-pypi` installs the maintained PyPI publishing action
-(with a pinned PyPA uploader) at `.github/actions/release-publish/action.yml`. It requires
-`core`, `python-core`, and `github`; set `RELEASE_PUBLISHER=custom` to enable uploads.
-It is excluded from default profiles.
-
 **Meta-bundles** — curated compositions of other bundles: `github-project`, `gitlab-project`, `local` (no hosted CI), and the single-language local profiles `rust-local` and `go-local`.
 
 ### Dogfooding (root files ↔ bundle sources)

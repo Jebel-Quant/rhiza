@@ -83,7 +83,9 @@ def test_authenticated_setup_consumption(tmp_path):
                 }
             )
         )
-        dispatcher = yaml.safe_load((_ROOT / ".github/actions/rhiza-consumer-setup/action.yml").read_text())
+        steps = yaml.safe_load((_ROOT / ".github/workflows/rhiza_ci.yml").read_text())["jobs"]["test"]["steps"]
+        guard_step = next(s for s in steps if s.get("name") == "Validate consumer dependency setup")
+        call_step = next(s for s in steps if s.get("name") == "Run consumer dependency setup")
         environment = {k: v for k, v in os.environ.items() if not k.startswith("UV_")}
         environment.update(
             ENABLED="true",
@@ -102,9 +104,9 @@ def test_authenticated_setup_consumption(tmp_path):
                 command, cwd=project, env=env, capture_output=True, text=True, check=False, timeout=60
             )
 
-        guard = run(["bash", "-e", "-c", dispatcher["runs"]["steps"][0]["run"]], environment)
+        guard = run(["bash", "-e", "-c", guard_step["run"]], environment)
         assert guard.returncode == 0, guard.stderr
-        assert dispatcher["runs"]["steps"][1]["uses"] == "./.github/actions/rhiza-setup"
+        assert call_step["uses"] == "./.github/actions/rhiza-setup"
         setup = yaml.safe_load(hook.read_text())["runs"]["steps"][0]
         result = run(["bash", "-e", "-c", setup["run"]], environment)
         assert result.returncode == 0, result.stderr

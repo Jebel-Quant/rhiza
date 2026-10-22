@@ -21,10 +21,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  actions: read
-  id-token: write
+# Hook jobs inherit the caller's permissions; OIDC consumers must opt in there.
+# No default id-token grant is made for dependency setup.
 
 # The rhiza-task pin every gate step below runs through. `make <gate>` was the old
 # interface, and v1.4.0 retired the synced make layer: `.rhiza/rhiza.mk` and the sixteen
@@ -72,16 +70,30 @@ jobs:
         with:
           lfs: true
 
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
       - name: Run consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-consumer-setup
-        env:
-          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
+        uses: ./.github/actions/rhiza-setup
         with:
-          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
           purpose: ${{ github.job }}
           credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
-
 
       - id: versions
         name: Build package metadata and extract supported Python classifiers
@@ -188,13 +200,28 @@ jobs:
           version: "0.11.16"
           python-version: ${{ matrix.python-version }}
 
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
       - name: Run consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-consumer-setup
-        env:
-          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
+        uses: ./.github/actions/rhiza-setup
         with:
-          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
           purpose: ${{ github.job }}
           credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
@@ -238,7 +265,6 @@ jobs:
           path: _tests/coverage.xml
           if-no-files-found: ignore
 
-
   lowest-deps:
     name: Lowest-direct dependency compatibility
     # CI budget: ≤20 min (dependency compatibility test run). Last measured: 2026-05-28.
@@ -264,13 +290,28 @@ jobs:
         with:
           version: "0.11.16"
 
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
       - name: Run consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-consumer-setup
-        env:
-          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
+        uses: ./.github/actions/rhiza-setup
         with:
-          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
           purpose: ${{ github.job }}
           credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
@@ -321,13 +362,28 @@ jobs:
           version: "0.11.16"
           python-version: ${{ matrix.python-version }}
 
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
       - name: Run consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-consumer-setup
-        env:
-          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
+        uses: ./.github/actions/rhiza-setup
         with:
-          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
           purpose: ${{ github.job }}
           credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
@@ -363,13 +419,28 @@ jobs:
         with:
           version: "0.11.16"
 
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
       - name: Run consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-consumer-setup
-        env:
-          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
+        uses: ./.github/actions/rhiza-setup
         with:
-          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
           purpose: ${{ github.job }}
           credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
@@ -416,13 +487,28 @@ jobs:
         with:
           version: "0.11.16"
 
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
       - name: Run consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-consumer-setup
-        env:
-          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
+        uses: ./.github/actions/rhiza-setup
         with:
-          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
           purpose: ${{ github.job }}
           credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
@@ -437,6 +523,9 @@ jobs:
         run: uvx "$RHIZA_TASK" rhiza-test
 
   pre-commit:
+    permissions:
+      contents: read
+      actions: read
     name: Pre-commit hooks
     # CI budget: ≤5 min (lint/format hooks). Last measured: 2026-05-28.
     timeout-minutes: 5
@@ -449,16 +538,6 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-
-      - name: Run consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-consumer-setup
-        env:
-          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
-        with:
-          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
-          purpose: ${{ github.job }}
-          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -504,13 +583,28 @@ jobs:
         with:
           version: "0.11.16"
 
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
       - name: Run consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-consumer-setup
-        env:
-          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
+        uses: ./.github/actions/rhiza-setup
         with:
-          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
           purpose: ${{ github.job }}
           credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
@@ -544,13 +638,28 @@ jobs:
         with:
           version: "0.11.16"
 
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
       - name: Run consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-consumer-setup
-        env:
-          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
+        uses: ./.github/actions/rhiza-setup
         with:
-          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
           purpose: ${{ github.job }}
           credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
@@ -583,13 +692,28 @@ jobs:
         with:
           version: "0.11.16"
 
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
       - name: Run consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-consumer-setup
-        env:
-          RHIZA_SETUP_VARS: ${{ toJSON(vars) }}
+        uses: ./.github/actions/rhiza-setup
         with:
-          enabled: ${{ vars.RHIZA_SETUP_ENABLED }}
           purpose: ${{ github.job }}
           credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 
@@ -617,6 +741,9 @@ jobs:
           if-no-files-found: ignore
 
   ci-gate:
+    permissions:
+      contents: read
+      actions: read
     name: CI gate
     # Roll-up gate: a single required status check that aggregates the test,
     # typecheck, lowest-deps and rhiza-test jobs. Branch protection requires this
