@@ -87,7 +87,7 @@ jobs:
 
       - name: Resolve and install latest compatible dependencies
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: |
           # --upgrade ignores the committed lockfile and resolves the newest
           # versions that satisfy pyproject.toml constraints.
@@ -100,7 +100,7 @@ jobs:
 
       - name: Run tests
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: uvx "$RHIZA_TASK" test
 
   semgrep:
@@ -137,7 +137,7 @@ jobs:
 
       - name: Run Semgrep
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: uvx "$RHIZA_TASK" semgrep
 
   link-check:

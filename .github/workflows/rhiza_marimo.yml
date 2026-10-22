@@ -158,7 +158,7 @@ jobs:
         id: artefact-folder
         timeout-minutes: 10
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: |
           notebook="${{ matrix.notebook }}"
           notebook_stem="$(basename "$notebook" .py)"

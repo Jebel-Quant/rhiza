@@ -69,3 +69,15 @@ def test_pypi_success_outputs_feed_generic_release_notes_and_conda(tmp_path):
     assert output == {"artifact-url": "https://pypi.org/project/demo/1.2.3/", "public-pypi": "true"}
     assert action["outputs"]["artifact-url"]["value"] == "${{ steps.link.outputs.artifact-url }}"
     assert action["outputs"]["public-pypi"]["value"] == "${{ steps.link.outputs.public-pypi }}"
+
+
+def test_opt_in_bundle_ships_the_supported_adapter():
+    """The maintained bundle has the tested behavior and remains outside default profiles."""
+    shipped = yaml.safe_load((_ROOT / "bundles/github-pypi/.github/actions/release-publish/action.yml").read_text())
+    example = yaml.safe_load(_ACTION.read_text())
+    assert shipped["runs"] == example["runs"]
+    assert shipped["inputs"] == example["inputs"]
+    assert shipped["outputs"] == example["outputs"]
+    bundles = yaml.safe_load((_ROOT / ".rhiza/template-bundles.yml").read_text())
+    assert "github-pypi" in bundles["bundles"]
+    assert all("github-pypi" not in profile["bundles"] for profile in bundles["profiles"].values())

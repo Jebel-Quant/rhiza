@@ -315,6 +315,11 @@ bundles:
       ANTHROPIC_API_KEY CI/CD variable is set (masked).
 
   # ============================================================================
+  github-pypi:
+    description: "Opt-in public PyPI publishing adapter (select RELEASE_PUBLISHER=custom)"
+    standalone: true
+    requires: [core, python-core, github]
+
   github-tests:
     description: "GitHub Actions workflow stubs for CI (rhiza_ci, rhiza_codeql, rhiza_benchmark)"
     standalone: true

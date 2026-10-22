@@ -78,7 +78,7 @@ jobs:
       - name: Run benchmarks
         timeout-minutes: 20
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: |
           START=$(date +%s)
           uvx "$RHIZA_TASK" benchmark

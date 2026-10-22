@@ -415,8 +415,9 @@ jobs:
 
       - name: Sync environment for SBOM generation
         if: hashFiles('pyproject.toml') != ''
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: |
-          export UV_EXTRA_INDEX_URL="${{ secrets.UV_EXTRA_INDEX_URL }}"
           uv sync --all-extras --all-groups --frozen
 
       - name: Generate SBOM (CycloneDX)
@@ -580,6 +581,18 @@ jobs:
           TAG: ${{ needs.tag.outputs.tag }}
         run: |
           python3 .rhiza-release-tools/bundles/github/.rhiza/scripts/release_publish.py validate-publisher
+
+      - name: Report disabled package publication
+        if: steps.publisher.outputs.should_publish != 'true'
+        shell: bash
+        run: |
+          echo "::warning::Package publication is disabled. This release will not upload a package. Set RELEASE_PUBLISHER=custom and install a publishing adapter to enable uploads."
+          {
+            echo "## Package publication disabled"
+            echo ""
+            echo "No package will be uploaded. The GitHub release can still complete."
+            echo "Upgrading from implicit PyPI publishing? Adopt the github-pypi bundle and set RELEASE_PUBLISHER=custom."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Download dist artifact
         if: steps.publisher.outputs.should_publish == 'true'

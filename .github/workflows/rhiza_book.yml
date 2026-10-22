@@ -184,7 +184,7 @@ jobs:
       - name: "Sync the virtual environment for ${{ github.repository }}"
         shell: bash
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: |
           # will just use .python-version?
           uv sync --all-extras --all-groups --frozen
@@ -234,7 +234,7 @@ jobs:
       - name: "Make the book"
         timeout-minutes: 10
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: |
           # Same reason as rhiza_paper.yml: tectonic embeds the build time in the PDF `/ID`,
           # so without this the paper the book publishes differs on every build. Here the cost

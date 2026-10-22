@@ -403,10 +403,11 @@ def test_reusable_tag_is_passed_without_shell_interpolation(workflow, tmp_path, 
 
 
 def test_no_placeholder_publisher_is_shipped():
-    """Every bundle leaves both custom-action metadata paths owned by the repository."""
+    """Core bundles leave publisher ownership to the repository; PyPI is opt-in."""
     assert not (_ROOT / ".github/actions/release-publish").exists()
     for bundle in (_ROOT / "bundles").iterdir():
-        assert not (bundle / ".github/actions/release-publish").exists()
+        if bundle.name != "github-pypi":
+            assert not (bundle / ".github/actions/release-publish").exists()
 
 
 @pytest.mark.parametrize(("mode", "buildable", "success"), [("", "false", True), ("none", "true", True)])
@@ -518,3 +519,23 @@ def test_failed_custom_composite_leaves_release_draft(workflow, tmp_path):
     values = {f"needs.{job}.result": "success" for job in finalise["needs"]}
     values["needs.publish.result"] = "failure" if upload.returncode else "success"
     assert not _condition(finalise["if"], values)
+
+
+@pytest.mark.parametrize("path", _PATHS)
+def test_disabled_publication_warns_and_summarizes(path, tmp_path):
+    """A successful GitHub release cannot silently hide disabled package uploads."""
+    workflow = yaml.safe_load((_ROOT / path).read_text())
+    step = _step(workflow, "publish", "Report disabled package publication")
+    assert step["if"] == "steps.publisher.outputs.should_publish != 'true'"
+    summary = tmp_path / "summary"
+    result = subprocess.run(
+        ["bash", "-e", "-c", step["run"]],
+        env={**os.environ, "GITHUB_STEP_SUMMARY": str(summary)},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "::warning::Package publication is disabled" in result.stdout
+    assert "No package will be uploaded" in summary.read_text()
+    assert "github-pypi" in summary.read_text()

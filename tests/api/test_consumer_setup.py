@@ -103,7 +103,8 @@ def test_shipped_setup_matches_repository_action():
     ).read_bytes() == _ACTION.read_bytes()
     for bundle in (_ROOT / "bundles").iterdir():
         assert not (bundle / ".github/actions/rhiza-setup").exists()
-        assert not (bundle / ".github/actions/release-publish").exists()
+        if bundle.name != "github-pypi":
+            assert not (bundle / ".github/actions/release-publish").exists()
 
 
 @pytest.mark.parametrize(

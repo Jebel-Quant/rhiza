@@ -213,7 +213,7 @@ jobs:
 
       - name: Run tests
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         shell: bash
         run: |
           uvx "$RHIZA_TASK" test
@@ -293,7 +293,7 @@ jobs:
         # restating it. The copy had already drifted -- it omitted `-n auto`, so this job
         # ran single-process while `test` ran under xdist.
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: uvx "$RHIZA_TASK" test-lowest
 
   typecheck:
@@ -341,7 +341,7 @@ jobs:
         # as defined by rhiza-task's `typecheck` task. Set TYPECHECKER=ty or
         # TYPECHECKER=mypy to run only one of the two checkers.
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: uvx "$RHIZA_TASK" typecheck
 
   deptry:
@@ -433,7 +433,7 @@ jobs:
 
       - name: Run the rhiza repository checks
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: uvx "$RHIZA_TASK" rhiza-test
 
   pre-commit:
@@ -521,7 +521,7 @@ jobs:
 
       - name: Check docs coverage
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: |
           uvx "$RHIZA_TASK" docs-coverage
 
@@ -561,7 +561,7 @@ jobs:
 
       - name: Run security scans
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: uvx "$RHIZA_TASK" security
 
   license:
@@ -600,12 +600,12 @@ jobs:
 
       - name: Run license check
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: uvx "$RHIZA_TASK" license
 
       - name: Generate LICENSES.md
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: |
           uv run --with pip-licenses pip-licenses --format markdown --output-file LICENSES.md
 

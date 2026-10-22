@@ -1,5 +1,11 @@
 # Rhiza Architecture
 
+> **Upgrade warning:** Package uploads are now disabled when `RELEASE_PUBLISHER` is unset.
+> A GitHub release can succeed without publishing a package. Before upgrading a PyPI
+> consumer, adopt the opt-in `github-pypi` bundle and set `RELEASE_PUBLISHER=custom`.
+> Existing `RELEASE_PUBLISHER=pypi` configurations require the same migration.
+
+
 Visual diagrams of Rhiza's architecture and component interactions.
 
 ## System Overview
@@ -199,6 +205,21 @@ Publisher guards are loaded from an independent, immutable Rhiza tooling checkou
 old release tags do not have to contain a current helper script. Both workflows pin the
 tested helper revision; upgrades must publish the helper before updating that pin.
 
+### PyPI quick-start
+
+1. Add `github-pypi` to `templates` in `.rhiza/template.yml` alongside your existing
+   GitHub profile or bundles, then sync. This installs the maintained, opt-in
+   `.github/actions/release-publish/action.yml` adapter with its pinned PyPA action.
+2. Set the repository variable `RELEASE_PUBLISHER=custom`.
+3. Register your repository on PyPI as a Trusted Publisher with workflow filename
+   `rhiza_release.yml` and environment `release`.
+4. Trigger the synced `.github/workflows/rhiza_release.yml` directly using
+   `workflow_dispatch`. Keep its `id-token: write` permission. No PyPI token is needed.
+
+Reusable-workflow callers cannot use this PyPI OIDC configuration. Supply a PyPI API
+token through `RELEASE_PUBLISH_CREDENTIALS`, or use a separate caller-owned publishing
+job. The adapter rejects private packages and uploads only verified wheels and sdists.
+
 ### Optional PyPI and CodeArtifact implementations
 
 The copyable examples are outside the synced bundles:
@@ -223,8 +244,8 @@ choosing TestPyPI or another destination must configure their own adapter explic
 
 ### Migration
 
-Before upgrading existing PyPI consumers, commit the PyPI example at the publishing hook
-path, set `RELEASE_PUBLISHER=custom`, and move any `PYPI_TOKEN` secret to
+Before upgrading existing PyPI consumers, adopt `github-pypi` or commit your own adapter
+at the publishing hook path, set `RELEASE_PUBLISHER=custom`, and move any `PYPI_TOKEN` secret to
 `RELEASE_PUBLISH_CREDENTIALS`. OIDC consumers running the directly triggered workflow
 need no token. The core no longer reads `PYPI_REPOSITORY_URL`: custom endpoints belong
 in the consumer publisher. Verify the hook is present in each new release tag.

@@ -1,5 +1,11 @@
 # GitHub Actions Configuration
 
+> **Upgrade warning:** Package uploads are now disabled when `RELEASE_PUBLISHER` is unset.
+> A GitHub release can succeed without publishing a package. Before upgrading a PyPI
+> consumer, adopt the opt-in `github-pypi` bundle and set `RELEASE_PUBLISHER=custom`.
+> Existing `RELEASE_PUBLISHER=pypi` configurations require the same migration.
+
+
 This document describes the secrets used by the Rhiza-provided GitHub Actions workflows
 (`.github/workflows/rhiza_*.yml`) and how to configure them.
 
@@ -60,20 +66,28 @@ regenerate the token and update the secret.
 
 Setup receives `purpose` and `credentials` inputs and non-secret variables as JSON in
 `RHIZA_SETUP_VARS`. Publishing receives `artifacts-dir`, `tag`, `version`, `credentials`,
-and non-secret variables as JSON in `RHIZA_RELEASE_PUBLISH_VARS`. Neither consumer action
-is template-owned. Commit them before releasing; publisher code is loaded from the release
+and non-secret variables as JSON in `RHIZA_RELEASE_PUBLISH_VARS`. The setup action is consumer-owned; the publishing action may be consumer-owned
+or maintained by the opt-in github-pypi bundle. Commit them before releasing; publisher code is loaded from the release
 tag. Missing configured actions and failed setup/uploads fail closed. Failed publication
 leaves the release draft. OIDC callers must grant `id-token: write`.
 
-PyPI is an optional implementation of the same publishing contract. Copy
-`examples/publishing/pypi/action.yml` from Rhiza into your publishing action path and select
-`custom`. For Trusted Publishing, use the directly triggered release workflow; PyPA does
-not support OIDC publishing inside reusable workflows. Reusable callers can pass a PyPI
-API token through `RELEASE_PUBLISH_CREDENTIALS` instead. The example rejects private-package
-metadata and excludes provenance files from uploads.
+## PyPI quick-start (Trusted Publishing)
+
+1. Add `github-pypi` to `templates` in `.rhiza/template.yml` alongside your existing
+   GitHub profile or bundles, then sync. This installs the maintained, opt-in
+   `.github/actions/release-publish/action.yml` adapter with its pinned PyPA action.
+2. Set the repository variable `RELEASE_PUBLISHER=custom`.
+3. Register your repository on PyPI as a Trusted Publisher with workflow filename
+   `rhiza_release.yml` and environment `release`.
+4. Trigger the synced `.github/workflows/rhiza_release.yml` directly using
+   `workflow_dispatch`. Keep its `id-token: write` permission. No PyPI token is needed.
+
+Reusable-workflow callers cannot use this PyPI OIDC configuration. Supply a PyPI API
+token through `RELEASE_PUBLISH_CREDENTIALS`, or use a separate caller-owned publishing
+job. The adapter rejects private packages and uploads only verified wheels and sdists.
 
 **Migration:** implicit PyPI publishing and `RELEASE_PUBLISHER=pypi` have been removed.
-Adopt the example and select `custom` before upgrading. Move `PYPI_TOKEN` to
+Adopt `github-pypi` (or your own adapter) and select `custom` before upgrading. Move `PYPI_TOKEN` to
 `RELEASE_PUBLISH_CREDENTIALS`; put any custom endpoint configuration inside your own action.
 There is no fallback upload destination. Existing `custom` publishers retain their inputs.
 

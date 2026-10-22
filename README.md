@@ -1,5 +1,11 @@
 <div align="center" markdown>
 
+> **Upgrade warning:** Package uploads are now disabled when `RELEASE_PUBLISHER` is unset.
+> A GitHub release can succeed without publishing a package. Before upgrading a PyPI
+> consumer, adopt the opt-in `github-pypi` bundle and set `RELEASE_PUBLISHER=custom`.
+> Existing `RELEASE_PUBLISHER=pypi` configurations require the same migration.
+
+
 # <img src="https://jebel-quant.github.io/rhiza/assets/rhiza-logo.svg" alt="Rhiza Logo" width="30" style="vertical-align: middle;"> Rhiza
 ![GitHub Release](https://img.shields.io/github/v/release/jebel-quant/rhiza?sort=semver&color=2FA4A9&label=rhiza)
 
@@ -200,6 +206,7 @@ Any bundle can be selected on its own — its dependencies are resolved and inst
 |--------|-------------|---------------|
 | `github` | Base GitHub repository automation (sync, release, dependabot) | `core` |
 | `github-tests` | GitHub Actions workflows for test automation (CI, CodeQL, weekly) | `github`, `python-core`, `core` |
+| `github-pypi` | Opt-in maintained public PyPI publisher | `core`, `python-core`, `github` |
 | `github-book` | GitHub Actions workflow for documentation publishing | `github`, `book`, `core` |
 | `github-marimo` | GitHub Actions workflow for Marimo notebook automation | `github`, `python-core`, `core` |
 | `github-docker` | GitHub Actions workflow for Docker image building and publishing | `github`, `docker`, `core` |
