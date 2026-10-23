@@ -15,8 +15,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Hook jobs inherit the caller's permissions; OIDC consumers must opt in there.
-# No default id-token grant is made for dependency setup.
+permissions:
+  contents: read
 
 # The rhiza-task pin the gate step below runs through. v1.4.0 retired the synced make
 # layer -- `.rhiza/rhiza.mk` and its fragments are CLI tasks now -- and while `core` does
@@ -42,6 +42,8 @@ on:
 
 jobs:
   benchmark:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
 
     steps:

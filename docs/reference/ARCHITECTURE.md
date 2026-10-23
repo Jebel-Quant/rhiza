@@ -290,25 +290,51 @@ disabled. Never check out untrusted PR code in a privileged event to bypass the 
 
 #### Caller permissions
 
-Setup jobs inherit the caller's permissions rather than adding a default OIDC grant.
-For OIDC, explicitly grant `id-token: write` on the calling job; for token-based setup,
-keep `contents: read` only. The reusable workflow cannot elevate the caller's ceiling.
-Non-consuming jobs keep their own limited permissions. Existing release attestation,
-publishing and Pages deployment permissions are separate from dependency setup.
-Directly triggered workflows likewise need an explicit job grant when opting into OIDC.
-Exclude customized wrapper files from sync so subsequent updates preserve the opt-in.
+The shipped CI, book, benchmark, notebook and weekly workflows declare explicit
+read-only defaults and job permissions. CI also retains `actions: read`. Setup is
+available with the explicit `RHIZA_SETUP_CREDENTIALS` secret, but these default
+jobs cannot obtain an OIDC token. In particular, the book `build` job has only
+`contents: read`: it never inherits `pages: write` or `id-token: write` from the
+calling Pages stub. Those permissions remain confined to the `deploy` job.
+Release build attestation and publishing retain their existing OIDC permissions.
+
+**OIDC opt-in requires permission in both the consuming job and its caller.** Adding
+`id-token: write` to a caller alone cannot override the called job's read-only
+scope. GitHub permissions are static; `RHIZA_SETUP_ENABLED=true` enables the action,
+not an OIDC grant. To opt in without widening default consumers' permissions:
+
+1. Copy the desired version of the reusable workflow into a consumer-owned path,
+   such as `.github/workflows/dependency-ci.yml`. Retain `workflow_call`; remove any
+   direct push, PR or scheduled triggers if those remain in your calling wrapper.
+2. In that copy, add `id-token: write` only to each dependency-consuming job that
+   needs OIDC, alongside its existing read permissions. For the book `build` job,
+   the complete set is `contents: read` and `id-token: write`; never add
+   `pages: write`. Keep the separate deployment permissions unchanged.
+3. Grant the matching OIDC permission in the calling wrapper, and point it at the
+   consumer-owned workflow. Install the setup action and enable it as described above.
+
+For example, after preparing the consumer-owned CI workflow:
 
 ```yaml
 jobs:
   ci:
-    uses: jebel-quant/rhiza/.github/workflows/rhiza_ci.yml@<version>
+    uses: ./.github/workflows/dependency-ci.yml
     permissions:
       contents: read
       actions: read
-      id-token: write  # Opt in only for an OIDC setup action.
+      id-token: write
     secrets:
       RHIZA_SETUP_CREDENTIALS: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
 ```
+
+**Upgrade responsibility:** exclude customized template-owned wrappers from sync
+so updates preserve the opt-in. Excluded wrappers no longer receive automatic
+`@vX.Y.Z` reference updates from `/rhiza:update`; bump any retained version references
+by hand. A consumer-owned workflow copy also requires manual review and application
+of upstream fixes. Adding only a caller grant to an otherwise unchanged upstream
+workflow does not enable OIDC. A maintained opt-in overlay or reusable OIDC variant
+could remove this copying and upgrade burden; that remains follow-up work under
+[#1732](https://github.com/Jebel-Quant/rhiza/issues/1732).
 
 #### CodeArtifact example
 

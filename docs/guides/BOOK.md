@@ -195,6 +195,14 @@ keeps the interface general and avoids coupling Rhiza to any one host.
 
 ### Consumer-owned build setup (opt-in)
 
+The shipped build job has only `contents: read`, even when the caller grants Pages
+and OIDC permissions for deployment. Token-based setup uses the explicit secret
+below. OIDC setup requires a consumer-owned workflow copy with `id-token: write`
+added to the build job as well as the caller; adding it only to the caller is
+insufficient. Never grant `pages: write` to the build job. See the
+[OIDC opt-in procedure](../reference/ARCHITECTURE.md#caller-permissions) and its
+manual upgrade responsibilities.
+
 **Migration from the book-specific hook:** rename `.github/actions/rhiza-book-setup`
 to `.github/actions/rhiza-setup`, rename its `token` input to `credentials`, forward
 `RHIZA_SETUP_CREDENTIALS` instead of `BOOK_SETUP_TOKEN`, remove `with.book-setup`,

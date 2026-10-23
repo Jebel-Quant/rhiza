@@ -21,8 +21,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Hook jobs inherit the caller's permissions; OIDC consumers must opt in there.
-# No default id-token grant is made for dependency setup.
+permissions:
+  contents: read
+  actions: read
 
 # The rhiza-task pin every gate step below runs through. `make <gate>` was the old
 # interface, and v1.4.0 retired the synced make layer: `.rhiza/rhiza.mk` and the sixteen
@@ -54,6 +55,9 @@ on:
 
 jobs:
   generate-matrix:
+    permissions:
+      contents: read
+      actions: read
     # CI budget: ≤5 min (matrix generation/setup). Last measured: 2026-05-28.
     timeout-minutes: 5
     runs-on: ubuntu-latest
@@ -164,6 +168,9 @@ jobs:
           echo "OS versions: ${{ steps.os.outputs.list }}"
 
   test:
+    permissions:
+      contents: read
+      actions: read
     # CI budget: ≤20 min (test matrix execution). Last measured: 2026-05-28.
     timeout-minutes: 20
     needs: generate-matrix
@@ -266,6 +273,9 @@ jobs:
           if-no-files-found: ignore
 
   lowest-deps:
+    permissions:
+      contents: read
+      actions: read
     name: Lowest-direct dependency compatibility
     # CI budget: ≤20 min (dependency compatibility test run). Last measured: 2026-05-28.
     timeout-minutes: 20
@@ -338,6 +348,9 @@ jobs:
         run: uvx "$RHIZA_TASK" test-lowest
 
   typecheck:
+    permissions:
+      contents: read
+      actions: read
     name: Type checking (Python ${{ matrix.python-version }})
     # CI budget: ≤5 min (lint/typecheck quality gate). Last measured: 2026-05-28.
     timeout-minutes: 5
@@ -401,6 +414,9 @@ jobs:
         run: uvx "$RHIZA_TASK" typecheck
 
   deptry:
+    permissions:
+      contents: read
+      actions: read
     name: Check dependencies with deptry
     # CI budget: ≤5 min (lint/dependency hygiene check). Last measured: 2026-05-28.
     timeout-minutes: 5
@@ -453,6 +469,9 @@ jobs:
         run: uvx "$RHIZA_TASK" deps
 
   rhiza-test:
+    permissions:
+      contents: read
+      actions: read
     name: Rhiza repository checks
     # Runs the conformance checks `make rhiza-test` selects through RHIZA_CHECKS — the
     # [project] structure gate, doctests, README validation and the release-tag check.
@@ -566,6 +585,9 @@ jobs:
           uvx "$RHIZA_TASK" fmt
 
   docs-coverage:
+    permissions:
+      contents: read
+      actions: read
     # CI budget: ≤10 min (docs quality check). Last measured: 2026-05-28.
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -620,6 +642,9 @@ jobs:
           uvx "$RHIZA_TASK" docs-coverage
 
   security:
+    permissions:
+      contents: read
+      actions: read
     name: Security scanning
     # CI budget: ≤10 min (security scanning and suppression audit). Last measured: 2026-05-28.
     timeout-minutes: 10
@@ -674,6 +699,9 @@ jobs:
         run: uvx "$RHIZA_TASK" security
 
   license:
+    permissions:
+      contents: read
+      actions: read
     name: License compliance scan
     # CI budget: ≤10 min (license and artifact generation). Last measured: 2026-05-28.
     timeout-minutes: 10

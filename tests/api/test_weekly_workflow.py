@@ -83,10 +83,10 @@ class TestWeeklyWorkflowStructure:
         assert workflow.get("name") == "(RHIZA) WEEKLY"
 
     def test_permissions_contents_read(self, workflow):
-        """Setup jobs inherit the caller ceiling without a shipped OIDC grant."""
-        assert "permissions" not in workflow
+        """Every job explicitly limits the caller grant to contents read."""
+        assert workflow["permissions"] == {"contents": "read"}
         for job in ("dep-compat-test", "semgrep"):
-            assert "permissions" not in workflow["jobs"][job]
+            assert workflow["jobs"][job]["permissions"] == {"contents": "read"}
         assert workflow["jobs"]["link-check"]["permissions"] == {"contents": "read"}
 
     # --- triggers ---

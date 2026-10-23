@@ -93,9 +93,15 @@ def test_setup_before_dependency_resolution():
             assert "env" not in call
             assert call["uses"] == "./.github/actions/rhiza-setup"
             assert call["with"]["credentials"] == "${{ secrets.RHIZA_SETUP_CREDENTIALS }}"
+            expected = {"contents": "read"}
+            if workflow == "ci":
+                expected["actions"] = "read"
+            elif workflow == "release":
+                expected.update({"id-token": "write", "attestations": "write"})
+            assert definition["jobs"][job]["permissions"] == expected
+            assert "pages" not in expected
             if workflow != "release":
-                assert "permissions" not in definition
-                assert "permissions" not in definition["jobs"][job]
+                assert definition["permissions"] == expected
         text = str(definition)
         assert "CODEARTIFACT_" not in text
         assert "AWS_ROLE_TO_ASSUME_READ" not in text
@@ -143,3 +149,17 @@ def test_codeartifact_example_preserves_uv_index_names(tmp_path, index, expected
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert f"normalized_index={expected}" in output.read_text().splitlines()
+
+
+def test_book_build_does_not_inherit_deployment_permissions():
+    """Even a deployment-capable caller cannot widen the book build's explicit scope."""
+    definition = yaml.safe_load((_ROOT / ".github/workflows/rhiza_book.yml").read_text())
+    stub = yaml.safe_load((_ROOT / "bundles/github-book/.github/workflows/rhiza_book.yml").read_text())
+    caller = stub["jobs"]["book"]["permissions"]
+    assert caller == {"contents": "read", "pages": "write", "id-token": "write"}
+    build = definition["jobs"]["build"]
+    assert definition["permissions"] == {"contents": "read"}
+    assert build["permissions"] == {"contents": "read"}
+    assert "pages" not in build["permissions"]
+    assert "id-token" not in build["permissions"]
+    assert definition["jobs"]["deploy"]["permissions"] == caller

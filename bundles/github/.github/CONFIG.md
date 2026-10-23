@@ -127,8 +127,12 @@ Keep provider settings inside that action; no repository variables are forwarded
 Setup exports through `GITHUB_ENV` survive an unset legacy `UV_EXTRA_INDEX_URL`
 secret. Publication is independent: built-in PyPI remains the default.
 
-OIDC consumers must explicitly grant `id-token: write` on their calling job;
-setup jobs inherit that grant, and default wrappers add none for setup.
+Default setup jobs explicitly retain read-only permissions; the book build never
+inherits Pages deployment permissions. A caller-only `id-token: write` grant is
+insufficient for OIDC setup: opt in with a consumer-owned workflow copy granting
+OIDC only to the dependency jobs, plus the matching caller grant. See the setup
+contract below for the procedure. Excluded wrappers no longer receive automatic
+workflow-version updates; bump their references and maintain workflow copies manually.
 Pages deployment and release signing retain their existing separate permissions.
 Fork PRs and `pull_request_target` fail when setup is enabled, before the action runs.
 

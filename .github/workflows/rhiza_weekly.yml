@@ -19,8 +19,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Hook jobs inherit the caller's permissions; OIDC consumers must opt in there.
-# No default id-token grant is made for dependency setup.
+permissions:
+  contents: read
 
 # The rhiza-task pin the gate steps below run through. v1.4.0 retired the synced make
 # layer -- `.rhiza/rhiza.mk` and its fragments are CLI tasks now -- and these steps call the
@@ -49,6 +49,8 @@ on:
 
 jobs:
   dep-compat-test:
+    permissions:
+      contents: read
     name: Test with latest compatible dependencies
     runs-on: ubuntu-latest
     #if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -118,6 +120,8 @@ jobs:
         run: uvx "$RHIZA_TASK" test
 
   semgrep:
+    permissions:
+      contents: read
     name: Semgrep (numpy)
     runs-on: ubuntu-latest
 

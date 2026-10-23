@@ -176,15 +176,11 @@ class TestCiWorkflow:
         )
 
     def test_ci_workflow_has_permissions(self, ci_workflow: dict) -> None:
-        """Hook jobs inherit opt-in caller grants; other jobs stay explicitly limited."""
-        assert "permissions" not in ci_workflow
+        """CI keeps explicit read-only scopes even under a more privileged caller."""
+        expected = {"contents": "read", "actions": "read"}
+        assert ci_workflow["permissions"] == expected
         for job in ci_workflow["jobs"].values():
-            setup = any(s.get("uses") == "./.github/actions/rhiza-setup" for s in job.get("steps", []))
-            if setup:
-                assert "permissions" not in job
-            else:
-                assert job["permissions"]["contents"] == "read"
-                assert "id-token" not in job["permissions"]
+            assert job["permissions"] == expected
 
     def test_ci_workflow_verifies_clean_working_tree_after_tests(self, ci_workflow: dict) -> None:
         """CI workflow should fail if tests leave tracked or untracked files behind."""
