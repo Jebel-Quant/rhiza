@@ -28,6 +28,10 @@ name: "(RHIZA) BOOK"
 on:
   workflow_call:
     inputs:
+      book-setup:
+        description: Deprecated; use RHIZA_SETUP_ENABLED. Retained until the next major release.
+        type: boolean
+        default: false
       deploy-pages:
         description: >-
           Deploy the generated book to GitHub Pages. Set to `false` for
@@ -38,6 +42,9 @@ on:
         type: boolean
         default: true
     secrets:
+      BOOK_SETUP_TOKEN:
+        description: Deprecated alias for RHIZA_SETUP_CREDENTIALS; retained until the next major release.
+        required: false
       RHIZA_SETUP_CREDENTIALS:
         required: false
       GH_PAT:
@@ -127,29 +134,45 @@ jobs:
           version: "0.11.16"
 
       - name: Validate consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        id: consumer_setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' || inputs.book-setup }}
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
           HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
           CALLER_REPOSITORY: ${{ github.repository }}
+          LEGACY_BOOK_SETUP: ${{ inputs.book-setup }}
         run: |
           if [ "$EVENT_NAME" = "pull_request_target" ] ||
              { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
             echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
             exit 1
           fi
-          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
-            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+          if [ "$LEGACY_BOOK_SETUP" = "true" ]; then
+            echo "::warning::book-setup and BOOK_SETUP_TOKEN are deprecated and will be removed in the next major release. Migrate to RHIZA_SETUP_ENABLED and RHIZA_SETUP_CREDENTIALS."
+          fi
+          if [ -f .github/actions/rhiza-setup/action.yml ] || [ -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "action=generic" >> "$GITHUB_OUTPUT"
+          elif [ "$LEGACY_BOOK_SETUP" = "true" ] &&
+               { [ -f .github/actions/rhiza-book-setup/action.yml ] || [ -f .github/actions/rhiza-book-setup/action.yaml ]; }; then
+            echo "action=legacy" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Setup requires .github/actions/rhiza-setup/action.yml or action.yaml (or rhiza-book-setup when using deprecated book-setup)."
             exit 1
           fi
 
       - name: Run consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        if: ${{ steps.consumer_setup.outputs.action == 'generic' }}
         uses: ./.github/actions/rhiza-setup
         with:
           purpose: ${{ github.job }}
-          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS || secrets.BOOK_SETUP_TOKEN }}
+
+      - name: Run deprecated consumer book setup
+        if: ${{ steps.consumer_setup.outputs.action == 'legacy' }}
+        uses: ./.github/actions/rhiza-book-setup
+        with:
+          token: ${{ secrets.RHIZA_SETUP_CREDENTIALS || secrets.BOOK_SETUP_TOKEN }}
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1

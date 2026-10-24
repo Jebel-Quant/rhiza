@@ -127,6 +127,14 @@ Keep provider settings inside that action; no repository variables are forwarded
 Setup exports through `GITHUB_ENV` survive an unset legacy `UV_EXTRA_INDEX_URL`
 secret. Publication is independent: built-in PyPI remains the default.
 
+For Dependabot PRs, also define `RHIZA_SETUP_CREDENTIALS` as a Dependabot secret
+when setup requires it; Actions secrets are not available to those runs. The same
+applies to `BOOK_SETUP_TOKEN` for deprecated book callers.
+
+In the shipped workflows, OIDC-based setup works only in the release `build` job,
+which already has `id-token: write` for attestations. CI, book, marimo, benchmark
+and weekly setup support token-based authentication only.
+
 Default setup jobs explicitly retain read-only permissions; the book build never
 inherits Pages deployment permissions. A caller-only `id-token: write` grant is
 insufficient for OIDC setup: opt in with a consumer-owned workflow copy granting
@@ -141,4 +149,8 @@ migration and deferred container/AWS validation work, see the
 [setup contract](https://jebel-quant.github.io/rhiza/reference/ARCHITECTURE/#consumer-owned-dependency-setup).
 Rename the former book action to `rhiza-setup`, its `token` input to `credentials`,
 and `BOOK_SETUP_TOKEN` to `RHIZA_SETUP_CREDENTIALS`; remove `with.book-setup` and set
-`RHIZA_SETUP_ENABLED=true` instead.
+`RHIZA_SETUP_ENABLED=true` instead. The old input and secret remain deprecated aliases
+until the next major release. `book-setup: true` enables setup for the book job and
+emits a warning. The generic action takes precedence; if absent, the old
+`rhiza-book-setup` action runs with its `token` input. `RHIZA_SETUP_CREDENTIALS`
+takes precedence over `BOOK_SETUP_TOKEN`. Only one action runs.

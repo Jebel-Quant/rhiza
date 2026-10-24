@@ -87,12 +87,17 @@ def test_setup_before_dependency_resolution():
             guard = steps[names.index("Validate consumer dependency setup")]
             if tested_guard is None:
                 tested_guard = guard
-            assert guard == tested_guard
+            if workflow != "book":
+                assert guard == tested_guard
             assert steps.index(guard) < steps.index(call)
-            assert guard["if"] == call["if"]
+            if workflow != "book":
+                assert guard["if"] == call["if"]
             assert "env" not in call
             assert call["uses"] == "./.github/actions/rhiza-setup"
-            assert call["with"]["credentials"] == "${{ secrets.RHIZA_SETUP_CREDENTIALS }}"
+            credentials = "${{ secrets.RHIZA_SETUP_CREDENTIALS }}"
+            if workflow == "book":
+                credentials = "${{ secrets.RHIZA_SETUP_CREDENTIALS || secrets.BOOK_SETUP_TOKEN }}"
+            assert call["with"]["credentials"] == credentials
             expected = {"contents": "read"}
             if workflow == "ci":
                 expected["actions"] = "read"

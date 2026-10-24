@@ -207,8 +207,12 @@ manual upgrade responsibilities.
 to `.github/actions/rhiza-setup`, rename its `token` input to `credentials`, forward
 `RHIZA_SETUP_CREDENTIALS` instead of `BOOK_SETUP_TOKEN`, remove `with.book-setup`,
 and set the repository variable `RHIZA_SETUP_ENABLED=true`. The former input and
-secret are removed. This action now also runs in other supported dependency jobs;
-use its `purpose` input when setup needs to vary by job.
+secret remain deprecated aliases until the next major release. Existing callers
+using `book-setup: true` receive a warning and continue working: the generic action
+runs if present, otherwise `.github/actions/rhiza-book-setup` runs with its `token`
+input. `RHIZA_SETUP_CREDENTIALS` takes precedence over `BOOK_SETUP_TOKEN`, and the
+actions never both run. The generic action also runs in other supported dependency
+jobs when `RHIZA_SETUP_ENABLED=true`; use `purpose` when setup needs to vary by job.
 
 Set the repository variable `RHIZA_SETUP_ENABLED=true` to run your own composite action at
 `.github/actions/rhiza-setup/action.yml`. Rhiza checks out the caller's

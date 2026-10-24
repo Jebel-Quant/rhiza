@@ -42,17 +42,85 @@ def _run(script: str, cwd: Path, **env: str) -> subprocess.CompletedProcess:
     )
 
 
-def test_book_uses_only_generic_setup(workflow: dict) -> None:
-    """The book hook migrates to the same contract as every dependency job."""
-    text = _WORKFLOW.read_text()
-    assert "book-setup" not in text
-    assert "BOOK_SETUP_TOKEN" not in text
+def test_book_retains_deprecated_setup_aliases(workflow: dict) -> None:
+    """Existing callers remain valid while the generic contract takes precedence."""
+    call = (workflow.get("on") or workflow[True])["workflow_call"]
+    assert call["inputs"]["book-setup"]["type"] == "boolean"
+    assert call["inputs"]["book-setup"]["default"] is False
+    assert call["secrets"]["BOOK_SETUP_TOKEN"]["required"] is False
     steps = workflow["jobs"]["build"]["steps"]
     setup = _step(workflow, "Run consumer dependency setup")
     checkout = next(s for s in steps if s.get("uses", "").startswith("actions/checkout@"))
     sync = next(s for s in steps if "uv sync" in s.get("run", ""))
     assert steps.index(checkout) < steps.index(setup) < steps.index(sync)
-    assert setup["with"]["credentials"] == "${{ secrets.RHIZA_SETUP_CREDENTIALS }}"
+    guard = _step(workflow, "Validate consumer dependency setup")
+    assert guard["if"] == "${{ vars.RHIZA_SETUP_ENABLED == 'true' || inputs.book-setup }}"
+    assert setup["if"] == "${{ steps.consumer_setup.outputs.action == 'generic' }}"
+    assert setup["with"]["credentials"] == "${{ secrets.RHIZA_SETUP_CREDENTIALS || secrets.BOOK_SETUP_TOKEN }}"
+    legacy = _step(workflow, "Run deprecated consumer book setup")
+    assert legacy["if"] == "${{ steps.consumer_setup.outputs.action == 'legacy' }}"
+    assert legacy["uses"] == "./.github/actions/rhiza-book-setup"
+    assert legacy["with"] == {"token": setup["with"]["credentials"]}
+    assert steps.index(guard) < steps.index(setup) < steps.index(legacy) < steps.index(sync)
+
+
+@pytest.mark.parametrize(
+    ("legacy_enabled", "generic", "legacy", "expected"),
+    [
+        (False, "action.yml", None, "generic"),
+        (True, None, "action.yml", "legacy"),
+        (True, None, "action.yaml", "legacy"),
+        (True, "action.yaml", "action.yml", "generic"),
+        (True, "action.yml", None, "generic"),
+        (False, None, "action.yml", None),
+        (True, None, None, None),
+    ],
+)
+def test_book_setup_selection(workflow, tmp_path, legacy_enabled, generic, legacy, expected):
+    """Run the real guard: fallback is opt-in and never executes both actions."""
+    for directory, filename in (("rhiza-setup", generic), ("rhiza-book-setup", legacy)):
+        if filename:
+            action = tmp_path / ".github/actions" / directory / filename
+            action.parent.mkdir(parents=True)
+            action.write_text("name: setup\n")
+    output = tmp_path / "output"
+    guard = _step(workflow, "Validate consumer dependency setup")
+    result = _run(
+        guard["run"],
+        tmp_path,
+        EVENT_NAME="push",
+        HEAD_REPOSITORY="",
+        CALLER_REPOSITORY="acme/project",
+        LEGACY_BOOK_SETUP=str(legacy_enabled).lower(),
+        GITHUB_OUTPUT=str(output),
+    )
+    assert (result.returncode == 0) == (expected is not None), result.stdout + result.stderr
+    assert ("::warning::" in result.stdout) == legacy_enabled
+    if expected:
+        assert output.read_text() == f"action={expected}\n"
+    else:
+        assert not output.exists()
+
+
+@pytest.mark.parametrize(("event", "head"), [("pull_request", "fork/project"), ("pull_request_target", "acme/project")])
+def test_legacy_book_setup_rejects_untrusted_events(workflow, tmp_path, event, head):
+    """Deprecated callers cannot bypass the generic hook's trust restrictions."""
+    action = tmp_path / ".github/actions/rhiza-book-setup/action.yml"
+    action.parent.mkdir(parents=True)
+    action.write_text("name: setup\n")
+    output = tmp_path / "output"
+    result = _run(
+        _step(workflow, "Validate consumer dependency setup")["run"],
+        tmp_path,
+        EVENT_NAME=event,
+        HEAD_REPOSITORY=head,
+        CALLER_REPOSITORY="acme/project",
+        LEGACY_BOOK_SETUP="true",
+        GITHUB_OUTPUT=str(output),
+    )
+    assert result.returncode != 0
+    assert "not allowed" in result.stdout
+    assert not output.exists()
 
 
 def test_setup_failure_blocks_upload_and_deployment(workflow: dict) -> None:

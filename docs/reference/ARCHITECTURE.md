@@ -297,6 +297,12 @@ jobs cannot obtain an OIDC token. In particular, the book `build` job has only
 `contents: read`: it never inherits `pages: write` or `id-token: write` from the
 calling Pages stub. Those permissions remain confined to the `deploy` job.
 Release build attestation and publishing retain their existing OIDC permissions.
+Thus OIDC-based setup works in the shipped release `build` job only (subject to
+the caller's grant); CI, book, marimo, benchmark and weekly setup support token-based
+authentication only. Define `RHIZA_SETUP_CREDENTIALS` as a Dependabot secret as well
+as an Actions secret when Dependabot PRs require authenticated setup. Actions secrets
+are unavailable to Dependabot runs; deprecated book callers need the same treatment
+for `BOOK_SETUP_TOKEN`.
 
 **OIDC opt-in requires permission in both the consuming job and its caller.** Adding
 `id-token: write` to a caller alone cannot override the called job's read-only
@@ -400,8 +406,13 @@ and container forwarding work. This PR is a partial delivery of that issue.
 **Book migration:** rename `.github/actions/rhiza-book-setup` to
 `.github/actions/rhiza-setup`, rename its `token` input to `credentials`, replace
 `BOOK_SETUP_TOKEN` with `RHIZA_SETUP_CREDENTIALS`, remove `with.book-setup`, and set
-`RHIZA_SETUP_ENABLED=true`. The old input and secret are removed. Use `purpose` to
-limit book-only work within an action shared across dependency jobs.
+`RHIZA_SETUP_ENABLED=true`. The old input and secret remain deprecated aliases until
+the next major release. `book-setup: true` enables setup for the book job and emits a
+deprecation warning. If the generic action exists, it receives `purpose` and
+`credentials`; otherwise the legacy `rhiza-book-setup` action receives `token`.
+`RHIZA_SETUP_CREDENTIALS` takes precedence over `BOOK_SETUP_TOKEN`; only one action
+runs. Without `book-setup: true`, the legacy action is never selected. Use `purpose`
+to limit book-only work within an action shared across dependency jobs.
 
 ## Template Sync Flow
 
