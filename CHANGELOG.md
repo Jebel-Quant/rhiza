@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.11.0] - 2026-10-24
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1734)
+
+### Maintenance
+- Chore(deps)(deps): bump the github-actions group with 5 updates (#1736)
+
+### Other Changes
+- Add provider-neutral private dependency setup to reusable workflows (#1737)
+
 ## [1.10.0] - 2026-10-15
 
 ### New Features
