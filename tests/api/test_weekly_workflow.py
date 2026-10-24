@@ -83,8 +83,11 @@ class TestWeeklyWorkflowStructure:
         assert workflow.get("name") == "(RHIZA) WEEKLY"
 
     def test_permissions_contents_read(self, workflow):
-        """Workflow must declare contents: read permissions."""
-        assert workflow.get("permissions", {}).get("contents") == "read"
+        """Every job explicitly limits the caller grant to contents read."""
+        assert workflow["permissions"] == {"contents": "read"}
+        for job in ("dep-compat-test", "semgrep"):
+            assert workflow["jobs"][job]["permissions"] == {"contents": "read"}
+        assert workflow["jobs"]["link-check"]["permissions"] == {"contents": "read"}
 
     # --- triggers ---
 
