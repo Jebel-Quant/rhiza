@@ -176,10 +176,11 @@ class TestCiWorkflow:
         )
 
     def test_ci_workflow_has_permissions(self, ci_workflow: dict) -> None:
-        """CI workflow must declare explicit permissions (principle of least privilege)."""
-        assert "permissions" in ci_workflow, (
-            "CI workflow should declare explicit permissions to limit GitHub token scope"
-        )
+        """CI keeps explicit read-only scopes even under a more privileged caller."""
+        expected = {"contents": "read", "actions": "read"}
+        assert ci_workflow["permissions"] == expected
+        for job in ci_workflow["jobs"].values():
+            assert job["permissions"] == expected
 
     def test_ci_workflow_verifies_clean_working_tree_after_tests(self, ci_workflow: dict) -> None:
         """CI workflow should fail if tests leave tracked or untracked files behind."""

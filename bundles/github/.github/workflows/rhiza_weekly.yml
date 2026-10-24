@@ -33,5 +33,6 @@ jobs:
     # caller's own organisation or enterprise (#1689). A secret this repository has not
     # defined arrives empty and the workflow falls back to `github.token`.
     secrets:
+      RHIZA_SETUP_CREDENTIALS: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
       GH_PAT: ${{ secrets.GH_PAT }}
       UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}

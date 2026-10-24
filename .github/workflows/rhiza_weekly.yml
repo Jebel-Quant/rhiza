@@ -40,6 +40,8 @@ on:
   workflow_dispatch:
   workflow_call:
     secrets:
+      RHIZA_SETUP_CREDENTIALS:
+        required: false
       GH_PAT:
         required: false
       UV_EXTRA_INDEX_URL:
@@ -47,6 +49,8 @@ on:
 
 jobs:
   dep-compat-test:
+    permissions:
+      contents: read
     name: Test with latest compatible dependencies
     runs-on: ubuntu-latest
     #if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -67,6 +71,31 @@ jobs:
         with:
           version: "0.11.16"
 
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-setup
+        with:
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
         with:
@@ -74,7 +103,7 @@ jobs:
 
       - name: Resolve and install latest compatible dependencies
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: |
           # --upgrade ignores the committed lockfile and resolves the newest
           # versions that satisfy pyproject.toml constraints.
@@ -87,10 +116,12 @@ jobs:
 
       - name: Run tests
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: uvx "$RHIZA_TASK" test
 
   semgrep:
+    permissions:
+      contents: read
     name: Semgrep (numpy)
     runs-on: ubuntu-latest
 
@@ -107,6 +138,31 @@ jobs:
         with:
           version: "0.11.16"
 
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-setup
+        with:
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
         with:
@@ -114,10 +170,12 @@ jobs:
 
       - name: Run Semgrep
         env:
-          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: uvx "$RHIZA_TASK" semgrep
 
   link-check:
+    permissions:
+      contents: read
     name: Check links in README.md
     runs-on: ubuntu-latest
 

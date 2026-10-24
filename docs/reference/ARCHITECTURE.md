@@ -249,8 +249,8 @@ pre-write ownership collision protection in
 and real AWS OIDC/upload validation before adoption. The removed provider and its tests
 remain recoverable from [PR #1694](https://github.com/Jebel-Quant/rhiza/pull/1694)'s
 [earlier commit](https://github.com/Jebel-Quant/rhiza/commit/52580cd1908aac769310421e08b6fc1105b86e98).
-Private dependency consumption is separate follow-up work in
-[#1685](https://github.com/Jebel-Quant/rhiza/issues/1685), not part of this publishing contract.
+Private dependency consumption uses the separate setup contract below; remaining validation
+is tracked in [#1732](https://github.com/Jebel-Quant/rhiza/issues/1732).
 
 ### Completion and platform scope
 
@@ -266,6 +266,153 @@ This extension contract is **GitHub Actions-only**. The GitLab release template 
 its existing token/URL publishing behaviour. It also does not configure private-feed
 **consumption** in build, test or documentation jobs: those jobs need their own
 authentication before resolving dependencies, because job credentials are not shared.
+
+### Consumer-owned dependency setup
+
+Dependency consumption is independent of `RELEASE_PUBLISHER`: `pypi` remains the
+default, and `custom` and `none` retain their existing behaviour. To authenticate
+private installs, set the repository variable `RHIZA_SETUP_ENABLED=true` and commit
+`.github/actions/rhiza-setup/action.yml` (or `action.yaml`). No bundle owns this path.
+The action receives `purpose` (the consuming job ID) and `credentials` (only the
+optional `RHIZA_SETUP_CREDENTIALS` secret). No complete variables or secrets context
+is forwarded. Keep non-secret provider configuration in the consumer action, or
+call a pinned organisation action with explicit inputs. Export credentials through
+`GITHUB_ENV`; they are fresh per job/matrix leg and never shared through job outputs.
+The legacy `UV_EXTRA_INDEX_URL` secret takes precedence only when populated.
+
+The trust and action-presence guard is inlined in each reusable workflow, so it is
+versioned with that workflow rather than depending on a synced dispatcher. Enabled
+setup fails on fork PRs and all `pull_request_target` events before invoking the
+action. Missing actions and failed authentication fail the job and block dependent
+uploads/deployments. Disabled setup needs no local action or credentials. Run trusted
+pushes for credentialed validation; fork PRs need uncredentialed checks with setup
+disabled. Never check out untrusted PR code in a privileged event to bypass the guard.
+
+#### Caller permissions
+
+The shipped CI, book, benchmark, notebook and weekly workflows declare explicit
+read-only defaults and job permissions. CI also retains `actions: read`. Setup is
+available with the explicit `RHIZA_SETUP_CREDENTIALS` secret, but these default
+jobs cannot obtain an OIDC token. In particular, the book `build` job has only
+`contents: read`: it never inherits `pages: write` or `id-token: write` from the
+calling Pages stub. Those permissions remain confined to the `deploy` job.
+Release build attestation and publishing retain their existing OIDC permissions.
+Thus OIDC-based setup works in the shipped release `build` job only (subject to
+the caller's grant); CI, book, marimo, benchmark and weekly setup support token-based
+authentication only. Define `RHIZA_SETUP_CREDENTIALS` as a Dependabot secret as well
+as an Actions secret when Dependabot PRs require authenticated setup. Actions secrets
+are unavailable to Dependabot runs; deprecated book callers need the same treatment
+for `BOOK_SETUP_TOKEN`.
+
+**OIDC opt-in requires permission in both the consuming job and its caller.** Adding
+`id-token: write` to a caller alone cannot override the called job's read-only
+scope. GitHub permissions are static; `RHIZA_SETUP_ENABLED=true` enables the action,
+not an OIDC grant. To opt in without widening default consumers' permissions:
+
+1. Copy the desired version of the reusable workflow into a consumer-owned path,
+   such as `.github/workflows/dependency-ci.yml`. Retain `workflow_call`; remove any
+   direct push, PR or scheduled triggers if those remain in your calling wrapper.
+2. In that copy, add `id-token: write` only to each dependency-consuming job that
+   needs OIDC, alongside its existing read permissions. For the book `build` job,
+   the complete set is `contents: read` and `id-token: write`; never add
+   `pages: write`. Keep the separate deployment permissions unchanged.
+3. Grant the matching OIDC permission in the calling wrapper, and point it at the
+   consumer-owned workflow. Install the setup action and enable it as described above.
+
+For example, after preparing the consumer-owned CI workflow:
+
+```yaml
+jobs:
+  ci:
+    uses: ./.github/workflows/dependency-ci.yml
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    secrets:
+      RHIZA_SETUP_CREDENTIALS: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+```
+
+**Upgrade responsibility:** exclude customized template-owned wrappers from sync
+so updates preserve the opt-in. Excluded wrappers no longer receive automatic
+`@vX.Y.Z` reference updates from `/rhiza:update`; bump any retained version references
+by hand. A consumer-owned workflow copy also requires manual review and application
+of upstream fixes. Adding only a caller grant to an otherwise unchanged upstream
+workflow does not enable OIDC. A maintained opt-in overlay or reusable OIDC variant
+could remove this copying and upgrade burden; that remains follow-up work under
+[#1732](https://github.com/Jebel-Quant/rhiza/issues/1732).
+
+#### CodeArtifact example
+
+Copy `examples/dependency-setup/codeartifact/action.yml` to the consumer action path
+and replace its explicit configuration placeholders. It assumes a read-only role,
+obtains and immediately masks a short-lived token, and exports uv's named-index
+username/password. Configure the credential-free URL and explicit package mapping
+in the project, then commit the generated lockfile:
+
+```toml
+[[tool.uv.index]]
+name = "private"
+url = "https://example-123456789012.d.codeartifact.eu-west-2.amazonaws.com/python/packages/simple/"
+explicit = true
+
+[tool.uv.sources]
+private-package = { index = "private" }
+```
+
+Use a reader role separate from publishing. Allow `codeartifact:GetAuthorizationToken`
+on the domain and `codeartifact:GetRepositoryEndpoint` plus
+`codeartifact:ReadFromRepository` on the required repository. Allow
+`sts:GetServiceBearerToken` with `sts:AWSServiceName=codeartifact.amazonaws.com`.
+The role trust must allow `sts:AssumeRoleWithWebIdentity` through GitHub's OIDC provider,
+require audience `sts.amazonaws.com`, and restrict the subject to your repository and
+trusted refs, such as `repo:ORG/REPO:ref:refs/heads/main`. The release build job
+declares no environment, so reader trust must also allow approved release-tag
+subjects, such as `repo:ORG/REPO:ref:refs/tags/v1.2.3`. The publishing job uses the
+`release` environment subject (`repo:ORG/REPO:environment:release`); restrict that
+subject to the separate publisher role and protect the environment's allowed refs.
+These examples use GitHub's default subject format; if your organisation customizes
+OIDC subjects, use the corresponding configured format in both roles' trust policies.
+Do not grant the reader role package publishing permissions. See AWS's
+[token permissions](https://docs.aws.amazon.com/codeartifact/latest/ug/tokens-authentication.html)
+and [repository permissions](https://docs.aws.amazon.com/codeartifact/latest/ug/repo-policies.html).
+
+#### Workflow support and remaining validation
+
+| Workflow/job | First dependency consumer after setup |
+| --- | --- |
+| CI metadata | Build-and-inspect package action (build dependencies) |
+| CI test, lowest, typecheck, deptry, repository checks, docs coverage, security, license | Task invocation or project install |
+| Book build | Frozen environment sync, followed by notebooks/book generation |
+| Marimo | Notebook execution and its script environment |
+| Benchmark | Benchmark task |
+| Weekly compatibility / Semgrep | Fresh dependency resolution / task invocation |
+| Release build | Package build and frozen SBOM sync in the same job |
+| CI pre-commit | No hook: installs public tooling only |
+| Docker / devcontainer | Generic setup unsupported inside isolated builds; deferred under [#1732](https://github.com/Jebel-Quant/rhiza/issues/1732) |
+
+Runner `GITHUB_ENV` does not enter container builds. The existing Docker GitHub-token
+secret path is not CodeArtifact forwarding; private-feed support needs separate BuildKit
+secret mounts. Local devcontainer bootstrap also needs its own authentication.
+Do not pass feed credentials through build arguments or bake them into image layers.
+
+The loopback authenticated-index test verifies setup exports, rejected unauthenticated
+access, frozen private dependency installation and import without changing the lockfile.
+It does not prove AWS OIDC or reusable-workflow execution. Keep
+[#1732](https://github.com/Jebel-Quant/rhiza/issues/1732) open for the trusted AWS run
+(role assumption, fresh token, locked install/import, credential-free logs/artifacts)
+and container forwarding work. This PR is a partial delivery of that issue.
+
+**Book migration:** rename `.github/actions/rhiza-book-setup` to
+`.github/actions/rhiza-setup`, rename its `token` input to `credentials`, replace
+`BOOK_SETUP_TOKEN` with `RHIZA_SETUP_CREDENTIALS`, remove `with.book-setup`, and set
+`RHIZA_SETUP_ENABLED=true`. The old input and secret remain deprecated aliases until
+the next major release. `book-setup: true` enables setup for the book job and emits a
+deprecation warning. If the generic action exists, it receives `purpose` and
+`credentials`; otherwise the legacy `rhiza-book-setup` action receives `token`.
+`RHIZA_SETUP_CREDENTIALS` takes precedence over `BOOK_SETUP_TOKEN`; only one action
+runs. Without `book-setup: true`, the legacy action is never selected. Use `purpose`
+to limit book-only work within an action shared across dependency jobs.
 
 ## Template Sync Flow
 

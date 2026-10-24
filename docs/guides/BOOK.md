@@ -195,15 +195,34 @@ keeps the interface general and avoids coupling Rhiza to any one host.
 
 ### Consumer-owned build setup (opt-in)
 
-Set `book-setup: true` to run your own composite action at
-`.github/actions/rhiza-book-setup/action.yml`. Rhiza checks out the caller's
+The shipped build job has only `contents: read`, even when the caller grants Pages
+and OIDC permissions for deployment. Token-based setup uses the explicit secret
+below. OIDC setup requires a consumer-owned workflow copy with `id-token: write`
+added to the build job as well as the caller; adding it only to the caller is
+insufficient. Never grant `pages: write` to the build job. See the
+[OIDC opt-in procedure](../reference/ARCHITECTURE.md#caller-permissions) and its
+manual upgrade responsibilities.
+
+**Migration from the book-specific hook:** rename `.github/actions/rhiza-book-setup`
+to `.github/actions/rhiza-setup`, rename its `token` input to `credentials`, forward
+`RHIZA_SETUP_CREDENTIALS` instead of `BOOK_SETUP_TOKEN`, remove `with.book-setup`,
+and set the repository variable `RHIZA_SETUP_ENABLED=true`. The former input and
+secret remain deprecated aliases until the next major release. Existing callers
+using `book-setup: true` receive a warning and continue working: the generic action
+runs if present, otherwise `.github/actions/rhiza-book-setup` runs with its `token`
+input. `RHIZA_SETUP_CREDENTIALS` takes precedence over `BOOK_SETUP_TOKEN`, and the
+actions never both run. The generic action also runs in other supported dependency
+jobs when `RHIZA_SETUP_ENABLED=true`; use `purpose` when setup needs to vary by job.
+
+Set the repository variable `RHIZA_SETUP_ENABLED=true` to run your own composite action at
+`.github/actions/rhiza-setup/action.yml`. Rhiza checks out the caller's
 `github.sha`, not the Rhiza workflow revision or a configurable branch. Setup runs
-in the build job before dependency resolution, cache restoration, and book
+in the build job before dependency resolution and book
 generation. Values exported through `GITHUB_ENV` are available to subsequent
 steps in that job, not to a separate deployment job.
 
-The only setup credential Rhiza accepts is the optional `BOOK_SETUP_TOKEN`
-secret, passed as the action's `token` input. Map just the credential your action
+The only setup credential Rhiza accepts is the optional `RHIZA_SETUP_CREDENTIALS`
+secret, passed as the action's `credentials` input. Map just the credential your action
 needs; do not use `secrets: inherit` or serialize the secrets context. Keep
 non-secret configuration in your consumer-owned action. Rhiza does not sync or
 provide this action. If you customize the template-owned caller stub, exclude
@@ -218,18 +237,20 @@ jobs:
     uses: jebel-quant/rhiza/.github/workflows/rhiza_book.yml@<version>
     with:
       deploy-pages: false
-      book-setup: true
     secrets:
-      BOOK_SETUP_TOKEN: ${{ secrets.PRIVATE_API_READ_TOKEN }}
+      RHIZA_SETUP_CREDENTIALS: ${{ secrets.PRIVATE_API_READ_TOKEN }}
 ```
 
-Create the consumer-owned `.github/actions/rhiza-book-setup/action.yml`:
+Create the consumer-owned `.github/actions/rhiza-setup/action.yml`:
 
 ```yaml
 name: Prepare private API access
 description: Configure the documentation notebook's read-only API access
 inputs:
-  token:
+  purpose:
+    description: Job requesting setup
+    required: true
+  credentials:
     description: Read-only private API credential
     required: true
 runs:
@@ -237,7 +258,7 @@ runs:
   steps:
     - shell: bash
       env:
-        API_TOKEN: ${{ inputs.token }}
+        API_TOKEN: ${{ inputs.credentials }}
       run: |
         if [ -z "$API_TOKEN" ] || [[ "$API_TOKEN" == *$'\n'* || "$API_TOKEN" == *$'\r'* ]]; then
           echo "::error::A single-line private API token is required."
@@ -280,10 +301,10 @@ The optional secret may be empty, so actions needing it must check it explicitly
 an action's `required: true` input alone is not a runtime check.
 
 When setup is enabled, fork `pull_request` events and **all**
-`pull_request_target` events are rejected before checkout or secret delivery to
+`pull_request_target` events are rejected before secret delivery to
 the action. This remains true even if repository settings allow sending secrets
 to fork workflows. Do not work around it by checking out PR code in a privileged
-event. Use a separate uncredentialed validation call with `book-setup: false`
+event. Use a separate uncredentialed validation call with `RHIZA_SETUP_ENABLED` unset
 (and `deploy-pages: false`) for fork PRs, or build credentialed documentation
 only on trusted pushes. Same-repository PRs may run setup: protect write access
 and review changes to the action and notebooks as credential-bearing code.
