@@ -180,17 +180,19 @@ class TestGitlabProjectProfileSync:
         """GitHub and GitLab CI must reference the same supported Python versions."""
         github_workflow = _load_yaml(root / ".github" / "workflows" / "rhiza_ci.yml")
         github_generate_steps = github_workflow["jobs"]["generate-matrix"]["steps"]
-        github_matrix_source = "\n".join(
-            step["run"] for step in github_generate_steps if isinstance(step, dict) and "run" in step
-        )
+        versions_output = next(step for step in github_generate_steps if step.get("id") == "versions-output")
+        planner = next(step for step in github_generate_steps if step.get("id") == "plan")
         versions_step = next(step for step in github_generate_steps if step.get("id") == "versions")
         gitlab_test_job = _gitlab_jobs_from_includes(self.project)["ci:test"]
         gitlab_matrix = gitlab_test_job["parallel"]["matrix"][0]["PYTHON_VERSION"]
 
         assert "hynek/build-and-inspect-python-package" in versions_step["uses"]
-        assert "supported_python_classifiers_json_array" in github_matrix_source
+        assert versions_output["env"]["VERSIONS"] == (
+            "${{ steps.versions.outputs.supported_python_classifiers_json_array }}"
+        )
+        assert planner["env"]["VERSIONS"] == "${{ steps.versions-output.outputs.list }}"
         assert github_workflow["jobs"]["test"]["strategy"]["matrix"]["python-version"] == (
-            "${{ fromJson(needs.generate-matrix.outputs.matrix) }}"
+            "${{ fromJson(needs.generate-matrix.outputs.test_matrix) }}"
         )
         assert gitlab_matrix == _supported_python_versions(root)
 

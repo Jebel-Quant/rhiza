@@ -16,6 +16,7 @@ nav:
     - Book (Docs Site): guides/BOOK.md
     - Extending Rhiza: guides/EXTENDING_RHIZA.md
     - Customization: guides/CUSTOMIZATION.md
+    - CI Profiles: guides/CI_PROFILES.md
     - Troubleshooting: troubleshooting.md
   - Reference:
     - Architecture: reference/ARCHITECTURE.md
