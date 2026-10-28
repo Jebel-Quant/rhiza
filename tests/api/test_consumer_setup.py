@@ -59,6 +59,7 @@ def test_setup_before_dependency_resolution():
             **dict.fromkeys(
                 [
                     "test",
+                    "quality",
                     "lowest-deps",
                     "typecheck",
                     "deptry",

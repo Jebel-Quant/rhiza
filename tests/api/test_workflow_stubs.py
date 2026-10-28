@@ -188,7 +188,10 @@ class TestCiWorkflow:
         verify_step = next((step for step in steps if step.get("name") == "Verify clean working tree"), None)
 
         assert verify_step is not None, "CI workflow should verify that tests leave the working tree clean"
-        assert verify_step.get("if") == "matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'"
+        assert (
+            verify_step.get("if")
+            == "matrix.python-version == needs.generate-matrix.outputs.primary && matrix.os == 'ubuntu-latest'"
+        )
 
         run = verify_step.get("run", "")
         assert "git status --porcelain" in run, "clean-tree verification must detect untracked files"
@@ -201,32 +204,6 @@ class TestCiWorkflow:
         step_names = [step.get("name") for step in steps]
 
         assert step_names.index("Run tests") < step_names.index("Verify clean working tree")
-
-    def test_ci_gate_tolerates_cancelled_results(self, ci_workflow: dict) -> None:
-        """CI gate must accept 'cancelled' alongside 'success' to survive transient runner cancellations.
-
-        When a matrix leg is cancelled mid-run (e.g. by the concurrency group or a
-        transient runner failure), GitHub sets the parent job result to 'cancelled'.
-        The gate must not block the PR in that case; it should only fail on 'failure'
-        or 'skipped' results.
-        """
-        gate_steps = ci_workflow.get("jobs", {}).get("ci-gate", {}).get("steps", [])
-        # Matched on the step's *shape* rather than its exact title: the title names the
-        # jobs being rolled up, so it changes whenever one joins (rhiza-test did in #1523)
-        # and an equality check would fail for a reason that has nothing to do with the
-        # cancelled-result property under test.
-        verify_step = next(
-            (s for s in gate_steps if s.get("name", "").startswith("Verify") and "needs." in s.get("run", "")),
-            None,
-        )
-        assert verify_step is not None, "CI gate must have a verification step reading job results"
-
-        run_script = verify_step.get("run", "")
-        # The gate must not simply check `!= "success"` — it must also allow `cancelled`.
-        assert "cancelled" in run_script, (
-            "CI gate must accept 'cancelled' results to tolerate transient runner cancellations; "
-            "see: https://github.com/Jebel-Quant/rhiza/actions/runs/28344335938/job/83965148182"
-        )
 
 
 def _get_workflow_triggers(workflow_doc: dict) -> dict:

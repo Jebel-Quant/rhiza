@@ -154,3 +154,14 @@ until the next major release. `book-setup: true` enables setup for the book job 
 emits a warning. The generic action takes precedence; if absent, the old
 `rhiza-book-setup` action runs with its `token` input. `RHIZA_SETUP_CREDENTIALS`
 takes precedence over `BOOK_SETUP_TOKEN`. Only one action runs.
+
+## CI profiles (prototype)
+
+Select `lean`, `standard` or `comprehensive` with `[tool.rhiza.ci].profile` in the
+consumer's `pyproject.toml`. The default is `comprehensive`. Lean consolidates
+quality checks and runs the primary Python version on ordinary changes; scheduled
+and full manual runs restore the complete compatibility matrix. Standard moves
+lowest-direct dependency testing to those broader runs.
+
+See the [CI profiles guide](https://github.com/Jebel-Quant/rhiza/blob/main/docs/guides/CI_PROFILES.md)
+for scope, migration, branch protection and unreleased-prototype limitations.
