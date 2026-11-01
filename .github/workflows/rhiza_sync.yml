@@ -1,0 +1,261 @@
+# This file is part of the jebel-quant/rhiza repository
+# (https://github.com/jebel-quant/rhiza).
+#
+# Workflow: Sync
+#
+# Purpose: Keeps a rhiza-managed repository on the template's latest release.
+#          Compares `ref` in `.rhiza/template.yml` against the newest release tag
+#          of the template repository and, when it is behind, opens a pull request
+#          that bumps the ref *and* carries the synced template files -- the
+#          `/rhiza:update` flow, run without Claude.
+#
+#          The sync engine is rhiza-claude's stdlib-only scripts (`sync.py`,
+#          `resolve_conflicts.py`, `stage_synced.py`), checked out at a pinned tag.
+#          Only paths in `.rhiza/template.lock` are staged, so the PR never carries
+#          a repo-owned file. Conflicts take the upstream side, as `/rhiza:update` does.
+#
+#          Major version bumps are never automatic: they warn and stop.
+#
+# IMPORTANT: `GH_PAT` (scopes: repo + workflow) is needed in practice. `GITHUB_TOKEN`
+#            cannot push changes to `.github/workflows/*`, and a pull request it opens
+#            triggers no CI. Without it the workflow still runs and warns.
+#
+# Trigger: workflow_call (from the `github` bundle's daily stub) and manual dispatch.
+
+name: "(RHIZA) SYNC"
+
+# Queue runs instead of cancelling: a sync must never be interrupted mid-push.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+# The rhiza-claude release whose sync scripts run here. Pinned so a synced repo runs
+# exactly the sync engine its template release was tested against.
+env:
+  RHIZA_CLAUDE_REF: v1.0.0
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    secrets:
+      GH_PAT:
+        required: false
+
+jobs:
+  sync:
+    name: Sync to the latest template release
+    # The mother repo is the template: it has no `.rhiza/template.yml` to bump.
+    if: github.repository != 'jebel-quant/rhiza'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # Needed to push the sync branch
+      pull-requests: write   # Needed to open the sync PR
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT || github.token }}
+
+      - name: Check GH_PAT configuration
+        shell: bash
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -z "$GH_PAT" ]; then
+            echo "::warning::GH_PAT is not configured. A sync that touches .github/workflows/* cannot be pushed, and the PR will not trigger CI. See .github/CONFIG.md."
+          fi
+
+      - name: Checkout rhiza-claude sync scripts
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          repository: Jebel-Quant/rhiza-claude
+          ref: ${{ env.RHIZA_CLAUDE_REF }}
+          path: .rhiza-claude
+          persist-credentials: false
+
+      - name: Move the sync scripts out of the working tree
+        shell: bash
+        # sync.py refuses a dirty tree, so the scripts must not live inside it.
+        run: |
+          mv .rhiza-claude "$RUNNER_TEMP/rhiza-claude"
+          echo "RHIZA_SCRIPTS=$RUNNER_TEMP/rhiza-claude/plugin/scripts" >> "$GITHUB_ENV"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+
+      - name: Read the template configuration
+        id: template
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f .rhiza/template.yml ]; then
+            echo "::error::No .rhiza/template.yml -- not a rhiza-managed repository."
+            exit 1
+          fi
+          uv run --python 3.12 --no-project python - <<'EOF' >> "$GITHUB_OUTPUT"
+          import os, sys
+          from pathlib import Path
+          sys.path.insert(0, os.environ["RHIZA_SCRIPTS"])
+          from _rhiza_template import load_template
+          t = load_template(Path("."), Path(".rhiza/template.yml"))
+          print(f"repository={t.repository}")
+          print(f"ref={t.ref}")
+          print(f"url={t.git_url}")
+          EOF
+
+      - name: Resolve the latest template release
+        id: latest
+        shell: bash
+        env:
+          TEMPLATE_URL: ${{ steps.template.outputs.url }}
+        run: |
+          set -euo pipefail
+          # Final releases only: a pre-release tag is never a sync target.
+          LATEST=$(git ls-remote --tags --refs "$TEMPLATE_URL" \
+            | sed -E 's#.*refs/tags/##' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            | sort -V | tail -n 1 || true)
+          if [ -z "$LATEST" ]; then
+            echo "::error::No release tag found in $TEMPLATE_URL"
+            exit 1
+          fi
+          echo "tag=$LATEST" >> "$GITHUB_OUTPUT"
+
+      - name: Decide whether to sync
+        id: decide
+        shell: bash
+        env:
+          CURRENT: ${{ steps.template.outputs.ref }}
+          LATEST: ${{ steps.latest.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ "$CURRENT" = "$LATEST" ]; then
+            echo "::notice::Template is up to date at $CURRENT."
+            echo "sync=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! printf '%s\n' "$CURRENT" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::warning::ref '$CURRENT' is not a release tag; not syncing it automatically."
+            echo "sync=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          NEWEST=$(printf '%s\n%s\n' "$CURRENT" "$LATEST" | sort -V | tail -n 1)
+          if [ "$NEWEST" = "$CURRENT" ]; then
+            echo "::notice::ref $CURRENT is ahead of the latest release $LATEST."
+            echo "sync=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CUR_MAJOR=${CURRENT#v}; CUR_MAJOR=${CUR_MAJOR%%.*}
+          NEW_MAJOR=${LATEST#v}; NEW_MAJOR=${NEW_MAJOR%%.*}
+          if [ "$NEW_MAJOR" -gt "$CUR_MAJOR" ]; then
+            echo "::warning::$LATEST is a major bump from $CURRENT; run /rhiza:update by hand."
+            echo "sync=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "::notice::Template $CURRENT is behind $LATEST."
+          echo "sync=true" >> "$GITHUB_OUTPUT"
+
+      - name: Skip when a sync branch already exists
+        id: branch
+        if: steps.decide.outputs.sync == 'true'
+        shell: bash
+        env:
+          LATEST: ${{ steps.latest.outputs.tag }}
+        run: |
+          set -euo pipefail
+          BRANCH="rhiza/sync-$LATEST"
+          echo "name=$BRANCH" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null; then
+            echo "::notice::$BRANCH already exists on origin; leaving its PR alone."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump the ref, sync and stage template-owned files
+        id: sync
+        if: steps.decide.outputs.sync == 'true' && steps.branch.outputs.exists == 'false'
+        shell: bash
+        env:
+          CURRENT: ${{ steps.template.outputs.ref }}
+          LATEST: ${{ steps.latest.outputs.tag }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          TEMPLATE_REPO: ${{ steps.template.outputs.repository }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+
+          sed -E -i "s/^((ref|template-branch):[[:space:]]*)[\"']?[^\"'[:space:]#]+[\"']?/\1\"$LATEST\"/" .rhiza/template.yml
+          if git diff --quiet -- .rhiza/template.yml; then
+            echo "::error::Could not rewrite the ref in .rhiza/template.yml"
+            exit 1
+          fi
+          git add .rhiza/template.yml
+          git commit -m "chore: bump rhiza to $LATEST"
+
+          RUN="uv run --python 3.12 --no-project python"
+          CONFLICTS=false
+          set +e
+          $RUN "$RHIZA_SCRIPTS/sync.py" .
+          RC=$?
+          set -e
+          case "$RC" in
+            0) ;;
+            1) CONFLICTS=true
+               $RUN "$RHIZA_SCRIPTS/resolve_conflicts.py" . ;;
+            *) echo "::error::sync.py failed (exit $RC)"; exit "$RC" ;;
+          esac
+
+          # Stage exactly the lock's file list -- never `git add --all`.
+          $RUN "$RHIZA_SCRIPTS/stage_synced.py" . --json > "$RUNNER_TEMP/staged.json"
+          STAGED=$(git diff --cached --name-only | wc -l | tr -d ' ')
+          if [ "$STAGED" -gt 0 ]; then
+            # check-managed-files rejects exactly the commit a sync makes.
+            SKIP=check-managed-files git commit -m "chore: apply rhiza sync $LATEST"
+          fi
+
+          LEFT=$(jq -r '.unstaged[]? | "- `" + . + "`"' "$RUNNER_TEMP/staged.json")
+          {
+            echo "Updates \`$TEMPLATE_REPO\` from \`$CURRENT\` to \`$LATEST\`."
+            echo
+            echo "- Template files changed: $STAGED"
+            if [ "$CONFLICTS" = true ]; then
+              echo "- Conflicts were resolved by taking the upstream side."
+            fi
+            if [ -n "$LEFT" ]; then
+              echo
+              echo "Left unstaged (not template-owned, review by hand):"
+              echo "$LEFT"
+            fi
+            echo
+            echo "Opened by the \`(RHIZA) SYNC\` workflow. No gates were run by the sync; CI on this PR is the check."
+          } > "$RUNNER_TEMP/pr-body.md"
+
+      - name: Push the branch and open the pull request
+        if: steps.sync.outcome == 'success'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
+          LATEST: ${{ steps.latest.outputs.tag }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          BASE: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          git push --set-upstream origin "$BRANCH"
+          gh pr create \
+            --base "$BASE" \
+            --head "$BRANCH" \
+            --title "chore: update rhiza to $LATEST" \
+            --body-file "$RUNNER_TEMP/pr-body.md"

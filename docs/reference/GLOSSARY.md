@@ -145,7 +145,7 @@ targets go in `local.mk`, which the shim `-include`s. It was repo-owned for one 
 by `uvx rhiza-task shim`; that subcommand was removed in rhiza-task 1.0.0.
 
 ### `.rhiza/template.yml`
-The *pointer*: which template repository this project follows, at which `ref`, and which bundles or profiles it selects (plus any `include`/`exclude` patterns). Written by `/rhiza:init`, and the file Renovate bumps.
+The *pointer*: which template repository this project follows, at which `ref`, and which bundles or profiles it selects (plus any `include`/`exclude` patterns). Written by `/rhiza:init`, and the file the daily `rhiza_sync.yml` workflow bumps.
 
 ### `.rhiza/template.lock`
 The *record*: what a sync actually delivered — repository, ref, commit SHA, timestamp, strategy, and every managed file. The pointer and the record answer different questions and can disagree, which is why `/rhiza:status` reports both, and why `/rhiza:update` stages precisely the recorded file list rather than everything that changed.

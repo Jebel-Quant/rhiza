@@ -68,14 +68,15 @@ profiles:
 ```
 
 A **profile** is a named preset that expands to a set of **bundles**; you can add individual
-bundles alongside it, and `include`/`exclude` patterns for the last mile. `ref` is a tag, so
-Renovate can raise it for you — its manager only matches the quoted form shown above, which is
-what `/rhiza:init` writes.
+bundles alongside it, and `include`/`exclude` patterns for the last mile. `ref` is a tag, and
+on GitHub the `github` bundle's daily `rhiza_sync.yml` workflow raises it for you: when a newer
+release exists it opens a PR that bumps `ref` and carries the synced files (major bumps stay
+manual — see [CONFIG.md](bundles/github/.github/CONFIG.md)).
 
 `/rhiza:update` then fetches what your selection owns and three-way merges it into a branch, so
 local edits survive and you review the result as a pull request.
 
-**The anatomy of that file, the sync lifecycle and the Renovate wiring are
+**The anatomy of that file and the sync lifecycle are
 [rhiza-education](https://github.com/Jebel-Quant/rhiza-education) Lessons 7–9** — this README
 does not try to teach them.
 
@@ -474,8 +475,9 @@ organisation works with no extra setup.
 GitHub Actions and GitLab CI have feature parity: tests across operating systems and Python
 versions, hooks and gates, docs publishing, notebooks, containers, releases, security scanning
 and weekly maintenance. Choose the platform by profile — `github-project` or `gitlab-project` —
-and the matching workflow stubs arrive with it. Syncing is not a workflow: `/rhiza:update` runs
-it from your machine and opens the PR.
+and the matching workflow stubs arrive with it. On GitHub, `rhiza_sync.yml` checks once a day for a
+newer template release and opens the sync PR itself; `/rhiza:update` does the same from your
+machine, on any platform and for major bumps.
 
 GitLab specifics (variables, runners, Pages) are in
 **[.gitlab/README.md](bundles/gitlab/.gitlab/README.md)**; what each check enforces and where it
