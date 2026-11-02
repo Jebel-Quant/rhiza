@@ -191,11 +191,9 @@ def test_ci_gate_rolls_up_rhiza_test(root):
         f"rhiza-test would not block the PR (#1523)."
     )
 
-    run_script = next(s["run"] for s in gate["steps"] if "needs." in s.get("run", ""))
-    assert "needs.rhiza-test.result" in run_script, (
-        "ci-gate lists rhiza-test in `needs` but never inspects its result, so the job "
-        "runs and its outcome is discarded."
-    )
+    verify = next(s for s in gate["steps"] if s.get("name", "").startswith("Verify"))
+    assert verify["env"]["RESULTS"] == "${{ toJSON(needs) }}"
+    assert 'results[name]["result"] != "success"' in verify["run"]
 
 
 def test_ci_cache_keys_match_audit_policy(root):
@@ -260,7 +258,7 @@ def test_ci_workflow_generate_matrix_uses_baipp_classifier_output(root):
     versions_output_step = next(step for step in steps if step.get("id") == "versions-output")
 
     assert "hynek/build-and-inspect-python-package@" in versions_step["uses"]
-    assert "supported_python_classifiers_json_array" in versions_output_step["run"]
+    assert "supported_python_classifiers_json_array" in versions_output_step["env"]["VERSIONS"]
     assert generate_matrix["outputs"]["matrix"] == "${{ steps.versions-output.outputs.list }}"
     assert "make -f .rhiza/rhiza.mk -s version-matrix" not in versions_output_step["run"]
 

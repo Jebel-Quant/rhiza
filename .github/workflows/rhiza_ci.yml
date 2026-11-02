@@ -12,7 +12,7 @@
 # - Reads `Programming Language :: Python :: 3.x` classifiers from package metadata
 # - Adding/removing classifiers updates CI Python coverage automatically
 #
-# Trigger: On push and pull_request.
+# Trigger: Default-branch pushes, all PRs, weekly compatibility and manual dispatch.
 
 name: "(RHIZA) CI"
 
@@ -44,7 +44,20 @@ env:
 on:
   push:
   pull_request:
+  schedule:
+    - cron: "17 7 * * 1"  # Full compatibility validation, Monday UTC.
+  workflow_dispatch:
+    inputs:
+      full-validation:
+        description: Run the complete compatibility matrix and dependency floors
+        type: boolean
+        default: false
   workflow_call:
+    inputs:
+      full-validation:
+        description: Run the complete compatibility matrix and dependency floors
+        type: boolean
+        default: false
     secrets:
       RHIZA_SETUP_CREDENTIALS:
         required: false
@@ -55,6 +68,8 @@ on:
 
 jobs:
   generate-matrix:
+    # Branch pushes are covered by PRs, including PRs targeting feature branches.
+    if: github.event_name != 'push' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     permissions:
       contents: read
       actions: read
@@ -64,6 +79,14 @@ jobs:
     outputs:
       matrix: ${{ steps.versions-output.outputs.list }}
       os_matrix: ${{ steps.os.outputs.list }}
+      profile: ${{ steps.plan.outputs.profile }}
+      primary: ${{ steps.plan.outputs.primary }}
+      test_matrix: ${{ steps.plan.outputs.test_matrix }}
+      test_os: ${{ steps.plan.outputs.test_os }}
+      run_tests: ${{ steps.plan.outputs.run_tests }}
+      run_lowest: ${{ steps.plan.outputs.run_lowest }}
+      consolidated: ${{ steps.plan.outputs.consolidated }}
+      required_jobs: ${{ steps.plan.outputs.required_jobs }}
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
@@ -73,6 +96,7 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           lfs: true
+          fetch-depth: 0  # Compare complete PR diffs without an API file-count limit.
 
       - name: Validate consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
@@ -104,8 +128,9 @@ jobs:
         uses: hynek/build-and-inspect-python-package@67230f7b8410ae0052b39c1efc89d89fff43ff10 # v3.0.2
 
       - id: versions-output
-        run: |
-          echo "list=${{ steps.versions.outputs.supported_python_classifiers_json_array }}" >> "$GITHUB_OUTPUT"
+        env:
+          VERSIONS: ${{ steps.versions.outputs.supported_python_classifiers_json_array }}
+        run: echo "list=$VERSIONS" >> "$GITHUB_OUTPUT"
 
       - name: Debug matrix
         run: |
@@ -167,7 +192,105 @@ jobs:
         run: |
           echo "OS versions: ${{ steps.os.outputs.list }}"
 
+      # Inline so a reusable call uses its pinned planner, not code from the consumer checkout.
+      - name: Plan CI profile
+        id: plan
+        env:
+          VERSIONS: ${{ steps.versions-output.outputs.list }}
+          PLATFORMS: ${{ steps.os.outputs.list }}
+          FULL_VALIDATION: ${{ inputs.full-validation || false }}
+        shell: python
+        run: |
+          import json
+          import os
+          import re
+          import subprocess
+          import tomllib
+          from pathlib import Path
+
+          with Path("pyproject.toml").open("rb") as stream:
+              project = tomllib.load(stream)
+          config = project.get("tool", {}).get("rhiza", {}).get("ci", {})
+          if not isinstance(config, dict) or set(config) - {"profile"}:
+              raise SystemExit("[tool.rhiza.ci] accepts only profile")
+          profile = config.get("profile", "comprehensive")
+          if profile not in ("lean", "standard", "comprehensive"):
+              raise SystemExit("CI profile must be lean, standard or comprehensive")
+          versions = json.loads(os.environ["VERSIONS"])
+          if not isinstance(versions, list) or not versions or any(
+              not isinstance(v, str) or not re.fullmatch(r"3\.\d+", v) for v in versions
+          ):
+              raise SystemExit("Expected a non-empty Python classifier matrix")
+          platforms = json.loads(os.environ["PLATFORMS"])
+          if not isinstance(platforms, list) or not platforms or any(
+              not isinstance(p, str) or not p.strip() for p in platforms
+          ):
+              raise SystemExit("Expected a non-empty OS matrix")
+          version_file = Path(".python-version")
+          primary = version_file.read_text().strip() if version_file.exists() else versions[0]
+          if not re.fullmatch(r"3\.\d+(?:\.\d+)?", primary):
+              raise SystemExit(".python-version must contain a single numeric Python version")
+          primary = ".".join(primary.split(".")[:2])
+          if primary not in versions:
+              raise SystemExit("Primary Python version must appear in the supported classifiers")
+
+          # Missing/unavailable history retains application tests, never a guessed docs-only diff.
+          event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
+          event_name = os.environ["GITHUB_EVENT_NAME"]
+          full = event_name == "schedule" or os.environ["FULL_VALIDATION"] == "true"
+          docs_only = False
+          base = event.get("pull_request", {}).get("base", {}).get("sha", "")
+          if event_name == "push":
+              base = event.get("before", "")
+          if (
+              not full and event_name in ("pull_request", "push")
+              and re.fullmatch(r"[0-9a-f]{40}", base) and set(base) != {"0"}
+          ):
+              revision = f"{base}...HEAD" if event_name == "pull_request" else base
+              command = ["git", "diff", "--name-only", "-z", "--no-renames", revision]
+              if event_name == "push":
+                  command.append("HEAD")
+              result = subprocess.run(command, capture_output=True, check=False)
+              if result.returncode == 0:
+                  changed = [Path(p) for p in result.stdout.decode().split("\0") if p]
+                  docs_only = bool(changed) and all(
+                      (p.parent == Path(".") and p.suffix == ".md")
+                      or (p.parts[0] == "docs" and p.suffix.lower() in {
+                          ".md", ".rst", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"
+                      })
+                      for p in changed
+                  )
+
+          consolidated = profile == "lean"
+          run_tests = not docs_only
+          run_lowest = run_tests and (full or profile == "comprehensive")
+          required = ["generate-matrix"]
+          if run_tests:
+              required.append("test")
+              if not consolidated:
+                  required.append("typecheck")
+          if run_lowest:
+              required.append("lowest-deps")
+          required += ["quality"] if consolidated else [
+              "deptry", "rhiza-test", "pre-commit", "docs-coverage", "security", "license"
+          ]
+          plan = {
+              "profile": profile,
+              "primary": primary,
+              "test_matrix": [primary] if consolidated and not full else versions,
+              "test_os": ["ubuntu-latest"] if consolidated and not full else platforms,
+              "run_tests": run_tests,
+              "run_lowest": run_lowest,
+              "consolidated": consolidated,
+              "required_jobs": required,
+          }
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a") as output:
+              for key, value in plan.items():
+                  output.write(f"{key}={value if isinstance(value, str) else json.dumps(value)}\n")
+          print(json.dumps({**plan, "docs_only": docs_only, "full_validation": full}, indent=2))
+
   test:
+    if: needs.generate-matrix.outputs.run_tests == 'true'
     permissions:
       contents: read
       actions: read
@@ -177,8 +300,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
-        os: ${{ fromJson(needs.generate-matrix.outputs.os_matrix) }}
+        python-version: ${{ fromJson(needs.generate-matrix.outputs.test_matrix) }}
+        os: ${{ fromJson(needs.generate-matrix.outputs.test_os) }}
       fail-fast: false
 
     steps:
@@ -253,7 +376,7 @@ jobs:
           uvx "$RHIZA_TASK" test
 
       - name: Verify clean working tree
-        if: matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'
+        if: matrix.python-version == needs.generate-matrix.outputs.primary && matrix.os == 'ubuntu-latest'
         shell: bash
         run: |
           status="$(git status --porcelain)"
@@ -265,7 +388,7 @@ jobs:
           fi
 
       - name: Upload coverage report
-        if: matrix.python-version == '3.12' && matrix.os == 'ubuntu-latest'
+        if: matrix.python-version == needs.generate-matrix.outputs.primary && matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-report
@@ -273,6 +396,8 @@ jobs:
           if-no-files-found: ignore
 
   lowest-deps:
+    needs: generate-matrix
+    if: needs.generate-matrix.outputs.run_lowest == 'true'
     permissions:
       contents: read
       actions: read
@@ -348,6 +473,7 @@ jobs:
         run: uvx "$RHIZA_TASK" test-lowest
 
   typecheck:
+    if: needs.generate-matrix.outputs.consolidated != 'true' && needs.generate-matrix.outputs.run_tests == 'true'
     permissions:
       contents: read
       actions: read
@@ -414,6 +540,8 @@ jobs:
         run: uvx "$RHIZA_TASK" typecheck
 
   deptry:
+    needs: generate-matrix
+    if: needs.generate-matrix.outputs.consolidated != 'true'
     permissions:
       contents: read
       actions: read
@@ -469,6 +597,8 @@ jobs:
         run: uvx "$RHIZA_TASK" deps
 
   rhiza-test:
+    needs: generate-matrix
+    if: needs.generate-matrix.outputs.consolidated != 'true'
     permissions:
       contents: read
       actions: read
@@ -542,6 +672,8 @@ jobs:
         run: uvx "$RHIZA_TASK" rhiza-test
 
   pre-commit:
+    needs: generate-matrix
+    if: needs.generate-matrix.outputs.consolidated != 'true'
     permissions:
       contents: read
       actions: read
@@ -585,6 +717,8 @@ jobs:
           uvx "$RHIZA_TASK" fmt
 
   docs-coverage:
+    needs: generate-matrix
+    if: needs.generate-matrix.outputs.consolidated != 'true'
     permissions:
       contents: read
       actions: read
@@ -642,6 +776,8 @@ jobs:
           uvx "$RHIZA_TASK" docs-coverage
 
   security:
+    needs: generate-matrix
+    if: needs.generate-matrix.outputs.consolidated != 'true'
     permissions:
       contents: read
       actions: read
@@ -699,6 +835,8 @@ jobs:
         run: uvx "$RHIZA_TASK" security
 
   license:
+    needs: generate-matrix
+    if: needs.generate-matrix.outputs.consolidated != 'true'
     permissions:
       contents: read
       actions: read
@@ -768,43 +906,135 @@ jobs:
           path: LICENSES.md
           if-no-files-found: ignore
 
-  ci-gate:
+  quality:
     permissions:
       contents: read
       actions: read
-    name: CI gate
-    # Roll-up gate: a single required status check that aggregates the test,
-    # typecheck, lowest-deps and rhiza-test jobs. Branch protection requires this
-    # context instead of every per-leg name, so the matrix can change without editing
-    # the ruleset — which is why rhiza-test joined here rather than as a seventh
-    # required context (#1523): the roll-up is the mechanism that exists for exactly
-    # this, and adding a context would mean editing the ruleset, its bundle copy and
-    # the sync test that pins the `ci / ` prefix between them.
-    # CI budget: ≤5 min (result aggregation only). Last measured: 2026-06-27.
-    timeout-minutes: 5
-    if: always()
-    needs: [test, typecheck, lowest-deps, rhiza-test]
+    name: Consolidated quality checks
+    timeout-minutes: 30
+    needs: generate-matrix
+    if: needs.generate-matrix.outputs.consolidated == 'true'
     runs-on: ubuntu-latest
-
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: audit
 
-      - name: Verify test, typecheck, lowest-deps and rhiza-test succeeded
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          # Repository checks execute README examples, which may read LFS data.
+          lfs: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.11.16"
+          python-version: ${{ needs.generate-matrix.outputs.primary }}
+
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
         run: |
-          echo "test result:        ${{ needs.test.result }}"
-          echo "typecheck result:   ${{ needs.typecheck.result }}"
-          echo "lowest-deps result: ${{ needs.lowest-deps.result }}"
-          echo "rhiza-test result:  ${{ needs.rhiza-test.result }}"
-          # Accept "success" or "cancelled" (transient runner cancellation).
-          # Reject "failure" (real failure) and "skipped" (job never ran).
-          if [[ "${{ needs.test.result }}" != "success" && "${{ needs.test.result }}" != "cancelled" \
-             || "${{ needs.typecheck.result }}" != "success" && "${{ needs.typecheck.result }}" != "cancelled" \
-             || "${{ needs.lowest-deps.result }}" != "success" && "${{ needs.lowest-deps.result }}" != "cancelled" \
-             || "${{ needs.rhiza-test.result }}" != "success" && "${{ needs.rhiza-test.result }}" != "cancelled" ]]; then
-            echo "::error::test, typecheck, lowest-deps and/or rhiza-test did not succeed; failing the CI gate."
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
             exit 1
           fi
-          echo "All required CI jobs succeeded."
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-setup
+        with:
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+
+      - name: Configure git auth for private packages
+        uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Run fmt
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
+        run: uvx "$RHIZA_TASK" fmt
+
+      - name: Run deps
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
+        run: uvx "$RHIZA_TASK" deps
+
+      - name: Run typecheck
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
+        run: uvx "$RHIZA_TASK" typecheck
+
+      - name: Run rhiza-test
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
+        run: uvx "$RHIZA_TASK" rhiza-test
+
+      - name: Run docs-coverage
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
+        run: uvx "$RHIZA_TASK" docs-coverage
+
+      - name: Run security
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
+        run: uvx "$RHIZA_TASK" security
+
+      - name: Run license
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
+        run: uvx "$RHIZA_TASK" license
+
+  ci-gate:
+    permissions:
+      contents: read
+      actions: read
+    name: CI gate
+    timeout-minutes: 5
+    # Inspect every planned job, even when a dependency failed or was skipped.
+    if: always() && (github.event_name != 'push' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
+    needs: [generate-matrix, test, typecheck, lowest-deps, quality, deptry, rhiza-test, pre-commit, docs-coverage, security, license]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        with:
+          egress-policy: audit
+
+      - name: Verify every planned CI job succeeded
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        shell: python
+        run: |
+          import json
+          import os
+
+          results = json.loads(os.environ["RESULTS"])
+          planner = results["generate-matrix"]
+          if planner["result"] != "success":
+              raise SystemExit("CI planning did not succeed")
+          required = json.loads(planner["outputs"]["required_jobs"])
+          if not required or "generate-matrix" not in required:
+              raise SystemExit("CI plan contains no required jobs")
+          failed = [name for name in required if results[name]["result"] != "success"]
+          if failed:
+              raise SystemExit(f"Required CI jobs did not succeed: {failed}")
+          unexpected = [
+              name for name, job in results.items()
+              if name not in required and job["result"] != "skipped"
+          ]
+          if unexpected:
+              raise SystemExit(f"Unexpected CI jobs ran: {unexpected}")
+          print("All planned CI jobs succeeded.")

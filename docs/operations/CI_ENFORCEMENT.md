@@ -7,8 +7,10 @@ than buried in each workflow's header.
 
 ## Blocking gates
 
-These fail the pull request when they fail. They run on every PR via
-`rhiza_ci.yml` (and the equivalent GitLab pipeline):
+These fail the pull request when they fail. The GitHub workflow runs them according to the selected
+[CI profile](../guides/CI_PROFILES.md); documentation-only changes retain quality
+and repository checks while omitting application compatibility tests. GitLab
+pipeline behaviour is unchanged:
 
 | Check | Workflow / target | Notes |
 |-------|-------------------|-------|
