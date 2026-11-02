@@ -19,7 +19,7 @@
 # on a front door it neither ships nor can verify.
 
 variables:
-  RHIZA_TASK: "rhiza-task@1.8.1"
+  RHIZA_TASK: "rhiza-task@1.9.1"
 
 weekly:semgrep:
   stage: test
