@@ -119,6 +119,29 @@ GitLab feature. See the
 [publisher contract](https://jebel-quant.github.io/rhiza/reference/ARCHITECTURE/#repository-owned-publishing-action)
 for details.
 
+## Conda-forge recipe generation (not publication)
+
+After a successful public PyPI upload, the release workflow's `conda` job generates a
+conda-forge `meta.yaml` with grayskull for the tagged version, checks it against the
+published sdist (version, source file, SHA256), and uploads it as the `conda-recipe`
+workflow artifact. Set the Actions **variable** `PUBLISH_CONDA` to `false` to skip this.
+Despite its name, the variable controls only *generation*. Rhiza never publishes to
+conda-forge. That happens through a conda-forge feedstock, which its maintainers review
+and merge. The job never blocks the release.
+
+To regenerate the recipe for an existing release without republishing it (the job
+failed, was skipped, or its artifact expired), run the recipe-only workflow. It has
+`contents: read` and nothing else:
+
+```bash
+gh workflow run rhiza_conda_recipe.yml -f tag=v1.2.3
+```
+
+The [conda-forge recipes guide](https://jebel-quant.github.io/rhiza/development/CONDA_FORGE/)
+covers the first submission through `conda-forge/staged-recipes` and later updates through
+the feedstock's autotick bot, including what to review and how to keep feedstock-specific
+changes.
+
 ## Private dependency secrets in other workflows
 
 `GH_PAT` and `UV_EXTRA_INDEX_URL` are read by the CI, benchmark, CodeQL, marimo, book,
