@@ -5,6 +5,35 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.12.0] - 2026-11-08
+
+### New Features
+- *(github)* Daily workflow that syncs to the latest template release (#1733)
+- *(ci)* Prototype supported CI profiles (#1747)
+- *(release)* Validate distributions with dist-check before publishing (#1755)
+
+### Bug Fixes
+- *(deps)* Bump rhiza-task to v1.9.1 for pytest 9.2 compatible pytest-benchmark (#1749)
+- *(dependabot)* Set versioning-strategy increase-if-necessary for uv (#1751)
+- *(docker)* Quote the GH_PAT placeholder so DOCKER.md's fence parses (#1753)
+- Download tectonic through the GitHub API, not the releases/download redirector (#1754)
+- *(pre-commit)* Install shellcheck from the PyPI wheel, not by building shellcheck-py (#1756)
+- *(release)* Generate the conda recipe for the tagged version and verify it against PyPI (#1746) (#1757)
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1740)
+- *(deps)* Lock file maintenance (#1748)
+
+### Maintenance
+- Chore(deps-dev)(deps-dev): bump pandas (#1741)
+- Chore(deps)(deps): bump the github-actions group with 9 updates (#1742)
+- Chore(deps)(deps): bump the github-actions group with 3 updates (#1750)
+- Chore(deps)(deps): bump taiki-e/install-action (#1752)
+- Merge release/v1.11.x back into main
+
+### Other Changes
+- Merge pull request #1758 from Jebel-Quant/chore/merge-back-v1.11.1
+
 ## [1.11.1] - 2026-11-03
 
 Maintenance release cut from `v1.11.0`, carrying only the fix below.
