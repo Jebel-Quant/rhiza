@@ -131,7 +131,7 @@ permissions:
 # workflow's RHIZA_TASK, and moved with them by the same Renovate rule, so the release and CI
 # run one version of the check rather than two.
 env:
-  RHIZA_TASK: rhiza-task@1.9.1
+  RHIZA_TASK: rhiza-task@1.10.0
 
 jobs:
   tag:
