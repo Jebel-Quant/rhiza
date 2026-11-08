@@ -89,7 +89,7 @@ Rhiza dogfoods its own templates: the files it ships in `bundles/<name>/...` als
 
 A few files **cannot** be symlinks and stay as **real copies**, kept in sync by tests (`tests/bundles/test_bundle_*_sync.py`) rather than by symlink:
 
-- `.github/*` platform config (Dependabot, release notes, secret scanning, PR template, rulesets) — GitHub reads these blobs directly and does not resolve symlinks. **Live `.github/workflows/*` are also real** (Actions won't run a symlinked workflow) and differ from the bundle stubs by design. So does **`rulesets/main-branch-protection.json`**, and for a subtler reason (#1448): here `rhiza_ci.yml` has `push:`/`pull_request:` triggers, so its jobs run top-level and report bare check-run names, while downstream the `github-tests` stub delegates via `jobs.ci` and GitHub reports them as `ci / <job name>`. The bundle copy therefore prefixes all six required contexts; `tests/bundles/test_bundle_github_sync.py` pins that relationship, including the coupling to the stub's job id.
+- `.github/*` platform config (Dependabot, release notes, secret scanning, PR template, rulesets) — GitHub reads these blobs directly and does not resolve symlinks. **Live `.github/workflows/*` are also real** (Actions won't run a symlinked workflow) and differ from the bundle stubs by design. So does **`rulesets/main-branch-protection.json`**, and for a subtler reason (#1448): here `rhiza_ci.yml` has `push:`/`pull_request:` triggers, so its jobs run top-level and report bare check-run names, while downstream the `github-tests` stub delegates via `jobs.ci` and GitHub reports them as `ci / <job name>`. The bundle copy therefore prefixes its required context; `tests/bundles/test_bundle_github_sync.py` pins that relationship, including the coupling to the stub's job id. Since #1744 both copies require exactly one context, the aggregate `CI gate` (`ci / CI gate` downstream): the `lean` CI profile folds the five per-job quality checks the rulesets used to name into one `quality` job, so they would never report on a lean consumer's PRs, while `CI gate` reports under every profile and fails on any planned job that failed, was cancelled or was unexpectedly skipped. Changing the file changes no live setting — a consumer, and this repo, must re-apply it (see `docs/ops/BRANCH_PROTECTION.md`).
 - `.rhiza/.gitignore` (and any `.gitignore`/`.gitattributes`) — git opens these with `O_NOFOLLOW`, so a symlink yields an ELOOP warning and the rules are ignored.
 
 Plus intentional mother-repo overrides that deliberately diverge from their bundle source: root `.gitignore`, `.pre-commit-config.yaml`, `.python-version`, `SECURITY.md`, `renovate.json`. The exclusion list lives in `utils/link_dogfood.py`. Downstream consumers are unaffected: the sync checks out a bundle and dereferences symlinks on copy, so synced projects always receive real files (guarded by `test_no_symlinks_in_*`).
@@ -736,9 +736,11 @@ default for `mkdocs-extra-packages`, which this repo's `pyproject.toml` now mere
 >   that the pattern matches files the gate measures, and that the table and the recipe
 >   agree on the threshold.
 >
-> The CI job keeps its id `pre-commit` and its display name "Pre-commit hooks": that name
-> is a required status check in `.github/rulesets/main-branch-protection.json`, so
-> renaming it would leave every PR waiting on a context that never reports.
+> The CI job keeps its id `pre-commit` and its display name "Pre-commit hooks". Since #1744
+> the ruleset file requires only `CI gate`, which rolls this job up, but the name was a
+> required context until then — and stays one in any live ruleset (this repo's or a
+> consumer's) not yet re-applied from the file — so renaming it would leave those PRs
+> waiting on a context that never reports.
 
 ### Enforcing template ownership
 

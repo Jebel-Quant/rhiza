@@ -129,7 +129,7 @@ class TestRequiredStatusCheckContexts:
     thin caller whose ``jobs.ci`` delegates to that same reusable workflow, and GitHub
     names the resulting runs ``<calling job id> / <inner job name>``.
 
-    A bundle ruleset listing bare contexts therefore names six checks that can never
+    A bundle ruleset listing bare contexts therefore names checks that can never
     report, leaving every downstream PR blocked on "Expected — waiting for status".
     """
 
@@ -176,3 +176,23 @@ class TestRequiredStatusCheckContexts:
             f"required status checks name no job in .github/workflows/rhiza_ci.yml: {missing} "
             f"(known job check-run names: {sorted(names)})"
         )
+
+    def test_only_the_profile_independent_aggregate_is_required(self) -> None:
+        """Both rulesets require ``CI gate`` and nothing else (#1744).
+
+        The ``lean`` CI profile folds pre-commit, deptry, docs-coverage, security and
+        license into one ``quality`` job, so a ruleset naming those per-job checks waits
+        forever on a lean consumer's PRs. ``CI gate`` reports under every profile and
+        fails on any planned job that failed, was cancelled or was unexpectedly skipped,
+        so requiring it alone loses no assurance. Keeping the list to that one context
+        also keeps out the optional workflows (CodeQL, marimo), which skip on pull
+        requests under ``lean`` and ``standard`` and so can never be required.
+        """
+        assert _required_contexts(_ROOT / ".github" / _RULESET) == ["CI gate"]
+        assert _required_contexts(_ROOT / "bundles" / "github" / ".github" / _RULESET) == ["ci / CI gate"]
+
+    def test_the_required_gate_rolls_up_every_ci_job(self) -> None:
+        """``CI gate`` can stand in for the per-job checks only if it needs every job."""
+        workflow = yaml.safe_load((_ROOT / ".github" / "workflows" / "rhiza_ci.yml").read_text(encoding="utf-8"))
+        gate_id = next(job_id for job_id, job in workflow["jobs"].items() if job.get("name") == "CI gate")
+        assert set(workflow["jobs"][gate_id]["needs"]) == set(workflow["jobs"]) - {gate_id}

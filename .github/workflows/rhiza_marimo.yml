@@ -7,8 +7,10 @@
 #          repository. It builds a dynamic matrix to run each notebook in
 #          parallel to surface errors early and keep notebooks reproducible.
 #
-# Trigger: This workflow runs on every push and on pull requests to main/master
-#          branches (including from forks)
+# Trigger: This workflow runs on pushes to and pull requests against main/master
+#          (including from forks), and on manual dispatch. Under the `lean` and
+#          `standard` CI profiles ([tool.rhiza.ci].profile in pyproject.toml) the
+#          notebooks skip on pull requests; see docs/guides/CI_PROFILES.md.
 #
 # Components:
 #   - 🔎 Discover notebooks in book/marimo
@@ -30,6 +32,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
   workflow_call:
     secrets:
       RHIZA_SETUP_CREDENTIALS:
@@ -40,8 +43,62 @@ on:
         required: false
 
 jobs:
+  # The CI profile gate (#1744). `on:` triggers cannot read pyproject.toml, so this
+  # cheap job resolves `[tool.rhiza.ci].profile` and every expensive job below needs
+  # it: under `lean` and `standard` they skip on pull requests and still run on
+  # pushes, the schedule and manual dispatch. `comprehensive` -- the default when the
+  # table is absent -- runs on pull requests exactly as before. An invalid profile
+  # fails this job, as it fails rhiza_ci.yml's planner, rather than quietly running
+  # less. Inline for the planner's reason: a reusable call must run its pinned code,
+  # not code from the consumer checkout.
+  profile:
+    name: CI profile
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    outputs:
+      profile: ${{ steps.profile.outputs.profile }}
+      run: ${{ steps.profile.outputs.run }}
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Resolve CI profile
+        id: profile
+        shell: python
+        run: |
+          import json
+          import os
+          import tomllib
+          from pathlib import Path
+
+          # BEGIN ci-profile resolution. Copied verbatim into the profile gates of
+          # rhiza_codeql.yml and rhiza_marimo.yml; tests/api/test_ci_profiles.py
+          # fails if any copy differs from this one.
+          with Path("pyproject.toml").open("rb") as stream:
+              project = tomllib.load(stream)
+          config = project.get("tool", {}).get("rhiza", {}).get("ci", {})
+          if not isinstance(config, dict) or set(config) - {"profile"}:
+              raise SystemExit("[tool.rhiza.ci] accepts only profile")
+          profile = config.get("profile", "comprehensive")
+          if profile not in ("lean", "standard", "comprehensive"):
+              raise SystemExit("CI profile must be lean, standard or comprehensive")
+          # END ci-profile resolution
+          event_name = os.environ["GITHUB_EVENT_NAME"]
+          run = profile == "comprehensive" or event_name not in ("pull_request", "pull_request_target")
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a") as output:
+              output.write(f"profile={profile}\nrun={json.dumps(run)}\n")
+          print(json.dumps({"profile": profile, "event": event_name, "run": run}))
+
   # Build a matrix of notebooks to test
   list-notebooks:
+    needs: profile
+    if: needs.profile.outputs.run == 'true'
     permissions:
       contents: read
     runs-on: ubuntu-latest

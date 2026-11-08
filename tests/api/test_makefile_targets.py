@@ -95,8 +95,9 @@ class TestMakefileRootFixture:
         unmergeable, which is what this test exists to catch, whoever owns it.
 
         Pinned because it is load-bearing for a *required* check. The ``pre-commit`` job runs
-        ``make fmt`` with no ``astral-sh/setup-uv`` step, and ``Pre-commit hooks`` is required
-        in ``.github/rulesets/main-branch-protection.json`` — so losing this line makes the
+        ``make fmt`` with no ``astral-sh/setup-uv`` step, and ``Pre-commit hooks`` is rolled up by
+        ``CI gate``, the context ``.github/rulesets/main-branch-protection.json`` requires — so
+        losing this line makes the
         branch unmergeable, which is exactly what happened on the first push of the migration.
 
         Asserted as a prepend, not merely a mention: appending leaves a runner with an older

@@ -9,7 +9,10 @@
 #          Set the CODEQL_ENABLED repository variable to 'true' to force-enable
 #          on private repos, 'false' to disable, or leave unset for auto-detect.
 #
-# Trigger: On push to main/master, pull requests, and weekly schedule.
+# Trigger: On push to main/master, pull requests, weekly schedule and manual
+#          dispatch. Under the `lean` and `standard` CI profiles
+#          ([tool.rhiza.ci].profile in pyproject.toml) the analysis skips on pull
+#          requests; see docs/guides/CI_PROFILES.md.
 
 name: "(RHIZA) CODEQL"
 
@@ -20,6 +23,7 @@ on:
     branches: [ "main", "master" ]
   schedule:
     - cron: '27 1 * * 1'
+  workflow_dispatch:
   workflow_call:
     secrets:
       GH_PAT:
@@ -34,8 +38,67 @@ permissions:
   contents: read
 
 jobs:
+  # The CI profile gate (#1744). `on:` triggers cannot read pyproject.toml, so this
+  # cheap job resolves `[tool.rhiza.ci].profile` and every expensive job below needs
+  # it: under `lean` and `standard` they skip on pull requests and still run on
+  # pushes, the schedule and manual dispatch. `comprehensive` -- the default when the
+  # table is absent -- runs on pull requests exactly as before. An invalid profile
+  # fails this job, as it fails rhiza_ci.yml's planner, rather than quietly running
+  # less. Inline for the planner's reason: a reusable call must run its pinned code,
+  # not code from the consumer checkout.
+  #
+  # It carries the CODEQL_ENABLED condition `analyze` used to, so a repository with
+  # CodeQL switched off spends no runner on the gate either.
+  profile:
+    name: CI profile
+    if: |
+      vars.CODEQL_ENABLED == 'true' ||
+      (vars.CODEQL_ENABLED != 'false' && github.event.repository.visibility == 'public')
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    outputs:
+      profile: ${{ steps.profile.outputs.profile }}
+      run: ${{ steps.profile.outputs.run }}
+    steps:
+    - name: Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+    - name: Resolve CI profile
+      id: profile
+      shell: python
+      run: |
+        import json
+        import os
+        import tomllib
+        from pathlib import Path
+
+        # BEGIN ci-profile resolution. Copied verbatim into the profile gates of
+        # rhiza_codeql.yml and rhiza_marimo.yml; tests/api/test_ci_profiles.py
+        # fails if any copy differs from this one.
+        with Path("pyproject.toml").open("rb") as stream:
+            project = tomllib.load(stream)
+        config = project.get("tool", {}).get("rhiza", {}).get("ci", {})
+        if not isinstance(config, dict) or set(config) - {"profile"}:
+            raise SystemExit("[tool.rhiza.ci] accepts only profile")
+        profile = config.get("profile", "comprehensive")
+        if profile not in ("lean", "standard", "comprehensive"):
+            raise SystemExit("CI profile must be lean, standard or comprehensive")
+        # END ci-profile resolution
+        event_name = os.environ["GITHUB_EVENT_NAME"]
+        run = profile == "comprehensive" or event_name not in ("pull_request", "pull_request_target")
+        with Path(os.environ["GITHUB_OUTPUT"]).open("a") as output:
+            output.write(f"profile={profile}\nrun={json.dumps(run)}\n")
+        print(json.dumps({"profile": profile, "event": event_name, "run": run}))
+
   analyze:
     name: Analyze (${{ matrix.language }})
+    needs: profile
     # Runner size impacts CodeQL analysis time. To learn more, please see:
     #   - https://gh.io/recommended-hardware-resources-for-running-codeql
     #   - https://gh.io/supported-runners-and-hardware-resources
@@ -48,9 +111,8 @@ jobs:
     # - Private repositories: Requires GitHub Advanced Security
     # To disable this workflow, set CODEQL_ENABLED repository variable to 'false'
     # To enable this workflow for private repos with Advanced Security, set CODEQL_ENABLED to 'true'
-    if: |
-      vars.CODEQL_ENABLED == 'true' ||
-      (vars.CODEQL_ENABLED != 'false' && github.event.repository.visibility == 'public')
+    # That condition sits on the `profile` job above; a skipped gate skips this job too.
+    if: needs.profile.outputs.run == 'true'
     permissions:
       # required for all workflows
       security-events: write

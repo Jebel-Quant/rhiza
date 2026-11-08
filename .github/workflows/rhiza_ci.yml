@@ -208,6 +208,9 @@ jobs:
           import tomllib
           from pathlib import Path
 
+          # BEGIN ci-profile resolution. Copied verbatim into the profile gates of
+          # rhiza_codeql.yml and rhiza_marimo.yml; tests/api/test_ci_profiles.py
+          # fails if any copy differs from this one.
           with Path("pyproject.toml").open("rb") as stream:
               project = tomllib.load(stream)
           config = project.get("tool", {}).get("rhiza", {}).get("ci", {})
@@ -216,6 +219,7 @@ jobs:
           profile = config.get("profile", "comprehensive")
           if profile not in ("lean", "standard", "comprehensive"):
               raise SystemExit("CI profile must be lean, standard or comprehensive")
+          # END ci-profile resolution
           versions = json.loads(os.environ["VERSIONS"])
           if not isinstance(versions, list) or not versions or any(
               not isinstance(v, str) or not re.fullmatch(r"3\.\d+", v) for v in versions

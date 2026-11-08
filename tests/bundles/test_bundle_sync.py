@@ -112,7 +112,7 @@ class TestCoreIsLanguageNeutral:
         core's rather than a layer's has not changed: uvx runs prek, mkdocs and semgrep whatever
         the language. The job lives in the shim, which resolves ``UVX`` to ``./bin/uvx`` and has a
         rule to download it -- so ``make <anything>`` still works on a bare runner, which is what
-        keeps rhiza's own required ``Pre-commit hooks`` check green.
+        keeps rhiza's own ``Pre-commit hooks`` check, and so ``CI gate``, green.
 
         Read from the synced file, which needs no network and no subprocess. While the CLI printed
         the shim this had to generate it, and *skipped* when ``uvx`` could not be reached -- so the

@@ -6,7 +6,9 @@
 # Purpose: Run the benchmark suite on pushes to main to create a measurable
 #          performance baseline over time.
 #
-# Trigger: This workflow runs on pushes to the main branch.
+# Trigger: This workflow runs on pushes to the main branch and on manual dispatch.
+#          It has no pull_request trigger in any CI profile, so it needs no
+#          profile gate; see docs/guides/CI_PROFILES.md.
 
 name: "(RHIZA) BENCHMARK"
 
@@ -31,6 +33,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
   workflow_call:
     secrets:
       RHIZA_SETUP_CREDENTIALS:
