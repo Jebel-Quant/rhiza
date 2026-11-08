@@ -76,10 +76,17 @@ repos:
         # Scope deliberately lives in .bandit, not here — see that file (#1493).
         args: ["--ini", ".bandit"]
 
-  - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.11.0.1
+  # shellcheck-py as a pinned PyPI wheel, not as a hook repo: installing the hook repo builds
+  # from source, and that build downloads the binary from github.com/.../releases/download/,
+  # which answered 504 for hours on 2026-11-08 and turned every PR's pre-commit job red. The
+  # wheels bundle the binary (linux x86_64, macOS, Windows), so nothing is fetched from GitHub.
+  - repo: local
     hooks:
       - id: shellcheck
+        name: shellcheck
+        language: python
+        additional_dependencies: ["shellcheck-py==0.11.0.1"]
+        entry: shellcheck
         files: '\.sh$'
 
   - repo: https://github.com/betterleaks/betterleaks
