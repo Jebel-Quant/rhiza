@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.11.1] - 2026-11-03
+
+Maintenance release cut from `v1.11.0`, carrying only the fix below.
+
+### Bug Fixes
+- *(deps)* Bump rhiza-task to v1.9.1 for pytest 9.2 compatible pytest-benchmark (#1749)
+
 ## [1.11.0] - 2026-10-24
 
 ### Dependencies
