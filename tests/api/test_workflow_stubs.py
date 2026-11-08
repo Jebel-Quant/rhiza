@@ -586,7 +586,7 @@ class TestBookWorkflow:
             "the book workflow pins no tectonic version, so `book`'s `paper` prerequisite "
             "cannot compile and the PDF the nav claims is never built."
         )
-        assert "tectonic-typesetting/tectonic/releases/download" in book_workflow_text, (
+        assert "x86_64-unknown-linux-musl.tar.gz" in book_workflow_text, (
             "the book workflow names a tectonic version but never installs it. The `paper` "
             "prerequisite skips without the binary on PATH -- and a skipped prerequisite is "
             "exactly what deployed a 404 in the book's own nav."
@@ -809,7 +809,7 @@ class TestBookWorkflow:
         assert path.is_file(), "the gitlab-book bundle ships no rhiza_book.yml"
         text = path.read_text(encoding="utf-8")
 
-        assert "tectonic-typesetting/tectonic/releases/download" in text, (
+        assert "x86_64-unknown-linux-musl.tar.gz" in text, (
             "the GitLab book pipeline installs no LaTeX engine, so `book`'s `paper` "
             "prerequisite skips and the nav entry for the paper resolves to nothing."
         )

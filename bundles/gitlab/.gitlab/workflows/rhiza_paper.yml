@@ -37,9 +37,28 @@ paper:build:
     # container $UV_IMAGE happens to be. The gnu tarball wants libgraphite2.so.3, which a
     # slim image does not carry.
     - |
-      url="https://github.com/tectonic-typesetting/tectonic/releases/download"
-      url="${url}/tectonic%40${TECTONIC_VERSION}/tectonic-${TECTONIC_VERSION}-x86_64-unknown-linux-musl.tar.gz"
-      curl -fsSL "$url" -o /tmp/tectonic.tar.gz
+      # Fetched through the GitHub REST API, not the github.com/<repo>/releases/download/
+      # redirector: on 2026-11-08 that URL answered 504 to every request while the API served
+      # the same asset. Set GITHUB_TOKEN as a CI variable to lift the 60 requests/hour limit.
+      uv run --no-project python - <<'PY'
+      import json, os, time, urllib.request
+      v = os.environ["TECTONIC_VERSION"]
+      api = "https://api.github.com/repos/tectonic-typesetting/tectonic/releases"
+      name = f"tectonic-{v}-x86_64-unknown-linux-musl.tar.gz"
+      auth = {"Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}"} if os.environ.get("GITHUB_TOKEN") else {}
+      def get(url, **headers):
+          for attempt in range(3):
+              try:
+                  with urllib.request.urlopen(urllib.request.Request(url, headers={**auth, **headers})) as r:
+                      return r.read()
+              except OSError:
+                  if attempt == 2:
+                      raise
+                  time.sleep(10 * (attempt + 1))
+      asset = next(a for a in json.loads(get(f"{api}/tags/tectonic%40{v}"))["assets"] if a["name"] == name)
+      with open("/tmp/tectonic.tar.gz", "wb") as f:
+          f.write(get(asset["url"], Accept="application/octet-stream"))
+      PY
       tar xzf /tmp/tectonic.tar.gz -C /usr/local/bin tectonic
       tectonic --version
   script:
