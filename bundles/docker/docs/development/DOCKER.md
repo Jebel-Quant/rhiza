@@ -71,7 +71,7 @@ whereas a secret mount exists only while that instruction runs and lands in no l
 (#1691). Locally, export the same variables and pass them as secrets:
 
 ```bash
-export GH_PAT=<token>                      # a PAT with read access to the private repositories
+export GH_PAT="<token>"                    # a PAT with read access to the private repositories
 docker buildx build \
   --file docker/Dockerfile \
   --build-arg PYTHON_VERSION=$(cat .python-version) \
