@@ -14,6 +14,9 @@ JSONC files carry comments. Each is skipped for the parse check and validated an
 from __future__ import annotations
 
 import json
+import re
+import shutil
+import subprocess  # nosec B404
 import tomllib
 from pathlib import Path
 
@@ -193,3 +196,51 @@ class TestBundleTomlValidity:
         for layer in _LAYER_BUNDLES:
             tomls = [f for f in _all_files_in_bundle(root / "bundles" / layer) if f.suffix == ".toml"]
             assert tomls, f"layer '{layer}' ships no .toml file — has the scan gone stale?"
+
+
+_SHELL_FENCE_RE = re.compile(r"^```(?:bash|sh)[ \t]*\n(.*?)^```", re.MULTILINE | re.DOTALL)
+
+
+def _shell_fence_errors(text: str) -> list[str]:
+    """Return ``bash -n`` diagnostics for every ``bash``/``sh`` fence in *text*."""
+    errors: list[str] = []
+    for match in _SHELL_FENCE_RE.finditer(text):
+        line = text.count("\n", 0, match.start()) + 1
+        result = subprocess.run(  # nosec B603 B607
+            ["bash", "-n"], input=match.group(1), text=True, capture_output=True, check=False
+        )
+        if result.returncode:
+            errors.append(f"line {line}: {result.stderr.strip()}")
+    return errors
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="bash not available")
+class TestBundleShellFenceValidity:
+    """Every ``bash``/``sh`` fence in a bundle's markdown must parse under ``bash -n`` (#1735).
+
+    rhiza-task's ``docs-examples`` gate runs ``bash -n`` over these fences in every consumer,
+    with no skip marker and no per-path exclude. A placeholder such as ``<token>`` reads as a
+    redirect, so one broken fence in a template-owned doc turns that gate red downstream.
+    """
+
+    def test_all_shell_fences_parse(self, root: Path, bundle_names: list[str]) -> None:
+        """Walk every bundle's markdown and assert each shell fence passes ``bash -n``."""
+        errors: list[str] = []
+        for name in bundle_names:
+            bundle_dir = root / "bundles" / name
+            if not bundle_dir.is_dir():
+                continue
+            for f in _all_files_in_bundle(bundle_dir):
+                if f.suffix != ".md":
+                    continue
+                rel = f.relative_to(root / "bundles")
+                errors.extend(f"  [{name}] {rel}:{e}" for e in _shell_fence_errors(f.read_text(encoding="utf-8")))
+        if errors:
+            pytest.fail("Shell fences that bash -n rejects:\n" + "\n".join(errors))
+
+    def test_the_check_rejects_an_unquoted_placeholder(self) -> None:
+        """Positive control: the exact shape from #1735 must be caught, or the scan is vacuous."""
+        broken = "```bash\nexport GH_PAT=<token>   # a PAT\n```\n"
+        fixed = '```bash\nexport GH_PAT="<token>"   # a PAT\n```\n'
+        assert _shell_fence_errors(broken)
+        assert not _shell_fence_errors(fixed)
