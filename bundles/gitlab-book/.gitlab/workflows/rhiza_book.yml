@@ -44,7 +44,7 @@ pages:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
     - |
       # The musl build: statically linked, so it runs in whatever container $UV_IMAGE is.
-      folder=$(uvx rhiza-task@1.9.1 print paper-folder)
+      folder=$(uvx rhiza-task@1.10.0 print paper-folder)
       if [ -n "$(find "${folder}" -maxdepth 1 -name '*.tex' 2>/dev/null | head -1)" ]; then
         # Fetched through the GitHub REST API, not the github.com/<repo>/releases/download/
         # redirector: on 2026-11-08 that URL answered 504 to every request while the API served

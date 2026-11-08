@@ -63,6 +63,7 @@ _CONTROLS = {
     # The anchors are checked inside `load` itself, so every importer inherits them.
     "tests/registry.py": "load",
     "tests/api/test_ci_workflow.py": "_gates_named_by_all",
+    "tests/api/test_dist_check_wiring.py": "test_the_pin_scan_and_task_list_are_not_empty",
     "tests/bundles/test_bundle_combinations.py": "test_the_benchmark_task_is_registered",
     "tests/bundles/test_layer_contract.py": "test_every_prerequisite_of_all_resolves",
     "tests/integration/test_book_targets.py": "test_every_prerequisite_of_book_resolves",

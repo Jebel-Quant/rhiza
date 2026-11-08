@@ -44,6 +44,10 @@ _BUNDLE_WORKFLOW = _ROOT / "bundles" / "github" / ".github" / "workflows" / "rhi
 
 _WRITTEN_STEP = "Verify version matches tag"
 _BUILT_STEP = "Verify built distribution matches the tag"
+# `uv build` became `dist-check` here (#1743): the task builds dist/ and validates it, so the
+# step that produces the artifacts is named for both halves. tests/api/test_dist_check_wiring.py
+# holds what it runs.
+_BUILD_STEP = "Build and validate distributions"
 
 
 def _step(workflow: Path, name: str) -> dict:
@@ -195,8 +199,8 @@ class TestBothChecksAreWiredIntoBothWorkflows:
         names = [
             step.get("name") for step in yaml.safe_load(workflow.read_text(encoding="utf-8"))["jobs"]["build"]["steps"]
         ]
-        assert names.index(_BUILT_STEP) > names.index("Build"), (
-            f"{workflow.relative_to(_ROOT)}: '{_BUILT_STEP}' must follow the Build step"
+        assert names.index(_BUILT_STEP) > names.index(_BUILD_STEP), (
+            f"{workflow.relative_to(_ROOT)}: '{_BUILT_STEP}' must follow '{_BUILD_STEP}'"
         )
 
     @pytest.mark.parametrize("workflow", [_LIVE_WORKFLOW, _BUNDLE_WORKFLOW])
@@ -207,8 +211,8 @@ class TestBothChecksAreWiredIntoBothWorkflows:
             workflow: The release workflow to read.
         """
         condition = _step(workflow, _BUILT_STEP)["if"]
-        assert condition == _step(workflow, "Build")["if"], (
-            f"{workflow.relative_to(_ROOT)}: '{_BUILT_STEP}' must run exactly when Build does"
+        assert condition == _step(workflow, _BUILD_STEP)["if"], (
+            f"{workflow.relative_to(_ROOT)}: '{_BUILT_STEP}' must run exactly when '{_BUILD_STEP}' does"
         )
 
 

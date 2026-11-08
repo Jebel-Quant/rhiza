@@ -116,6 +116,12 @@ concurrency:
 permissions:
   contents: read
 
+# The CLI the build job validates distributions with (`dist-check`). Pinned like every other
+# workflow's RHIZA_TASK, and moved with them by the same Renovate rule, so the release and CI
+# run one version of the check rather than two.
+env:
+  RHIZA_TASK: rhiza-task@1.10.0
+
 jobs:
   tag:
     name: Validate Tag
@@ -369,11 +375,18 @@ jobs:
             echo "buildable=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build
+      - name: Build and validate distributions
         if: steps.buildable.outputs.buildable == 'true'
-        run: |
-          printf "[INFO] Building package...\n"
-          uv build
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
+        # `dist-check` builds into dist/ and then reads the artifacts back before anything is
+        # uploaded (#1743): every declared licence file must be in each archive and recorded as
+        # a License-File, and a wheel rebuilt from the sdist -- outside the checkout, with
+        # version overrides removed -- must agree with the rest. dist/ is left holding exactly
+        # what passed, and that folder is what the jobs below publish; nothing rebuilds it.
+        # `--strict`, because a skip here would mean nothing was built, and an empty dist/
+        # must not reach the publish job as a pass.
+        run: uvx "$RHIZA_TASK" dist-check --strict
 
       - name: Verify built distribution matches the tag
         if: steps.buildable.outputs.buildable == 'true'

@@ -36,6 +36,9 @@ workflow:
 
 variables:
   RELEASE_TAG: $CI_COMMIT_TAG
+  # The CLI release:build validates distributions with (`dist-check`), pinned like the
+  # other pipelines' RHIZA_TASK and moved with them by the same Renovate rule.
+  RHIZA_TASK: "rhiza-task@1.10.0"
 
 .release_validate_tag:
   stage: .pre
@@ -182,8 +185,13 @@ release:build:
 
       # Detect buildable Python package
       if [ -f "pyproject.toml" ] && grep -q '^\[build-system\]' pyproject.toml; then
-        echo "📦 Building package..."
-        uv build
+        echo "📦 Building and validating package..."
+        # `dist-check` builds into dist/ and reads the artifacts back before anything is
+        # published (#1743): declared licence files packaged and recorded as License-File,
+        # and a wheel rebuilt from the sdist outside the checkout agreeing with the rest.
+        # dist/ is left holding exactly what passed, and that is the artifact below.
+        # `--strict`: a skip would mean nothing was built.
+        uvx "$RHIZA_TASK" dist-check --strict
 
         # The only place a version *derived* from the VCS can be caught being wrong:
         # hatch-vcs and setuptools-scm fall back rather than fail, so a shallow clone

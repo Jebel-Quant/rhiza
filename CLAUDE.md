@@ -203,6 +203,24 @@ which is why this repo's own release is verified by the tag job alone.
 `tests/api/test_release_version_verification.py` runs both scripts, lifted out of the YAML,
 against fixture projects in all three shapes; the GitLab twin carries the same two halves.
 
+**The artifacts themselves are checked too, and the build step is where (#1743).** A filename
+carrying the right version says nothing about what is inside: chebfun 0.11.0 declared
+`license-files = ["LICENSE"]` while the repository held `LICENSE.rst`, the backend accepted it
+without a word, and the release published metadata with no licence. So the release no longer
+runs `uv build` itself. Its build step is rhiza-task's `dist-check --strict`, which builds into
+`dist/` and then reads the archives back: every declared licence file packaged and recorded as
+a `License-File`, the sdist and wheels agreeing on version and licences, and a wheel **rebuilt
+from the sdist** — unpacked outside the checkout, with `SETUPTOOLS_SCM_PRETEND_VERSION*` removed
+— agreeing with both. That last one is the version conda-forge or a distro builds, which a
+derived version never frozen into `PKG-INFO` gets wrong silently. `dist/` is left holding
+exactly what passed, and the tag check and the upload both read that folder, so nothing is
+rebuilt between validation and publication. The same task runs in `rhiza_ci.yml` (its own
+`dist-check` job, a step in lean's consolidated one) and in GitLab's quality pipeline, both
+with full history so a derived version can see its tag. Tag comparison stays in the workflow
+step above, because normalising a tag needs `packaging` and rhiza-task keeps that out of its
+runtime dependencies. `tests/api/test_dist_check_wiring.py` holds all four call sites, and asks
+each pinned CLI whether it has the task at all — the wiring is dead until it does.
+
 `/rhiza:release` handles the shape, and needed a fix to: it tells its two phases apart by
 comparing the declared version against the highest tag, and on a derived version the two are
 the same number by construction — so a merged-but-untagged release read as phase A and would

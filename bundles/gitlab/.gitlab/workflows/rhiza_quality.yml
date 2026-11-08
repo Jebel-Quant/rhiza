@@ -18,7 +18,7 @@
 # on a front door it neither ships nor can verify.
 
 variables:
-  RHIZA_TASK: "rhiza-task@1.9.1"
+  RHIZA_TASK: "rhiza-task@1.10.0"
 
 quality:deptry:
   stage: test
@@ -36,6 +36,24 @@ quality:pre-commit:
   image: $UV_IMAGE
   script:
     - uvx "$RHIZA_TASK" fmt
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+quality:dist-check:
+  stage: test
+  needs: []
+  image: $UV_IMAGE
+  variables:
+    UV_EXTRA_INDEX_URL: "${UV_EXTRA_INDEX_URL}"
+    # A version derived from git needs the tags, or the sdist carries a fallback version.
+    GIT_DEPTH: "0"
+  # The check the release runs before publishing (#1743), on every pipeline: a declared
+  # licence file that is not packaged, or a version a rebuild from the sdist cannot
+  # reproduce, fails here rather than on release day. No [build-system] means a skip.
+  script:
+    - git fetch --tags --quiet || true
+    - uvx "$RHIZA_TASK" dist-check
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
