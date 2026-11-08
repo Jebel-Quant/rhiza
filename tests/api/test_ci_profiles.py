@@ -18,7 +18,7 @@ _PLAN = next(s for s in _JOBS["generate-matrix"]["steps"] if s.get("id") == "pla
 _GATE = next(s for s in _JOBS["ci-gate"]["steps"] if s.get("name", "").startswith("Verify"))
 _VERSIONS = ["3.12", "3.13", "3.14"]
 _PLATFORMS = ["ubuntu-latest", "macos-latest"]
-_QUALITY = {"deptry", "rhiza-test", "pre-commit", "docs-coverage", "security", "license"}
+_QUALITY = {"deptry", "rhiza-test", "pre-commit", "docs-coverage", "security", "license", "dist-check"}
 
 
 def _git(folder, *args):
@@ -223,7 +223,7 @@ def test_gate_covers_every_job_and_profile_uses_the_existing_security_gates():
     commands = [s["run"] for s in quality["steps"] if s.get("name", "").startswith("Run ") and "run" in s]
     assert commands == [
         f'uvx "$RHIZA_TASK" {task}'
-        for task in ["fmt", "deps", "typecheck", "rhiza-test", "docs-coverage", "security", "license"]
+        for task in ["fmt", "deps", "typecheck", "rhiza-test", "docs-coverage", "security", "license", "dist-check"]
     ]
     assert not any(s.get("continue-on-error") for s in quality["steps"])
     for name in _QUALITY:
