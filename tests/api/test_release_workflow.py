@@ -8,6 +8,7 @@ the changelog and the workflow no longer commits it separately.
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess  # nosec B404 - running the workflow's own shell against a fake grayskull
 from pathlib import Path
@@ -254,7 +255,7 @@ if [[ -n "${CRASH:-}" ]]; then
   exit 1
 fi
 if [[ " $* " != *" --no-use-v1-format "* ]]; then
-  mkdir -p "$2" && echo "schema_version: 1" > "$2/recipe.yaml"
+  mkdir -p "${2%%==*}" && echo "schema_version: 1" > "${2%%==*}/recipe.yaml"
   echo "ImportError: Please install conda-recipe-manager from conda-forge to enable support for the V1 format." >&2
   exit 1
 fi
@@ -264,15 +265,39 @@ if [[ "$calls" -le "$MISSING" ]]; then
   echo "Error code: 404"
   exit 0
 fi
-mkdir -p "$2" && echo "package: {name: $2}" > "$2/meta.yaml"
+echo "$2" >> "$STATE/requests"
+name="${2%%==*}"
+version="${RECIPE_VERSION:-${2#*==}}"
+mkdir -p "$name"
+cat > "$name/meta.yaml" <<RECIPE
+{% set version = "$version" %}
+
+package:
+  name: $name
+  version: {{ version }}
+
+source:
+  url: https://files.pythonhosted.org/packages/source/${name:0:1}/$name/${name}-{{ version }}.tar.gz
+  sha256: ${RECIPE_SHA:-$SDIST_SHA}
+RECIPE
 """
+
+_RELEASED = "1.2.3"
+_SDIST_SHA = "a" * 64
 
 _FAKE_SLEEP = """#!/usr/bin/env bash
 echo "$1" >> "$STATE/sleeps"
 """
 
 
-def _run_grayskull_step(root: Path, relative: Path, tmp_path: Path, missing: int, crash: bool = False):
+def _run_grayskull_step(
+    root: Path,
+    relative: Path,
+    tmp_path: Path,
+    missing: int,
+    crash: bool = False,
+    extra_env: dict[str, str] | None = None,
+):
     """Run the workflow's grayskull step against a fake grayskull that 404s ``missing`` times.
 
     Args:
@@ -281,6 +306,7 @@ def _run_grayskull_step(root: Path, relative: Path, tmp_path: Path, missing: int
         tmp_path: Scratch directory for the fake project, tools and recipe.
         missing: How many calls the fake grayskull answers with the exit-0 404.
         crash: Make every call fail with a non-zero exit, like a real grayskull error.
+        extra_env: Extra variables for the fake, e.g. ``RECIPE_VERSION`` to write a stale recipe.
 
     Returns:
         The completed process and the scratch ``state`` directory.
@@ -306,8 +332,12 @@ def _run_grayskull_step(root: Path, relative: Path, tmp_path: Path, missing: int
         "STATE": str(state),
         "MISSING": str(missing),
         "GITHUB_WORKSPACE": str(workspace),
+        "TAG": f"v{_RELEASED}",
+        "SDIST_SHA": _SDIST_SHA,
     }
-    env.pop("CRASH", None)
+    for name in ("CRASH", "RECIPE_VERSION", "RECIPE_SHA"):
+        env.pop(name, None)
+    env.update(extra_env or {})
     if crash:
         env["CRASH"] = "1"
     result = subprocess.run(
@@ -387,3 +417,127 @@ def test_grayskull_is_pinned(root, relative):
         f"{relative.as_posix()}: grayskull is installed unpinned, so a new release can change "
         f"its default output (as 3.2.0 did) without anyone noticing (#1701)."
     )
+
+
+# ---------------------------------------------------------------------------
+# #1746 -- the recipe must describe the release that was just published
+# ---------------------------------------------------------------------------
+
+_VERIFY_STEP = "Verify conda recipe against the published sdist"
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_conda_requests_the_released_version(root, relative, tmp_path):
+    """Grayskull is asked for the tagged version, not whatever PyPI currently calls latest (#1746).
+
+    While a new release's metadata propagates, "latest" on PyPI is the previous release, and a
+    bare package name would happily produce that release's recipe.
+    """
+    result, state = _run_grayskull_step(root, relative, tmp_path, missing=0)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert (state / "requests").read_text().split() == [f"ducktide=={_RELEASED}"]
+
+
+def _pypi_fixture(tmp_path: Path, version: str = _RELEASED, sha: str = _SDIST_SHA, filename: str | None = None) -> str:
+    """Write a PyPI JSON API response for ducktide and return a base URL serving it.
+
+    Args:
+        tmp_path: Scratch directory.
+        version: The version PyPI reports as published.
+        sha: The SHA256 PyPI reports for the sdist.
+        filename: The sdist filename PyPI reports; defaults to the one for ``version``.
+
+    Returns:
+        A ``file://`` URL to stand in for ``https://pypi.org/pypi``.
+    """
+    api = tmp_path / "pypi"
+    target = api / "ducktide" / _RELEASED / "json"
+    target.parent.mkdir(parents=True)
+    target.write_text(
+        json.dumps(
+            {
+                "info": {"version": version},
+                "urls": [
+                    {"packagetype": "bdist_wheel", "filename": f"ducktide-{version}-py3-none-any.whl"},
+                    {
+                        "packagetype": "sdist",
+                        "filename": filename or f"ducktide-{version}.tar.gz",
+                        "digests": {"sha256": sha},
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return api.as_uri()
+
+
+def _generate_and_verify(root, relative, tmp_path, api: str, **recipe_env: str):
+    """Generate a recipe with the fake grayskull, then run the workflow's verify step on it.
+
+    Args:
+        root: Repository root.
+        relative: Path to the workflow, relative to the root.
+        tmp_path: Scratch directory.
+        api: Base URL standing in for PyPI's JSON API.
+        **recipe_env: ``RECIPE_VERSION``/``RECIPE_SHA`` overrides for the generated recipe.
+
+    Returns:
+        The verify step's completed process.
+    """
+    generated, _ = _run_grayskull_step(root, relative, tmp_path, missing=0, extra_env=recipe_env)
+    assert generated.returncode == 0, generated.stdout + generated.stderr
+
+    workflow = yaml.safe_load((root / relative).read_text(encoding="utf-8"))
+    step = next(s for s in workflow["jobs"]["conda"]["steps"] if s.get("name") == _VERIFY_STEP)
+    assert step["env"]["PYPI_JSON_API"] == "https://pypi.org/pypi"
+    return subprocess.run(
+        ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", step["run"]],
+        cwd=tmp_path / "workspace",
+        env={**os.environ, "TAG": f"v{_RELEASED}", "PYPI_JSON_API": api},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_conda_recipe_matching_the_published_sdist_passes(root, relative, tmp_path):
+    """Version, source file and SHA256 all agreeing with PyPI is the one passing case."""
+    result = _generate_and_verify(root, relative, tmp_path, _pypi_fixture(tmp_path))
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert f"conda recipe matches ducktide-{_RELEASED}.tar.gz" in result.stdout
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_conda_recipe_for_an_older_release_fails(root, relative, tmp_path):
+    """Stale metadata: a recipe for the previous release is not a success for this one (#1746)."""
+    result = _generate_and_verify(root, relative, tmp_path, _pypi_fixture(tmp_path), RECIPE_VERSION="1.2.2")
+    assert result.returncode == 1
+    assert "version 1.2.2 != 1.2.3" in result.stdout
+    assert "source ducktide-1.2.2.tar.gz != published sdist ducktide-1.2.3.tar.gz" in result.stdout
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_conda_recipe_with_the_wrong_checksum_fails(root, relative, tmp_path):
+    """A recipe whose SHA256 is not the published sdist's would build something else."""
+    result = _generate_and_verify(root, relative, tmp_path, _pypi_fixture(tmp_path), RECIPE_SHA="b" * 64)
+    assert result.returncode == 1
+    assert "sha256 " + "b" * 64 in result.stdout
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_conda_recipe_pointing_at_another_source_fails(root, relative, tmp_path):
+    """A source URL naming a file PyPI did not publish for this release fails, checksum aside."""
+    api = _pypi_fixture(tmp_path, filename=f"ducktide-{_RELEASED}.zip")
+    result = _generate_and_verify(root, relative, tmp_path, api)
+    assert result.returncode == 1
+    assert f"!= published sdist ducktide-{_RELEASED}.zip" in result.stdout
+
+
+@pytest.mark.parametrize("relative", _RELEASE_WORKFLOWS, ids=lambda p: p.as_posix())
+def test_conda_recipe_fails_when_pypi_has_no_such_release(root, relative, tmp_path):
+    """No PyPI metadata for the tagged version is an error, not a pass by default."""
+    result = _generate_and_verify(root, relative, tmp_path, (tmp_path / "nowhere").as_uri())
+    assert result.returncode == 1
+    assert f"could not read PyPI metadata for ducktide {_RELEASED}" in result.stdout
