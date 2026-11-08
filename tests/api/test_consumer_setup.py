@@ -67,6 +67,7 @@ def test_setup_before_dependency_resolution():
                     "docs-coverage",
                     "security",
                     "license",
+                    "dist-check",
                 ],
                 "Configure git auth for private packages",
             ),
@@ -75,7 +76,7 @@ def test_setup_before_dependency_resolution():
         "marimo": {"test-notebooks": "Run notebook"},
         "benchmark": {"benchmark": "Run benchmarks"},
         "weekly": {"dep-compat-test": "Resolve and install latest compatible dependencies", "semgrep": "Run Semgrep"},
-        "release": {"build": "Build"},
+        "release": {"build": "Build and validate distributions"},
     }
     tested_guard = None
     for workflow, consumers in jobs.items():

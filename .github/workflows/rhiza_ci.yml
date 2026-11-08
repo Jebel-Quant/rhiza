@@ -272,7 +272,7 @@ jobs:
           if run_lowest:
               required.append("lowest-deps")
           required += ["quality"] if consolidated else [
-              "deptry", "rhiza-test", "pre-commit", "docs-coverage", "security", "license"
+              "deptry", "rhiza-test", "pre-commit", "docs-coverage", "security", "license", "dist-check"
           ]
           plan = {
               "profile": profile,
@@ -834,6 +834,74 @@ jobs:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: uvx "$RHIZA_TASK" security
 
+  dist-check:
+    needs: generate-matrix
+    if: needs.generate-matrix.outputs.consolidated != 'true'
+    permissions:
+      contents: read
+      actions: read
+    name: Package validation
+    # Builds the sdist and wheel, then rebuilds a wheel from the sdist; both are a backend
+    # resolve plus one build, so the budget matches the other single-gate jobs.
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          # A version derived from git (hatch-vcs, setuptools-scm) needs the tags to be
+          # visible, or the sdist carries a fallback version and the check measures that.
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.11.16"
+
+      - name: Validate consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CALLER_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request_target" ] ||
+             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
+            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
+            exit 1
+          fi
+          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
+            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
+            exit 1
+          fi
+
+      - name: Run consumer dependency setup
+        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
+        uses: ./.github/actions/rhiza-setup
+        with:
+          purpose: ${{ github.job }}
+          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+
+      - name: Configure git auth for private packages
+        uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
+        with:
+          token: ${{ secrets.GH_PAT }}
+
+      # The same check the release runs before publishing (#1743), on every PR, so a declared
+      # licence file that is not packaged -- or a version a rebuild from the sdist cannot
+      # reproduce -- fails here rather than on release day. A project with no [build-system]
+      # builds nothing and the task skips.
+      - name: Validate built distributions
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
+        run: uvx "$RHIZA_TASK" dist-check
+
   license:
     needs: generate-matrix
     if: needs.generate-matrix.outputs.consolidated != 'true'
@@ -925,6 +993,8 @@ jobs:
         with:
           # Repository checks execute README examples, which may read LFS data.
           lfs: true
+          # dist-check builds the package; a version derived from git needs the tags.
+          fetch-depth: 0
 
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
@@ -997,6 +1067,11 @@ jobs:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
         run: uvx "$RHIZA_TASK" license
 
+      - name: Run dist-check
+        env:
+          UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
+        run: uvx "$RHIZA_TASK" dist-check
+
   ci-gate:
     permissions:
       contents: read
@@ -1005,7 +1080,7 @@ jobs:
     timeout-minutes: 5
     # Inspect every planned job, even when a dependency failed or was skipped.
     if: always() && (github.event_name != 'push' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch))
-    needs: [generate-matrix, test, typecheck, lowest-deps, quality, deptry, rhiza-test, pre-commit, docs-coverage, security, license]
+    needs: [generate-matrix, test, typecheck, lowest-deps, quality, deptry, rhiza-test, pre-commit, docs-coverage, security, license, dist-check]
     runs-on: ubuntu-latest
     steps:
       - name: Harden the runner (Audit all outbound calls)
