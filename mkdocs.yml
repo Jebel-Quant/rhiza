@@ -34,6 +34,7 @@ nav:
     - Marimo: development/MARIMO.md
     - Paper: development/PAPER.md
     - Presentation: development/PRESENTATION.md
+    - Conda-forge Recipes: development/CONDA_FORGE.md
     - Building the Slides: presentations/index.md
     - Git LFS: lfs/LFS.md
   - Operations:

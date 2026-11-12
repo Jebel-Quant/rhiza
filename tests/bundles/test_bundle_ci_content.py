@@ -30,8 +30,10 @@ _REUSABLE_WORKFLOW_PREFIX = "jebel-quant/rhiza/.github/workflows/"
 
 # rhiza_*.yml workflows that are intentionally NOT thin stubs.  rhiza_release.yml
 # is a full release-automation workflow that runs many first-party steps itself
-# rather than delegating to a reusable workflow.
-_NON_STUB_RHIZA_WORKFLOWS = {"rhiza_release.yml"}
+# rather than delegating to a reusable workflow. rhiza_conda_recipe.yml runs the
+# same synced script as the release's conda job, which it reads from the caller's own
+# commit, so it cannot delegate to a workflow in jebel-quant/rhiza either (#1746).
+_NON_STUB_RHIZA_WORKFLOWS = {"rhiza_release.yml", "rhiza_conda_recipe.yml"}
 
 # ---------------------------------------------------------------------------
 # GitLab CI uv-image single-source pinning

@@ -129,7 +129,7 @@ Adopt a Rhiza bundle and your project immediately gains:
 - **Pre-commit hooks** run by [prek](https://github.com/j178/prek) — ruff, bandit, markdownlint, interrogate, actionlint, and the `rhiza-hooks` checks
 - **pytest** with coverage, benchmarks, and property-based testing via Hypothesis
 - **Documentation** via MkDocs + zensical, with optional Marimo notebook exports
-- **Release automation** — version bumping, OIDC PyPI publishing, optional grayskull conda recipe generation (`vars.PUBLISH_CONDA`, defaults to `true`), SLSA provenance
+- **Release automation** — version bumping, OIDC PyPI publishing, optional conda-forge recipe *generation* with grayskull (`vars.PUBLISH_CONDA`, defaults to `true`; publication stays with the conda-forge feedstock, see [Conda-forge Recipes](docs/development/CONDA_FORGE.md)), SLSA provenance
 - **Security scanning** — CodeQL, bandit, secret scanning, Dependabot
 
 ## 📁 Available Templates

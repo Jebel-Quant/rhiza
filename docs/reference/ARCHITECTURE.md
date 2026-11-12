@@ -140,7 +140,7 @@ flowchart TD
     publisher -->|pypi - default| pypi[PyPI-compatible upload]
     publisher -->|custom| custom[Repository-owned publisher]
     publisher -->|none| finalize[Finalize Release]
-    pypi -->|Public PyPI only| conda[Generate Conda Recipe<br/>with grayskull]
+    pypi -->|Public PyPI only| conda[Generate Conda Recipe artifact<br/>with grayskull, not published]
     draft --> devcontainer[Publish Devcontainer]
     pypi --> finalize
     custom --> finalize
@@ -187,6 +187,17 @@ and callers that have not synced the helper therefore remain supported; a caller
 own helper is never used. To upgrade the guards, first publish the new script revision,
 then update the tooling checkout SHA in both workflows. This pin is deliberately not
 an automatically bumped self-referential release tag.
+
+Conda recipe generation uses `bundles/github/.rhiza/scripts/conda_recipe.py`, reached
+differently. The release workflow's `conda` job and the on-demand
+`rhiza_conda_recipe.yml` both check out **the commit the workflow itself was read from**
+(`github.sha`) into `.rhiza-conda-tools` and run the synced copy there. The `github` bundle
+ships the script and both workflows together, so that commit always carries a matching
+script. A release tag, which can be older than the script when a recipe is
+regenerated for an existing release, is never asked for it. This needs no pin to move
+after a Rhiza release. The trade-off is that a repository that excludes
+`.rhiza/scripts/` from its sync loses the conda job. See
+[Conda-forge Recipes](../development/CONDA_FORGE.md) for the handoff to conda-forge.
 
 The dependency-free module is directly unit-tested and scanned as ordinary Python.
 Workflow integration tests exercise the commands with absent or incompatible caller
