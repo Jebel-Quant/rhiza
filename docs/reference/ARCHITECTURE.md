@@ -555,8 +555,9 @@ flowchart TD
 
 Every gate a pull request must pass is a **job** of `rhiza_ci.yml` — the pre-commit hooks,
 `deptry`, `docs-coverage`, the security scan, the licence scan — not a workflow of its own.
-That is what the required status checks in `.github/rulesets/main-branch-protection.json`
-name, and why renaming a job breaks branch protection.
+The `CI gate` job rolls them all up, and it is the one context
+`.github/rulesets/main-branch-protection.json` requires (#1744): it reports under every CI
+profile, including `lean`, which folds the quality jobs into one.
 
 ## Python Execution Model
 

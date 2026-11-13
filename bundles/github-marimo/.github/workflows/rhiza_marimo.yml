@@ -7,8 +7,10 @@
 #          repository. It builds a dynamic matrix to run each notebook in
 #          parallel to surface errors early and keep notebooks reproducible.
 #
-# Trigger: This workflow runs on every push and on pull requests to main/master
-#          branches (including from forks)
+# Trigger: This workflow runs on pushes to and pull requests against main/master
+#          (including from forks), and on manual dispatch. Under the `lean` and
+#          `standard` CI profiles ([tool.rhiza.ci].profile in pyproject.toml) the
+#          notebooks skip on pull requests; see docs/guides/CI_PROFILES.md.
 #
 # Components:
 #   - 🔎 Discover notebooks in book/marimo
@@ -25,6 +27,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   marimo:

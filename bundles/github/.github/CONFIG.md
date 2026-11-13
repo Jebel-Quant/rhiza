@@ -198,13 +198,21 @@ emits a warning. The generic action takes precedence; if absent, the old
 `rhiza-book-setup` action runs with its `token` input. `RHIZA_SETUP_CREDENTIALS`
 takes precedence over `BOOK_SETUP_TOKEN`. Only one action runs.
 
-## CI profiles (prototype)
+## CI profiles
 
 Select `lean`, `standard` or `comprehensive` with `[tool.rhiza.ci].profile` in the
 consumer's `pyproject.toml`. The default is `comprehensive`. Lean consolidates
 quality checks and runs the primary Python version on ordinary changes; scheduled
 and full manual runs restore the complete compatibility matrix. Standard moves
-lowest-direct dependency testing to those broader runs.
+lowest-direct dependency testing to those broader runs. Under both Lean and
+Standard, CodeQL and the marimo notebooks skip on pull requests and still run on
+default-branch pushes, their schedule and manual dispatch.
+
+`rulesets/main-branch-protection.json` requires only `ci / CI gate`, the one check
+that reports under every profile. The file changes nothing on GitHub by itself:
+re-apply it to the repository (see the guide) when updating from a release that
+required the five per-job `ci / ...` contexts, or a Lean repository's PRs wait on
+checks that never report.
 
 See the [CI profiles guide](https://github.com/Jebel-Quant/rhiza/blob/main/docs/guides/CI_PROFILES.md)
-for scope, migration, branch protection and unreleased-prototype limitations.
+for the per-workflow table, scope and migration.

@@ -109,5 +109,7 @@ What actually changed:
   the flag, go-core's hooks run `go vet ./...` in a directory with no `go.mod` and fail.
 
 The CI job keeps its id (`pre-commit`) and display name ("Pre-commit hooks"), because
-that name is a required status check in `.github/rulesets/main-branch-protection.json`.
-Renaming it would leave every PR waiting on a context that never reports.
+that name was a required status check in `.github/rulesets/main-branch-protection.json`.
+Renaming it would leave every PR waiting on a context that never reports. (Since #1744 the
+file requires only the aggregate `CI gate`, which rolls this job up; a live ruleset not yet
+re-applied from the file still names it.)

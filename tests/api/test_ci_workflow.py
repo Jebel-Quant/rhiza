@@ -206,8 +206,9 @@ def test_ci_cache_keys_match_audit_policy(root):
     assert uv_cache_step["with"]["key"] == "${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}"
 
     # The job id stays `pre-commit` and its display name stays "Pre-commit hooks": that
-    # name is a required status check in .github/rulesets/main-branch-protection.json,
-    # so renaming it would leave every PR waiting on a context that never reports.
+    # name was a required status check until #1744 reduced the ruleset file to `CI gate`,
+    # and a live ruleset not yet re-applied still names it -- renaming it would leave
+    # those PRs waiting on a context that never reports.
     # What the hook runner is called is a detail of the recipe; what the check is called
     # is a contract with branch protection.
     pre_commit_steps = workflow["jobs"]["pre-commit"]["steps"]

@@ -21,8 +21,9 @@ This directly improves two Scorecard checks that cannot be fixed by workflow fil
 - Pull request required, with **1 approving review**, **code-owner review** (see
   [`.github/CODEOWNERS`](../../.github/CODEOWNERS)), **last-push approval**, and stale-review dismissal on new
   pushes.
-- **Required status checks** — the always-on CI gates must pass before merge: `Pre-commit hooks`, `validation`,
-  `Check dependencies with deptry`, `docs-coverage`, `Security scanning`, `License compliance scan`.
+- **Required status check** — `CI gate`, the aggregate job of `rhiza_ci.yml`, must pass before merge. It needs
+  every other CI job and fails when any job the CI profile planned failed, was cancelled or was unexpectedly
+  skipped, so the pre-commit, deptry, docs-coverage, security, licence and test jobs all block a merge through it.
 - **No force-pushes** (`non_fast_forward`) and **no deletion** of the default branch.
 
 Repository **admins can bypass** (`bypass_actors` → `RepositoryRole` id 5, `bypass_mode: always`) so a solo
@@ -31,11 +32,22 @@ apply to administrators' is disabled`) and the main reason **Code-Review** stays
 Drop the `bypass_actors` entry for the strictest posture (admins included), at the cost of needing a second
 approver on every PR.
 
-The required status checks are deliberately limited to **single-instance jobs that run on every PR**. The
-matrix jobs (`test (3.x, <os>)`, `Type checking (Python 3.x)`) are intentionally **not** hard-required: their
-context names change whenever the Python/OS matrix changes, which would wedge PRs until the ruleset is edited.
-The conditional overlay workflows (book, docker, paper, marimo, devcontainer) are excluded for the same reason —
-they only run on relevant changes.
+The required status checks are deliberately limited to **one single-instance job that runs on every PR**. Until
+#1744 the file also named five per-job contexts (`Pre-commit hooks`, `Check dependencies with deptry`,
+`docs-coverage`, `Security scanning`, `License compliance scan`). The `lean` [CI profile](../guides/CI_PROFILES.md)
+runs those gates in one consolidated `quality` job, so those contexts never report on a lean PR and would wedge it;
+`CI gate` reports under every profile and already rolls them up. The matrix jobs (`test (3.x, <os>)`,
+`Type checking (Python 3.x)`) are **not** hard-required either: their context names change whenever the Python/OS
+matrix or the profile changes. The optional workflows (CodeQL, book, docker, paper, marimo, devcontainer) are
+excluded because they only run on relevant changes, and CodeQL and marimo skip on pull requests under the `lean`
+and `standard` profiles.
+
+**Migrating.** Editing the JSON changes nothing on GitHub. A repository whose live ruleset still lists the five
+per-job contexts keeps requiring them until it is re-applied with the `PUT` command below. That is harmless under
+`standard` and `comprehensive`, where those jobs still run, but blocks every PR under `lean`. Downstream projects
+receive the file as `bundles/github/.github/rulesets/main-branch-protection.json`, whose context is `ci / CI gate`
+because the `github-tests` stub's `ci` job prefixes every check it calls; they apply it to their own repository the
+same way.
 
 ## Apply it
 
@@ -57,7 +69,7 @@ gh api --method PUT repos/Jebel-Quant/rhiza/rulesets/<RULESET_ID> \
 
 ## Tuning required status checks
 
-The ruleset already requires the always-on, single-instance gates (see above). To adjust the list, edit the
+The ruleset already requires the always-on aggregate gate (see above). To adjust the list, edit the
 `required_status_checks` rule and re-apply with the `PUT` command above. List context names from a recent PR
 head (PRs exercise the full matrix, unlike `main`):
 

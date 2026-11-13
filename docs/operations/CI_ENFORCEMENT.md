@@ -20,7 +20,7 @@ pipeline behaviour is unchanged:
 | Dependency hygiene | `make deps` | Unused/missing dependency scan. |
 | Docstring coverage | `make docs-coverage` | interrogate at 100%. |
 | Security | `make security` | bandit over the folders in `BANDIT_FOLDERS`. |
-| CodeQL | `rhiza_codeql.yml` | Code scanning on PR and push. |
+| CodeQL | `rhiza_codeql.yml` | Code scanning on push, schedule and manual dispatch; on PRs only under the `comprehensive` profile (the default). |
 
 ## Conditional / opt-in gates
 
