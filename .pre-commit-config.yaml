@@ -31,7 +31,7 @@ repos:
         pass_filenames: false
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 'v0.17.0'
+    rev: 'v0.17.5'
     hooks:
       - id: ruff
         args: [ --fix, --exit-non-zero-on-fix, --unsafe-fixes ]
@@ -40,13 +40,13 @@ repos:
       - id: ruff-format
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.49.1
+    rev: v0.50.0
     hooks:
       - id: markdownlint
         args: ["--disable", "MD013"]
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.38.2
+    rev: 0.39.0
     hooks:
       - id: check-renovate
         args: [ "--verbose" ]
@@ -65,7 +65,7 @@ repos:
       - id: actionlint
 
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: "0.26"
+    rev: "v0.27"
     hooks:
       - id: validate-pyproject
 
@@ -90,12 +90,12 @@ repos:
         files: '\.sh$'
 
   - repo: https://github.com/betterleaks/betterleaks
-    rev: v1.9.0
+    rev: v1.10.1
     hooks:
       - id: betterleaks
 
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.13.1
+    rev: 0.13.8
     hooks:
       - id: uv-lock
 
@@ -120,7 +120,7 @@ repos:
         files: ^(utils|tests)/.*\.py$
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v1.3.1  # Use the latest release
+    rev: v1.3.2  # Use the latest release
     hooks:
       - id: check-rhiza-workflow-names
       - id: check-rhiza-config
