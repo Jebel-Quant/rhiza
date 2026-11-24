@@ -76,8 +76,10 @@ jobs:
 
       - name: Set registry
         id: registry
+        env:
+          DEVCONTAINER_REGISTRY: ${{ vars.DEVCONTAINER_REGISTRY }}
         run: |
-          REGISTRY="${{ vars.DEVCONTAINER_REGISTRY }}"
+          REGISTRY="$DEVCONTAINER_REGISTRY"
           if [ -z "$REGISTRY" ]; then
             REGISTRY="ghcr.io"
           fi
@@ -103,15 +105,20 @@ jobs:
       # repository owner to lowercase for Docker image naming, as devcontainers/ci does not safeguard
       - name: Get lowercase repository owner
         id: repo_owner
-        run: echo "owner_lc=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+        run: echo "owner_lc=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
       - name: Get Image Name
         if: steps.check.outputs.exists == 'true'
         id: image_name
+        env:
+          CUSTOM_IMAGE_NAME: ${{ vars.DEVCONTAINER_IMAGE_NAME }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          REGISTRY: ${{ steps.registry.outputs.registry }}
+          OWNER_LC: ${{ steps.repo_owner.outputs.owner_lc }}
         run: |
           # Check if custom name is provided, otherwise use default
-          if [ -z "${{ vars.DEVCONTAINER_IMAGE_NAME }}" ]; then
-            REPO_NAME_LC=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          if [ -z "$CUSTOM_IMAGE_NAME" ]; then
+            REPO_NAME_LC=$(echo "$REPO_NAME" | tr '[:upper:]' '[:lower:]')
             # Sanitize repo name: replace invalid characters with hyphens
             # Docker image names must match [a-z0-9]+([._-][a-z0-9]+)*
             # Replace leading dots and multiple consecutive separators
@@ -119,7 +126,7 @@ jobs:
             IMAGE_NAME="$REPO_NAME_SANITIZED/devcontainer"
             echo "Using default image name component: $IMAGE_NAME"
           else
-            IMAGE_NAME="${{ vars.DEVCONTAINER_IMAGE_NAME }}"
+            IMAGE_NAME="$CUSTOM_IMAGE_NAME"
             echo "Using custom image name component: $IMAGE_NAME"
           fi
 
@@ -130,7 +137,7 @@ jobs:
             exit 1
           fi
 
-          IMAGE_NAME="${{ steps.registry.outputs.registry }}/${{ steps.repo_owner.outputs.owner_lc }}/$IMAGE_NAME"
+          IMAGE_NAME="$REGISTRY/$OWNER_LC/$IMAGE_NAME"
           echo "✅ Final image name: $IMAGE_NAME"
           echo "image_name=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
 
@@ -138,7 +145,7 @@ jobs:
         if: steps.check.outputs.exists == 'true'
         id: sanitized_tag
         run: |
-          SANITIZED_TAG=$(echo "${{ github.ref_name }}-${{ github.sha }}" | tr '/' '-')
+          SANITIZED_TAG=$(echo "$GITHUB_REF_NAME-$GITHUB_SHA" | tr '/' '-')
           echo "sanitized_tag=$SANITIZED_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Build Devcontainer Image
