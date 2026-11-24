@@ -33,6 +33,12 @@ _ROOT = Path(__file__).resolve().parents[2]
 # same check runs under a bare name here and a `ci / `-prefixed name downstream.
 _RULESET = Path("rulesets") / "main-branch-protection.json"
 
+# The second one: consumers get Dependabot PRs for pyproject.toml / uv.lock only, because
+# every other pin they carry is template-owned and arrives through sync. The mother repo
+# is where those pins are bumped, so its copy keeps the github-actions ecosystem on top.
+# TestDependabotDivergence holds the shared part identical.
+_DEPENDABOT = Path("dependabot.yml")
+
 # The stub that produces the prefix downstream. Its job id is the prefix.
 _CI_STUB = _ROOT / "bundles" / "github-tests" / ".github" / "workflows" / "rhiza_ci.yml"
 
@@ -56,6 +62,8 @@ def _github_dogfood_pairs() -> list[tuple[str, Path, Path]]:
             continue  # live mother-repo workflows differ from bundle stubs by design
         if relative == _RULESET:
             continue  # required-check names differ by design — see TestRequiredStatusCheckContexts
+        if relative == _DEPENDABOT:
+            continue  # mother repo adds github-actions by design — see TestDependabotDivergence
         root_file = _ROOT / ".github" / relative
         if not root_file.exists():
             continue  # bundle-only file (e.g. CONFIG.md) — not dogfooded here
@@ -101,6 +109,30 @@ class TestBundleGithubSync:
         assert root_file.read_bytes() == bundle_file.read_bytes(), (
             f"{label}: dogfooded copy differs from bundle source "
             f"{bundle_file.relative_to(_ROOT)} — edit both sides to keep them in sync"
+        )
+
+
+class TestDependabotDivergence:
+    """The mother repo's dependabot.yml is the consumer one plus the github-actions ecosystem."""
+
+    _BUNDLE = _ROOT / "bundles" / "github" / ".github" / "dependabot.yml"
+    _ROOT_COPY = _ROOT / ".github" / "dependabot.yml"
+    _MARKER = "  # GitHub Actions\n"
+
+    def test_root_keeps_github_actions(self) -> None:
+        """Rhiza bumps the workflow pins its consumers receive, so it must keep that ecosystem."""
+        assert 'package-ecosystem: "github-actions"' in self._ROOT_COPY.read_text(encoding="utf-8")
+
+    def test_shared_part_matches_bundle(self) -> None:
+        """Everything from ``updates:`` up to the github-actions block must match the bundle byte for byte."""
+        bundle = self._BUNDLE.read_text(encoding="utf-8")
+        root = self._ROOT_COPY.read_text(encoding="utf-8")
+        assert self._MARKER in root, "root dependabot.yml lost its '# GitHub Actions' block marker"
+        shared_root = root.split(self._MARKER, 1)[0].rstrip()
+        shared_root = shared_root[shared_root.index("updates:") :]
+        shared_bundle = bundle[bundle.index("updates:") :].rstrip()
+        assert shared_root == shared_bundle, (
+            "the uv block in .github/dependabot.yml drifted from bundles/github/.github/dependabot.yml"
         )
 
 
