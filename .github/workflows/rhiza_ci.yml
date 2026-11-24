@@ -58,6 +58,19 @@ on:
         description: Run the complete compatibility matrix and dependency floors
         type: boolean
         default: false
+      # Runner selection (#1764). Each value is passed through to `runs-on` after the
+      # planner validates it: a bare label, or JSON for a label, a list of labels, or a
+      # {"group": ..., "labels": ...} object. Empty keeps `ubuntu-latest`. Selection is
+      # independent of the CI profile and the compatibility matrix, and any routing by
+      # event is the caller's: compute the value in its `with:` block.
+      test-runner:
+        description: Runner for the Linux test matrix entries and lowest-deps (label or JSON)
+        type: string
+        default: ""
+      quality-runner:
+        description: Runner for the quality-check jobs (label or JSON)
+        type: string
+        default: ""
     secrets:
       RHIZA_SETUP_CREDENTIALS:
         required: false
@@ -87,6 +100,8 @@ jobs:
       run_lowest: ${{ steps.plan.outputs.run_lowest }}
       consolidated: ${{ steps.plan.outputs.consolidated }}
       required_jobs: ${{ steps.plan.outputs.required_jobs }}
+      test_runner: ${{ steps.plan.outputs.test_runner }}
+      quality_runner: ${{ steps.plan.outputs.quality_runner }}
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
@@ -199,6 +214,8 @@ jobs:
           VERSIONS: ${{ steps.versions-output.outputs.list }}
           PLATFORMS: ${{ steps.os.outputs.list }}
           FULL_VALIDATION: ${{ inputs.full-validation || false }}
+          TEST_RUNNER: ${{ inputs.test-runner || '' }}
+          QUALITY_RUNNER: ${{ inputs.quality-runner || '' }}
         shell: python
         run: |
           import json
@@ -265,6 +282,39 @@ jobs:
                       for p in changed
                   )
 
+          def runner(name):
+              # A bare label, or JSON in any shape `runs-on` accepts; empty keeps the default.
+              raw = os.environ.get(name, "").strip()
+              if not raw:
+                  return "ubuntu-latest"
+              try:
+                  value = json.loads(raw) if raw[0] in "[{\"" else raw
+              except json.JSONDecodeError as error:
+                  raise SystemExit(f"{name} is not valid JSON: {error}") from None
+
+              def label(item):
+                  return isinstance(item, str) and bool(item.strip()) and "\n" not in item
+
+              def labels(item):
+                  return label(item) or (
+                      isinstance(item, list) and bool(item) and all(label(i) for i in item)
+                  )
+
+              group = isinstance(value, dict) and bool(value) and set(value) <= {"group", "labels"}
+              if group and "group" in value and not label(value["group"]):
+                  group = False
+              if group and "labels" in value and not labels(value["labels"]):
+                  group = False
+              if not (labels(value) or group):
+                  raise SystemExit(
+                      f"{name} must be a runner label, a non-empty list of labels, "
+                      'or an object with "group" and/or "labels"'
+                  )
+              return value
+
+          test_runner = runner("TEST_RUNNER")
+          quality_runner = runner("QUALITY_RUNNER")
+
           consolidated = profile == "lean"
           run_tests = not docs_only
           run_lowest = run_tests and (full or profile == "comprehensive")
@@ -287,6 +337,9 @@ jobs:
               "run_lowest": run_lowest,
               "consolidated": consolidated,
               "required_jobs": required,
+              # Dumped here so a bare label still reaches `fromJSON` as a JSON string.
+              "test_runner": json.dumps(test_runner),
+              "quality_runner": json.dumps(quality_runner),
           }
           with Path(os.environ["GITHUB_OUTPUT"]).open("a") as output:
               for key, value in plan.items():
@@ -301,7 +354,9 @@ jobs:
     # CI budget: ≤20 min (test matrix execution). Last measured: 2026-05-28.
     timeout-minutes: 20
     needs: generate-matrix
-    runs-on: ${{ matrix.os }}
+    # Only the Linux entries move: macOS stays hosted, and `matrix.os` stays the platform
+    # name the coverage-upload and clean-tree steps below select on.
+    runs-on: ${{ matrix.os == 'ubuntu-latest' && fromJSON(needs.generate-matrix.outputs.test_runner) || matrix.os }}
     strategy:
       matrix:
         python-version: ${{ fromJson(needs.generate-matrix.outputs.test_matrix) }}
@@ -408,7 +463,7 @@ jobs:
     name: Lowest-direct dependency compatibility
     # CI budget: ≤20 min (dependency compatibility test run). Last measured: 2026-05-28.
     timeout-minutes: 20
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.generate-matrix.outputs.test_runner) }}
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -485,7 +540,7 @@ jobs:
     # CI budget: ≤5 min (lint/typecheck quality gate). Last measured: 2026-05-28.
     timeout-minutes: 5
     needs: generate-matrix
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.generate-matrix.outputs.quality_runner) }}
     strategy:
       matrix:
         python-version: ${{ fromJson(needs.generate-matrix.outputs.matrix) }}
@@ -552,7 +607,7 @@ jobs:
     name: Check dependencies with deptry
     # CI budget: ≤5 min (lint/dependency hygiene check). Last measured: 2026-05-28.
     timeout-minutes: 5
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.generate-matrix.outputs.quality_runner) }}
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -617,7 +672,7 @@ jobs:
     # pytest came from `uv run --with` anyway. One resolve either way.
     # CI budget: ≤5 min (small, dependency-light suite). Last measured: 2026-08-15.
     timeout-minutes: 5
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.generate-matrix.outputs.quality_runner) }}
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -684,7 +739,7 @@ jobs:
     name: Pre-commit hooks
     # CI budget: ≤5 min (lint/format hooks). Last measured: 2026-05-28.
     timeout-minutes: 5
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.generate-matrix.outputs.quality_runner) }}
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -728,7 +783,7 @@ jobs:
       actions: read
     # CI budget: ≤10 min (docs quality check). Last measured: 2026-05-28.
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.generate-matrix.outputs.quality_runner) }}
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
@@ -788,7 +843,7 @@ jobs:
     name: Security scanning
     # CI budget: ≤10 min (security scanning and suppression audit). Last measured: 2026-05-28.
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.generate-matrix.outputs.quality_runner) }}
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -848,7 +903,7 @@ jobs:
     # Builds the sdist and wheel, then rebuilds a wheel from the sdist; both are a backend
     # resolve plus one build, so the budget matches the other single-gate jobs.
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.generate-matrix.outputs.quality_runner) }}
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -915,7 +970,7 @@ jobs:
     name: License compliance scan
     # CI budget: ≤10 min (license and artifact generation). Last measured: 2026-05-28.
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.generate-matrix.outputs.quality_runner) }}
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -986,7 +1041,7 @@ jobs:
     timeout-minutes: 30
     needs: generate-matrix
     if: needs.generate-matrix.outputs.consolidated == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.generate-matrix.outputs.quality_runner) }}
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0

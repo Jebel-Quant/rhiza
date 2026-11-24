@@ -167,6 +167,10 @@ workflows. The presets make no fixed cost or savings guarantee. A weekly full
 matrix may still consume substantial minutes, and the book still builds on every
 branch push.
 
+Profiles and runners are independent. The `test-runner` and `quality-runner` inputs
+decide where jobs run, never which jobs or Python versions; see
+[Choosing CI Runners](CUSTOMIZATION.md#choosing-ci-runners).
+
 The profiles do not change documentation publishing, benchmarks, release
 automation or GitLab pipelines. Those keep the bundle selection and repository
 variables listed in the table above; leaving a bundle out of `.rhiza/template.yml`

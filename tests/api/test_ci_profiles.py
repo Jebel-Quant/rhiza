@@ -40,7 +40,16 @@ def consumer(tmp_path):
     return tmp_path
 
 
-def _plan(consumer, profile=None, event_name="pull_request", event=None, full=False, versions=None, platforms=None):
+def _plan(
+    consumer,
+    profile=None,
+    event_name="pull_request",
+    event=None,
+    full=False,
+    versions=None,
+    platforms=None,
+    runners=None,
+):
     """Execute the actual workflow Python step, returning its machine-readable outputs."""
     if profile is not None:
         with (consumer / "pyproject.toml").open("a") as stream:
@@ -61,6 +70,9 @@ def _plan(consumer, profile=None, event_name="pull_request", event=None, full=Fa
             "FULL_VALIDATION": str(full).lower(),
             "VERSIONS": json.dumps(_VERSIONS if versions is None else versions),
             "PLATFORMS": json.dumps(_PLATFORMS if platforms is None else platforms),
+            "TEST_RUNNER": "",
+            "QUALITY_RUNNER": "",
+            **(runners or {}),
         },
         capture_output=True,
         text=True,
@@ -311,3 +323,114 @@ def test_gate_rejects_empty_plan(consumer):
     assert result.returncode == 0, result.stderr
     plan["required_jobs"] = "[]"
     assert _gate(plan, {"generate-matrix": "success"}).returncode != 0
+
+
+# Runner selection (#1764): the caller's value reaches `runs-on` unchanged, or planning fails.
+_QUALITY_JOBS = _QUALITY | {"typecheck", "quality"}
+_TEST_JOBS = {"lowest-deps"}
+_HOSTED_JOBS = {"generate-matrix", "ci-gate"}
+
+
+def test_runner_inputs_are_declared_and_reach_the_planner_through_env():
+    """Both inputs are optional strings, and the planner reads them only through its environment."""
+    inputs = _WORKFLOW.get("on", _WORKFLOW.get(True))["workflow_call"]["inputs"]
+    for name, env in [("test-runner", "TEST_RUNNER"), ("quality-runner", "QUALITY_RUNNER")]:
+        assert inputs[name] == {**inputs[name], "type": "string", "default": ""}
+        assert _PLAN["env"][env] == f"${{{{ inputs.{name} || '' }}}}"
+        assert f"inputs.{name}" not in _PLAN["run"]
+
+
+def test_every_job_runs_on_the_planned_runner_or_is_deliberately_hosted():
+    """A new job cannot hard-code `ubuntu-latest` and silently escape the caller's selection."""
+    planned = "${{ fromJSON(needs.generate-matrix.outputs.%s) }}"
+    assert set(_JOBS) == _QUALITY_JOBS | _TEST_JOBS | _HOSTED_JOBS | {"test"}
+    for name in _QUALITY_JOBS:
+        assert _JOBS[name]["runs-on"] == planned % "quality_runner", name
+    for name in _TEST_JOBS:
+        assert _JOBS[name]["runs-on"] == planned % "test_runner", name
+    for name in _HOSTED_JOBS:
+        assert _JOBS[name]["runs-on"] == "ubuntu-latest", name
+    outputs = _JOBS["generate-matrix"]["outputs"]
+    assert outputs["test_runner"] == "${{ steps.plan.outputs.test_runner }}"
+    assert outputs["quality_runner"] == "${{ steps.plan.outputs.quality_runner }}"
+
+
+def test_only_linux_test_entries_move_and_platform_selectors_survive():
+    """`matrix.os` stays the platform name, so coverage upload still selects one Linux job."""
+    test = _JOBS["test"]
+    assert test["runs-on"] == (
+        "${{ matrix.os == 'ubuntu-latest' && fromJSON(needs.generate-matrix.outputs.test_runner) || matrix.os }}"
+    )
+    selectors = [step.get("if", "") for step in test["steps"]]
+    assert sum("matrix.os == 'ubuntu-latest'" in condition for condition in selectors) >= 2
+
+
+def test_runners_default_to_hosted_ubuntu(consumer):
+    """No selection keeps today's runner for every routed job."""
+    result, outputs = _plan(consumer)
+    assert result.returncode == 0, result.stderr
+    assert json.loads(outputs["test_runner"]) == "ubuntu-latest"
+    assert json.loads(outputs["quality_runner"]) == "ubuntu-latest"
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("private-linux", "private-linux"),
+        ("  private-linux  ", "private-linux"),
+        ('"private-linux"', "private-linux"),
+        ('["private-linux", "ci-run-123-1"]', ["private-linux", "ci-run-123-1"]),
+        ('{"group": "private"}', {"group": "private"}),
+        ('{"group": "private", "labels": ["linux", "x64"]}', {"group": "private", "labels": ["linux", "x64"]}),
+        ('{"labels": "linux"}', {"labels": "linux"}),
+    ],
+)
+@pytest.mark.parametrize("variable", ["TEST_RUNNER", "QUALITY_RUNNER"])
+def test_valid_runner_selections_pass_through(consumer, variable, raw, expected):
+    """Every `runs-on` shape survives planning unchanged, and the other selection keeps its default."""
+    result, outputs = _plan(consumer, runners={variable: raw})
+    assert result.returncode == 0, result.stderr
+    key, other = ("test_runner", "quality_runner") if variable == "TEST_RUNNER" else ("quality_runner", "test_runner")
+    assert json.loads(outputs[key]) == expected
+    assert json.loads(outputs[other]) == "ubuntu-latest"
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "[]",
+        '[""]',
+        '["linux", 3]',
+        '""',
+        "{}",
+        '{"group": ""}',
+        '{"labels": []}',
+        '{"group": "private", "os": "linux"}',
+        '["unterminated"',
+        '"multi\\nline"',
+    ],
+)
+@pytest.mark.parametrize("variable", ["TEST_RUNNER", "QUALITY_RUNNER"])
+def test_invalid_runner_selections_fail_planning(consumer, variable, raw):
+    """A malformed selection fails in the planner rather than queueing a job that never starts."""
+    result, outputs = _plan(consumer, runners={variable: raw})
+    assert result.returncode != 0
+    assert variable in result.stderr
+    assert not outputs
+
+
+@pytest.mark.parametrize("profile", ["lean", "standard", "comprehensive"])
+@pytest.mark.parametrize("full", [False, True])
+def test_runner_selection_never_changes_the_plan(consumer, profile, full):
+    """Choosing a runner preserves the profile's Python versions, platforms and required jobs."""
+    _, default = _plan(consumer, profile, event_name="workflow_dispatch", full=full)
+    _, routed = _plan(
+        consumer,
+        event_name="workflow_dispatch",
+        full=full,
+        runners={"TEST_RUNNER": '["private-linux"]', "QUALITY_RUNNER": '{"group": "private"}'},
+    )
+    ignored = {"test_runner", "quality_runner"}
+    assert {k: v for k, v in routed.items() if k not in ignored} == {
+        k: v for k, v in default.items() if k not in ignored
+    }
