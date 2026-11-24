@@ -254,14 +254,19 @@ release notes.
 
 ### CodeArtifact follow-up
 
-No managed CodeArtifact publisher ships with this contract. That follow-up requires
-pre-write ownership collision protection in
-[rhiza-claude#267](https://github.com/Jebel-Quant/rhiza-claude/issues/267)
-and real AWS OIDC/upload validation before adoption. The removed provider and its tests
+No managed CodeArtifact publisher ships with this contract. A managed publisher would
+be a bundle owning an action path that consumers already own, so adopting one needs the
+pre-write ownership collision protection from
+[rhiza-claude#267](https://github.com/Jebel-Quant/rhiza-claude/issues/267). That issue is
+closed and the protection shipped in rhiza-claude v1.0.0: confirm the plugin in use is at
+least that release before syncing such a bundle. Real AWS OIDC/upload validation is
+still required before adoption. The removed provider and its tests
 remain recoverable from [PR #1694](https://github.com/Jebel-Quant/rhiza/pull/1694)'s
 [earlier commit](https://github.com/Jebel-Quant/rhiza/commit/52580cd1908aac769310421e08b6fc1105b86e98).
-Private dependency consumption uses the separate setup contract below; remaining validation
-is tracked in [#1732](https://github.com/Jebel-Quant/rhiza/issues/1732).
+Private dependency consumption uses the separate setup contract below. The publisher, the
+OIDC variants and the AWS validation are tracked in
+[#1745](https://github.com/Jebel-Quant/rhiza/issues/1745), which superseded the closed
+[#1732](https://github.com/Jebel-Quant/rhiza/issues/1732).
 
 ### Completion and platform scope
 
@@ -351,7 +356,7 @@ by hand. A consumer-owned workflow copy also requires manual review and applicat
 of upstream fixes. Adding only a caller grant to an otherwise unchanged upstream
 workflow does not enable OIDC. A maintained opt-in overlay or reusable OIDC variant
 could remove this copying and upgrade burden; that remains follow-up work under
-[#1732](https://github.com/Jebel-Quant/rhiza/issues/1732).
+[#1745](https://github.com/Jebel-Quant/rhiza/issues/1745).
 
 #### CodeArtifact example
 
@@ -400,7 +405,7 @@ and [repository permissions](https://docs.aws.amazon.com/codeartifact/latest/ug/
 | Weekly compatibility / Semgrep | Fresh dependency resolution / task invocation |
 | Release build | Package build and frozen SBOM sync in the same job |
 | CI pre-commit | No hook: installs public tooling only |
-| Docker / devcontainer | Generic setup unsupported inside isolated builds; deferred under [#1732](https://github.com/Jebel-Quant/rhiza/issues/1732) |
+| Docker / devcontainer | Generic setup unsupported inside isolated builds; deferred under [#1745](https://github.com/Jebel-Quant/rhiza/issues/1745) |
 
 Runner `GITHUB_ENV` does not enter container builds. The existing Docker GitHub-token
 secret path is not CodeArtifact forwarding; private-feed support needs separate BuildKit
@@ -409,10 +414,12 @@ Do not pass feed credentials through build arguments or bake them into image lay
 
 The loopback authenticated-index test verifies setup exports, rejected unauthenticated
 access, frozen private dependency installation and import without changing the lockfile.
-It does not prove AWS OIDC or reusable-workflow execution. Keep
-[#1732](https://github.com/Jebel-Quant/rhiza/issues/1732) open for the trusted AWS run
+It does not prove AWS OIDC or reusable-workflow execution. The trusted AWS run
 (role assumption, fresh token, locked install/import, credential-free logs/artifacts)
-and container forwarding work. This PR is a partial delivery of that issue.
+and the container forwarding work are still outstanding, tracked in
+[#1745](https://github.com/Jebel-Quant/rhiza/issues/1745). The setup contract
+delivered part of the now-closed
+[#1732](https://github.com/Jebel-Quant/rhiza/issues/1732), and #1745 tracks the rest.
 
 **Book migration:** rename `.github/actions/rhiza-book-setup` to
 `.github/actions/rhiza-setup`, rename its `token` input to `credentials`, replace
