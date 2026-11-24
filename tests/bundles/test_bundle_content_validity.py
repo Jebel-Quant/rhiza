@@ -186,16 +186,30 @@ class TestRenovateBundleContent:
         assert isinstance(renovate_json["extends"], list), "'extends' must be a list"
         assert len(renovate_json["extends"]) > 0, "'extends' list is empty"
 
-    def test_renovate_json_has_enabled_managers(self, renovate_json: dict) -> None:
-        """renovate.json must declare enabledManagers covering all required dependency surfaces."""
+    def test_renovate_json_scopes_updates_to_pyproject(self, renovate_json: dict) -> None:
+        """Consumers' Renovate must update pyproject.toml dependencies and nothing else.
+
+        Every other pinned surface a consumer has (workflows, pre-commit hooks, the
+        devcontainer, Dockerfiles, GitLab CI) is template-owned. A consumer-side bump edits
+        a file the next sync overwrites, and check-managed-files rejects it, so those pins
+        are bumped here in rhiza and travel through sync instead.
+        """
         assert "enabledManagers" in renovate_json, (
             "renovate.json should declare 'enabledManagers' to scope what Renovate updates"
         )
         enabled = renovate_json["enabledManagers"]
         assert isinstance(enabled, list), "'enabledManagers' must be a list"
-        required = {"pep621", "github-actions", "gitlabci"}
-        missing = required - set(enabled)
-        assert not missing, f"renovate.json 'enabledManagers' is missing required managers: {sorted(missing)}"
+        assert set(enabled) == {"pep621", "custom.regex"}, (
+            f"consumer Renovate must only manage pyproject.toml (pep621 + the pytest-rhiza pin), got {sorted(enabled)}"
+        )
+        assert ":enablePreCommit" not in renovate_json.get("extends", []), (
+            ".pre-commit-config.yaml is template-owned; consumers must not bump its hooks"
+        )
+        for manager in renovate_json.get("customManagers", []):
+            patterns = [p.strip("/") for p in manager["managerFilePatterns"]]
+            assert all(re.search(p, "pyproject.toml") for p in patterns), (
+                f"custom manager {manager.get('depNameTemplate')} targets files other than pyproject.toml: {patterns}"
+            )
 
     def test_pytest_rhiza_custom_manager_finds_this_repos_pin(self, renovate_json: dict, root: Path) -> None:
         """The custom manager for the pytest-rhiza pin must actually match where the pin lives.
@@ -524,3 +538,20 @@ class TestDevcontainerBundleContent:
             pytest.skip("github-devcontainer overlay not present")
         content = wf.read_text(encoding="utf-8")
         assert ".devcontainer/**" in content, "devcontainer CI overlay should trigger on .devcontainer/** path changes"
+
+
+class TestDependabotBundleContent:
+    """The github bundle's dependabot.yml must only update pyproject.toml dependencies."""
+
+    def test_only_the_uv_ecosystem_is_configured(self, root: Path) -> None:
+        """Consumers get Dependabot PRs for pyproject.toml / uv.lock and nothing else.
+
+        The ``github-actions`` ecosystem would bump the template-owned ``rhiza_*.yml``
+        workflows in each consumer, which the next sync overwrites and check-managed-files
+        rejects; those pins are bumped here and travel through sync.
+        """
+        config = root / "bundles" / "github" / ".github" / "dependabot.yml"
+        ecosystems = re.findall(
+            r"^\s*-\s*package-ecosystem:\s*[\"']?([\w-]+)", config.read_text(encoding="utf-8"), flags=re.M
+        )
+        assert ecosystems == ["uv"], f"consumer dependabot.yml must configure only 'uv', got {ecosystems}"

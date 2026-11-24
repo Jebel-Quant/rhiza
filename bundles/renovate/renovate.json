@@ -1,7 +1,7 @@
 {
+  "description": "Consumer repos get update PRs for the Python dependencies in pyproject.toml / uv.lock only. Workflows, pre-commit hooks, the devcontainer, Dockerfiles and GitLab CI are template-owned: their pins are bumped here in rhiza and arrive through rhiza sync. A consumer-side bump edits a file the next sync overwrites, and the check-managed-files hook rejects it.",
   "extends": [
     "config:recommended",
-    ":enablePreCommit",
     ":automergeMinor",
     ":dependencyDashboard",
     ":maintainLockFilesWeekly",
@@ -11,11 +11,6 @@
   "rebaseWhen": "behind-base-branch",
   "enabledManagers": [
     "pep621",
-    "pre-commit",
-    "github-actions",
-    "gitlabci",
-    "devcontainer",
-    "dockerfile",
     "custom.regex"
   ],
   "timezone": "Asia/Dubai",
