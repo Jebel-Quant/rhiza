@@ -30,6 +30,16 @@
         "python"
       ],
       "enabled": false
+    },
+    {
+      "description": "The `python` base image in `bundles/docker/docker/Dockerfile` is `python:${PYTHON_VERSION}-slim`, and `ARG PYTHON_VERSION=3.12` is only a fallback. Every real build passes `--build-arg PYTHON_VERSION=$(cat .python-version)`, so `.python-version` is the single source of truth, as the Dockerfile's own header says. Renovate reads the fallback as the image tag and proposes bumping it (3.12 -> 3.15), which would make the fallback disagree with `.python-version` here and in python-core while changing nothing a build uses. Moving Python is a `.python-version` decision, not an image bump. Only the `python` image is disabled: the uv builder image's `-python3.12-` part is a tag suffix Renovate keeps as-is, so uv updates still arrive.",
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "matchPackageNames": [
+        "python"
+      ],
+      "enabled": false
     }
   ],
   "customManagers": [
