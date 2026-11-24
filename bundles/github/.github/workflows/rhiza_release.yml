@@ -493,7 +493,9 @@ jobs:
         # otherwise ship releases without any signature asset, which fails
         # OpenSSF Scorecard's Signed-Releases check.
         if: hashFiles('pyproject.toml') != '' && github.event.repository.private == false
-        run: cp "${{ steps.attest-sbom.outputs.bundle-path }}" sbom.cdx.json.sigstore.json
+        env:
+          BUNDLE_PATH: ${{ steps.attest-sbom.outputs.bundle-path }}
+        run: cp "$BUNDLE_PATH" sbom.cdx.json.sigstore.json
 
       - name: Upload SBOM artifacts
         if: hashFiles('pyproject.toml') != ''
@@ -517,7 +519,9 @@ jobs:
         # signature asset (*.intoto.jsonl) so consumers — and OpenSSF
         # Scorecard's Signed-Releases check — can verify the artifacts.
         if: steps.buildable.outputs.buildable == 'true' && github.event.repository.private == false
-        run: cp "${{ steps.provenance.outputs.bundle-path }}" dist/provenance.intoto.jsonl
+        env:
+          BUNDLE_PATH: ${{ steps.provenance.outputs.bundle-path }}
+        run: cp "$BUNDLE_PATH" dist/provenance.intoto.jsonl
 
       - name: Upload dist artifact
         if: steps.buildable.outputs.buildable == 'true'
@@ -808,8 +812,10 @@ jobs:
       - name: Set registry
         if: steps.check_publish.outputs.should_publish == 'true'
         id: registry
+        env:
+          DEVCONTAINER_REGISTRY: ${{ vars.DEVCONTAINER_REGISTRY }}
         run: |
-          REGISTRY="${{ vars.DEVCONTAINER_REGISTRY }}"
+          REGISTRY="$DEVCONTAINER_REGISTRY"
           if [ -z "$REGISTRY" ]; then
             REGISTRY="ghcr.io"
           fi
@@ -826,15 +832,20 @@ jobs:
       - name: Get lowercase repository owner
         if: steps.check_publish.outputs.should_publish == 'true'
         id: repo_owner
-        run: echo "owner_lc=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+        run: echo "owner_lc=$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
       - name: Get Image Name
         if: steps.check_publish.outputs.should_publish == 'true'
         id: image_name
+        env:
+          CUSTOM_IMAGE_NAME: ${{ vars.DEVCONTAINER_IMAGE_NAME }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          REGISTRY: ${{ steps.registry.outputs.registry }}
+          OWNER_LC: ${{ steps.repo_owner.outputs.owner_lc }}
         run: |
           # Check if custom name is provided, otherwise use default
-          if [ -z "${{ vars.DEVCONTAINER_IMAGE_NAME }}" ]; then
-            REPO_NAME_LC=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          if [ -z "$CUSTOM_IMAGE_NAME" ]; then
+            REPO_NAME_LC=$(echo "$REPO_NAME" | tr '[:upper:]' '[:lower:]')
             # Sanitize repo name: replace invalid characters with hyphens
             # Docker image names must match [a-z0-9]+([._-][a-z0-9]+)*
             # Replace leading dots and multiple consecutive separators
@@ -842,7 +853,7 @@ jobs:
             IMAGE_NAME="$REPO_NAME_SANITIZED/devcontainer"
             echo "Using default image name component: $IMAGE_NAME"
           else
-            IMAGE_NAME="${{ vars.DEVCONTAINER_IMAGE_NAME }}"
+            IMAGE_NAME="$CUSTOM_IMAGE_NAME"
             echo "Using custom image name component: $IMAGE_NAME"
           fi
 
@@ -853,7 +864,7 @@ jobs:
             exit 1
           fi
 
-          IMAGE_NAME="${{ steps.registry.outputs.registry }}/${{ steps.repo_owner.outputs.owner_lc }}/$IMAGE_NAME"
+          IMAGE_NAME="$REGISTRY/$OWNER_LC/$IMAGE_NAME"
           echo "✅ Final image name: $IMAGE_NAME"
           echo "image_name=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
 

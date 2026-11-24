@@ -133,9 +133,16 @@ class TestReleaseWorkflowStructure:
         assert attest_step is not None, "Attest SBOM step must exist"
         assert attest_step.get("id") == "attest-sbom", "Attest SBOM step needs an id to reference its bundle"
 
-        commands = "\n".join(_step_commands(build_job))
-        assert "steps.attest-sbom.outputs.bundle-path" in commands
-        assert "sbom.cdx.json.sigstore.json" in commands
+        # The bundle path reaches the shell through `env:`, never by `${{ }}` expansion
+        # inside `run:` (zizmor/CodeFactor `template-injection`).
+        stage_step = next(
+            (s for s in steps if "sbom.cdx.json.sigstore.json" in (s.get("run") or "")),
+            None,
+        )
+        assert stage_step is not None, "a step must stage the SBOM attestation bundle"
+        assert "${{" not in stage_step["run"], "expressions belong in env:, not run:"
+        assert stage_step.get("env", {}).get("BUNDLE_PATH") == "${{ steps.attest-sbom.outputs.bundle-path }}"
+        assert '"$BUNDLE_PATH"' in stage_step["run"]
 
         upload_step = next((s for s in steps if s.get("name") == "Upload SBOM artifacts"), None)
         assert upload_step is not None, "Upload SBOM artifacts step must exist"
