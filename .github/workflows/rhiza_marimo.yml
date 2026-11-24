@@ -234,8 +234,9 @@ jobs:
         timeout-minutes: 10
         env:
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}
+          NOTEBOOK: ${{ matrix.notebook }}
         run: |
-          notebook="${{ matrix.notebook }}"
+          notebook="$NOTEBOOK"
           notebook_stem="$(basename "$notebook" .py)"
           artefact_folder="results/${notebook_stem}"
           mkdir -p "${artefact_folder}"

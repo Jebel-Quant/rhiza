@@ -30,7 +30,12 @@ permissions:
 jobs:
   book:
     uses: ./.github/workflows/rhiza_book.yml
-    secrets: inherit
+    # Forwarded by name, as the github-book stub does, rather than `secrets: inherit`.
+    secrets:
+      BOOK_SETUP_TOKEN: ${{ secrets.BOOK_SETUP_TOKEN }}
+      RHIZA_SETUP_CREDENTIALS: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
     permissions:
       contents: read
       pages: write
