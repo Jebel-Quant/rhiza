@@ -164,18 +164,34 @@ jobs:
     with:
       full-validation: ${{ inputs.full-validation || false }}
       # Same-repository PRs and pushes use an ephemeral private runner;
-      # fork PRs keep GitHub-hosted runners.
+      # fork PRs keep GitHub-hosted runners, for tests and quality checks alike.
       test-runner: >-
         ${{ (github.event_name != 'pull_request'
              || github.event.pull_request.head.repo.full_name == github.repository)
             && format('["private-linux","ci-run-{0}-{1}"]', github.run_id, github.run_attempt)
             || '' }}
-      quality-runner: '{"group": "private-linux"}'
+      quality-runner: >-
+        ${{ (github.event_name != 'pull_request'
+             || github.event.pull_request.head.repo.full_name == github.repository)
+            && format('["private-linux","ci-run-{0}-{1}"]', github.run_id, github.run_attempt)
+            || '' }}
     secrets:
       RHIZA_SETUP_CREDENTIALS: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
       GH_PAT: ${{ secrets.GH_PAT }}
       UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
 ```
+
+The condition is written out for each input because `with:` has no way to share a value
+between them. Apply it to every input you set: an input left unconditional sends fork PRs
+to your private runners, and every routed job, quality checks included, runs the PR's code.
+
+Each label list pairs a static label (`private-linux`) with one derived from
+`github.run_id` and `github.run_attempt`, so a re-run asks for fresh runners rather than
+matching ones left over from the previous attempt. Every routed job requests exactly those
+labels, so the runner provider must register a matching runner for each queued job: one
+per Linux test-matrix entry, one for `lowest-deps` when it runs, and one per quality job.
+Rhiza only passes the labels to `runs-on`. How runners are created and matched is up to the
+provider.
 
 Once excluded, the file no longer receives template updates, including the `@vX.Y.Z` pin,
 and the synced Renovate and Dependabot configs do not bump workflow refs either: they
@@ -188,9 +204,8 @@ Things to know before routing jobs to your own runners:
   from a fork runs its own code, and on `pull_request` events it can also edit the
   calling workflow. Keep fork PRs on hosted runners, require approval before fork
   workflows run, and restrict runner groups to the repositories that need them.
-- **One job per runner.** The test matrix starts one Linux job per Python version, all
-  asking for the same labels. With single-use ephemeral runners, the provider must
-  supply one per job. Jobs that find no matching runner wait in GitHub's normal queue.
+- **Jobs with no matching runner wait.** They stay in GitHub's normal queue until a
+  runner with matching labels appears, or until GitHub's queue timeout cancels them.
 - **What a routed job needs:** Linux, `bash`, `git`, `git-lfs` (checkout runs with
   `lfs: true`) and outbound network access. Everything else, including `uv` and Python,
   is installed by the job itself.
