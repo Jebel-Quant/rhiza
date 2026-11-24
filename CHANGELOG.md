@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.13.0] - 2026-11-24
+
+### New Features
+- *(release)* Retry conda recipe generation without republishing (#1746) (#1761)
+- *(ci)* Extend CI profiles to optional workflows and the branch-protection ruleset (#1744) (#1760)
+
+### Bug Fixes
+- *(ci)* Pass template expressions to run blocks via env (#1776)
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1762)
+- *(deps)* Combine Renovate pre-commit hook updates (#1772)
+- *(deps)* Lock file maintenance (#1774)
+
+### Maintenance
+- Chore(deps)(deps): bump the github-actions group with 7 updates (#1763)
+- Chore(deps)(deps): bump the github-actions group with 3 updates (#1773)
+- Chore(deps)(deps): bump the github-actions group with 8 updates (#1775)
+
 ## [1.12.0] - 2026-11-08
 
 ### New Features
