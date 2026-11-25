@@ -231,6 +231,10 @@ validated by `tests/bundles/test_gitlab_ci.py` without a GitLab host.
 - `rhiza_ci.yml` runs every gate, plus `dist-check` and `license`, and rolls them into one
   `CI gate` job — the only required check.
 - `rhiza_e2e.yml` is the only place the Rust and Go layers execute.
+- Python dependency advisories are audited **weekly**, not gated: `rhiza_weekly.yml`'s
+  `advisories` job (and GitLab's `weekly:advisories`) runs `pip-audit` over the committed
+  `uv.lock`. The Python `security` task stays bandit-only, so an advisory published today
+  never fails a pull request (`tests/api/test_weekly_advisories.py`).
 - `rhiza_release.yml`'s `Validate Tag` job refuses an existing release, a version not
   newer than every tag, and a tag on a commit no branch contains.
   `tests/api/test_release_tag_reachability.py` runs that guard's shell.

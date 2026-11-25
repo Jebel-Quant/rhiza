@@ -6,6 +6,7 @@
 # Purpose: Slower checks deferred to a weekly schedule:
 #
 #   weekly:semgrep    — Semgrep static analysis (numpy rules).
+#   weekly:advisories — Audits the committed uv.lock against the PyPI advisory database.
 #   weekly:link-check — Verifies hyperlinks in README.md are reachable.
 #                       Also runs on push/MR when README.md changes.
 #
@@ -28,6 +29,24 @@ weekly:semgrep:
   script:
     - export UV_EXTRA_INDEX_URL="${UV_EXTRA_INDEX_URL}"
     - uvx "$RHIZA_TASK" semgrep
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+
+# The GitLab half of rhiza_weekly.yml's `advisories` job (#1804): the Python layer's
+# `security` task is bandit only, and GitLab has no Dependabot alerts to fall back on, so
+# without this nothing audits a GitLab consumer's locked dependencies at all. Weekly, and
+# not allow_failure on a schedule, for the reasons that job's comment gives. The export
+# carries hashes, so `--disable-pip` resolves and installs nothing.
+weekly:advisories:
+  stage: test
+  needs: []
+  image: $UV_IMAGE
+  script:
+    - uv export --frozen --all-extras --all-groups --no-emit-project --format requirements-txt -o "${CI_PROJECT_DIR}/.advisories-requirements.txt"
+    - uvx pip-audit --disable-pip -r "${CI_PROJECT_DIR}/.advisories-requirements.txt"
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "web"
