@@ -82,7 +82,7 @@ def _plan(workflow, directory, *, mode="", buildable="true", private=False, acti
 
 @pytest.mark.parametrize(
     ("mode", "buildable", "private"),
-    itertools.product(("", "pypi", "custom", "none"), ("true", "false"), (True, False)),
+    list(itertools.product(("", "pypi", "custom", "none"), ("true", "false"), (True, False))),
 )
 def test_publisher_modes(workflow, tmp_path, mode, buildable, private):
     """Default/private/disabled decisions are explicit; custom cannot silently skip."""
@@ -293,7 +293,7 @@ def test_invalid_url_never_leaks(workflow, tmp_path, url):
 
 @pytest.mark.parametrize(
     ("enabled", "publish", "public", "result"),
-    itertools.product(("", "true", "false"), ("true", "false"), ("true", "false"), ("success", "failure")),
+    list(itertools.product(("", "true", "false"), ("true", "false"), ("true", "false"), ("success", "failure"))),
 )
 def test_conda_only_follows_public_pypi(workflow, tmp_path, enabled, publish, public, result):
     """Conda excludes custom publishers, legacy feeds, disabled and failed uploads."""
