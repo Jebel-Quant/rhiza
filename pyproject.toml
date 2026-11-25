@@ -240,7 +240,7 @@ mkdocs-extra-packages = ["mkdocstrings[python]"]
 # whole tree at default strictness and reported on code this repo does not gate.
 #
 # Keep `files` in step with [tool.rhiza-task].source-folder, and `strict`
-# in step with the `--strict` in python.mk's typecheck recipe. tests/ is deliberately
+# in step with the `mypy --strict` the pinned rhiza-task `typecheck` task runs. tests/ is deliberately
 # absent from both: ruff exempts test code from ANN (see ruff.toml's per-file-ignores),
 # so the annotations strict mode would demand are not there by design.
 strict = true
@@ -255,10 +255,11 @@ files = ["utils"]
 # A hook that is weaker than the gate it shadows is worse than no hook: it passes on
 # work the gate will reject.
 #
-# Keep these in step with the flags in python.mk's docs-coverage recipe
+# Keep these in step with the flags the pinned rhiza-task `docs-coverage` task passes
 # (`interrogate -vv --fail-under 100 --ignore-init-method --ignore-magic`). No `paths`
-# key: the hook is handed the files it matched, and the gate passes DOCSTRING_FOLDERS on
-# the command line, so neither reads a path from here.
+# key: the hook is handed the files it matched, and the task passes the folders on the
+# command line (`source-folder` from [tool.rhiza-task], plus `tests`), so neither reads a
+# path from here.
 fail-under = 100
 ignore-init-method = true
 ignore-magic = true
