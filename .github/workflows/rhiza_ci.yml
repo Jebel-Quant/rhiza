@@ -113,7 +113,14 @@ jobs:
           lfs: true
           fetch-depth: 0  # Compare complete PR diffs without an API file-count limit.
 
-      - name: Validate consumer dependency setup
+      # The consumer-setup pair below is defined once, here, and every other job reuses it as
+      # `*consumer_setup_guard` / `*consumer_setup_run` (#1806). The guard is a security check --
+      # it refuses fork pull requests and pull_request_target -- and it used to be pasted into
+      # eleven jobs, where the first edit to miss one would silently weaken that job alone.
+      # A composite action cannot carry it: in a reusable workflow `./.github/actions/...`
+      # resolves against the *caller's* checkout, which is exactly how rhiza-setup works.
+      - &consumer_setup_guard
+        name: Validate consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
         shell: bash
         env:
@@ -131,7 +138,8 @@ jobs:
             exit 1
           fi
 
-      - name: Run consumer dependency setup
+      - &consumer_setup_run
+        name: Run consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
         uses: ./.github/actions/rhiza-setup
         with:
@@ -389,30 +397,9 @@ jobs:
           version: "0.11.16"
           python-version: ${{ matrix.python-version }}
 
-      - name: Validate consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
-          CALLER_REPOSITORY: ${{ github.repository }}
-        run: |
-          if [ "$EVENT_NAME" = "pull_request_target" ] ||
-             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
-            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
-            exit 1
-          fi
-          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
-            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
-            exit 1
-          fi
+      - *consumer_setup_guard
 
-      - name: Run consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-setup
-        with:
-          purpose: ${{ github.job }}
-          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+      - *consumer_setup_run
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -484,30 +471,9 @@ jobs:
         with:
           version: "0.11.16"
 
-      - name: Validate consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
-          CALLER_REPOSITORY: ${{ github.repository }}
-        run: |
-          if [ "$EVENT_NAME" = "pull_request_target" ] ||
-             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
-            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
-            exit 1
-          fi
-          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
-            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
-            exit 1
-          fi
+      - *consumer_setup_guard
 
-      - name: Run consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-setup
-        with:
-          purpose: ${{ github.job }}
-          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+      - *consumer_setup_run
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -560,30 +526,9 @@ jobs:
           version: "0.11.16"
           python-version: ${{ matrix.python-version }}
 
-      - name: Validate consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
-          CALLER_REPOSITORY: ${{ github.repository }}
-        run: |
-          if [ "$EVENT_NAME" = "pull_request_target" ] ||
-             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
-            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
-            exit 1
-          fi
-          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
-            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
-            exit 1
-          fi
+      - *consumer_setup_guard
 
-      - name: Run consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-setup
-        with:
-          purpose: ${{ github.job }}
-          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+      - *consumer_setup_run
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -622,30 +567,9 @@ jobs:
         with:
           version: "0.11.16"
 
-      - name: Validate consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
-          CALLER_REPOSITORY: ${{ github.repository }}
-        run: |
-          if [ "$EVENT_NAME" = "pull_request_target" ] ||
-             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
-            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
-            exit 1
-          fi
-          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
-            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
-            exit 1
-          fi
+      - *consumer_setup_guard
 
-      - name: Run consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-setup
-        with:
-          purpose: ${{ github.job }}
-          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+      - *consumer_setup_run
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -695,30 +619,9 @@ jobs:
         with:
           version: "0.11.16"
 
-      - name: Validate consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
-          CALLER_REPOSITORY: ${{ github.repository }}
-        run: |
-          if [ "$EVENT_NAME" = "pull_request_target" ] ||
-             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
-            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
-            exit 1
-          fi
-          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
-            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
-            exit 1
-          fi
+      - *consumer_setup_guard
 
-      - name: Run consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-setup
-        with:
-          purpose: ${{ github.job }}
-          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+      - *consumer_setup_run
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -798,30 +701,9 @@ jobs:
         with:
           version: "0.11.16"
 
-      - name: Validate consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
-          CALLER_REPOSITORY: ${{ github.repository }}
-        run: |
-          if [ "$EVENT_NAME" = "pull_request_target" ] ||
-             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
-            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
-            exit 1
-          fi
-          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
-            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
-            exit 1
-          fi
+      - *consumer_setup_guard
 
-      - name: Run consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-setup
-        with:
-          purpose: ${{ github.job }}
-          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+      - *consumer_setup_run
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -858,30 +740,9 @@ jobs:
         with:
           version: "0.11.16"
 
-      - name: Validate consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
-          CALLER_REPOSITORY: ${{ github.repository }}
-        run: |
-          if [ "$EVENT_NAME" = "pull_request_target" ] ||
-             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
-            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
-            exit 1
-          fi
-          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
-            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
-            exit 1
-          fi
+      - *consumer_setup_guard
 
-      - name: Run consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-setup
-        with:
-          purpose: ${{ github.job }}
-          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+      - *consumer_setup_run
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -922,30 +783,9 @@ jobs:
         with:
           version: "0.11.16"
 
-      - name: Validate consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
-          CALLER_REPOSITORY: ${{ github.repository }}
-        run: |
-          if [ "$EVENT_NAME" = "pull_request_target" ] ||
-             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
-            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
-            exit 1
-          fi
-          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
-            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
-            exit 1
-          fi
+      - *consumer_setup_guard
 
-      - name: Run consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-setup
-        with:
-          purpose: ${{ github.job }}
-          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+      - *consumer_setup_run
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -985,30 +825,9 @@ jobs:
         with:
           version: "0.11.16"
 
-      - name: Validate consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
-          CALLER_REPOSITORY: ${{ github.repository }}
-        run: |
-          if [ "$EVENT_NAME" = "pull_request_target" ] ||
-             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
-            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
-            exit 1
-          fi
-          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
-            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
-            exit 1
-          fi
+      - *consumer_setup_guard
 
-      - name: Run consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-setup
-        with:
-          purpose: ${{ github.job }}
-          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+      - *consumer_setup_run
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -1061,30 +880,9 @@ jobs:
           version: "0.11.16"
           python-version: ${{ needs.generate-matrix.outputs.primary }}
 
-      - name: Validate consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        shell: bash
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
-          CALLER_REPOSITORY: ${{ github.repository }}
-        run: |
-          if [ "$EVENT_NAME" = "pull_request_target" ] ||
-             { [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPOSITORY" != "$CALLER_REPOSITORY" ]; }; then
-            echo "::error::Consumer setup is not allowed on fork pull requests or pull_request_target."
-            exit 1
-          fi
-          if [ ! -f .github/actions/rhiza-setup/action.yml ] && [ ! -f .github/actions/rhiza-setup/action.yaml ]; then
-            echo "::error::RHIZA_SETUP_ENABLED=true requires .github/actions/rhiza-setup/action.yml or action.yaml."
-            exit 1
-          fi
+      - *consumer_setup_guard
 
-      - name: Run consumer dependency setup
-        if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
-        uses: ./.github/actions/rhiza-setup
-        with:
-          purpose: ${{ github.job }}
-          credentials: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+      - *consumer_setup_run
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
