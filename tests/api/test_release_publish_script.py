@@ -25,7 +25,7 @@ _SPEC.loader.exec_module(publisher)
 
 @pytest.mark.parametrize(
     ("mode", "buildable", "private"),
-    itertools.product(("", "pypi", "custom", "none"), ("true", "false"), (True, False)),
+    list(itertools.product(("", "pypi", "custom", "none"), ("true", "false"), (True, False))),
 )
 def test_decisions(tmp_path, mode, buildable, private):
     """Exercise every publisher/private/buildable combination directly under coverage."""
