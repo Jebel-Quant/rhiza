@@ -14,7 +14,7 @@
 
 renovate:
   stage: .pre
-  image: renovate/renovate:latest
+  image: renovate/renovate:44.262.2@sha256:2d5cd4c778b9a2c36623302ceec231a813d8eed77cea19da13b73dd4e8e92e54
   variables:
     # GitLab platform configuration
     RENOVATE_PLATFORM: gitlab

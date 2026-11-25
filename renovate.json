@@ -17,6 +17,11 @@
     "dockerfile",
     "custom.regex"
   ],
+  "gitlabci": {
+    "managerFilePatterns": [
+      "/^bundles/[^/]+/\\.gitlab/.*\\.ya?ml$/"
+    ]
+  },
   "timezone": "Asia/Dubai",
   "schedule": [
     "before 3am"
