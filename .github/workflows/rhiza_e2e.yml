@@ -221,10 +221,11 @@ jobs:
           echo "python result: ${{ needs.python.result }}"
           echo "rust result:   ${{ needs.rust.result }}"
           echo "go result:     ${{ needs.go.result }}"
-          # Accept "success" or "cancelled" (transient runner cancellation).
-          # Reject "failure" (real failure) and "skipped" (job never ran).
+          # Only "success" passes. This gate is a required check (#1813), and a job that
+          # exceeds its timeout-minutes concludes "cancelled" -- accepting that would let
+          # a hung Rust or Go layer through. CI gate treats "cancelled" the same way.
           for result in "${{ needs.python.result }}" "${{ needs.rust.result }}" "${{ needs.go.result }}"; do
-            if [[ "$result" != "success" && "$result" != "cancelled" ]]; then
+            if [[ "$result" != "success" ]]; then
               echo "::error::a language layer did not succeed ($result); failing the E2E gate."
               exit 1
             fi

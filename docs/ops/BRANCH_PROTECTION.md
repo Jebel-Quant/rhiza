@@ -24,6 +24,11 @@ This directly improves two Scorecard checks that cannot be fixed by workflow fil
 - **Required status check** — `CI gate`, the aggregate job of `rhiza_ci.yml`, must pass before merge. It needs
   every other CI job and fails when any job the CI profile planned failed, was cancelled or was unexpectedly
   skipped, so the pre-commit, deptry, docs-coverage, security, licence and test jobs all block a merge through it.
+- **Required status check (this repository only)** — `E2E gate`, the aggregate job of `rhiza_e2e.yml`. That
+  workflow is the only place the Rust and Go layers execute, so without it a PR that breaks either layer for every
+  consumer merges past a green `CI gate` (#1813). It passes only when all three layer jobs succeeded; a job past its
+  `timeout-minutes` concludes `cancelled` and fails it. The bundle copy does not carry it: consumers have no e2e
+  workflow, and a required check that never reports wedges every PR.
 - **No force-pushes** (`non_fast_forward`) and **no deletion** of the default branch.
 
 Repository **admins can bypass** (`bypass_actors` → `RepositoryRole` id 5, `bypass_mode: always`) so a solo
@@ -32,7 +37,7 @@ apply to administrators' is disabled`) and the main reason **Code-Review** stays
 Drop the `bypass_actors` entry for the strictest posture (admins included), at the cost of needing a second
 approver on every PR.
 
-The required status checks are deliberately limited to **one single-instance job that runs on every PR**. Until
+The required status checks are deliberately limited to **single-instance jobs that run on every PR**. Until
 #1744 the file also named five per-job contexts (`Pre-commit hooks`, `Check dependencies with deptry`,
 `docs-coverage`, `Security scanning`, `License compliance scan`). The `lean` [CI profile](../guides/CI_PROFILES.md)
 runs those gates in one consolidated `quality` job, so those contexts never report on a lean PR and would wedge it;
