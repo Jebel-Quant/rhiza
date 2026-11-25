@@ -122,6 +122,94 @@ git rm .github/workflows/rhiza_codeql.yml
 git commit -m "Remove CodeQL workflow"
 ```
 
+## 🏃 Choosing CI Runners
+
+The reusable CI workflow runs on GitHub-hosted `ubuntu-latest` by default. Two inputs
+route its jobs elsewhere, for example to self-hosted or third-party runners:
+
+| input | jobs it routes |
+| --- | --- |
+| `test-runner` | the Linux entries of the test matrix, and `lowest-deps` |
+| `quality-runner` | `typecheck`, `deptry`, `rhiza-test`, `pre-commit`, `docs-coverage`, `security`, `dist-check`, `license`, and the lean profile's `quality` |
+
+`generate-matrix` and `CI gate` always stay on `ubuntu-latest`, so planning never waits
+for a private runner. macOS entries of the test matrix stay hosted too.
+
+Each input takes either a bare label (`private-linux`) or JSON in any shape that
+[`runs-on`](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idruns-on)
+accepts: a label, a list of labels, or a `{"group": ..., "labels": ...}` object. Empty
+means the default. The planner validates the value and fails with a clear error if it is
+malformed. Runner selection changes nothing else: the CI profile still decides which
+checks run and on which Python versions.
+
+### Passing the inputs
+
+The synced stub `.github/workflows/rhiza_ci.yml` is template-owned and passes no runner,
+so a repository that wants custom runners owns its caller instead. Exclude the stub in
+`.rhiza/template.yml`:
+
+```yaml
+exclude:
+  - .github/workflows/rhiza_ci.yml
+```
+
+then keep the stub's content and add a `with:` block to the `ci` job. The values may be
+computed from the workflow context, which is how routing by event is done:
+
+```yaml
+jobs:
+  ci:
+    if: github.event_name != 'push' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    uses: jebel-quant/rhiza/.github/workflows/rhiza_ci.yml@vX.Y.Z
+    with:
+      full-validation: ${{ inputs.full-validation || false }}
+      # Same-repository PRs and pushes use an ephemeral private runner;
+      # fork PRs keep GitHub-hosted runners, for tests and quality checks alike.
+      test-runner: >-
+        ${{ (github.event_name != 'pull_request'
+             || github.event.pull_request.head.repo.full_name == github.repository)
+            && format('["private-linux","ci-run-{0}-{1}"]', github.run_id, github.run_attempt)
+            || '' }}
+      quality-runner: >-
+        ${{ (github.event_name != 'pull_request'
+             || github.event.pull_request.head.repo.full_name == github.repository)
+            && format('["private-linux","ci-run-{0}-{1}"]', github.run_id, github.run_attempt)
+            || '' }}
+    secrets:
+      RHIZA_SETUP_CREDENTIALS: ${{ secrets.RHIZA_SETUP_CREDENTIALS }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+```
+
+The condition is written out for each input because `with:` has no way to share a value
+between them. Apply it to every input you set: an input left unconditional sends fork PRs
+to your private runners, and every routed job, quality checks included, runs the PR's code.
+
+Each label list pairs a static label (`private-linux`) with one derived from
+`github.run_id` and `github.run_attempt`, so a re-run asks for fresh runners rather than
+matching ones left over from the previous attempt. Every routed job requests exactly those
+labels, so the runner provider must register a matching runner for each queued job: one
+per Linux test-matrix entry, one for `lowest-deps` when it runs, and one per quality job.
+Rhiza only passes the labels to `runs-on`. How runners are created and matched is up to the
+provider.
+
+Once excluded, the file no longer receives template updates, including the `@vX.Y.Z` pin,
+and the synced Renovate and Dependabot configs do not bump workflow refs either: they
+update only `pyproject.toml` and `uv.lock`. Move the pin when you sync a new rhiza
+release, or enable Renovate's `github-actions` manager for that one file.
+
+Things to know before routing jobs to your own runners:
+
+- **The workflow runs untrusted code on whatever runner you pick.** A pull request
+  from a fork runs its own code, and on `pull_request` events it can also edit the
+  calling workflow. Keep fork PRs on hosted runners, require approval before fork
+  workflows run, and restrict runner groups to the repositories that need them.
+- **Jobs with no matching runner wait.** They stay in GitHub's normal queue until a
+  runner with matching labels appears, or until GitHub's queue timeout cancels them.
+- **What a routed job needs:** Linux, `bash`, `git`, `git-lfs` (checkout runs with
+  `lfs: true`) and outbound network access. Everything else, including `uv` and Python,
+  is installed by the job itself.
+
 ## ⚙️ Configuration Variables
 
 Settings belong to the task runner, not to the `Makefile` — which is template-owned, so an assignment there would not survive a sync. `rhiza-task` resolves each one through five layers, later winning over earlier: its defaults, `.rhiza/.env`, `pyproject.toml`, the environment, then CLI flags.
