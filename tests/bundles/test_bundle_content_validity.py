@@ -193,7 +193,31 @@ class TestRenovateBundleContent:
                 f"custom manager {manager.get('depNameTemplate')} targets files other than pyproject.toml: {patterns}"
             )
 
-    def test_pytest_rhiza_custom_manager_finds_this_repos_pin(self, renovate_json: dict, root: Path) -> None:
+    @pytest.fixture
+    def pytest_rhiza_manager(self, renovate_json: dict) -> dict:
+        """Return the one customManager bumping the pytest-rhiza pin."""
+        managers = renovate_json.get("customManagers", [])
+        assert managers, "renovate.json should declare customManagers"
+        pin = [m for m in managers if m.get("depNameTemplate") == "pytest-rhiza"]
+        assert len(pin) == 1, "expected exactly one customManager for the pytest-rhiza pin"
+        return pin[0]
+
+    def test_pytest_rhiza_custom_manager_uses_pypi(self, pytest_rhiza_manager: dict) -> None:
+        """The pytest-rhiza pin is a PyPI version spec, so its manager must read PyPI."""
+        assert pytest_rhiza_manager.get("datasourceTemplate") == "pypi", (
+            "the pin is a PyPI version spec, so the datasource must be pypi -- a git ref "
+            "is not a version Renovate can compare"
+        )
+
+    def test_pytest_rhiza_custom_manager_targets_pyproject(self, pytest_rhiza_manager: dict) -> None:
+        """Some managerFilePattern of the pytest-rhiza manager matches pyproject.toml, where the pin lives."""
+        # Renovate wraps a regex file pattern in slashes and uses JS named groups.
+        patterns = [p.strip("/") for p in pytest_rhiza_manager["managerFilePatterns"]]
+        assert any(re.search(p, "pyproject.toml") for p in patterns), (
+            f"no managerFilePattern in {patterns} matches pyproject.toml, where the pin lives"
+        )
+
+    def test_pytest_rhiza_custom_manager_finds_this_repos_pin(self, pytest_rhiza_manager: dict, root: Path) -> None:
         """The custom manager for the pytest-rhiza pin must actually match where the pin lives.
 
         A Renovate custom manager whose ``managerFilePatterns`` match no file is not an
@@ -207,28 +231,12 @@ class TestRenovateBundleContent:
         earns its keep: the pin lives in ``pyproject.toml``'s ``[tool.rhiza-task]`` table, a
         file every Python consumer has too. Its sibling manager -- the template.yml/ref pair
         -- gets no such test on purpose: that file exists only in a *consumer*, never here,
-        so there is nothing to match it against.
+        so there is nothing to match it against. The datasource and file-pattern halves of
+        that liveness are the two tests above.
         """
-        managers = renovate_json.get("customManagers", [])
-        assert managers, "renovate.json should declare customManagers"
-
-        pin = [m for m in managers if m.get("depNameTemplate") == "pytest-rhiza"]
-        assert len(pin) == 1, "expected exactly one customManager for the pytest-rhiza pin"
-        manager = pin[0]
-
-        assert manager.get("datasourceTemplate") == "pypi", (
-            "the pin is a PyPI version spec, so the datasource must be pypi -- a git ref "
-            "is not a version Renovate can compare"
-        )
-
-        # Renovate wraps a regex file pattern in slashes and uses JS named groups.
-        patterns = [p.strip("/") for p in manager["managerFilePatterns"]]
-        assert any(re.search(p, "pyproject.toml") for p in patterns), (
-            f"no managerFilePattern in {patterns} matches pyproject.toml, where the pin lives"
-        )
-
         pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
-        for match_string in manager["matchStrings"]:
+        for match_string in pytest_rhiza_manager["matchStrings"]:
+            # Renovate uses JS named groups; Python spells them (?P<name>...).
             found = re.search(match_string.replace("(?<", "(?P<"), pyproject)
             assert found, f"matchString {match_string!r} finds nothing in pyproject.toml"
             assert found.group("currentValue"), "matchString must capture a currentValue"

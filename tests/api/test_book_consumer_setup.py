@@ -42,26 +42,73 @@ def _run(script: str, cwd: Path, **env: str) -> subprocess.CompletedProcess:
     )
 
 
-def test_book_retains_deprecated_setup_aliases(workflow: dict) -> None:
-    """Existing callers remain valid while the generic contract takes precedence."""
-    call = (workflow.get("on") or workflow[True])["workflow_call"]
+# Existing callers remain valid while the generic contract takes precedence. One property per
+# test (#1807): this was one C-rated function.
+@pytest.fixture
+def call(workflow: dict) -> dict:
+    """Return the reusable workflow's ``workflow_call`` trigger."""
+    return (workflow.get("on") or workflow[True])["workflow_call"]
+
+
+@pytest.fixture
+def order(workflow: dict):
+    """Return a function giving a build step's position, so tests can compare step order."""
+    return workflow["jobs"]["build"]["steps"].index
+
+
+@pytest.fixture
+def checkout(workflow: dict) -> dict:
+    """Return the build job's repository checkout."""
+    return next(s for s in workflow["jobs"]["build"]["steps"] if s.get("uses", "").startswith("actions/checkout@"))
+
+
+@pytest.fixture
+def sync(workflow: dict) -> dict:
+    """Return the build job's ``uv sync`` step, the first that needs the dependencies."""
+    return next(s for s in workflow["jobs"]["build"]["steps"] if "uv sync" in s.get("run", ""))
+
+
+def test_book_retains_deprecated_setup_aliases(call: dict) -> None:
+    """Existing callers remain valid: the legacy input defaults off and its token is optional."""
     assert call["inputs"]["book-setup"]["type"] == "boolean"
     assert call["inputs"]["book-setup"]["default"] is False
     assert call["secrets"]["BOOK_SETUP_TOKEN"]["required"] is False
-    steps = workflow["jobs"]["build"]["steps"]
+
+
+def test_book_setup_runs_between_checkout_and_sync(workflow: dict, order, checkout: dict, sync: dict) -> None:
+    """Setup sees the checked-out hook and finishes before dependencies are resolved."""
     setup = _step(workflow, "Run consumer dependency setup")
-    checkout = next(s for s in steps if s.get("uses", "").startswith("actions/checkout@"))
-    sync = next(s for s in steps if "uv sync" in s.get("run", ""))
-    assert steps.index(checkout) < steps.index(setup) < steps.index(sync)
+    assert order(checkout) < order(setup) < order(sync)
+
+
+def test_book_guard_honours_the_generic_and_legacy_switches(workflow: dict) -> None:
+    """The guard runs when either the generic variable or the deprecated input enables setup."""
     guard = _step(workflow, "Validate consumer dependency setup")
     assert guard["if"] == "${{ vars.RHIZA_SETUP_ENABLED == 'true' || inputs.book-setup }}"
+
+
+def test_book_generic_setup_takes_precedence(workflow: dict) -> None:
+    """The generic action runs when the guard selects it, with the legacy token as a fallback."""
+    setup = _step(workflow, "Run consumer dependency setup")
     assert setup["if"] == "${{ steps.consumer_setup.outputs.action == 'generic' }}"
     assert setup["with"]["credentials"] == "${{ secrets.RHIZA_SETUP_CREDENTIALS || secrets.BOOK_SETUP_TOKEN }}"
+
+
+def test_book_legacy_setup_runs_only_when_selected(workflow: dict) -> None:
+    """The deprecated action runs only when selected, with the same credentials as the generic one."""
+    setup = _step(workflow, "Run consumer dependency setup")
     legacy = _step(workflow, "Run deprecated consumer book setup")
     assert legacy["if"] == "${{ steps.consumer_setup.outputs.action == 'legacy' }}"
     assert legacy["uses"] == "./.github/actions/rhiza-book-setup"
     assert legacy["with"] == {"token": setup["with"]["credentials"]}
-    assert steps.index(guard) < steps.index(setup) < steps.index(legacy) < steps.index(sync)
+
+
+def test_book_setup_steps_run_guard_generic_legacy_then_sync(workflow: dict, order, sync: dict) -> None:
+    """The guard decides first, and either action finishes before dependencies are resolved."""
+    guard = _step(workflow, "Validate consumer dependency setup")
+    setup = _step(workflow, "Run consumer dependency setup")
+    legacy = _step(workflow, "Run deprecated consumer book setup")
+    assert order(guard) < order(setup) < order(legacy) < order(sync)
 
 
 @pytest.mark.parametrize(

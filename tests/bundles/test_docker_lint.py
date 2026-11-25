@@ -129,6 +129,57 @@ def test_the_hadolint_step_declares_its_failure_threshold() -> None:
     assert threshold in _THRESHOLDS, f"failure-threshold: {threshold!r} is not one of {list(_THRESHOLDS)}"
 
 
+def _sarif_producer() -> dict:
+    """Return the one step that names a SARIF report as its ``output``.
+
+    Returns:
+        The producing step mapping.
+    """
+    producers = [step for step in _job_steps() if str(step.get("with", {}).get("output", "")).endswith(".sarif")]
+    assert len(producers) == 1, f"expected exactly one step writing a SARIF report, found {len(producers)}"
+    return producers[0]
+
+
+def _step_reads(step: dict, report: str) -> bool:
+    """Return whether any of a step's ``with:`` inputs names the report.
+
+    Args:
+        step: A workflow step mapping.
+        report: The report's file name.
+
+    Returns:
+        True when some input value mentions the report.
+    """
+    return any(report in str(value) for value in step.get("with", {}).values())
+
+
+def _sarif_consumers(producer: dict) -> list[dict]:
+    """Return every step other than the producer that reads the producer's report.
+
+    Args:
+        producer: The step writing the SARIF report.
+
+    Returns:
+        The consuming steps, in file order.
+    """
+    report = str(producer["with"]["output"])
+    return [step for step in _job_steps() if step is not producer and _step_reads(step, report)]
+
+
+def test_the_sarif_report_has_a_producer_other_steps_can_wait_for() -> None:
+    """Exactly one step writes the SARIF report, and it carries an ``id:`` to condition on."""
+    producer = _sarif_producer()
+    report = str(producer["with"]["output"])
+    assert producer.get("id"), f"the step writing {report} has no `id:`, so no other step can wait for it"
+
+
+def test_some_step_consumes_the_sarif_report() -> None:
+    """The upload steps the next test checks still exist, so it cannot pass vacuously."""
+    producer = _sarif_producer()
+    report = str(producer["with"]["output"])
+    assert _sarif_consumers(producer), f"no step consumes {report}; the pattern has gone stale"
+
+
 def test_the_sarif_uploads_wait_for_the_scan_that_writes_them() -> None:
     """`always()` alone uploads a report that a skipped scan never wrote.
 
@@ -136,21 +187,10 @@ def test_the_sarif_uploads_wait_for_the_scan_that_writes_them() -> None:
     its `output`, and every other step naming that file has to condition on *that* step's
     outcome. A rename of the step or of the file leaves this assertion true.
     """
-    steps = _job_steps()
-    producers = [step for step in steps if str(step.get("with", {}).get("output", "")).endswith(".sarif")]
-    assert len(producers) == 1, f"expected exactly one step writing a SARIF report, found {len(producers)}"
-    producer = producers[0]
+    producer = _sarif_producer()
     report = str(producer["with"]["output"])
     producer_id = producer.get("id")
-    assert producer_id, f"the step writing {report} has no `id:`, so no other step can wait for it"
-
-    consumers = [
-        step
-        for step in steps
-        if step is not producer and any(report in str(value) for value in step.get("with", {}).values())
-    ]
-    assert consumers, f"no step consumes {report}; the pattern has gone stale"
-    for step in consumers:
+    for step in _sarif_consumers(producer):
         condition = str(step.get("if", ""))
         assert f"steps.{producer_id}.outcome" in condition, (
             f"step {step.get('name')!r} consumes {report} under `if: {condition}`, which does "

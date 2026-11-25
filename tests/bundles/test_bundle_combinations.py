@@ -35,6 +35,17 @@ from tests.util import sync_bundles
 _GATE_PLUGIN_HOOK_PREFIXES = ("pytest_benchmark_",)
 
 
+def _top_level_function_names(path: Path) -> list[str]:
+    """Return the names of the functions a Python module defines at top level."""
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    return [node.name for node in tree.body if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)]
+
+
+def _is_unprovided_hook(name: str, core_hooks: frozenset[str]) -> bool:
+    """Return whether a function name is a pytest hook neither pytest nor the gate's plugins declare."""
+    return name.startswith("pytest_") and name not in core_hooks and not name.startswith(_GATE_PLUGIN_HOOK_PREFIXES)
+
+
 class TestDockerBundleSync:
     """Syncing core + docker bundle produces containerisation scaffolding."""
 
@@ -320,17 +331,12 @@ class TestBenchmarksBundleSync:
             "accept anything — pytest moved them and this derivation needs updating"
         )
 
-        offenders: list[str] = []
-        for path in sorted((self.project / "tests" / "benchmarks").glob("*.py")):
-            tree = ast.parse(path.read_text(encoding="utf-8"))
-            offenders += [
-                f"{path.name}::{node.name}"
-                for node in tree.body
-                if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef)
-                and node.name.startswith("pytest_")
-                and node.name not in core_hooks
-                and not node.name.startswith(_GATE_PLUGIN_HOOK_PREFIXES)
-            ]
+        offenders = [
+            f"{path.name}::{name}"
+            for path in sorted((self.project / "tests" / "benchmarks").glob("*.py"))
+            for name in _top_level_function_names(path)
+            if _is_unprovided_hook(name, core_hooks)
+        ]
 
         assert not offenders, (
             f"synced benchmark scaffolding implements hooks the `benchmark` gate provides no "

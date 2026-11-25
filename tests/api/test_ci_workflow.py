@@ -272,7 +272,31 @@ _RUNS_PROJECT_CODE = re.compile(
 )
 
 
-def test_ci_jobs_that_run_project_code_check_out_lfs(root):
+def _checkout(job):
+    """Return a job's ``actions/checkout`` step, or None when it never checks the repository out."""
+    return next((s for s in job.get("steps") or [] if "actions/checkout" in str(s.get("uses", ""))), None)
+
+
+def _runs_project_code(job):
+    """Whether any step of a job runs a gate that executes the consumer's code."""
+    return any(_RUNS_PROJECT_CODE.search(step.get("run") or "") for step in job.get("steps") or [])
+
+
+@pytest.fixture
+def code_jobs(root):
+    """The live CI jobs that execute the consumer's code, derived from what each job runs."""
+    with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
+        workflow = yaml.safe_load(fh)
+    return {name: job for name, job in workflow["jobs"].items() if _runs_project_code(job)}
+
+
+def test_ci_jobs_that_run_project_code_check_the_repository_out(code_jobs):
+    """Any CI job that executes the consumer's code must check the repository out at all."""
+    for name, job in code_jobs.items():
+        assert _checkout(job) is not None, f"{name} runs project code but never checks the repository out"
+
+
+def test_ci_jobs_that_run_project_code_check_out_lfs(code_jobs):
     """Any CI job that executes the consumer's code must fetch its LFS content.
 
     A checkout without `lfs: true` writes the pointer file — a few lines of text naming
@@ -293,18 +317,8 @@ def test_ci_jobs_that_run_project_code_check_out_lfs(root):
     text and are deliberately left alone: LFS content costs bandwidth and a smudge on every
     file, and none of them open the data.
     """
-    with (root / WORKFLOW_PATH).open(encoding="utf-8") as fh:
-        workflow = yaml.safe_load(fh)
-
-    offenders = {}
-    for name, job in workflow["jobs"].items():
-        steps = job.get("steps") or []
-        if not any(_RUNS_PROJECT_CODE.search(step.get("run") or "") for step in steps):
-            continue
-        checkout = next((s for s in steps if "actions/checkout" in str(s.get("uses", ""))), None)
-        assert checkout is not None, f"{name} runs project code but never checks the repository out"
-        if (checkout.get("with") or {}).get("lfs") is not True:
-            offenders[name] = checkout.get("with")
+    options = {name: (_checkout(job) or {}).get("with") for name, job in code_jobs.items()}
+    offenders = {name: given for name, given in options.items() if (given or {}).get("lfs") is not True}
 
     assert not offenders, (
         f"these jobs execute the consumer's code but check out without `lfs: true`, so an "

@@ -49,6 +49,34 @@ def _load_workflow_doc(path: Path) -> object:
         return yaml.safe_load(fh)
 
 
+def _delegates(uses: object) -> bool:
+    """Return whether a job-level ``uses:`` names a jebel-quant/rhiza reusable workflow."""
+    return isinstance(uses, str) and uses.startswith(_REUSABLE_WORKFLOW_PREFIX)
+
+
+def _workflow_jobs(doc: object) -> dict:
+    """Return a workflow document's ``jobs:`` mapping, or an empty one when it has none."""
+    return (doc.get("jobs") if isinstance(doc, dict) else None) or {}
+
+
+def _reusable_calls(doc: object) -> list[tuple[str, dict]]:
+    """Return ``(job_name, job)`` for every well-formed job that calls a reusable workflow.
+
+    Step-level ``uses:`` (third-party actions) never appear here: only a job's own
+    ``uses:`` makes it a reusable-workflow call.
+    """
+    return [
+        (name, job)
+        for name, job in _workflow_jobs(doc).items()
+        if isinstance(job, dict) and job.get("uses") is not None
+    ]
+
+
+def _is_thin_stub_candidate(path: Path) -> bool:
+    """Return whether a workflow file must be a thin stub: a ``rhiza_*`` file not on the exception list."""
+    return path.name.startswith("rhiza_") and path.name not in _NON_STUB_RHIZA_WORKFLOWS
+
+
 class TestGithubWorkflowStubs:
     """Bundle-shipped GitHub workflows must delegate to jebel-quant/rhiza reusables.
 
@@ -112,6 +140,19 @@ class TestGithubWorkflowStubs:
         if errors:
             pytest.fail("Workflow stubs without 'jobs':\n" + "\n".join(errors))
 
+    @pytest.fixture
+    def stub_workflows(self, root: Path, bundle_names: list[str]) -> list[tuple[str, Path, object]]:
+        """Return ``(bundle_name, path, parsed_doc)`` for every rhiza_*.yml that must be a thin stub.
+
+        rhiza_release.yml and the other ``_NON_STUB_RHIZA_WORKFLOWS`` are excluded.
+        """
+        return [
+            (bundle_name, wf, _load_workflow_doc(wf))
+            for bundle_name, workflows_dir in self._bundles_with_github_workflows(root, bundle_names)
+            for wf in workflows_dir.glob("*.yml")
+            if _is_thin_stub_candidate(wf)
+        ]
+
     def test_reusable_calls_target_rhiza_workflows(self, root: Path, bundle_names: list[str]) -> None:
         """Every job that calls a reusable workflow must target a jebel-quant/rhiza one.
 
@@ -123,55 +164,63 @@ class TestGithubWorkflowStubs:
         errors: list[str] = []
         for bundle_name, workflows_dir in self._bundles_with_github_workflows(root, bundle_names):
             for wf in workflows_dir.glob("*.yml"):
-                doc = _load_workflow_doc(wf)
-                if not isinstance(doc, dict):
-                    continue
-                for job_name, job in (doc.get("jobs") or {}).items():
-                    if not isinstance(job, dict):
-                        continue
-                    uses = job.get("uses")
-                    if uses is None:
-                        continue  # not a reusable-workflow call
-                    if not (isinstance(uses, str) and uses.startswith(_REUSABLE_WORKFLOW_PREFIX)):
-                        errors.append(
-                            f"  [{bundle_name}] {wf.name}: job '{job_name}' calls '{uses}', "
-                            f"not a {_REUSABLE_WORKFLOW_PREFIX}* reusable workflow"
-                        )
+                errors.extend(
+                    f"  [{bundle_name}] {wf.name}: job '{job_name}' calls '{job['uses']}', "
+                    f"not a {_REUSABLE_WORKFLOW_PREFIX}* reusable workflow"
+                    for job_name, job in _reusable_calls(_load_workflow_doc(wf))
+                    if not _delegates(job["uses"])
+                )
         if errors:
             pytest.fail("Reusable-workflow calls not targeting jebel-quant/rhiza:\n" + "\n".join(errors))
 
-    def test_rhiza_workflows_are_thin_stubs(self, root: Path, bundle_names: list[str]) -> None:
+    def test_rhiza_workflows_have_jobs_to_delegate(self, stub_workflows: list[tuple[str, Path, object]]) -> None:
+        """A rhiza_*.yml stub with no jobs delegates nothing, so it cannot be a thin stub."""
+        errors = [
+            f"  [{bundle_name}] {wf.name}: no jobs to delegate"
+            for bundle_name, wf, doc in stub_workflows
+            if not _workflow_jobs(doc)
+        ]
+        if errors:
+            pytest.fail("rhiza_* bundle workflows that are not thin stubs:\n" + "\n".join(errors))
+
+    def test_rhiza_workflow_jobs_are_mappings(self, stub_workflows: list[tuple[str, Path, object]]) -> None:
+        """Every job of a rhiza_*.yml stub is a mapping the delegation checks can read."""
+        errors = [
+            f"  [{bundle_name}] {wf.name}: job '{job_name}' is malformed"
+            for bundle_name, wf, doc in stub_workflows
+            for job_name, job in _workflow_jobs(doc).items()
+            if not isinstance(job, dict)
+        ]
+        if errors:
+            pytest.fail("rhiza_* bundle workflows that are not thin stubs:\n" + "\n".join(errors))
+
+    def test_rhiza_workflow_jobs_delegate_to_rhiza(self, stub_workflows: list[tuple[str, Path, object]]) -> None:
+        """Every job of a rhiza_*.yml stub has a ``uses:`` pointing at a jebel-quant/rhiza reusable."""
+        errors = [
+            f"  [{bundle_name}] {wf.name}: job '{job_name}' does not delegate to a "
+            f"{_REUSABLE_WORKFLOW_PREFIX}* reusable workflow"
+            for bundle_name, wf, doc in stub_workflows
+            for job_name, job in _workflow_jobs(doc).items()
+            if isinstance(job, dict) and not _delegates(job.get("uses"))
+        ]
+        if errors:
+            pytest.fail("rhiza_* bundle workflows that are not thin stubs:\n" + "\n".join(errors))
+
+    def test_rhiza_workflows_are_thin_stubs(self, stub_workflows: list[tuple[str, Path, object]]) -> None:
         """Every rhiza_*.yml bundle workflow is a thin stub (except documented exceptions).
 
         A thin stub delegates entirely to a jebel-quant/rhiza reusable workflow: each
         of its jobs has a ``uses:`` pointing at that repo and defines no inline
         ``steps:``.  rhiza_release.yml is exempt (it is a full release workflow).
+        The tests above cover jobs and ``uses:``; this one covers inline ``steps:``.
         """
-        errors: list[str] = []
-        for bundle_name, workflows_dir in self._bundles_with_github_workflows(root, bundle_names):
-            for wf in workflows_dir.glob("*.yml"):
-                if not wf.name.startswith("rhiza_") or wf.name in _NON_STUB_RHIZA_WORKFLOWS:
-                    continue
-                doc = _load_workflow_doc(wf)
-                jobs = doc.get("jobs") if isinstance(doc, dict) else None
-                if not jobs:
-                    errors.append(f"  [{bundle_name}] {wf.name}: no jobs to delegate")
-                    continue
-                for job_name, job in jobs.items():
-                    if not isinstance(job, dict):
-                        errors.append(f"  [{bundle_name}] {wf.name}: job '{job_name}' is malformed")
-                        continue
-                    uses = job.get("uses")
-                    if not (isinstance(uses, str) and uses.startswith(_REUSABLE_WORKFLOW_PREFIX)):
-                        errors.append(
-                            f"  [{bundle_name}] {wf.name}: job '{job_name}' does not delegate to a "
-                            f"{_REUSABLE_WORKFLOW_PREFIX}* reusable workflow"
-                        )
-                    if "steps" in job:
-                        errors.append(
-                            f"  [{bundle_name}] {wf.name}: job '{job_name}' defines inline steps; "
-                            f"rhiza_* workflows must be thin stubs (add it to the reusable workflow instead)"
-                        )
+        errors = [
+            f"  [{bundle_name}] {wf.name}: job '{job_name}' defines inline steps; "
+            f"rhiza_* workflows must be thin stubs (add it to the reusable workflow instead)"
+            for bundle_name, wf, doc in stub_workflows
+            for job_name, job in _workflow_jobs(doc).items()
+            if isinstance(job, dict) and "steps" in job
+        ]
         if errors:
             pytest.fail("rhiza_* bundle workflows that are not thin stubs:\n" + "\n".join(errors))
 

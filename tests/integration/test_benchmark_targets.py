@@ -75,6 +75,11 @@ def test_the_benchmark_gate_has_something_to_measure_or_is_known_not_to() -> Non
         )
 
 
+def _mentions_mutmut(path: Path) -> bool:
+    """Whether a shipped path is a file whose text names mutmut."""
+    return path.is_file() and "mutmut" in path.read_text(encoding="utf-8", errors="ignore").lower()
+
+
 def test_no_bundle_offers_a_mutation_gate() -> None:
     """No bundle may ship or advertise a mutation-testing gate (#1492).
 
@@ -86,10 +91,31 @@ def test_no_bundle_offers_a_mutation_gate() -> None:
     The decision is not to port it — mutmut 3.x has no CLI path for source paths at all, so a
     task would have to require `[tool.mutmut]` in every consumer's `pyproject.toml` or write one
     for them. This asserts the decision rather than trusting the prose: a bundle must ship no
-    file mentioning mutmut, and no bundle description may promise a mutation gate.
+    file mentioning mutmut (descriptions are the next test's half of the same decision).
 
     Scoped to shipped files and descriptions on purpose, so the rationale recorded in
     `template-bundles.yml`'s `notes` — which has to name the thing to explain it — stays legal.
+    """
+    offenders = [
+        str(path.relative_to(_ROOT)) for path in sorted((_ROOT / "bundles").rglob("*")) if _mentions_mutmut(path)
+    ]
+    assert not offenders, f"bundles ship mutation tooling again: {offenders}"
+
+
+def test_no_bundle_description_promises_a_mutation_gate() -> None:
+    """No bundle description may promise a mutation gate (#1492).
+
+    Descriptions only: the rationale recorded in `template-bundles.yml`'s `notes` has to name the
+    thing to explain it, and stays legal.
+    """
+    bundles = yaml.safe_load((_ROOT / ".rhiza" / "template-bundles.yml").read_text())["bundles"]
+    descriptions = {name: (spec.get("description") or "").lower() for name, spec in bundles.items()}
+    promising = sorted(name for name, text in descriptions.items() if "mutation" in text)
+    assert not promising, f"bundle descriptions advertise a mutation gate again: {promising}"
+
+
+def test_no_dependency_group_declares_mutmut() -> None:
+    """No dependency group may declare mutmut, which no target runs (#1492).
 
     The dependency-group half is here rather than in `test_dependency_groups.py`, and the reason
     is worth stating: `mutmut` used to sit in that module's `_PROVISIONED_ON_THE_FLY` set, whose
@@ -98,17 +124,6 @@ def test_no_bundle_offers_a_mutation_gate() -> None:
     entry would have *permitted* a group to declare a tool nothing runs. It is a policy about
     mutation, so it belongs with the rest of the policy.
     """
-    offenders = [
-        str(path.relative_to(_ROOT))
-        for path in sorted((_ROOT / "bundles").rglob("*"))
-        if path.is_file() and "mutmut" in path.read_text(encoding="utf-8", errors="ignore").lower()
-    ]
-    assert not offenders, f"bundles ship mutation tooling again: {offenders}"
-
-    bundles = yaml.safe_load((_ROOT / ".rhiza" / "template-bundles.yml").read_text())["bundles"]
-    promising = sorted(name for name, spec in bundles.items() if "mutation" in (spec.get("description") or "").lower())
-    assert not promising, f"bundle descriptions advertise a mutation gate again: {promising}"
-
     with (_ROOT / "pyproject.toml").open("rb") as fh:
         groups = tomllib.load(fh).get("dependency-groups", {})
     declaring = sorted(f"{group}:{dep}" for group, deps in groups.items() for dep in deps if "mutmut" in dep.lower())

@@ -49,6 +49,16 @@ def _step_uses(job: dict) -> list[str]:
     return [step["uses"] for step in job.get("steps", []) if "uses" in step]
 
 
+def _step_named(steps: list[dict], name: str) -> dict | None:
+    """Return the first step called ``name``, or None."""
+    return next((step for step in steps if step.get("name") == name), None)
+
+
+def _step_running(steps: list[dict], fragment: str) -> dict | None:
+    """Return the first step whose ``run`` script contains ``fragment``, or None."""
+    return next((step for step in steps if fragment in (step.get("run") or "")), None)
+
+
 # ---------------------------------------------------------------------------
 # Structure tests — validate the YAML content of rhiza_release.yml
 # ---------------------------------------------------------------------------
@@ -119,32 +129,46 @@ class TestReleaseWorkflowStructure:
         assert "conda" in finalise_job.get("needs", [])
         assert "needs.conda.result" not in str(finalise_job.get("if", ""))
 
-    def test_sbom_attestation_is_staged_as_release_signature(self, workflow):
+    @pytest.fixture
+    def build_steps(self, workflow):
+        """Return the steps of the release workflow's build job."""
+        return workflow["jobs"]["build"].get("steps", [])
+
+    # Non-buildable repos must still ship a recognised signature asset. Repos without a
+    # ``[build-system]`` produce no ``dist/*.intoto.jsonl`` provenance, so the SBOM's Sigstore
+    # attestation bundle is staged as a ``*.sigstore.json`` release asset to satisfy OpenSSF
+    # Scorecard's Signed-Releases check. One property per test (#1807).
+
+    def test_sbom_attestation_step_has_an_id(self, build_steps):
+        """The SBOM attestation step needs an id so its bundle path can be referenced.
+
+        Non-buildable repos ship that bundle as their release signature (Scorecard
+        Signed-Releases), since they produce no ``dist/*.intoto.jsonl`` provenance.
+        """
+        attest_step = _step_named(build_steps, "Attest SBOM")
+        assert attest_step is not None, "Attest SBOM step must exist"
+        assert attest_step.get("id") == "attest-sbom", "Attest SBOM step needs an id to reference its bundle"
+
+    def test_sbom_attestation_is_staged_as_release_signature(self, build_steps):
         """Non-buildable repos must still ship a recognised signature asset.
 
         Repos without a ``[build-system]`` produce no ``dist/*.intoto.jsonl``
         provenance, so the SBOM's Sigstore attestation bundle is staged as a
         ``*.sigstore.json`` release asset to satisfy OpenSSF Scorecard's
         Signed-Releases check.
-        """
-        build_job = workflow["jobs"]["build"]
-        steps = build_job.get("steps", [])
-        attest_step = next((s for s in steps if s.get("name") == "Attest SBOM"), None)
-        assert attest_step is not None, "Attest SBOM step must exist"
-        assert attest_step.get("id") == "attest-sbom", "Attest SBOM step needs an id to reference its bundle"
 
-        # The bundle path reaches the shell through `env:`, never by `${{ }}` expansion
-        # inside `run:` (zizmor/CodeFactor `template-injection`).
-        stage_step = next(
-            (s for s in steps if "sbom.cdx.json.sigstore.json" in (s.get("run") or "")),
-            None,
-        )
+        The bundle path reaches the shell through ``env:``, never by ``${{ }}`` expansion
+        inside ``run:`` (zizmor/CodeFactor ``template-injection``).
+        """
+        stage_step = _step_running(build_steps, "sbom.cdx.json.sigstore.json")
         assert stage_step is not None, "a step must stage the SBOM attestation bundle"
         assert "${{" not in stage_step["run"], "expressions belong in env:, not run:"
         assert stage_step.get("env", {}).get("BUNDLE_PATH") == "${{ steps.attest-sbom.outputs.bundle-path }}"
         assert '"$BUNDLE_PATH"' in stage_step["run"]
 
-        upload_step = next((s for s in steps if s.get("name") == "Upload SBOM artifacts"), None)
+    def test_sbom_attestation_bundle_is_uploaded(self, build_steps):
+        """The staged ``*.sigstore.json`` bundle travels with the SBOM artifacts."""
+        upload_step = _step_named(build_steps, "Upload SBOM artifacts")
         assert upload_step is not None, "Upload SBOM artifacts step must exist"
         assert "sbom.cdx.json.sigstore.json" in upload_step["with"]["path"]
 

@@ -7,11 +7,15 @@ Tests the SBOM (Software Bill of Materials) generation workflow to ensure
 the cyclonedx-bom tool works correctly with uvx.
 """
 
+import json
 import subprocess  # nosec B404
 
+import pytest
 
-def test_sbom_generation_json(minimal_git_repo, logger):
-    """Test that SBOM generation works in JSON format."""
+
+@pytest.fixture
+def json_sbom(minimal_git_repo, logger):
+    """Generate a JSON SBOM in the fixture repository; return the command result and output path."""
     # Run the SBOM generation command for JSON
     result = subprocess.run(  # nosec B603 B607
         [
@@ -35,30 +39,41 @@ def test_sbom_generation_json(minimal_git_repo, logger):
 
     logger.info("SBOM JSON stdout: %s", result.stdout)
     logger.info("SBOM JSON stderr: %s", result.stderr)
+    return result, minimal_git_repo / "sbom.cdx.json"
 
+
+@pytest.fixture
+def json_sbom_data(json_sbom):
+    """Parse the generated JSON SBOM, failing if generation did not succeed."""
+    result, sbom_file = json_sbom
+    assert result.returncode == 0, f"SBOM JSON generation failed: {result.stderr}"
+    with open(sbom_file) as f:
+        return json.load(f)
+
+
+def test_sbom_generation_json(json_sbom):
+    """Test that SBOM generation works in JSON format."""
+    result, sbom_file = json_sbom
     # Verify command succeeded
     assert result.returncode == 0, f"SBOM JSON generation failed: {result.stderr}"
 
     # Verify output file exists
-    sbom_file = minimal_git_repo / "sbom.cdx.json"
     assert sbom_file.exists(), "SBOM JSON file was not created"
     assert sbom_file.stat().st_size > 0, "SBOM JSON file is empty"
 
-    # Verify it's valid JSON
-    import json
 
-    with open(sbom_file) as f:
-        sbom_data = json.load(f)
+def test_sbom_json_has_cyclonedx_structure(json_sbom_data):
+    """The JSON SBOM is valid JSON with the basic CycloneDX structure."""
+    assert "bomFormat" in json_sbom_data, "SBOM missing bomFormat field"
+    assert json_sbom_data["bomFormat"] == "CycloneDX", "SBOM has incorrect bomFormat"
+    assert "components" in json_sbom_data, "SBOM missing components field"
 
-    # Basic CycloneDX structure validation
-    assert "bomFormat" in sbom_data, "SBOM missing bomFormat field"
-    assert sbom_data["bomFormat"] == "CycloneDX", "SBOM has incorrect bomFormat"
-    assert "components" in sbom_data, "SBOM missing components field"
 
-    # Verify primary component (metadata.component) is present for NTIA compliance
-    assert "metadata" in sbom_data, "SBOM missing metadata field"
-    assert "component" in sbom_data["metadata"], "SBOM missing primary component (metadata.component)"
-    primary = sbom_data["metadata"]["component"]
+def test_sbom_json_names_the_primary_component(json_sbom_data):
+    """The primary component (metadata.component) is present with a name and version, for NTIA compliance."""
+    assert "metadata" in json_sbom_data, "SBOM missing metadata field"
+    assert "component" in json_sbom_data["metadata"], "SBOM missing primary component (metadata.component)"
+    primary = json_sbom_data["metadata"]["component"]
     assert primary.get("name"), "Primary component missing name"
     assert primary.get("version"), "Primary component missing version"
 

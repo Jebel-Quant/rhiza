@@ -48,33 +48,49 @@ def _supported_python_versions(root: Path) -> list[str]:
     return re.findall(r"Programming Language :: Python :: (3\.\d+)", pyproject)
 
 
+def _include_local_path(include: object) -> str | None:
+    """Return the ``local:`` path an include entry names, or None for any other include."""
+    return include.get("local") if isinstance(include, dict) else None
+
+
+def _rule_excludes(project: Path, rule: object) -> bool:
+    """Return True when an ``exists:`` rule names only files absent from the project."""
+    exists = rule.get("exists") if isinstance(rule, dict) else None
+    return bool(exists) and not any((project / candidate).exists() for candidate in exists)
+
+
+def _include_is_active(project: Path, include: object) -> bool:
+    """Return whether GitLab would load the include, honouring its ``exists:`` rules.
+
+    An include guarded by an `exists` clause is a no-op when the referenced file is
+    absent (used by opt-in overlay bundles such as gitlab-quality-review). Skipping it
+    here keeps the profile-sync assertions matching what GitLab would actually run.
+    """
+    rules = include.get("rules", []) if isinstance(include, dict) else []
+    return not any(_rule_excludes(project, rule) for rule in rules)
+
+
+def _workflow_jobs(workflow: dict) -> dict[str, dict]:
+    """Return a workflow file's jobs, dropping hidden ``.template`` entries and non-mappings."""
+    return {name: job for name, job in workflow.items() if isinstance(job, dict) and not name.startswith(".")}
+
+
 def _gitlab_jobs_from_includes(project: Path) -> dict[str, dict]:
     """Load all included GitLab workflow jobs from the synced project."""
     pipeline = _load_yaml(project / ".gitlab-ci.yml")
     jobs: dict[str, dict] = {}
 
     for include in pipeline.get("include", []):
-        local_path = include.get("local") if isinstance(include, dict) else None
-        if not local_path:
-            continue
-        # Honour GitLab `exists:` include rules: an include guarded by an
-        # `exists` clause is a no-op when the referenced file is absent (used by
-        # opt-in overlay bundles such as gitlab-quality-review). Skip it here so
-        # the profile-sync assertions match what GitLab would actually run.
-        skip = False
-        for rule in include.get("rules", []) if isinstance(include, dict) else []:
-            exists = rule.get("exists") if isinstance(rule, dict) else None
-            if exists and not any((project / candidate).exists() for candidate in exists):
-                skip = True
-                break
-        if skip:
-            continue
-        workflow = _load_yaml(project / local_path)
-        for name, job in workflow.items():
-            if isinstance(job, dict) and not name.startswith("."):
-                jobs[name] = job
+        local_path = _include_local_path(include)
+        if local_path and _include_is_active(project, include):
+            jobs.update(_workflow_jobs(_load_yaml(project / local_path)))
 
     return jobs
+
+
+def _step_by_id(steps: list[dict], step_id: str) -> dict:
+    """Return the first step carrying the given ``id:``."""
+    return next(step for step in steps if step.get("id") == step_id)
 
 
 def _job_commands(job: dict, key: str) -> list[str]:
@@ -176,24 +192,47 @@ class TestGitlabProjectProfileSync:
         assert github_job_names & expected == expected
         assert gitlab_job_names & expected == expected
 
-    def test_ci_workflows_share_python_version_matrix(self, root: Path) -> None:
-        """GitHub and GitLab CI must reference the same supported Python versions."""
-        github_workflow = _load_yaml(root / ".github" / "workflows" / "rhiza_ci.yml")
-        github_generate_steps = github_workflow["jobs"]["generate-matrix"]["steps"]
-        versions_output = next(step for step in github_generate_steps if step.get("id") == "versions-output")
-        planner = next(step for step in github_generate_steps if step.get("id") == "plan")
-        versions_step = next(step for step in github_generate_steps if step.get("id") == "versions")
-        gitlab_test_job = _gitlab_jobs_from_includes(self.project)["ci:test"]
-        gitlab_matrix = gitlab_test_job["parallel"]["matrix"][0]["PYTHON_VERSION"]
+    @pytest.fixture
+    def github_ci(self, root: Path) -> dict:
+        """Load the mother repo's live GitHub CI workflow."""
+        return _load_yaml(root / ".github" / "workflows" / "rhiza_ci.yml")
 
+    @pytest.fixture
+    def generate_matrix_steps(self, github_ci: dict) -> list[dict]:
+        """Return the steps of the GitHub CI ``generate-matrix`` job."""
+        return github_ci["jobs"]["generate-matrix"]["steps"]
+
+    def test_github_versions_come_from_package_classifiers(self, generate_matrix_steps: list[dict]) -> None:
+        """GitHub CI derives its Python versions from the built package's classifiers."""
+        versions_step = _step_by_id(generate_matrix_steps, "versions")
         assert "hynek/build-and-inspect-python-package" in versions_step["uses"]
+
+    def test_github_versions_output_reads_the_classifier_array(self, generate_matrix_steps: list[dict]) -> None:
+        """The ``versions-output`` step consumes the classifier array the versions step emits."""
+        versions_output = _step_by_id(generate_matrix_steps, "versions-output")
         assert versions_output["env"]["VERSIONS"] == (
             "${{ steps.versions.outputs.supported_python_classifiers_json_array }}"
         )
+
+    def test_github_planner_reads_the_versions_output(self, generate_matrix_steps: list[dict]) -> None:
+        """The ``plan`` step consumes the list the ``versions-output`` step produces."""
+        planner = _step_by_id(generate_matrix_steps, "plan")
         assert planner["env"]["VERSIONS"] == "${{ steps.versions-output.outputs.list }}"
-        assert github_workflow["jobs"]["test"]["strategy"]["matrix"]["python-version"] == (
+
+    def test_github_test_matrix_comes_from_generate_matrix(self, github_ci: dict) -> None:
+        """The GitHub ``test`` job's python-version matrix is the planned one."""
+        assert github_ci["jobs"]["test"]["strategy"]["matrix"]["python-version"] == (
             "${{ fromJson(needs.generate-matrix.outputs.test_matrix) }}"
         )
+
+    def test_ci_workflows_share_python_version_matrix(self, root: Path) -> None:
+        """GitHub and GitLab CI must reference the same supported Python versions.
+
+        GitHub derives its matrix from the classifiers (the tests above); GitLab lists it,
+        so the listed matrix must equal the classifiers.
+        """
+        gitlab_test_job = _gitlab_jobs_from_includes(self.project)["ci:test"]
+        gitlab_matrix = gitlab_test_job["parallel"]["matrix"][0]["PYTHON_VERSION"]
         assert gitlab_matrix == _supported_python_versions(root)
 
     @pytest.mark.parametrize(("job_name", "command"), PARITY_JOB_COMMANDS.items())
