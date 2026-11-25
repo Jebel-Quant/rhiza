@@ -91,12 +91,17 @@
     },
     {
       "customType": "regex",
-      "description": "The `UV_VERSION` pin in `bundles/core/Makefile`: the uv the shim's bootstrap installs (`astral.sh/uv/$(UV_VERSION)/install.sh`) on a runner with no uv on PATH. Before #1797 the URL was unversioned, so a fresh runner got whatever uv astral released last -- the one unpinned step in a toolchain that pins everything else, inherited by every consumer. Root renovate.json only, for the same reason as the RHIZA_TASK manager: in a consumer the shim is template-owned and the next sync would overwrite the bump. The root `Makefile` is not matched because it is the dogfood symlink. The uv-pre-commit hook is a separate dependency, so the two arrive as separate PRs. tests/api/test_renovate_managers.py holds these claims.",
+      "description": "The `UV_VERSION` pin in `bundles/core/Makefile`: the uv the shim's bootstrap installs (`astral.sh/uv/$(UV_VERSION)/install.sh`) on a runner with no uv on PATH. Before #1797 the URL was unversioned, so a fresh runner got whatever uv astral released last -- the one unpinned step in a toolchain that pins everything else, inherited by every consumer. Root renovate.json only, for the same reason as the RHIZA_TASK manager: in a consumer the shim is template-owned and the next sync would overwrite the bump. The root `Makefile` is not matched because it is the dogfood symlink. The same manager also owns every `astral-sh/setup-uv` `version:` in the live and bundled GitHub workflows and the GitLab `UV_IMAGE` tag (#1818): with only the shim watched, the shim moved to 0.13.x while CI and every GitLab consumer sat on 0.11.16 -- the drift #1383 had already fixed once. One manager, one dep name, so Renovate moves them in one PR. The Dockerfile builder image is the dockerfile manager's, and the uv-pre-commit hook is a separate dependency, so both arrive as separate PRs. tests/api/test_renovate_managers.py holds these claims.",
       "managerFilePatterns": [
-        "/^bundles/core/Makefile$/"
+        "/^bundles/core/Makefile$/",
+        "/^\\.github/workflows/[^/]+\\.ya?ml$/",
+        "/^bundles/[^/]+/\\.github/workflows/[^/]+\\.ya?ml$/",
+        "/^bundles/gitlab/\\.gitlab-ci\\.yml$/"
       ],
       "matchStrings": [
-        "UV_VERSION \\?= (?<currentValue>\\d+\\.\\d+\\.\\d+)"
+        "UV_VERSION \\?= (?<currentValue>\\d+\\.\\d+\\.\\d+)",
+        "astral-sh/setup-uv@[^\\n]*\\n(?:[^\\n]*\\n){0,6}?\\s+version: \"(?<currentValue>\\d+\\.\\d+\\.\\d+)\"",
+        "UV_IMAGE: \"ghcr\\.io/astral-sh/uv:(?<currentValue>\\d+\\.\\d+\\.\\d+)-"
       ],
       "depNameTemplate": "uv",
       "datasourceTemplate": "pypi"

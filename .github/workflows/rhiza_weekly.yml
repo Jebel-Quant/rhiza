@@ -70,7 +70,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
-          version: "0.11.16"
+          version: "0.13.10"
 
       - name: Validate consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
@@ -137,7 +137,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
-          version: "0.11.16"
+          version: "0.13.10"
 
       - name: Validate consumer dependency setup
         if: ${{ vars.RHIZA_SETUP_ENABLED == 'true' }}
@@ -204,7 +204,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
         with:
-          version: "0.11.16"
+          version: "0.13.10"
 
       # The committed lockfile is the subject, so `--frozen`: resolving afresh would audit
       # versions nobody ships. The export carries hashes, which is what lets pip-audit run

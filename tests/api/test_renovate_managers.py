@@ -375,6 +375,73 @@ def _gitlab_files_with_literal_images() -> list[str]:
     ]
 
 
+# Every other place a uv version is pinned (#1818): the `version:` input of each
+# astral-sh/setup-uv step, and the GitLab `UV_IMAGE` tag. Both shapes, as written.
+_SETUP_UV = re.compile(r"astral-sh/setup-uv@[^\n]*\n(?:[^\n]*\n){0,6}?\s+version: \"(\d+\.\d+\.\d+)\"")
+_UV_IMAGE = re.compile(r"UV_IMAGE: \"ghcr\.io/astral-sh/uv:(\d+\.\d+\.\d+)-")
+
+
+def _uv_pins() -> dict[str, list[str]]:
+    """Return every uv version pin in the tree, by file.
+
+    Prose (docs, tests) is skipped: it quotes pins rather than carrying them. The
+    Dockerfile builder image is deliberately absent -- the dockerfile manager owns it.
+
+    Returns:
+        Repo-relative path to the versions it pins, in file order.
+    """
+    pins: dict[str, list[str]] = {}
+    for path in _tracked_files():
+        if path.startswith(_PROSE_PREFIXES) or path in _NOT_THE_MANAGER_S_JOB:
+            continue
+        if not path.endswith((".yml", ".yaml", "Makefile")):
+            continue
+        text = (_ROOT / path).read_text(encoding="utf-8")
+        found = _UV_VERSION.findall(text) + _SETUP_UV.findall(text) + _UV_IMAGE.findall(text)
+        if found:
+            pins[path] = found
+    return pins
+
+
+class TestEveryUvPinMovesTogether:
+    """One uv version across the shim, the CI workflows and the GitLab image (#1818).
+
+    The shim's pin had a manager and moved to 0.13.x; the setup-uv inputs and `UV_IMAGE`
+    had none and stayed on 0.11.16, so a developer's bootstrap and every CI run used
+    different uv releases -- the drift #1383 fixed once already. All of them now belong to
+    the one `uv` manager, which Renovate bumps as a single dependency.
+    """
+
+    def test_the_scan_finds_the_pins_at_all(self) -> None:
+        """Positive control: the shim, the CI workflow and the GitLab image all carry a pin."""
+        pins = _uv_pins()
+        assert {_SHIM, ".github/workflows/rhiza_ci.yml", "bundles/gitlab/.gitlab-ci.yml"} <= set(pins), sorted(pins)
+        assert sum(len(v) for v in pins.values()) >= 20, "fewer setup-uv pins than the workflows carry"
+
+    @pytest.mark.parametrize("path", sorted(_uv_pins()))
+    def test_every_pinned_file_is_matched_by_the_manager(self, path: str) -> None:
+        """A pin in a file no ``managerFilePatterns`` entry matches is a pin that only ages."""
+        patterns = [_as_regex(p) for p in _manager("uv")["managerFilePatterns"]]
+        assert any(p.search(path) for p in patterns), f"no uv managerFilePatterns entry matches {path}"
+
+    @pytest.mark.parametrize("path", sorted(_uv_pins()))
+    def test_the_match_strings_capture_every_pin(self, path: str) -> None:
+        """Matching the file is not enough: the manager must capture each version in it."""
+        text = (_ROOT / path).read_text(encoding="utf-8")
+        captured = sorted(
+            m.group("currentValue") for s in _manager("uv")["matchStrings"] for m in _match_string(s).finditer(text)
+        )
+        assert captured == sorted(_uv_pins()[path]), f"the uv manager captured {captured} from {path}"
+
+    def test_every_pin_names_the_same_version(self) -> None:
+        """Two uv releases across the toolchain is a difference nothing would report."""
+        versions: dict[str, set[str]] = {}
+        for path, found in _uv_pins().items():
+            for version in found:
+                versions.setdefault(version, set()).add(path)
+        assert len(versions) == 1, f"uv pins disagree: { {v: sorted(p) for v, p in versions.items()} }"
+
+
 class TestGitlabImageManager:
     """The pinned GitLab job images must be watched by Renovate (#1814).
 
