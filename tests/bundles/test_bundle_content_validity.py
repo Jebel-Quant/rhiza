@@ -5,7 +5,7 @@ two siblings, every class here inspects a *named* bundle or a named kind of file
 than sweeping the whole tree:
 
 - every bundle is described in ``template-bundles.yml`` and documented
-- Makefile fragments expose at least one documented target (``## help`` comment)
+- no bundle ships a Makefile fragment (the make layer is retired)
 - legal files have real content
 - ``renovate.json`` carries the required schema declaration, and its custom manager for
   the pytest-rhiza pin still matches where that pin lives
@@ -84,51 +84,33 @@ _REUSABLE_WORKFLOW_PREFIX = "jebel-quant/rhiza/.github/workflows/"
 _NON_STUB_RHIZA_WORKFLOWS = {"rhiza_release.yml", "rhiza_conda_recipe.yml"}
 
 
-class TestMakefileFragments:
-    """Makefile fragments in bundles must follow the help-comment convention."""
+class TestNoMakefileFragments:
+    """No bundle ships a Makefile fragment: the synced make layer is retired.
 
-    def test_all_mk_files_have_at_least_one_documented_target(self, root: Path, bundle_names: list[str]) -> None:
-        """Every .mk fragment that is not a customisation template must document at least one target with ##."""
-        skip_names = {"custom-env.mk", "custom-task.mk", "README.md"}
-        violations: list[str] = []
+    Two help-comment and ``.PHONY`` checks over bundle ``*.mk`` files lived here. Since
+    v1.4 moved every target into the pinned ``rhiza-task`` CLI there are no such files,
+    so both passed having inspected nothing (#1795). The invariant worth keeping is the
+    absence itself: ``bundles/core/Makefile`` is the only make file shipped, and
+    repo-owned targets belong in the consumer's own ``local.mk``.
+    """
+
+    def test_no_bundle_ships_a_mk_fragment(self, root: Path, bundle_names: list[str]) -> None:
+        """Every bundle is free of ``*.mk`` files, and the sweep actually saw files."""
+        inspected = 0
+        fragments: list[str] = []
         for bundle_name in bundle_names:
             bundle_dir = root / "bundles" / bundle_name
             if not bundle_dir.is_dir():
                 continue
-            for mk_file in _all_files_in_bundle(bundle_dir):
-                if mk_file.suffix != ".mk" or mk_file.name in skip_names:
-                    continue
-                content = mk_file.read_text(encoding="utf-8")
-                # A documented target looks like: target: ... ## description
-                if "##" not in content:
-                    rel = mk_file.relative_to(root / "bundles")
-                    violations.append(f"  [{bundle_name}] {rel}")
-        if violations:
-            pytest.fail("Makefile fragments without any ## help comment:\n" + "\n".join(violations))
-
-    def test_all_mk_files_have_phony_declarations(self, root: Path, bundle_names: list[str]) -> None:
-        """Makefile fragments that define targets should declare them as .PHONY."""
-        skip_names = {"custom-env.mk", "custom-task.mk"}
-        violations: list[str] = []
-        for bundle_name in bundle_names:
-            bundle_dir = root / "bundles" / bundle_name
-            if not bundle_dir.is_dir():
-                continue
-            for mk_file in _all_files_in_bundle(bundle_dir):
-                if mk_file.suffix != ".mk" or mk_file.name in skip_names:
-                    continue
-                content = mk_file.read_text(encoding="utf-8")
-                # If the file defines targets (has :: or : rules) it should have .PHONY
-                has_targets = any(
-                    line.strip().endswith("::")
-                    or (": " in line and not line.startswith("\t") and not line.startswith("#"))
-                    for line in content.splitlines()
-                )
-                if has_targets and ".PHONY" not in content:
-                    rel = mk_file.relative_to(root / "bundles")
-                    violations.append(f"  [{bundle_name}] {rel}")
-        if violations:
-            pytest.fail("Makefile fragments with targets but no .PHONY declaration:\n" + "\n".join(violations))
+            for path in _all_files_in_bundle(bundle_dir):
+                inspected += 1
+                if path.suffix == ".mk":
+                    fragments.append(f"  [{bundle_name}] {path.relative_to(root / 'bundles')}")
+        assert inspected, "the sweep found no bundle files at all, so it checked nothing"
+        assert not fragments, (
+            "bundles must not ship Makefile fragments; the make layer is retired and targets "
+            "live in rhiza-task (repo-owned ones in local.mk):\n" + "\n".join(fragments)
+        )
 
 
 class TestLegalBundleContent:
