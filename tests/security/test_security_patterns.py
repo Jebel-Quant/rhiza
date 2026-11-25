@@ -419,7 +419,9 @@ class TestGithubBundleActive:
 # Lines allowed to pipe a downloaded script into a shell. The uv installer is
 # the documented bootstrap path and runs before any package manager exists;
 # every other installer must use a verifiable package manager (npm, uv, ...).
-_PIPED_INSTALLER_ALLOWLIST = ("astral.sh/uv/install.sh",)
+# Only the *versioned* URL is allowed: the unversioned `astral.sh/uv/install.sh` installs
+# whatever uv is newest, so it fails here rather than passing as the bootstrap (#1797).
+_PIPED_INSTALLER_ALLOWLIST = ("astral.sh/uv/$(UV_VERSION)/install.sh",)
 
 _PIPED_INSTALLER_RE = re.compile(
     r"(?:curl|wget)[^|\n]*\|\s*(?:[A-Za-z_][A-Za-z0-9_]*=\S+\s+)*(?:env\s+)?(?:ba|da|z)?sh\b"

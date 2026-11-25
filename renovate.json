@@ -83,6 +83,18 @@
       "depNameTemplate": "tectonic-typesetting/tectonic",
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^tectonic@(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "The `UV_VERSION` pin in `bundles/core/Makefile`: the uv the shim's bootstrap installs (`astral.sh/uv/$(UV_VERSION)/install.sh`) on a runner with no uv on PATH. Before #1797 the URL was unversioned, so a fresh runner got whatever uv astral released last -- the one unpinned step in a toolchain that pins everything else, inherited by every consumer. Root renovate.json only, for the same reason as the RHIZA_TASK manager: in a consumer the shim is template-owned and the next sync would overwrite the bump. The root `Makefile` is not matched because it is the dogfood symlink. The uv-pre-commit hook is a separate dependency, so the two arrive as separate PRs. tests/api/test_renovate_managers.py holds these claims.",
+      "managerFilePatterns": [
+        "/^bundles/core/Makefile$/"
+      ],
+      "matchStrings": [
+        "UV_VERSION \\?= (?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "uv",
+      "datasourceTemplate": "pypi"
     }
   ]
 }
