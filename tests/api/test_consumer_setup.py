@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import os
 import subprocess  # nosec B404 - executes the checked-in action shell in fixture projects
 from pathlib import Path
@@ -51,69 +52,107 @@ def test_setup_guard(tmp_path, event, head, exists, success):
     assert not call.get("continue-on-error")
 
 
-def test_setup_before_dependency_resolution():
+# Each supported job, and the first step in it that consumes dependencies. Setup must run
+# before that step. One property per test (#1798): this was a single D-rated function in
+# which the first failing job hid every later one.
+_CI_GATES = (
+    "test",
+    "quality",
+    "lowest-deps",
+    "typecheck",
+    "deptry",
+    "rhiza-test",
+    "docs-coverage",
+    "security",
+    "license",
+    "dist-check",
+)
+_CONSUMERS = {
+    "ci": {
+        "generate-matrix": "Build package metadata and extract supported Python classifiers",
+        **dict.fromkeys(_CI_GATES, "Configure git auth for private packages"),
+    },
+    "book": {"build": "Sync the virtual environment for ${{ github.repository }}"},
+    "marimo": {"test-notebooks": "Run notebook"},
+    "benchmark": {"benchmark": "Run benchmarks"},
+    "weekly": {"dep-compat-test": "Resolve and install latest compatible dependencies", "semgrep": "Run Semgrep"},
+    "release": {"build": "Build and validate distributions"},
+}
+_JOB_CASES = [
+    (workflow, job, dependency) for workflow, consumers in _CONSUMERS.items() for job, dependency in consumers.items()
+]
+# The book accepts its legacy token as a fallback and keeps its own guard; every other
+# workflow shares the CI guard verbatim.
+_CREDENTIALS = {
+    "book": "${{ secrets.RHIZA_SETUP_CREDENTIALS || secrets.BOOK_SETUP_TOKEN }}",
+}
+_PERMISSIONS = {
+    "ci": {"contents": "read", "actions": "read"},
+    "release": {"contents": "read", "id-token": "write", "attestations": "write"},
+}
+
+
+@functools.cache
+def _definition(workflow):
+    """Parse one live reusable workflow."""
+    return yaml.safe_load((_ROOT / f".github/workflows/rhiza_{workflow}.yml").read_text())
+
+
+def _setup_steps(workflow, job):
+    """Return a job's steps, its setup call and its setup guard."""
+    steps = _definition(workflow)["jobs"][job]["steps"]
+    names = [s.get("name") for s in steps]
+    call = steps[names.index("Run consumer dependency setup")]
+    guard = steps[names.index("Validate consumer dependency setup")]
+    return steps, call, guard
+
+
+@pytest.mark.parametrize(("workflow", "job", "dependency"), _JOB_CASES)
+def test_setup_before_dependency_resolution(workflow, job, dependency):
     """Every supported job authenticates before its first dependency-consuming step."""
-    jobs = {
-        "ci": {
-            "generate-matrix": "Build package metadata and extract supported Python classifiers",
-            **dict.fromkeys(
-                [
-                    "test",
-                    "quality",
-                    "lowest-deps",
-                    "typecheck",
-                    "deptry",
-                    "rhiza-test",
-                    "docs-coverage",
-                    "security",
-                    "license",
-                    "dist-check",
-                ],
-                "Configure git auth for private packages",
-            ),
-        },
-        "book": {"build": "Sync the virtual environment for ${{ github.repository }}"},
-        "marimo": {"test-notebooks": "Run notebook"},
-        "benchmark": {"benchmark": "Run benchmarks"},
-        "weekly": {"dep-compat-test": "Resolve and install latest compatible dependencies", "semgrep": "Run Semgrep"},
-        "release": {"build": "Build and validate distributions"},
-    }
-    tested_guard = None
-    for workflow, consumers in jobs.items():
-        definition = yaml.safe_load((_ROOT / f".github/workflows/rhiza_{workflow}.yml").read_text())
-        for job, dependency in consumers.items():
-            steps = definition["jobs"][job]["steps"]
-            names = [s.get("name") for s in steps]
-            assert names.index("Run consumer dependency setup") < names.index(dependency)
-            call = steps[names.index("Run consumer dependency setup")]
-            guard = steps[names.index("Validate consumer dependency setup")]
-            if tested_guard is None:
-                tested_guard = guard
-            if workflow != "book":
-                assert guard == tested_guard
-            assert steps.index(guard) < steps.index(call)
-            if workflow != "book":
-                assert guard["if"] == call["if"]
-            assert "env" not in call
-            assert call["uses"] == "./.github/actions/rhiza-setup"
-            credentials = "${{ secrets.RHIZA_SETUP_CREDENTIALS }}"
-            if workflow == "book":
-                credentials = "${{ secrets.RHIZA_SETUP_CREDENTIALS || secrets.BOOK_SETUP_TOKEN }}"
-            assert call["with"]["credentials"] == credentials
-            expected = {"contents": "read"}
-            if workflow == "ci":
-                expected["actions"] = "read"
-            elif workflow == "release":
-                expected.update({"id-token": "write", "attestations": "write"})
-            assert definition["jobs"][job]["permissions"] == expected
-            assert "pages" not in expected
-            if workflow != "release":
-                assert definition["permissions"] == expected
-        text = str(definition)
-        assert "CODEARTIFACT_" not in text
-        assert "AWS_ROLE_TO_ASSUME_READ" not in text
-        triggers = definition.get("on") or definition[True]
-        assert triggers["workflow_call"]["secrets"]["RHIZA_SETUP_CREDENTIALS"]["required"] is False
+    steps, call, guard = _setup_steps(workflow, job)
+    names = [s.get("name") for s in steps]
+    assert names.index("Run consumer dependency setup") < names.index(dependency)
+    assert steps.index(guard) < steps.index(call)
+
+
+@pytest.mark.parametrize(("workflow", "job", "dependency"), _JOB_CASES)
+def test_setup_call_contract(workflow, job, dependency):
+    """The call uses the caller's action with the forwarded credential and no extra env."""
+    _, call, _ = _setup_steps(workflow, job)
+    assert "env" not in call
+    assert call["uses"] == "./.github/actions/rhiza-setup"
+    assert call["with"]["credentials"] == _CREDENTIALS.get(workflow, "${{ secrets.RHIZA_SETUP_CREDENTIALS }}")
+
+
+@pytest.mark.parametrize(("workflow", "job", "dependency"), [c for c in _JOB_CASES if c[0] != "book"])
+def test_setup_guard_is_shared(workflow, job, dependency):
+    """Outside the book, every job runs the CI guard verbatim, under the call's condition."""
+    _, call, guard = _setup_steps(workflow, job)
+    _, _, reference = _setup_steps(*_JOB_CASES[0][:2])
+    assert guard == reference
+    assert guard["if"] == call["if"]
+
+
+@pytest.mark.parametrize(("workflow", "job", "dependency"), _JOB_CASES)
+def test_setup_job_permissions(workflow, job, dependency):
+    """Jobs get read access plus only what their workflow needs, never pages."""
+    expected = _PERMISSIONS.get(workflow, {"contents": "read"})
+    assert "pages" not in expected
+    assert _definition(workflow)["jobs"][job]["permissions"] == expected
+    if workflow != "release":
+        assert _definition(workflow)["permissions"] == expected
+
+
+@pytest.mark.parametrize("workflow", list(_CONSUMERS))
+def test_setup_workflow_has_no_provider_configuration(workflow):
+    """No provider-specific setup is baked in, and the setup credential is optional."""
+    definition = _definition(workflow)
+    text = str(definition)
+    assert "CODEARTIFACT_" not in text
+    assert "AWS_ROLE_TO_ASSUME_READ" not in text
+    triggers = definition.get("on") or definition[True]
+    assert triggers["workflow_call"]["secrets"]["RHIZA_SETUP_CREDENTIALS"]["required"] is False
 
 
 def test_setup_has_no_synced_dispatcher_or_provider_configuration():

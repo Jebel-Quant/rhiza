@@ -346,42 +346,79 @@ def test_finalisation_requires_upload_success(workflow, job, result, cancelled):
     )
 
 
-def test_publisher_contract_and_order(workflow):
-    """Action reuses tag-verified downloads, scoped credentials, and release OIDC."""
-    jobs = workflow["jobs"]
-    publisher = jobs["pypi"]
+# The publisher contract, one property per test (#1798). These were a single E-rated function
+# (CC 38), where the first failing assertion hid every later one.
+_RELEASE_JOBS = ("build", "draft-release", "pypi", "conda", "devcontainer", "finalise-release")
+_PUBLISHER_ORDER = (
+    "Checkout Code",
+    "Checkout publisher guards",
+    "Validate publisher configuration",
+    "Download dist artifact",
+    "Require built distributions",
+    "Publish with repository action",
+    "Validate publisher artifact URL",
+)
+_GUARD_COMMANDS = (
+    ("Validate publisher configuration", "validate-publisher"),
+    ("Require built distributions", "require-distributions"),
+    ("Validate publisher artifact URL", "validate-artifact-url"),
+)
+
+
+def test_publisher_job_contract(workflow):
+    """The publisher runs in the release environment with release OIDC and nothing more."""
+    publisher = workflow["jobs"]["pypi"]
     assert publisher["environment"] == "release"
     assert publisher["permissions"] == {"contents": "read", "id-token": "write"}
     assert not publisher.get("continue-on-error")
-    assert jobs["build"]["outputs"]["buildable"] == "${{ steps.buildable.outputs.buildable }}"
-    for name in ("build", "draft-release", "pypi", "conda", "devcontainer", "finalise-release"):
-        checkout = _step(workflow, name, "Checkout Code")
-        assert checkout["with"]["ref"] == "refs/tags/${{ needs.tag.outputs.tag }}"
+    assert not publisher.get("env")
+    assert publisher["outputs"]["artifact_url"] == "${{ steps.artifact_url.outputs.artifact_url }}"
+    assert publisher["outputs"]["publisher"] == "${{ steps.publisher.outputs.publisher }}"
+    assert workflow["jobs"]["build"]["outputs"]["buildable"] == "${{ steps.buildable.outputs.buildable }}"
+
+
+def test_publish_credentials_secret_is_optional(workflow):
+    """Callers without a custom publisher need not declare its credentials."""
+    triggers = workflow.get("on") or workflow[True]
+    assert triggers["workflow_call"]["secrets"]["RELEASE_PUBLISH_CREDENTIALS"]["required"] is False
+
+
+@pytest.mark.parametrize("job", _RELEASE_JOBS)
+def test_release_jobs_check_out_the_verified_tag(workflow, job):
+    """Every job after tagging builds or publishes exactly the tagged commit."""
+    assert _step(workflow, job, "Checkout Code")["with"]["ref"] == "refs/tags/${{ needs.tag.outputs.tag }}"
+
+
+def test_publisher_checkout_does_not_persist_credentials(workflow):
+    """The job holding release OIDC leaves no git token on disk."""
     assert _step(workflow, "pypi", "Checkout Code")["with"]["persist-credentials"] is False
-    steps = publisher["steps"]
-    names = [step["name"] for step in steps]
-    ordered = [
-        "Checkout Code",
-        "Checkout publisher guards",
-        "Validate publisher configuration",
-        "Download dist artifact",
-        "Require built distributions",
-        "Publish with repository action",
-        "Validate publisher artifact URL",
-    ]
-    assert [names.index(name) for name in ordered] == sorted(names.index(name) for name in ordered)
-    for name, command in (
-        ("Validate publisher configuration", "validate-publisher"),
-        ("Require built distributions", "require-distributions"),
-        ("Validate publisher artifact URL", "validate-artifact-url"),
-    ):
-        assert _step(workflow, "pypi", name)["run"].strip() == (
-            f"python3 .rhiza-release-tools/bundles/github/.rhiza/scripts/release_publish.py {command}"
-        )
-    download = _step(workflow, "pypi", "Download dist artifact")
+
+
+def test_publisher_steps_run_in_order(workflow):
+    """Guards run before the download, and the URL check after the publish."""
+    names = [step["name"] for step in workflow["jobs"]["pypi"]["steps"]]
+    positions = [names.index(name) for name in _PUBLISHER_ORDER]
+    assert positions == sorted(positions)
+
+
+@pytest.mark.parametrize(("name", "command"), _GUARD_COMMANDS)
+def test_publisher_guards_run_the_pinned_helper(workflow, name, command):
+    """Each guard runs the helper from the independent tooling checkout."""
+    assert _step(workflow, "pypi", name)["run"].strip() == (
+        f"python3 .rhiza-release-tools/bundles/github/.rhiza/scripts/release_publish.py {command}"
+    )
+
+
+def test_draft_release_download_is_required_when_buildable(workflow):
+    """A buildable project cannot draft a release without its distributions."""
     draft_download = _step(workflow, "draft-release", "Download dist artifact")
     assert not draft_download.get("continue-on-error")
     assert draft_download["if"] == "needs.build.outputs.buildable == 'true'"
+
+
+def test_repository_action_receives_the_downloaded_artifacts(workflow):
+    """The custom action gets the tag-verified download and scoped credentials only."""
+    download = _step(workflow, "pypi", "Download dist artifact")
     action = _step(workflow, "pypi", "Publish with repository action")
     assert download["with"] == {"name": "dist", "path": "${{ github.workspace }}/release-dist"}
     assert action["uses"] == "./.github/actions/release-publish"
@@ -392,31 +429,40 @@ def test_publisher_contract_and_order(workflow):
         "credentials": "${{ secrets.RELEASE_PUBLISH_CREDENTIALS }}",
     }
     assert action["env"] == {"RHIZA_RELEASE_PUBLISH_VARS": "${{ toJSON(vars) }}"}
-    assert not publisher.get("env")
-    for step in steps:
+
+
+def test_publisher_steps_fail_closed_and_never_rebuild(workflow):
+    """No step may swallow a failure, rebuild, dump secrets or interpolate into shell."""
+    for step in workflow["jobs"]["pypi"]["steps"]:
         assert not step.get("continue-on-error")
         assert "uv build" not in step.get("run", "")
         assert "toJSON(secrets)" not in str(step)
-        if "run" in step:
-            assert "${{" not in step["run"]
-    triggers = workflow.get("on") or workflow[True]
-    assert triggers["workflow_call"]["secrets"]["RELEASE_PUBLISH_CREDENTIALS"]["required"] is False
-    assert publisher["outputs"]["artifact_url"] == "${{ steps.artifact_url.outputs.artifact_url }}"
-    assert publisher["outputs"]["publisher"] == "${{ steps.publisher.outputs.publisher }}"
+        assert "${{" not in step.get("run", "")
+
+
+def test_pypi_publish_uses_scoped_credentials(workflow):
+    """The PyPI token reaches the publish step only, never the configuration guard."""
     pypi = _step(workflow, "pypi", "Publish to PyPI")
     configuration = _step(workflow, "pypi", "Validate publisher configuration")
     assert "PYPI_TOKEN" not in configuration.get("env", {})
     assert pypi["with"]["repository-url"] == "${{ vars.PYPI_REPOSITORY_URL }}"
     assert pypi["with"]["password"] == "${{ secrets.PYPI_TOKEN }}"  # noqa: S105 - Actions expression, not a token
-    for mode, publish in itertools.product(("pypi", "custom", "none"), ("true", "false")):
-        values = {"steps.publisher.outputs.publisher": mode, "steps.publisher.outputs.should_publish": publish}
-        assert _condition(action["if"], values) == (mode == "custom" and publish == "true")
-        assert _condition(pypi["if"], values) == (mode == "pypi" and publish == "true")
-        assert _condition(download["if"], values) == (publish == "true")
-        assert _condition(_step(workflow, "pypi", "Require built distributions")["if"], values) == (publish == "true")
-        assert _condition(_step(workflow, "pypi", "Validate publisher artifact URL")["if"], values) == (
-            mode == "custom" and publish == "true"
-        )
+
+
+@pytest.mark.parametrize(("mode", "publish"), list(itertools.product(("pypi", "custom", "none"), ("true", "false"))))
+def test_publisher_step_conditions(workflow, mode, publish):
+    """Each publish path runs only for its own mode, and only when publishing."""
+    values = {"steps.publisher.outputs.publisher": mode, "steps.publisher.outputs.should_publish": publish}
+    custom = mode == "custom" and publish == "true"
+    expected = {
+        "Publish with repository action": custom,
+        "Publish to PyPI": mode == "pypi" and publish == "true",
+        "Download dist artifact": publish == "true",
+        "Require built distributions": publish == "true",
+        "Validate publisher artifact URL": custom,
+    }
+    actual = {name: _condition(_step(workflow, "pypi", name)["if"], values) for name in expected}
+    assert actual == expected
 
 
 @pytest.mark.parametrize("message", ["", "### Published Package\n\n<https://packages.example.org/demo>"])
