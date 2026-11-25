@@ -93,7 +93,8 @@ Some files **cannot** be symlinks and stay real copies, kept in sync by
   with `ci /` because downstream stubs delegate through a `ci` job. Both copies require
   the aggregate `CI gate` check; the root copy also requires `E2E gate`, which consumers
   never run. Changing the file changes no live setting; re-apply
-  it (see `docs/ops/BRANCH_PROTECTION.md`).
+  it (see `docs/ops/BRANCH_PROTECTION.md`). `rhiza_weekly.yml`'s `ruleset-drift` job fails
+  when the live required checks differ from the file (`tests/api/test_weekly_ruleset_drift.py`).
 - `.gitignore` / `.gitattributes` files — git opens these with `O_NOFOLLOW`.
 
 Intentional mother-repo overrides that diverge from their bundle source: root `.gitignore`,
