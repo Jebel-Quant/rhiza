@@ -19,8 +19,10 @@ This directly improves two Scorecard checks that cannot be fixed by workflow fil
 ## What the ruleset enforces
 
 - Pull request required, with **1 approving review**, **code-owner review** (see
-  [`.github/CODEOWNERS`](../../.github/CODEOWNERS)), **last-push approval**, and stale-review dismissal on new
-  pushes.
+  [`.github/CODEOWNERS`](../../.github/CODEOWNERS)), **last-push approval**, stale-review dismissal on new
+  pushes, **resolved review threads**, and an extra approval for unattributed changes. This repository's copy
+  also requires branches to be **up to date** with the default branch before merge (strict status checks); the
+  bundle copy shipped to consumers keeps the looser defaults.
 - **Required status check** — `CI gate`, the aggregate job of `rhiza_ci.yml`, must pass before merge. It needs
   every other CI job and fails when any job the CI profile planned failed, was cancelled or was unexpectedly
   skipped, so the pre-commit, deptry, docs-coverage, security, licence and test jobs all block a merge through it.
@@ -53,6 +55,18 @@ per-job contexts keeps requiring them until it is re-applied with the `PUT` comm
 receive the file as `bundles/github/.github/rulesets/main-branch-protection.json`, whose context is `ci / CI gate`
 because the `github-tests` stub's `ci` job prefixes every check it calls; they apply it to their own repository the
 same way.
+
+## Drift: the file is not the setting
+
+Editing the JSON changes nothing on GitHub, and every test reads the file, so a ruleset nobody re-applied looks
+correct everywhere except where it matters. That happened here (#1817): the live ruleset kept requiring the five
+per-job contexts #1744 removed and never required `E2E gate`, while the file had moved on twice.
+
+The `ruleset-drift` job in `rhiza_weekly.yml` closes that gap. Every week it fetches the live ruleset named
+after the file and compares its required status-check contexts with the committed ones, failing with the
+`PUT` command to run when they differ. It skips with a notice when there is no file or no ruleset of that name
+is applied, and fails on an API error rather than skipping. Consumers calling the reusable weekly workflow get
+the same check against their own copy.
 
 ## Apply it
 

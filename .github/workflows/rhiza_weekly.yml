@@ -9,6 +9,8 @@
 #                     that break compatibility before Renovate picks them up.
 #   semgrep         — static analysis with project-specific rules.
 #   advisories      — audits the committed uv.lock against the PyPI advisory database.
+#   ruleset-drift   — compares the live branch-protection ruleset's required checks with
+#                     the committed .github/rulesets/main-branch-protection.json.
 #   link-check      — verifies all hyperlinks in README.md are reachable.
 #
 # Trigger: Weekly schedule (Monday 08:00 UTC) and manual dispatch.
@@ -218,6 +220,100 @@ jobs:
 
       - name: Audit them against the advisory database
         run: uvx pip-audit --disable-pip -r "$RUNNER_TEMP/requirements.txt"
+
+  # The committed ruleset file changes no live setting: GitHub reads branch protection from
+  # repository settings, and the file is only what an admin re-applies with `gh api PUT`.
+  # Every test reads the file, so a live ruleset that was never re-applied looks correct
+  # everywhere except on GitHub. That happened here (#1817): #1744 and #1813 changed the
+  # file's required checks, while the live ruleset kept requiring the five per-job contexts
+  # #1744 removed and never required `E2E gate`.
+  #
+  # Only the required status-check contexts are compared -- the part every rhiza change to
+  # the file has been about. The job skips, with a notice, when the repository has no
+  # ruleset file or has not applied a ruleset of that name: neither is drift. An API error
+  # is not a skip -- it fails the job, so the check cannot go green by measuring nothing.
+  ruleset-drift:
+    permissions:
+      contents: read
+    name: Branch-protection ruleset drift
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      # Reading a ruleset needs only metadata access, which every GITHUB_TOKEN has.
+      - name: Fetch the live ruleset
+        id: fetch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RULESET_FILE: .github/rulesets/main-branch-protection.json
+        run: |
+          set -euo pipefail
+          if [ ! -f "$RULESET_FILE" ]; then
+            echo "::notice::no $RULESET_FILE in this repository; nothing to compare"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          name=$(basename "$RULESET_FILE" .json)
+          ids=$(gh api --paginate "repos/$GITHUB_REPOSITORY/rulesets?includes_parents=false" \
+            --jq ".[] | select(.name == \"$name\") | .id")
+          if [ -z "$ids" ]; then
+            echo "::notice::no live ruleset named '$name' is applied; apply it with" \
+              "gh api --method POST repos/$GITHUB_REPOSITORY/rulesets --input $RULESET_FILE"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$(echo "$ids" | wc -l)" -ne 1 ]; then
+            echo "::error::more than one live ruleset is named '$name' ($(echo "$ids" | tr '\n' ' '));" \
+              "which one is meant is ambiguous"
+            exit 1
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/rulesets/$ids" > "$RUNNER_TEMP/live-ruleset.json"
+          echo "id=$ids" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Compare the required status checks
+        if: steps.fetch.outputs.skip == 'false'
+        env:
+          RULESET_FILE: .github/rulesets/main-branch-protection.json
+          LIVE_FILE: ${{ runner.temp }}/live-ruleset.json
+          RULESET_ID: ${{ steps.fetch.outputs.id }}
+        shell: python
+        run: |
+          import json
+          import os
+
+
+          def contexts(path):
+              """Return the required status-check contexts a ruleset declares."""
+              with open(path, encoding="utf-8") as handle:
+                  rules = json.load(handle).get("rules", [])
+              for rule in rules:
+                  if rule.get("type") == "required_status_checks":
+                      checks = rule.get("parameters", {}).get("required_status_checks", [])
+                      return sorted(check["context"] for check in checks)
+              return []
+
+
+          committed = contexts(os.environ["RULESET_FILE"])
+          live = contexts(os.environ["LIVE_FILE"])
+          print(f"committed: {committed}")
+          print(f"live:      {live}")
+          if committed != live:
+              missing = sorted(set(committed) - set(live))
+              extra = sorted(set(live) - set(committed))
+              print(f"::error::the live ruleset has drifted from {os.environ['RULESET_FILE']}: "
+                    f"not required live {missing}, required live but not committed {extra}")
+              print("Re-apply it: gh api --method PUT "
+                    f"repos/{os.environ.get('GITHUB_REPOSITORY', '<owner>/<repo>')}/rulesets/"
+                    f"{os.environ['RULESET_ID']} --input {os.environ['RULESET_FILE']}")
+              raise SystemExit(1)
+          print("The live ruleset requires exactly the committed status checks.")
 
   link-check:
     permissions:
