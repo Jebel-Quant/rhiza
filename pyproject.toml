@@ -279,19 +279,6 @@ ignore-magic = true
 enforce = false
 reason = "Rhiza ships configuration templates, not a runtime library: there is no src/ tree to mirror. Tests are organised by the invariant under test (bundles, Make API, per-layer e2e), and bundle/gate coverage is enforced by tests/bundles/test_bundle_test_coverage.py."
 
-[tool.deptry.package_module_name_map]
-# uvx runs deptry without the project deps installed, so it cannot read each
-# package's metadata to resolve the import module name. Declaring the mappings
-# explicitly silences the "Assuming the corresponding module name ..." warnings.
-pyyaml = "yaml"
-pytest = "pytest"
-defusedxml = "defusedxml"
-packaging = "packaging"
-marimo = "marimo"
-numpy = "numpy"
-plotly = "plotly"
-pandas = "pandas"
-
 [tool.coverage.report]
 # `make test` now measures COVERAGE_FOLDERS rather than a hard-coded SOURCE_FOLDER
 # (#1516), which brought utils/ under the coverage gate for the first time. These are
