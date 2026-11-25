@@ -271,6 +271,10 @@ def _parse_ref(ref: str) -> tuple[str, str, str]:
     """Split an image ref into (registry, repository, tag-or-digest)."""
     if "@" in ref:
         name, reference = ref.rsplit("@", 1)
+        # `image:tag@sha256:...` -- the digest is the reference; the tag is a label for
+        # humans and Renovate, and left on the name it becomes part of the repository path.
+        if ":" in name.rsplit("/", 1)[-1]:
+            name = name.rsplit(":", 1)[0]
     elif ":" in ref.rsplit("/", 1)[-1]:
         name, reference = ref.rsplit(":", 1)
     else:

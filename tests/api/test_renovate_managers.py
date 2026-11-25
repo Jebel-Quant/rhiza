@@ -353,3 +353,53 @@ class TestTheUvInstallerPin:
         assert not any(p.search("Makefile") for p in patterns), (
             "the uv manager matches the root `Makefile`, a dogfood symlink Renovate would turn into a real file"
         )
+
+
+# Renovate's built-in default for the gitlabci manager; ours extends it rather than replacing it.
+_GITLABCI_DEFAULT = re.compile(r"\.gitlab-ci\.ya?ml$")
+_LITERAL_IMAGE = re.compile(r"^\s*image:\s*[^$\s]", re.MULTILINE)
+
+
+def _gitlab_files_with_literal_images() -> list[str]:
+    """Return every tracked gitlab-bundle YAML file carrying an `image:` that is not a variable.
+
+    Returns:
+        Repo-relative paths.
+    """
+    return [
+        path
+        for path in _tracked_files()
+        if path.startswith("bundles/gitlab")
+        and path.endswith((".yml", ".yaml"))
+        and _LITERAL_IMAGE.search((_ROOT / path).read_text(encoding="utf-8"))
+    ]
+
+
+class TestGitlabImageManager:
+    """The pinned GitLab job images must be watched by Renovate (#1814).
+
+    The built-in ``gitlabci`` manager reads only ``.gitlab-ci.yml`` by default, so the jobs
+    under ``bundles/*/.gitlab/workflows/`` were invisible to it: an exact pin there would
+    only age. ``renovate.json`` extends the manager's file patterns to those folders. Root
+    only, for the reason the RHIZA_TASK manager gives: in a consumer these files are
+    template-owned, and a bump there is overwritten by the next sync.
+    """
+
+    def test_the_scan_finds_the_images_at_all(self) -> None:
+        """Positive control: the release, Renovate and quality-review workflows carry images."""
+        assert len(_gitlab_files_with_literal_images()) >= 3
+
+    def test_the_gitlabci_manager_is_enabled(self) -> None:
+        """A file pattern on a disabled manager is a pattern nothing reads."""
+        config = json.loads(_RENOVATE.read_text(encoding="utf-8"))
+        assert "gitlabci" in config.get("enabledManagers", [])
+
+    @pytest.mark.parametrize("path", _gitlab_files_with_literal_images())
+    def test_every_image_file_is_matched_by_the_manager(self, path: str) -> None:
+        """An image in a file the manager does not read is an image Renovate never bumps."""
+        config = json.loads(_RENOVATE.read_text(encoding="utf-8"))
+        patterns = [_as_regex(p) for p in config.get("gitlabci", {}).get("managerFilePatterns", [])]
+        patterns.append(_GITLABCI_DEFAULT)
+        assert any(p.search(path) for p in patterns), (
+            f"{path} carries a pinned job image that the gitlabci manager does not read"
+        )

@@ -310,3 +310,53 @@ class TestGitlabImagePinning:
         assert ".python_base" not in parsed, (
             ".python_base was an orphaned template (nothing extends it); it should stay removed"
         )
+
+
+# An exact image tag: a full X.Y.Z version, optionally followed by a variant suffix
+# (`-bookworm`) and a digest. `:latest`, `:22-bookworm` and `:3.24` all fail it.
+_EXACT_IMAGE_TAG = re.compile(r":v?\d+\.\d+\.\d+(?:-[\w.]+)?(?:@sha256:[0-9a-f]{64})?$")
+
+
+def _literal_gitlab_images(root: Path) -> list[tuple[str, int, str]]:
+    """Return every `image:` under bundles/gitlab* that names an image rather than a variable.
+
+    Args:
+        root: Repository root.
+
+    Returns:
+        ``(repo-relative path, line number, image value)`` per literal image line.
+    """
+    found: list[tuple[str, int, str]] = []
+    for bundle in sorted(root.glob("bundles/gitlab*")):
+        for path in _all_files_in_bundle(bundle):
+            if path.suffix not in {".yml", ".yaml", ".jinja"}:
+                continue
+            for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                m = _IMAGE_LINE.match(line)
+                if m and not m.group(1).startswith("$"):
+                    found.append((str(path.relative_to(root)), lineno, m.group(1)))
+    return found
+
+
+class TestGitlabImagesAreExactlyPinned:
+    """Every literal GitLab job image must name an exact version (#1814).
+
+    The release jobs ran on `alpine:latest`, the token-bearing Renovate job on
+    `renovate/renovate:latest`, and the quality review on `node:22-bookworm`, so every
+    `gitlab-project` consumer pulled whatever those tags pointed at that day. The GitHub side
+    has held every `uses:` to a full SHA all along; this holds the GitLab images to an exact
+    version. `$UV_IMAGE` lines are skipped here: `TestGitlabImagePinning` owns them.
+    """
+
+    def test_the_scan_finds_literal_images_at_all(self, root: Path) -> None:
+        """Positive control: an empty scan would make the pin check vacuous."""
+        assert len(_literal_gitlab_images(root)) >= 5, "found fewer literal images than the gitlab bundles carry"
+
+    def test_no_floating_image_tags(self, root: Path) -> None:
+        """`:latest`, a missing tag, and a major-only tag are all refused."""
+        floating = [
+            f"{path}:{lineno}: {image}"
+            for path, lineno, image in _literal_gitlab_images(root)
+            if not _EXACT_IMAGE_TAG.search(image)
+        ]
+        assert not floating, "GitLab images must be pinned to an exact X.Y.Z version:\n" + "\n".join(floating)
