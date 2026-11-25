@@ -5,6 +5,45 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.14.0] - 2026-11-25
+
+### New Features
+- *(ci)* Let callers choose runners for tests and quality checks (#1784)
+- *(weekly)* Audit the committed uv.lock for dependency advisories every week (#1804) (#1811)
+
+### Bug Fixes
+- *(scorecard)* Use published action image (#1785)
+- *(tests)* Pass parametrize a list, not an itertools.product iterator (#1787) (#1788)
+- *(github)* Pin shipped whole workflows to the live action SHAs and guard parity (#1786) (#1791)
+- *(core)* Pin the uv the Makefile shim bootstraps and let Renovate move it (#1797) (#1801)
+- *(gitlab)* Pin the shipped GitLab job images to exact versions and digests (#1814) (#1815)
+- *(ci)* Require E2E gate on main and fail it on a cancelled layer (#1813) (#1816)
+- *(ci)* Put every uv pin under one Renovate manager and align them on 0.13.10 (#1818) (#1819)
+- *(ci)* Add a weekly ruleset-drift check and align the committed ruleset with the live one (#1817) (#1820)
+
+### Documentation
+- *(architecture)* Point CodeArtifact tracking at #1745, not closed #1732 (#1778)
+- Restructure CLAUDE.md into current-state guidance, move history to docs (#1793) (#1794)
+- Point pyproject's interrogate and mypy comments at rhiza-task, not python.mk (#1796) (#1799)
+- Drop the last python.mk and DOCSTRING_FOLDERS references from pyproject.toml (#1796) (#1803)
+
+### Dependencies
+- *(deps)* Limit consumer dependency updates to pyproject.toml (#1780)
+- *(deps)* Update pre-commit hook astral-sh/ruff-pre-commit to v0.17.6 (#1781)
+- *(deps)* Update pre-commit hook igorshubovych/markdownlint-cli to v0.50.1 (#1783)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.13.9 (#1782)
+- *(deps)* Update pre-commit hook astral-sh/uv-pre-commit to v0.13.10 (#1789)
+- *(deps)* Update dependency plotly to >=7,<7.3 (#1790)
+- *(deps)* Lock file maintenance (#1792)
+
+### Maintenance
+- *(renovate)* Stop bumping the Dockerfile's PYTHON_VERSION fallback (#1779)
+- Split the E/D-rated release and setup tests into one test per property (#1798) (#1802)
+- Replace vacuous TestMakefileFragments with a guard that no bundle ships a .mk (#1795) (#1800)
+- *(ci)* Define the consumer-setup guard once and alias it into every job (#1806) (#1808)
+- Split the 31 C-ranked tests into one test per property (#1807) (#1809)
+- Bump rhiza-task to 1.11.0 and drop the deptry name map it made redundant (#1805) (#1812)
+
 ## [1.13.0] - 2026-11-24
 
 ### New Features
