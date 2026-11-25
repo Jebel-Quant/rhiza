@@ -303,6 +303,61 @@ class TestBenchmarkWorkflow:
         )
 
 
+_PAPER_PUSH = "git push origin paper"
+_LOCAL_BOOK_WORKFLOW = "./.github/workflows/rhiza_book.yml"
+
+
+def _all_steps(doc: dict) -> list[dict]:
+    """Return every step of every job in a parsed workflow, in document order."""
+    return [step for job in doc["jobs"].values() for step in job.get("steps") or ()]
+
+
+def _step_runs(steps: list[dict]) -> list[str]:
+    """Return each step's ``run`` script, or the empty string for a ``uses`` step."""
+    return [step.get("run") or "" for step in steps]
+
+
+def _indices_containing(runs: list[str], fragment: str) -> list[int]:
+    """Return the positions of the scripts that contain ``fragment``."""
+    return [index for index, run in enumerate(runs) if fragment in run]
+
+
+def _book_build_indices(runs: list[str]) -> list[int]:
+    """Return the positions of the scripts that build the book (not merely check its nav)."""
+    return [index for index, run in enumerate(runs) if 'uvx "$RHIZA_TASK" book' in run and "book-nav" not in run]
+
+
+def _mkdocs_guard_indices(runs: list[str]) -> list[int]:
+    """Return the positions of the scripts that fail when the root ``mkdocs.yml`` is missing."""
+    return [index for index, run in enumerate(runs) if "mkdocs.yml" in run and "exit 1" in run]
+
+
+def _building_job_runs(doc: dict) -> list[str]:
+    """Return the step scripts of the first job that builds the book, failing when none does."""
+    for job in doc["jobs"].values():
+        runs = _step_runs(job.get("steps", []))
+        if _book_build_indices(runs):
+            return runs
+    pytest.fail("no job in the book workflow builds the book")
+
+
+def _pages_upload_guards(doc: dict) -> list[str]:
+    """Return the ``if:`` of every step that uploads a Pages artifact."""
+    return [
+        step.get("if") or "" for step in _all_steps(doc) if "actions/upload-pages-artifact" in (step.get("uses") or "")
+    ]
+
+
+def _triggers(doc: dict) -> dict:
+    """Return a workflow's ``on:`` block; PyYAML parses the bare key as ``True``."""
+    return doc.get("on") or doc.get(True) or {}
+
+
+def _local_book_callers(doc: dict) -> list[dict]:
+    """Return the jobs that call the local reusable book workflow."""
+    return [job for job in (doc.get("jobs") or {}).values() if job.get("uses") == _LOCAL_BOOK_WORKFLOW]
+
+
 class TestPaperWorkflow:
     """The paper workflow delegates the compile and publishes the PDF on the `paper` branch.
 
@@ -395,7 +450,30 @@ class TestPaperWorkflow:
             "would try to rewrite the branch, and a fork's run has no token to do it with."
         )
 
-    def test_the_push_is_preceded_by_a_collision_check(self, paper_workflow_text: str) -> None:
+    @pytest.fixture
+    def paper_runs(self, paper_workflow_text: str) -> list[str]:
+        """Return the ``run`` script of every step in the paper workflow, in order."""
+        return _step_runs(_all_steps(yaml.safe_load(paper_workflow_text)))
+
+    @pytest.fixture
+    def paper_publish_run(self, paper_runs: list[str]) -> str:
+        """Return the script of the step that pushes to the ``paper`` branch."""
+        return next(run for run in paper_runs if _PAPER_PUSH in run)
+
+    def test_the_paper_workflow_checks_for_a_colliding_ref(self, paper_runs: list[str]) -> None:
+        """Some step must look for a `paper/<topic>` ref before the publish (#1494).
+
+        Git refs are paths, so `refs/heads/paper` cannot be created while
+        `refs/heads/paper/overview` exists, and git's own message on that failure names
+        neither branch.
+        """
+        assert _indices_containing(paper_runs, "git ls-remote --heads origin 'paper/*'"), (
+            "no step checks for a colliding `paper/*` ref before pushing. Without it the "
+            "failure is git's, and it names neither the branch it wanted nor the one in the "
+            "way (#1494)."
+        )
+
+    def test_the_push_is_preceded_by_a_collision_check(self, paper_runs: list[str]) -> None:
         """A `paper/<topic>` ref must be diagnosed before the push, not by it.
 
         This is the whole of #1494 as a step: git refs are paths, so `refs/heads/paper`
@@ -406,17 +484,9 @@ class TestPaperWorkflow:
         It deliberately sits after the artifact upload, so a repository in that state still
         collects its PDF while it decides which branch to rename.
         """
-        doc = yaml.safe_load(paper_workflow_text)
-        steps = [s for job in doc["jobs"].values() for s in job.get("steps", [])]
-        runs = [s.get("run") or "" for s in steps]
-
-        checking = [i for i, r in enumerate(runs) if "git ls-remote --heads origin 'paper/*'" in r]
-        pushing = [i for i, r in enumerate(runs) if "git push origin paper" in r]
-        assert checking, (
-            "no step checks for a colliding `paper/*` ref before pushing. Without it the "
-            "failure is git's, and it names neither the branch it wanted nor the one in the "
-            "way (#1494)."
-        )
+        checking = _indices_containing(paper_runs, "git ls-remote --heads origin 'paper/*'")
+        pushing = _indices_containing(paper_runs, _PAPER_PUSH)
+        assert checking, "no step checks for a colliding `paper/*` ref before pushing (#1494)."
         assert pushing, "no step pushes to the `paper` branch, so nothing here is being guarded"
         assert max(checking) < min(pushing), (
             "the collision check does not run before the push, so the push fails first and the diagnosis never prints."
@@ -444,7 +514,7 @@ class TestPaperWorkflow:
             "the README is written but not staged, so the branch never receives it."
         )
 
-    def test_the_branch_readme_carries_no_per_run_value(self, paper_workflow_text: str) -> None:
+    def test_the_branch_readme_carries_no_per_run_value(self, paper_publish_run: str) -> None:
         """A timestamp or run id in the README would commit on every push.
 
         The step commits only when `git diff --staged` reports a change, which is what keeps a
@@ -454,14 +524,10 @@ class TestPaperWorkflow:
         moved.
 
         Provenance is not lost by that -- it goes in the commit message, which is written only
-        when there is something to commit. So this asserts both halves: the README region has
-        no per-run value, and the commit message does.
+        when there is something to commit. This test asserts the README half;
+        :meth:`test_the_commit_message_carries_the_provenance` asserts the other.
         """
-        doc = yaml.safe_load(paper_workflow_text)
-        steps = [s for job in doc["jobs"].values() for s in job.get("steps", [])]
-        run = next(s["run"] for s in steps if "git push origin paper" in (s.get("run") or ""))
-
-        readme_region = run.split("> README.md")[0].rsplit("\n{\n", 1)[-1]
+        readme_region = paper_publish_run.split("> README.md")[0].rsplit("\n{\n", 1)[-1]
         volatile = [
             token
             for token in ("github.sha", "github.run_id", "github.run_number", "GITHUB_SHA", "$(date")
@@ -473,7 +539,14 @@ class TestPaperWorkflow:
             f"even when the paper had not changed."
         )
 
-        commit_line = next(line for line in run.splitlines() if "git commit -m" in line)
+    def test_the_commit_message_carries_the_provenance(self, paper_publish_run: str) -> None:
+        """The source commit goes in the commit message, since the README must not carry it.
+
+        The other half of :meth:`test_the_branch_readme_carries_no_per_run_value`: the
+        message is written only when there is something to commit, so a per-run value there
+        costs nothing.
+        """
+        commit_line = next(line for line in paper_publish_run.splitlines() if "git commit -m" in line)
         assert "GITHUB_SHA" in commit_line or "github.sha" in commit_line, (
             "the commit message names no source commit, so nothing on the branch says which "
             "revision the PDF was built from -- and the README deliberately does not carry it."
@@ -592,32 +665,41 @@ class TestBookWorkflow:
             "exactly what deployed a 404 in the book's own nav."
         )
 
-    def test_the_book_workflow_names_the_nav_gate(self, book_workflow_text: str) -> None:
-        """`book-nav` must run in the job that builds, after the build.
+    @pytest.fixture
+    def book_workflow(self, book_workflow_text: str) -> dict:
+        """Return the parsed book workflow."""
+        return yaml.safe_load(book_workflow_text)
+
+    @pytest.fixture
+    def building_job_runs(self, book_workflow: dict) -> list[str]:
+        """Return the step scripts of the job that builds the book."""
+        return _building_job_runs(book_workflow)
+
+    def test_the_book_workflow_names_the_nav_gate(self, building_job_runs: list[str]) -> None:
+        """`book-nav` must run in the job that builds.
 
         It is deliberately not a prerequisite of `book` -- a consumer that cannot compile its
         paper locally must still be able to build its book -- so the only place the check can
-        live is the pipeline that deploys. Asserted by step order: run before the build and it
-        reads a `_book/` from nowhere and skips, which is a pass that proves nothing.
+        live is the pipeline that deploys.
         """
-        doc = yaml.safe_load(book_workflow_text)
-        for job in doc["jobs"].values():
-            runs = [s.get("run") or "" for s in job.get("steps", [])]
-            building = [i for i, r in enumerate(runs) if 'uvx "$RHIZA_TASK" book' in r and "book-nav" not in r]
-            checking = [i for i, r in enumerate(runs) if 'uvx "$RHIZA_TASK" book-nav' in r]
-            if not building:
-                continue
-            assert checking, (
-                "the job that builds the book never runs `book-nav`, so a nav entry with no "
-                "asset behind it deploys as a 404. zensical reports `No issues found` for "
-                "exactly that case, so nothing else asks."
-            )
-            assert min(checking) > max(building), (
-                "`book-nav` runs before the book is built, so it skips for want of a built "
-                "site -- a pass that measures nothing."
-            )
-            return
-        pytest.fail("no job in the book workflow builds the book")
+        assert _indices_containing(building_job_runs, 'uvx "$RHIZA_TASK" book-nav'), (
+            "the job that builds the book never runs `book-nav`, so a nav entry with no "
+            "asset behind it deploys as a 404. zensical reports `No issues found` for "
+            "exactly that case, so nothing else asks."
+        )
+
+    def test_the_nav_gate_runs_after_the_build(self, building_job_runs: list[str]) -> None:
+        """`book-nav` must run after the build, asserted by step order.
+
+        Run before the build and it reads a `_book/` from nowhere and skips, which is a pass
+        that proves nothing.
+        """
+        checking = _indices_containing(building_job_runs, 'uvx "$RHIZA_TASK" book-nav')
+        assert checking, "the job that builds the book never runs `book-nav`"
+        assert min(checking) > max(_book_build_indices(building_job_runs)), (
+            "`book-nav` runs before the book is built, so it skips for want of a built "
+            "site -- a pass that measures nothing."
+        )
 
     def test_the_book_build_is_reproducible(self, book_workflow_text: str) -> None:
         """The book must pin `SOURCE_DATE_EPOCH` too, for the asset rather than for a commit.
@@ -688,50 +770,71 @@ class TestBookWorkflow:
                     return
         pytest.fail("no step uploads the generic `book` artifact")
 
-    def test_the_pages_upload_and_deploy_are_gated_on_the_toggle(self, book_workflow_text: str) -> None:
-        """Pages-specific steps must skip when `deploy-pages` is false.
+    # Pages-specific steps must skip when `deploy-pages` is false. Both halves matter: the
+    # `upload-pages-artifact` step feeds the deploy job, and the deploy job itself declares
+    # the `github-pages` environment. Skipping neither would leave a Pages upload with no
+    # deploy (harmless but wasteful) or a deploy of a stale artifact (worse). One property
+    # per test (#1807).
 
-        Both halves matter: the `upload-pages-artifact` step feeds the deploy
-        job, and the deploy job itself declares the `github-pages` environment.
-        Skipping neither would leave a Pages upload with no deploy (harmless
-        but wasteful) or a deploy of a stale artifact (worse).
+    @pytest.fixture
+    def pages_upload_guards(self, book_workflow: dict) -> list[str]:
+        """Return the ``if:`` of every Pages-artifact upload, requiring at least one."""
+        guards = _pages_upload_guards(book_workflow)
+        assert guards, "no `upload-pages-artifact` step found to gate"
+        return guards
 
-        Gating must rest on `inputs.deploy-pages` alone. `github.event_name`
-        cannot help: inside a called workflow it reflects the caller's
-        triggering event rather than `workflow_call`, so a condition built on
-        it cannot tell a direct invocation apart from a reusable call whose
-        caller happened to run on push -- which is exactly the bug this test
-        guards against (jebel-quant/rhiza#1677).
-        """
-        doc = yaml.safe_load(book_workflow_text)
-        pages_upload_guarded = False
-        for job in doc["jobs"].values():
-            for step in job.get("steps") or ():
-                if "actions/upload-pages-artifact" in (step.get("uses") or ""):
-                    guard = step.get("if") or ""
-                    assert "deploy-pages" in guard, (
-                        "the Pages-artifact upload step is not gated on `inputs.deploy-pages`, "
-                        "so artifact-only consumers still pay for a Pages upload that "
-                        "nothing consumes."
-                    )
-                    assert "event_name" not in guard, (
-                        "the Pages-artifact upload guard must not consult `github.event_name` -- "
-                        "inside a called workflow it reflects the caller's event, not "
-                        "`workflow_call`, so it cannot distinguish a direct trigger from a "
-                        "reusable call and silently re-enables Pages regardless of the input."
-                    )
-                    pages_upload_guarded = True
-        assert pages_upload_guarded, "no `upload-pages-artifact` step found to gate"
-
-        deploy = doc["jobs"].get("deploy")
+    @pytest.fixture
+    def deploy_condition(self, book_workflow: dict) -> str:
+        """Return the ``if:`` of the book workflow's deploy job, requiring the job."""
+        deploy = book_workflow["jobs"].get("deploy")
         assert deploy is not None, "the book workflow declares no `deploy` job"
-        deploy_if = deploy.get("if") or ""
-        assert "deploy-pages" in deploy_if, (
+        return deploy.get("if") or ""
+
+    def test_the_pages_upload_is_gated_on_the_toggle(self, pages_upload_guards: list[str]) -> None:
+        """The `upload-pages-artifact` step must skip when `deploy-pages` is false."""
+        for guard in pages_upload_guards:
+            assert "deploy-pages" in guard, (
+                "the Pages-artifact upload step is not gated on `inputs.deploy-pages`, "
+                "so artifact-only consumers still pay for a Pages upload that "
+                "nothing consumes."
+            )
+
+    def test_the_pages_upload_guard_ignores_the_event_name(self, pages_upload_guards: list[str]) -> None:
+        """Gating must rest on `inputs.deploy-pages` alone.
+
+        `github.event_name` cannot help: inside a called workflow it reflects the caller's
+        triggering event rather than `workflow_call`, so a condition built on it cannot tell
+        a direct invocation apart from a reusable call whose caller happened to run on push
+        -- which is exactly the bug this test guards against (jebel-quant/rhiza#1677).
+        """
+        for guard in pages_upload_guards:
+            assert "event_name" not in guard, (
+                "the Pages-artifact upload guard must not consult `github.event_name` -- "
+                "inside a called workflow it reflects the caller's event, not "
+                "`workflow_call`, so it cannot distinguish a direct trigger from a "
+                "reusable call and silently re-enables Pages regardless of the input."
+            )
+
+    def test_the_deploy_job_is_gated_on_the_toggle(self, deploy_condition: str) -> None:
+        """The deploy job must skip when `deploy-pages` is false.
+
+        It declares the `github-pages` environment, so running it in artifact-only mode
+        deploys a stale artifact.
+        """
+        assert "deploy-pages" in deploy_condition, (
             "the `deploy` job is not gated on `inputs.deploy-pages`, so artifact-only mode "
             "still tries to publish to GitHub Pages -- which is exactly what the input "
             "exists to prevent."
         )
-        assert "event_name" not in deploy_if, (
+
+    def test_the_deploy_guard_ignores_the_event_name(self, deploy_condition: str) -> None:
+        """The deploy job's gate must rest on `inputs.deploy-pages` alone (#1677).
+
+        Inside a called workflow `github.event_name` reflects the caller's triggering event
+        rather than `workflow_call`, so it cannot tell a direct invocation from a reusable
+        call whose caller ran on push.
+        """
+        assert "event_name" not in deploy_condition, (
             "the deploy guard must not consult `github.event_name` -- inside a called "
             "workflow it reflects the caller's event, not `workflow_call`, so it cannot "
             "distinguish a direct trigger from a reusable call and silently re-enables "
@@ -758,27 +861,34 @@ class TestBookWorkflow:
         )
         assert "workflow_call" in on, "the book workflow lost its workflow_call trigger"
 
-    def test_the_book_deploy_wrapper_publishes_this_repository_on_push(self, workflows_dir: Path) -> None:
+    @pytest.fixture
+    def book_deploy_wrapper(self, workflows_dir: Path) -> dict:
+        """Return the parsed book-deploy wrapper, or skip when it is not synced."""
+        path = workflows_dir / "rhiza_book_deploy.yml"
+        if not path.exists():
+            pytest.skip("rhiza_book_deploy.yml not found")
+        return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+    def test_the_book_deploy_wrapper_publishes_this_repository_on_push(self, book_deploy_wrapper: dict) -> None:
         """This repository's own Pages deployment must run through the wrapper.
 
         `rhiza_book.yml` is reusable-only (previous test), so something in this
         repository still has to trigger on push and opt in to `deploy-pages`.
         """
-        path = workflows_dir / "rhiza_book_deploy.yml"
-        if not path.exists():
-            pytest.skip("rhiza_book_deploy.yml not found")
-        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
-        on = doc.get("on") or doc.get(True) or {}
+        on = _triggers(book_deploy_wrapper)
         assert isinstance(on, dict), "the book-deploy wrapper's `on:` block did not parse as a mapping"
         assert "push" in on, "the book-deploy wrapper declares no `push` trigger"
 
-        jobs = doc.get("jobs") or {}
-        uses_refs = [job.get("uses") for job in jobs.values() if job.get("uses")]
-        assert any(ref == "./.github/workflows/rhiza_book.yml" for ref in uses_refs), (
+    def test_the_book_deploy_wrapper_calls_the_local_book_workflow(self, book_deploy_wrapper: dict) -> None:
+        """The wrapper deploys by calling the reusable workflow in this repository."""
+        assert _local_book_callers(book_deploy_wrapper), (
             "the book-deploy wrapper does not call the local reusable book workflow"
         )
-        deploying_jobs = [job for job in jobs.values() if job.get("uses") == "./.github/workflows/rhiza_book.yml"]
-        assert any((job.get("with") or {}).get("deploy-pages") is True for job in deploying_jobs), (
+
+    def test_the_book_deploy_wrapper_opts_in_to_pages(self, book_deploy_wrapper: dict) -> None:
+        """The wrapper passes `deploy-pages: true`, or this repository's site never publishes."""
+        callers = _local_book_callers(book_deploy_wrapper)
+        assert any((job.get("with") or {}).get("deploy-pages") is True for job in callers), (
             "the book-deploy wrapper never passes `deploy-pages: true`, so this repository's "
             "own site is never published to GitHub Pages"
         )
@@ -831,33 +941,48 @@ class TestBookWorkflow:
             check=False,
         )
 
-    def test_the_book_workflow_requires_a_root_mkdocs_yml_before_building(
-        self, book_workflow_text: str, tmp_path: Path
-    ) -> None:
+    # The root `mkdocs.yml` guard (#1699) is run rather than grepped for, in both states, and
+    # must precede the build. One property per test (#1807).
+
+    @pytest.fixture
+    def book_build_runs(self, book_workflow: dict) -> list[str]:
+        """Return the step scripts of the book workflow's build job."""
+        return _step_runs(book_workflow["jobs"]["build"]["steps"])
+
+    @pytest.fixture
+    def mkdocs_guard(self, book_build_runs: list[str]) -> str:
+        """Return the first script in the build job that guards the root ``mkdocs.yml``."""
+        guards = _mkdocs_guard_indices(book_build_runs)
+        assert guards, "the book workflow never checks for a root mkdocs.yml before building"
+        return book_build_runs[guards[0]]
+
+    def test_the_book_workflow_requires_a_root_mkdocs_yml_before_building(self, book_build_runs: list[str]) -> None:
         """Without a root `mkdocs.yml` the job must fail up front, saying why (#1699).
 
         `book` *skips* in that case, so `_book/` is never written and the job used to die at
         the Pages upload with `tar: _book/: Cannot open` -- two steps and one tool away from
         the cause, and red on the first PR of every freshly synced `github-project` repo.
-        The guard is run rather than grepped for, in both states, and must precede the build.
+        The guard must precede the build.
         """
-        steps = yaml.safe_load(book_workflow_text)["jobs"]["build"]["steps"]
-        runs = [s.get("run") or "" for s in steps]
-        guards = [i for i, r in enumerate(runs) if "mkdocs.yml" in r and "exit 1" in r]
-        builds = [i for i, r in enumerate(runs) if 'uvx "$RHIZA_TASK" book' in r and "book-nav" not in r]
+        guards = _mkdocs_guard_indices(book_build_runs)
+        builds = _book_build_indices(book_build_runs)
         assert guards, "the book workflow never checks for a root mkdocs.yml before building"
         assert builds, "no step in the build job builds the book"
         assert min(guards) < min(builds), "the mkdocs.yml check runs after the build it guards"
 
-        missing = self._run_guard(runs[guards[0]], tmp_path)
+    def test_the_mkdocs_guard_fails_without_a_root_config(self, mkdocs_guard: str, tmp_path: Path) -> None:
+        """Run, the guard fails a repository with no `mkdocs.yml` and shows the fix (#1699)."""
+        missing = self._run_guard(mkdocs_guard, tmp_path)
         assert missing.returncode != 0, "the guard passes a repository with no mkdocs.yml"
         assert "mkdocs.yml" in missing.stdout
         assert "INHERIT: docs/mkdocs-base.yml" in (tmp_path / "summary.md").read_text(encoding="utf-8"), (
             "the step summary does not show the root config the consumer has to add"
         )
 
+    def test_the_mkdocs_guard_passes_with_a_root_config(self, mkdocs_guard: str, tmp_path: Path) -> None:
+        """Run, the guard lets a repository with a root `mkdocs.yml` through (#1699)."""
         (tmp_path / "mkdocs.yml").write_text("INHERIT: docs/mkdocs-base.yml\nsite_name: x\n", encoding="utf-8")
-        present = self._run_guard(runs[guards[0]], tmp_path)
+        present = self._run_guard(mkdocs_guard, tmp_path)
         assert present.returncode == 0, f"the guard fails a repository that has mkdocs.yml: {present.stdout}"
 
     def test_the_gitlab_book_pipeline_requires_a_root_mkdocs_yml(self, root: Path, tmp_path: Path) -> None:

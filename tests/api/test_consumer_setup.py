@@ -155,20 +155,38 @@ def test_setup_workflow_has_no_provider_configuration(workflow):
     assert triggers["workflow_call"]["secrets"]["RHIZA_SETUP_CREDENTIALS"]["required"] is False
 
 
-def test_setup_has_no_synced_dispatcher_or_provider_configuration():
-    """Consumers own setup code; guards travel with the versioned reusable workflow."""
-    for bundle in (_ROOT / "bundles").iterdir():
-        for action in ("rhiza-setup", "rhiza-consumer-setup", "release-publish"):
-            assert not (bundle / f".github/actions/{action}").exists()
-    for workflow in ("ci", "book", "marimo", "benchmark", "weekly", "release"):
-        text = (_ROOT / f".github/workflows/rhiza_{workflow}.yml").read_text()
-        assert "RHIZA_SETUP_VARS" not in text
-        assert "rhiza-consumer-setup" not in text
-    ci = yaml.safe_load(_WORKFLOW.read_text())
-    assert not any("consumer dependency setup" in s.get("name", "") for s in ci["jobs"]["pre-commit"]["steps"])
-    for path in (_ROOT / "bundles").glob("*/.github/workflows/*.yml"):
-        if path.name in {"rhiza_ci.yml", "rhiza_benchmark.yml", "rhiza_marimo.yml", "rhiza_weekly.yml"}:
-            assert "id-token: write" not in path.read_text()
+# Consumers own setup code; guards travel with the versioned reusable workflow. One property
+# per test (#1807): this was one C-rated function.
+_BUNDLES = sorted(path for path in (_ROOT / "bundles").iterdir() if path.is_dir())
+_UNPRIVILEGED = {"rhiza_ci.yml", "rhiza_benchmark.yml", "rhiza_marimo.yml", "rhiza_weekly.yml"}
+
+
+@pytest.mark.parametrize("action", ["rhiza-setup", "rhiza-consumer-setup", "release-publish"])
+def test_no_bundle_ships_a_setup_action(action):
+    """Consumers own setup code, so no bundle may sync a setup or publish action into them."""
+    shipping = [bundle.name for bundle in _BUNDLES if (bundle / f".github/actions/{action}").exists()]
+    assert not shipping, f"bundles ship .github/actions/{action}: {shipping}"
+
+
+@pytest.mark.parametrize("workflow", ["ci", "book", "marimo", "benchmark", "weekly", "release"])
+def test_setup_has_no_synced_dispatcher_or_provider_configuration(workflow):
+    """Guards travel with the versioned reusable workflow, not with a synced dispatcher."""
+    text = (_ROOT / f".github/workflows/rhiza_{workflow}.yml").read_text()
+    assert "RHIZA_SETUP_VARS" not in text
+    assert "rhiza-consumer-setup" not in text
+
+
+def test_pre_commit_job_runs_no_consumer_setup():
+    """The pre-commit job reads source as text and never runs consumer dependency setup."""
+    steps = yaml.safe_load(_WORKFLOW.read_text())["jobs"]["pre-commit"]["steps"]
+    assert not any("consumer dependency setup" in s.get("name", "") for s in steps)
+
+
+def test_unprivileged_bundle_workflows_request_no_id_token():
+    """Setup must not widen the token of workflows that publish nothing."""
+    workflows = [p for p in (_ROOT / "bundles").glob("*/.github/workflows/*.yml") if p.name in _UNPRIVILEGED]
+    offenders = [str(p.relative_to(_ROOT)) for p in workflows if "id-token: write" in p.read_text()]
+    assert not offenders, f"unprivileged workflows request id-token: write: {offenders}"
 
 
 @pytest.mark.parametrize(

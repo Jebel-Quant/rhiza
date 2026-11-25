@@ -85,6 +85,40 @@ def _bundle_files_with_sources(bundle_dir: Path) -> list[tuple[str, str]]:
     return files_with_sources
 
 
+def _bundle_closure(bundles: dict, seeds: list) -> tuple[set, list]:
+    """Resolve the transitive bundle closure for the seeds, returning (closure, missing)."""
+    closure: set = set()
+    missing: list = []
+    queue = list(seeds)
+    while queue:
+        b = queue.pop()
+        if b in closure:
+            continue
+        if b not in bundles:
+            missing.append(b)
+            continue
+        closure.add(b)
+        queue.extend(bundles[b].get("requires", []))
+    return closure, missing
+
+
+# A profile on one platform must not pull in the other platform's bundles.
+_OTHER_PLATFORM = {"github": "gitlab", "gitlab": "github"}
+
+
+def _cross_platform_bundles(profile_name: str, closure: set) -> tuple[str, list]:
+    """Return the other platform's name and the sorted bundles of it in a profile's closure.
+
+    A profile whose name starts with neither ``github`` nor ``gitlab`` has no other
+    platform, so the list is empty.
+    """
+    platform = next((name for name in _OTHER_PLATFORM if profile_name.startswith(name)), None)
+    if platform is None:
+        return "", []
+    other = _OTHER_PLATFORM[platform]
+    return other, sorted(b for b in closure if b.startswith(other))
+
+
 class TestTemplateBundles:
     """Tests for template-bundles.yml and the bundles/ directory layout."""
 
@@ -406,43 +440,31 @@ class TestTemplateBundles:
         if errors:
             pytest.fail("\nProfiles must list required bundle prerequisites explicitly:\n" + "\n".join(errors))
 
-    def test_profile_transitive_closure_is_self_consistent(self, bundles_data, profiles_data, bundle_names):
-        """Test that each profile's full transitive bundle closure has no unresolvable references.
-
-        Also checks for cross-platform contamination (github-* in gitlab profiles or vice versa).
-        """
+    def test_profile_transitive_closure_is_self_consistent(self, bundles_data, profiles_data):
+        """Test that each profile's full transitive bundle closure has no unresolvable references."""
         if not profiles_data:
             pytest.skip("No profiles defined in template-bundles.yml")
         bundles = bundles_data["bundles"]
 
-        def full_closure(seeds: list) -> tuple:
-            """Resolve the transitive bundle closure for the seeds, returning (closure, missing)."""
-            closure: set = set()
-            missing: list = []
-            queue = list(seeds)
-            while queue:
-                b = queue.pop()
-                if b in closure:
-                    continue
-                if b not in bundles:
-                    missing.append(b)
-                    continue
-                closure.add(b)
-                queue.extend(bundles[b].get("requires", []))
-            return closure, missing
+        errors = []
+        for profile_name, profile_config in profiles_data.items():
+            _, missing = _bundle_closure(bundles, profile_config.get("bundles", []))
+            if missing:
+                errors.append(f"  [profile:{profile_name}] unresolvable bundles: {sorted(missing)}")
+        if errors:
+            pytest.fail("\nProfile transitive closure issues:\n" + "\n".join(errors))
+
+    def test_profile_transitive_closure_stays_on_its_platform(self, bundles_data, profiles_data):
+        """Test for cross-platform contamination (github-* in gitlab profiles or vice versa) in each closure."""
+        if not profiles_data:
+            pytest.skip("No profiles defined in template-bundles.yml")
+        bundles = bundles_data["bundles"]
 
         errors = []
         for profile_name, profile_config in profiles_data.items():
-            closure, missing = full_closure(profile_config.get("bundles", []))
-            if missing:
-                errors.append(f"  [profile:{profile_name}] unresolvable bundles: {sorted(missing)}")
-            if profile_name.startswith("github"):
-                cross = sorted(b for b in closure if b.startswith("gitlab"))
-                if cross:
-                    errors.append(f"  [profile:{profile_name}] gitlab bundles in closure: {cross}")
-            elif profile_name.startswith("gitlab"):
-                cross = sorted(b for b in closure if b.startswith("github"))
-                if cross:
-                    errors.append(f"  [profile:{profile_name}] github bundles in closure: {cross}")
+            closure, _ = _bundle_closure(bundles, profile_config.get("bundles", []))
+            other, cross = _cross_platform_bundles(profile_name, closure)
+            if cross:
+                errors.append(f"  [profile:{profile_name}] {other} bundles in closure: {cross}")
         if errors:
             pytest.fail("\nProfile transitive closure issues:\n" + "\n".join(errors))

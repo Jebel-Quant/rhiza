@@ -80,26 +80,39 @@ def _plan(workflow, directory, *, mode="", buildable="true", private=False, acti
     return result, _outputs(output)
 
 
-@pytest.mark.parametrize(
-    ("mode", "buildable", "private"),
-    list(itertools.product(("", "pypi", "custom", "none"), ("true", "false"), (True, False))),
-)
-def test_publisher_modes(workflow, tmp_path, mode, buildable, private):
-    """Default/private/disabled decisions are explicit; custom cannot silently skip."""
-    result, output = _plan(workflow, tmp_path, mode=mode, buildable=buildable, private=private)
-    if mode == "custom" and buildable == "false":
-        assert result.returncode != 0
-        assert not output
-        return
-    assert result.returncode == 0, result.stderr
+# Default/private/disabled decisions are explicit; custom cannot silently skip.
+# Split by outcome so neither test branches (#1807).
+_MODE_COMBINATIONS = list(itertools.product(("", "pypi", "custom", "none"), ("true", "false"), (True, False)))
+_UNBUILDABLE_CUSTOM = [combo for combo in _MODE_COMBINATIONS if combo[:2] == ("custom", "false")]
+_DECIDABLE = [combo for combo in _MODE_COMBINATIONS if combo[:2] != ("custom", "false")]
+
+
+def _expected_plan(mode, buildable, private):
+    """Return the outputs the configuration guard must write for a decidable combination."""
     publisher = mode or "pypi"
     publish = publisher != "none" and buildable == "true" and (publisher == "custom" or not private)
-    assert output == {
+    return {
         "publisher": publisher,
         "should_publish": str(publish).lower(),
         "public_pypi": str(publish and publisher == "pypi").lower(),
         "version": "1.2.3-rc.1",
     }
+
+
+@pytest.mark.parametrize(("mode", "buildable", "private"), _DECIDABLE)
+def test_publisher_modes(workflow, tmp_path, mode, buildable, private):
+    """Default/private/disabled decisions are explicit."""
+    result, output = _plan(workflow, tmp_path, mode=mode, buildable=buildable, private=private)
+    assert result.returncode == 0, result.stderr
+    assert output == _expected_plan(mode, buildable, private)
+
+
+@pytest.mark.parametrize(("mode", "buildable", "private"), _UNBUILDABLE_CUSTOM)
+def test_custom_publisher_cannot_silently_skip(workflow, tmp_path, mode, buildable, private):
+    """A custom publisher on a non-buildable project fails rather than skipping."""
+    result, output = _plan(workflow, tmp_path, mode=mode, buildable=buildable, private=private)
+    assert result.returncode != 0
+    assert not output
 
 
 @pytest.mark.parametrize("mode", ["unknown", "PyPI", "CUSTOM", " ", "custom\npypi", "$(touch injected)"])
@@ -569,23 +582,57 @@ def test_caller_helper_is_never_required_or_executed(workflow, tmp_path, caller_
         assert helper.read_text() == caller_helper
 
 
-def test_tooling_checkout_is_immutable_and_independent(workflow):
-    """The already-published provider revision is distinct from the caller's tag checkout."""
-    caller = _step(workflow, "pypi", "Checkout Code")
-    tools = _step(workflow, "pypi", "Checkout publisher guards")
-    assert tools["uses"] == caller["uses"]
-    assert tools["with"] == {
+# The already-published provider revision is distinct from the caller's tag checkout.
+# One property per test (#1807).
+
+
+@pytest.fixture
+def caller_checkout(workflow):
+    """Return the publisher job's checkout of the caller's tag."""
+    return _step(workflow, "pypi", "Checkout Code")
+
+
+@pytest.fixture
+def tooling_checkout(workflow):
+    """Return the publisher job's independent checkout of the guard scripts."""
+    return _step(workflow, "pypi", "Checkout publisher guards")
+
+
+def test_tooling_checkout_uses_the_caller_checkout_action(caller_checkout, tooling_checkout):
+    """Both checkouts use the same pinned checkout action."""
+    assert tooling_checkout["uses"] == caller_checkout["uses"]
+
+
+def test_tooling_checkout_is_a_sparse_credential_free_provider_checkout(tooling_checkout):
+    """The tooling checkout fetches only the guard scripts from rhiza, beside the caller's tree."""
+    assert tooling_checkout["with"] == {
         "repository": "jebel-quant/rhiza",
-        "ref": tools["with"]["ref"],
+        "ref": tooling_checkout["with"]["ref"],
         "path": ".rhiza-release-tools",
         "sparse-checkout": "bundles/github/.rhiza/scripts",
         "persist-credentials": False,
     }
-    assert re.fullmatch(r"[0-9a-f]{40}", tools["with"]["ref"])
-    assert "path" not in caller["with"]
-    assert caller["with"]["ref"] == "refs/tags/${{ needs.tag.outputs.tag }}"
-    assert not tools.get("if")
-    assert not tools.get("continue-on-error")
+
+
+def test_tooling_checkout_is_pinned_to_a_commit(tooling_checkout):
+    """The provider revision is an immutable commit SHA, not a movable ref."""
+    assert re.fullmatch(r"[0-9a-f]{40}", tooling_checkout["with"]["ref"])
+
+
+def test_caller_checkout_is_the_tag_at_the_workspace_root(caller_checkout):
+    """The caller's checkout stays the verified tag, in the default path."""
+    assert "path" not in caller_checkout["with"]
+    assert caller_checkout["with"]["ref"] == "refs/tags/${{ needs.tag.outputs.tag }}"
+
+
+def test_tooling_checkout_is_unconditional(tooling_checkout):
+    """The guards are always fetched, and a failed fetch fails the job."""
+    assert not tooling_checkout.get("if")
+    assert not tooling_checkout.get("continue-on-error")
+
+
+def test_publisher_steps_run_from_the_workspace_root(workflow):
+    """No working-directory default or override moves the guards' relative paths."""
     assert not workflow.get("defaults", {}).get("run", {}).get("working-directory")
     assert not workflow["jobs"]["pypi"].get("defaults", {}).get("run", {}).get("working-directory")
     for step in workflow["jobs"]["pypi"]["steps"]:

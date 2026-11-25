@@ -164,33 +164,70 @@ def test_bad_metadata(tmp_path, monkeypatch, capsys, contents):
     assert capsys.readouterr().err == "::error::Missing or invalid publisher configuration or output file\n"
 
 
-def test_main_outputs_and_errors(tmp_path, monkeypatch, capsys):
-    """The CLI appends validated outputs only, with a safe diagnostic on expected failures."""
+_SAFE_ERROR = "::error::Missing or invalid publisher configuration or output file\n"
+
+
+# The CLI appends validated outputs only, with a safe diagnostic on expected failures.
+# One property per test (#1807).
+
+
+@pytest.fixture
+def cli_environment(tmp_path, monkeypatch):
+    """Return a CLI environment whose ``GITHUB_OUTPUT`` already holds an unrelated line."""
     monkeypatch.chdir(tmp_path)
     output = tmp_path / "output"
     output.write_text("existing=value\n")
-    environment = {
+    return {
         "RELEASE_PUBLISHER": "none",
         "BUILDABLE": "true",
         "PYPI_REPOSITORY_URL": "",
         "TAG": "v1.2.3",
         "GITHUB_OUTPUT": str(output),
     }
-    assert publisher.main(["validate-publisher"], environment) == 0
-    assert output.read_text() == (
+
+
+def test_main_appends_publisher_outputs(cli_environment):
+    """validate-publisher appends its outputs after what GITHUB_OUTPUT already holds."""
+    assert publisher.main(["validate-publisher"], cli_environment) == 0
+    assert Path(cli_environment["GITHUB_OUTPUT"]).read_text() == (
         "existing=value\npublisher=none\nshould_publish=false\npublic_pypi=false\nversion=1.2.3\n"
     )
+
+
+def test_main_accepts_an_empty_artifact_url():
+    """An empty artifact URL is valid and needs no output file."""
     assert publisher.main(["validate-artifact-url"], {"ARTIFACT_URL": ""}) == 0
+
+
+def test_main_rejects_an_unsafe_artifact_url(capsys):
+    """An unsafe artifact URL fails with a diagnostic that does not echo it."""
     assert publisher.main(["validate-artifact-url"], {"ARTIFACT_URL": "******example.org"}) == 1
     assert capsys.readouterr().err == ("::error::Publisher artifact-url must be one public credential-free HTTPS URL\n")
-    environment["ARTIFACT_URL"] = "https://example.org/release"
-    assert publisher.main(["validate-artifact-url"], environment) == 0
-    assert output.read_text().endswith("artifact_url=https://example.org/release\n")
-    environment["GITHUB_OUTPUT"] = str(tmp_path)
-    assert publisher.main(["validate-artifact-url"], environment) == 1
-    assert capsys.readouterr().err == "::error::Missing or invalid publisher configuration or output file\n"
+
+
+def test_main_appends_a_valid_artifact_url(cli_environment):
+    """A valid artifact URL is appended to GITHUB_OUTPUT."""
+    cli_environment["ARTIFACT_URL"] = "https://example.org/release"
+    assert publisher.main(["validate-artifact-url"], cli_environment) == 0
+    assert Path(cli_environment["GITHUB_OUTPUT"]).read_text().endswith("artifact_url=https://example.org/release\n")
+
+
+def test_main_fails_safely_on_an_unwritable_output(tmp_path, cli_environment, capsys):
+    """A GITHUB_OUTPUT that cannot be written fails with the generic safe diagnostic."""
+    cli_environment["ARTIFACT_URL"] = "https://example.org/release"
+    cli_environment["GITHUB_OUTPUT"] = str(tmp_path)
+    assert publisher.main(["validate-artifact-url"], cli_environment) == 1
+    assert capsys.readouterr().err == _SAFE_ERROR
+
+
+def test_main_accepts_built_distributions(tmp_path):
+    """require-distributions succeeds when the artifacts directory holds a wheel."""
     (tmp_path / "demo.whl").write_bytes(b"built")
     assert publisher.main(["require-distributions"], {"ARTIFACTS_DIR": str(tmp_path)}) == 0
+
+
+def test_main_rejects_an_unknown_command():
+    """An unknown command is a usage error (exit status 2)."""
     with pytest.raises(SystemExit, match="2"):
         publisher.main(["unknown"], {})
 
@@ -216,24 +253,62 @@ def test_helper_is_shipped_and_dogfooded():
         assert (workflow.parents[2] / ".rhiza/scripts/release_publish.py").resolve() == source
 
 
-def test_scanner_reachability():
-    """The authoritative script is eligible for Ruff, Bandit and Python CodeQL."""
-    path = _SCRIPT.as_posix()
-    hooks = yaml.safe_load((_ROOT / ".pre-commit-config.yaml").read_text())
-    assert not re.search(hooks.get("exclude", "^$"), path)
-    for name in ("ruff", "ruff-format", "bandit"):
-        hook = next(hook for repo in hooks["repos"] for hook in repo["hooks"] if hook["id"] == name)
-        assert re.search(hook.get("files", ""), path)
-        assert not re.search(hook.get("exclude", "^$"), path)
+# The authoritative script is eligible for Ruff, Bandit and Python CodeQL.
+# One scanner per test (#1807).
+
+
+@pytest.fixture(scope="module")
+def hooks():
+    """Return the parsed root pre-commit configuration."""
+    return yaml.safe_load((_ROOT / ".pre-commit-config.yaml").read_text())
+
+
+@pytest.fixture(scope="module")
+def codeql_job():
+    """Return the CodeQL workflow's analyze job."""
+    codeql = yaml.safe_load((_ROOT / ".github/workflows/rhiza_codeql.yml").read_text())
+    return codeql["jobs"]["analyze"]
+
+
+def _hook(hooks: dict, name: str) -> dict:
+    """Return the pre-commit hook with id ``name``."""
+    return next(hook for repo in hooks["repos"] for hook in repo["hooks"] if hook["id"] == name)
+
+
+def test_script_is_not_excluded_from_pre_commit(hooks):
+    """The pre-commit global exclude does not hide the script."""
+    assert not re.search(hooks.get("exclude", "^$"), _SCRIPT.as_posix())
+
+
+@pytest.mark.parametrize("name", ["ruff", "ruff-format", "bandit"])
+def test_script_is_reached_by_hook(hooks, name):
+    """Each scanner hook's ``files`` matches the script and its ``exclude`` does not."""
+    hook = _hook(hooks, name)
+    assert re.search(hook.get("files", ""), _SCRIPT.as_posix())
+    assert not re.search(hook.get("exclude", "^$"), _SCRIPT.as_posix())
+
+
+def test_script_is_not_excluded_from_bandit():
+    """The .bandit exclude list does not cover the script."""
     bandit = configparser.ConfigParser()
     bandit.read(_ROOT / ".bandit")
-    assert not any(part.strip() in path for part in bandit["bandit"]["exclude"].split(","))
+    assert not any(part.strip() in _SCRIPT.as_posix() for part in bandit["bandit"]["exclude"].split(","))
+
+
+def test_script_is_not_excluded_from_ruff():
+    """ruff.toml's exclude patterns do not cover the script."""
     ruff = tomllib.loads((_ROOT / "ruff.toml").read_text())
     assert not any(_SCRIPT.match(pattern) for pattern in ruff["exclude"])
-    codeql = yaml.safe_load((_ROOT / ".github/workflows/rhiza_codeql.yml").read_text())
-    job = codeql["jobs"]["analyze"]
-    assert {"language": "python", "build-mode": "none"} in job["strategy"]["matrix"]["include"]
-    initialization = next(step for step in job["steps"] if step.get("name") == "Initialize CodeQL")
+
+
+def test_codeql_analyzes_python(codeql_job):
+    """CodeQL's matrix includes Python with no build."""
+    assert {"language": "python", "build-mode": "none"} in codeql_job["strategy"]["matrix"]["include"]
+
+
+def test_codeql_uses_the_default_configuration(codeql_job):
+    """CodeQL is initialised per matrix language with no config that could narrow its paths."""
+    initialization = next(step for step in codeql_job["steps"] if step.get("name") == "Initialize CodeQL")
     assert initialization["with"]["languages"] == "${{ matrix.language }}"
     assert "config-file" not in initialization["with"]
     assert "config" not in initialization["with"]

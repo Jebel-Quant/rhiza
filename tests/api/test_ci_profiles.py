@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import json
 import os
 import subprocess  # nosec B404 - executes checked-in workflow scripts and fixture git commands
@@ -26,18 +27,23 @@ def _git(folder, *args):
     return subprocess.check_output(["git", "-C", str(folder), *args], text=True).strip()
 
 
+def _init_consumer(folder):
+    """Commit an application and primary Python version into ``folder``."""
+    (folder / "pyproject.toml").write_text('[project]\nname = "consumer"\nversion = "0.1.0"\n')
+    (folder / ".python-version").write_text("3.13.2\n")
+    (folder / "app.py").write_text("value = 1\n")
+    _git(folder, "init", "-b", "main")
+    _git(folder, "config", "user.name", "CI test")
+    _git(folder, "config", "user.email", "ci@example.invalid")
+    _git(folder, "add", ".")
+    _git(folder, "commit", "-qm", "Initial project")
+    return folder
+
+
 @pytest.fixture
 def consumer(tmp_path):
     """Create a consumer with a committed application and primary Python version."""
-    (tmp_path / "pyproject.toml").write_text('[project]\nname = "consumer"\nversion = "0.1.0"\n')
-    (tmp_path / ".python-version").write_text("3.13.2\n")
-    (tmp_path / "app.py").write_text("value = 1\n")
-    _git(tmp_path, "init", "-b", "main")
-    _git(tmp_path, "config", "user.name", "CI test")
-    _git(tmp_path, "config", "user.email", "ci@example.invalid")
-    _git(tmp_path, "add", ".")
-    _git(tmp_path, "commit", "-qm", "Initial project")
-    return tmp_path
+    return _init_consumer(tmp_path)
 
 
 def _plan(
@@ -82,8 +88,32 @@ def _plan(
     return result, outputs
 
 
-@pytest.mark.parametrize("profile", [None, "lean", "standard", "comprehensive"])
-@pytest.mark.parametrize(
+@pytest.fixture(scope="module")
+def planned(tmp_path_factory):
+    """Plan each preset and trigger once, in its own consumer, for the tests that split its properties."""
+
+    @functools.cache
+    def plan(profile, event_name, full):
+        """Run the planner for one preset and trigger, failing with its stderr if planning fails."""
+        project = _init_consumer(tmp_path_factory.mktemp("planned"))
+        result, outputs = _plan(project, profile, event_name=event_name, full=full)
+        assert result.returncode == 0, result.stderr
+        return outputs
+
+    return plan
+
+
+def _scope(profile, event_name, full):
+    """Return whether a preset plans a narrow matrix on a trigger, and whether it adds lowest-deps."""
+    broad = full or event_name == "schedule"
+    narrow = profile == "lean" and not broad
+    lowest = broad or profile in (None, "comprehensive")
+    return narrow, lowest
+
+
+# Every preset on every trigger. One property per test (#1807): this was one C-rated function.
+_PRESETS = pytest.mark.parametrize("profile", [None, "lean", "standard", "comprehensive"])
+_TRIGGERS = pytest.mark.parametrize(
     ("event_name", "full"),
     [
         ("pull_request", False),
@@ -93,22 +123,40 @@ def _plan(
         ("workflow_dispatch", True),
     ],
 )
-def test_profile_execution_plan(consumer, profile, event_name, full):
-    """Every preset retains quality/security gates and broadens compatibility on demand."""
-    result, plan = _plan(consumer, profile, event_name=event_name, full=full)
-    assert result.returncode == 0, result.stderr
-    lean = profile == "lean"
-    broad = full or event_name == "schedule"
+
+
+@_PRESETS
+@_TRIGGERS
+def test_profile_execution_plan(planned, profile, event_name, full):
+    """Every preset names itself, plans the primary version and runs the application tests."""
+    plan = planned(profile, event_name, full)
     assert plan["profile"] == (profile or "comprehensive")
     assert plan["primary"] == "3.13"
-    assert json.loads(plan["test_matrix"]) == (["3.13"] if lean and not broad else _VERSIONS)
-    assert json.loads(plan["test_os"]) == (["ubuntu-latest"] if lean and not broad else _PLATFORMS)
+    assert plan["run_tests"] == "true"
+
+
+@_PRESETS
+@_TRIGGERS
+def test_profile_matrix_broadens_compatibility_on_demand(planned, profile, event_name, full):
+    """Only Lean narrows the matrix, and a schedule or full validation broadens it again."""
+    plan = planned(profile, event_name, full)
+    narrow, _ = _scope(profile, event_name, full)
+    assert json.loads(plan["test_matrix"]) == (["3.13"] if narrow else _VERSIONS)
+    assert json.loads(plan["test_os"]) == (["ubuntu-latest"] if narrow else _PLATFORMS)
+
+
+@_PRESETS
+@_TRIGGERS
+def test_profile_retains_quality_and_security_gates(planned, profile, event_name, full):
+    """Every preset retains quality/security gates; lowest-deps and typecheck follow the preset."""
+    plan = planned(profile, event_name, full)
+    _, lowest = _scope(profile, event_name, full)
+    lean = profile == "lean"
     required = set(json.loads(plan["required_jobs"]))
     assert {"generate-matrix", "test"} <= required
-    assert ("lowest-deps" in required) == (broad or profile in (None, "comprehensive"))
+    assert ("lowest-deps" in required) == lowest
     assert ("typecheck" in required) == (not lean)
     assert ({"quality"} if lean else _QUALITY) <= required
-    assert plan["run_tests"] == "true"
 
 
 @pytest.mark.parametrize("profile", ["lean", "standard", "comprehensive"])
@@ -228,48 +276,82 @@ def test_gate_accepts_only_planned_success_and_intentional_skips(consumer, profi
         assert _gate(plan, {"security": "failure"}).returncode != 0
 
 
-def test_gate_covers_every_job_and_profile_uses_the_existing_security_gates():
-    """The gate covers all branches and Lean runs the same pinned checks after authenticated setup."""
+# The gate and job wiring, one property per test (#1807): this was one C-rated function, in
+# which the first wrong condition hid every later one.
+_QUALITY_TASKS = ["fmt", "deps", "typecheck", "rhiza-test", "docs-coverage", "security", "license", "dist-check"]
+_PLANNED = "needs.generate-matrix.outputs"
+_CONDITIONS = {
+    "test": f"{_PLANNED}.run_tests == 'true'",
+    "lowest-deps": f"{_PLANNED}.run_lowest == 'true'",
+    "typecheck": f"{_PLANNED}.consolidated != 'true' && {_PLANNED}.run_tests == 'true'",
+    "quality": f"{_PLANNED}.consolidated == 'true'",
+}
+_STUB = yaml.safe_load((_ROOT / "bundles/github-tests/.github/workflows/rhiza_ci.yml").read_text())
+_DEFAULT_BRANCH_ONLY_PUSH = (
+    "github.event_name != 'push' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)"
+)
+_FULL_VALIDATION = "${{ inputs.full-validation || false }}"
+
+
+def _run_commands(job):
+    """Return the commands of a job's ``Run ...`` steps, in order."""
+    named = [s for s in job["steps"] if s.get("name", "").startswith("Run ")]
+    return [s["run"] for s in named if "run" in s]
+
+
+def test_gate_covers_every_job():
+    """The gate needs every other job, so no branch of the plan escapes the roll-up."""
     assert set(_JOBS["ci-gate"]["needs"]) == set(_JOBS) - {"ci-gate"}
+
+
+def test_consolidated_quality_runs_the_existing_security_gates():
+    """Lean runs the same pinned checks as the split jobs, after authenticated setup, and none may fail open."""
     quality = _JOBS["quality"]
-    commands = [s["run"] for s in quality["steps"] if s.get("name", "").startswith("Run ") and "run" in s]
-    assert commands == [
-        f'uvx "$RHIZA_TASK" {task}'
-        for task in ["fmt", "deps", "typecheck", "rhiza-test", "docs-coverage", "security", "license", "dist-check"]
-    ]
+    assert _run_commands(quality) == [f'uvx "$RHIZA_TASK" {task}' for task in _QUALITY_TASKS]
     assert not any(s.get("continue-on-error") for s in quality["steps"])
-    for name in _QUALITY:
-        assert _JOBS[name]["needs"] == "generate-matrix"
-        assert _JOBS[name]["if"] == "needs.generate-matrix.outputs.consolidated != 'true'"
-    assert _JOBS["test"]["if"] == "needs.generate-matrix.outputs.run_tests == 'true'"
-    assert _JOBS["lowest-deps"]["if"] == "needs.generate-matrix.outputs.run_lowest == 'true'"
-    assert (
-        _JOBS["typecheck"]["if"]
-        == "needs.generate-matrix.outputs.consolidated != 'true' && needs.generate-matrix.outputs.run_tests == 'true'"
-    )
-    assert quality["if"] == "needs.generate-matrix.outputs.consolidated == 'true'"
+
+
+@pytest.mark.parametrize("name", sorted(_QUALITY))
+def test_split_quality_jobs_yield_to_the_consolidated_job(name):
+    """Each split quality job follows the plan and stands down when Lean consolidates them."""
+    assert _JOBS[name]["needs"] == "generate-matrix"
+    assert _JOBS[name]["if"] == f"{_PLANNED}.consolidated != 'true'"
+
+
+@pytest.mark.parametrize(("name", "condition"), _CONDITIONS.items())
+def test_planned_jobs_run_on_their_plan_output(name, condition):
+    """Test, lowest-deps, typecheck and the consolidated quality job each run on their plan output."""
+    assert _JOBS[name]["if"] == condition
+
+
+def test_test_matrix_comes_from_the_plan():
+    """The test job's Python versions and platforms are the planned ones."""
     matrix = _JOBS["test"]["strategy"]["matrix"]
     assert "test_matrix" in matrix["python-version"]
     assert "test_os" in matrix["os"]
 
 
-def test_consumer_triggers_preserve_feature_branch_prs_and_manual_full_validation():
-    """Consumers schedule compatibility checks and suppress branch pushes without filtering PR targets."""
-    stub = yaml.safe_load((_ROOT / "bundles/github-tests/.github/workflows/rhiza_ci.yml").read_text())
-    for workflow in [stub, _WORKFLOW]:
-        triggers = workflow.get("on", workflow.get(True))
-        assert triggers["pull_request"] is None
-        assert triggers["push"] is None
-        assert triggers["schedule"]
-        assert triggers["workflow_dispatch"]["inputs"]["full-validation"]["type"] == "boolean"
-    condition = (
-        "github.event_name != 'push' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)"
-    )
-    assert stub["jobs"]["ci"]["if"] == condition
-    assert _JOBS["generate-matrix"]["if"] == condition
-    assert _JOBS["ci-gate"]["if"] == f"always() && ({condition})"
-    assert stub["jobs"]["ci"]["with"]["full-validation"] == "${{ inputs.full-validation || false }}"
-    assert _PLAN["env"]["FULL_VALIDATION"] == "${{ inputs.full-validation || false }}"
+@pytest.mark.parametrize("workflow", [_STUB, _WORKFLOW], ids=["stub", "reusable"])
+def test_consumer_triggers_preserve_feature_branch_prs_and_manual_full_validation(workflow):
+    """Consumers schedule compatibility checks and offer full validation without filtering PR targets."""
+    triggers = workflow.get("on", workflow.get(True))
+    assert triggers["pull_request"] is None
+    assert triggers["push"] is None
+    assert triggers["schedule"]
+    assert triggers["workflow_dispatch"]["inputs"]["full-validation"]["type"] == "boolean"
+
+
+def test_consumer_suppresses_branch_pushes():
+    """Only default-branch pushes run, in the stub and in every entry job of the reusable workflow."""
+    assert _STUB["jobs"]["ci"]["if"] == _DEFAULT_BRANCH_ONLY_PUSH
+    assert _JOBS["generate-matrix"]["if"] == _DEFAULT_BRANCH_ONLY_PUSH
+    assert _JOBS["ci-gate"]["if"] == f"always() && ({_DEFAULT_BRANCH_ONLY_PUSH})"
+
+
+def test_manual_full_validation_reaches_the_planner():
+    """The stub forwards the dispatch input and the planner reads it, defaulting to false."""
+    assert _STUB["jobs"]["ci"]["with"]["full-validation"] == _FULL_VALIDATION
+    assert _PLAN["env"]["FULL_VALIDATION"] == _FULL_VALIDATION
 
 
 @pytest.mark.parametrize("profile", ["lean", "standard", "comprehensive"])

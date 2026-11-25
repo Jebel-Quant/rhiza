@@ -140,6 +140,33 @@ def _assemble_gitlab_project(root: Path, dest: Path) -> Path:
 # ---------------------------------------------------------------------------
 
 
+def _image_ref(value: object) -> str | None:
+    """Return the image an ``image:`` value or ``services:`` entry names, if any.
+
+    GitLab accepts either a bare string or a ``{name: ...}`` mapping; anything else
+    names no image.
+    """
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict) and isinstance(value.get("name"), str):
+        return value["name"]
+    return None
+
+
+def _images_under(key: object, value: object) -> list[str]:
+    """Collect the image references a single mapping entry contributes.
+
+    ``image:`` contributes its own reference, a ``services:`` list one per entry, and
+    any other key is walked recursively.
+    """
+    if key == "image":
+        ref = _image_ref(value)
+        return [] if ref is None else [ref]
+    if key == "services" and isinstance(value, list):
+        return [ref for ref in map(_image_ref, value) if ref is not None]
+    return _walk_images(value)
+
+
 def _walk_images(node: object) -> list[str]:
     """Recursively collect every container image reference in a loaded YAML doc.
 
@@ -147,26 +174,11 @@ def _walk_images(node: object) -> list[str]:
     (list of strings or ``{name: ...}``) wherever they appear (``default:`` or
     per-job).
     """
-    found: list[str] = []
     if isinstance(node, dict):
-        for key, value in node.items():
-            if key == "image":
-                if isinstance(value, str):
-                    found.append(value)
-                elif isinstance(value, dict) and isinstance(value.get("name"), str):
-                    found.append(value["name"])
-            elif key == "services" and isinstance(value, list):
-                for svc in value:
-                    if isinstance(svc, str):
-                        found.append(svc)
-                    elif isinstance(svc, dict) and isinstance(svc.get("name"), str):
-                        found.append(svc["name"])
-            else:
-                found.extend(_walk_images(value))
-    elif isinstance(node, list):
-        for item in node:
-            found.extend(_walk_images(item))
-    return found
+        return [image for key, value in node.items() for image in _images_under(key, value)]
+    if isinstance(node, list):
+        return [image for item in node for image in _walk_images(item)]
+    return []
 
 
 def _collect_variables(project: Path) -> dict[str, str]:

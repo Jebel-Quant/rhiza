@@ -105,17 +105,33 @@ def test_dependency_steps_preserve_setup_exports(workflow):
     assert all(value == "${{ secrets.UV_EXTRA_INDEX_URL || env.UV_EXTRA_INDEX_URL }}" for value in values), values
 
 
-def test_authenticated_setup_consumption(tmp_path, private_index):
-    """Setup exports survive an empty legacy secret and enable frozen installation."""
+# The end-to-end path, one property per test (#1807): this was one C-rated function. Each
+# fixture below runs one stage of it, so a later test still runs every earlier stage first.
+_CI_STEPS = yaml.safe_load((_ROOT / ".github/workflows/rhiza_ci.yml").read_text())["jobs"]["test"]["steps"]
+_GUARD_STEP = next(s for s in _CI_STEPS if s.get("name") == "Validate consumer dependency setup")
+_CALL_STEP = next(s for s in _CI_STEPS if s.get("name") == "Run consumer dependency setup")
+
+
+@pytest.fixture
+def uv():
+    """Locate uv; the frozen-install path cannot run without it."""
     uv = shutil.which("uv")
     if not uv:
         pytest.skip("uv is required")
-    url, authorized = private_index
+    return uv
+
+
+def _run(project, command, env):
+    """Execute real setup and dependency commands with bounded runtimes."""
+    return subprocess.run(command, cwd=project, env=env, capture_output=True, text=True, check=False, timeout=60)
+
+
+@pytest.fixture
+def consumer(tmp_path, private_index):
+    """Write the consumer, its setup hook and the step environment of an enabled push."""
+    url, _ = private_index
     project = tmp_path / "consumer"
     hook = _write_consumer(project)
-    steps = yaml.safe_load((_ROOT / ".github/workflows/rhiza_ci.yml").read_text())["jobs"]["test"]["steps"]
-    guard_step = next(s for s in steps if s.get("name") == "Validate consumer dependency setup")
-    call_step = next(s for s in steps if s.get("name") == "Run consumer dependency setup")
     environment = {k: v for k, v in os.environ.items() if not k.startswith("UV_")}
     environment.update(
         ENABLED="true",
@@ -127,28 +143,60 @@ def test_authenticated_setup_consumption(tmp_path, private_index):
         UV_CACHE_DIR=str(tmp_path / "cache"),
         UV_PYTHON_DOWNLOADS="never",
     )
+    return project, hook, environment
 
-    def run(command, env):
-        """Execute real setup and dependency commands with bounded runtimes."""
-        return subprocess.run(command, cwd=project, env=env, capture_output=True, text=True, check=False, timeout=60)
 
-    guard = run(["bash", "-e", "-c", guard_step["run"]], environment)
+@pytest.fixture
+def exported(consumer):
+    """Run the guard and the consumer's setup hook, then load what it exported into the environment."""
+    project, hook, environment = consumer
+    guard = _run(project, ["bash", "-e", "-c", _GUARD_STEP["run"]], environment)
     assert guard.returncode == 0, guard.stderr
-    assert call_step["uses"] == "./.github/actions/rhiza-setup"
     setup = yaml.safe_load(hook.read_text())["runs"]["steps"][0]
-    result = run(["bash", "-e", "-c", setup["run"]], environment)
+    result = _run(project, ["bash", "-e", "-c", setup["run"]], environment)
     assert result.returncode == 0, result.stderr
     environment.update(line.split("=", 1) for line in Path(environment["GITHUB_ENV"]).read_text().splitlines())
-    result = run([uv, "lock"], environment)
+    return project, environment
+
+
+@pytest.fixture
+def locked(exported, uv):
+    """Lock the consumer against the private index using only the exported credentials."""
+    project, environment = exported
+    result = _run(project, [uv, "lock"], environment)
     assert result.returncode == 0, result.stderr
-    lock = (project / "uv.lock").read_bytes()
-    # No credentials: a fresh cache must fail, proving the index enforces auth.
+    return project, environment, (project / "uv.lock").read_bytes()
+
+
+def test_setup_is_called_through_the_consumer_action():
+    """The workflow delegates setup to the consumer's own composite action."""
+    assert _CALL_STEP["uses"] == "./.github/actions/rhiza-setup"
+
+
+def test_setup_guard_accepts_an_enabled_push(consumer):
+    """The real guard passes for an enabled push from the caller's own repository."""
+    project, _, environment = consumer
+    guard = _run(project, ["bash", "-e", "-c", _GUARD_STEP["run"]], environment)
+    assert guard.returncode == 0, guard.stderr
+
+
+def test_frozen_sync_fails_without_the_exported_credentials(locked, private_index, uv):
+    """No credentials: a fresh cache must fail, proving the index enforces auth."""
+    project, environment, _ = locked
+    url, _ = private_index
     unauthenticated = {**environment, "UV_EXTRA_INDEX_URL": url.replace("fixture:secret@", "")}
-    result = run([uv, "sync", "--frozen"], unauthenticated)
+    result = _run(project, [uv, "sync", "--frozen"], unauthenticated)
     assert result.returncode != 0
-    result = run([uv, "sync", "--frozen"], environment)
+
+
+def test_authenticated_setup_consumption(locked, private_index, uv):
+    """Setup exports survive an empty legacy secret and enable frozen installation."""
+    project, environment, lock = locked
+    _, authorized = private_index
+    result = _run(project, [uv, "sync", "--frozen"], environment)
     assert result.returncode == 0, result.stderr
-    result = run(
+    result = _run(
+        project,
         [uv, "run", "--frozen", "python", "-c", "import private_demo; assert private_demo.VALUE == 1737"],
         environment,
     )
