@@ -150,9 +150,9 @@ ignore_missing_version = true
 # layer 4 of rhiza-task's resolution order, above `.rhiza/.env` and below the environment.
 #
 # `source-folder` is the one entry that is load-bearing rather than a preference. It
-# replaces six make accumulators that the retired `.rhiza/make.d/bundles.mk` used to carry
-# (TYPECHECK_FOLDERS, BANDIT_FOLDERS, DOCSTRING_FOLDERS, DEPTRY_FOLDERS, SEMGREP_FOLDERS,
-# COVERAGE_FOLDERS += utils). They existed because this repo ships configuration rather
+# replaces six per-gate folder accumulators (typecheck, bandit, docstring, deptry, semgrep
+# and coverage, each appended `utils`) that the retired make layer's bundle fragment used to
+# carry. They existed because this repo ships configuration rather
 # than a library: it has no `src/`, so the default matched nothing and `typecheck`,
 # `security`, `deps`, `docs-coverage` and `semgrep` each exited 0 having measured nothing
 # (#1505, #1511, #1516) — on the repo that ships those gates to everyone else.
@@ -177,7 +177,8 @@ deptry-ignore = ["--ignore", "DEP004"]
 # inference entirely.
 layers = ["python"]
 
-# Restores what the make layer defaulted to. `python.mk` had `TYPECHECKER ?= both`; the CLI
+# Restores what the make layer defaulted to. Its Python fragment ran both checkers by default
+# (`TYPECHECKER ?= both`); the CLI
 # defaults to `ty` alone, so a bare migration silently dropped `mypy --strict` from this
 # repo's typecheck gate — while CLAUDE.md and the README go on describing `make typecheck`
 # as "ty and mypy --strict".
