@@ -91,7 +91,8 @@ Some files **cannot** be symlinks and stay real copies, kept in sync by
   symlinks there. Live workflows deliberately differ from the bundle stubs.
 - `rulesets/main-branch-protection.json` — the bundle copy prefixes its required context
   with `ci /` because downstream stubs delegate through a `ci` job. Both copies require
-  only the aggregate `CI gate` check. Changing the file changes no live setting; re-apply
+  the aggregate `CI gate` check; the root copy also requires `E2E gate`, which consumers
+  never run. Changing the file changes no live setting; re-apply
   it (see `docs/ops/BRANCH_PROTECTION.md`).
 - `.gitignore` / `.gitattributes` files — git opens these with `O_NOFOLLOW`.
 
@@ -229,8 +230,9 @@ This repo runs on **GitHub Actions only** (`.github/workflows/`). There is no ro
 validated by `tests/bundles/test_gitlab_ci.py` without a GitLab host.
 
 - `rhiza_ci.yml` runs every gate, plus `dist-check` and `license`, and rolls them into one
-  `CI gate` job — the only required check.
-- `rhiza_e2e.yml` is the only place the Rust and Go layers execute.
+  `CI gate` job — a required check.
+- `rhiza_e2e.yml` is the only place the Rust and Go layers execute. Its `E2E gate` job is
+  the mother repo's second required check, passing only when every layer succeeded.
 - Python dependency advisories are audited **weekly**, not gated: `rhiza_weekly.yml`'s
   `advisories` job (and GitLab's `weekly:advisories`) runs `pip-audit` over the committed
   `uv.lock`. The Python `security` task stays bandit-only, so an advisory published today

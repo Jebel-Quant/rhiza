@@ -143,13 +143,25 @@ def _required_contexts(ruleset: Path) -> list[str]:
     return [check["context"] for check in checks["parameters"]["required_status_checks"]]
 
 
-def _ci_job_names() -> set[str]:
-    """Return the check-run names the mother repo's reusable CI workflow reports.
+def _job_names(workflow_file: str) -> set[str]:
+    """Return the check-run names one of the mother repo's workflows reports.
 
     GitHub names a check run after the job's ``name:``, falling back to its job id.
+
+    Args:
+        workflow_file: File name under ``.github/workflows/``.
+
+    Returns:
+        The check-run names.
     """
-    workflow = yaml.safe_load((_ROOT / ".github" / "workflows" / "rhiza_ci.yml").read_text(encoding="utf-8"))
+    workflow = yaml.safe_load((_ROOT / ".github" / "workflows" / workflow_file).read_text(encoding="utf-8"))
     return {job.get("name", job_id) for job_id, job in workflow["jobs"].items()}
+
+
+# Contexts only the mother repo requires. `E2E gate` rolls up rhiza_e2e.yml, which runs the
+# language layers against the bundles in this repository and is not shipped to consumers,
+# so the bundle ruleset cannot name it: the check would never report downstream (#1813).
+_MOTHER_ONLY_CONTEXTS = ("E2E gate",)
 
 
 class TestRequiredStatusCheckContexts:
@@ -191,7 +203,8 @@ class TestRequiredStatusCheckContexts:
         """The bundle copy must be the root copy with the caller's job id prepended."""
         root = _required_contexts(_ROOT / ".github" / _RULESET)
         bundle = _required_contexts(_ROOT / "bundles" / "github" / ".github" / _RULESET)
-        assert bundle == [f"ci / {context}" for context in root], (
+        shipped = [context for context in root if context not in _MOTHER_ONLY_CONTEXTS]
+        assert bundle == [f"ci / {context}" for context in shipped], (
             "the bundle ruleset must list the same checks as the root one, each prefixed "
             "with the github-tests caller's job id (#1448)"
         )
@@ -202,15 +215,15 @@ class TestRequiredStatusCheckContexts:
         A ruleset may only require checks that report; a renamed or deleted job leaves
         a required check permanently pending rather than failing loudly.
         """
-        names = _ci_job_names()
+        names = _job_names("rhiza_ci.yml") | _job_names("rhiza_e2e.yml")
         missing = [c for c in _required_contexts(_ROOT / ".github" / _RULESET) if c not in names]
         assert not missing, (
-            f"required status checks name no job in .github/workflows/rhiza_ci.yml: {missing} "
+            f"required status checks name no job in rhiza_ci.yml or rhiza_e2e.yml: {missing} "
             f"(known job check-run names: {sorted(names)})"
         )
 
-    def test_only_the_profile_independent_aggregate_is_required(self) -> None:
-        """Both rulesets require ``CI gate`` and nothing else (#1744).
+    def test_only_the_profile_independent_aggregates_are_required(self) -> None:
+        """Both rulesets require ``CI gate``; the mother repo adds ``E2E gate`` (#1744, #1813).
 
         The ``lean`` CI profile folds pre-commit, deptry, docs-coverage, security and
         license into one ``quality`` job, so a ruleset naming those per-job checks waits
@@ -219,8 +232,12 @@ class TestRequiredStatusCheckContexts:
         so requiring it alone loses no assurance. Keeping the list to that one context
         also keeps out the optional workflows (CodeQL, marimo), which skip on pull
         requests under ``lean`` and ``standard`` and so can never be required.
+
+        ``E2E gate`` is the one addition, and only here: ``rhiza_e2e.yml`` is the only place the
+        Rust and Go layers execute, so without it a PR breaking either merges past a green
+        ``CI gate``. It is single-instance, runs on every pull request, and is not shipped.
         """
-        assert _required_contexts(_ROOT / ".github" / _RULESET) == ["CI gate"]
+        assert _required_contexts(_ROOT / ".github" / _RULESET) == ["CI gate", "E2E gate"]
         assert _required_contexts(_ROOT / "bundles" / "github" / ".github" / _RULESET) == ["ci / CI gate"]
 
     def test_the_required_gate_rolls_up_every_ci_job(self) -> None:
@@ -228,3 +245,43 @@ class TestRequiredStatusCheckContexts:
         workflow = yaml.safe_load((_ROOT / ".github" / "workflows" / "rhiza_ci.yml").read_text(encoding="utf-8"))
         gate_id = next(job_id for job_id, job in workflow["jobs"].items() if job.get("name") == "CI gate")
         assert set(workflow["jobs"][gate_id]["needs"]) == set(workflow["jobs"]) - {gate_id}
+
+
+class TestE2EGate:
+    """``E2E gate`` can be required only if it rolls up every layer and always reports (#1813)."""
+
+    @staticmethod
+    def _workflow() -> dict:
+        """Return the parsed ``rhiza_e2e.yml``."""
+        return yaml.safe_load((_ROOT / ".github" / "workflows" / "rhiza_e2e.yml").read_text(encoding="utf-8"))
+
+    @staticmethod
+    def _gate_id(workflow: dict) -> str:
+        """Return the job id whose check-run name is ``E2E gate``."""
+        return next(job_id for job_id, job in workflow["jobs"].items() if job.get("name") == "E2E gate")
+
+    def test_the_gate_rolls_up_every_layer_job(self) -> None:
+        """A layer job the gate does not need could fail without blocking a merge."""
+        workflow = self._workflow()
+        gate_id = self._gate_id(workflow)
+        assert set(workflow["jobs"][gate_id]["needs"]) == set(workflow["jobs"]) - {gate_id}
+
+    def test_the_gate_runs_even_when_a_layer_fails(self) -> None:
+        """Without ``always()`` a failed layer skips the gate, and a skipped check is not a red one."""
+        workflow = self._workflow()
+        assert "always()" in str(workflow["jobs"][self._gate_id(workflow)].get("if", ""))
+
+    def test_the_gate_reports_on_every_pull_request(self) -> None:
+        """A required check behind a paths filter never reports on other PRs and wedges them."""
+        workflow = self._workflow()
+        triggers = workflow.get("on", workflow.get(True))  # YAML 1.1 reads a bare `on` key as True
+        assert "pull_request" in triggers
+        pull_request = triggers["pull_request"] or {}
+        assert not {"paths", "paths-ignore", "branches", "branches-ignore"} & set(pull_request)
+
+    def test_only_success_passes_the_gate(self) -> None:
+        """A layer past its timeout-minutes concludes ``cancelled``; accepting it lets a hung layer through."""
+        workflow = self._workflow()
+        script = "\n".join(step.get("run", "") for step in workflow["jobs"][self._gate_id(workflow)]["steps"])
+        assert '!= "success"' in script
+        assert '!= "cancelled"' not in script

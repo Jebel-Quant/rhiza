@@ -474,6 +474,17 @@ Two properties keep it from being merely expensive:
 Narrow the run with `make e2e E2E_ARGS=tests/e2e/test_go_layer_e2e.py`, which is how
 each CI job selects its layer.
 
+**`E2E gate` is a required check (#1813).** The workflow ran on every pull request from
+the start, but the ruleset required only `CI gate`, so a red Rust or Go layer sat beside
+a green merge button. The fix requires the existing `E2E gate` roll-up in the **root**
+ruleset only. The bundle copy cannot carry it, because consumers have no e2e workflow and
+a required check that never reports wedges every PR. The gate used to accept `cancelled`
+as well as `success`. Once required, that was a hole: a job past its `timeout-minutes`
+concludes `cancelled`, so a hung layer would have passed. It now accepts only `success`,
+as `CI gate` does. `TestE2EGate` in `tests/bundles/test_bundle_github_sync.py` pins all
+four properties: rolls up every layer, runs under `always()`, reports on every PR, and
+passes only on `success`.
+
 ### The rhiza checks are a dependency, not synced files
 
 `make rhiza-test` runs rhiza's **conformance checks** — the assertions about a consuming
