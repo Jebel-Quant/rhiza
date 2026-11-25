@@ -170,6 +170,8 @@ Version constraints should be reviewed:
 - Security patches are auto-merged when safe
 - Full test suite runs on every update
 - Dependency vulnerability scanning via GitHub Security
+- A weekly `pip-audit` of the committed `uv.lock` (the `advisories` job in
+  `rhiza_weekly.yml`), which also covers GitLab, where there is no Dependabot
 
 ### Advisory Monitoring
 

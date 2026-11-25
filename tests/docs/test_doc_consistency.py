@@ -610,12 +610,16 @@ class TestToolClaims:
             "The invocation scan is probably looking in the wrong places."
         )
 
-    def test_pip_audit_is_the_known_absent_case(self) -> None:
-        """pip-audit is deliberately not wired up; this pins the fact the gate depends on."""
-        assert "pip-audit" not in _invoked_tools(), (
-            "pip-audit is invoked again — that is fine, but this test and the docs that "
-            "were pruned in #1506 should be revisited together."
-        )
+    def test_pip_audit_runs_in_the_weekly_advisories_job(self) -> None:
+        """pip-audit is wired up again, in the weekly workflows only; this pins the fact docs may cite.
+
+        #1506 pruned nine documents that claimed pip-audit ran when nothing invoked it, and this
+        test used to pin its absence. #1804 brought it back as the weekly `advisories` job --
+        not in `security`, so a freshly published advisory notifies rather than blocks a pull
+        request. Documents may now name it, but only as a weekly audit: if it ever moves into a
+        gate or out of the toolchain, this test and those documents should be revisited together.
+        """
+        assert "pip-audit" in _invoked_tools(), "pip-audit is no longer invoked anywhere; revisit #1804's docs"
 
 
 # Mechanisms that retired with the synced make layer (v1.4.0) and its predecessors. Each is a
