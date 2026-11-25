@@ -310,3 +310,46 @@ class TestTheTectonicPin:
             f"{ {v: sorted(p) for v, p in versions.items()} }. The paper artifact and the "
             f"book's copy of it would be built by different engines."
         )
+
+
+# The uv pin in the shim, as written: `UV_VERSION ?= 0.13.10`.
+_UV_VERSION = re.compile(r"^UV_VERSION \?= (\d+\.\d+\.\d+)$", re.MULTILINE)
+_SHIM = "bundles/core/Makefile"
+
+
+class TestTheUvInstallerPin:
+    """The uv the shim bootstraps is pinned, and Renovate is what moves the pin (#1797).
+
+    The shim downloads uv only when none is on PATH -- a fresh machine or a bare CI image,
+    which is exactly where reproducibility matters. An unversioned installer URL makes that
+    the one unpinned step in a toolchain that pins everything else, and every consumer
+    inherits it. The unversioned URL itself is refused by
+    ``tests/security/test_security_patterns.py``'s piped-installer allowlist.
+    """
+
+    def test_the_shim_pins_a_uv_version(self) -> None:
+        """Exactly one semver ``UV_VERSION`` default, used by the installer URL."""
+        text = (_ROOT / _SHIM).read_text(encoding="utf-8")
+        pins = _UV_VERSION.findall(text)
+        assert len(pins) == 1, f"expected one `UV_VERSION ?= X.Y.Z` in {_SHIM}, found {pins}"
+        assert "astral.sh/uv/$(UV_VERSION)/install.sh" in text, (
+            f"{_SHIM} no longer installs uv through the pinned URL; an unversioned "
+            f"astral.sh/uv/install.sh installs whatever uv is newest"
+        )
+        assert "astral.sh/uv/install.sh" not in text, f"{_SHIM} still carries an unversioned installer URL"
+
+    def test_the_manager_matches_the_shim_and_captures_the_pin(self) -> None:
+        """A manager that finds the file but not the literal is a silent no-op (#1579)."""
+        manager = _manager("uv")
+        patterns = [_as_regex(p) for p in manager["managerFilePatterns"]]
+        assert any(p.search(_SHIM) for p in patterns), f"no managerFilePatterns entry matches {_SHIM}"
+        text = (_ROOT / _SHIM).read_text(encoding="utf-8")
+        captured = [m.group("currentValue") for s in manager["matchStrings"] for m in _match_string(s).finditer(text)]
+        assert captured == _UV_VERSION.findall(text), f"the uv manager captured {captured} from {_SHIM}"
+
+    def test_the_root_makefile_is_not_matched(self) -> None:
+        """The dogfood symlink stays out of reach, as for the rhiza-task manager."""
+        patterns = [_as_regex(p) for p in _manager("uv")["managerFilePatterns"]]
+        assert not any(p.search("Makefile") for p in patterns), (
+            "the uv manager matches the root `Makefile`, a dogfood symlink Renovate would turn into a real file"
+        )

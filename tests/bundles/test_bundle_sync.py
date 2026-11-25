@@ -121,7 +121,7 @@ class TestCoreIsLanguageNeutral:
         """
         shim = (self.project / "Makefile").read_text(encoding="utf-8")
         assert "UVX ?=" in shim, "the shim no longer resolves a uvx path"
-        assert "astral.sh/uv/install.sh" in shim, (
+        assert "astral.sh/uv/$(UV_VERSION)/install.sh" in shim, (
             "the shim no longer downloads uv, so `make fmt` fails on a runner without it"
         )
 
