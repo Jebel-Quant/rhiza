@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.14.1] - 2026-11-26
+
+### Dependencies
+- *(deps)* Update renovate/renovate docker tag to v44.263.5 (#1822)
+- *(deps)* Update node.js to v26 (#1823)
+- *(deps)* Update renovate/renovate docker tag to v45 (#1824)
+
 ## [1.14.0] - 2026-11-25
 
 ### New Features
