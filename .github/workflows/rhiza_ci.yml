@@ -110,6 +110,7 @@ jobs:
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          persist-credentials: false
           lfs: true
           fetch-depth: 0  # Compare complete PR diffs without an API file-count limit.
 
@@ -380,6 +381,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          persist-credentials: false
           lfs: true
 
       - name: Install uv
@@ -460,6 +462,7 @@ jobs:
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          persist-credentials: false
           # Runs the project's own pytest suite, so a repo whose fixtures are LFS-tracked
           # needs the content here for the same reason `test` does. Passing there and
           # failing here on identical tests reads as a resolution problem, which is the
@@ -519,6 +522,8 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
@@ -561,6 +566,8 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
@@ -606,6 +613,7 @@ jobs:
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          persist-credentials: false
           # README validation doctests the ```pycon fences, and a consumer's example
           # reads the demo data that ships with the repo. Without this the pointer file
           # reaches the reader and the check dies on content, not on the repo being wrong
@@ -651,6 +659,8 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
 
       - name: Configure git auth for private packages
         uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
@@ -695,6 +705,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
@@ -734,6 +746,8 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
@@ -774,6 +788,7 @@ jobs:
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          persist-credentials: false
           # A version derived from git (hatch-vcs, setuptools-scm) needs the tags to be
           # visible, or the sdist carries a fallback version and the check measures that.
           fetch-depth: 0
@@ -819,6 +834,8 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
@@ -869,6 +886,7 @@ jobs:
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          persist-credentials: false
           # Repository checks execute README examples, which may read LFS data.
           lfs: true
           # dist-check builds the package; a version derived from git needs the tags.

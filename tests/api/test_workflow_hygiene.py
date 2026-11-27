@@ -1,10 +1,10 @@
-"""Tests that gate workflow hygiene: concurrency groups and precise action pins.
+"""Tests that gate workflow hygiene: concurrency, action pins, secrets, checkouts, timeouts.
 
 Rhiza-specific: covers both rhiza's own workflows (.github/workflows/) and the
 workflow stubs shipped to downstream projects (bundles/*/.github/workflows/).
 Lives in the mother repo's own tests/, so it does not sync downstream.
 
-Three invariants:
+Five invariants:
 
 1. Every workflow that runs its own jobs declares a top-level ``concurrency``
    block so superseded runs are cancelled instead of wasting CI minutes.
@@ -28,6 +28,9 @@ Three invariants:
    other organisation it forwarded nothing and private dependencies failed to
    install (#1689). A mapped-but-undeclared secret fails the run at parse time,
    and a read-but-undeclared one arrives empty, so both halves are pinned.
+4. Every ``actions/checkout`` step sets ``persist-credentials`` explicitly, and only
+   jobs that use git against ``origin`` afterwards (an allowlist) keep the token.
+5. Every job that runs its own steps declares ``timeout-minutes``.
 """
 
 from __future__ import annotations
@@ -348,3 +351,99 @@ class TestSecretForwarding:
                 if value != f"${{{{ secrets.{name} }}}}":
                     problems.append(f"{job_id}: {name} is forwarded as {value!r}, expected ${{{{ secrets.{name} }}}}")
         assert not problems, f"{stub.relative_to(_ROOT)}:\n  " + "\n  ".join(problems)
+
+
+# --- Invariant 4: checkouts do not leave the token in the workspace -----------
+#
+# actions/checkout persists the job's token into `.git/config` by default, where every
+# later step can read it — and any step that uploads the workspace as an artifact
+# publishes it (zizmor's `artipacked`). Every checkout therefore states its choice, and
+# only a job that talks to `origin` with git afterwards may keep the token. The allowlist
+# names the job, not just the file, so a second checkout added to one of these files
+# still has to justify itself. Jobs that install private packages are unaffected: they
+# authenticate through `configure-git-auth`, which writes its own global URL rewrite.
+
+_CHECKOUT = "actions/checkout@"
+
+# (workflow file name, job id) -> why the job needs git credentials after checkout.
+_CREDENTIALED_CHECKOUTS = {
+    ("rhiza_paper.yml", "build-pdf"): "pushes the compiled PDF to the paper branch",
+    ("rhiza_sync.yml", "sync"): "pushes the sync branch",
+    ("rhiza_release.yml", "tag"): "fetches branch refs to check the tag is reachable",
+}
+
+
+def _checkouts(workflow: dict) -> list[tuple[str, dict]]:
+    """Return ``(job_id, with_block)`` for every actions/checkout step in a workflow."""
+    return [
+        (job_id, step.get("with") or {})
+        for job_id, job in (workflow.get("jobs") or {}).items()
+        for step in job.get("steps") or []
+        if str(step.get("uses", "")).startswith(_CHECKOUT)
+    ]
+
+
+_CHECKOUT_WORKFLOWS = [path for path in _WORKFLOWS if _checkouts(_load(path))]
+_CHECKOUT_IDS = [str(p.relative_to(_ROOT)) for p in _CHECKOUT_WORKFLOWS]
+
+
+class TestCheckoutCredentials:
+    """Every checkout sets persist-credentials, and only allowlisted jobs keep the token."""
+
+    def test_checkouts_were_collected(self) -> None:
+        """The invariant is vacuous if no checkout is found."""
+        assert len(_CHECKOUT_WORKFLOWS) >= 10, f"expected checkouts in many workflows, got {_CHECKOUT_IDS}"
+
+    @pytest.mark.parametrize("workflow_file", _CHECKOUT_WORKFLOWS, ids=_CHECKOUT_IDS)
+    def test_persist_credentials_is_explicit(self, workflow_file: Path) -> None:
+        """A checkout relying on the default silently persists the token."""
+        implicit = [job_id for job_id, with_ in _checkouts(_load(workflow_file)) if "persist-credentials" not in with_]
+        assert not implicit, (
+            f"{workflow_file.relative_to(_ROOT)}: jobs {implicit} check out without "
+            f"`persist-credentials`; set it to false (or allowlist the job if it pushes or fetches)"
+        )
+
+    @pytest.mark.parametrize("workflow_file", _CHECKOUT_WORKFLOWS, ids=_CHECKOUT_IDS)
+    def test_only_allowlisted_jobs_keep_credentials(self, workflow_file: Path) -> None:
+        """persist-credentials: true is reserved for jobs that use git against origin."""
+        kept = {
+            job_id for job_id, with_ in _checkouts(_load(workflow_file)) if with_.get("persist-credentials") is True
+        }
+        unexpected = {job for job in kept if (workflow_file.name, job) not in _CREDENTIALED_CHECKOUTS}
+        assert not unexpected, (
+            f"{workflow_file.relative_to(_ROOT)}: jobs {sorted(unexpected)} keep the checkout token; "
+            f"add them to _CREDENTIALED_CHECKOUTS with the reason, or set persist-credentials: false"
+        )
+
+    @pytest.mark.parametrize(("name", "job"), sorted(_CREDENTIALED_CHECKOUTS))
+    def test_allowlist_entries_are_live(self, name: str, job: str) -> None:
+        """A stale allowlist entry would quietly permit a future regression."""
+        path = _ROOT / ".github" / "workflows" / name
+        kept = [with_ for job_id, with_ in _checkouts(_load(path)) if job_id == job]
+        assert any(w.get("persist-credentials") is True for w in kept), (
+            f"{name}:{job} is allowlisted but no checkout in it keeps credentials; drop the entry"
+        )
+
+
+# --- Invariant 5: every step-running job has a timeout ------------------------
+#
+# GitHub's default is 360 minutes, so a hung step burns six hours of runner time — in
+# this repo and in every consumer that calls these workflows. A job that delegates to a
+# reusable workflow cannot set one (GitHub rejects the key); the called jobs carry it.
+
+
+class TestJobTimeouts:
+    """Every job that runs its own steps declares timeout-minutes."""
+
+    @pytest.mark.parametrize("workflow_file", _WORKFLOWS, ids=_IDS)
+    def test_every_step_running_job_has_a_timeout(self, workflow_file: Path) -> None:
+        """timeout-minutes is a positive integer on every job that has steps."""
+        missing = [
+            job_id
+            for job_id, job in (_load(workflow_file).get("jobs") or {}).items()
+            if "steps" in job and not (isinstance(job.get("timeout-minutes"), int) and job["timeout-minutes"] > 0)
+        ]
+        assert not missing, (
+            f"{workflow_file.relative_to(_ROOT)}: jobs {missing} have no timeout-minutes; "
+            f"GitHub's 360-minute default lets a hung step run for six hours"
+        )

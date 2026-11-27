@@ -49,6 +49,7 @@ jobs:
     name: Sync to the latest template release
     # The mother repo is the template: it has no `.rhiza/template.yml` to bump.
     if: github.repository != 'jebel-quant/rhiza'
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
       contents: write        # Needed to push the sync branch
@@ -63,6 +64,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          # Credentials kept: this job pushes the sync branch with this token.
+          persist-credentials: true
           fetch-depth: 0
           token: ${{ secrets.GH_PAT || github.token }}
 

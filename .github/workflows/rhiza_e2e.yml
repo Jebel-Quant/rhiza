@@ -53,6 +53,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
 
       # Matches bundles/python-core/.python-version, which the scaffold's
       # requires-python tracks: the check-python-version-consistency pre-commit
@@ -105,6 +107,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
 
       # uv is still needed on a Rust project: the language-neutral half of the
       # template (pre-commit, mkdocs, semgrep) runs through uvx whatever the
@@ -161,6 +165,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
