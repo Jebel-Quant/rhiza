@@ -215,6 +215,10 @@ layer's (`test_pyproject`, `test_docstrings` for Python; `test_cargo_toml` for R
   `--config .pre-commit-config.yaml` explicitly, because prek otherwise also runs the
   template configs nested under `bundles/*-core/`.
 - prek's `--all-files` only sees tracked files: `git add` new files before `make fmt`.
+- **Spelling**: the [typos](https://github.com/crate-ci/typos) hook (mother repo only) checks
+  every tracked text file except `CHANGELOG.md`. A real token typos mistakes for a
+  misspelling goes in `[tool.typos]` in `pyproject.toml` with a comment; an entry nothing
+  uses any more fails `tests/api/test_typos_gate.py`.
 
 ### Template ownership in consumers
 
