@@ -110,13 +110,14 @@ jobs:
           # `[ -s ... ]` guard leaves the build exactly as it was.
           GH_PAT: ${{ secrets.GH_PAT }}
           UV_EXTRA_INDEX_URL: ${{ secrets.UV_EXTRA_INDEX_URL }}
+          PYTHON_VERSION: ${{ steps.python_version.outputs.version }}
         run: |
           # Derive image tag from repository name and sanitize (remove '.' and '_')
           REPO_NAME="${GITHUB_REPOSITORY##*/}"
           REPO_NAME="${REPO_NAME//[._]/}"
           docker buildx build \
             --file docker/Dockerfile \
-            --build-arg PYTHON_VERSION=${{ steps.python_version.outputs.version }} \
+            --build-arg "PYTHON_VERSION=$PYTHON_VERSION" \
             --secret id=gh_pat,env=GH_PAT \
             --secret id=uv_extra_index_url,env=UV_EXTRA_INDEX_URL \
             --tag "${REPO_NAME}:ci" \

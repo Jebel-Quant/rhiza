@@ -249,6 +249,10 @@ validated by `tests/bundles/test_gitlab_ci.py` without a GitLab host.
 - `rhiza_paper.yml` runs rhiza-task's `paper` task with `--strict`, using a pinned static
   tectonic binary. `rhiza_book.yml` installs the same engine when a `*.tex` exists (the
   `book` task builds the paper) and runs `book-nav` after the build.
+- [zizmor](https://docs.zizmor.sh) audits the live and bundle workflows, actions, dependabot
+  and pre-commit configs as a root `.pre-commit-config.yaml` hook, so a finding fails
+  `CI gate`. Fix findings at the source; an exception goes in `.github/zizmor.yml` with
+  its reason (`tests/api/test_zizmor_gate.py`). Mother repo only, not shipped.
 - When adding a gate, make sure it cannot pass by skipping: a green run that measured
   nothing is the failure this repo has hit most often (see
   [`docs/development/HISTORY.md`](docs/development/HISTORY.md)).
