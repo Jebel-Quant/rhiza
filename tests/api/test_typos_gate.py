@@ -31,7 +31,7 @@ def _typos_hook() -> dict:
             hooks = [hook for hook in repo["hooks"] if hook["id"] == "typos"]
             assert len(hooks) == 1, f"expected one typos hook in {_HOOK_REPO}, got {hooks}"
             return hooks[0]
-    pytest.fail(f"the root .pre-commit-config.yaml has no {_HOOK_REPO} hook")
+    raise AssertionError(f"the root .pre-commit-config.yaml has no {_HOOK_REPO} hook")
 
 
 def _typos_config() -> dict:
