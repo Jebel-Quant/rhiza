@@ -47,6 +47,7 @@ permissions:
 jobs:
   analysis:
     name: Scorecard analysis
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     # Publishing results and the public score only work on public repositories.
     if: |

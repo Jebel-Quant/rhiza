@@ -67,6 +67,8 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
 
       - name: Resolve CI profile
         id: profile
@@ -101,6 +103,7 @@ jobs:
     if: needs.profile.outputs.run == 'true'
     permissions:
       contents: read
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     outputs:
       notebook-list: ${{ steps.notebooks.outputs.matrix }}
@@ -112,6 +115,8 @@ jobs:
           egress-policy: audit
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
 
       # Install uv/uvx
       #
@@ -173,6 +178,7 @@ jobs:
     permissions:
       contents: read
     if: needs.list-notebooks.outputs.notebook-list != '[]'
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     needs: list-notebooks
     strategy:
@@ -190,6 +196,7 @@ jobs:
 
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          persist-credentials: false
           lfs: true
 
       # Install uv/uvx

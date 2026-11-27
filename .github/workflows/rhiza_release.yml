@@ -132,6 +132,7 @@ env:
 jobs:
   tag:
     name: Validate Tag
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     permissions:
       contents: read   # Validation only: reads tags and release state
@@ -146,6 +147,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          # Credentials kept: the reachability check below runs `git fetch origin`, which needs auth on a private repository.
+          persist-credentials: true
           fetch-depth: 0
 
       - name: Set Tag Variable
@@ -269,6 +272,7 @@ jobs:
 
   build:
     name: Build
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     needs: tag
     permissions:
@@ -286,6 +290,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          persist-credentials: false
           ref: refs/tags/${{ needs.tag.outputs.tag }}
           fetch-depth: 0
 
@@ -522,6 +527,7 @@ jobs:
   # Don't try to upload artifacts to GitHub Release at all
   draft-release:
     name: Draft GitHub Release
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     needs: [tag, build]
     permissions:
@@ -536,6 +542,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          persist-credentials: false
           ref: refs/tags/${{ needs.tag.outputs.tag }}
           fetch-depth: 0
 
@@ -575,6 +582,7 @@ jobs:
   # Decide at step-level whether to publish
   pypi:
     name: Publish package
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     environment: release
     needs: [tag, build, draft-release]
@@ -674,6 +682,7 @@ jobs:
 
   conda:
     name: Generate Conda Recipe (artifact only, not published)
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     needs: [tag, pypi]
     permissions:
@@ -690,6 +699,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          persist-credentials: false
           ref: refs/tags/${{ needs.tag.outputs.tag }}
           fetch-depth: 0
 
@@ -762,6 +772,7 @@ jobs:
 
   devcontainer:
     name: Publish Devcontainer Image
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     environment: release
     needs: [tag, build, draft-release]
@@ -780,6 +791,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          persist-credentials: false
           ref: refs/tags/${{ needs.tag.outputs.tag }}
           fetch-depth: 0
 
@@ -866,6 +878,7 @@ jobs:
 
   finalise-release:
     name: Finalise Release
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     needs: [tag, build, draft-release, pypi, conda, devcontainer]
     # A status function overrides GitHub's implicit success() over all dependencies:
@@ -885,6 +898,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
+          persist-credentials: false
           ref: refs/tags/${{ needs.tag.outputs.tag }}
           fetch-depth: 0
 

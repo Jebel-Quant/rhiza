@@ -68,6 +68,8 @@ jobs:
         egress-policy: audit
 
     - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      with:
+        persist-credentials: false
 
     - name: Resolve CI profile
       id: profile
@@ -104,6 +106,7 @@ jobs:
     #   - https://gh.io/supported-runners-and-hardware-resources
     #   - https://gh.io/using-larger-runners (GitHub.com only)
     # Consider using larger runners or machines with greater resources for possible analysis time improvements.
+    timeout-minutes: 120
     runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
     # CodeQL requires GitHub Advanced Security (part of GitHub Enterprise).
     # For users without Enterprise license:
@@ -148,6 +151,8 @@ jobs:
 
     - name: Checkout repository
       uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      with:
+        persist-credentials: false
 
     - name: Configure git auth for private packages
       uses: jebel-quant/actions/configure-git-auth@6d52725ca371d609489c5b50236965ad70bbe528 # v1
