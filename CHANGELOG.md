@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and entries are generated from [Conventional Commits](https://www.conventionalcommits.org).
 
+## [1.14.2] - 2026-11-27
+
+### Bug Fixes
+- *(ci)* Set persist-credentials explicitly and add job timeouts (#1826)
+- *(python-core)* Make pytest strict about markers and xfail (#1832) (#1834)
+- Bump rhiza-task to 1.12.0, make pytest config strict, and pin ty warnings as failures (#1832, #1833) (#1835)
+- *(python-core)* Register the timeout marker so stress and hypothesis-test collect (#1836)
+
+### Dependencies
+- *(deps)* Lock file maintenance (#1830)
+
+### Maintenance
+- Audit workflows with zizmor as a CI-gated pre-commit hook (#1827)
+- Chore(deps)(deps): bump ossf/scorecard-action (#1828)
+- Spell-check the repo with a typos pre-commit hook (#1829)
+- Freeze pre-commit hooks to commit SHAs and make Renovate wait 7 days (#1831)
+
 ## [1.14.1] - 2026-11-26
 
 ### Dependencies
