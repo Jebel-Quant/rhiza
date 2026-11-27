@@ -291,3 +291,24 @@ exclude_lines = [
     "if TYPE_CHECKING:",
     "raise NotImplementedError",
 ]
+
+# Spell-checking by the `typos` hook in the root .pre-commit-config.yaml (mother repo only).
+# Each allowed entry is a real token that typos mistakes for a misspelling; prefer fixing a
+# hit to adding one. The hook passes --force-exclude, so the exclusions below also apply to
+# files pre-commit names explicitly (tests/api/test_typos_gate.py).
+[tool.typos.files]
+extend-exclude = [
+    # Sections are generated from commit messages as they were written; a typo in a
+    # released section is history, and rewriting it changes what shipped.
+    "CHANGELOG.md",
+]
+
+[tool.typos.default.extend-identifiers]
+froms = "froms"  # the FROM lines of a Dockerfile (tests/bundles/test_docker_build_secrets.py)
+withs = "withs"  # rhiza-task's `withs=` parameter (tests/integration/test_docs_targets.py)
+
+[tool.typos.default.extend-words]
+intoto = "intoto"              # in-toto provenance files, `*.intoto.jsonl`
+vulnerabilit = "vulnerabilit"  # a prefix matching vulnerability/vulnerabilities
+ba = "ba"                      # regex alternation `(?:ba|da|z)?sh` for bash/dash/zsh
+mis = "mis"                    # the hyphenated prefix, as in "mis-scoped"

@@ -75,6 +75,15 @@ repos:
       - id: zizmor
         args: ["--no-progress", "--offline", "--config", ".github/zizmor.yml"]
 
+  # Spell-checking. Mother repo only; allowed words and exclusions are in pyproject.toml's
+  # [tool.typos]. --force-exclude makes those exclusions hold for the file names prek
+  # passes, which typos otherwise checks regardless.
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.52.2
+    hooks:
+      - id: typos
+        args: ["--force-exclude"]
+
   - repo: https://github.com/abravalheri/validate-pyproject
     rev: "v0.27"
     hooks:
