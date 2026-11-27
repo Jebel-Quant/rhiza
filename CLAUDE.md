@@ -215,6 +215,9 @@ layer's (`test_pyproject`, `test_docstrings` for Python; `test_cargo_toml` for R
   `--config .pre-commit-config.yaml` explicitly, because prek otherwise also runs the
   template configs nested under `bundles/*-core/`.
 - prek's `--all-files` only sees tracked files: `git add` new files before `make fmt`.
+- **Pins**: every remote hook, root and bundled, is pinned as `rev: <commit sha>  # frozen: <tag>`,
+  the format Renovate rewrites. Renovate waits `minimumReleaseAge: 7 days` before proposing a
+  release; only rhiza's own packages are exempt (`tests/api/test_supply_chain_pins.py`).
 - **Spelling**: the [typos](https://github.com/crate-ci/typos) hook (mother repo only) checks
   every tracked text file except `CHANGELOG.md`. A real token typos mistakes for a
   misspelling goes in `[tool.typos]` in `pyproject.toml` with a comment; an entry nothing

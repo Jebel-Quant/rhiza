@@ -9,6 +9,7 @@
     ":pinDevDependencies"
   ],
   "rebaseWhen": "behind-base-branch",
+  "minimumReleaseAge": "7 days",
   "enabledManagers": [
     "pep621",
     "custom.regex"
@@ -18,6 +19,13 @@
     "before 3am"
   ],
   "packageRules": [
+    {
+      "description": "Our own packages skip the release-age wait. `minimumReleaseAge` above holds every third-party release back a week, so a compromised one has time to be yanked before Renovate proposes it -- and `:automergeMinor` would otherwise merge it unreviewed. Releases made in Jebel-Quant are not that risk, and the companion-package flow is release-then-bump: a new setting or check lands in the package, then the project moves its pin to use it. A week's wait there only delays the bump. Security updates bypass the wait regardless (Renovate's vulnerabilityAlerts default). tests/api/test_supply_chain_pins.py holds both lists.",
+      "matchPackageNames": [
+        "pytest-rhiza"
+      ],
+      "minimumReleaseAge": "0 days"
+    },
     {
       "matchManagers": [
         "pep621"

@@ -23,6 +23,32 @@ ZIZMOR_HOOK_FILES = (
 )
 
 
+_REPO_LINE = re.compile(r"^\s*-\s*repo:\s*(\S+)")
+_REV_LINE = re.compile(r"^\s*rev:\s*(?P<rev>\S+)(?:\s+#\s*frozen:\s*(?P<tag>\S+))?")
+
+
+def frozen_revs(config: Path) -> list[tuple[str, str, str | None]]:
+    """Return each remote hook repo's pin in a pre-commit config, comment included.
+
+    YAML parsers drop comments, and the ``# frozen:`` comment is the only place the release
+    behind a SHA-pinned ``rev`` is written, so the file is read line by line.
+
+    Args:
+        config: Path to a ``.pre-commit-config.yaml``.
+
+    Returns:
+        One ``(repo, rev, frozen tag or None)`` triple per ``rev:`` line, in file order.
+    """
+    pins: list[tuple[str, str, str | None]] = []
+    repo = None
+    for line in config.read_text(encoding="utf-8").splitlines():
+        if match := _REPO_LINE.match(line):
+            repo = match.group(1)
+        elif (match := _REV_LINE.match(line)) and repo is not None:
+            pins.append((repo, match.group("rev").strip("'\""), match.group("tag")))
+    return pins
+
+
 def strip_ansi(text: str) -> str:
     """Strip ANSI escape sequences from text."""
     return _ANSI_RE.sub("", text)

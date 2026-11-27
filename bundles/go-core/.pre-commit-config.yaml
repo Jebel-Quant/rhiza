@@ -18,7 +18,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
     hooks:
       - id: check-toml
         groups: ["fast"]
@@ -70,14 +70,14 @@ repos:
         groups: ["go", "fast"]
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.50.1
+    rev: bf6d1792b8bc7f6cc93f10cc27735a4cb0c38e47  # frozen: v0.50.1
     hooks:
       - id: markdownlint
         args: ["--disable", "MD013"]
         groups: ["lint", "fast"]
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.39.0
+    rev: a76b92851fc9eede9f9bc4073eb55202f34eb0df  # frozen: 0.39.0
     hooks:
       - id: check-renovate
         args: [ "--verbose" ]
@@ -88,19 +88,19 @@ repos:
         groups: ["fast"]
 
   - repo: https://github.com/rhysd/actionlint
-    rev: v1.7.12
+    rev: 914e7df21a07ef503a81201c76d2b11c789d3fca  # frozen: v1.7.12
     hooks:
       - id: actionlint
         groups: ["lint", "fast"]
 
   - repo: https://github.com/betterleaks/betterleaks
-    rev: v1.10.1
+    rev: 39d5bdcf34db54e944facac5cf6e8b03db5e2b99  # frozen: v1.10.1
     hooks:
       - id: betterleaks
         groups: ["security", "slow"]
 
   - repo: https://github.com/Jebel-Quant/rhiza-hooks
-    rev: v1.3.2  # Use the latest release
+    rev: c57784340d04eb7eeb57665f2cb5a93cda1efbea  # frozen: v1.3.2
     hooks:
       - id: check-rhiza-workflow-names
         groups: ["fast"]

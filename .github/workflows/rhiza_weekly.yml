@@ -336,7 +336,7 @@ jobs:
   # somebody's pull request.
   #
   # Mother repo only: a consumer's rhiza workflows are these files, synced, and are fixed
-  # here. The version comes from the hook's `rev`, so Renovate moves both together; the
+  # here. The version comes from the hook's `# frozen:` comment, so Renovate moves both together; the
   # file set is the hook's own `files` pattern. tests/api/test_weekly_zizmor.py pins both.
   zizmor-online:
     if: github.repository == 'jebel-quant/rhiza'
@@ -366,7 +366,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          version=$(awk '/zizmorcore\/zizmor-pre-commit/ {found=1} found && /rev:/ {print $2; exit}' \
+          # The rev is a commit SHA; the release it stands for is the `# frozen:` comment.
+          version=$(awk '/zizmorcore\/zizmor-pre-commit/ {found=1} found && /rev:/ {for (i = 1; i < NF; i++) if ($i == "frozen:") print $(i + 1); exit}' \
             .pre-commit-config.yaml)
           version="${version#v}"
           if [ -z "$version" ]; then

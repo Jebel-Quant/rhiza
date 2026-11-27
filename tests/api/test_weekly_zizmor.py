@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tests.util import ZIZMOR_HOOK_FILES
+from tests.util import ZIZMOR_HOOK_FILES, frozen_revs
 
 _ROOT = Path(__file__).resolve().parents[2]
 _WEEKLY = _ROOT / ".github" / "workflows" / "rhiza_weekly.yml"
@@ -60,16 +60,15 @@ class TestWeeklyZizmor:
         assert not re.search(r"zizmor@\d", audit_step["run"]), "read the version from the hook's rev"
 
     def test_reads_the_hook_rev(self, audit_step: dict) -> None:
-        """The job's awk program, run on the real config, yields the hook's rev."""
+        """The job's awk program, run on the real config, yields the release the hook's rev is frozen at."""
         awk = shutil.which("awk")
         if awk is None:
             pytest.skip("awk is not installed")
         program = re.search(r"awk '([^']+)'", audit_step["run"])
         assert program, "the job no longer reads the version with awk"
         result = subprocess.run([awk, program.group(1), str(_PRE_COMMIT)], capture_output=True, text=True, check=True)  # nosec B603
-        config = yaml.safe_load(_PRE_COMMIT.read_text(encoding="utf-8"))
-        (rev,) = [r["rev"] for r in config["repos"] if r["repo"].endswith("zizmorcore/zizmor-pre-commit")]
-        assert result.stdout.strip() == rev
+        (tag,) = [tag for repo, _sha, tag in frozen_revs(_PRE_COMMIT) if repo.endswith("zizmorcore/zizmor-pre-commit")]
+        assert result.stdout.strip() == tag
 
     def test_audits_the_hook_file_set(self, audit_step: dict) -> None:
         """The job's file pattern is the hook's upstream `files` pattern, verbatim."""
