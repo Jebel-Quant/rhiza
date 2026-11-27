@@ -106,6 +106,38 @@ def test_the_pinned_cli_supplies_the_timeout() -> None:
     assert int(result.stdout.strip()) > 0, f"{match.group(1)} supplies no per-test timeout"
 
 
+def test_the_suite_collects_without_pytest_timeout() -> None:
+    """``stress``, ``hypothesis-test`` and ``benchmark`` run pytest with no pytest-timeout.
+
+    Under ``--strict-markers`` a ``@pytest.mark.timeout`` the ini does not register fails
+    collection there. That broke the book build on main after #1835 -- PR CI never runs those
+    tasks -- so it is asserted here, with the plugin switched off, over the whole suite.
+    """
+    result = subprocess.run(  # nosec B603
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "--collect-only",
+            "-q",
+            "-p",
+            "no:timeout",
+            "-p",
+            "no:xdist",
+            "-p",
+            "no:cacheprovider",
+            "tests",
+        ],
+        cwd=_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=300,
+    )
+    assert result.returncode == 0, result.stdout[-2000:] + result.stderr[-2000:]
+    assert " collected" in result.stdout, "collected nothing, so this proves nothing"
+
+
 def test_an_unexpected_pass_fails_the_run(tmp_path: Path) -> None:
     """``xfail_strict``: an xfail test that passes is reported as a failure."""
     source = "import pytest\n\n@pytest.mark.xfail\ndef test_fixed():\n    assert True\n"
