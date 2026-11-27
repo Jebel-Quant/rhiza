@@ -157,8 +157,10 @@ jobs:
         run: echo "list=$VERSIONS" >> "$GITHUB_OUTPUT"
 
       - name: Debug matrix
+        env:
+          PYTHON_VERSIONS: ${{ steps.versions-output.outputs.list }}
         run: |
-          echo "Python versions: ${{ steps.versions-output.outputs.list }}"
+          echo "Python versions: $PYTHON_VERSIONS"
 
       # The matrix comes from the rhiza-task CLI rather than from
       # `make -f .rhiza/rhiza.mk -s ci-os-matrix`, which is what this step used to run.
@@ -213,8 +215,10 @@ jobs:
           echo "list=$OS_MATRIX" >> "$GITHUB_OUTPUT"
 
       - name: Debug OS matrix
+        env:
+          OS_VERSIONS: ${{ steps.os.outputs.list }}
         run: |
-          echo "OS versions: ${{ steps.os.outputs.list }}"
+          echo "OS versions: $OS_VERSIONS"
 
       # Inline so a reusable call uses its pinned planner, not code from the consumer checkout.
       - name: Plan CI profile

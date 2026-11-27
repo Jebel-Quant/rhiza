@@ -12,6 +12,8 @@
 #   ruleset-drift   — compares the live branch-protection ruleset's required checks with
 #                     the committed .github/rulesets/main-branch-protection.json.
 #   link-check      — verifies all hyperlinks in README.md are reachable.
+#   zizmor-online   — zizmor's online audits (known-vulnerable actions, impostor commits),
+#                     which the offline pre-commit gate cannot run. Mother repo only.
 #
 # Trigger: Weekly schedule (Monday 08:00 UTC) and manual dispatch.
 
@@ -325,6 +327,60 @@ jobs:
                     f"{os.environ['RULESET_ID']} --input {os.environ['RULESET_FILE']}")
               raise SystemExit(1)
           print("The live ruleset requires exactly the committed status checks.")
+
+  # The `zizmor` pre-commit hook gates every PR, but with --offline so its result does not
+  # depend on a GH_TOKEN. That leaves out the audits that need the GitHub API -- known-
+  # vulnerable actions, impostor commits, ref confusion -- which are also the ones that
+  # change after a workflow is written, when an advisory is published against a pinned
+  # action. This job runs them weekly, so a new advisory notifies instead of failing
+  # somebody's pull request.
+  #
+  # Mother repo only: a consumer's rhiza workflows are these files, synced, and are fixed
+  # here. The version comes from the hook's `rev`, so Renovate moves both together; the
+  # file set is the hook's own `files` pattern. tests/api/test_weekly_zizmor.py pins both.
+  zizmor-online:
+    if: github.repository == 'jebel-quant/rhiza'
+    permissions:
+      contents: read
+    name: zizmor online audits
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
+        with:
+          version: "0.13.10"
+
+      - name: Run zizmor with online audits
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version=$(awk '/zizmorcore\/zizmor-pre-commit/ {found=1} found && /rev:/ {print $2; exit}' \
+            .pre-commit-config.yaml)
+          version="${version#v}"
+          if [ -z "$version" ]; then
+            echo "::error::no zizmor-pre-commit rev in .pre-commit-config.yaml; nothing to pin to"
+            exit 1
+          fi
+          pattern='(^|/)(\.github/(workflows/[^/]+|dependabot)\.ya?ml|action\.ya?ml|\.pre-commit-(config|hooks)\.ya?ml)$'
+          mapfile -t files < <(git ls-files | grep -E "$pattern")
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "::error::no files match the zizmor hook pattern; the audit would measure nothing"
+            exit 1
+          fi
+          echo "zizmor $version over ${#files[@]} files"
+          uvx "zizmor@$version" --no-progress --config .github/zizmor.yml "${files[@]}"
 
   link-check:
     permissions:

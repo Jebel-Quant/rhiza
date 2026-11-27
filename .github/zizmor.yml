@@ -1,0 +1,43 @@
+# zizmor configuration for the mother repo (https://docs.zizmor.sh/configuration/).
+#
+# Read by the `zizmor` hook in the root .pre-commit-config.yaml, which passes this file
+# with --config. That hook runs in `make fmt` and in rhiza_ci.yml's pre-commit job, so a
+# new finding fails the required `CI gate`. Not shipped to consumers: their workflows are
+# template-owned, and every finding is fixed here, at the source.
+#
+# Each exception below says why it is not a defect in this repository. Prefer fixing a
+# finding to adding an entry.
+
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        # Bundle stubs call this repository's reusable workflows by release tag
+        # (`@vX.Y.Z`). bump-my-version moves that pin in the release commit, and the
+        # tag is created on the merged release commit, so no SHA exists to pin to
+        # when the stub is written.
+        "jebel-quant/rhiza/*": ref-pin
+        # Everything else is pinned to a full commit SHA.
+        "*": hash-pin
+
+  self-repository:
+    # `uses: ./.github/...` inside a reusable workflow resolves against the *caller's*
+    # checkout. That is deliberate: it is how a consumer's own
+    # `.github/actions/rhiza-setup` and `release-publish` actions run inside rhiza's
+    # workflows. The self-repository syntax would always point at rhiza instead.
+    disable: true
+
+  use-trusted-publishing:
+    # rhiza_release.yml publishes with Trusted Publishing by default.
+    # `password: secrets.PYPI_TOKEN` is only used by a consumer that sets that secret,
+    # for a registry without OIDC (`vars.PYPI_REPOSITORY_URL`); when it is unset the
+    # action falls back to Trusted Publishing.
+    ignore:
+      - rhiza_release.yml
+
+  superfluous-actions:
+    # ncipollo/release-action creates the GitHub release with its artifacts. Replacing
+    # it with `gh release create` would change the release behaviour of every
+    # consumer, which is a separate change from adopting zizmor.
+    ignore:
+      - rhiza_release.yml

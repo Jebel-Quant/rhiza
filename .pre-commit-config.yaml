@@ -64,6 +64,17 @@ repos:
     hooks:
       - id: actionlint
 
+  # Security audit of workflows, actions, dependabot and pre-commit configs, in the live
+  # .github/ and in bundles/ (what consumers receive). Mother repo only; exceptions and
+  # their reasons are in .github/zizmor.yml. --offline keeps the result the same with or
+  # without a GH_TOKEN in the environment, locally and in CI; the online audits run weekly
+  # in rhiza_weekly.yml's zizmor-online job, which reads its version from this rev.
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.33.1
+    hooks:
+      - id: zizmor
+        args: ["--no-progress", "--offline", "--config", ".github/zizmor.yml"]
+
   - repo: https://github.com/abravalheri/validate-pyproject
     rev: "v0.27"
     hooks:

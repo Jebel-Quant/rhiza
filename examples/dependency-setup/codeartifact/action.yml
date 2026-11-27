@@ -40,7 +40,7 @@ runs:
             print(f'normalized_index={re.sub("[^A-Z0-9]", "_", index.upper())}', file=output)
         PY
     - name: Assume dependency read role
-      uses: aws-actions/configure-aws-credentials@5579c002bb4778aa43395ef1df492868a9a1c83f # v4.0.2
+      uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
       with:
         role-to-assume: ${{ steps.configuration.outputs.AWS_ROLE_TO_ASSUME_READ }}
         aws-region: ${{ steps.configuration.outputs.AWS_REGION }}
