@@ -26,12 +26,17 @@ _HOOK_REPO = "https://github.com/crate-ci/typos"
 def _typos_hook() -> dict:
     """Return the typos hook entry from the root pre-commit config."""
     config = yaml.safe_load((_ROOT / ".pre-commit-config.yaml").read_text(encoding="utf-8"))
-    for repo in config["repos"]:
-        if repo["repo"] == _HOOK_REPO:
-            hooks = [hook for hook in repo["hooks"] if hook["id"] == "typos"]
-            assert len(hooks) == 1, f"expected one typos hook in {_HOOK_REPO}, got {hooks}"
-            return hooks[0]
-    raise AssertionError(f"the root .pre-commit-config.yaml has no {_HOOK_REPO} hook")
+    hooks = [
+        hook
+        for repo in config["repos"]
+        if repo["repo"] == _HOOK_REPO
+        for hook in repo["hooks"]
+        if hook["id"] == "typos"
+    ]
+    assert len(hooks) == 1, (
+        f"expected one typos hook from {_HOOK_REPO} in the root .pre-commit-config.yaml, got {hooks}"
+    )
+    return hooks[0]
 
 
 def _typos_config() -> dict:
