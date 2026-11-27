@@ -252,7 +252,9 @@ validated by `tests/bundles/test_gitlab_ci.py` without a GitLab host.
 - [zizmor](https://docs.zizmor.sh) audits the live and bundle workflows, actions, dependabot
   and pre-commit configs as a root `.pre-commit-config.yaml` hook, so a finding fails
   `CI gate`. Fix findings at the source; an exception goes in `.github/zizmor.yml` with
-  its reason (`tests/api/test_zizmor_gate.py`). Mother repo only, not shipped.
+  its reason (`tests/api/test_zizmor_gate.py`). Mother repo only, not shipped. The hook runs
+  `--offline`; `rhiza_weekly.yml`'s `zizmor-online` job adds the audits that need the GitHub
+  API, with the hook's version and file set (`tests/api/test_weekly_zizmor.py`).
 - When adding a gate, make sure it cannot pass by skipping: a green run that measured
   nothing is the failure this repo has hit most often (see
   [`docs/development/HISTORY.md`](docs/development/HISTORY.md)).

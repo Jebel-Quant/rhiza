@@ -15,6 +15,13 @@ _MAKE = shutil.which("make") or "/usr/bin/make"
 _GIT = shutil.which("git") or "/usr/bin/git"
 _ANSI_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
+# The upstream zizmor hook's `files` pattern (zizmor-pre-commit's .pre-commit-hooks.yaml).
+# The root config does not override it, and rhiza_weekly.yml's zizmor-online job repeats
+# it; both zizmor tests check against this one copy.
+ZIZMOR_HOOK_FILES = (
+    r"(^|/)(\.github/(workflows/[^/]+|dependabot)\.ya?ml|action\.ya?ml|\.pre-commit-(config|hooks)\.ya?ml)$"
+)
+
 
 def strip_ansi(text: str) -> str:
     """Strip ANSI escape sequences from text."""

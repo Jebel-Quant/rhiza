@@ -20,13 +20,10 @@ from pathlib import Path
 import pytest
 import yaml
 
+from tests.util import ZIZMOR_HOOK_FILES
+
 _ROOT = Path(__file__).resolve().parents[2]
 _HOOK_REPO = "https://github.com/zizmorcore/zizmor-pre-commit"
-# The upstream hook's own `files` pattern (zizmor-pre-commit's .pre-commit-hooks.yaml).
-# The root config does not override it; this copy lets the test check what it matches.
-_UPSTREAM_FILES = (
-    r"(^|/)(\.github/(workflows/[^/]+|dependabot)\.ya?ml|action\.ya?ml|\.pre-commit-(config|hooks)\.ya?ml)$"
-)
 
 
 def _zizmor_hook() -> dict:
@@ -68,7 +65,7 @@ class TestZizmorGate:
 
     def test_bundle_workflows_are_in_scope(self) -> None:
         """Both the live workflows and the shipped bundle copies match the hook's pattern."""
-        pattern = re.compile(_UPSTREAM_FILES)
+        pattern = re.compile(ZIZMOR_HOOK_FILES)
         live = [p for p in (_ROOT / ".github" / "workflows").glob("*.yml") if pattern.search(p.as_posix())]
         shipped = [p for p in _ROOT.glob("bundles/*/.github/workflows/*.yml") if pattern.search(p.as_posix())]
         assert len(live) >= 10, f"expected the live workflows in scope, got {len(live)}"
