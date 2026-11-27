@@ -1,9 +1,10 @@
 """The shipped pytest.ini turns pytest's silent-pass warnings into errors (#1832).
 
 Without ``--strict-markers`` a misspelled marker is a warning, so ``-m "not strss"`` deselects
-nothing and the run stays green. (``--strict-config`` follows once the
-``timeout`` key moves into rhiza-task's ``test`` task; until then it would break a bare
-``uv run pytest``.) Without ``xfail_strict`` a fixed bug hides behind its xfail.
+nothing and the run stays green. Without ``--strict-config`` an unknown ini key is a warning,
+which is how ``timeout = 60`` did nothing under a bare ``uv run pytest``: only pytest-timeout
+knows the key, and only ``make test`` installs it. The key is gone; rhiza-task's ``test``
+passes ``--timeout`` itself. Without ``xfail_strict`` a fixed bug hides behind its xfail.
 
 Each test runs pytest in a scratch project carrying the bundle's own ``pytest.ini``, so what is
 asserted is the behaviour consumers receive, not the presence of a string in a file.
@@ -11,11 +12,16 @@ asserted is the behaviour consumers receive, not the presence of a string in a f
 
 from __future__ import annotations
 
+import configparser
+import re
 import shutil
 import subprocess  # nosec B404 - fixed argument vectors
 import sys
 from pathlib import Path
 
+import pytest
+
+_ROOT = Path(__file__).resolve().parents[2]
 _INI = Path(__file__).resolve().parents[2] / "bundles" / "python-core" / "pytest.ini"
 
 
@@ -50,6 +56,7 @@ def test_the_ini_runs_clean(tmp_path: Path) -> None:
     """Positive control: a plain passing test passes, so the failures below are the rules biting."""
     result = _run(tmp_path, "def test_ok():\n    assert True\n")
     assert result.returncode == 0, result.stdout + result.stderr
+    assert "PytestConfigWarning" not in result.stdout + result.stderr
 
 
 def test_an_unregistered_marker_fails_collection(tmp_path: Path) -> None:
@@ -58,6 +65,45 @@ def test_an_unregistered_marker_fails_collection(tmp_path: Path) -> None:
     result = _run(tmp_path, source)
     assert result.returncode != 0
     assert "'strss' not found in `markers`" in result.stdout + result.stderr
+
+
+def test_an_unknown_ini_key_is_an_error(tmp_path: Path) -> None:
+    """``--strict-config``: a key no plugin claims fails the run instead of being ignored."""
+    result = _run(tmp_path, "def test_ok():\n    assert True\n", extra_ini="no_such_option = 1\n")
+    assert result.returncode != 0
+    assert "no_such_option" in result.stdout + result.stderr
+
+
+def test_the_ini_carries_no_plugin_only_key() -> None:
+    """The ini has no ``timeout`` key, the one only pytest-timeout knows.
+
+    Under ``make test`` the plugin is installed, so strict config alone would not catch the
+    key coming back -- but every bare ``uv run pytest`` would then fail on it.
+    """
+    parser = configparser.ConfigParser(interpolation=None)
+    parser.read(_INI, encoding="utf-8")
+    assert "timeout" not in parser["pytest"]
+
+
+def test_the_pinned_cli_supplies_the_timeout() -> None:
+    """The timeout moved into rhiza-task, so the pinned version must actually supply one."""
+    uvx = shutil.which("uvx")
+    if uvx is None:
+        pytest.skip("uvx not available; cannot ask the pinned CLI")
+    makefile = (_ROOT / "bundles" / "core" / "Makefile").read_text(encoding="utf-8")
+    match = re.search(r"^RHIZA_TASK \?= (\S+)", makefile, re.MULTILINE)
+    assert match, "bundles/core/Makefile must pin RHIZA_TASK"
+    result = subprocess.run(  # nosec B603
+        [uvx, "-q", match.group(1), "print", "test_timeout"],
+        cwd=_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=120,
+    )
+    if result.returncode != 0:
+        pytest.skip(f"cannot run {match.group(1)} (offline?): {result.stderr[-300:]}")
+    assert int(result.stdout.strip()) > 0, f"{match.group(1)} supplies no per-test timeout"
 
 
 def test_an_unexpected_pass_fails_the_run(tmp_path: Path) -> None:

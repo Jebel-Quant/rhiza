@@ -144,6 +144,32 @@ def test_typecheck_gate_runs_both_checkers(project: Project, logger):
     )
 
 
+def test_typecheck_gate_fails_on_a_ty_warning(project: Project, logger):
+    """A diagnostic ty rates only a *warning* still turns the gate red (#1833).
+
+    A redundant ``cast`` is a warning, not an error, in ty. Whether a warning-only run fails
+    depends on ty's default, which has changed between releases, and ``ty_version`` is a
+    consumer setting -- so rhiza-task passes ``--error-on-warning`` to pin the meaning. This
+    asserts the result, on a synced project, rather than the flag.
+
+    The probe module is removed again whatever happens: the project fixture is shared by the
+    whole module, and every other gate test expects a clean tree.
+    """
+    probe = project.path / "src" / "demo" / "_warning_probe.py"
+    probe.write_text(
+        '"""Probe module: one redundant cast."""\n\nfrom typing import cast\n\n\n'
+        'def same(x: int) -> int:\n    """Return x."""\n    return cast(int, x)\n',
+        encoding="utf-8",
+    )
+    try:
+        proc = run_make(logger, ["typecheck"], check=False, dry_run=False, env=gate_env(), cwd=project.path)
+    finally:
+        probe.unlink()
+    out = strip_ansi(proc.stdout) + strip_ansi(proc.stderr)
+    assert "redundant-cast" in out, f"ty did not report the probe's warning, so the test proves nothing:\n{out[-1500:]}"
+    assert proc.returncode != 0, f"typecheck passed with a ty warning in the source:\n{out[-1500:]}"
+
+
 def test_security_gate_scans_the_source(project: Project, logger):
     """Bandit runs over SOURCE_FOLDER with the shipped .bandit config."""
     out = gate(project, "security", logger)

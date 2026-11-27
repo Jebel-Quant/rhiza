@@ -84,6 +84,9 @@ _CONTROLS = {
     # would fail that comparison only by accident of the bundle's current layout -- so the
     # non-emptiness is asserted on its own rather than left to it.
     "tests/bundles/test_docker_paths_agree.py": "test_the_docker_folder_setting_resolves_to_something",
+    # A resolved setting, asserted positive: empty output fails int(), and 0 fails the bound,
+    # so a CLI that stopped supplying the timeout cannot read as green.
+    "tests/bundles/test_pytest_strictness.py": "test_the_pinned_cli_supplies_the_timeout",
     # The control module for the shared reader. It is a deriver like any other -- it calls
     # `load()` -- so it declares itself rather than being exempted for being the control.
     "tests/test_registry.py": "test_the_registry_loads_and_carries_its_anchors",
